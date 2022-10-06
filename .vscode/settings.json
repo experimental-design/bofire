@@ -1,0 +1,21 @@
+{
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "prettier.embeddedLanguageFormatting": "off",
+  "prettier.jsxBracketSameLine": true,
+  "prettier.printWidth": 80,
+  "prettier.bracketSpacing": false,
+  "prettier.vueIndentScriptAndStyle": true,
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[python]": {
+    "formatting.provider": "black",
+    "formatting.autopep8Args": [
+      "--max-line-length=80"
+    ],
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  }
+}
