@@ -1,5 +1,7 @@
-# everest
+# Everest
 Bayesian Optimization Library
+
+![everest](everest.png)
 
 
 
