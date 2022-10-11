@@ -29,3 +29,18 @@ pip freeze > requirements.txt
 
 Any new non-dev dependency must also be added to [setup.py](./setup.py).
 
+
+
+## Tests
+
+To run unit tests, execute the following:
+
+```bash
+# activate venv
+source .venv/bin/activate
+# add src to PYTHONPATH
+export PYTHONPATH=$(pwd)/src:$PYTHONPATH
+# run tests
+pytest tests/
+```
+
