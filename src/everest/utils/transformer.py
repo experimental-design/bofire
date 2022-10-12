@@ -1,49 +1,27 @@
 import logging
-from enum import Enum
 from typing import Dict, List, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
 from everest.domain.domain import Domain, DomainError
-from everest.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    InputFeature,
-    OutputFeature,
-    is_continuous,
-)
-from everest.utils.categoricalDescriptorEncoder import CategoricalDescriptorEncoder
+from everest.domain.features import (CategoricalDescriptorInputFeature,
+                                     CategoricalInputFeature,
+                                     ContinuousInputFeature,
+                                     ContinuousOutputFeature, InputFeature,
+                                     OutputFeature, is_continuous)
+from everest.strategies.strategy import (CategoricalEncodingEnum,
+                                         DescriptorEncodingEnum, ScalerEnum)
+from everest.utils.categoricalDescriptorEncoder import \
+    CategoricalDescriptorEncoder
 from pydantic import BaseModel, Field, validator
-from sklearn.preprocessing import (
-    MinMaxScaler,
-    OneHotEncoder,
-    OrdinalEncoder,
-    StandardScaler,
-)
+from sklearn.preprocessing import (MinMaxScaler, OneHotEncoder, OrdinalEncoder,
+                                   StandardScaler)
 
-# with warnings.catch_warnings():
+#with warnings.catch_warnings():
 #    warnings.simplefilter("ignore")
 
-# warnings.filterwarnings("ignore", category=DeprecationWarning)
-# warnings.filterwarnings("ignore", category=UserWarning, append=True)
-
-
-class ScalerEnum(Enum):
-    NORMALIZE = "NORMALIZE"
-    STANDARDIZE = "STANDARDIZE"
-
-
-class CategoricalEncodingEnum(Enum):
-    ONE_HOT = "ONE_HOT"
-    ORDINAL = "ORDINAL"
-
-
-class DescriptorEncodingEnum(Enum):
-    DESCRIPTOR = "DESCRIPTOR"
-    CATEGORICAL = "CATEGORICAL"
-
+#warnings.filterwarnings("ignore", category=DeprecationWarning)
+#warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
 class Transformer(BaseModel):
     domain: Domain
@@ -51,7 +29,7 @@ class Transformer(BaseModel):
     categorical_encoding: Optional[CategoricalEncodingEnum]
     scale_inputs: ScalerEnum = None
     scale_outputs: ScalerEnum = None
-    is_fitted: bool = False
+    is_fitted: bool= False
     features2transformedFeatures: Dict = Field(default_factory=lambda: {})
     encoders: Dict = Field(default_factory=lambda: {})
     """Pre/post-processing of data for strategies
@@ -62,68 +40,66 @@ class Transformer(BaseModel):
         encoders: Dict  
 
     """
-
-    def __init__(
-        self,
+    def __init__(self, 
         domain,
-        descriptor_encoding=None,
-        categorical_encoding=None,
-        scale_inputs=None,
-        scale_outputs=None,
+        descriptor_encoding = None,
+        categorical_encoding = None,
+        scale_inputs = None,
+        scale_outputs = None
     ) -> None:
         """Pre/post-processing of data for strategies
 
         Args:
-            domain (Domain):
+            domain (Domain): 
                     A domain for that is being used in the strategy
             descriptor_encoding (DescriptorEncodingEnum, optional):
-                    Transform the descriptors into continuous features ("DESCRIPTOR")/
+                    Transform the descriptors into continuous features ("DESCRIPTOR")/ 
                     numerical representation of categoricals ("CATEGORICAL"). Defaults to None.
             categorical_encoding (CategoricalEncodingEnum, optional):
-                Distinction between one hot and ordinal encoding for categoricals.
+                Distinction between one hot and ordinal encoding for categoricals. 
                 Defaults to None.
-            scale_inputs/ scale_outputs (ScalerEnum, optional):
+            scale_inputs/ scale_outputs (ScalerEnum, optional): 
                 In-/Outputs can be standardized, normalized or not scaled. Defaults to None.
         """
-        super().__init__(
-            domain=domain,
-            descriptor_encoding=descriptor_encoding,
-            categorical_encoding=categorical_encoding,
-            scale_inputs=scale_inputs,
-            scale_outputs=scale_outputs,
-        )
+        super().__init__(domain=domain,
+                        descriptor_encoding=descriptor_encoding,
+                        categorical_encoding=categorical_encoding,
+                        scale_inputs=scale_inputs,
+                        scale_outputs=scale_outputs
+                        )
 
         for feature in self.get_features_to_be_transformed():
             if (
                 isinstance(feature, CategoricalDescriptorInputFeature)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
-            ):
-
+            ): 
+                             
                 keys = [feature.key + "_" + str(t) for t in feature.descriptors]
                 self.features2transformedFeatures[feature.key] = keys
 
+
             elif (
-                isinstance(feature, CategoricalInputFeature)
-                and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
+                isinstance(feature, CategoricalInputFeature) 
+                and self.categorical_encoding==CategoricalEncodingEnum.ONE_HOT
             ):
                 keys = [feature.key + "_" + str(t) for t in feature.categories]
                 self.features2transformedFeatures[feature.key] = keys
-
-        return
-
-    def fit(self, input: pd.DataFrame):
+        
+        return 
+    
+    def fit (self, input: pd.DataFrame):
         """Fit the encoders to provided input data
 
         Args:
             input (pd.DataFrame): The data, the encoders are fitted to.
 
         Raises:
-            NotImplementedError:
-                User-provided descriptor values are currently ignored.
+            NotImplementedError: 
+                User-provided descriptor values are currently ignored. 
                 The descriptor values are set in the CategoricalDescriptorInputFeature.
             DomainError: Unknown input feature type. Features have to be of type continuous or categorical feature.
             DomainError: Output features cannot be categorical features currently.
-            DomainError: Unknown output feature type
+            DomainError: Unknown output feature type 
 
         Returns:
             transformer object: The fitted transformer
@@ -135,82 +111,63 @@ class Transformer(BaseModel):
             if (
                 isinstance(feature, CategoricalDescriptorInputFeature)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
-            ):
-
+            ): 
+                              
                 if all(np.isin(feature.descriptors, experiment.columns)):
-                    # how should we deal with descriptors entered by the user, which are not in line with the values assigned in the features`?
+                    #how should we deal with descriptors entered by the user, which are not in line with the values assigned in the features`?
                     # TODO: Check if user-provided decriptors are valid
                     # TODO: implement hierarchy which descriptors are preferred
-                    raise NotImplementedError(
-                        "User-provided descriptor values are currently ignored"
-                    )
+                    raise NotImplementedError("User-provided descriptor values are currently ignored")
 
-                enc = CategoricalDescriptorEncoder(
-                    categories=[feature.categories],
-                    descriptors=[feature.descriptors],
-                    values=[feature.values],
-                )
-                values = pd.DataFrame(experiment[feature.key], columns=[feature.key])
+                
+                enc = CategoricalDescriptorEncoder(categories = [feature.categories], descriptors = [feature.descriptors], values = [feature.values]) 
+                values = pd.DataFrame(experiment[feature.key], columns = [feature.key])
                 enc.fit(values)
                 column_names = enc.get_feature_names_out()
 
-                self.encoders[feature.key] = enc
+                self.encoders[feature.key] = enc 
                 values = self.encoders[feature.key].transform(values)
-
+                
                 for loc, column_name in enumerate(column_names):
-
-                    experiment[column_name] = values[:, loc]
+                    
+                    experiment[column_name] = values[:,loc]
                     var_min = min([val[loc] for val in feature.values])
                     var_max = max([val[loc] for val in feature.values])
 
-                    # Scale inputs
-                    self.fit_scaling(
-                        column_name,
-                        experiment,
-                        var_min,
-                        var_max,
-                        scaler_type=self.scale_inputs,
-                    )
+                    # Scale inputs 
+                    self.fit_scaling(column_name, experiment, var_min, var_max, scaler_type=self.scale_inputs)
                     experiment = experiment.drop(column_name, axis=1)
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
-                and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
+                isinstance(feature, CategoricalInputFeature) 
+                and self.categorical_encoding==CategoricalEncodingEnum.ORDINAL
             ):
-                enc = OrdinalEncoder(categories=[feature.categories])
-
-                values = pd.DataFrame(experiment[feature.key], columns=[feature.key])
+                enc = OrdinalEncoder(categories=[feature.categories]) 
+                
+                values = pd.DataFrame(experiment[feature.key], columns = [feature.key])
                 enc.fit(values)
 
                 self.encoders[feature.key] = enc
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
-                and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
+                isinstance(feature, CategoricalInputFeature) 
+                and self.categorical_encoding==CategoricalEncodingEnum.ONE_HOT
             ):
                 # Create one-hot encoding columns & insert to DataSet
-                # TODO: drop in oneHot encoder testen
-                enc = OneHotEncoder(categories=[feature.categories])
-
-                values = pd.DataFrame(experiment[feature.key], columns=[feature.key])
+                #TODO: drop in oneHot encoder testen
+                enc = OneHotEncoder(categories=[feature.categories]) 
+                
+                values = pd.DataFrame(experiment[feature.key], columns = [feature.key])
                 enc.fit(values)
-
+                
                 self.encoders[feature.key] = enc
 
             elif isinstance(feature, ContinuousInputFeature):
                 var_min, var_max = feature.lower_bound, feature.upper_bound
-                self.fit_scaling(
-                    feature.key,
-                    experiment,
-                    var_min,
-                    var_max,
-                    scaler_type=self.scale_inputs,
-                )
-
+                self.fit_scaling(feature.key, experiment, var_min, var_max, scaler_type=self.scale_inputs)
+            
             elif self.categorical_encoding == None and self.descriptor_encoding != None:
-                logging.warning(
-                    "Descriptors should be encoded as categoricals. However, categoricals are selected to be not transformed. Thus, I will skip categoricals with descriptors as well."
-                )
+                logging.warning("Descriptors should be encoded as categoricals. However, categoricals are selected to be not transformed. Thus, I will skip categoricals with descriptors as well.")
                 pass
 
             else:
@@ -219,20 +176,18 @@ class Transformer(BaseModel):
                 )
 
         for feature in self.domain.get_features(OutputFeature):
-
+            
             if isinstance(feature, OutputFeature):
                 if not is_continuous(feature):
                     raise DomainError(
                         "Output features cannot be categorical features currently."
                     )
 
-                self.fit_scaling(
-                    feature.key, experiment, scaler_type=self.scale_outputs
-                )
-
+                self.fit_scaling(feature.key, experiment, scaler_type=self.scale_outputs)
+                
             else:
                 raise DomainError(f"Feature {feature.key} is not in the dataset.")
-
+        
         self.is_fitted = True
         return self
 
@@ -243,106 +198,80 @@ class Transformer(BaseModel):
             experiment (pd.DataFrame): Input data to be transformed
 
         Raises:
-            DomainError:
+            DomainError: 
                 Unknown input feature type. Features have to be of type continuous or categorical feature.
-            DomainError:
+            DomainError: 
                 Output features cannot be categorical features currently.
-            DomainError:
-                Unknown output feature type
+            DomainError: 
+                Unknown output feature type 
 
         Returns:
             transformed_experiment (pd.DataFrame): the transformed input data
         """
 
         assert self.is_fitted == True, "Encoders are not initialized"
-        transformed_experiment = experiment.copy()
-
+        transformed_experiment = experiment.copy()   
+         
         for feature in self.get_features_to_be_transformed():
             if (
                 isinstance(feature, CategoricalDescriptorInputFeature)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
-            ):
-
-                values = pd.DataFrame(
-                    transformed_experiment[feature.key], columns=[feature.key]
-                )
+            ): 
+                              
+                values = pd.DataFrame(transformed_experiment[feature.key], columns = [feature.key])
                 values = self.encoders[feature.key].transform(values)
                 column_names = self.encoders[feature.key].get_feature_names_out()
 
                 index = transformed_experiment.columns.get_loc(feature.key)
                 for i, column_name in enumerate(column_names):
-                    transformed_experiment.insert(index + i, column_name, values[:, i])
-
+                    transformed_experiment.insert(index+i, column_name, values[:,i])
+ 
                     # Scale inputs
                     if self.encoders[column_name] is not None:
-                        values_unscaled = np.atleast_2d(
-                            transformed_experiment[column_name].to_numpy()
-                        ).T
-                        transformed_experiment[column_name] = self.encoders[
-                            column_name
-                        ].transform(values_unscaled)
+                        values_unscaled = np.atleast_2d(transformed_experiment[column_name].to_numpy()).T
+                        transformed_experiment[column_name] = self.encoders[column_name].transform(values_unscaled)
 
                 # Ensure descriptor features are floats
-                transformed_experiment[column_names] = transformed_experiment[
-                    column_names
-                ].astype(float)
+                transformed_experiment[column_names] = transformed_experiment[column_names].astype(np.float)
 
                 # drop categorical column
-                transformed_experiment = transformed_experiment.drop(
-                    feature.key, axis=1
-                )
+                transformed_experiment = transformed_experiment.drop(feature.key, axis=1)
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
-                and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
+                isinstance(feature, CategoricalInputFeature) 
+                and self.categorical_encoding==CategoricalEncodingEnum.ORDINAL
             ):
-
-                values = pd.DataFrame(
-                    transformed_experiment[feature.key], columns=[feature.key]
-                )
+                              
+                values = pd.DataFrame(transformed_experiment[feature.key], columns = [feature.key])
                 enc_values = self.encoders[feature.key].transform(values)
 
-                transformed_experiment[feature.key] = enc_values.astype(
-                    "int32"
-                )  # categorical kernel needs int as input to avoid numerical trouble. Thus, these columns are also not scaled
+                transformed_experiment[feature.key] = enc_values.astype('int32') # categorical kernel needs int as input to avoid numerical trouble. Thus, these columns are also not scaled
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
-                and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
+                isinstance(feature, CategoricalInputFeature) 
+                and self.categorical_encoding==CategoricalEncodingEnum.ONE_HOT
             ):
-
-                values = pd.DataFrame(
-                    transformed_experiment[feature.key], columns=[feature.key]
-                )
+                 
+                values = pd.DataFrame(transformed_experiment[feature.key], columns = [feature.key])
                 enc_values = self.encoders[feature.key].transform(values).toarray()
-
+               
                 column_names = self.encoders[feature.key].get_feature_names_out()
-
+   
                 index = transformed_experiment.columns.get_loc(feature.key)
                 for i, column_name in enumerate(column_names):
-                    transformed_experiment.insert(
-                        index + i, column_name, enc_values[:, i]
-                    )
+                    transformed_experiment.insert(index+i, column_name, enc_values[:,i]) 
 
                 # Drop old categorical column
-                transformed_experiment = transformed_experiment.drop(
-                    feature.key, axis=1
-                )
+                transformed_experiment = transformed_experiment.drop(feature.key, axis=1)
 
             elif isinstance(feature, ContinuousInputFeature):
-
+                
                 if self.encoders[feature.key] is not None:
-                    values = np.atleast_2d(
-                        transformed_experiment[feature.key].to_numpy()
-                    ).T
-                    transformed_experiment[feature.key] = self.encoders[
-                        feature.key
-                    ].transform(values)
-
+                    values = np.atleast_2d(transformed_experiment[feature.key].to_numpy()).T
+                    transformed_experiment[feature.key] = self.encoders[feature.key].transform(values)
+            
             elif self.categorical_encoding == None and self.descriptor_encoding != None:
-                logging.warning(
-                    "Descriptors should be encoded as categoricals. However, categoricals are selected to be not transformed. Thus, I will skip categoricals with descriptors as well."
-                )
+                logging.warning("Descriptors should be encoded as categoricals. However, categoricals are selected to be not transformed. Thus, I will skip categoricals with descriptors as well.")
                 pass
 
             else:
@@ -351,7 +280,7 @@ class Transformer(BaseModel):
                 )
 
         for feature in self.domain.get_features(OutputFeature):
-
+            
             if isinstance(feature, OutputFeature):
                 if not is_continuous(feature):
                     raise DomainError(
@@ -359,19 +288,16 @@ class Transformer(BaseModel):
                     )
 
                 if self.encoders[feature.key] is not None:
-                    values = np.atleast_2d(
-                        transformed_experiment[feature.key].to_numpy()
-                    ).T
-                    transformed_experiment[feature.key] = self.encoders[
-                        feature.key
-                    ].transform(values)
-
+                    values = np.atleast_2d(transformed_experiment[feature.key].to_numpy()).T
+                    transformed_experiment[feature.key] = self.encoders[feature.key].transform(values)
+                
             else:
                 raise DomainError(f"Feature {feature.key} is not in the dataset.")
+        
 
         return transformed_experiment.copy()
-
-    def fit_transform(self, experiment: pd.DataFrame):
+    
+    def fit_transform (self, experiment: pd.DataFrame):
         """A combination of self.fit and self.transform
 
         Args:
@@ -392,9 +318,9 @@ class Transformer(BaseModel):
             transformed_candidate (pd.DataFrame): input data to be backtransformed
 
         Raises:
-            DomainError:
+            DomainError: 
                 Feature is defined in the domain, but no feature data is provided in the dataset to be backtransformed.
-            NotImplementedError:
+            NotImplementedError: 
                 Acctually, categorical outputs are not supported.
 
         Returns:
@@ -415,7 +341,7 @@ class Transformer(BaseModel):
                 column_names = enc.get_feature_names_out()
 
                 for column_name in column_names:
-                    candidate = self.un_scale(column_name, candidate)
+                    candidate = self.un_scale(column_name, candidate)          
 
                 values = candidate[column_names].to_numpy()
                 enc_values = enc.inverse_transform(values)
@@ -428,7 +354,7 @@ class Transformer(BaseModel):
 
             # Categorical features using one-hot encoding
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInputFeature) 
                 and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
             ):
                 # Get encoder
@@ -448,7 +374,7 @@ class Transformer(BaseModel):
 
             # Categorical features using ordinal encoding
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInputFeature) 
                 and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
             ):
                 # Get encoder
@@ -471,83 +397,66 @@ class Transformer(BaseModel):
                 raise DomainError(f"Feature {feature.key} is not in the dataset.")
 
         for feature in self.domain.get_features(OutputFeature):
-
+            
             if feature.key in transformed_candidate.columns:
                 if isinstance(feature, ContinuousOutputFeature):
                     candidate = self.un_scale(feature.key, candidate)
                 else:
-                    raise NotImplementedError(
-                        "Acctually, only continuous outputs are implemented"
-                    )
+                    raise NotImplementedError("Acctually, only continuous outputs are implemented")
         return candidate
 
     def get_features_to_be_transformed(self):
         features = self.domain.get_features(InputFeature)
 
         if self.categorical_encoding == None:
-
+            
             # removes all categorical features (incl. the descriptor ones)
-            [
-                features.remove(feat)
-                for feat in self.domain.get_features(CategoricalInputFeature)
-            ]
-            # add categorical descriptor features again
+            [features.remove(feat) for feat in self.domain.get_features(CategoricalInputFeature)]
+            # add categorical descriptor features again 
             features2 = self.domain.get_features(CategoricalDescriptorInputFeature)
 
-            features = (
-                features + features2
-            )  # TODO: change, when Benjamin implemented new get_feature
+            features = features + features2 #TODO: change, when Benjamin implemented new get_feature
 
         if self.descriptor_encoding == None:
-            [
-                features.remove(feat)
-                for feat in self.domain.get_features(CategoricalDescriptorInputFeature)
-            ]
-
+            [features.remove(feat) for feat in self.domain.get_features(CategoricalDescriptorInputFeature)]
+        
         return features
-
-    def fit_scaling(
-        self,
-        key: str,
-        experiment: pd.DataFrame,
-        var_min: float = np.nan,
-        var_max: float = np.nan,
-        scaler_type: ScalerEnum = None,
-    ) -> pd.DataFrame:
+   
+    def fit_scaling(self, key: str, experiment: pd.DataFrame, var_min: float=np.nan, var_max: float=np.nan, scaler_type: ScalerEnum=None) -> pd.DataFrame:
         """fitting the chosen scaler type to provided input data
 
         Args:
-            key (str):
-                column name in input data of the feature to be scaled
-            experiment (pd.DataFrame):
+            key (str): 
+                column name in input data of the feature to be scaled 
+            experiment (pd.DataFrame): 
                 input data to be fitted to
-            var_min (float, optional):
-                Lower bound to be used for min max scaling.
+            var_min (float, optional): 
+                Lower bound to be used for min max scaling. 
                 When not defined or nan, the minimum of the input data is used. Defaults to np.nan.
-            var_max (float, optional):
-                Upper bound to be used for min max scaling.
+            var_max (float, optional): 
+                Upper bound to be used for min max scaling. 
                 When not defined or nan, the maximum of the input data is used. Defaults to np.nan.
-            scaler_type (ScalerEnum, optional):
+            scaler_type (ScalerEnum, optional): 
                 Defines the type of scaling (Normalize/ standardize/ None). Defaults to None.
 
         Returns:
-            transformer object: fitted encoders are added to self.encoders
+            transformer object: fitted encoders are added to self.encoders 
         """
         values = np.atleast_2d(experiment[key].to_numpy()).T
 
         if scaler_type == ScalerEnum.STANDARDIZE:
             enc = StandardScaler()
-            enc.fit(values)
-
+            enc.fit(values)       
+                    
         elif scaler_type == ScalerEnum.NORMALIZE:
             enc = MinMaxScaler()
             if np.isnan(var_min):
                 var_min = min(values)
             if np.isnan(var_max):
-                var_max = max(values)
+                var_max= max(values)
 
-            enc.fit(np.array([var_min, var_max]).reshape(-1, 1))
-
+            enc.fit(np.array([var_min, var_max]).reshape(-1,1)) 
+            
         else:
             enc = None
 
@@ -559,20 +468,20 @@ class Transformer(BaseModel):
         """uses the fitted encoders to back-scale the input data to original scale
 
         Args:
-            key (str):
-                column name in input data of the feature to be back-scaled
-            candidate (pd.DataFrame):
+            key (str): 
+                column name in input data of the feature to be back-scaled 
+            candidate (pd.DataFrame): 
                 input data to be un-scaled
 
         Returns:
             candidate (pd.DataFrame):
                 The un-scaled input data
         """
-
+        
         if (key in self.encoders.keys()) and (self.encoders[key] is not None):
             values = np.atleast_2d(candidate[key].to_numpy()).T
             candidate[key] = self.encoders[key].inverse_transform(values)
 
-        candidate[key] = candidate[key].astype(float)
+        candidate[key] = candidate[key].astype(np.float)
 
         return candidate

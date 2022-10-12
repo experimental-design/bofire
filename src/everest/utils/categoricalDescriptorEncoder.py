@@ -1,11 +1,18 @@
+import numbers
+import warnings
 from typing import List
 
 import numpy as np
 from scipy import sparse
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.preprocessing._encoders import _BaseEncoder
-from sklearn.utils import check_array
-from sklearn.utils._encode import _check_unknown, _unique
-from sklearn.utils.validation import _check_feature_names_in, check_is_fitted
+from sklearn.utils import check_array, is_scalar_nan
+from sklearn.utils._encode import (_check_unknown, _encode, _extract_missing,
+                                   _unique)
+from sklearn.utils._mask import _get_mask
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.validation import (_check_feature_names_in, _num_samples,
+                                      check_is_fitted)
 
 
 class CategoricalDescriptorEncoder(_BaseEncoder):
@@ -18,8 +25,8 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         *,
         categories: List[List[str]] = "auto",
         descriptors: List[List[str]] = "auto",
-        values: List[List[List[float]]],
-        sparse: bool = False,
+        values: List[List[List[float]]], 
+        sparse: bool=False,
         dtype=np.float64,
         handle_unknown="error",
     ):
@@ -27,9 +34,9 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
 
         Args:
             values (List[List[List[float]]]): Nested list of descriptor values. Must be of shape (n_features, n_categories_per_feature, n_descriptors).
-            categories (List[List[str]], optional): List of strings referring to the categories (not the feature names!) occuring in the dataset.
+            categories (List[List[str]], optional): List of strings referring to the categories (not the feature names!) occuring in the dataset. 
                                                     Defaults to "auto". (When no list is passed, the descriptor names are generated automatically.)
-            descriptors (List[List[str]], optional): List of strings referring to the descriptor names occuring in the dataset.
+            descriptors (List[List[str]], optional): List of strings referring to the descriptor names occuring in the dataset. 
                                                     Defaults to "auto". (When no list is passed, the descriptor names are generated automatically.)
             sparse (bool, optional): Sparse matrix output is currently not supported. Defaults to False.
             dtype (dtype, optional): [description]. Defaults to np.float64.
@@ -42,10 +49,10 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         # check, whether we have only 1D data or multiple descriptors provided at once
         if not isinstance(self.values[0][0], list):
             self.values = [values]
-
+        
         if not isinstance(self.categories[0], list) and self.categories != "auto":
             self.categories = [categories]
-
+        
         if not isinstance(self.descriptors[0], list) and self.descriptors != "auto":
             self.descriptors = [descriptors]
 
@@ -54,11 +61,6 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         self.handle_unknown = handle_unknown
 
     def _validate_keywords(self):
-        """Validate `handle_unknown` argument.
-
-        Raises:
-            ValueError: if `handle_unknown`not `error` or `ignore`.
-        """
         if self.handle_unknown not in ("error", "ignore"):
             msg = (
                 "handle_unknown should be either 'error' or 'ignore', got {0}.".format(
@@ -75,29 +77,31 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         )
         self.n_features_in_ = n_features
 
+
         if self.categories != "auto":
             if len(self.categories) != n_features:
                 raise ValueError(
                     "Shape mismatch: if categories is an array,"
                     " it has to be of shape (n_features,)."
                 )
-
+        
         if self.descriptors != "auto":
             for i, des in enumerate(self.descriptors):
                 if len(des) != len(self.values[i][0]):
                     raise ValueError(
                         "Shape mismatch: number of descriptors"
-                        " do not fit to the dimension of provided values."
-                    )
+                    " do not fit to the dimension of provided values."
+                )
+
 
         self.values_ = []
         self.n_categories_i = []
         self.n_descriptors_in_ = []
 
-        for values in self.values:
+        for values in self.values: 
             descriptor_list, n_categories_i, n_descriptors = self._check_X(
-                values, force_all_finite=force_all_finite
-            )
+            values, force_all_finite=force_all_finite
+        )
             self.values_.append(descriptor_list)
             self.n_categories_i.append(n_categories_i)
             self.n_descriptors_in_.append(n_descriptors)
@@ -141,20 +145,21 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
                     )
                 if self.descriptors == "auto":
                     des_list.append(f"Descriptor_{i}_{j}")
-
+                    
                 else:
                     des_list.append(np.array(self.descriptors[i][j]))
-
+                
             self.descriptors_.append(des_list)
+                    
 
     def fit(self, X, y=None):
         """
         Fit Encoder to X.
-
+        
         Args:
             X (array-like of shape (n_samples, n_features)): The data to determine the categories of each feature.
             y: None. Ignored. This parameter exists only for compatibility with :class:`~sklearn.pipeline.Pipeline`.
-
+        
         Returns:
             self: Fitted encoder.
         """
@@ -166,29 +171,29 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         """
         Fit categoricalDescriptorEncoder to X, then transform X.
         Equivalent to fit(X).transform(X) but more convenient.
-
+        
         Args:
             X (array-like of shape (n_samples, n_features)): The data to encode.
             y: None. Ignored. This parameter exists only for compatibility with :class:`~sklearn.pipeline.Pipeline`.
-
+        
         Returns:
-            X_out ({ndarray, matrix} of shape (n_samples, n_encoded_features)): Transformed input.
+            X_out ({ndarray, matrix} of shape (n_samples, n_encoded_features)): Transformed input. 
         """
         self._validate_keywords()
         return super().fit_transform(X, y)
-
+    
     def transform(self, X):
         """
         Transform X using descriptors.
-
+        
         Args:
             X (array-like of shape (n_samples, n_features)): The data to encode.
-
+        
         Returns:
             X_out ({ndarray, sparse matrix} of shape (n_samples, n_encoded_features)): Transformed input.
         """
         check_is_fitted(self)
-
+        
         # validation of X happens in _check_X called by _transform
         warn_on_unknown = self.handle_unknown == "ignore"
         X_int, X_mask = self._transform(
@@ -203,13 +208,13 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
 
         X_tr = np.zeros((n_samples, sum(self.n_descriptors_in_)), dtype=float)
 
-        for c, categories in enumerate(self.categories_):
+        for c, categories in enumerate(self.categories_): 
             for i, category in enumerate(categories):
                 for j in range(self.n_descriptors_in_[c]):
-                    col = sum(self.n_descriptors_in_[:c])
-                    # insert values to categorical data
+                    col = sum(self.n_descriptors_in_[:c]) 
+                # insert values to categorical data
                     row = np.where(X == category)[0]
-                    X_tr[row, col + j] = self.values_[c][j][i]
+                    X_tr[row, col+j] = self.values_[c][j][i]
 
         ### check whats going on here ### #TODO: sparse matrix is currently not supported!
         mask = X_mask.ravel()
@@ -231,18 +236,16 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         if not self.sparse:
             return X_tr
         else:
-            raise NotImplementedError(
-                "Sparse matrices as output are not implemented yet"
-            )
-            # return X_tr_sparse
+            raise NotImplementedError("Sparse matrices as output are not implemented yet")
+            #return X_tr_sparse
 
     def inverse_transform(self, X):
         """
         Convert the data back to the original representation.
-
+        
         Args:
             X ({array-like, sparse matrix} of shape (n_samples, n_encoded_features*n_descriptors_per_feature)): The transformed data.
-
+        
         Returns:
             X_tr (ndarray of shape (n_samples, n_features)): Inverse transformed array.
         """
@@ -257,12 +260,12 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         if X.shape[1] != sum(self.n_descriptors_in_):
             raise ValueError(msg.format(len(self.descriptors), X.shape[1]))
 
-        X_tr = np.empty((n_samples, self.n_features_in_), dtype=object)
+        X_tr = np.empty((n_samples,self.n_features_in_), dtype=object)
 
         for c, categories in enumerate(self.categories_):
-            indices = np.cumsum([0] + self.n_descriptors_in_)
+            indices = np.cumsum([0]+self.n_descriptors_in_)
 
-            var_descriptor_conditions = X[:, indices[c] : indices[c + 1]]
+            var_descriptor_conditions = X[:,indices[c]:indices[c+1]]
             var_descriptor_orig_data = np.column_stack(self.values_[c])
             var_categorical_transformed = []
             # Find the closest points by euclidean distance
@@ -272,7 +275,7 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
                     np.square(
                         np.subtract(
                             var_descriptor_orig_data,
-                            var_descriptor_conditions[i, :],
+                            var_descriptor_conditions[i,:],
                         )
                     ),
                     axis=1,
@@ -285,13 +288,13 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
                 category = categories[category_index]
                 # Add the original categorical variables name to the dataset
                 var_categorical_transformed.append(category)
-            X_tr[:, c] = np.asarray(var_categorical_transformed)
+            X_tr[:,c] = np.asarray(var_categorical_transformed)
 
         return X_tr
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
-
+        
         Args:
             input_features (array-like of str or None): default=None.
                 Input features.
@@ -300,12 +303,12 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
                     then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
                 - If `input_features` is an array-like, then `input_features` must
                     match `feature_names_in_` if `feature_names_in_` is defined.
-
+        
         Returns:
             feature_names_out (ndarray(str)): Transformed feature names.
         """
         check_is_fitted(self)
-
+    
         desc = self.descriptors_
         input_features = _check_feature_names_in(self, input_features)
 
