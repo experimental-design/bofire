@@ -54,27 +54,37 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], 1),
-            LinearInequalityConstraint(features=F[:3], coefficients=C[:3], rhs=6),
+            LinearInequalityConstraint.from_greater_equal(
+                features=F[:3], coefficients=C[:3], rhs=6
+            ),
             True,
         ),
         (
             pd.concat([get_row(F[:3], 1), get_row(F[:3], 1), get_row(F[:3], 2)]),
-            LinearInequalityConstraint(features=F[:3], coefficients=C[:3], rhs=6),
+            LinearInequalityConstraint.from_greater_equal(
+                features=F[:3], coefficients=C[:3], rhs=6
+            ),
             True,
         ),
         (
             pd.concat([get_row(F[:3], 1), get_row(F[:3], 0.5)]),
-            LinearInequalityConstraint(features=F[:3], coefficients=C[:3], rhs=6),
+            LinearInequalityConstraint.from_greater_equal(
+                features=F[:3], coefficients=C[:3], rhs=6
+            ),
             False,
         ),
         (
             get_row(F[:3], 1),
-            LinearInequalityConstraint(features=F[:3], coefficients=C[:3], rhs=2),
+            LinearInequalityConstraint.from_greater_equal(
+                features=F[:3], coefficients=C[:3], rhs=2
+            ),
             True,
         ),
         (
             get_row(F[:3], 1),
-            LinearInequalityConstraint(features=F[:3], coefficients=C[:3], rhs=6.001),
+            LinearInequalityConstraint.from_greater_equal(
+                features=F[:3], coefficients=C[:3], rhs=6.001
+            ),
             False,
         ),
         (
@@ -185,4 +195,4 @@ def get_row(features, value: float = None, values: List[float] = None):
     ],
 )
 def test_fulfillment(df, constraint, fulfilled):
-    assert constraint.is_fulfilled(df) == fulfilled
+    assert constraint.is_fulfilled(df).all() == fulfilled

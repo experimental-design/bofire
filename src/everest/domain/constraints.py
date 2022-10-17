@@ -13,14 +13,26 @@ class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
     @abstractmethod
-    def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         """Abstract method to check if a constraint is fulfilled for all the rows of the provided dataframe.
 
         Args:
-            df_data (pd.DataFrame): Dataframe to check constraint fulfillment.
+            experiments (pd.DataFrame): Dataframe to check constraint fulfillment.
 
         Returns:
             bool: True if fulfilled else False
+        """
+        pass
+
+    @abstractmethod
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        """Numerically evaluates the constraint.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
+
+        Returns:
+            pd.Series: Distance to reach constraint fulfillment.
         """
         pass
 
@@ -82,18 +94,23 @@ class LinearConstraint(Constraint):
             )
         return values
 
-    def lhs(self, df_data: pd.DataFrame) -> float:
-        """Evaluate the left-hand side of the constraint on each row of a dataframe
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        return (
+            experiments[self.features] @ self.coefficients - self.rhs
+        ) / np.linalg.norm(self.coefficients)
 
-        Args:
-            df_data (pd.DataFrame): Dataframe on which the left-hand side should be evaluated.
+    # def lhs(self, df_data: pd.DataFrame) -> float:
+    #     """Evaluate the left-hand side of the constraint on each row of a dataframe
 
-        Returns:
-            np.array: 1-dim array with left-hand side of each row of the provided dataframe.
-        """
-        cols = self.features
-        coefficients = self.coefficients
-        return np.sum(df_data[cols].values * np.array(coefficients), axis=1)
+    #     Args:
+    #         df_data (pd.DataFrame): Dataframe on which the left-hand side should be evaluated.
+
+    #     Returns:
+    #         np.array: 1-dim array with left-hand side of each row of the provided dataframe.
+    #     """
+    #     cols = self.features
+    #     coefficients = self.coefficients
+    #     return np.sum(df_data[cols].values * np.array(coefficients), axis=1)
 
     def __str__(self) -> str:
         """Generate string representation of the constraint.
@@ -115,16 +132,23 @@ class LinearEqualityConstraint(LinearConstraint):
         rhs (float): Right-hand side of the constraint
     """
 
-    def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
-        """Check if the linear equality constraint is fulfilled for all the rows of the provided dataframe.
+    # def is_fulfilled(self, experiments: pd.DataFrame, complete: bool) -> bool:
+    #     """Check if the linear equality constraint is fulfilled for all the rows of the provided dataframe.
 
-        Args:
-            df_data (pd.DataFrame): Dataframe to evaluate constraint on.
+    #     Args:
+    #         df_data (pd.DataFrame): Dataframe to evaluate constraint on.
 
-        Returns:
-            bool: True if fulfilled else False.
-        """
-        return np.isclose(self.lhs(df_data), self.rhs).all()
+    #     Returns:
+    #         bool: True if fulfilled else False.
+    #     """
+    #     fulfilled = np.isclose(self(experiments), 0)
+    #     if complete:
+    #         return fulfilled.all()
+    #     else:
+    #         pd.Series(fulfilled, index=experiments.index)
+
+    def is_fulfilled(self, experiments: pd.DataFrame) -> np.array:
+        return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
 
     def __str__(self) -> str:
         """Generate string representation of the constraint.
@@ -136,7 +160,7 @@ class LinearEqualityConstraint(LinearConstraint):
 
 
 class LinearInequalityConstraint(LinearConstraint):
-    """Linear inequality constraint of the form `coefficients * x >= rhs`.
+    """Linear inequality constraint of the form `coefficients * x <= rhs`.
 
     To instantiate a constraint of the form `coefficients * x <= rhs` multiply coefficients and rhs by -1, or
     use the classmethod `from_smaller_equal`.
@@ -147,17 +171,22 @@ class LinearInequalityConstraint(LinearConstraint):
         rhs (float): Right-hand side of the constraint
     """
 
-    def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
-        """Check if the linear inequality constraint is fulfilled in each row of the provided dataframe.
+    # def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
+    #     """Check if the linear inequality constraint is fulfilled in each row of the provided dataframe.
 
-        Args:
-            df_data (pd.DataFrame): Dataframe to evaluate constraint on.
+    #     Args:
+    #         df_data (pd.DataFrame): Dataframe to evaluate constraint on.
 
-        Returns:
-            bool: True if fulfilled else False.
-        """
-        noise = 10e-10
-        return (self.lhs(df_data) >= self.rhs - noise).all()
+    #     Returns:
+    #         bool: True if fulfilled else False.
+    #     """
+
+    #     noise = 10e-10
+    #     return (self.lhs(df_data) >= self.rhs - noise).all()
+
+    def is_fulfilled(self, experiments: pd.DataFrame) -> np.array:
+        # noise = 10e-10 discuss with Behrang
+        return self(experiments).values <= 0
 
     @classmethod
     def from_greater_equal(
@@ -170,16 +199,17 @@ class LinearInequalityConstraint(LinearConstraint):
             coefficients (List[float]): List of coefficients.
             rhs (float): Right-hand side of the constraint.
         """
-        return cls(features=features, coefficients=coefficients, rhs=rhs)
+        return cls(
+            features=features,
+            coefficients=[-1.0 * c for c in coefficients],
+            rhs=-1.0 * rhs,
+        )
 
     @classmethod
     def from_smaller_equal(
         cls, features: List[float], coefficients: List[float], rhs: float
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x <= rhs`.
-
-        Internally it is converted to a constraint of the form `coefficients * x >= rhs` via multiplying `rhs`
-        and `coefficients` by -1.
 
         Args:
             features (List[str]): List of feature keys.
@@ -188,8 +218,8 @@ class LinearInequalityConstraint(LinearConstraint):
         """
         return cls(
             features=features,
-            coefficients=[-1.0 * c for c in coefficients],
-            rhs=-1.0 * rhs,
+            coefficients=coefficients,
+            rhs=rhs,
         )
 
     def __str__(self):
@@ -198,7 +228,30 @@ class LinearInequalityConstraint(LinearConstraint):
         Returns:
             str: string representation of the constraint.
         """
-        return super().__str__() + f" >= {self.rhs}"
+        return super().__str__() + f" <= {self.rhs}"
+
+
+class NonlinearConstraint(Constraint):
+    expression: str
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        return experiments.eval(self.expression)
+
+
+class NonlinearEqualityConstraint(NonlinearConstraint):
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
+
+    def __str__(self):
+        return f"{self.expression}==0"
+
+
+class NonlinearInqualityConstraint(NonlinearConstraint):
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        return self(experiments) <= 0
+
+    def __str__(self):
+        return f"{self.expression}<=0"
 
 
 class ConcurrencyConstraint(Constraint):
@@ -240,7 +293,10 @@ class ConcurrencyConstraint(Constraint):
 
         return values
 
-    def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        raise NotImplementedError
+
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         """Check if the concurrency constraint is fulfilled for all the rows of the provided dataframe.
 
         Args:
@@ -250,16 +306,20 @@ class ConcurrencyConstraint(Constraint):
             bool: True if fulfilled else False.
         """
         cols = self.features
-        sums = (df_data[cols] > 0).sum(axis=1)
+        sums = (experiments[cols] > 0).sum(axis=1)
 
         lower = sums >= self.min_count
         upper = sums <= self.max_count
 
         if not self.none_also_valid:
-            return lower.all() and upper.all()
+            # return lower.all() and upper.all()
+            return pd.Series(np.logical_and(lower, upper), index=experiments.index)
         else:
             none = sums == 0
-            return np.logical_or(none, np.logical_and(lower, upper)).all()
+            return pd.Series(
+                np.logical_or(none, np.logical_and(lower, upper)),
+                index=experiments.index,
+            )
 
     def __str__(self):
         """Generate string representation of the constraint.

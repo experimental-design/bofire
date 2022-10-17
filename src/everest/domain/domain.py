@@ -426,7 +426,7 @@ class Domain(BaseModel):
 
         return used_features_list_final, unused_features_list
 
-    def is_fulfilled(self, df_data: pd.DataFrame):
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         """Method to check if all constraints are fulfilled on all rows of the provided dataframe
 
         Args:
@@ -435,10 +435,14 @@ class Domain(BaseModel):
         Returns:
             Boolean: True if all constraints are fulfilled for all rows, false if not
         """
-        for c in self.constraints:
-            if not c.is_fulfilled(df_data):
-                return False
-        return True
+        if len(self.constraints) == 0:
+            return pd.Series([True] * len(experiments), index=experiments.index)
+        return pd.concat(
+            [c.satisfied(experiments) for c in self.constraints], axis=1
+        ).all(axis=1)
+
+    def evaluate_constraints(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
     def preprocess_experiments_one_valid_output(
         self, experiments: pd.DataFrame, output_feature_key: str
@@ -714,7 +718,7 @@ class Domain(BaseModel):
                         f"not all values of output feature `{key}` are numerical"
                     )
         # check if all constraints are fulfilled
-        if self.is_fulfilled(candidates) == False:
+        if self.is_fulfilled(candidates).all() == False:
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))
