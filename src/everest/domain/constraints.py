@@ -61,6 +61,8 @@ class Constraint(BaseModel):
             "LinearEqualityConstraint": LinearEqualityConstraint,
             "LinearInequalityConstraint": LinearInequalityConstraint,
             "ConcurrencyConstraint": ConcurrencyConstraint,
+            "NonlinearEqualityConstraint": NonlinearEqualityConstraint,
+            "NonlinearInqualityConstraint": NonlinearInqualityConstraint,
         }
         return mapper[config["type"]](**config)
 
