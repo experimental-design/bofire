@@ -2,9 +2,10 @@ import pytest
 from everest.domain.constraints import (
     ConcurrencyConstraint,
     Constraint,
-    LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInqualityConstraint,
 )
 from pydantic.error_wrappers import ValidationError
 from tests.everest.domain.utils import INVALID_SPECS, get_invalids
@@ -21,6 +22,10 @@ VALID_LINEAR_CONSTRAINT_SPEC = {
     "coefficients": [1, 2, 3],
     "rhs": 1.5,
 }
+
+VALID_NONLINEAR_CONSTRAINT_SPEC = {"features": ["f1", "f2"], "expression": "f1*f2"}
+
+INVALID_NONLINEAR_CONSTRAINT_SPEC = {"expression": [5, 7, 8]}
 
 VALID_LINEAR_CONSTRAINT_SPECS = [
     {
@@ -66,6 +71,14 @@ CONSTRAINT_SPECS = {
         "invalids": INVALID_SPECS
         + get_invalids(VALID_LINEAR_CONSTRAINT_SPEC)
         + INVALID_LINEAR_CONSTRAINT_SPECS,
+    },
+    NonlinearEqualityConstraint: {
+        "valids": [VALID_NONLINEAR_CONSTRAINT_SPEC],
+        "invalids": [INVALID_NONLINEAR_CONSTRAINT_SPEC],
+    },
+    NonlinearInqualityConstraint: {
+        "valids": [VALID_NONLINEAR_CONSTRAINT_SPEC],
+        "invalids": [INVALID_NONLINEAR_CONSTRAINT_SPEC],
     },
 }
 
@@ -114,15 +127,15 @@ def test_invalid_constraint_specs(cls, spec):
 
 def test_from_greater_equal():
     c = LinearInequalityConstraint.from_greater_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
-    assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"]
-    assert c.coefficients == VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
+    assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"] * -1.0
+    assert c.coefficients == [
+        -1.0 * coef for coef in VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
+    ]
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
 
 
 def test_from_smaller_equal():
     c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
-    assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"] * -1.0
-    assert c.coefficients == [
-        -1.0 * coef for coef in VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
-    ]
+    assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"]
+    assert c.coefficients == VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
