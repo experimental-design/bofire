@@ -349,6 +349,14 @@ class ContinuousInputFeature(NumericalInputFeature):
         return values
 
     def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
         return pd.Series(
             name=self.key,
             data=np.random.uniform(self.lower_bound, self.upper_bound, n),
@@ -420,6 +428,14 @@ class DiscreteInputFeature(NumericalInputFeature):
         return values
 
     def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
 
@@ -628,6 +644,14 @@ class CategoricalInputFeature(InputFeature):
         )
 
     def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
         return pd.Series(
             name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
         )
