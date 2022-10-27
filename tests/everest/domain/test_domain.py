@@ -4,7 +4,7 @@ from math import nan
 import numpy as np
 import pandas as pd
 import pytest
-from everest.domain.constraints import ConcurrencyConstraint, LinearEqualityConstraint
+from everest.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
 from everest.domain.desirability_functions import TargetDesirabilityFunction
 from everest.domain.domain import Domain, get_subdomain
 from everest.domain.features import (
@@ -104,7 +104,7 @@ def test_invalid_domain_arg_types(input_features, output_features, constraints):
             [if1, if2],
             [of3],
             [
-                ConcurrencyConstraint(
+                NChooseKConstraint(
                     features=["f1", "f2"],
                     min_count=0,
                     max_count=1,
@@ -116,7 +116,7 @@ def test_invalid_domain_arg_types(input_features, output_features, constraints):
             [if1, if2],
             [],
             [
-                ConcurrencyConstraint(
+                NChooseKConstraint(
                     features=["f1", "f2"],
                     min_count=0,
                     max_count=2,
@@ -141,7 +141,7 @@ def test_valid_constraints_in_domain(output_features, input_features, constraint
             [],
             [],
             [
-                ConcurrencyConstraint(
+                NChooseKConstraint(
                     features=["x", "t55"],
                     min_count=0,
                     max_count=1,
@@ -153,7 +153,7 @@ def test_valid_constraints_in_domain(output_features, input_features, constraint
             [if1],
             [],
             [
-                ConcurrencyConstraint(
+                NChooseKConstraint(
                     features=["f1", "x"],
                     min_count=0,
                     max_count=2,
@@ -165,7 +165,7 @@ def test_valid_constraints_in_domain(output_features, input_features, constraint
             [],
             [of1],
             [
-                ConcurrencyConstraint(
+                NChooseKConstraint(
                     features=["f1", "x"],
                     min_count=0,
                     max_count=1,
@@ -177,7 +177,7 @@ def test_valid_constraints_in_domain(output_features, input_features, constraint
             [if1],
             [of1],
             [
-                ConcurrencyConstraint(
+                NChooseKConstraint(
                     features=["f1", "f2"],
                     min_count=0,
                     max_count=1,

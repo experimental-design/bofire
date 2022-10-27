@@ -4,11 +4,7 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from everest.domain.constraints import (
-    ConcurrencyConstraint,
-    Constraint,
-    LinearConstraint,
-)
+from everest.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
 from everest.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -74,14 +70,14 @@ class Domain(BaseModel):
             return v
         keys = [f.key for f in values["input_features"]]
         for c in v:
-            if isinstance(c, LinearConstraint) or isinstance(c, ConcurrencyConstraint):
+            if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
                 for f in c.features:
                     if f not in keys:
                         raise ValueError(f"feature {f} in constraint unknown ({keys})")
         return v
 
     @validator("constraints", always=True)
-    def validate_lower_bounds_in_concurrency_constraints(cls, v, values):
+    def validate_lower_bounds_in_nchoosek_constraints(cls, v, values):
         """Validate the lower bound as well if the chosen number of allowed features is continuous.
 
         Args:
@@ -97,16 +93,16 @@ class Domain(BaseModel):
             if type(f) is ContinuousInputFeature:
                 continuous_input_features_dict[f.key] = f
 
-        # check if unfixed continuous features appearing in concurrency constraints have lower bound of 0
+        # check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0
         for c in v:
-            if isinstance(c, ConcurrencyConstraint):
+            if isinstance(c, NChooseKConstraint):
                 for f in c.features:
                     assert (
                         f in continuous_input_features_dict
                     ), f"{f} must be continuous."
                     assert (
                         continuous_input_features_dict[f].lower_bound == 0
-                    ), f"lower bound of {f} must be 0 for concurrency constraint."
+                    ), f"lower bound of {f} must be 0 for NChooseK constraint."
         return v
 
     def to_config(self) -> Dict:
@@ -331,22 +327,22 @@ class Domain(BaseModel):
         return list(itertools.product(*list_of_lists))
 
     # getting list of fixed values
-    def get_concurrency_combinations(self):
-        """get all possible concurrency combinations
+    def get_nchoosek_combinations(self):
+        """get all possible NChooseK combinations
 
         Returns:
-            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each concurrency combination.
-             unused_features_list is a list of lists containing features unused in each concurrency combination.
+            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
+             unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.get_constraints(ConcurrencyConstraint)) == 0:
+        if len(self.get_constraints(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInputFeature)
             return used_continuous_features, []
 
         used_features_list_all = []
 
-        # loops through each concurrency constraint
-        for con in self.get_constraints(ConcurrencyConstraint):
+        # loops through each NChooseK constraint
+        for con in self.get_constraints(NChooseKConstraint):
             used_features_list = []
 
             for n in range(con.min_count, con.max_count + 1):
@@ -359,7 +355,7 @@ class Domain(BaseModel):
 
         used_features_list_all = list(
             itertools.product(*used_features_list_all)
-        )  # product between concurrency constraints
+        )  # product between NChooseK constraints
 
         # format into a list of used features
         used_features_list_formatted = []
@@ -389,7 +385,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.get_constraints(ConcurrencyConstraint):
+            for con in self.get_constraints(NChooseKConstraint):
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
                     if f in con.features:
@@ -407,7 +403,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.get_constraints(ConcurrencyConstraint):
+        for con in self.get_constraints(NChooseKConstraint):
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
         features_in_cc.sort()
