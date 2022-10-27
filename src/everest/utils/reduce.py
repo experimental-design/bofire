@@ -5,11 +5,11 @@ import numpy as np
 import pandas as pd
 from everest.domain import Domain
 from everest.domain.constraints import (
-    ConcurrencyConstraint,
     Constraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from everest.domain.features import ContinuousInputFeature, InputFeature
 
@@ -219,8 +219,8 @@ def check_domain_for_reduction(domain: Domain) -> bool:
     if len(linear_equalities) == 0:
         return False
 
-    # are there no concurrency constraints?
-    if len(domain.get_constraints([ConcurrencyConstraint])) > 0:
+    # are there no NChooseKConstraint constraints?
+    if len(domain.get_constraints([NChooseKConstraint])) > 0:
         return False
 
     # are there continuous inputs

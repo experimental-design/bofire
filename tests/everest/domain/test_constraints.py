@@ -1,16 +1,16 @@
 import pytest
 from everest.domain.constraints import (
-    ConcurrencyConstraint,
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
 from pydantic.error_wrappers import ValidationError
 from tests.everest.domain.utils import INVALID_SPECS, get_invalids
 
-VALID_CONCURRENCY_CONSTRAINT_SPEC = {
+VALID_NCHOOSEKE_CONSTRAINT_SPEC = {
     "features": ["f1", "f2", "f3"],
     "min_count": 1,
     "max_count": 1,
@@ -56,9 +56,9 @@ INVALID_LINEAR_CONSTRAINT_SPECS = [
 
 
 CONSTRAINT_SPECS = {
-    ConcurrencyConstraint: {
-        "valids": [VALID_CONCURRENCY_CONSTRAINT_SPEC],
-        "invalids": INVALID_SPECS + get_invalids(VALID_CONCURRENCY_CONSTRAINT_SPEC),
+    NChooseKConstraint: {
+        "valids": [VALID_NCHOOSEKE_CONSTRAINT_SPEC],
+        "invalids": INVALID_SPECS + get_invalids(VALID_NCHOOSEKE_CONSTRAINT_SPEC),
     },
     LinearEqualityConstraint: {
         "valids": [VALID_LINEAR_CONSTRAINT_SPEC] + VALID_LINEAR_CONSTRAINT_SPECS,
