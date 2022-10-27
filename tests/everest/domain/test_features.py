@@ -225,6 +225,21 @@ def test_valid_feature_specs(cls, spec):
 
 @pytest.mark.parametrize(
     "cls, spec",
+    [
+        (cls, valid)
+        for cls, data in FEATURE_SPECS.items()
+        for valid in data["valids"]
+        if cls != ContinuousOutputFeature
+    ],
+)
+def test_sample(cls, spec):
+    feat = cls(**spec)
+    samples = feat.sample(n=100)
+    feat.validate_candidental(samples)
+
+
+@pytest.mark.parametrize(
+    "cls, spec",
     [(cls, valid) for cls, data in FEATURE_SPECS.items() for valid in data["valids"]],
 )
 def test_feature_serialize(cls, spec):
