@@ -350,7 +350,7 @@ class ContinuousInputFeature(NumericalInputFeature):
 
     def sample(self, n: int) -> pd.Series:
         return pd.Series(
-            name=self.name,
+            name=self.key,
             data=np.random.uniform(self.lower_bound, self.upper_bound, n),
         )
 
@@ -420,7 +420,7 @@ class DiscreteInputFeature(NumericalInputFeature):
         return values
 
     def sample(self, n: int) -> pd.Series:
-        return pd.Series(name=self.name, data=np.random.choice(self.values, n))
+        return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -628,7 +628,9 @@ class CategoricalInputFeature(InputFeature):
         )
 
     def sample(self, n: int) -> pd.Series:
-        return pd.Series(name=self.name, data=np.random.choice(self.domain, n))
+        return pd.Series(
+            name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
+        )
 
     def __str__(self) -> str:
         """Returns the number of categories as str
