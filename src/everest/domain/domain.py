@@ -4,21 +4,15 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from everest.domain.constraints import (
-    ConcurrencyConstraint,
-    Constraint,
-    LinearConstraint,
-)
-from everest.domain.features import (
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
-    Feature,
-    InputFeature,
-    OutputFeature,
-)
-from everest.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
+from everest.domain.constraints import (ConcurrencyConstraint, Constraint,
+                                        LinearConstraint)
+from everest.domain.features import (CategoricalInputFeature,
+                                     ContinuousInputFeature,
+                                     ContinuousOutputFeature,
+                                     ContinuousOutputFeature_woDesFunc,
+                                     Feature, InputFeature, OutputFeature)
+from everest.domain.util import (BaseModel, filter_by_class, is_categorical,
+                                 is_numeric)
 from pydantic import Field, validator
 
 
@@ -26,6 +20,8 @@ class Domain(BaseModel):
     input_features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
     output_features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
     constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+    experiments: Optional[pd.DataFrame]
+    candidates: Optional[pd.DataFrame]
     """Representation of the optimization problem/domain
 
     Attributes:
@@ -58,7 +54,7 @@ class Domain(BaseModel):
 
     @validator("constraints", always=True)
     def validate_constraints(cls, v, values):
-        """Validate if all features included in the cosntraints are also defined as features for the domain.
+        """Validate if all features included in the constraints are also defined as features for the domain.
 
         Args:
             v (List[Constraint]): List of constraints or empty if no constraints are defined
@@ -115,11 +111,16 @@ class Domain(BaseModel):
         Returns:
             Dict: Serialized version of the domain as dictionary.
         """
-        return {
+        config =  {
             "input_features": [feat.to_config() for feat in self.input_features],
             "output_features": [feat.to_config() for feat in self.output_features],
             "constraints": [constraint.to_config() for constraint in self.constraints],
         }
+        if self.experiments is not None:
+            config["experiments"] = self.experiments.to_dict()
+        if self.candidates is not None:
+            config["candidates"] = self.candidates.to_dict()
+        return config
 
     @classmethod
     def from_config(cls, config: Dict):
@@ -140,6 +141,10 @@ class Domain(BaseModel):
                 for constraint in config["constraints"]
             ],
         )
+        if "experiments" in config["experiments"]:
+            d.add_experiments(experiments=config["experiments"])
+        if "candidates" in config["candidates"]:
+            d.add_candidates(experiments=config["candidates"])
         return d
 
     def get_feature_reps_df(self) -> pd.DataFrame:
@@ -278,6 +283,10 @@ class Domain(BaseModel):
             ValueError: if the feature key is already in the domain
             TypeError: if the feature type is neither Input nor Output feature
         """
+        if (self._experiments is not None) or (self._candidates is not None):
+            raise ValueError(
+                "Feature cannot be added as experiments/candidates are already set."
+            )
         if feature.key in self.get_feature_keys():
             raise ValueError(f"Feature with key {feature.key} already in domain.")
         if isinstance(feature, InputFeature):
@@ -297,6 +306,10 @@ class Domain(BaseModel):
             KeyError: when the key is not found in the domain
             ValueError: when more than one feature with key is found
         """
+        if (self._experiments is not None) or (self._candidates is not None):
+            raise ValueError(
+                f"Feature {key} cannot be removed as experiments/candidates are already set."
+            )
         input_count = len([f for f in self.input_features if f.key == key])
         output_count = len([f for f in self.output_features if f.key == key])
         if input_count == 0 and output_count == 0:
@@ -772,6 +785,27 @@ class Domain(BaseModel):
                 )
             ]
         )
+
+    def add_candidates(self, candidates: pd.DataFrame):
+        candidates = self.validate_candidates(candidates)
+        if candidates is None:
+            self.candidates = candidates
+        else:
+            self._candidates = pd.concat((self._candidates, candidates), ignore_index = True)
+
+    def add_experiments(self, experiments: pd.DataFrame):
+        experiments = self.validate_experiments(experiments)
+        if experiments is None:
+            self.experiments = None
+        else:
+            self._experiments = pd.concat((self._experiments, experiments),ignore_index=True)
+        
+    @property
+    def experiments(self):
+        return self._experiments
+
+    @experiments.setter
+    def experiments(self, experiments: pd.DataFrame):
 
     def experiments2excel(self, filename: str, experiments: pd.DataFrame):
         """export function to excel
