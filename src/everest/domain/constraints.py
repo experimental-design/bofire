@@ -60,7 +60,7 @@ class Constraint(BaseModel):
         mapper = {
             "LinearEqualityConstraint": LinearEqualityConstraint,
             "LinearInequalityConstraint": LinearInequalityConstraint,
-            "ConcurrencyConstraint": ConcurrencyConstraint,
+            "NChooseKConstraint": NChooseKConstraint,
             "NonlinearEqualityConstraint": NonlinearEqualityConstraint,
             "NonlinearInqualityConstraint": NonlinearInqualityConstraint,
         }
@@ -256,8 +256,8 @@ class NonlinearInqualityConstraint(NonlinearConstraint):
         return f"{self.expression}<=0"
 
 
-class ConcurrencyConstraint(Constraint):
-    """Concurrency constraint that defines how many ingredients are allowed in a formulation.
+class NChooseKConstraint(Constraint):
+    """NChooseK constraint that defines how many ingredients are allowed in a formulation.
 
     Attributes:
         features (List[str]): List of feature keys to which the constraint applies.

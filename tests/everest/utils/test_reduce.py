@@ -5,10 +5,10 @@ import pandas as pd
 import pytest
 from everest.domain import Domain
 from everest.domain.constraints import (
-    ConcurrencyConstraint,
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from everest.domain.features import (
     CategoricalInputFeature,

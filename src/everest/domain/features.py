@@ -126,6 +126,18 @@ class InputFeature(Feature):
         """
         pass
 
+    @abstractmethod
+    def sample(self, n: int) -> pd.Series:
+        """Sample a series of allowed values.
+
+        Args:
+            n (int): Number of samples
+
+        Returns:
+            pd.Series: Sampled values.
+        """
+        pass
+
 
 class OutputFeature(Feature):
     """Base class for all output features.
@@ -336,6 +348,20 @@ class ContinuousInputFeature(NumericalInputFeature):
             )
         return values
 
+    def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
+        return pd.Series(
+            name=self.key,
+            data=np.random.uniform(self.lower_bound, self.upper_bound, n),
+        )
+
     def __str__(self) -> str:
         """Method to return a string of lower and upper bound
 
@@ -400,6 +426,17 @@ class DiscreteInputFeature(NumericalInputFeature):
                 f"Not allowed values in candidates for feature {self.key}."
             )
         return values
+
+    def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
+        return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -604,6 +641,19 @@ class CategoricalInputFeature(InputFeature):
         """
         return sorted(
             list(set(list(set(values.tolist())) + self.get_allowed_categories()))
+        )
+
+    def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
+        return pd.Series(
+            name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
         )
 
     def __str__(self) -> str:

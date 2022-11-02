@@ -4,19 +4,22 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from everest.domain.constraints import (ConcurrencyConstraint, Constraint,
-                                        LinearConstraint)
-from everest.domain.features import (CategoricalInputFeature,
-                                     ContinuousInputFeature,
-                                     ContinuousOutputFeature,
-                                     ContinuousOutputFeature_woDesFunc,
-                                     Feature, InputFeature, OutputFeature)
-from everest.domain.util import (BaseModel, filter_by_class, is_categorical,
-                                 is_numeric)
+from everest.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
+from everest.domain.features import (
+    CategoricalInputFeature,
+    ContinuousInputFeature,
+    ContinuousOutputFeature,
+    ContinuousOutputFeature_woDesFunc,
+    Feature,
+    InputFeature,
+    OutputFeature,
+)
+from everest.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
 from pydantic import Field, validator
 
 
 class Domain(BaseModel):
+
     input_features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
     output_features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
     constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
@@ -70,14 +73,14 @@ class Domain(BaseModel):
             return v
         keys = [f.key for f in values["input_features"]]
         for c in v:
-            if isinstance(c, LinearConstraint) or isinstance(c, ConcurrencyConstraint):
+            if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
                 for f in c.features:
                     if f not in keys:
                         raise ValueError(f"feature {f} in constraint unknown ({keys})")
         return v
 
     @validator("constraints", always=True)
-    def validate_lower_bounds_in_concurrency_constraints(cls, v, values):
+    def validate_lower_bounds_in_nchoosek_constraints(cls, v, values):
         """Validate the lower bound as well if the chosen number of allowed features is continuous.
 
         Args:
@@ -93,16 +96,16 @@ class Domain(BaseModel):
             if type(f) is ContinuousInputFeature:
                 continuous_input_features_dict[f.key] = f
 
-        # check if unfixed continuous features appearing in concurrency constraints have lower bound of 0
+        # check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0
         for c in v:
-            if isinstance(c, ConcurrencyConstraint):
+            if isinstance(c, NChooseKConstraint):
                 for f in c.features:
                     assert (
                         f in continuous_input_features_dict
                     ), f"{f} must be continuous."
                     assert (
                         continuous_input_features_dict[f].lower_bound == 0
-                    ), f"lower bound of {f} must be 0 for concurrency constraint."
+                    ), f"lower bound of {f} must be 0 for NChooseK constraint."
         return v
 
     def to_config(self) -> Dict:
@@ -111,7 +114,7 @@ class Domain(BaseModel):
         Returns:
             Dict: Serialized version of the domain as dictionary.
         """
-        config =  {
+        config = {
             "input_features": [feat.to_config() for feat in self.input_features],
             "output_features": [feat.to_config() for feat in self.output_features],
             "constraints": [constraint.to_config() for constraint in self.constraints],
@@ -141,9 +144,9 @@ class Domain(BaseModel):
                 for constraint in config["constraints"]
             ],
         )
-        if "experiments" in config["experiments"]:
+        if "experiments" in config.keys():
             d.add_experiments(experiments=config["experiments"])
-        if "candidates" in config["candidates"]:
+        if "candidates" in config.keys():
             d.add_candidates(experiments=config["candidates"])
         return d
 
@@ -283,7 +286,7 @@ class Domain(BaseModel):
             ValueError: if the feature key is already in the domain
             TypeError: if the feature type is neither Input nor Output feature
         """
-        if (self._experiments is not None) or (self._candidates is not None):
+        if (self.experiments is not None) or (self.candidates is not None):
             raise ValueError(
                 "Feature cannot be added as experiments/candidates are already set."
             )
@@ -306,7 +309,7 @@ class Domain(BaseModel):
             KeyError: when the key is not found in the domain
             ValueError: when more than one feature with key is found
         """
-        if (self._experiments is not None) or (self._candidates is not None):
+        if (self.experiments is not None) or (self.candidates is not None):
             raise ValueError(
                 f"Feature {key} cannot be removed as experiments/candidates are already set."
             )
@@ -344,22 +347,22 @@ class Domain(BaseModel):
         return list(itertools.product(*list_of_lists))
 
     # getting list of fixed values
-    def get_concurrency_combinations(self):
-        """get all possible concurrency combinations
+    def get_nchoosek_combinations(self):
+        """get all possible NChooseK combinations
 
         Returns:
-            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each concurrency combination.
-             unused_features_list is a list of lists containing features unused in each concurrency combination.
+            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
+             unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.get_constraints(ConcurrencyConstraint)) == 0:
+        if len(self.get_constraints(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInputFeature)
             return used_continuous_features, []
 
         used_features_list_all = []
 
-        # loops through each concurrency constraint
-        for con in self.get_constraints(ConcurrencyConstraint):
+        # loops through each NChooseK constraint
+        for con in self.get_constraints(NChooseKConstraint):
             used_features_list = []
 
             for n in range(con.min_count, con.max_count + 1):
@@ -372,7 +375,7 @@ class Domain(BaseModel):
 
         used_features_list_all = list(
             itertools.product(*used_features_list_all)
-        )  # product between concurrency constraints
+        )  # product between NChooseK constraints
 
         # format into a list of used features
         used_features_list_formatted = []
@@ -402,7 +405,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.get_constraints(ConcurrencyConstraint):
+            for con in self.get_constraints(NChooseKConstraint):
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
                     if f in con.features:
@@ -420,7 +423,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.get_constraints(ConcurrencyConstraint):
+        for con in self.get_constraints(NChooseKConstraint):
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
         features_in_cc.sort()
@@ -791,21 +794,18 @@ class Domain(BaseModel):
         if candidates is None:
             self.candidates = candidates
         else:
-            self._candidates = pd.concat((self._candidates, candidates), ignore_index = True)
+            self._candidates = pd.concat(
+                (self._candidates, candidates), ignore_index=True
+            )
 
     def add_experiments(self, experiments: pd.DataFrame):
         experiments = self.validate_experiments(experiments)
         if experiments is None:
             self.experiments = None
         else:
-            self._experiments = pd.concat((self._experiments, experiments),ignore_index=True)
-        
-    @property
-    def experiments(self):
-        return self._experiments
-
-    @experiments.setter
-    def experiments(self, experiments: pd.DataFrame):
+            self.experiments = pd.concat(
+                (self.experiments, experiments), ignore_index=True
+            )
 
     def experiments2excel(self, filename: str, experiments: pd.DataFrame):
         """export function to excel

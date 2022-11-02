@@ -3,9 +3,9 @@ from typing import List
 import pandas as pd
 import pytest
 from everest.domain.constraints import (
-    ConcurrencyConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
@@ -123,7 +123,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], values=[1, 1, 1]),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=0,
@@ -136,7 +136,7 @@ def get_row(features, value: float = None, values: List[float] = None):
             pd.concat(
                 [get_row(F[:3], values=[1, 1, 1]), get_row(F[:3], values=[1, 1, 1])]
             ),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=0,
@@ -147,7 +147,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], values=[0, 2, 3]),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
@@ -158,7 +158,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], values=[1, 2, 3]),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
@@ -169,7 +169,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], values=[0, 0, 3]),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
@@ -180,7 +180,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], values=[0, 0, 0]),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
@@ -191,7 +191,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:3], values=[0, 0, 0]),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
@@ -204,7 +204,7 @@ def get_row(features, value: float = None, values: List[float] = None):
             pd.concat(
                 [get_row(F[:3], values=[0, 2, 3]), get_row(F[:3], values=[0, 0, 0])]
             ),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
@@ -217,7 +217,7 @@ def get_row(features, value: float = None, values: List[float] = None):
             pd.concat(
                 [get_row(F[:3], values=[0, 2, 3]), get_row(F[:3], values=[0, 0, 0])]
             ),
-            ConcurrencyConstraint(
+            NChooseKConstraint(
                 features=F[:3],
                 coefficients=C[:3],
                 min_count=2,
