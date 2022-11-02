@@ -70,6 +70,7 @@ class DesirabilityFunction(BaseModel):
             "MinSigmoidDesirabilityFunction": MinSigmoidDesirabilityFunction,
             "ConstantDesirabilityFunction": ConstantDesirabilityFunction,
             "TargetDesirabilityFunction": TargetDesirabilityFunction,
+            "CloseToTargetDesirabilityFunction": CloseToTargetDesirabilityFunction,
         }
         return mapper[config["type"]](**config)
 
@@ -273,7 +274,40 @@ class ConstantDesirabilityFunction(DesirabilityFunction):
         return np.ones(x.shape) * self.w
 
 
-class TargetDesirabilityFunction(DesirabilityFunction):
+class AbstractTargetDesirabilityFunction(DesirabilityFunction):
+    w: confloat(gt=0, le=1)
+    target_value: float
+    tolerance: confloat(ge=0)
+
+    def plot_details(self, ax):
+        """Plot function highlighting the tolerance area of the desirability function
+
+        Args:
+            ax (matplotlib.axes.Axes): Matplotlib axes object
+
+        Returns:
+            matplotlib.axes.Axes: The object to be plotted
+        """
+        ax.axvline(self.target_value, color="black")
+        ax.axvspan(
+            self.target_value - self.tolerance,
+            self.target_value + self.tolerance,
+            color="gray",
+            alpha=0.5,
+        )
+        return ax
+
+
+class CloseToTargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
+    exponent: float
+
+    def __call__(self, x: np.array) -> np.array:
+        return (
+            x - self.target
+        ).abs() ** self.exponent - self.tolerance**self.exponent
+
+
+class TargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
     """Class for desirability functions for optimizing towards a target value
 
     Attributes:
@@ -284,10 +318,7 @@ class TargetDesirabilityFunction(DesirabilityFunction):
 
     """
 
-    target_value: float
     steepness: confloat(gt=0)
-    tolerance: confloat(gt=0)
-    w: confloat(gt=0, le=1)
 
     def __call__(self, x: np.array) -> np.array:
         """The call function returning a reward for passed x values.
@@ -317,21 +348,3 @@ class TargetDesirabilityFunction(DesirabilityFunction):
                 )
             )
         )
-
-    def plot_details(self, ax):
-        """Plot function highlighting the tolerance area of the desirability function
-
-        Args:
-            ax (matplotlib.axes.Axes): Matplotlib axes object
-
-        Returns:
-            matplotlib.axes.Axes: The object to be plotted
-        """
-        ax.axvline(self.target_value, color="black")
-        ax.axvspan(
-            self.target_value - self.tolerance,
-            self.target_value + self.tolerance,
-            color="gray",
-            alpha=0.5,
-        )
-        return ax
