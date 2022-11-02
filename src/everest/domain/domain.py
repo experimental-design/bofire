@@ -457,11 +457,24 @@ class Domain(BaseModel):
             [c.satisfied(experiments) for c in self.constraints], axis=1
         ).all(axis=1)
 
+    # TODO: needs to be tested
     def evaluate_constraints(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
+    # TODO: needs to be tested
+    def evaluate_desirabilities(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        return pd.concat(
+            [
+                feat.desirability_function(experiments[feat.name])
+                for feat in self.get_features(ContinuousOutputFeature)
+            ],
+            axis=1,
+        )
+
     def preprocess_experiments_one_valid_output(
-        self, experiments: pd.DataFrame, output_feature_key: str
+        self,
+        output_feature_key: str,
+        experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Method to get a dataframe where non-valid entries of the provided output feature are removed
 
@@ -472,6 +485,11 @@ class Domain(BaseModel):
         Returns:
             pd.DataFrame: Dataframe with all experiments where only valid entries of the specific feature are included
         """
+        if experiments is None:
+            if self.experiments is not None:
+                experiments = self.experiments
+            else:
+                return None
         clean_exp = experiments.loc[
             (experiments["valid_%s" % output_feature_key] == 1)
             & (experiments[output_feature_key].notna())
@@ -481,7 +499,9 @@ class Domain(BaseModel):
         return clean_exp
 
     def preprocess_experiments_all_valid_outputs(
-        self, experiments: pd.DataFrame, output_feature_keys: Optional[List] = None
+        self,
+        experiments: Optional[pd.DataFrame] = None,
+        output_feature_keys: Optional[List] = None,
     ) -> pd.DataFrame:
         """Method to get a dataframe where non-valid entries of all output feature are removed
 
@@ -492,6 +512,11 @@ class Domain(BaseModel):
         Returns:
             pd.DataFrame: Dataframe with all experiments where only valid entries of the selected features are included
         """
+        if experiments is None:
+            if self.experiments is not None:
+                experiments = self.experiments
+            else:
+                return None
         if (output_feature_keys is None) or (len(output_feature_keys) == 0):
             output_feature_keys = self.get_feature_keys(OutputFeature)
         else:
@@ -509,7 +534,7 @@ class Domain(BaseModel):
         return clean_exp
 
     def preprocess_experiments_any_valid_output(
-        self, experiments: pd.DataFrame
+        self, experiments: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Method to get a dataframe where at least one output feature has a valid entry
 
@@ -519,6 +544,12 @@ class Domain(BaseModel):
         Returns:
             pd.DataFrame: Dataframe with all experiments where at least one output feature has a valid entry
         """
+        if experiments is None:
+            if self.experiments is not None:
+                experiments = self.experiments
+            else:
+                return None
+
         output_feature_keys = self.get_feature_keys(OutputFeature)
 
         # clean_exp = experiments.query(" or ".join(["(valid_%s > 0)" % key for key in output_feature_keys]))
