@@ -3,4 +3,3 @@ scipy>=1.7
 pandas
 scikit-learn
 matplotlib
-pytest

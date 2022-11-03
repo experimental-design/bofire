@@ -13,8 +13,14 @@ def get_version():
 
 
 root_dir = os.path.dirname(__file__)
-with open(os.path.join(root_dir, "README.md"), "r") as fh:
-    long_description = fh.read()
+with open(os.path.join(root_dir, "README.md"), "r") as f:
+    long_description = f.read()
+
+with open(os.path.join(root_dir, "requirements.txt"), "r") as f:
+    stripped_lines = (line.strip() for line in f)
+    install_requires = [
+        line for line in stripped_lines if not line.startswith("#") and len(line) > 0
+    ]
 
 setup(
     name="bofire",
@@ -41,13 +47,6 @@ setup(
     python_requires=">=3.7",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[
-        "pydantic",
-        "scipy>=1.7",
-        "pandas",
-        "scikit-learn",
-        "matplotlib",
-        "numpy",
-    ],
+    install_requires=install_requires,
     extras_require={"testing": ["pytest"]},
 )
