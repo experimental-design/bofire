@@ -1,7 +1,7 @@
 #%%%
 from opti.problems.datasets import Cake
 
-from everest.mappers.opti import problem2domain
+from bofire.mappers.opti import problem2domain
 
 c = Cake()
 

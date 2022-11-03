@@ -3,8 +3,11 @@ import uuid
 
 import pandas as pd
 import pytest
-from everest.domain.desirability_functions import MinIdentityDesirabilityFunction
-from everest.domain.features import (
+from pandas.testing import assert_frame_equal
+from pydantic.error_wrappers import ValidationError
+
+from bofire.domain.desirability_functions import MinIdentityDesirabilityFunction
+from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousDescriptorInputFeature,
@@ -13,9 +16,7 @@ from everest.domain.features import (
     DiscreteInputFeature,
     Feature,
 )
-from pandas.testing import assert_frame_equal
-from pydantic.error_wrappers import ValidationError
-from tests.everest.domain.utils import get_invalids
+from tests.bofire.domain.utils import get_invalids
 
 desirability_function = MinIdentityDesirabilityFunction(w=1)
 

@@ -3,20 +3,21 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
-from everest.domain import Domain
-from everest.domain.constraints import (
+
+from bofire.domain import Domain
+from bofire.domain.constraints import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from everest.domain.features import (
+from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
     Feature,
 )
-from everest.utils.reduce import (
+from bofire.utils.reduce import (
     check_domain_for_reduction,
     check_existence_of_solution,
     reduce_domain,
@@ -96,7 +97,7 @@ def test_check_existence_of_solution():
 
 def test_reduce_1_independent_linear_equality_constraints():
     # define problem: standard case
-    # this is not allowed in everest as it produces one dime constraints
+    # this is not allowed in bofire as it produces one dime constraints
     domain = Domain(
         input_features=[
             ContinuousInputFeature(key="x1", lower_bound=1.0, upper_bound=2.0),

@@ -4,8 +4,16 @@ from typing import Dict, List, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
-from everest.domain.domain import Domain, DomainError
-from everest.domain.features import (
+from pydantic import BaseModel, Field, validator
+from sklearn.preprocessing import (
+    MinMaxScaler,
+    OneHotEncoder,
+    OrdinalEncoder,
+    StandardScaler,
+)
+
+from bofire.domain.domain import Domain, DomainError
+from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -14,14 +22,7 @@ from everest.domain.features import (
     OutputFeature,
     is_continuous,
 )
-from everest.utils.categoricalDescriptorEncoder import CategoricalDescriptorEncoder
-from pydantic import BaseModel, Field, validator
-from sklearn.preprocessing import (
-    MinMaxScaler,
-    OneHotEncoder,
-    OrdinalEncoder,
-    StandardScaler,
-)
+from bofire.utils.categoricalDescriptorEncoder import CategoricalDescriptorEncoder
 
 # with warnings.catch_warnings():
 #    warnings.simplefilter("ignore")

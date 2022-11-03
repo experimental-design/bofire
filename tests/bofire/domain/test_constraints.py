@@ -1,5 +1,7 @@
 import pytest
-from everest.domain.constraints import (
+from pydantic.error_wrappers import ValidationError
+
+from bofire.domain.constraints import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -7,8 +9,7 @@ from everest.domain.constraints import (
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
-from pydantic.error_wrappers import ValidationError
-from tests.everest.domain.utils import INVALID_SPECS, get_invalids
+from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
 VALID_NCHOOSEKE_CONSTRAINT_SPEC = {
     "features": ["f1", "f2", "f3"],

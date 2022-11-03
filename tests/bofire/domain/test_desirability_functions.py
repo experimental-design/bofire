@@ -1,5 +1,7 @@
 import pytest
-from everest.domain.desirability_functions import (
+from pydantic.error_wrappers import ValidationError
+
+from bofire.domain.desirability_functions import (
     CloseToTargetDesirabilityFunction,
     ConstantDesirabilityFunction,
     DeltaIdentityDesirabilityFunction,
@@ -11,8 +13,7 @@ from everest.domain.desirability_functions import (
     MinSigmoidDesirabilityFunction,
     TargetDesirabilityFunction,
 )
-from pydantic.error_wrappers import ValidationError
-from tests.everest.domain.utils import INVALID_SPECS, get_invalids
+from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
 VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC = {
     "w": 100.0,

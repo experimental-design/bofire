@@ -3,10 +3,11 @@ from abc import abstractmethod
 from typing import Dict, List, Optional
 
 import numpy as np
-from everest.domain.util import BaseModel
 from pydantic import validator
 from pydantic.class_validators import root_validator
 from pydantic.types import confloat
+
+from bofire.domain.util import BaseModel
 
 # for the return functions we do not distinguish between multiplicative/ additive (i.e. *weight or **weight),
 # since when a desirability function is called directly, we only have one objective

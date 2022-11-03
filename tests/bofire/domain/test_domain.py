@@ -4,10 +4,14 @@ from math import nan
 import numpy as np
 import pandas as pd
 import pytest
-from everest.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
-from everest.domain.desirability_functions import TargetDesirabilityFunction
-from everest.domain.domain import Domain, get_subdomain
-from everest.domain.features import (
+from pandas.testing import assert_frame_equal
+from pydantic.error_wrappers import ValidationError
+from pydantic.types import constr
+
+from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
+from bofire.domain.desirability_functions import TargetDesirabilityFunction
+from bofire.domain.domain import Domain, get_subdomain
+from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -17,10 +21,7 @@ from everest.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from everest.domain.util import BaseModel
-from pandas.testing import assert_frame_equal
-from pydantic.error_wrappers import ValidationError
-from pydantic.types import constr
+from bofire.domain.util import BaseModel
 
 
 def test_empty_domain():

@@ -1,8 +1,5 @@
-# Everest
-Bayesian Optimization Library
-
-![everest](everest.png)
-
+# BoFire
+Bayesian Optimization Framework Intended for Real Experiments
 
 
 ## Dependencies

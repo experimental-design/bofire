@@ -2,21 +2,22 @@ import json
 from typing import Dict, Optional
 
 import pandas as pd
-from everest.domain import Domain
-from everest.domain.constraints import (
+
+from bofire.domain import Domain
+from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
-from everest.domain.desirability_functions import (
+from bofire.domain.desirability_functions import (
     CloseToTargetDesirabilityFunction,
     MaxIdentityDesirabilityFunction,
     MinIdentityDesirabilityFunction,
     TargetDesirabilityFunction,
 )
-from everest.domain.features import (
+from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,

@@ -3,24 +3,25 @@ import random
 import numpy as np
 import pandas as pd
 import pytest
-from everest.domain.domain import Domain, DomainError
-from everest.domain.features import (
+from pandas.testing import assert_frame_equal
+from sklearn.utils._testing import assert_array_equal
+
+from bofire.domain.domain import Domain, DomainError
+from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
     InputFeature,
 )
-from everest.utils.transformer import (
+from bofire.utils.transformer import (
     CategoricalEncodingEnum,
     DescriptorEncodingEnum,
     ScalerEnum,
     Transformer,
 )
-from pandas.testing import assert_frame_equal
-from sklearn.utils._testing import assert_array_equal
-from tests.everest.domain.test_domain_validators import generate_experiments
-from tests.everest.domain.test_features import (
+from tests.bofire.domain.test_domain_validators import generate_experiments
+from tests.bofire.domain.test_features import (
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,

@@ -2,7 +2,8 @@ from typing import List
 
 import pandas as pd
 import pytest
-from everest.domain.constraints import (
+
+from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,

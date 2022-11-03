@@ -3,10 +3,11 @@ from typing import Dict, List
 
 import numpy as np
 import pandas as pd
-from everest.domain.util import BaseModel
 from pydantic import validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist, conset
+
+from bofire.domain.util import BaseModel
 
 
 class Constraint(BaseModel):

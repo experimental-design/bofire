@@ -5,8 +5,9 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
-from everest.domain.domain import Domain
-from everest.domain.features import (
+
+from bofire.domain.domain import Domain
+from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -14,7 +15,7 @@ from everest.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from tests.everest.domain.test_features import (
+from tests.bofire.domain.test_features import (
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,

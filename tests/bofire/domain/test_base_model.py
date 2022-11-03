@@ -3,8 +3,9 @@ import uuid
 from typing import List
 
 import pytest
-from everest.domain.util import BaseModel
 from pydantic.error_wrappers import ValidationError
+
+from bofire.domain.util import BaseModel
 
 
 class Bla(BaseModel):

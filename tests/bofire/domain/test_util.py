@@ -1,5 +1,6 @@
 import pytest
-from everest.domain.util import filter_by_class
+
+from bofire.domain.util import filter_by_class
 
 
 class A:
@@ -39,7 +40,13 @@ a21 = A21()
 a211 = A211()
 
 data = [
-    a, a1, a11, a12, a2, a21, a211,
+    a,
+    a1,
+    a11,
+    a12,
+    a2,
+    a21,
+    a211,
 ]
 
 
@@ -51,7 +58,7 @@ data = [
         (data, [A1], [a1, a11, a12]),
         (data, [A11], [a11]),
         (data, [A2], [a2, a21, a211]),
-    ]
+    ],
 )
 def test_filter_by_class(data, includes, expected):
     res = filter_by_class(data, includes)
@@ -68,7 +75,7 @@ def test_filter_by_class(data, includes, expected):
         (data, [A1], [a1]),
         (data, [A11], [a11]),
         (data, [A2], [a2]),
-    ]
+    ],
 )
 def test_filter_by_class_exact(data, includes, expected):
     res = filter_by_class(data, includes, exact=True)
@@ -84,7 +91,7 @@ def test_filter_by_class_exact(data, includes, expected):
         (data, [A1], [A11], [a1, a12]),
         (data, [A], [A21], [a, a1, a11, a12, a2]),
         (data, [A2], [A1], [a2, a21, a211]),
-    ]
+    ],
 )
 def test_filter_by_class_exclude(data, includes, exclude, expected):
     res = filter_by_class(data, includes, exclude)
@@ -101,7 +108,7 @@ def test_filter_by_class_exclude(data, includes, exclude, expected):
         (data, [A1], [], [a1]),
         (data, [A1, A11], [], [a1, a11]),
         (data, [A, A2, A21], [A211], [a, a2, a21]),
-    ]
+    ],
 )
 def test_filter_by_class_exclude_exact(data, includes, exclude, expected):
     res = filter_by_class(data, includes, exclude, exact=True)
@@ -114,7 +121,7 @@ def test_filter_by_class_exclude_exact(data, includes, exclude, expected):
     "includes",
     [
         ([]),
-    ]
+    ],
 )
 def test_filter_by_class_no_cls(includes):
     with pytest.raises(ValueError):
@@ -128,7 +135,7 @@ def test_filter_by_class_no_cls(includes):
         ([A2], [A2]),
         ([A12], [A, A12]),
         ([A11, A21], [A12, A21]),
-    ]
+    ],
 )
 def test_filter_by_class_no_intersection(includes, excludes):
     with pytest.raises(ValueError):

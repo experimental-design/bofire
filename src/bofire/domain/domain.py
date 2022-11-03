@@ -4,8 +4,10 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from everest.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
-from everest.domain.features import (
+from pydantic import Field, validator
+
+from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
+from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
@@ -14,8 +16,7 @@ from everest.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from everest.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
-from pydantic import Field, validator
+from bofire.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
 
 
 class Domain(BaseModel):

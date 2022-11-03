@@ -3,9 +3,10 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
-from everest.domain.constraints import NChooseKConstraint
-from everest.domain.domain import Domain
-from everest.domain.features import (
+
+from bofire.domain.constraints import NChooseKConstraint
+from bofire.domain.domain import Domain
+from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,

@@ -3,15 +3,16 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from everest.domain import Domain
-from everest.domain.constraints import (
+
+from bofire.domain import Domain
+from bofire.domain.constraints import (
     Constraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from everest.domain.features import ContinuousInputFeature, InputFeature
+from bofire.domain.features import ContinuousInputFeature, InputFeature
 
 ### this module is based on the original implementation in basf/opti.
 

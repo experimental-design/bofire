@@ -5,15 +5,16 @@ from typing import Dict, List, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from everest.domain.desirability_functions import (
+from pydantic import Field, validator
+from pydantic.class_validators import root_validator
+from pydantic.types import conlist, conset
+
+from bofire.domain.desirability_functions import (
     DesirabilityFunction,
     MaxIdentityDesirabilityFunction,
     NoDesirabilityFunction,
 )
-from everest.domain.util import KeyModel, is_numeric, name2key
-from pydantic import Field, validator
-from pydantic.class_validators import root_validator
-from pydantic.types import conlist, conset
+from bofire.domain.util import KeyModel, is_numeric, name2key
 
 
 class Feature(KeyModel):
