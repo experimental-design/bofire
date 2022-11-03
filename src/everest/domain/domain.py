@@ -19,9 +19,12 @@ from pydantic import Field, validator
 
 
 class Domain(BaseModel):
+
     input_features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
     output_features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
     constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+    experiments: Optional[pd.DataFrame]
+    candidates: Optional[pd.DataFrame]
     """Representation of the optimization problem/domain
 
     Attributes:
@@ -54,7 +57,7 @@ class Domain(BaseModel):
 
     @validator("constraints", always=True)
     def validate_constraints(cls, v, values):
-        """Validate if all features included in the cosntraints are also defined as features for the domain.
+        """Validate if all features included in the constraints are also defined as features for the domain.
 
         Args:
             v (List[Constraint]): List of constraints or empty if no constraints are defined
@@ -111,11 +114,16 @@ class Domain(BaseModel):
         Returns:
             Dict: Serialized version of the domain as dictionary.
         """
-        return {
+        config = {
             "input_features": [feat.to_config() for feat in self.input_features],
             "output_features": [feat.to_config() for feat in self.output_features],
             "constraints": [constraint.to_config() for constraint in self.constraints],
         }
+        if self.experiments is not None:
+            config["experiments"] = self.experiments.to_dict()
+        if self.candidates is not None:
+            config["candidates"] = self.candidates.to_dict()
+        return config
 
     @classmethod
     def from_config(cls, config: Dict):
@@ -136,6 +144,10 @@ class Domain(BaseModel):
                 for constraint in config["constraints"]
             ],
         )
+        if "experiments" in config.keys():
+            d.add_experiments(experiments=config["experiments"])
+        if "candidates" in config.keys():
+            d.add_candidates(experiments=config["candidates"])
         return d
 
     def get_feature_reps_df(self) -> pd.DataFrame:
@@ -274,6 +286,10 @@ class Domain(BaseModel):
             ValueError: if the feature key is already in the domain
             TypeError: if the feature type is neither Input nor Output feature
         """
+        if (self.experiments is not None) or (self.candidates is not None):
+            raise ValueError(
+                "Feature cannot be added as experiments/candidates are already set."
+            )
         if feature.key in self.get_feature_keys():
             raise ValueError(f"Feature with key {feature.key} already in domain.")
         if isinstance(feature, InputFeature):
@@ -293,6 +309,10 @@ class Domain(BaseModel):
             KeyError: when the key is not found in the domain
             ValueError: when more than one feature with key is found
         """
+        if (self.experiments is not None) or (self.candidates is not None):
+            raise ValueError(
+                f"Feature {key} cannot be removed as experiments/candidates are already set."
+            )
         input_count = len([f for f in self.input_features if f.key == key])
         output_count = len([f for f in self.output_features if f.key == key])
         if input_count == 0 and output_count == 0:
@@ -437,11 +457,24 @@ class Domain(BaseModel):
             [c.satisfied(experiments) for c in self.constraints], axis=1
         ).all(axis=1)
 
+    # TODO: needs to be tested
     def evaluate_constraints(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
+    # TODO: needs to be tested
+    def evaluate_desirabilities(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        return pd.concat(
+            [
+                feat.desirability_function(experiments[feat.name])
+                for feat in self.get_features(ContinuousOutputFeature)
+            ],
+            axis=1,
+        )
+
     def preprocess_experiments_one_valid_output(
-        self, experiments: pd.DataFrame, output_feature_key: str
+        self,
+        output_feature_key: str,
+        experiments: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Method to get a dataframe where non-valid entries of the provided output feature are removed
 
@@ -452,6 +485,11 @@ class Domain(BaseModel):
         Returns:
             pd.DataFrame: Dataframe with all experiments where only valid entries of the specific feature are included
         """
+        if experiments is None:
+            if self.experiments is not None:
+                experiments = self.experiments
+            else:
+                return None
         clean_exp = experiments.loc[
             (experiments["valid_%s" % output_feature_key] == 1)
             & (experiments[output_feature_key].notna())
@@ -461,7 +499,9 @@ class Domain(BaseModel):
         return clean_exp
 
     def preprocess_experiments_all_valid_outputs(
-        self, experiments: pd.DataFrame, output_feature_keys: Optional[List] = None
+        self,
+        experiments: Optional[pd.DataFrame] = None,
+        output_feature_keys: Optional[List] = None,
     ) -> pd.DataFrame:
         """Method to get a dataframe where non-valid entries of all output feature are removed
 
@@ -472,6 +512,11 @@ class Domain(BaseModel):
         Returns:
             pd.DataFrame: Dataframe with all experiments where only valid entries of the selected features are included
         """
+        if experiments is None:
+            if self.experiments is not None:
+                experiments = self.experiments
+            else:
+                return None
         if (output_feature_keys is None) or (len(output_feature_keys) == 0):
             output_feature_keys = self.get_feature_keys(OutputFeature)
         else:
@@ -489,7 +534,7 @@ class Domain(BaseModel):
         return clean_exp
 
     def preprocess_experiments_any_valid_output(
-        self, experiments: pd.DataFrame
+        self, experiments: Optional[pd.DataFrame] = None
     ) -> pd.DataFrame:
         """Method to get a dataframe where at least one output feature has a valid entry
 
@@ -499,6 +544,12 @@ class Domain(BaseModel):
         Returns:
             pd.DataFrame: Dataframe with all experiments where at least one output feature has a valid entry
         """
+        if experiments is None:
+            if self.experiments is not None:
+                experiments = self.experiments
+            else:
+                return None
+
         output_feature_keys = self.get_feature_keys(OutputFeature)
 
         # clean_exp = experiments.query(" or ".join(["(valid_%s > 0)" % key for key in output_feature_keys]))
@@ -769,69 +820,23 @@ class Domain(BaseModel):
             ]
         )
 
-    def experiments2excel(self, filename: str, experiments: pd.DataFrame):
-        """export function to excel
-
-        Args:
-            filename (str): Excel file name
-            experiments (pd.DataFrame): The datagrame to be exported
-
-        Returns:
-            Tuple(pd.DataFrame, pd.DataFrame): Returns the passed experiment dataframe and a dataframe with meta data
-        """
-        types = {
-            "ContinuousInputFeature": "continuous-input",
-            "ContinuousOutputFeature": "continuous-output",
-            "CategoricalInputFeature": "categorical-input",
-        }
-
-        experiments = experiments.copy()
-        self.validate_experiments(experiments[self.experiment_column_names])
-        experiments = self.preprocess_experiments_any_valid_output(experiments)
-
-        # remove non valid measurements with nans
-        for key in self.get_feature_keys(OutputFeature):
-            experiments.loc[experiments["valid_%s" % key] < 1, key] = np.nan
-
-        experiments["Experiment"] = [
-            "Experiment %i" % (i + 1) for i in range(experiments.shape[0])
-        ]
-
-        experiments = experiments.astype(
-            {
-                key: "float64"
-                for key in self.get_feature_keys(ContinuousInputFeature)
-                + self.get_feature_keys(ContinuousOutputFeature)
-            }
-        )
-
-        d_meta = {
-            "Name": self.get_feature_keys(),
-            "Is Input": [True for _ in self.get_features(InputFeature)]
-            + [False for _ in self.get_features(OutputFeature)],
-            "Type": [types[feat.__class__.__name__] for feat in self.get_features()],
-            "Index": list(range(len(self.get_features(InputFeature))))
-            + list(range(len(self.get_features(OutputFeature)))),
-            "Column Index": (np.array(range(len(self.get_features()))) + 2).tolist(),
-        }
-        meta = pd.DataFrame.from_dict(d_meta)
-        meta.astype(
-            {
-                "Name": "object",
-                "Is Input": "bool",
-                "Type": "object",
-                "Index": "int64",
-                "Column Index": "int64",
-            }
-        )
-
-        with pd.ExcelWriter(filename) as writer:
-            experiments[["Experiment"] + self.get_feature_keys()].to_excel(
-                writer, sheet_name="Dataset Template", index=False
+    def add_candidates(self, candidates: pd.DataFrame):
+        candidates = self.validate_candidates(candidates)
+        if candidates is None:
+            self.candidates = candidates
+        else:
+            self._candidates = pd.concat(
+                (self._candidates, candidates), ignore_index=True
             )
-            meta.to_excel(writer, sheet_name="Dataset Metadata", index=False)
 
-        return experiments, meta
+    def add_experiments(self, experiments: pd.DataFrame):
+        experiments = self.validate_experiments(experiments)
+        if experiments is None:
+            self.experiments = None
+        else:
+            self.experiments = pd.concat(
+                (self.experiments, experiments), ignore_index=True
+            )
 
 
 def get_subdomain(

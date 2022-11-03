@@ -6,16 +6,16 @@ from pydantic import validator
 
 
 def name2key(name):
-    # this has been commented out due to some 
-    # problems with the backend, in the future 
+    # this has been commented out due to some
+    # problems with the backend, in the future
     # the backend needs to have a verifier for
     # to validate strings
-    #key = re.sub(r'[^a-zA-Z0-9 _/]+', '', name)
-    #key = key.strip()
-    #key = key.replace(" ", "_")
-    #if not len(key) > 0:
+    # key = re.sub(r'[^a-zA-Z0-9 _/]+', '', name)
+    # key = key.strip()
+    # key = key.replace(" ", "_")
+    # if not len(key) > 0:
     #    raise ValueError("key cannot be empty")
-    #return key
+    # return key
     return name
 
 
@@ -23,7 +23,7 @@ def name2key(name):
 class BaseModel(_BaseModel):
     class Config:
         validate_assignment = True
-        # arbitrary_types_allowed = True
+        arbitrary_types_allowed = True
 
 
 class KeyModel(BaseModel):
@@ -35,7 +35,7 @@ class KeyModel(BaseModel):
 
 
 def is_numeric(s: pd.Series):
-    return pd.to_numeric(s, errors='coerce').notnull().all()
+    return pd.to_numeric(s, errors="coerce").notnull().all()
 
 
 def is_categorical(s: pd.Series, categories: List[str]):
@@ -61,10 +61,7 @@ def filter_by_class(
         raise ValueError("includes and excludes overlap")
 
     if exact:
-        return [
-            d
-            for d in data
-            if type(d) in includes and type(d) not in excludes]
+        return [d for d in data if type(d) in includes and type(d) not in excludes]
     return [
         d
         for d in data

@@ -1,5 +1,6 @@
 import pytest
 from everest.domain.desirability_functions import (
+    CloseToTargetDesirabilityFunction,
     ConstantDesirabilityFunction,
     DeltaIdentityDesirabilityFunction,
     DesirabilityFunction,
@@ -34,6 +35,13 @@ VALID_TARGET_DESIRABILITY_FUNCTION_SPEC = {
     "w": 0.5,
 }
 
+VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC = {
+    "target_value": 42,
+    "exponent": 2,
+    "tolerance": 1.5,
+    "w": 1.0,
+}
+
 INVALID_W = [
     {"w": 0},
     {"w": -100},
@@ -51,8 +59,8 @@ INVALID_STEEPNESS = [
 ]
 
 INVALID_TOLERANCE = [
-    {"steepness": 0},
-    {"steepness": -100},
+    {"tolerance": -0.1},
+    {"tolerance": -100},
 ]
 
 DESIRABILITY_FUNCTION_SPECS = {
@@ -127,6 +135,19 @@ DESIRABILITY_FUNCTION_SPECS = {
             {**VALID_TARGET_DESIRABILITY_FUNCTION_SPEC, **invalid}
             for invalid in [
                 *INVALID_STEEPNESS,
+                *INVALID_TOLERANCE,
+                *INVALID_W,
+            ]
+        ],
+    },
+    CloseToTargetDesirabilityFunction: {
+        "valids": [VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC],
+        "invalids": INVALID_SPECS
+        + get_invalids(VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC)
+        + [
+            {**VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC, **invalid}
+            for invalid in [
+                # *INVALID_STEEPNESS,
                 *INVALID_TOLERANCE,
                 *INVALID_W,
             ]

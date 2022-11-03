@@ -511,7 +511,7 @@ def test_preprocess_experiments_any_valid_output(domain, data, expected):
     ],
 )
 def test_preprocess_experiments_one_valid_output(domain, data, expected):
-    experiments = domain.preprocess_experiments_one_valid_output(data, "out2")
+    experiments = domain.preprocess_experiments_one_valid_output("out2", data)
     assert experiments["x1"].tolist() == expected["x1"].tolist()
     assert np.isnan(experiments["out1"].tolist()[2])
     assert experiments["out2"].tolist() == expected["out2"].tolist()
