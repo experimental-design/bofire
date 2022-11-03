@@ -1,5 +1,5 @@
 pydantic
-scipy
+scipy>=1.7
 pandas
 sklearn
 matplotlib
