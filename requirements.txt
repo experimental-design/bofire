@@ -1,6 +1,6 @@
 pydantic
 scipy>=1.7
 pandas
-sklearn
+scikit-learn
 matplotlib
 pytest

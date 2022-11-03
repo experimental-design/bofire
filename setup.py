@@ -43,10 +43,10 @@ setup(
     include_package_data=True,
     install_requires=[
         "pydantic",
-        "matplotlib",
-        "sklearn",
         "scipy>=1.7",
         "pandas",
+        "scikit-learn",
+        "matplotlib",
         "numpy",
     ],
     extras_require={"testing": ["pytest"]},
