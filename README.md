@@ -30,7 +30,7 @@ Any new non-dev dependency must also be added to [setup.py](./setup.py).
 
 ## Tests
 
-To run unit tests, execute the following:
+To run unit tests, execute the following on Linx.
 
 ```bash
 # activate venv
@@ -38,6 +38,14 @@ source .venv/bin/activate
 # add src to PYTHONPATH
 export PYTHONPATH=$(pwd)/src:$PYTHONPATH
 # run tests
+pytest tests/
+```
+
+On Windows you can execute tests as follows.
+ 
+```bat
+.venv/Scripts/activate.bat
+set PYTHONPATH=%cd%/src;%PYTHONPATH%
 pytest tests/
 ```
 
