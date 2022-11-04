@@ -4,19 +4,18 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
-
 from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
 from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
+    DesirabilityOutputFeature,
     Feature,
     InputFeature,
     OutputFeature,
 )
 from bofire.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
+from pydantic import Field, validator
 
 
 class Domain(BaseModel):
@@ -752,9 +751,7 @@ class Domain(BaseModel):
                 raise ValueError(f"no col for input feature `{feat.key}`")
             feat.validate_candidental(candidates[feat.key])
         # for each output feature
-        for key in self.get_feature_keys(
-            OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
-        ):
+        for key in self.get_feature_keys(DesirabilityOutputFeature):
             # check that pred, sd, and des cols are specified and numerical
             for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
                 if col not in candidates:
@@ -770,11 +767,7 @@ class Domain(BaseModel):
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))
-        of_count = len(
-            self.get_features(
-                OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
-            )
-        )
+        of_count = len(self.get_features(DesirabilityOutputFeature))
         # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
         if len(candidates.columns) != if_count + 3 * of_count:
             raise ValueError("additional columns found")

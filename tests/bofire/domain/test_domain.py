@@ -4,10 +4,6 @@ from math import nan
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
-from pydantic.error_wrappers import ValidationError
-from pydantic.types import constr
-
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
 from bofire.domain.desirability_functions import TargetDesirabilityFunction
 from bofire.domain.domain import Domain, get_subdomain
@@ -16,12 +12,14 @@ from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
     Feature,
     InputFeature,
+    MaxIdentityOutputFeature,
     OutputFeature,
 )
 from bofire.domain.util import BaseModel
+from pandas.testing import assert_frame_equal
+from pydantic.error_wrappers import ValidationError
 
 
 def test_empty_domain():
@@ -32,14 +30,6 @@ def test_empty_domain():
     )
 
 
-df = TargetDesirabilityFunction(
-    target_value=1,
-    steepness=2,
-    tolerance=3,
-    w=0.5,
-)
-
-
 class Bla(BaseModel):
     a: int
 
@@ -47,18 +37,18 @@ class Bla(BaseModel):
 nf = Bla(a=1)
 
 if_ = CategoricalInputFeature(key="if", categories=["a", "b"])
-of_ = ContinuousOutputFeature(key="of", desirability_function=df)
+of_ = MaxIdentityOutputFeature(key="of", w=1.0)
 
 
 if1 = ContinuousInputFeature(key="f1", upper_bound=10, lower_bound=0)
 if1_ = ContinuousInputFeature(key="f1", upper_bound=10, lower_bound=1)
 if2 = ContinuousInputFeature(key="f2", upper_bound=10, lower_bound=0)
 
-of1 = ContinuousOutputFeature(key="f1", desirability_function=df)
-of1_ = ContinuousOutputFeature(key="f1", desirability_function=df)
-of2 = ContinuousOutputFeature(key="f2", desirability_function=df)
+of1 = MaxIdentityOutputFeature(key="f1", w=1.0)
+of1_ = MaxIdentityOutputFeature(key="f1", w=1.0)
+of2 = MaxIdentityOutputFeature(key="f2", w=1.0)
 
-of3 = ContinuousOutputFeature(key="of3", desirability_function=df)
+of3 = MaxIdentityOutputFeature(key="of3", w=1.0)
 
 
 @pytest.mark.parametrize(
@@ -365,13 +355,13 @@ data = pd.DataFrame.from_dict(
 if1 = ContinuousInputFeature(key="x1", upper_bound=10, lower_bound=1)
 if2 = ContinuousInputFeature(key="x2", upper_bound=10, lower_bound=1)
 
-of1 = ContinuousOutputFeature(key="out1", desirability_function=df)
-of2 = ContinuousOutputFeature(key="out2", desirability_function=df)
+of1 = MaxIdentityOutputFeature(key="out1", w=1.0)
+of2 = MaxIdentityOutputFeature(key="out2", w=1.0)
 
 c1 = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[5, 5], rhs=15.0)
 
-of1_ = ContinuousOutputFeature_woDesFunc(key="out3")
-of2_ = ContinuousOutputFeature_woDesFunc(key="out4")
+of1_ = ContinuousOutputFeature(key="out3")
+of2_ = ContinuousOutputFeature(key="out4")
 
 domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
 domain2 = Domain(
@@ -631,14 +621,12 @@ domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_
     "domain, FeatureType, exact, expected",
     [
         (domain, OutputFeature, True, []),
-        (domain, OutputFeature, False, [of1, of2, of1_, of2_]),
-        (domain, OutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, True, [of1, of2]),
-        (domain, ContinuousOutputFeature, False, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, [of1_, of2_]),
+        (domain, OutputFeature, False, [of1_, of2_, of1, of2]),
+        (domain, OutputFeature, None, [of1_, of2_, of1, of2]),
+        (domain, MaxIdentityOutputFeature, True, [of1, of2]),
+        (domain, ContinuousOutputFeature, False, [of1_, of2_, of1, of2]),
+        (domain, ContinuousOutputFeature, None, [of1_, of2_, of1, of2]),
+        (domain, ContinuousOutputFeature, True, [of1_, of2_]),
         (domain, InputFeature, True, []),
         (domain, InputFeature, False, [if1, if2]),
         (domain, InputFeature, None, [if1, if2]),
@@ -652,14 +640,12 @@ def test_get_features(domain, FeatureType, exact, expected):
     "domain, FeatureType, exact, expected",
     [
         (domain, OutputFeature, True, []),
-        (domain, OutputFeature, False, ["out1", "out2", "out3", "out4"]),
-        (domain, OutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, True, ["out1", "out2"]),
-        (domain, ContinuousOutputFeature, False, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, ["out3", "out4"]),
+        (domain, OutputFeature, False, ["out3", "out4", "out1", "out2"]),
+        (domain, OutputFeature, None, ["out3", "out4", "out1", "out2"]),
+        (domain, MaxIdentityOutputFeature, True, ["out1", "out2"]),
+        (domain, ContinuousOutputFeature, False, ["out3", "out4", "out1", "out2"]),
+        (domain, ContinuousOutputFeature, None, ["out3", "out4", "out1", "out2"]),
+        (domain, ContinuousOutputFeature, True, ["out3", "out4"]),
         (domain, InputFeature, True, []),
         (domain, InputFeature, False, ["x1", "x2"]),
         (domain, InputFeature, None, ["x1", "x2"]),
@@ -681,7 +667,7 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
 )
 def test_get_subdomain(domain, feature_keys):
     subdomain = get_subdomain(domain, feature_keys)
-    assert subdomain.get_feature_keys(Feature) == feature_keys
+    assert set(subdomain.get_feature_keys(Feature)) == set(feature_keys)
 
 
 @pytest.mark.parametrize(

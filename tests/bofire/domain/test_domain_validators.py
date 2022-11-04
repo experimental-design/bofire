@@ -5,14 +5,15 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
-
 from bofire.domain.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
+    DesirabilityOutputFeature,
     InputFeature,
+    MaxSigmoidOutputFeature,
     OutputFeature,
 )
 from tests.bofire.domain.test_features import (
@@ -23,6 +24,7 @@ from tests.bofire.domain.test_features import (
     VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
 )
+from tests.bofire.domain.test_output_features import VALID_SIGMOID_OUTPUT_FEATURE_SPEC
 
 if1 = ContinuousInputFeature(
     **{
@@ -61,9 +63,9 @@ if6 = CategoricalInputFeature(
         "key": "if6",
     }
 )
-of1 = ContinuousOutputFeature(
+of1 = MaxSigmoidOutputFeature(
     **{
-        **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
+        **VALID_SIGMOID_OUTPUT_FEATURE_SPEC,
         "key": "out1",
     }
 )
@@ -133,15 +135,15 @@ def generate_candidates(domain: Domain, row_count: int = 5):
                 },
                 **{
                     f"{k}_pred": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutputFeature)
+                    for k in domain.get_feature_keys(DesirabilityOutputFeature)
                 },
                 **{
                     f"{k}_sd": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutputFeature)
+                    for k in domain.get_feature_keys(DesirabilityOutputFeature)
                 },
                 **{
                     f"{k}_des": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutputFeature)
+                    for k in domain.get_feature_keys(DesirabilityOutputFeature)
                 },
                 **{
                     f.key: random.choice(f.get_allowed_categories())
@@ -292,7 +294,7 @@ def test_domain_validate_candidates_valid(
     + [
         (d, generate_candidates(d).drop(key, axis=1))
         for d in [domain0]
-        for key_ in d.get_feature_keys(OutputFeature)
+        for key_ in d.get_feature_keys(DesirabilityOutputFeature)
         for key in [f"{key_}_pred", f"{key_}_sd", f"{key_}_des"]
     ],
 )

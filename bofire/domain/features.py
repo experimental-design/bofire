@@ -4,9 +4,6 @@ from typing import Dict, List, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from bofire.domain.desirability_functions import (
-    DesirabilityFunction, MaxIdentityDesirabilityFunction,
-    NoDesirabilityFunction)
 from bofire.domain.util import KeyModel, is_numeric, name2key
 from pydantic import Field, validator
 from pydantic.class_validators import root_validator
@@ -46,14 +43,14 @@ class Feature(KeyModel):
         }
 
     @staticmethod
-    def from_config(config: Dict) -> "DesirabilityFunction":
-        """Generate desirability function out of serialized version.
+    def from_config(config: Dict) -> "Feature":
+        """Generate feature out of serialized version.
 
         Args:
-            config (Dict): Serialized version of a desirability function
+            config (Dict): Serialized version of a feature
 
         Returns:
-            DesirabilityFunction: Instaniated desirability function of the type specified in the `config`.
+            DesirabilityFunction: Instaniated feature of the type specified in the `config`.
         """
         input_mapper = {
             "ContinuousInputFeature": ContinuousInputFeature,
@@ -61,40 +58,28 @@ class Feature(KeyModel):
             "CategoricalInputFeature": CategoricalInputFeature,
             "CategoricalDescriptorInputFeature": CategoricalDescriptorInputFeature,
             "ContinuousDescriptorInputFeature": ContinuousDescriptorInputFeature,
-        }
-        output_mapper = {
-            "ContinuousOutputFeature_woDesFunc": ContinuousOutputFeature_woDesFunc,
             "ContinuousOutputFeature": ContinuousOutputFeature,
+            "MinIdentityOutputFeature": MinIdentityOutputFeature,
+            "MaxIdentityOutputFeature": MaxIdentityOutputFeature,
+            "DeltaIdentityOutputFeature": DeltaIdentityOutputFeature,
+            "MinSigmoidOutputFeature": MaxSigmoidOutputFeature,
+            "MaxSigmoidOutputFeature": MaxSigmoidOutputFeature,
+            "CloseToTargetOutputFeature": CloseToTargetOutputFeature,
+            "TargetOutputFeature": TargetOutputFeature,
+            "ConstantOutputFeature": ConstantOutputFeature,
         }
-        if config["type"] in input_mapper.keys():
-            return input_mapper[config["type"]](**config)
-        else:
-            d = DesirabilityFunction.from_config(config=config["desirability_function"])
-            return output_mapper[config["type"]](
-                key=config["key"], desirability_function=d
-            )
-
-
-class InputFeature(Feature):
-    """Base class for all input features."""
-
-    @abstractmethod
-    def is_fixed() -> bool:
-        """Indicates if a variable is set to a fixed value.
-
-        Returns:
-            bool: True if fixed, els False.
-        """
-        pass
-
-    @abstractmethod
-    def fixed_value() -> Union[None, str, float]:
-        """Method to return the fixed value in case of a fixed feature.
-
-        Returns:
-            Union[None,str,float]: None in case the feature is not fixed, else the fixed value.
-        """
-        pass
+        # output_mapper = {
+        #    "ContinuousOutputFeature_woDesFunc": ContinuousOutputFeature_woDesFunc,
+        #    "ContinuousOutputFeature": ContinuousOutputFeature,
+        # }
+        return input_mapper[config["type"]](**config)
+        # if config["type"] in input_mapper.keys():
+        #    return input_mapper[config["type"]](**config)
+        # else:
+        #    d = DesirabilityFunction.from_config(config=config["desirability_function"])
+        #    return output_mapper[config["type"]](
+        #        key=config["key"], desirability_function=d
+        #    )
 
     @abstractmethod
     def validate_experimental(
@@ -123,6 +108,28 @@ class InputFeature(Feature):
         """
         pass
 
+
+class InputFeature(Feature):
+    """Base class for all input features."""
+
+    @abstractmethod
+    def is_fixed() -> bool:
+        """Indicates if a variable is set to a fixed value.
+
+        Returns:
+            bool: True if fixed, els False.
+        """
+        pass
+
+    @abstractmethod
+    def fixed_value() -> Union[None, str, float]:
+        """Method to return the fixed value in case of a fixed feature.
+
+        Returns:
+            Union[None,str,float]: None in case the feature is not fixed, else the fixed value.
+        """
+        pass
+
     @abstractmethod
     def sample(self, n: int) -> pd.Series:
         """Sample a series of allowed values.
@@ -134,9 +141,6 @@ class InputFeature(Feature):
             pd.Series: Sampled values.
         """
         pass
-
-
-
 
 
 class NumericalInputFeature(InputFeature):
@@ -721,6 +725,7 @@ class CategoricalDescriptorInputFeature(CategoricalInputFeature):
             values=df.values.tolist(),
         )
 
+
 class OutputFeature(Feature):
     """Base class for all output features.
 
@@ -729,26 +734,25 @@ class OutputFeature(Feature):
             the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
     """
 
-    desirability_function: Optional[DesirabilityFunction] = Field(
-        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
-    )
+    # desirability_function: Optional[DesirabilityFunction] = Field(
+    #    default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
+    # )
 
-    def to_config(self) -> Dict:
-        """Generate serialized version of the feature.
+    # def to_config(self) -> Dict:
+    #    """Generate serialized version of the feature.
+    #
+    #        Returns:
+    #            Dict: Serialized version of the feature as dictionary.
+    #        """
+    #        return {
+    #           "type": self.__class__.__name__,
+    #           "key": self.key,
+    #           "desirability_function": self.desirability_function.to_config(),
+    #      }
 
-        Returns:
-            Dict: Serialized version of the feature as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            "key": self.key,
-            "desirability_function": self.desirability_function.to_config(),
-        }
 
-    
-
-    def __str__(self) -> str:
-        return self.desirability_function.__class__.__name__
+#    def __str__(self) -> str:
+#        return self.desirability_function.__class__.__name__
 
 
 class ContinuousOutputFeature(OutputFeature):
@@ -758,7 +762,20 @@ class ContinuousOutputFeature(OutputFeature):
         desirability_function (Desirability_function, optional): Desirability function of
             the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
     """
-    pass
+
+    def validate_experimental(
+        self, values: pd.Series, strict: bool = False
+    ) -> pd.Series:
+        # if not is_numeric(values):
+        #    raise ValueError(
+        #        f"not all values of input feature `{self.key}` are numerical"
+        #    )
+        return values
+
+    def validate_candidental(self, values: pd.Series) -> pd.Series:
+        return values
+        # return self.validate_experimental(values=values)
+
 
 class DesirabilityOutputFeature(ContinuousOutputFeature):
     w: confloat(gt=0, le=1)
@@ -813,7 +830,7 @@ class DesirabilityOutputFeature(ContinuousOutputFeature):
             x_data = df_data.loc[df_data[self.key].notna(), self.key].values
             ax.scatter(
                 x_data,
-                self..__call__(x_data),
+                self.__call__(x_data),
                 **scatter_options,
             )
         ax.set_title("Desirability %s" % self.key, **title_options)
@@ -867,17 +884,6 @@ class IdentityOutputFeature(DesirabilityOutputFeature):
             )
         return values
 
-    def __call__(self, x: np.array) -> np.array:
-        """The call function returning a reward for passed x values
-
-        Args:
-            x (np.array): An array of x values
-
-        Returns:
-            np.array: The identity as reward, might be normalized to the passed lower and upper bounds
-        """
-        return (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
-
 
 class MaxIdentityOutputFeature(IdentityOutputFeature):
     """Child class from the identity function without modifications, since the parent class is already defined as maximization
@@ -888,7 +894,16 @@ class MaxIdentityOutputFeature(IdentityOutputFeature):
         upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
     """
 
-    pass
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning a reward for passed x values
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: The identity as reward, might be normalized to the passed lower and upper bounds
+        """
+        return (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
 
 class MinIdentityOutputFeature(IdentityOutputFeature):
@@ -912,7 +927,7 @@ class MinIdentityOutputFeature(IdentityOutputFeature):
         return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
 
-class DeltaIdentityDesirabilityFunction(IdentityOutputFeature):
+class DeltaIdentityOutputFeature(DesirabilityOutputFeature):
     """Class returning the difference between a reference value and identity as reward
 
     Attributes:
@@ -922,7 +937,7 @@ class DeltaIdentityDesirabilityFunction(IdentityOutputFeature):
     """
 
     ref_point: float
-    scale: float = 1
+    scale: float
 
     def __call__(self, x: np.ndarray) -> np.array:
         """The call function returning a reward for passed x values
@@ -1098,10 +1113,27 @@ FEATURE_ORDER = {
     ContinuousOutputFeature: 6,
     MaxIdentityOutputFeature: 7,
     MinIdentityOutputFeature: 7,
-    DeltaIdentityDesirabilityFunction: 7,
+    DeltaIdentityOutputFeature: 7,
     MaxSigmoidOutputFeature: 7,
     MinSigmoidOutputFeature: 7,
     ConstantOutputFeature: 7,
     CloseToTargetOutputFeature: 7,
     TargetOutputFeature: 7,
 }
+
+
+## TODO: REMOVE THIS --> it is not needed!
+def is_continuous(var: Feature) -> bool:
+    """Checks if Feature is continous
+    Args:
+        var (Feature): Feature to be checked
+    Returns:
+        bool: True if continuous, else False
+    """
+    # TODO: generalize query via attribute continuousFeature (not existing yet!)
+    if isinstance(var, ContinuousInputFeature) or isinstance(
+        var, ContinuousOutputFeature
+    ):
+        return True
+    else:
+        False
