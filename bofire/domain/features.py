@@ -1,20 +1,16 @@
 from abc import abstractmethod
-from os import name
 from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from bofire.domain.desirability_functions import (
+    DesirabilityFunction, MaxIdentityDesirabilityFunction,
+    NoDesirabilityFunction)
+from bofire.domain.util import KeyModel, is_numeric, name2key
 from pydantic import Field, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conlist, conset
-
-from bofire.domain.desirability_functions import (
-    DesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-    NoDesirabilityFunction,
-)
-from bofire.domain.util import KeyModel, is_numeric, name2key
+from pydantic.types import confloat, conlist
 
 
 class Feature(KeyModel):
@@ -140,77 +136,7 @@ class InputFeature(Feature):
         pass
 
 
-class OutputFeature(Feature):
-    """Base class for all output features.
 
-    Attributes:
-        desirability_function (Desirability_function, optional): Desirability function of
-            the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
-    """
-
-    desirability_function: Optional[DesirabilityFunction] = Field(
-        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
-    )
-
-    def to_config(self) -> Dict:
-        """Generate serialized version of the feature.
-
-        Returns:
-            Dict: Serialized version of the feature as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            "key": self.key,
-            "desirability_function": self.desirability_function.to_config(),
-        }
-
-    def plot(
-        self,
-        lower: float,
-        upper: float,
-        df_data: Optional[pd.DataFrame] = None,
-        plot_details: bool = True,
-        line_options: Optional[Dict] = None,
-        scatter_options: Optional[Dict] = None,
-        label_options: Optional[Dict] = None,
-        title_options: Optional[Dict] = None,
-    ):
-        """Plot the assigned reward function.
-
-        Args:
-            lower (float): lower bound for the plot
-            upper (float): upper bound for the plot
-            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
-        """
-        line_options = line_options or {}
-        scatter_options = scatter_options or {}
-        label_options = label_options or {}
-        title_options = title_options or {}
-
-        line_options["color"] = line_options.get("color", "black")
-        scatter_options["color"] = scatter_options.get("color", "red")
-
-        x = np.linspace(lower, upper, 5000)
-        reward = self.desirability_function.__call__(x)
-        fig, ax = plt.subplots()
-        ax.plot(x, reward, **line_options)
-        # TODO: validate dataframe
-        if df_data is not None:
-            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
-            ax.scatter(
-                x_data,
-                self.desirability_function.__call__(x_data),
-                **scatter_options,
-            )
-        ax.set_title("Desirability %s" % self.key, **title_options)
-        ax.set_ylabel("Desirability", **label_options)
-        ax.set_xlabel(self.key, **label_options)
-        if plot_details:
-            ax = self.desirability_function.plot_details(ax=ax)
-        return fig, ax
-
-    def __str__(self) -> str:
-        return self.desirability_function.__class__.__name__
 
 
 class NumericalInputFeature(InputFeature):
@@ -795,6 +721,35 @@ class CategoricalDescriptorInputFeature(CategoricalInputFeature):
             values=df.values.tolist(),
         )
 
+class OutputFeature(Feature):
+    """Base class for all output features.
+
+    Attributes:
+        desirability_function (Desirability_function, optional): Desirability function of
+            the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
+    """
+
+    desirability_function: Optional[DesirabilityFunction] = Field(
+        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
+    )
+
+    def to_config(self) -> Dict:
+        """Generate serialized version of the feature.
+
+        Returns:
+            Dict: Serialized version of the feature as dictionary.
+        """
+        return {
+            "type": self.__class__.__name__,
+            "key": self.key,
+            "desirability_function": self.desirability_function.to_config(),
+        }
+
+    
+
+    def __str__(self) -> str:
+        return self.desirability_function.__class__.__name__
+
 
 class ContinuousOutputFeature(OutputFeature):
     """The base class for a continuous output feature
@@ -803,14 +758,334 @@ class ContinuousOutputFeature(OutputFeature):
         desirability_function (Desirability_function, optional): Desirability function of
             the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
     """
+    pass
+
+class DesirabilityOutputFeature(ContinuousOutputFeature):
+    w: confloat(gt=0, le=1)
+
+    @abstractmethod
+    def __call__(
+        self,
+        x: np.array,
+    ) -> np.array:
+        """Abstract method to define the call function for the class DesirabilityFunction
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: The desirability of the passed x values
+        """
+        pass
+
+    def plot(
+        self,
+        lower: float,
+        upper: float,
+        df_data: Optional[pd.DataFrame] = None,
+        plot_details: bool = True,
+        line_options: Optional[Dict] = None,
+        scatter_options: Optional[Dict] = None,
+        label_options: Optional[Dict] = None,
+        title_options: Optional[Dict] = None,
+    ):
+        """Plot the assigned reward function.
+
+        Args:
+            lower (float): lower bound for the plot
+            upper (float): upper bound for the plot
+            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
+        """
+        line_options = line_options or {}
+        scatter_options = scatter_options or {}
+        label_options = label_options or {}
+        title_options = title_options or {}
+
+        line_options["color"] = line_options.get("color", "black")
+        scatter_options["color"] = scatter_options.get("color", "red")
+
+        x = np.linspace(lower, upper, 5000)
+        reward = self.__call__(x)
+        fig, ax = plt.subplots()
+        ax.plot(x, reward, **line_options)
+        # TODO: validate dataframe
+        if df_data is not None:
+            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
+            ax.scatter(
+                x_data,
+                self..__call__(x_data),
+                **scatter_options,
+            )
+        ax.set_title("Desirability %s" % self.key, **title_options)
+        ax.set_ylabel("Desirability", **label_options)
+        ax.set_xlabel(self.key, **label_options)
+        if plot_details:
+            ax = self.desirability_function.plot_details(ax=ax)
+        return fig, ax
+
+    def plot_details(self, ax):
+        """
+        Args:
+            ax (matplotlib.axes.Axes): Matplotlib axes object
+
+        Returns:
+            matplotlib.axes.Axes: The object to be plotted
+        """
+        return ax
+
+
+class IdentityOutputFeature(DesirabilityOutputFeature):
+    """A desirability function returning the identity as reward.
+    The return can be scaled, when a lower and upper bound are provided.
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function
+        lower_bound (float, optional): Lower bound for normalizing the desirability function between zero and one. Defaults to zero.
+        upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
+    """
+
+    w: confloat(gt=0, le=1)
+    lower_bound: float = 0
+    upper_bound: float = 1
+
+    @root_validator(pre=False)
+    def validate_lower_upper(cls, values):
+        """Validation function to ensure that lower bound is always greater the upper bound
+
+        Args:
+            values (Dict): The attributes of the class
+
+        Raises:
+            ValueError: when a lower bound higher than the upper bound is passed
+
+        Returns:
+            Dict: The attributes of the class
+        """
+        if values["lower_bound"] > values["upper_bound"]:
+            raise ValueError(
+                f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
+            )
+        return values
+
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning a reward for passed x values
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: The identity as reward, might be normalized to the passed lower and upper bounds
+        """
+        return (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
+
+
+class MaxIdentityOutputFeature(IdentityOutputFeature):
+    """Child class from the identity function without modifications, since the parent class is already defined as maximization
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function
+        lower_bound (float, optional): Lower bound for normalizing the desirability function between zero and one. Defaults to zero.
+        upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
+    """
 
     pass
 
 
-class ContinuousOutputFeature_woDesFunc(ContinuousOutputFeature):
-    """A class for continuous output features which should not be optimized. Deprecated."""
+class MinIdentityOutputFeature(IdentityOutputFeature):
+    """Class returning the negative identity as reward.
 
-    desirability_function = NoDesirabilityFunction
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function
+        lower_bound (float, optional): Lower bound for normalizing the desirability function between zero and one. Defaults to zero.
+        upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
+    """
+
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning a reward for passed x values
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: The negative identity as reward, might be normalized to the passed lower and upper bounds
+        """
+        return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
+
+
+class DeltaIdentityDesirabilityFunction(IdentityOutputFeature):
+    """Class returning the difference between a reference value and identity as reward
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function
+        ref_point (float): Reference value.
+        scale (float, optional): Scaling factor for the difference. Defaults to one.
+    """
+
+    ref_point: float
+    scale: float = 1
+
+    def __call__(self, x: np.ndarray) -> np.array:
+        """The call function returning a reward for passed x values
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: The difference between reference and the x value as reward, might be scaled with a passed scaling value
+        """
+        return (self.ref_point - x) * self.scale
+
+
+class SigmoidOutputFeature(DesirabilityOutputFeature):
+    """Base class for all sigmoid shaped desirability functions
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function.
+        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
+        tp (float): Turning point of the sigmoid function.
+    """
+
+    steepness: confloat(gt=0)
+    tp: float
+
+
+class MaxSigmoidOutputFeature(SigmoidOutputFeature):
+    """Class for a maximizing sigmoid desirability function
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function.
+        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
+        tp (float): Turning point of the sigmoid function.
+
+    """
+
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning a sigmoid shaped reward for passed x values.
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+        """
+        return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+
+
+class MinSigmoidOutputFeature(SigmoidOutputFeature):
+    """Class for a minimizing a sigmoid desirability function
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function.
+        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
+        tp (float): Turning point of the sigmoid function.
+    """
+
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning a sigmoid shaped reward for passed x values.
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+        """
+        return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+
+
+class ConstantOutputFeature(DesirabilityOutputFeature):
+    """Constant desirability function to allow constrained output features which should not be optimized
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function.
+    """
+
+    w: float
+
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning the fixed value as reward
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: An array of passed constants with the shape of the passed x values array.
+        """
+        return np.ones(x.shape) * self.w
+
+
+class AbstractTargetOutputFeature(DesirabilityOutputFeature):
+    target_value: float
+    tolerance: confloat(ge=0)
+
+    def plot_details(self, ax):
+        """Plot function highlighting the tolerance area of the desirability function
+
+        Args:
+            ax (matplotlib.axes.Axes): Matplotlib axes object
+
+        Returns:
+            matplotlib.axes.Axes: The object to be plotted
+        """
+        ax.axvline(self.target_value, color="black")
+        ax.axvspan(
+            self.target_value - self.tolerance,
+            self.target_value + self.tolerance,
+            color="gray",
+            alpha=0.5,
+        )
+        return ax
+
+
+class CloseToTargetOutputFeature(AbstractTargetOutputFeature):
+    exponent: float
+
+    def __call__(self, x: np.array) -> np.array:
+        return (
+            x - self.target
+        ).abs() ** self.exponent - self.tolerance**self.exponent
+
+
+class TargetOutputFeature(AbstractTargetOutputFeature):
+    """Class for desirability functions for optimizing towards a target value
+
+    Attributes:
+        w (float): float between zero and one for weighting the desirability function.
+        target_value (float): target value that should be reached.
+        tolerance (float): Tolerance for reaching the target. Has to be greater than zero.
+        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
+
+    """
+
+    steepness: confloat(gt=0)
+
+    def __call__(self, x: np.array) -> np.array:
+        """The call function returning a reward for passed x values.
+
+        Args:
+            x (np.array): An array of x values
+
+        Returns:
+            np.array: An array of reward values calculated by the product of two sigmoidal shaped functions resulting in a maximum at the target value.
+        """
+        return (
+            1
+            / (
+                1
+                + np.exp(
+                    -1 * self.steepness * (x - (self.target_value - self.tolerance))
+                )
+            )
+            * (
+                1
+                - 1
+                / (
+                    1.0
+                    + np.exp(
+                        -1 * self.steepness * (x - (self.target_value + self.tolerance))
+                    )
+                )
+            )
+        )
 
 
 # A helper constant for the default value of the weight parameter
@@ -821,23 +1096,12 @@ FEATURE_ORDER = {
     CategoricalInputFeature: 4,
     CategoricalDescriptorInputFeature: 5,
     ContinuousOutputFeature: 6,
-    ContinuousOutputFeature_woDesFunc: 7,
+    MaxIdentityOutputFeature: 7,
+    MinIdentityOutputFeature: 7,
+    DeltaIdentityDesirabilityFunction: 7,
+    MaxSigmoidOutputFeature: 7,
+    MinSigmoidOutputFeature: 7,
+    ConstantOutputFeature: 7,
+    CloseToTargetOutputFeature: 7,
+    TargetOutputFeature: 7,
 }
-
-## TODO: REMOVE THIS --> it is not needed!
-def is_continuous(var: Feature) -> bool:
-    """Checks if Feature is continous
-
-    Args:
-        var (Feature): Feature to be checked
-
-    Returns:
-        bool: True if continuous, else False
-    """
-    # TODO: generalize query via attribute continuousFeature (not existing yet!)
-    if isinstance(var, ContinuousInputFeature) or isinstance(
-        var, ContinuousOutputFeature
-    ):
-        return True
-    else:
-        False
