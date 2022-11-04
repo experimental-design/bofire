@@ -2,7 +2,6 @@ import json
 from typing import Dict, Optional
 
 import pandas as pd
-
 from bofire.domain import Domain
 from bofire.domain.constraints import (
     LinearEqualityConstraint,
@@ -11,18 +10,15 @@ from bofire.domain.constraints import (
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
-from bofire.domain.desirability_functions import (
-    CloseToTargetDesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-    MinIdentityDesirabilityFunction,
-    TargetDesirabilityFunction,
-)
 from bofire.domain.features import (
     CategoricalInputFeature,
+    CloseToTargetOutputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
     DiscreteInputFeature,
     InputFeature,
+    MaxIdentityOutputFeature,
+    MinIdentityOutputFeature,
     OutputFeature,
 )
 
@@ -44,11 +40,12 @@ def input2feature(config: Dict):
 
 def objective2feature(config: Dict):
     if config["type"] == "minimize":
-        d = MinIdentityDesirabilityFunction(w=1.0)
-    elif config["type"] == "maximize":
-        d = MaxIdentityDesirabilityFunction(w=1.0)
-    elif config["type"] == "close-to-target":
-        d = CloseToTargetDesirabilityFunction(
+        return MinIdentityOutputFeature(key=config["name"], w=1.0)
+    if config["type"] == "maximize":
+        return MaxIdentityOutputFeature(key=config["name"], w=1.0)
+    if config["type"] == "close-to-target":
+        return CloseToTargetOutputFeature(
+            key=config["name"],
             w=1,
             target_value=config["target"],
             exponent=config.get("tolerance", 1.0),
@@ -56,7 +53,6 @@ def objective2feature(config: Dict):
         )
     else:
         raise ValueError(f"Unknown objective type {config['type']}.")
-    return ContinuousOutputFeature(key=config["name"], desirability_function=d)
 
 
 def constraint2constraint(config: Dict, input_feature_keys: Optional[list] = None):
