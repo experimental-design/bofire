@@ -5,5 +5,5 @@ BoFire is a **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**ea
 pip install bofire
 ```
 
-More information to follow soon. If you want to contribute see the [CONTRIBUTING.md](https://github.com/experimental-design/bofire/blob/main/CONTRIBUTING.md)
+More information to follow soon. If you want to contribute see [CONTRIBUTING.md](https://github.com/experimental-design/bofire/blob/main/CONTRIBUTING.md).
   

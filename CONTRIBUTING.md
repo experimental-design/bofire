@@ -26,33 +26,13 @@ You have at least two options to install dependencies and run unit tests. In bot
   .venv/Scripts/activate.bat
   ```
 
-#### Option 1 - `setup.py`
 
-Using the `setup.py` you can install all dependencies and BoFire in editable mode via
+You can install all dependencies and BoFire in editable mode via
 
 ```
 pip install -e .[testing]
 ```
 Afterwards, you can check that the tests are successful vie
-```
-pytest tests/
-```
-#### Option 2 - `requirements.txt`
-
-Install the dependencies via
-```
-pip install -r requirements.txt
-```
-In contrast to Option 1 Since BoFire you have not installed BoFire. Hence, you have to add it to your `PYTHONPATH` environment variable such that Python can find BoFire.
-- Linux
-  ```bash
-  export PYTHONPATH=$(pwd):$PYTHONPATH
-  ```
-- Windows
-  ```bat
-  set PYTHONPATH=%cd%;%PYTHONPATH%
-  ```
-Run unit tests via
 ```
 pytest tests/
 ```
