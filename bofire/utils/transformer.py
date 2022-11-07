@@ -1,10 +1,10 @@
 import logging
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field
 from sklearn.preprocessing import (
     MinMaxScaler,
     OneHotEncoder,
@@ -60,7 +60,7 @@ class Transformer(BaseModel):
     Parameters:
         is_fitted: bool
         features2transformedFeatures: Dict
-        encoders: Dict  
+        encoders: Dict
 
     """
 
@@ -208,7 +208,10 @@ class Transformer(BaseModel):
                     scaler_type=self.scale_inputs,
                 )
 
-            elif self.categorical_encoding == None and self.descriptor_encoding != None:
+            elif (
+                self.categorical_encoding is None
+                and self.descriptor_encoding is not None
+            ):
                 logging.warning(
                     "Descriptors should be encoded as categoricals. However, categoricals are selected to be not transformed. Thus, I will skip categoricals with descriptors as well."
                 )
@@ -255,7 +258,7 @@ class Transformer(BaseModel):
             transformed_experiment (pd.DataFrame): the transformed input data
         """
 
-        assert self.is_fitted == True, "Encoders are not initialized"
+        assert self.is_fitted is True, "Encoders are not initialized"
         transformed_experiment = experiment.copy()
 
         for feature in self.get_features_to_be_transformed():
@@ -340,7 +343,10 @@ class Transformer(BaseModel):
                         feature.key
                     ].transform(values)
 
-            elif self.categorical_encoding == None and self.descriptor_encoding != None:
+            elif (
+                self.categorical_encoding is None
+                and self.descriptor_encoding is not None
+            ):
                 logging.warning(
                     "Descriptors should be encoded as categoricals. However, categoricals are selected to be not transformed. Thus, I will skip categoricals with descriptors as well."
                 )
@@ -402,7 +408,7 @@ class Transformer(BaseModel):
             candidate (pd.DataFrame): backtransformed input data
         """
 
-        assert self.is_fitted == True, "Encoders are not initialized"
+        assert self.is_fitted is True, "Encoders are not initialized"
 
         # Determine input and output columns in dataset
         candidate = transformed_candidate.copy()
@@ -465,7 +471,10 @@ class Transformer(BaseModel):
             elif isinstance(feature, ContinuousInputFeature):
                 candidate = self.un_scale(feature.key, candidate)
 
-            elif self.categorical_encoding == None and self.descriptor_encoding != None:
+            elif (
+                self.categorical_encoding is None
+                and self.descriptor_encoding is not None
+            ):
                 pass
 
             else:
@@ -485,7 +494,7 @@ class Transformer(BaseModel):
     def get_features_to_be_transformed(self):
         features = self.domain.get_features(InputFeature)
 
-        if self.categorical_encoding == None:
+        if self.categorical_encoding is None:
 
             # removes all categorical features (incl. the descriptor ones)
             [
@@ -499,7 +508,7 @@ class Transformer(BaseModel):
                 features + features2
             )  # TODO: change, when Benjamin implemented new get_feature
 
-        if self.descriptor_encoding == None:
+        if self.descriptor_encoding is None:
             [
                 features.remove(feat)
                 for feat in self.domain.get_features(CategoricalDescriptorInputFeature)

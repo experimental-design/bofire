@@ -1,4 +1,4 @@
-#%%%
+# %%%
 from opti.problems.datasets import Cake
 
 from bofire.mappers.opti import problem2domain

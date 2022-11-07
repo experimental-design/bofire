@@ -1,6 +1,5 @@
 import random
 import uuid
-from typing import List
 
 import pytest
 from pydantic.error_wrappers import ValidationError

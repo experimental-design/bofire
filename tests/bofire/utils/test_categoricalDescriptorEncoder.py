@@ -1,16 +1,10 @@
 import re
-from math import nan
 
 import numpy as np
 import pandas as pd
 import pytest
 from sklearn.exceptions import NotFittedError
-from sklearn.utils import is_scalar_nan
-from sklearn.utils._testing import (
-    _convert_container,
-    assert_allclose,
-    assert_array_equal,
-)
+from sklearn.utils._testing import assert_array_equal
 
 from bofire.utils.categoricalDescriptorEncoder import CategoricalDescriptorEncoder
 

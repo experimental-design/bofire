@@ -260,7 +260,7 @@ def test_feature_serialize(cls, spec):
 )
 def test_invalid_feature_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
-        res = cls(**spec)
+        _ = cls(**spec)
 
 
 @pytest.mark.parametrize(

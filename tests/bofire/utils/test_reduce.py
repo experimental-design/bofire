@@ -1,21 +1,15 @@
-import random
-
 import numpy as np
-import pandas as pd
 import pytest
 
 from bofire.domain import Domain
 from bofire.domain.constraints import (
-    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    NChooseKConstraint,
 )
 from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
-    Feature,
 )
 from bofire.utils.reduce import (
     check_domain_for_reduction,
@@ -68,7 +62,7 @@ def test_check_domain_for_reduction():
             )
         ],
     )
-    assert check_domain_for_reduction(domain) == True
+    assert check_domain_for_reduction(domain) is True
 
 
 def test_check_existence_of_solution():

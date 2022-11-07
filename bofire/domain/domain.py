@@ -16,7 +16,7 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
+from bofire.domain.util import BaseModel, filter_by_class, is_numeric
 
 
 class Domain(BaseModel):
@@ -766,7 +766,7 @@ class Domain(BaseModel):
                         f"not all values of output feature `{key}` are numerical"
                     )
         # check if all constraints are fulfilled
-        if self.is_fulfilled(candidates).all() == False:
+        if self.is_fulfilled(candidates).all() is False:
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))
