@@ -14,13 +14,7 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.util import (
-    BaseModel,
-    filter_by_class,
-    filter_by_class_attribute,
-    is_categorical,
-    is_numeric,
-)
+from bofire.domain.util import BaseModel, filter_by_class, is_numeric
 from pydantic import Field, validator
 
 
@@ -224,6 +218,7 @@ class Domain(BaseModel):
             includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
             excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
             exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+            by_attribute (str, optional): If set it is filtered by the attribute specified in by `by_attribute`. Defaults to None.
 
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
@@ -253,6 +248,7 @@ class Domain(BaseModel):
             includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
             excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
             exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+            by_attribute (str, optional): If set it is filtered by the attribute specified in by `by_attribute`. Defaults to None.
 
         Returns:
             List[str]: List of feature keys fitting to the passed requirements.
