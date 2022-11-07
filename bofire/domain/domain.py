@@ -4,8 +4,6 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
-
 from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
 from bofire.domain.features import (
     CategoricalInputFeature,
@@ -16,7 +14,14 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.util import BaseModel, filter_by_class, is_categorical, is_numeric
+from bofire.domain.util import (
+    BaseModel,
+    filter_by_class,
+    filter_by_class_attribute,
+    is_categorical,
+    is_numeric,
+)
+from pydantic import Field, validator
 
 
 class Domain(BaseModel):
@@ -252,6 +257,39 @@ class Domain(BaseModel):
         return [
             f.key
             for f in self.get_features(
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
+            )
+        ]
+
+    def get_features_by_desirabilities(
+        self,
+        includes: Union[Type, List[Type]] = Feature,
+        excludes: Union[Type, List[Type]] = None,
+        exact: bool = False,
+    ) -> List[ContinuousOutputFeature]:
+        return list(
+            sorted(
+                filter_by_class_attribute(
+                    self.get_features(ContinuousOutputFeature),
+                    attribute="desirability_function",
+                    includes=includes,
+                    excludes=excludes,
+                    exact=exact,
+                )
+            )
+        )
+
+    def get_feature_keys_by_desirabilities(
+        self,
+        includes: Union[Type, List[Type]] = Feature,
+        excludes: Union[Type, List[Type]] = None,
+        exact: bool = False,
+    ) -> List[str]:
+        return [
+            f.key
+            for f in self.get_features_by_desirabilities(
                 includes=includes,
                 excludes=excludes,
                 exact=exact,
