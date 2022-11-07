@@ -216,6 +216,7 @@ class Domain(BaseModel):
         includes: Union[Type, List[Type]] = Feature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
+        by_attribute: Optional[str] = None,
     ) -> List[Feature]:
         """get features of the domain
 
@@ -234,6 +235,7 @@ class Domain(BaseModel):
                     includes=includes,
                     excludes=excludes,
                     exact=exact,
+                    by_attribute=by_attribute,
                 )
             )
         )
@@ -243,6 +245,7 @@ class Domain(BaseModel):
         includes: Union[Type, List[Type]] = Feature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
+        by_attribute: Optional[str] = None,
     ) -> List[str]:
         """Method to get feature keys of the domain
 
@@ -260,39 +263,7 @@ class Domain(BaseModel):
                 includes=includes,
                 excludes=excludes,
                 exact=exact,
-            )
-        ]
-
-    def get_features_by_desirabilities(
-        self,
-        includes: Union[Type, List[Type]] = Feature,
-        excludes: Union[Type, List[Type]] = None,
-        exact: bool = False,
-    ) -> List[ContinuousOutputFeature]:
-        return list(
-            sorted(
-                filter_by_class_attribute(
-                    self.get_features(ContinuousOutputFeature),
-                    attribute="desirability_function",
-                    includes=includes,
-                    excludes=excludes,
-                    exact=exact,
-                )
-            )
-        )
-
-    def get_feature_keys_by_desirabilities(
-        self,
-        includes: Union[Type, List[Type]] = Feature,
-        excludes: Union[Type, List[Type]] = None,
-        exact: bool = False,
-    ) -> List[str]:
-        return [
-            f.key
-            for f in self.get_features_by_desirabilities(
-                includes=includes,
-                excludes=excludes,
-                exact=exact,
+                by_attribute=by_attribute,
             )
         ]
 

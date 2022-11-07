@@ -1,4 +1,4 @@
-from typing import List, Type, Union
+from typing import List, Optional, Type, Union
 
 import pandas as pd
 from pydantic import BaseModel as _BaseModel
@@ -47,6 +47,7 @@ def filter_by_class(
     includes: Union[Type, List[Type]],
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
+    by_attribute: Optional[str] = None,
 ) -> List:
     if not isinstance(includes, list):
         includes = [includes]
@@ -59,6 +60,23 @@ def filter_by_class(
         raise ValueError("no filter provided")
     if len([x for x in includes if x in excludes]) > 0:
         raise ValueError("includes and excludes overlap")
+
+    if by_attribute is not None:
+        data = [d for d in data if hasattr(d, by_attribute)]
+
+        if exact:
+            return [
+                d
+                for d in data
+                if type(getattr(d, by_attribute)) in includes
+                and type(getattr(d, by_attribute)) not in excludes
+            ]
+        return [
+            d
+            for d in data
+            if isinstance(type(getattr(d, by_attribute)), tuple(includes))
+            and not isinstance(type(getattr(d, by_attribute)), tuple(excludes))
+        ]
 
     if exact:
         return [d for d in data if type(d) in includes and type(d) not in excludes]
@@ -66,38 +84,4 @@ def filter_by_class(
         d
         for d in data
         if isinstance(d, tuple(includes)) and not isinstance(d, tuple(excludes))
-    ]
-
-
-def filter_by_class_attribute(
-    data: List,
-    attribute: str,
-    includes: Union[Type, List[Type]],
-    excludes: Union[Type, List[Type]] = None,
-    exact: bool = False,
-) -> List:
-    if not isinstance(includes, list):
-        includes = [includes]
-    if excludes is None:
-        excludes = []
-    if not isinstance(excludes, list):
-        excludes = [excludes]
-
-    if len(includes) == 0:
-        raise ValueError("no filter provided")
-    if len([x for x in includes if x in excludes]) > 0:
-        raise ValueError("includes and excludes overlap")
-
-    if exact:
-        return [
-            d
-            for d in data
-            if type(getattr(d, attribute)) in includes
-            and type(getattr(d, attribute)) not in excludes
-        ]
-    return [
-        d
-        for d in data
-        if isinstance(type(getattr(d, attribute)), tuple(includes))
-        and not isinstance(type(getattr(d, attribute)), tuple(excludes))
     ]
