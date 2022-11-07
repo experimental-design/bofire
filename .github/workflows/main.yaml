@@ -1,0 +1,27 @@
+name: Tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Run black, flake8 and isort
+        run: |
+          pip3 install black isort flake8
+          black --check opti test
+          flake8 --verbose opti test
+          isort . --check-only --verbose
+      - name: Run tests
+        run: |
+          pip install .[tests]
+          pytest

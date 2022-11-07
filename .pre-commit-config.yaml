@@ -1,0 +1,27 @@
+repos:
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+        name: black
+        stages: [commit]
+        entry: black
+        types: [python]
+  - repo: https://gitlab.com/pycqa/flake8
+    rev: 5.0.4
+    hooks:
+      - id: flake8
+        name: flake8
+        entry: flake8
+        types: [python]
+        require_serial: true
+  - repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        name: isort
+        stages: [commit]
+        entry: isort
+        types: [python]
+
+exclude: "README.md"
