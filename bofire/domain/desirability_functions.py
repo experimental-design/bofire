@@ -17,15 +17,15 @@ class DesirabilityFunction(BaseModel):
     @abstractmethod
     def __call__(
         self,
-        x: np.array,
-    ) -> np.array:
+        x: np.ndarray,
+    ) -> np.ndarray:
         """Abstract method to define the call function for the class DesirabilityFunction
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: The desirability of the passed x values
+            np.ndarray: The desirability of the passed x values
         """
         pass
 
@@ -81,11 +81,11 @@ class NoDesirabilityFunction(DesirabilityFunction):
         DesirabilityFunction (DesirabilityFunction): The base class for all desirability functions
     """
 
-    def __call__(self, x: np.array) -> None:
+    def __call__(self, x: np.ndarray) -> None:
         """Dummy call function returning None
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
             None: No reward is returned
@@ -126,14 +126,14 @@ class IdentityDesirabilityFunction(DesirabilityFunction):
             )
         return values
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a reward for passed x values
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: The identity as reward, might be normalized to the passed lower and upper bounds
+            np.ndarray: The identity as reward, might be normalized to the passed lower and upper bounds
         """
         return (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
@@ -159,14 +159,14 @@ class MinIdentityDesirabilityFunction(IdentityDesirabilityFunction):
         upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
     """
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a reward for passed x values
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: The negative identity as reward, might be normalized to the passed lower and upper bounds
+            np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds
         """
         return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
@@ -183,14 +183,14 @@ class DeltaIdentityDesirabilityFunction(IdentityDesirabilityFunction):
     ref_point: float
     scale: float = 1
 
-    def __call__(self, x: np.ndarray) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a reward for passed x values
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: The difference between reference and the x value as reward, might be scaled with a passed scaling value
+            np.ndarray: The difference between reference and the x value as reward, might be scaled with a passed scaling value
         """
         return (self.ref_point - x) * self.scale
 
@@ -219,14 +219,14 @@ class MaxSigmoidDesirabilityFunction(SigmoidDesirabilityFunction):
 
     """
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
@@ -240,14 +240,14 @@ class MinSigmoidDesirabilityFunction(SigmoidDesirabilityFunction):
         tp (float): Turning point of the sigmoid function.
     """
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
         """
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
@@ -261,14 +261,14 @@ class ConstantDesirabilityFunction(DesirabilityFunction):
 
     w: float
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning the fixed value as reward
 
         Args:
-            x (np.array): An array of x values
+            x (np.ndarray): An array of x values
 
         Returns:
-            np.array: An array of passed constants with the shape of the passed x values array.
+            np.ndarray: An array of passed constants with the shape of the passed x values array.
         """
         return np.ones(x.shape) * self.w
 
@@ -300,7 +300,7 @@ class AbstractTargetDesirabilityFunction(DesirabilityFunction):
 class CloseToTargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
     exponent: float
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         return (
             x - self.target
         ).abs() ** self.exponent - self.tolerance**self.exponent
@@ -319,7 +319,7 @@ class TargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
 
     steepness: confloat(gt=0)
 
-    def __call__(self, x: np.array) -> np.array:
+    def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a reward for passed x values.
 
         Args:

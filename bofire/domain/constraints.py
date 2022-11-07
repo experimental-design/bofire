@@ -150,7 +150,7 @@ class LinearEqualityConstraint(LinearConstraint):
     #     else:
     #         pd.Series(fulfilled, index=experiments.index)
 
-    def is_fulfilled(self, experiments: pd.DataFrame) -> np.array:
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
 
     def __str__(self) -> str:
