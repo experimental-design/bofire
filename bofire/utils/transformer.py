@@ -50,8 +50,8 @@ class Transformer(BaseModel):
     domain: Domain
     descriptor_encoding: Optional[DescriptorEncodingEnum]
     categorical_encoding: Optional[CategoricalEncodingEnum]
-    scale_inputs: ScalerEnum = None
-    scale_outputs: ScalerEnum = None
+    scale_inputs: Optional[ScalerEnum] = None
+    scale_outputs: Optional[ScalerEnum] = None
     is_fitted: bool = False
     features2transformedFeatures: Dict = Field(default_factory=lambda: {})
     encoders: Dict = Field(default_factory=lambda: {})
@@ -522,8 +522,8 @@ class Transformer(BaseModel):
         experiment: pd.DataFrame,
         var_min: float = np.nan,
         var_max: float = np.nan,
-        scaler_type: ScalerEnum = None,
-    ) -> pd.DataFrame:
+        scaler_type: Optional[ScalerEnum] = None,
+    ) -> "Transformer":  # TODO: switch to Self some time in the future which is available in Python 3.11
         """fitting the chosen scaler type to provided input data
 
         Args:
