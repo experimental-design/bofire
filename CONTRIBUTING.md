@@ -11,12 +11,15 @@ For development of BoFire, we recommend to use a virtual environment, e.g., [ven
   # activate
   source .venv/bin/activate
   ```
+
 - Windows
   ```bat
+  python -m venv .venv
   .venv/Scripts/activate.bat
   ```
+  
 ### Dependencies and Tests
-You have at least two options to install dependencies and run unit tests. In both cases, you need to activate your environment first.
+To install dependencies and run unit tests, activate your environment first.
 - Linux
   ```bash
   source .venv/bin/activate
@@ -32,7 +35,15 @@ You can install all dependencies and BoFire in editable mode via
 ```
 pip install -e .[testing]
 ```
-Afterwards, you can check that the tests are successful vie
+Afterwards, you can check that the tests are successful via
 ```
 pytest tests/
+```
+
+### Pre-commit Hooks
+We use [Black](https://github.com/psf/black), [Flake8](https://flake8.pycqa.org/en/latest/), and [Isort](https://github.com/PyCQA/isort) as pre-commit hooks. Further, we use corresponding checks in the Github pipeline. To install the
+pre-commit hooks defined in `.pre-commit-config.yaml`, you can proceed as follows.
+```
+pip install pre-commit
+pre-commit install
 ```

@@ -15,7 +15,6 @@ from bofire.domain.desirability_functions import (
     CloseToTargetDesirabilityFunction,
     MaxIdentityDesirabilityFunction,
     MinIdentityDesirabilityFunction,
-    TargetDesirabilityFunction,
 )
 from bofire.domain.features import (
     CategoricalInputFeature,

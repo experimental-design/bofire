@@ -1,13 +1,12 @@
 from abc import abstractmethod
-from os import name
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conlist, conset
+from pydantic.types import conlist
 
 from bofire.domain.desirability_functions import (
     DesirabilityFunction,
@@ -823,6 +822,7 @@ FEATURE_ORDER = {
     ContinuousOutputFeature: 6,
     ContinuousOutputFeature_woDesFunc: 7,
 }
+
 
 ## TODO: REMOVE THIS --> it is not needed!
 def is_continuous(var: Feature) -> bool:

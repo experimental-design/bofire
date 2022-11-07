@@ -84,9 +84,9 @@ def generate_experiments(
     include_labcode: bool = False,
 ):
     if only_allowed_categories:
-        assert force_all_categories == False
+        assert force_all_categories is False
     if force_all_categories:
-        assert only_allowed_categories == False
+        assert only_allowed_categories is False
     experiments = pd.DataFrame.from_dict(
         [
             {

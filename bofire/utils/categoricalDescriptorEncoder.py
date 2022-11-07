@@ -222,7 +222,7 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         np.cumsum(indptr[1:], out=indptr[1:])
         data = np.ones(indptr[-1])
 
-        X_tr_sparse = sparse.csr_matrix(
+        _ = sparse.csr_matrix(
             (data, indices, indptr),
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
