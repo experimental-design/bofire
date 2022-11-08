@@ -1,6 +1,6 @@
 import itertools
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -240,7 +240,7 @@ class Domain(BaseModel):
             )
         )
 
-    TDesirability = TypeVar("TDesirability", bound=DesirabilityFunction)
+    TDesirability = Type[DesirabilityFunction]
 
     def get_outputs_by_desirability(
         self,
