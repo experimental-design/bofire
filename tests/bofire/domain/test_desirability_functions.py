@@ -6,7 +6,6 @@ from bofire.domain.desirability_functions import (
     ConstantDesirabilityFunction,
     DeltaIdentityDesirabilityFunction,
     DesirabilityFunction,
-    IdentityDesirabilityFunction,
     MaxIdentityDesirabilityFunction,
     MaxSigmoidDesirabilityFunction,
     MinIdentityDesirabilityFunction,
@@ -199,4 +198,4 @@ def test_desirability_function_serialize(cls, spec):
 )
 def test_invalid_desirability_function_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
-        res = cls(**spec)
+        _ = cls(**spec)

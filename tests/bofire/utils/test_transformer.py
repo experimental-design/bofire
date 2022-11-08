@@ -6,13 +6,12 @@ import pytest
 from pandas.testing import assert_frame_equal
 from sklearn.utils._testing import assert_array_equal
 
-from bofire.domain.domain import Domain, DomainError
+from bofire.domain.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
-    InputFeature,
 )
 from bofire.utils.transformer import (
     CategoricalEncodingEnum,

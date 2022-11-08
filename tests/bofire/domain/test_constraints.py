@@ -123,7 +123,7 @@ def test_constraint_serialize(cls, spec):
 )
 def test_invalid_constraint_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
-        res = cls(**spec)
+        _ = cls(**spec)
 
 
 def test_from_greater_equal():

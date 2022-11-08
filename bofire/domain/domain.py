@@ -4,6 +4,8 @@ from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import Field, validator
+
 from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
 from bofire.domain.features import (
     CategoricalInputFeature,
@@ -15,7 +17,6 @@ from bofire.domain.features import (
     OutputFeature,
 )
 from bofire.domain.util import BaseModel, filter_by_class, is_numeric
-from pydantic import Field, validator
 
 
 class Domain(BaseModel):
@@ -771,7 +772,7 @@ class Domain(BaseModel):
                         f"not all values of output feature `{key}` are numerical"
                     )
         # check if all constraints are fulfilled
-        if self.is_fulfilled(candidates).all() == False:
+        if self.is_fulfilled(candidates).all() is False:
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))

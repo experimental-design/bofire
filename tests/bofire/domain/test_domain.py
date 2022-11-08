@@ -4,6 +4,10 @@ from math import nan
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
+from pydantic.error_wrappers import ValidationError
+from pydantic.types import constr
+
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
 from bofire.domain.desirability_functions import (
     DesirabilityFunction,
@@ -21,9 +25,6 @@ from bofire.domain.features import (
     OutputFeature,
 )
 from bofire.domain.util import BaseModel
-from pandas.testing import assert_frame_equal
-from pydantic.error_wrappers import ValidationError
-from pydantic.types import constr
 
 
 def test_empty_domain():
@@ -464,7 +465,7 @@ def test_preprocess_experiments_all_valid_outputs(
 
 def test_preprocess_experiments_all_valid_outputs_invalid():
     with pytest.raises(AssertionError):
-        experiments = domain.preprocess_experiments_all_valid_outputs(
+        _ = domain.preprocess_experiments_all_valid_outputs(
             data, output_feature_keys=["x1"]
         )
 
