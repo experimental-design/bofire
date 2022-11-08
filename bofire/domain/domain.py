@@ -17,7 +17,12 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.util import BaseModel, filter_by_class, is_numeric
+from bofire.domain.util import (
+    BaseModel,
+    filter_by_attribute,
+    filter_by_class,
+    is_numeric,
+)
 
 
 class Domain(BaseModel):
@@ -246,21 +251,13 @@ class Domain(BaseModel):
         if self.output_features is None:
             return None
         else:
-            filtered = filter_by_class(
-                [
-                    (i, of.desirability_function)
-                    for i, of in enumerate(self.output_features)
-                ],
-                includes=includes,
-                excludes=excludes,
-                exact=exact,
-                key=lambda idx_desi_pair: idx_desi_pair[1],
+            return filter_by_attribute(
+                self.output_features,
+                lambda of: of.desirability_function,
+                includes,
+                excludes,
+                exact,
             )
-            if len(filtered) == 0:
-                return filtered
-            else:
-                out_indices, _ = zip(*filtered)
-                return list(sorted([self.output_features[i] for i in out_indices]))
 
     def get_output_keys_by_desirability(
         self,

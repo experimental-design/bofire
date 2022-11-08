@@ -42,6 +42,27 @@ def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
 
+def filter_by_attribute(
+    data: List,
+    attribute_getter: Callable[[Type], Any],
+    includes: Union[Type, List[Type]],
+    excludes: Union[Type, List[Type]] = None,
+    exact: bool = False,
+):
+    filtered = filter_by_class(
+        [(i, attribute_getter(d)) for i, d in enumerate(data)],
+        includes=includes,
+        excludes=excludes,
+        exact=exact,
+        key=lambda idx_desi_pair: idx_desi_pair[1],
+    )
+    if len(filtered) == 0:
+        return filtered
+    else:
+        out_indices, _ = zip(*filtered)
+        return list(sorted([data[i] for i in out_indices]))
+
+
 def filter_by_class(
     data: List,
     includes: Union[Type, List[Type]],
