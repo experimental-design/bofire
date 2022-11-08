@@ -49,8 +49,16 @@ def filter_by_attribute(
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
 ):
+    data_with_attr = []
+    for d in data:
+        try:
+            attribute_getter(d)
+            data_with_attr.append(d)
+        except AttributeError:
+            pass
+
     filtered = filter_by_class(
-        [(i, attribute_getter(d)) for i, d in enumerate(data)],
+        [(i, attribute_getter(d)) for i, d in enumerate(data_with_attr)],
         includes=includes,
         excludes=excludes,
         exact=exact,
@@ -60,7 +68,7 @@ def filter_by_attribute(
         return filtered
     else:
         out_indices, _ = zip(*filtered)
-        return list(sorted([data[i] for i in out_indices]))
+        return [data_with_attr[i] for i in out_indices]
 
 
 def filter_by_class(

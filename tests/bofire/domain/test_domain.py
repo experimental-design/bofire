@@ -658,7 +658,7 @@ def test_get_features(domain, FeatureType, exact, expected):
         (domain, TargetDesirabilityFunction, False, [of1, of2]),
     ],
 )
-def test_get_by_desirability(
+def test_get_outputs_by_desirability(
     domain: Domain, DesirabilityType: DesirabilityFunction, exact, expected
 ):
     assert (
@@ -698,7 +698,7 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
         (domain, DesirabilityFunction, True, []),
     ],
 )
-def test_get_key_by_desirability(
+def test_get_output_keys_by_desirability(
     domain: Domain, DesirabilityType: DesirabilityFunction, exact, expected
 ):
     assert (

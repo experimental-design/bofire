@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from bofire.domain.util import filter_by_class
+from bofire.domain.util import filter_by_attribute, filter_by_class
 
 
 class A:
@@ -136,6 +136,27 @@ def test_filter_by_class(data, includes, expected):
 @pytest.mark.parametrize(
     "data,includes,expected",
     [
+        (data2, [B], [c, c1, c11, c12, c2, c21, c211]),
+        (data, [B], []),
+        (data, [B], []),
+        (data2, [B, B1, B2], [c, c1, c11, c12, c2, c21, c211]),
+        (data2, [B1], [c1, c11, c12]),
+        (data2, [B11], [c11]),
+        (data2, [B2], [c2, c21, c211]),
+    ],
+)
+def test_filter_by_attribute(data, includes, expected):
+    res = filter_by_attribute(
+        data, attribute_getter=lambda of: of.attribute, includes=includes
+    )
+    print("got:", [type(x.attribute).__name__ for x in res])
+    print("expected:", [type(x.attribute).__name__ for x in expected])
+    assert set(res) == set(expected)
+
+
+@pytest.mark.parametrize(
+    "data,includes,expected",
+    [
         (data, [A], [a]),
         (data, [A, A1, A21], [a, a1, a21]),
         (data, [A1], [a1]),
@@ -147,6 +168,25 @@ def test_filter_by_class_exact(data, includes, expected):
     res = filter_by_class(data, includes, exact=True)
     print("got:", [type(x).__name__ for x in res])
     print("expected:", [type(x).__name__ for x in expected])
+    assert set(res) == set(expected)
+
+
+@pytest.mark.parametrize(
+    "data,includes,expected",
+    [
+        (data2, [B], [c]),
+        (data2, [B, B1, B21], [c, c1, c21]),
+        (data2, [B1], [c1]),
+        (data2, [B11], [c11]),
+        (data2, [B2], [c2]),
+    ],
+)
+def test_filter_by_attribute_exact(data, includes, expected):
+    res = filter_by_attribute(
+        data, attribute_getter=lambda of: of.attribute, includes=includes, exact=True
+    )
+    print("got:", [type(x.attribute).__name__ for x in res])
+    print("expected:", [type(x.attribute).__name__ for x in expected])
     assert set(res) == set(expected)
 
 
@@ -169,6 +209,27 @@ def test_filter_by_class_exclude(data, includes, exclude, expected):
 @pytest.mark.parametrize(
     "data,includes,exclude,expected",
     [
+        (data2, [B], [], [c, c1, c11, c12, c2, c21, c211]),
+        (data2, [B1], [B11], [c1, c12]),
+        (data2, [B], [B21], [c, c1, c11, c12, c2]),
+        (data2, [B2], [B1], [c2, c21, c211]),
+    ],
+)
+def test_filter_by_class_exclude_attribute(data, includes, exclude, expected):
+    res = filter_by_attribute(
+        data,
+        attribute_getter=lambda of: of.attribute,
+        includes=includes,
+        excludes=exclude,
+    )
+    print("got:", [type(x.attribute).__name__ for x in res])
+    print("expected:", [type(x.attribute).__name__ for x in expected])
+    assert set(res) == set(expected)
+
+
+@pytest.mark.parametrize(
+    "data,includes,exclude,expected",
+    [
         (data, [A], [], [a]),
         (data, [A1], [A11], [a1]),
         (data, [A1], [], [a1]),
@@ -180,6 +241,29 @@ def test_filter_by_class_exclude_exact(data, includes, exclude, expected):
     res = filter_by_class(data, includes, exclude, exact=True)
     print("got:", [type(x).__name__ for x in res])
     print("expected:", [type(x).__name__ for x in expected])
+    assert set(res) == set(expected)
+
+
+@pytest.mark.parametrize(
+    "data,includes,exclude,expected",
+    [
+        (data2, [B], [], [c]),
+        (data2, [B1], [B11], [c1]),
+        (data2, [B1], [], [c1]),
+        (data2, [B1, B11], [], [c1, c11]),
+        (data2, [B, B2, B21], [B211], [c, c2, c21]),
+    ],
+)
+def test_filter_by_attribute_exclude_exact(data, includes, exclude, expected):
+    res = filter_by_attribute(
+        data,
+        attribute_getter=lambda of: of.attribute,
+        includes=includes,
+        excludes=exclude,
+        exact=True,
+    )
+    print("got:", [type(x.attribute).__name__ for x in res])
+    print("expected:", [type(x.attribute).__name__ for x in expected])
     assert set(res) == set(expected)
 
 
