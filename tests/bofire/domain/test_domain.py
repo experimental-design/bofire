@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
-from pydantic.types import constr
 
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
 from bofire.domain.desirability_functions import (

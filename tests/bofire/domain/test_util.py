@@ -1,7 +1,7 @@
-from inspect import Attribute
 from typing import Any
 
 import pytest
+
 from bofire.domain.util import filter_by_class
 
 
