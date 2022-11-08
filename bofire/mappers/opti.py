@@ -99,13 +99,18 @@ def feature2objective(feature: OutputFeature):
             "type": "maximize",
         }
     if isinstance(feature.desirability_function, CloseToTargetDesirabilityFunction):
-        return {
+        d = {
             "name": feature.key,
             "type": "close-to-target",
-            "exponent": feature.desirability_function.exponent,
+            # "exponent": feature.desirability_function.exponent,
             "target": feature.desirability_function.target_value,
-            "tolerance": feature.desirability_function.tolerance,
+            # "tolerance": feature.desirability_function.tolerance,
         }
+        if feature.desirability_function.exponent != 1:
+            d["exponent"] = feature.desirability_function.exponent
+        if feature.desirability_function.tolerance != 0:
+            d["tolerance"] = feature.desirability_function.tolerance
+        return d
     else:
         raise ValueError(f"Unsupported feature type {feature.__class__.__name__}.")
 
@@ -126,11 +131,11 @@ def opti_constraint2constraint(config: Dict, input_feature_keys: Optional[list] 
             min_count=0,
             none_also_valid=False,
         )
-    if config["type"] == "non-linear-equality":
+    if config["type"] == "nonlinear-equality":
         return NonlinearEqualityConstraint(
             features=input_feature_keys, expression=config["expression"]
         )
-    if config["type"] == "non-linear-inequality":
+    if config["type"] == "nonlinear-inequality":
         return NonlinearInqualityConstraint(
             features=input_feature_keys, expression=config["expression"]
         )
@@ -164,12 +169,12 @@ def constraint2opti_constraint(constraint: Constraint):
         }
     if isinstance(constraint, NonlinearEqualityConstraint):
         return {
-            "type": "non-linear-equality",
+            "type": "nonlinear-equality",
             "expression": constraint.expression,
         }
     if isinstance(constraint, NonlinearInqualityConstraint):
         return {
-            "type": "non-linear-inequality",
+            "type": "nonlinear-inequality",
             "expression": constraint.expression,
         }
     else:
@@ -197,7 +202,7 @@ def problem2domain(config: Dict):
         experiments = pd.read_json(json.dumps(config["data"]), orient="split")
 
         for key in domain.get_feature_keys(OutputFeature):
-            experiments[key] = 1
+            experiments[f"valid_{key}"] = 1
         domain.add_experiments(experiments=experiments)
     return domain
 
@@ -205,17 +210,13 @@ def problem2domain(config: Dict):
 def domain2problem(domain: Domain, name: Optional[str] = None) -> Dict:
     config = {
         "name": name,
-        "inputs": [feature2input(feat) for feat in domain.get_features(InputFeature)],
+        "inputs": [feature2input(feat) for feat in domain.input_features],
         "constraints": [
-            constraint2opti_constraint(constraint)
-            for constraint in domain.get_constraints(Constraint)
+            constraint2opti_constraint(constraint) for constraint in domain.constraints
         ],
-        "objectives": [
-            feature2objective(feat) for feat in domain.get_features(OutputFeature)
-        ],
+        "objectives": [feature2objective(feat) for feat in domain.output_features],
         "outputs": [
-            {"type": "continuous", "name": feat.key}
-            for feat in domain.get_features(OutputFeature)
+            {"type": "continuous", "name": feat.key} for feat in domain.output_features
         ],
     }
     if domain.experiments is not None:
