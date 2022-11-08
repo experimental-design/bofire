@@ -654,6 +654,7 @@ def test_get_features(domain, FeatureType, exact, expected):
     "domain, DesirabilityType, exact, expected",
     [
         (domain, DesirabilityFunction, True, []),
+        (domain, DesirabilityFunction, False, [of1, of2, of1_, of2_]),
         (domain, TargetDesirabilityFunction, False, [of1, of2]),
     ],
 )
