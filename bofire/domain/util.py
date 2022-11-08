@@ -74,8 +74,8 @@ def filter_by_class(
         return [
             d
             for d in data
-            if isinstance(type(getattr(d, by_attribute)), tuple(includes))
-            and not isinstance(type(getattr(d, by_attribute)), tuple(excludes))
+            if isinstance(getattr(d, by_attribute), tuple(includes))
+            and not isinstance(getattr(d, by_attribute), tuple(excludes))
         ]
 
     if exact:

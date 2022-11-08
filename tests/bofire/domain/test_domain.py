@@ -4,12 +4,11 @@ from math import nan
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
-from pydantic.error_wrappers import ValidationError
-from pydantic.types import constr
-
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
-from bofire.domain.desirability_functions import TargetDesirabilityFunction
+from bofire.domain.desirability_functions import (
+    DesirabilityFunction,
+    TargetDesirabilityFunction,
+)
 from bofire.domain.domain import Domain, get_subdomain
 from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
@@ -22,6 +21,9 @@ from bofire.domain.features import (
     OutputFeature,
 )
 from bofire.domain.util import BaseModel
+from pandas.testing import assert_frame_equal
+from pydantic.error_wrappers import ValidationError
+from pydantic.types import constr
 
 
 def test_empty_domain():
@@ -628,45 +630,89 @@ domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_
 
 
 @pytest.mark.parametrize(
-    "domain, FeatureType, exact, expected",
+    "domain, FeatureType, exact, by_attribute, expected",
     [
-        (domain, OutputFeature, True, []),
-        (domain, OutputFeature, False, [of1, of2, of1_, of2_]),
-        (domain, OutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, True, [of1, of2]),
-        (domain, ContinuousOutputFeature, False, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, [of1_, of2_]),
-        (domain, InputFeature, True, []),
-        (domain, InputFeature, False, [if1, if2]),
-        (domain, InputFeature, None, [if1, if2]),
+        (domain, OutputFeature, True, None, []),
+        (domain, OutputFeature, False, None, [of1, of2, of1_, of2_]),
+        (domain, OutputFeature, None, None, [of1, of2, of1_, of2_]),
+        (domain, ContinuousOutputFeature, True, None, [of1, of2]),
+        (domain, ContinuousOutputFeature, False, None, [of1, of2, of1_, of2_]),
+        (domain, ContinuousOutputFeature, None, None, [of1, of2, of1_, of2_]),
+        (domain, ContinuousOutputFeature_woDesFunc, True, None, [of1_, of2_]),
+        (domain, ContinuousOutputFeature_woDesFunc, False, None, [of1_, of2_]),
+        (domain, ContinuousOutputFeature_woDesFunc, None, None, [of1_, of2_]),
+        (domain, InputFeature, True, None, []),
+        (domain, InputFeature, False, None, [if1, if2]),
+        (domain, InputFeature, None, None, [if1, if2]),
+        (
+            domain,
+            DesirabilityFunction,
+            False,
+            "desirability_function",
+            [of1, of2, of1_, of2_],
+        ),
+        (domain, DesirabilityFunction, True, "desirability_function", []),
+        (domain, DesirabilityFunction, False, "desirability_function2", []),
+        (
+            domain,
+            TargetDesirabilityFunction,
+            False,
+            "desirability_function",
+            [of1, of2],
+        ),
     ],
 )
-def test_get_features(domain, FeatureType, exact, expected):
-    assert domain.get_features(FeatureType, exact=exact) == expected
+def test_get_features(domain, FeatureType, exact, by_attribute, expected):
+    assert (
+        domain.get_features(FeatureType, exact=exact, by_attribute=by_attribute)
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
-    "domain, FeatureType, exact, expected",
+    "domain, FeatureType, exact, by_attribute, expected",
     [
-        (domain, OutputFeature, True, []),
-        (domain, OutputFeature, False, ["out1", "out2", "out3", "out4"]),
-        (domain, OutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, True, ["out1", "out2"]),
-        (domain, ContinuousOutputFeature, False, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, ["out3", "out4"]),
-        (domain, InputFeature, True, []),
-        (domain, InputFeature, False, ["x1", "x2"]),
-        (domain, InputFeature, None, ["x1", "x2"]),
+        (domain, OutputFeature, True, None, []),
+        (domain, OutputFeature, False, None, ["out1", "out2", "out3", "out4"]),
+        (domain, OutputFeature, None, None, ["out1", "out2", "out3", "out4"]),
+        (domain, ContinuousOutputFeature, True, None, ["out1", "out2"]),
+        (
+            domain,
+            ContinuousOutputFeature,
+            False,
+            None,
+            ["out1", "out2", "out3", "out4"],
+        ),
+        (domain, ContinuousOutputFeature, None, None, ["out1", "out2", "out3", "out4"]),
+        (domain, ContinuousOutputFeature_woDesFunc, True, None, ["out3", "out4"]),
+        (domain, ContinuousOutputFeature_woDesFunc, False, None, ["out3", "out4"]),
+        (domain, ContinuousOutputFeature_woDesFunc, None, None, ["out3", "out4"]),
+        (domain, InputFeature, True, None, []),
+        (domain, InputFeature, False, None, ["x1", "x2"]),
+        (domain, InputFeature, None, None, ["x1", "x2"]),
+        (
+            domain,
+            DesirabilityFunction,
+            False,
+            "desirability_function",
+            ["out1", "out2", "out3", "out4"],
+        ),
+        (domain, DesirabilityFunction, True, "desirability_function", []),
+        (domain, DesirabilityFunction, False, "desirability_function2", []),
+        (
+            domain,
+            TargetDesirabilityFunction,
+            False,
+            "desirability_function",
+            ["out1", "out2"],
+        ),
     ],
 )
-def test_get_feature_keys(domain, FeatureType, exact, expected):
-    assert domain.get_feature_keys(FeatureType, exact=exact) == expected
+def test_get_feature_keys(domain, FeatureType, exact, by_attribute, expected):
+    assert (
+        domain.get_feature_keys(FeatureType, exact=exact, by_attribute=by_attribute)
+        == expected
+    )
 
 
 @pytest.mark.parametrize(
