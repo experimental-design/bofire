@@ -134,26 +134,6 @@ def test_filter_by_class(data, includes, expected):
 
 
 @pytest.mark.parametrize(
-    "data,includes,by_attribute,expected",
-    [
-        (data2, [B], "attribute", [c, c1, c11, c12, c2, c21, c211]),
-        (data2, [B], "attribute2", []),
-        (data, [B], "attribute", []),
-        (data, [B], "attribute", []),
-        (data2, [B, B1, B2], "attribute", [c, c1, c11, c12, c2, c21, c211]),
-        (data2, [B1], "attribute", [c1, c11, c12]),
-        (data2, [B11], "attribute", [c11]),
-        (data2, [B2], "attribute", [c2, c21, c211]),
-    ],
-)
-def test_filter_by_class_attribute(data, includes, by_attribute, expected):
-    res = filter_by_class(data, includes, by_attribute=by_attribute)
-    print("got:", [type(getattr(x, by_attribute)).__name__ for x in res])
-    print("expected:", [type(getattr(x, by_attribute)).__name__ for x in expected])
-    assert set(res) == set(expected)
-
-
-@pytest.mark.parametrize(
     "data,includes,expected",
     [
         (data, [A], [a]),
@@ -167,23 +147,6 @@ def test_filter_by_class_exact(data, includes, expected):
     res = filter_by_class(data, includes, exact=True)
     print("got:", [type(x).__name__ for x in res])
     print("expected:", [type(x).__name__ for x in expected])
-    assert set(res) == set(expected)
-
-
-@pytest.mark.parametrize(
-    "data,includes,by_attribute,expected",
-    [
-        (data2, [B], "attribute", [c]),
-        (data2, [B, B1, B21], "attribute", [c, c1, c21]),
-        (data2, [B1], "attribute", [c1]),
-        (data2, [B11], "attribute", [c11]),
-        (data2, [B2], "attribute", [c2]),
-    ],
-)
-def test_filter_by_class_attribute_exact(data, includes, by_attribute, expected):
-    res = filter_by_class(data, includes, exact=True, by_attribute=by_attribute)
-    print("got:", [type(getattr(x, by_attribute)).__name__ for x in res])
-    print("expected:", [type(getattr(x, by_attribute)).__name__ for x in expected])
     assert set(res) == set(expected)
 
 
@@ -204,24 +167,6 @@ def test_filter_by_class_exclude(data, includes, exclude, expected):
 
 
 @pytest.mark.parametrize(
-    "data,includes,by_attribute,exclude,expected",
-    [
-        (data2, [B], "attribute", [], [c, c1, c11, c12, c2, c21, c211]),
-        (data2, [B1], "attribute", [B11], [c1, c12]),
-        (data2, [B], "attribute", [B21], [c, c1, c11, c12, c2]),
-        (data2, [B2], "attribute", [B1], [c2, c21, c211]),
-    ],
-)
-def test_filter_by_class_exclude_attribute(
-    data, includes, by_attribute, exclude, expected
-):
-    res = filter_by_class(data, includes, exclude, by_attribute=by_attribute)
-    print("got:", [type(getattr(x, by_attribute)).__name__ for x in res])
-    print("expected:", [type(getattr(x, by_attribute)).__name__ for x in expected])
-    assert set(res) == set(expected)
-
-
-@pytest.mark.parametrize(
     "data,includes,exclude,expected",
     [
         (data, [A], [], [a]),
@@ -235,27 +180,6 @@ def test_filter_by_class_exclude_exact(data, includes, exclude, expected):
     res = filter_by_class(data, includes, exclude, exact=True)
     print("got:", [type(x).__name__ for x in res])
     print("expected:", [type(x).__name__ for x in expected])
-    assert set(res) == set(expected)
-
-
-@pytest.mark.parametrize(
-    "data,includes,by_attribute,exclude,expected",
-    [
-        (data2, [B], "attribute", [], [c]),
-        (data2, [B1], "attribute", [B11], [c1]),
-        (data2, [B1], "attribute", [], [c1]),
-        (data2, [B1, B11], "attribute", [], [c1, c11]),
-        (data2, [B, B2, B21], "attribute", [B211], [c, c2, c21]),
-    ],
-)
-def test_filter_by_class_attribute_exclude_exact(
-    data, includes, by_attribute, exclude, expected
-):
-    res = filter_by_class(
-        data, includes, exclude, exact=True, by_attribute=by_attribute
-    )
-    print("got:", [type(getattr(x, by_attribute)).__name__ for x in res])
-    print("expected:", [type(getattr(x, by_attribute)).__name__ for x in expected])
     assert set(res) == set(expected)
 
 

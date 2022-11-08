@@ -1,12 +1,13 @@
 import itertools
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 
 from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
+from bofire.domain.desirability_functions import DesirabilityFunction
 from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -211,7 +212,6 @@ class Domain(BaseModel):
         includes: Union[Type, List[Type]] = Feature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
-        by_attribute: Optional[str] = None,
     ) -> List[Feature]:
         """get features of the domain
 
@@ -231,17 +231,52 @@ class Domain(BaseModel):
                     includes=includes,
                     excludes=excludes,
                     exact=exact,
-                    by_attribute=by_attribute,
                 )
             )
         )
+
+    TDesirability = TypeVar("TDesirability", bound=DesirabilityFunction)
+
+    def get_outputs_by_desirability(
+        self,
+        includes: Union[List[TDesirability], TDesirability],
+        excludes: Union[List[TDesirability], TDesirability, None] = None,
+        exact: bool = False,
+    ):
+        if self.output_features is None:
+            return None
+        else:
+            filtered = filter_by_class(
+                [
+                    (i, of.desirability_function)
+                    for i, of in enumerate(self.output_features)
+                ],
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
+                key=lambda idx_desi_pair: idx_desi_pair[1],
+            )
+            if len(filtered) == 0:
+                return filtered
+            else:
+                out_indices, _ = zip(*filtered)
+                return list(sorted([self.output_features[i] for i in out_indices]))
+
+    def get_output_keys_by_desirability(
+        self,
+        includes: Union[List[TDesirability], TDesirability],
+        excludes: Union[List[TDesirability], TDesirability, None] = None,
+        exact: bool = False,
+    ):
+        outputs = self.get_outputs_by_desirability(includes, excludes, exact)
+        if outputs is not None:
+            return [o.key for o in outputs]
 
     def get_feature_keys(
         self,
         includes: Union[Type, List[Type]] = Feature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
-        by_attribute: Optional[str] = None,
     ) -> List[str]:
         """Method to get feature keys of the domain
 
@@ -260,7 +295,6 @@ class Domain(BaseModel):
                 includes=includes,
                 excludes=excludes,
                 exact=exact,
-                by_attribute=by_attribute,
             )
         ]
 

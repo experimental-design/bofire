@@ -1,4 +1,4 @@
-from typing import List, Optional, Type, Union
+from typing import Any, Callable, List, Type, Union
 
 import pandas as pd
 from pydantic import BaseModel as _BaseModel
@@ -47,7 +47,7 @@ def filter_by_class(
     includes: Union[Type, List[Type]],
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
-    by_attribute: Optional[str] = None,
+    key: Callable[[Type], Any] = lambda x: x,
 ) -> List:
     if not isinstance(includes, list):
         includes = [includes]
@@ -61,27 +61,13 @@ def filter_by_class(
     if len([x for x in includes if x in excludes]) > 0:
         raise ValueError("includes and excludes overlap")
 
-    if by_attribute is not None:
-        data = [d for d in data if hasattr(d, by_attribute)]
-
-        if exact:
-            return [
-                d
-                for d in data
-                if type(getattr(d, by_attribute)) in includes
-                and type(getattr(d, by_attribute)) not in excludes
-            ]
-        return [
-            d
-            for d in data
-            if isinstance(getattr(d, by_attribute), tuple(includes))
-            and not isinstance(getattr(d, by_attribute), tuple(excludes))
-        ]
-
     if exact:
-        return [d for d in data if type(d) in includes and type(d) not in excludes]
+        return [
+            d for d in data if type(key(d)) in includes and type(key(d)) not in excludes
+        ]
     return [
         d
         for d in data
-        if isinstance(d, tuple(includes)) and not isinstance(d, tuple(excludes))
+        if isinstance(key(d), tuple(includes))
+        and not isinstance(key(d), tuple(excludes))
     ]
