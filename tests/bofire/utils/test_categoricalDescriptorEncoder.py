@@ -47,10 +47,14 @@ def test_categorical_descriptor_encoder_handle_unknown(data, data_unknownCat, ex
     )
     enc.fit(data)
     X_passed = data_unknownCat.copy()
-    assert_array_equal(
-        enc.transform(X_passed),
-        expected,
-    )
+    # ignore option allows unknown categories but still warns about
+    # coercion to 0
+    with pytest.warns(UserWarning):
+        assert_array_equal(
+            enc.transform(X_passed),
+            expected,
+        )
+
     # ensure transformed data was not modified in place
     assert_array_equal(data_unknownCat, X_passed)
 
@@ -157,9 +161,11 @@ def test_categorical_descriptor_encoder_categories(data, data_unknownCat, X_expe
         handle_unknown="ignore",
     )
 
-    assert_array_equal(
-        enc.fit(data_unknownCat).transform(data_unknownCat), X_expected_ignore
-    )
+    # the ignore option allows unknown categories in the input but still triggers a warning
+    with pytest.warns(UserWarning):
+        assert_array_equal(
+            enc.fit(data_unknownCat).transform(data_unknownCat), X_expected_ignore
+        )
 
 
 @pytest.mark.parametrize("data, X_expected", [(data, X_expected)])
