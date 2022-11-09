@@ -67,8 +67,8 @@ class Transformer(BaseModel):
     def __init__(
         self,
         domain,
-        descriptor_encoding=None,
-        categorical_encoding=None,
+        descriptor_encoding=None, #TODO: default tbd!
+        categorical_encoding=None, #TODO: default tbd!
         scale_inputs=None,
         scale_outputs=None,
     ) -> None:
@@ -88,8 +88,8 @@ class Transformer(BaseModel):
         """
         super().__init__(
             domain=domain,
-            descriptor_encoding=descriptor_encoding,
-            categorical_encoding=categorical_encoding,
+            descriptor_encoding=descriptor_encoding.name,
+            categorical_encoding=categorical_encoding.name,
             scale_inputs=scale_inputs,
             scale_outputs=scale_outputs,
         )
