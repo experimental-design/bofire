@@ -1,4 +1,4 @@
-from typing import List, Type, Union
+from typing import Any, Callable, List, Type, Union
 
 import pandas as pd
 from pydantic import BaseModel as _BaseModel
@@ -42,11 +42,41 @@ def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
 
+def filter_by_attribute(
+    data: List,
+    attribute_getter: Callable[[Type], Any],
+    includes: Union[Type, List[Type]],
+    excludes: Union[Type, List[Type]] = None,
+    exact: bool = False,
+):
+    data_with_attr = []
+    for d in data:
+        try:
+            attribute_getter(d)
+            data_with_attr.append(d)
+        except AttributeError:
+            pass
+
+    filtered = filter_by_class(
+        [(i, attribute_getter(d)) for i, d in enumerate(data_with_attr)],
+        includes=includes,
+        excludes=excludes,
+        exact=exact,
+        key=lambda idx_desi_pair: idx_desi_pair[1],
+    )
+    if len(filtered) == 0:
+        return filtered
+    else:
+        out_indices, _ = zip(*filtered)
+        return [data_with_attr[i] for i in out_indices]
+
+
 def filter_by_class(
     data: List,
     includes: Union[Type, List[Type]],
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
+    key: Callable[[Type], Any] = lambda x: x,
 ) -> List:
     if not isinstance(includes, list):
         includes = [includes]
@@ -61,9 +91,12 @@ def filter_by_class(
         raise ValueError("includes and excludes overlap")
 
     if exact:
-        return [d for d in data if type(d) in includes and type(d) not in excludes]
+        return [
+            d for d in data if type(key(d)) in includes and type(key(d)) not in excludes
+        ]
     return [
         d
         for d in data
-        if isinstance(d, tuple(includes)) and not isinstance(d, tuple(excludes))
+        if isinstance(key(d), tuple(includes))
+        and not isinstance(key(d), tuple(excludes))
     ]

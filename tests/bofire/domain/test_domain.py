@@ -8,7 +8,10 @@ from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
-from bofire.domain.desirability_functions import TargetDesirabilityFunction
+from bofire.domain.desirability_functions import (
+    DesirabilityFunction,
+    TargetDesirabilityFunction,
+)
 from bofire.domain.domain import Domain, get_subdomain
 from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
@@ -648,13 +651,32 @@ def test_get_features(domain, FeatureType, exact, expected):
 
 
 @pytest.mark.parametrize(
+    "domain, DesirabilityType, exact, expected",
+    [
+        (domain, DesirabilityFunction, True, []),
+        (domain, DesirabilityFunction, False, [of1, of2, of1_, of2_]),
+        (domain, TargetDesirabilityFunction, False, [of1, of2]),
+    ],
+)
+def test_get_outputs_by_desirability(
+    domain: Domain, DesirabilityType: DesirabilityFunction, exact, expected
+):
+    assert (
+        domain.get_outputs_by_desirability(
+            DesirabilityType,
+            exact=exact,
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
     "domain, FeatureType, exact, expected",
     [
         (domain, OutputFeature, True, []),
         (domain, OutputFeature, False, ["out1", "out2", "out3", "out4"]),
         (domain, OutputFeature, None, ["out1", "out2", "out3", "out4"]),
         (domain, ContinuousOutputFeature, True, ["out1", "out2"]),
-        (domain, ContinuousOutputFeature, False, ["out1", "out2", "out3", "out4"]),
         (domain, ContinuousOutputFeature, None, ["out1", "out2", "out3", "out4"]),
         (domain, ContinuousOutputFeature_woDesFunc, True, ["out3", "out4"]),
         (domain, ContinuousOutputFeature_woDesFunc, False, ["out3", "out4"]),
@@ -666,6 +688,26 @@ def test_get_features(domain, FeatureType, exact, expected):
 )
 def test_get_feature_keys(domain, FeatureType, exact, expected):
     assert domain.get_feature_keys(FeatureType, exact=exact) == expected
+
+
+@pytest.mark.parametrize(
+    "domain, DesirabilityType, exact, expected",
+    [
+        (domain, DesirabilityFunction, False, ["out1", "out2", "out3", "out4"]),
+        (domain, TargetDesirabilityFunction, False, ["out1", "out2"]),
+        (domain, DesirabilityFunction, True, []),
+    ],
+)
+def test_get_output_keys_by_desirability(
+    domain: Domain, DesirabilityType: DesirabilityFunction, exact, expected
+):
+    assert (
+        domain.get_output_keys_by_desirability(
+            DesirabilityType,
+            exact=exact,
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize(

@@ -7,6 +7,7 @@ import pandas as pd
 from pydantic import Field, validator
 
 from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
+from bofire.domain.desirability_functions import DesirabilityFunction
 from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -16,7 +17,12 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.util import BaseModel, filter_by_class, is_numeric
+from bofire.domain.util import (
+    BaseModel,
+    filter_by_attribute,
+    filter_by_class,
+    is_numeric,
+)
 
 
 class Domain(BaseModel):
@@ -218,6 +224,7 @@ class Domain(BaseModel):
             includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
             excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
             exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+            by_attribute (str, optional): If set it is filtered by the attribute specified in by `by_attribute`. Defaults to None.
 
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
@@ -268,6 +275,59 @@ class Domain(BaseModel):
             Feature: The feature with the passed key
         """
         return {f.key: f for f in self.input_features + self.output_features}[key]
+
+    TDesirability = Type[DesirabilityFunction]
+
+    def get_outputs_by_desirability(
+        self,
+        includes: Union[List[TDesirability], TDesirability] = DesirabilityFunction,
+        excludes: Union[List[TDesirability], TDesirability, None] = None,
+        exact: bool = False,
+    ) -> List[OutputFeature]:
+        """Get output features filtered by the type of the attached desirability function.
+
+        Args:
+            includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes
+                to be returned. Defaults to DesirabilityFunction.
+            excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+
+        Returns:
+            List[OutputFeature]: List of output features fitting to the passed requirements.
+        """
+        if self.output_features is None:
+            return []
+        else:
+            return sorted(
+                filter_by_attribute(
+                    self.output_features,
+                    lambda of: of.desirability_function,
+                    includes,
+                    excludes,
+                    exact,
+                )
+            )
+
+    def get_output_keys_by_desirability(
+        self,
+        includes: Union[List[TDesirability], TDesirability] = DesirabilityFunction,
+        excludes: Union[List[TDesirability], TDesirability, None] = None,
+        exact: bool = False,
+    ) -> List[str]:
+        """Get keys of output features filtered by the type of the attached desirability function.
+
+        Args:
+            includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes
+                to be returned. Defaults to DesirabilityFunction.
+            excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+
+        Returns:
+            List[str]: List of output feature keys fitting to the passed requirements.
+        """
+        return [
+            f.key for f in self.get_outputs_by_desirability(includes, excludes, exact)
+        ]
 
     def add_constraint(self, constraint: Constraint):
         """Add a constraint to the optimzation domain
