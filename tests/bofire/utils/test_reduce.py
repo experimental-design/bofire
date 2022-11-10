@@ -6,11 +6,7 @@ from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import (
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-)
+from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.utils.reduce import (
     check_domain_for_reduction,
     check_existence_of_solution,
@@ -18,17 +14,17 @@ from bofire.utils.reduce import (
     rref,
 )
 
-if1 = ContinuousInputFeature(key="if1", lower_bound=0.0, upper_bound=0.8)
+if1 = ContinuousInput(key="if1", lower_bound=0.0, upper_bound=0.8)
 
-if2 = ContinuousInputFeature(key="if2", lower_bound=0.0, upper_bound=0.8)
+if2 = ContinuousInput(key="if2", lower_bound=0.0, upper_bound=0.8)
 
-cif1 = CategoricalInputFeature(key="cif1", categories=["A", "B"])
+cif1 = CategoricalInput(key="cif1", categories=["A", "B"])
 
-cif2 = CategoricalInputFeature(key="cif2", categories=["A", "B"])
+cif2 = CategoricalInput(key="cif2", categories=["A", "B"])
 
-of1 = ContinuousOutputFeature(key="of1")
+of1 = ContinuousOutput(key="of1")
 
-of2 = ContinuousOutputFeature(key="of2")
+of2 = ContinuousOutput(key="of2")
 
 
 def test_check_domain_for_reduction():
@@ -94,12 +90,12 @@ def test_reduce_1_independent_linear_equality_constraints():
     # this is not allowed in bofire as it produces one dime constraints
     domain = Domain(
         input_features=[
-            ContinuousInputFeature(key="x1", lower_bound=1.0, upper_bound=2.0),
-            ContinuousInputFeature(key="x2", lower_bound=-1.0, upper_bound=1.0),
-            CategoricalInputFeature(key="x3", categories=["A", "B"]),
-            CategoricalInputFeature(key="x4", categories=["A", "B"]),
+            ContinuousInput(key="x1", lower_bound=1.0, upper_bound=2.0),
+            ContinuousInput(key="x2", lower_bound=-1.0, upper_bound=1.0),
+            CategoricalInput(key="x3", categories=["A", "B"]),
+            CategoricalInput(key="x4", categories=["A", "B"]),
         ],
-        output_features=[ContinuousOutputFeature(key="y1")],
+        output_features=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
             LinearEqualityConstraint(
@@ -120,21 +116,21 @@ def test_reduce_1_independent_linear_equality_constraints():
     # define problem: irreducible problem
     domain = Domain(
         input_features=[
-            ContinuousInputFeature(key="x1", lower_bound=1, upper_bound=2.0),
-            ContinuousInputFeature(key="x2", lower_bound=-1, upper_bound=1.0),
-            CategoricalInputFeature(key="x3", categories=["A", "B"]),
+            ContinuousInput(key="x1", lower_bound=1, upper_bound=2.0),
+            ContinuousInput(key="x2", lower_bound=-1, upper_bound=1.0),
+            CategoricalInput(key="x3", categories=["A", "B"]),
         ],
-        output_features=[ContinuousOutputFeature(key="y1")],
+        output_features=[ContinuousOutput(key="y1")],
     )
     assert domain == reduce_domain(domain)[0]
 
     # define problem: linear equality constraints can't be fulfilled inside the domain
     domain = Domain(
         input_features=[
-            ContinuousInputFeature(key="x1", lower_bound=1, upper_bound=2.0),
-            ContinuousInputFeature(key="x2", lower_bound=-500, upper_bound=500.0),
+            ContinuousInput(key="x1", lower_bound=1, upper_bound=2.0),
+            ContinuousInput(key="x2", lower_bound=-500, upper_bound=500.0),
         ],
-        output_features=[ContinuousOutputFeature(key="y1")],
+        output_features=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2"], coefficients=[1.0, 0.0], rhs=0
@@ -149,11 +145,11 @@ def test_reduce_2_independent_linear_equality_constraints():
     # define problem: standard case
     domain = Domain(
         input_features=[
-            ContinuousInputFeature(key="x1", lower_bound=-1.0, upper_bound=1.0),
-            ContinuousInputFeature(key="x2", lower_bound=-1.0, upper_bound=1.0),
-            ContinuousInputFeature(key="x3", lower_bound=-1.0, upper_bound=1.0),
+            ContinuousInput(key="x1", lower_bound=-1.0, upper_bound=1.0),
+            ContinuousInput(key="x2", lower_bound=-1.0, upper_bound=1.0),
+            ContinuousInput(key="x3", lower_bound=-1.0, upper_bound=1.0),
         ],
-        output_features=[ContinuousOutputFeature(key="y1")],
+        output_features=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
@@ -180,11 +176,11 @@ def test_reduce_3_independent_linear_equality_constraints():
     # define problem: standard case
     domain = Domain(
         input_features=[
-            ContinuousInputFeature(key="x1", lower_bound=-1.0, upper_bound=1.0),
-            ContinuousInputFeature(key="x2", lower_bound=-1.0, upper_bound=1.0),
-            ContinuousInputFeature(key="x3", lower_bound=-1.0, upper_bound=1.0),
+            ContinuousInput(key="x1", lower_bound=-1.0, upper_bound=1.0),
+            ContinuousInput(key="x2", lower_bound=-1.0, upper_bound=1.0),
+            ContinuousInput(key="x3", lower_bound=-1.0, upper_bound=1.0),
         ],
-        output_features=[ContinuousOutputFeature(key="y1")],
+        output_features=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
@@ -203,16 +199,10 @@ def test_reduce_3_independent_linear_equality_constraints():
 
 def test_doc_simple():
     domain = Domain()
-    domain.add_feature(
-        ContinuousInputFeature(key="x1", lower_bound=0.1, upper_bound=1.0)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="x2", lower_bound=0.0, upper_bound=0.8)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="x3", lower_bound=0.3, upper_bound=0.9)
-    )
-    domain.add_feature(ContinuousOutputFeature(key="y"))
+    domain.add_feature(ContinuousInput(key="x1", lower_bound=0.1, upper_bound=1.0))
+    domain.add_feature(ContinuousInput(key="x2", lower_bound=0.0, upper_bound=0.8))
+    domain.add_feature(ContinuousInput(key="x3", lower_bound=0.3, upper_bound=0.9))
+    domain.add_feature(ContinuousOutput(key="y"))
     domain.add_constraint(
         LinearEqualityConstraint(
             features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
@@ -245,35 +235,17 @@ def test_doc_simple():
 def test_doc_complex():
     domain = Domain()
 
-    domain.add_feature(
-        ContinuousInputFeature(key="A1", lower_bound=0.0, upper_bound=0.9)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="A2", lower_bound=0.0, upper_bound=0.8)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="A3", lower_bound=0.0, upper_bound=0.9)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="A4", lower_bound=0.0, upper_bound=0.9)
-    )
+    domain.add_feature(ContinuousInput(key="A1", lower_bound=0.0, upper_bound=0.9))
+    domain.add_feature(ContinuousInput(key="A2", lower_bound=0.0, upper_bound=0.8))
+    domain.add_feature(ContinuousInput(key="A3", lower_bound=0.0, upper_bound=0.9))
+    domain.add_feature(ContinuousInput(key="A4", lower_bound=0.0, upper_bound=0.9))
 
-    domain.add_feature(
-        ContinuousInputFeature(key="B1", lower_bound=0.3, upper_bound=0.9)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="B2", lower_bound=0.0, upper_bound=0.8)
-    )
-    domain.add_feature(
-        ContinuousInputFeature(key="B3", lower_bound=0.1, upper_bound=1.0)
-    )
+    domain.add_feature(ContinuousInput(key="B1", lower_bound=0.3, upper_bound=0.9))
+    domain.add_feature(ContinuousInput(key="B2", lower_bound=0.0, upper_bound=0.8))
+    domain.add_feature(ContinuousInput(key="B3", lower_bound=0.1, upper_bound=1.0))
 
-    domain.add_feature(
-        CategoricalInputFeature(key="Process", categories=["p1", "p2", "p3"])
-    )
-    domain.add_feature(
-        CategoricalInputFeature(key="Discrete", categories=["a1", "a2", "a3"])
-    )
+    domain.add_feature(CategoricalInput(key="Process", categories=["p1", "p2", "p3"]))
+    domain.add_feature(CategoricalInput(key="Discrete", categories=["a1", "a2", "a3"]))
 
     domain.add_constraint(
         LinearEqualityConstraint(
@@ -297,7 +269,7 @@ def test_doc_complex():
     _domain, transform = reduce_domain(domain)
 
     assert len(_domain.get_features()) == 7
-    assert len(_domain.get_features(ContinuousInputFeature)) == 5
+    assert len(_domain.get_features(ContinuousInput)) == 5
 
     assert np.allclose(
         [_domain.get_feature("A2").lower_bound, _domain.get_feature("A2").upper_bound],
@@ -438,12 +410,12 @@ def test_doc_complex():
 def test_reduce_large_problem():
     domain = Domain(
         input_features=[
-            ContinuousInputFeature(key="x1", lower_bound=-1, upper_bound=1.0),
-            ContinuousInputFeature(key="x2", lower_bound=-5000, upper_bound=1.0),
-            ContinuousInputFeature(key="x3", lower_bound=-5000, upper_bound=5000.0),
-            ContinuousInputFeature(key="x4", lower_bound=-1, upper_bound=1.0),
+            ContinuousInput(key="x1", lower_bound=-1, upper_bound=1.0),
+            ContinuousInput(key="x2", lower_bound=-5000, upper_bound=1.0),
+            ContinuousInput(key="x3", lower_bound=-5000, upper_bound=5000.0),
+            ContinuousInput(key="x4", lower_bound=-1, upper_bound=1.0),
         ],
-        output_features=[ContinuousOutputFeature(key="y1")],
+        output_features=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x4"], coefficients=[1.0, -1.0, 1.0], rhs=-1.0

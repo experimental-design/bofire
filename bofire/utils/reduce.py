@@ -12,7 +12,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.features import ContinuousInputFeature, InputFeature
+from bofire.domain.features import ContinuousInput, InputFeature
 
 ### this module is based on the original implementation in basf/opti.
 
@@ -88,8 +88,8 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     )
 
     # only consider continuous inputs
-    continuous_inputs = domain.get_features(ContinuousInputFeature)
-    other_inputs = domain.get_features(InputFeature, excludes=[ContinuousInputFeature])
+    continuous_inputs = domain.get_features(ContinuousInput)
+    other_inputs = domain.get_features(InputFeature, excludes=[ContinuousInput])
 
     # assemble Matrix A from equality constraints
     N = len(linear_equalities)
@@ -225,14 +225,14 @@ def check_domain_for_reduction(domain: Domain) -> bool:
         return False
 
     # are there continuous inputs
-    continuous_inputs = domain.get_features(ContinuousInputFeature)
+    continuous_inputs = domain.get_features(ContinuousInput)
     if len(continuous_inputs) == 0:
         return False
 
     # check that equality constraints only contain continuous inputs
     for c in linear_equalities:
         for feat in c.features:
-            if feat not in domain.get_feature_keys(ContinuousInputFeature):
+            if feat not in domain.get_feature_keys(ContinuousInput):
                 return False
     return True
 
@@ -401,7 +401,7 @@ def rref(A: np.ndarray, tol: float = 1e-8) -> Tuple[np.ndarray, List[int]]:
     return np.round(A, prec), pivots
 
 
-def adjust_boundary(feature: ContinuousInputFeature, coef: float, rhs: float):
+def adjust_boundary(feature: ContinuousInput, coef: float, rhs: float):
     """Adjusts the boundaries of a feature.
 
     Args:

@@ -11,32 +11,32 @@ from bofire.domain.constraints import (
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
+from bofire.domain.features import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+    DiscreteInput,
+    InputFeature,
+    OutputFeature,
+)
 from bofire.domain.objectives import (
     CloseToTargetObjective,
     MaximizeObjective,
     MinimizeObjective,
 )
-from bofire.domain.features import (
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    DiscreteInputFeature,
-    InputFeature,
-    OutputFeature,
-)
 
 
 def input2feature(config: Dict):
     if config["type"] == "continuous":
-        return ContinuousInputFeature(
+        return ContinuousInput(
             key=config["name"],
             lower_bound=config["domain"][0],
             upper_bound=config["domain"][1],
         )
     if config["type"] == "categorical":
-        return CategoricalInputFeature(key=config["name"], categories=config["domain"])
+        return CategoricalInput(key=config["name"], categories=config["domain"])
     if config["type"] == "discrete":
-        return DiscreteInputFeature(key=config["name"], values=config["domain"])
+        return DiscreteInput(key=config["name"], values=config["domain"])
     else:
         raise ValueError(f"Unknown parameter type {config['type']}.")
 
@@ -55,7 +55,7 @@ def objective2feature(config: Dict):
         )
     else:
         raise ValueError(f"Unknown objective type {config['type']}.")
-    return ContinuousOutputFeature(key=config["name"], desirability_function=d)
+    return ContinuousOutput(key=config["name"], desirability_function=d)
 
 
 def constraint2constraint(config: Dict, input_feature_keys: Optional[list] = None):
