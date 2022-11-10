@@ -11,10 +11,10 @@ from bofire.domain.constraints import (
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
-from bofire.domain.desirability_functions import (
-    CloseToTargetDesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-    MinIdentityDesirabilityFunction,
+from bofire.domain.objectives import (
+    CloseToTargetObjective,
+    MaximizeObjective,
+    MinimizeObjective,
 )
 from bofire.domain.features import (
     CategoricalInputFeature,
@@ -43,11 +43,11 @@ def input2feature(config: Dict):
 
 def objective2feature(config: Dict):
     if config["type"] == "minimize":
-        d = MinIdentityDesirabilityFunction(w=1.0)
+        d = MinimizeObjective(w=1.0)
     elif config["type"] == "maximize":
-        d = MaxIdentityDesirabilityFunction(w=1.0)
+        d = MaximizeObjective(w=1.0)
     elif config["type"] == "close-to-target":
-        d = CloseToTargetDesirabilityFunction(
+        d = CloseToTargetObjective(
             w=1,
             target_value=config["target"],
             exponent=config.get("tolerance", 1.0),

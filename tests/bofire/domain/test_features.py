@@ -6,7 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.desirability_functions import MinIdentityDesirabilityFunction
+from bofire.domain.objectives import MinimizeObjective
 from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
     CategoricalInputFeature,
@@ -18,7 +18,7 @@ from bofire.domain.features import (
 )
 from tests.bofire.domain.utils import get_invalids
 
-desirability_function = MinIdentityDesirabilityFunction(w=1)
+objective = MinimizeObjective(w=1)
 
 VALID_CONTINUOUS_INPUT_FEATURE_SPEC = {
     "key": str(uuid.uuid4()),
@@ -206,11 +206,11 @@ FEATURE_SPECS = {
             VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
             {
                 **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
-                "desirability_function": desirability_function,
+                "objective": objective,
             },
             {
                 **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
-                "desirability_function": None,
+                "objective": None,
             },
         ],
         "invalids": [*get_invalids(VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)],

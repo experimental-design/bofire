@@ -8,10 +8,7 @@ from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
-from bofire.domain.desirability_functions import (
-    DesirabilityFunction,
-    TargetDesirabilityFunction,
-)
+from bofire.domain.objectives import Objective, TargetObjective
 from bofire.domain.domain import Domain, get_subdomain
 from bofire.domain.features import (
     CategoricalDescriptorInputFeature,
@@ -33,7 +30,7 @@ def test_empty_domain():
     )
 
 
-df = TargetDesirabilityFunction(
+df = TargetObjective(
     target_value=1,
     steepness=2,
     tolerance=3,
@@ -649,10 +646,10 @@ def test_get_features(domain, FeatureType, exact, expected):
 @pytest.mark.parametrize(
     "domain, includes, excludes, exact, expected",
     [
-        (domain, [DesirabilityFunction], [], True, []),
-        (domain, [DesirabilityFunction], [], False, [of1, of2]),
-        (domain, [TargetDesirabilityFunction], [], False, [of1, of2]),
-        (domain, [], [DesirabilityFunction], False, [of1_, of2_]),
+        (domain, [Objective], [], True, []),
+        (domain, [Objective], [], False, [of1, of2]),
+        (domain, [TargetObjective], [], False, [of1, of2]),
+        (domain, [], [Objective], False, [of1_, of2_]),
     ],
 )
 def test_get_outputs_by_desirability(
@@ -688,10 +685,10 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
 @pytest.mark.parametrize(
     "domain, includes, excludes, exact, expected",
     [
-        (domain, [DesirabilityFunction], [], False, ["out1", "out2"]),
-        (domain, [TargetDesirabilityFunction], [], False, ["out1", "out2"]),
-        (domain, [DesirabilityFunction], [], True, []),
-        (domain, [], [DesirabilityFunction], False, ["out3", "out4"]),
+        (domain, [Objective], [], False, ["out1", "out2"]),
+        (domain, [TargetObjective], [], False, ["out1", "out2"]),
+        (domain, [Objective], [], True, []),
+        (domain, [], [Objective], False, ["out3", "out4"]),
     ],
 )
 def test_get_output_keys_by_desirability(

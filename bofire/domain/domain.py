@@ -7,7 +7,7 @@ import pandas as pd
 from pydantic import Field, validator
 
 from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
-from bofire.domain.desirability_functions import DesirabilityFunction
+from bofire.domain.objectives import Objective
 from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
@@ -275,20 +275,20 @@ class Domain(BaseModel):
         """
         return {f.key: f for f in self.input_features + self.output_features}[key]
 
-    TDesirability = Type[DesirabilityFunction]
+    TObjective = Type[Objective]
 
     def get_outputs_by_desirability(
         self,
-        includes: Union[List[TDesirability], TDesirability] = DesirabilityFunction,
-        excludes: Union[List[TDesirability], TDesirability, None] = None,
+        includes: Union[List[TObjective], TObjective] = Objective,
+        excludes: Union[List[TObjective], TObjective, None] = None,
         exact: bool = False,
     ) -> List[OutputFeature]:
-        """Get output features filtered by the type of the attached desirability function.
+        """Get output features filtered by the type of the attached objective.
 
         Args:
-            includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes
-                to be returned. Defaults to DesirabilityFunction.
-            excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.
+            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes
+                to be returned. Defaults to Objective.
+            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.
             exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
 
         Returns:
@@ -309,16 +309,16 @@ class Domain(BaseModel):
 
     def get_output_keys_by_desirability(
         self,
-        includes: Union[List[TDesirability], TDesirability] = DesirabilityFunction,
-        excludes: Union[List[TDesirability], TDesirability, None] = None,
+        includes: Union[List[TObjective], TObjective] = Objective,
+        excludes: Union[List[TObjective], TObjective, None] = None,
         exact: bool = False,
     ) -> List[str]:
-        """Get keys of output features filtered by the type of the attached desirability function.
+        """Get keys of output features filtered by the type of the attached objective.
 
         Args:
-            includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes
-                to be returned. Defaults to DesirabilityFunction.
-            excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.
+            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes
+                to be returned. Defaults to Objective.
+            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific desirability classes to be excluded from the return. Defaults to None.
             exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
 
         Returns:
@@ -811,7 +811,7 @@ class Domain(BaseModel):
                 raise ValueError(f"no col for input feature `{feat.key}`")
             feat.validate_candidental(candidates[feat.key])
         # for each continuous output feature with an attached desirability object
-        for key in self.get_output_keys_by_desirability(DesirabilityFunction):
+        for key in self.get_output_keys_by_desirability(Objective):
             # check that pred, sd, and des cols are specified and numerical
             for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
                 if col not in candidates:
@@ -827,7 +827,7 @@ class Domain(BaseModel):
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))
-        of_count = len(self.get_outputs_by_desirability(DesirabilityFunction))
+        of_count = len(self.get_outputs_by_desirability(Objective))
         # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
         if len(candidates.columns) != if_count + 3 * of_count:
             raise ValueError("additional columns found")
@@ -857,19 +857,19 @@ class Domain(BaseModel):
             + [
                 f"{output_feature_key}_pred"
                 for output_feature_key in self.get_outputs_by_desirability(
-                    DesirabilityFunction
+                    Objective
                 )
             ]
             + [
                 f"{output_feature_key}_sd"
                 for output_feature_key in self.get_outputs_by_desirability(
-                    DesirabilityFunction
+                    Objective
                 )
             ]
             + [
                 f"{output_feature_key}_des"
                 for output_feature_key in self.get_outputs_by_desirability(
-                    DesirabilityFunction
+                    Objective
                 )
             ]
         )

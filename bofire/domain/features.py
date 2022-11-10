@@ -8,10 +8,7 @@ from pydantic import Field, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
-from bofire.domain.desirability_functions import (
-    DesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-)
+from bofire.domain.objectives import Objective, MaximizeObjective
 from bofire.domain.util import KeyModel, is_numeric, name2key
 
 
@@ -48,14 +45,14 @@ class Feature(KeyModel):
         }
 
     @staticmethod
-    def from_config(config: Dict) -> "DesirabilityFunction":
+    def from_config(config: Dict) -> "Objective":
         """Generate desirability function out of serialized version.
 
         Args:
             config (Dict): Serialized version of a desirability function
 
         Returns:
-            DesirabilityFunction: Instaniated desirability function of the type specified in the `config`.
+            Objective: Instaniated desirability function of the type specified in the `config`.
         """
         input_mapper = {
             "ContinuousInputFeature": ContinuousInputFeature,
@@ -71,9 +68,7 @@ class Feature(KeyModel):
             return input_mapper[config["type"]](**config)
         else:
             if "desirability_function" in config.keys():
-                d = DesirabilityFunction.from_config(
-                    config=config["desirability_function"]
-                )
+                d = Objective.from_config(config=config["desirability_function"])
             else:
                 d = None
             return output_mapper[config["type"]](
@@ -738,11 +733,11 @@ class ContinuousOutputFeature(OutputFeature):
 
     Attributes:
         desirability_function (Desirability_function, optional): Desirability function of
-            the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
+            the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.
     """
 
-    desirability_function: Optional[DesirabilityFunction] = Field(
-        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
+    desirability_function: Optional[Objective] = Field(
+        default_factory=lambda: MaximizeObjective(w=1.0)
     )
 
     def to_config(self) -> Dict:
