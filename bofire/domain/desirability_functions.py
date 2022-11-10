@@ -61,7 +61,6 @@ class DesirabilityFunction(BaseModel):
             DesirabilityFunction: Instaniated desirability function of the type specified in the `config`.
         """
         mapper = {
-            "NoDesirabilityFunction": NoDesirabilityFunction,
             "MaxIdentityDesirabilityFunction": MaxIdentityDesirabilityFunction,
             "MinIdentityDesirabilityFunction": MinIdentityDesirabilityFunction,
             "DeltaIdentityDesirabilityFunction": DeltaIdentityDesirabilityFunction,
@@ -72,25 +71,6 @@ class DesirabilityFunction(BaseModel):
             "CloseToTargetDesirabilityFunction": CloseToTargetDesirabilityFunction,
         }
         return mapper[config["type"]](**config)
-
-
-class NoDesirabilityFunction(DesirabilityFunction):
-    """Dummy desirability function to allow output features which should not be optimized
-
-    Args:
-        DesirabilityFunction (DesirabilityFunction): The base class for all desirability functions
-    """
-
-    def __call__(self, x: np.ndarray) -> None:
-        """Dummy call function returning None
-
-        Args:
-            x (np.ndarray): An array of x values
-
-        Returns:
-            None: No reward is returned
-        """
-        return None
 
 
 class IdentityDesirabilityFunction(DesirabilityFunction):

@@ -208,6 +208,10 @@ FEATURE_SPECS = {
                 **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
                 "desirability_function": desirability_function,
             },
+            {
+                **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
+                "desirability_function": None,
+            },
         ],
         "invalids": [*get_invalids(VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)],
     },

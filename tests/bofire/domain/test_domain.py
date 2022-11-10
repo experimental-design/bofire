@@ -18,7 +18,6 @@ from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
     Feature,
     InputFeature,
     OutputFeature,
@@ -372,8 +371,8 @@ of2 = ContinuousOutputFeature(key="out2", desirability_function=df)
 
 c1 = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[5, 5], rhs=15.0)
 
-of1_ = ContinuousOutputFeature_woDesFunc(key="out3")
-of2_ = ContinuousOutputFeature_woDesFunc(key="out4")
+of1_ = ContinuousOutputFeature(key="out3", desirability_function=None)
+of2_ = ContinuousOutputFeature(key="out4", desirability_function=None)
 
 domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
 domain2 = Domain(
@@ -635,12 +634,9 @@ domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_
         (domain, OutputFeature, True, []),
         (domain, OutputFeature, False, [of1, of2, of1_, of2_]),
         (domain, OutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, True, [of1, of2]),
+        (domain, ContinuousOutputFeature, True, [of1, of2, of1_, of2_]),
         (domain, ContinuousOutputFeature, False, [of1, of2, of1_, of2_]),
         (domain, ContinuousOutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, [of1_, of2_]),
         (domain, InputFeature, True, []),
         (domain, InputFeature, False, [if1, if2]),
         (domain, InputFeature, None, [if1, if2]),
@@ -651,19 +647,21 @@ def test_get_features(domain, FeatureType, exact, expected):
 
 
 @pytest.mark.parametrize(
-    "domain, DesirabilityType, exact, expected",
+    "domain, includes, excludes, exact, expected",
     [
-        (domain, DesirabilityFunction, True, []),
-        (domain, DesirabilityFunction, False, [of1, of2, of1_, of2_]),
-        (domain, TargetDesirabilityFunction, False, [of1, of2]),
+        (domain, [DesirabilityFunction], [], True, []),
+        (domain, [DesirabilityFunction], [], False, [of1, of2]),
+        (domain, [TargetDesirabilityFunction], [], False, [of1, of2]),
+        (domain, [], [DesirabilityFunction], False, [of1_, of2_]),
     ],
 )
 def test_get_outputs_by_desirability(
-    domain: Domain, DesirabilityType: DesirabilityFunction, exact, expected
+    domain: Domain, includes, excludes, exact, expected
 ):
     assert (
         domain.get_outputs_by_desirability(
-            DesirabilityType,
+            includes=includes,
+            excludes=excludes,
             exact=exact,
         )
         == expected
@@ -676,11 +674,8 @@ def test_get_outputs_by_desirability(
         (domain, OutputFeature, True, []),
         (domain, OutputFeature, False, ["out1", "out2", "out3", "out4"]),
         (domain, OutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, True, ["out1", "out2"]),
+        (domain, ContinuousOutputFeature, True, ["out1", "out2", "out3", "out4"]),
         (domain, ContinuousOutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, ["out3", "out4"]),
         (domain, InputFeature, True, []),
         (domain, InputFeature, False, ["x1", "x2"]),
         (domain, InputFeature, None, ["x1", "x2"]),
@@ -691,19 +686,21 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
 
 
 @pytest.mark.parametrize(
-    "domain, DesirabilityType, exact, expected",
+    "domain, includes, excludes, exact, expected",
     [
-        (domain, DesirabilityFunction, False, ["out1", "out2", "out3", "out4"]),
-        (domain, TargetDesirabilityFunction, False, ["out1", "out2"]),
-        (domain, DesirabilityFunction, True, []),
+        (domain, [DesirabilityFunction], [], False, ["out1", "out2"]),
+        (domain, [TargetDesirabilityFunction], [], False, ["out1", "out2"]),
+        (domain, [DesirabilityFunction], [], True, []),
+        (domain, [], [DesirabilityFunction], False, ["out3", "out4"]),
     ],
 )
 def test_get_output_keys_by_desirability(
-    domain: Domain, DesirabilityType: DesirabilityFunction, exact, expected
+    domain: Domain, includes, excludes, exact, expected
 ):
     assert (
         domain.get_output_keys_by_desirability(
-            DesirabilityType,
+            includes=includes,
+            excludes=excludes,
             exact=exact,
         )
         == expected

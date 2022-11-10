@@ -12,7 +12,6 @@ from bofire.domain.features import (
     CategoricalInputFeature,
     ContinuousInputFeature,
     ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
     Feature,
     InputFeature,
     OutputFeature,
@@ -300,7 +299,7 @@ class Domain(BaseModel):
         else:
             return sorted(
                 filter_by_attribute(
-                    self.output_features,
+                    self.get_features(ContinuousOutputFeature),
                     lambda of: of.desirability_function,
                     includes,
                     excludes,
@@ -811,10 +810,8 @@ class Domain(BaseModel):
             if feat.key not in candidates:
                 raise ValueError(f"no col for input feature `{feat.key}`")
             feat.validate_candidental(candidates[feat.key])
-        # for each output feature
-        for key in self.get_feature_keys(
-            OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
-        ):
+        # for each continuous output feature with an attached desirability object
+        for key in self.get_output_keys_by_desirability(DesirabilityFunction):
             # check that pred, sd, and des cols are specified and numerical
             for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
                 if col not in candidates:
@@ -830,11 +827,7 @@ class Domain(BaseModel):
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))
-        of_count = len(
-            self.get_features(
-                OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
-            )
-        )
+        of_count = len(self.get_outputs_by_desirability(DesirabilityFunction))
         # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
         if len(candidates.columns) != if_count + 3 * of_count:
             raise ValueError("additional columns found")
@@ -863,20 +856,20 @@ class Domain(BaseModel):
             self.get_feature_keys(InputFeature)
             + [
                 f"{output_feature_key}_pred"
-                for output_feature_key in self.get_feature_keys(
-                    OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
+                for output_feature_key in self.get_outputs_by_desirability(
+                    DesirabilityFunction
                 )
             ]
             + [
                 f"{output_feature_key}_sd"
-                for output_feature_key in self.get_feature_keys(
-                    OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
+                for output_feature_key in self.get_outputs_by_desirability(
+                    DesirabilityFunction
                 )
             ]
             + [
                 f"{output_feature_key}_des"
-                for output_feature_key in self.get_feature_keys(
-                    OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
+                for output_feature_key in self.get_outputs_by_desirability(
+                    DesirabilityFunction
                 )
             ]
         )

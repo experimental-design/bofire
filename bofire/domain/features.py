@@ -11,7 +11,6 @@ from pydantic.types import conlist
 from bofire.domain.desirability_functions import (
     DesirabilityFunction,
     MaxIdentityDesirabilityFunction,
-    NoDesirabilityFunction,
 )
 from bofire.domain.util import KeyModel, is_numeric, name2key
 
@@ -66,13 +65,17 @@ class Feature(KeyModel):
             "ContinuousDescriptorInputFeature": ContinuousDescriptorInputFeature,
         }
         output_mapper = {
-            "ContinuousOutputFeature_woDesFunc": ContinuousOutputFeature_woDesFunc,
             "ContinuousOutputFeature": ContinuousOutputFeature,
         }
         if config["type"] in input_mapper.keys():
             return input_mapper[config["type"]](**config)
         else:
-            d = DesirabilityFunction.from_config(config=config["desirability_function"])
+            if "desirability_function" in config.keys():
+                d = DesirabilityFunction.from_config(
+                    config=config["desirability_function"]
+                )
+            else:
+                d = None
             return output_mapper[config["type"]](
                 key=config["key"], desirability_function=d
             )
@@ -137,79 +140,6 @@ class InputFeature(Feature):
             pd.Series: Sampled values.
         """
         pass
-
-
-class OutputFeature(Feature):
-    """Base class for all output features.
-
-    Attributes:
-        desirability_function (Desirability_function, optional): Desirability function of
-            the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
-    """
-
-    desirability_function: Optional[DesirabilityFunction] = Field(
-        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
-    )
-
-    def to_config(self) -> Dict:
-        """Generate serialized version of the feature.
-
-        Returns:
-            Dict: Serialized version of the feature as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            "key": self.key,
-            "desirability_function": self.desirability_function.to_config(),
-        }
-
-    def plot(
-        self,
-        lower: float,
-        upper: float,
-        df_data: Optional[pd.DataFrame] = None,
-        plot_details: bool = True,
-        line_options: Optional[Dict] = None,
-        scatter_options: Optional[Dict] = None,
-        label_options: Optional[Dict] = None,
-        title_options: Optional[Dict] = None,
-    ):
-        """Plot the assigned reward function.
-
-        Args:
-            lower (float): lower bound for the plot
-            upper (float): upper bound for the plot
-            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
-        """
-        line_options = line_options or {}
-        scatter_options = scatter_options or {}
-        label_options = label_options or {}
-        title_options = title_options or {}
-
-        line_options["color"] = line_options.get("color", "black")
-        scatter_options["color"] = scatter_options.get("color", "red")
-
-        x = np.linspace(lower, upper, 5000)
-        reward = self.desirability_function.__call__(x)
-        fig, ax = plt.subplots()
-        ax.plot(x, reward, **line_options)
-        # TODO: validate dataframe
-        if df_data is not None:
-            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
-            ax.scatter(
-                x_data,
-                self.desirability_function.__call__(x_data),
-                **scatter_options,
-            )
-        ax.set_title("Desirability %s" % self.key, **title_options)
-        ax.set_ylabel("Desirability", **label_options)
-        ax.set_xlabel(self.key, **label_options)
-        if plot_details:
-            ax = self.desirability_function.plot_details(ax=ax)
-        return fig, ax
-
-    def __str__(self) -> str:
-        return self.desirability_function.__class__.__name__
 
 
 class NumericalInputFeature(InputFeature):
@@ -795,6 +725,14 @@ class CategoricalDescriptorInputFeature(CategoricalInputFeature):
         )
 
 
+class OutputFeature(Feature):
+    """Base class for all output features.
+
+    Attributes:
+        key(str): Key of the Feature.
+    """
+
+
 class ContinuousOutputFeature(OutputFeature):
     """The base class for a continuous output feature
 
@@ -803,13 +741,76 @@ class ContinuousOutputFeature(OutputFeature):
             the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
     """
 
-    pass
+    desirability_function: Optional[DesirabilityFunction] = Field(
+        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
+    )
 
+    def to_config(self) -> Dict:
+        """Generate serialized version of the feature.
 
-class ContinuousOutputFeature_woDesFunc(ContinuousOutputFeature):
-    """A class for continuous output features which should not be optimized. Deprecated."""
+        Returns:
+            Dict: Serialized version of the feature as dictionary.
+        """
+        config = {
+            "type": self.__class__.__name__,
+            "key": self.key,
+        }
+        if self.desirability_function is not None:
+            config["desirability_function"] = self.desirability_function.to_config()
+        return config
 
-    desirability_function = NoDesirabilityFunction
+    def plot(
+        self,
+        lower: float,
+        upper: float,
+        df_data: Optional[pd.DataFrame] = None,
+        plot_details: bool = True,
+        line_options: Optional[Dict] = None,
+        scatter_options: Optional[Dict] = None,
+        label_options: Optional[Dict] = None,
+        title_options: Optional[Dict] = None,
+    ):
+        """Plot the assigned desirability function.
+
+        Args:
+            lower (float): lower bound for the plot
+            upper (float): upper bound for the plot
+            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
+        """
+        if self.desirability_function is None:
+            raise ValueError(
+                f"No desirability function assigned for ContinuousOutputFeauture with key {self.key}."
+            )
+
+        line_options = line_options or {}
+        scatter_options = scatter_options or {}
+        label_options = label_options or {}
+        title_options = title_options or {}
+
+        line_options["color"] = line_options.get("color", "black")
+        scatter_options["color"] = scatter_options.get("color", "red")
+
+        x = np.linspace(lower, upper, 5000)
+        reward = self.desirability_function.__call__(x)
+        fig, ax = plt.subplots()
+        ax.plot(x, reward, **line_options)
+        # TODO: validate dataframe
+        if df_data is not None:
+            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
+            ax.scatter(
+                x_data,
+                self.desirability_function.__call__(x_data),
+                **scatter_options,
+            )
+        ax.set_title("Desirability %s" % self.key, **title_options)
+        ax.set_ylabel("Desirability", **label_options)
+        ax.set_xlabel(self.key, **label_options)
+        if plot_details:
+            ax = self.desirability_function.plot_details(ax=ax)
+        return fig, ax
+
+    def __str__(self) -> str:
+        return "ContinuousOutputFeature"
 
 
 # A helper constant for the default value of the weight parameter
@@ -820,7 +821,6 @@ FEATURE_ORDER = {
     CategoricalInputFeature: 4,
     CategoricalDescriptorInputFeature: 5,
     ContinuousOutputFeature: 6,
-    ContinuousOutputFeature_woDesFunc: 7,
 }
 
 
