@@ -57,9 +57,6 @@ def filter_by_attribute(
         except AttributeError:
             pass
 
-    print("includes", includes)
-    print("excludes", excludes)
-
     filtered = filter_by_class(
         [(i, attribute_getter(d)) for i, d in enumerate(data_with_attr)],
         includes=includes,
