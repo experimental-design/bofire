@@ -45,7 +45,7 @@ def is_categorical(s: pd.Series, categories: List[str]):
 def filter_by_attribute(
     data: List,
     attribute_getter: Callable[[Type], Any],
-    includes: Union[Type, List[Type]],
+    includes: Union[Type, List[Type]] = None,
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
 ):
@@ -73,11 +73,13 @@ def filter_by_attribute(
 
 def filter_by_class(
     data: List,
-    includes: Union[Type, List[Type]],
+    includes: Union[Type, List[Type]] = None,
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
     key: Callable[[Type], Any] = lambda x: x,
 ) -> List:
+    if includes is None:
+        includes = []
     if not isinstance(includes, list):
         includes = [includes]
     if excludes is None:
@@ -85,8 +87,12 @@ def filter_by_class(
     if not isinstance(excludes, list):
         excludes = [excludes]
 
-    if len(includes) == 0:
+    if len(includes) == len(excludes) == 0:
         raise ValueError("no filter provided")
+
+    if len(includes) == 0:
+        includes = [object]
+
     if len([x for x in includes if x in excludes]) > 0:
         raise ValueError("includes and excludes overlap")
 

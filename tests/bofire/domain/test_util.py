@@ -155,6 +155,36 @@ def test_filter_by_attribute(data, includes, expected):
 
 
 @pytest.mark.parametrize(
+    "data,excludes,expected",
+    [
+        (data, [A], []),
+        (data, [A2], [a, a1, a11, a12]),
+    ],
+)
+def test_filter_by_class_only_exclude(data, excludes, expected):
+    res = filter_by_class(data, excludes=excludes)
+    print("got:", [type(x).__name__ for x in res])
+    print("expected:", [type(x).__name__ for x in expected])
+    assert set(res) == set(expected)
+
+
+@pytest.mark.parametrize(
+    "data,excludes,expected",
+    [
+        (data2, [B2], [c, c1, c11, c12, c3]),
+        (data2, [B], [c3]),
+    ],
+)
+def test_filter_by_attribute_only_exclude(data, excludes, expected):
+    res = filter_by_attribute(
+        data, attribute_getter=lambda of: of.attribute, excludes=excludes
+    )
+    print("got:", [type(x.attribute).__name__ for x in res])
+    print("expected:", [type(x.attribute).__name__ for x in expected])
+    assert set(res) == set(expected)
+
+
+@pytest.mark.parametrize(
     "data,includes,expected",
     [
         (data, [A], [a]),
@@ -268,14 +298,17 @@ def test_filter_by_attribute_exclude_exact(data, includes, exclude, expected):
 
 
 @pytest.mark.parametrize(
-    "includes",
+    "includes, excludes",
     [
-        ([]),
+        ([], []),
+        ([], None),
+        (None, None),
+        (None, []),
     ],
 )
-def test_filter_by_class_no_cls(includes):
+def test_filter_by_class_no_cls(includes, excludes):
     with pytest.raises(ValueError):
-        filter_by_class(data, includes)
+        filter_by_class(data, includes=includes, excludes=excludes)
 
 
 @pytest.mark.parametrize(
