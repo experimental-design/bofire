@@ -6,11 +6,9 @@ import pandas as pd
 import pytest
 from _pytest.fixtures import fixture
 
-from bofire.domain.constraints import LinearEqualityConstraint
 from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInputFeature, ContinuousOutputFeature
-from bofire.strategies.strategy import ModelSpec, Strategy
-from tests.bofire.domain.test_constraints import VALID_LINEAR_CONSTRAINT_SPEC
+from bofire.strategies.strategy import Strategy
 from tests.bofire.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
@@ -47,6 +45,9 @@ e2 = generate_experiments(domain, 2)
 e3 = generate_experiments(domain, 3)
 e4 = generate_experiments(domain, 4)
 
+@fixture
+def strategy():
+    return DummyStrategy()
 
 @pytest.mark.parametrize("domain, experiments, replace", [
     (domain, experiments, replace)
@@ -60,9 +61,9 @@ def test_strategy_tell_initial(
 ):
     """verify that tell correctly stores initial experiments"""
     strategy = DummyStrategy(domain)
-    print(strategy.experiments)
+    print(strategy.domain.experiments)
     strategy.tell(experiments=experiments, replace=replace)
-    assert strategy.experiments.equals(experiments)
+    assert strategy.domain.experiments.equals(experiments)
 
 
 @pytest.mark.parametrize("domain, experimentss", [
@@ -77,7 +78,7 @@ def test_strategy_tell_append(
     for index, experiments in enumerate(experimentss):
         strategy.tell(experiments=experiments, replace=False)
         expected_len = sum([len(e) for e in experimentss[:index+1]])
-        assert len(strategy.experiments) == expected_len
+        assert len(strategy.domain.experiments) == expected_len
 
 
 @pytest.mark.parametrize("domain, experimentss", [
@@ -92,7 +93,7 @@ def test_strategy_tell_replace(
     for experiments in experimentss:
         strategy.tell(experiments=experiments, replace=True)
         expected_len = len(experiments)
-        assert len(strategy.experiments) == expected_len
+        assert len(strategy.domain.experiments) == expected_len
 
 
 @pytest.mark.parametrize("domain, experiments", [
@@ -100,7 +101,6 @@ def test_strategy_tell_replace(
     for e in [e3, e4]
 ])
 def test_strategy_ask_invalid_candidates(
-    strategy: Strategy,
     domain: Domain,
     experiments: pd.DataFrame,
 ):
@@ -126,7 +126,7 @@ def test_strategy_ask_invalid_candidates(
     (domain, e)
     for e in [e3, e4]
 ])
-def test_strategy_ask_different_lengths(
+def test_strategy_ask_invalid_candidate_count(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
@@ -137,34 +137,11 @@ def test_strategy_ask_different_lengths(
         self: Strategy,
         candidate_count: int
     ):
-        candidates = generate_candidates(self.domain, candidate_count)
-        return candidates
-    with mock.patch.object(DummyStrategy, '_ask', new=test_ask):
-        with pytest.raises(ValueError):
-            strategy.ask(candidate_count=1)
-
-
-@pytest.mark.parametrize("domain, experiments", [
-    (domain, e)
-    for e in [e3, e4]
-])
-def test_strategy_ask_invalid_candidate_count(
-    strategy: Strategy,
-    domain: Domain,
-    experiments: pd.DataFrame,
-):
-    strategy = Strategy(domain)
-    strategy.tell(experiments)
-
-    def test_ask(
-        self: Strategy,
-        candidate_count: int
-    ):
         candidates = generate_candidates(self.domain, candidate_count)[:-1]
         return candidates 
     with mock.patch.object(DummyStrategy, '_ask', new=test_ask):
         with pytest.raises(ValueError):
-            strategy.ask(candidate_count=1, allow_insufficient_experiments=False)
+            strategy.ask(candidate_count=1)
 
 
 @pytest.mark.parametrize("domain, experiments", [
@@ -183,68 +160,8 @@ def test_strategy_ask_valid(
         candidate_count: int
     ):
         candidates = generate_candidates(self.domain, candidate_count)
-        configs = [{} for _ in range(len(candidates))]
-        return candidates, configs
+        return candidates
     with mock.patch.object(DummyStrategy, '_ask', new=test_ask):
-        strategy.ask(candidate_count=1, allow_insufficient_experiments=False)
+        strategy.ask(candidate_count=1)
 
 
-@pytest.mark.parametrize("domain, experiments, candidate_count", [
-    (domain, e, candidate_count)
-    for e in [e1, e2]
-    for candidate_count in range(1, 5)
-])
-def test_strategy_ask_using_random(
-    domain: Domain,
-    experiments: pd.DataFrame,
-    candidate_count: int,
-):
-    strategy = DummyStrategy(domain)
-    strategy.tell(experiments)
-    candidates = strategy.ask(
-        candidate_count=candidate_count,
-    )
-    assert len(candidates) == candidate_count
-
-
-def test_strategy_is_reduceable():
-    st = DummyStrategy.from_domain(domain)
-    assert st.is_reduceable(domain) == True
-    st = DummyStrategy.from_domain(
-        domain = domain,
-        model_specs =  [
-            ModelSpec(
-                output_feature = "of1",
-                input_features = ["if1", "if2"],
-                kernel = "RBF",
-                ard = True,
-                scaler = "NORMALIZE"
-            ),
-            ModelSpec(
-                output_feature = "of2",
-                input_features = ["if1", "if2"],
-                kernel = "RBF",
-                ard = True,
-                scaler = "NORMALIZE"
-            ),
-        ])
-    assert st.is_reduceable(domain) == True
-    st = DummyStrategy(
-        domain = domain,
-        model_specs =  [
-            ModelSpec(
-                output_feature = "of1",
-                input_features = ["if1", "if2"],
-                kernel = "RBF",
-                ard = True,
-                scaler = "NORMALIZE"
-            ),
-            ModelSpec(
-                output_feature = "of2",
-                input_features = ["if1"],
-                kernel = "RBF",
-                ard = True,
-                scaler = "NORMALIZE"
-            ),
-        ])
-    assert st.is_reduceable(domain) == False

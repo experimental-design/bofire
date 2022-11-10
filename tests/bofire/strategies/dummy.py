@@ -4,6 +4,7 @@ from typing import List, Tuple, Type
 
 import pandas as pd
 
+from bofire.domain import Domain
 from bofire.domain.constraints import (
     Constraint,
     LinearConstraint,
@@ -56,3 +57,6 @@ class DummyStrategy(Strategy):
             ContinuousInputFeature,
             ContinuousOutputFeature
         ]
+
+    def is_reduceable(self, domain: Domain) -> bool:
+        return False

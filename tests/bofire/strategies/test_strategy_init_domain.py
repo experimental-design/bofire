@@ -65,29 +65,9 @@ c3 = NChooseKConstraint(**{
     for constraints in [[c1], [c2], [c1, c2]]
 ])
 def test_strategy_constructor(
-    domain: Domain
-):
-    strategy = DummyStrategy(domain)
-
-
-@pytest.mark.parametrize("domain", [
-    (
-        Domain(
-            input_features=input_features,
-            output_features=output_features,
-            constraints=[],
-        ),
-    )
-    for input_features in [[if1], [if2], [if1, if2]]
-    for output_features in [[of1], [of2], [of1, of2]]
-])
-def test_strategy_init_domain_model_specs(
     domain: Domain,
 ):
     strategy = DummyStrategy(domain)
-    assert len(strategy.model_specs) == len(domain.output_features)
-    for model_spec in strategy.model_specs:
-        assert len(model_spec.input_features) == len(domain.input_features)
 
 
 @pytest.mark.parametrize("domain", [
