@@ -5,10 +5,20 @@ import mock
 import pandas as pd
 import pytest
 from _pytest.fixtures import fixture
+from pydantic.error_wrappers import ValidationError
 
+from bofire.domain.constraints import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+)
 from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInputFeature, ContinuousOutputFeature
 from bofire.strategies.strategy import Strategy
+from tests.bofire.domain.test_constraints import (
+    VALID_LINEAR_CONSTRAINT_SPEC,
+    VALID_NCHOOSEKE_CONSTRAINT_SPEC,
+)
 from tests.bofire.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
@@ -22,10 +32,12 @@ from tests.bofire.strategies.dummy import DummyStrategy
 if1 = ContinuousInputFeature(**{
     **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     "key": "if1",
+    "lower_bound": 0.0
 })
 if2 = ContinuousInputFeature(**{
     **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     "key": "if2",
+    "lower_bound": 0.0
 })
 of1 = ContinuousOutputFeature(**{
     **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
@@ -35,6 +47,59 @@ of2 = ContinuousOutputFeature(**{
     **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
     "key": "of2",
 })
+
+c1 = LinearEqualityConstraint(**{
+    **VALID_LINEAR_CONSTRAINT_SPEC,
+    "features": ["if1", "if2"],
+    "coefficients": [1, 1],
+})
+c2 = LinearInequalityConstraint(**{
+    **VALID_LINEAR_CONSTRAINT_SPEC,
+    "features": ["if1", "if2"],
+    "coefficients": [1,1],
+})
+c3 = NChooseKConstraint(**{
+    **VALID_NCHOOSEKE_CONSTRAINT_SPEC,
+    "features": ["if1","if2"],
+})
+
+@fixture
+def strategy():
+    return DummyStrategy()
+
+@pytest.mark.parametrize("domain", [
+    (
+        Domain(
+            input_features=[if1, if2],
+            output_features=[of1],
+            constraints=constraints,
+        )
+    )
+    for constraints in [[c1], [c2], [c1, c2]]
+])
+def test_strategy_constructor(
+    domain: Domain,
+):
+    strategy = DummyStrategy(domain)
+
+
+@pytest.mark.parametrize("domain", [
+    (
+        Domain(
+            input_features=[if1, if2],
+            output_features=[of1],
+            constraints=constraints,
+        )
+    )
+    for constraints in [[c3], [c1, c3], [c2, c3], [c1, c2, c3]]
+])
+def test_strategy_init_domain_invalid_constraints(
+
+    domain: Domain,
+):
+    with pytest.raises(ValidationError):
+        strategy = DummyStrategy(domain)
+
 domain = Domain(
     input_features=[if1, if2],
     output_features=[of1, of2],
@@ -44,10 +109,6 @@ e1 = generate_experiments(domain, 1)
 e2 = generate_experiments(domain, 2)
 e3 = generate_experiments(domain, 3)
 e4 = generate_experiments(domain, 4)
-
-@fixture
-def strategy():
-    return DummyStrategy()
 
 @pytest.mark.parametrize("domain, experiments, replace", [
     (domain, experiments, replace)
