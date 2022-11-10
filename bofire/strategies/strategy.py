@@ -1,17 +1,15 @@
-
 from abc import abstractmethod
 from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
 from bofire.domain.features import Feature
 from bofire.domain.util import BaseModel
-from bofire.utils.reduce import AffineTransform, reduce_domain
 
 
 class Strategy(BaseModel):
@@ -24,32 +22,25 @@ class Strategy(BaseModel):
         seed (NonNegativeInt, optional):                random seed to be used
         domain (Domain):                                the problem definition
         rng (np.random.Generator, optional):            the random generator used
-        reduce (bool, optional):                        Boolean if irrelevant features or constraints should be ignored. Default is False.
-        affine_transform (AffineTransform, optional):   Backward transformation to obtain original domain from reduced domain again
     """
+
     class Config:
         arbitrary_types_allowed = True
 
-    seed: Optional[NonNegativeInt]
     domain: Domain
+    seed: Optional[NonNegativeInt]
     rng: Optional[np.random.Generator]
-    reduce: bool = False
-    affine_transform: Optional[AffineTransform] = Field(default_factory=lambda: AffineTransform(equalities=[]))
 
-    def __init__(self, domain: Domain, seed=None, reduce=False, *a, **kwa) -> None:
-        """Constructor of strategy, reduces the domain if requested 
-        """
-        super().__init__(domain=domain, seed=seed, reduce=reduce, *a, **kwa)
-        
-        if self.reduce and self.is_reduceable(self.domain):
-            self.domain, self.affine_transform = reduce_domain(self.domain)
-        
+    def __init__(self, domain: Domain, seed=None, *args, **kwargs) -> None:
+        """Constructor of strategy"""
+        super().__init__(domain=domain, seed=seed, *args, **kwargs)
+
         # we setup a random seed here
         if self.seed is None:
             self.seed = np.random.default_rng().integers(1000)
         self.rng = np.random.default_rng(self.seed)
 
-        self._init_domain()   
+        self._init_domain()
 
     @validator("domain")
     def validate_feature_count(cls, domain: Domain):
@@ -86,9 +77,11 @@ class Strategy(BaseModel):
         """
         for constraint in domain.constraints:
             if not cls.is_constraint_implemented(type(constraint)):
-                raise ValueError(f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`")
+                raise ValueError(
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"
+                )
         return domain
-    
+
     @validator("domain")
     def validate_features(cls, domain: Domain):
         """Validator to ensure that all features defined in the domain are valid for the chosen strategy
@@ -104,28 +97,25 @@ class Strategy(BaseModel):
         """
         for feature in domain.input_features + domain.output_features:
             if not cls.is_feature_implemented(type(feature)):
-                raise ValueError(f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`")
+                raise ValueError(
+                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
+                )
         return domain
-
-    @abstractmethod
-    def is_reduceable(self, domain: Domain) -> bool:
-        """Function to check if the domain can be reduced
-
-        Args:
-            domain (Domain): The domain defining all input features
-
-        Returns:
-            Boolean: Boolean if the domain can be reduced
-        """
-        pass
 
     @abstractmethod
     def _init_domain(
         self,
     ) -> None:
-        """Abstract method to allow for customized functions in the constructor of Strategy
-        """
+        """Abstract method to allow for customized functions in the constructor of Strategy"""
         pass
+
+    @property
+    def experiments(self):
+        return self.domain.experiments
+
+    @property
+    def pending_candidates(self):
+        return self.domain.candidates
 
     def tell(
         self,
@@ -133,8 +123,8 @@ class Strategy(BaseModel):
         replace: bool = False,
     ) -> None:
         """This function passes new experimental data to the optimizer
-        
-        Irrelevant features are dropped if self.reduce is set to True 
+
+        Irrelevant features are dropped if self.reduce is set to True
         and the data is checked on validity before passed to the optimizer.
 
         Args:
@@ -144,36 +134,29 @@ class Strategy(BaseModel):
         Raises:
             ValueError: if the domain is not specified
         """
-        if self.domain is None:
-            raise ValueError("domain is not initialized yet")
         if len(experiments) == 0:
             return
-        experiments = self.affine_transform.drop_data(experiments)
-        self.domain.validate_experiments(experiments)
-        if replace or self.domain.experiments is None:
-            self.domain.experiments = experiments
+        if replace:
+            self.domain.set_experiments(experiments)
         else:
             self.domain.add_experiments(experiments)
-        # TODO: check if provied constraints are implemented
-        # TODO: validate that domain's output features match model_spec
         self._tell()
 
     @abstractmethod
     def _tell(
         self,
     ) -> None:
-        """Abstract method to allow for customized tell functions in addition to self.tell()
-        """
+        """Abstract method to allow for customized tell functions in addition to self.tell()"""
         pass
 
     def ask(
-        self,
-        candidate_count: int
+        self, candidate_count: Optional[int] = None, add_pending: bool = False
     ) -> pd.DataFrame:
         """Function to generate new candidates
 
         Args:
-            candidate_count (int): Number of candidates to be generated
+            candidate_count (int, optional): Number of candidates to be generated. If not provided the number
+            of candidates is determined automaticall. Defaults to None.
 
         Raises:
             ValueError: if the number of generated candidates does not match the requested number
@@ -181,21 +164,33 @@ class Strategy(BaseModel):
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
         """
-        
+        if (candidate_count is not None) and (candidate_count < 1):
+            raise ValueError("Non negative candidate count is not supported.")
+
+        if not self.has_sufficient_experiments():
+            raise ValueError(
+                "Not enough experiments available to execute the strategy."
+            )
+
         candidates = self._ask(candidate_count=candidate_count)
 
         self.domain.validate_candidates(candidates=candidates)
-        candidates = self.affine_transform.augment_data(candidates)
-        
-        if len(candidates) != candidate_count:
-            raise ValueError(f"expected {candidate_count} candidates, got {len(candidates)}")
-        
+
+        if candidate_count is not None:
+            if len(candidates) != candidate_count:
+                raise ValueError(
+                    f"expected {candidate_count} candidates, got {len(candidates)}"
+                )
+
+        if add_pending:
+            self.domain.add_candidates(candidates)
+
         return candidates
 
     @abstractmethod
     def _ask(
         self,
-        candidate_count: int,
+        candidate_count: Optional[int] = None,
     ) -> pd.DataFrame:
         """Abstract ask method to allow for customized ask functions in addition to self.ask()
 

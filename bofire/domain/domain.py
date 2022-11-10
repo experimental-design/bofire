@@ -821,6 +821,10 @@ class Domain(BaseModel):
             ]
         )
 
+    def set_candidates(self, candidates: pd.DataFrame):
+        candidates = self.validate_candidates(candidates)
+        self.candidates = candidates
+
     def add_candidates(self, candidates: pd.DataFrame):
         candidates = self.validate_candidates(candidates)
         if candidates is None:
@@ -829,6 +833,10 @@ class Domain(BaseModel):
             self._candidates = pd.concat(
                 (self._candidates, candidates), ignore_index=True
             )
+
+    def set_experiments(self, experiments: pd.DataFrame):
+        experiments = self.validate_experiments(experiments)
+        self.experiments = experiments
 
     def add_experiments(self, experiments: pd.DataFrame):
         experiments = self.validate_experiments(experiments)

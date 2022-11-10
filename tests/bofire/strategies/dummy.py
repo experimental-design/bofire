@@ -1,10 +1,8 @@
 import inspect
-from enum import Enum
 from typing import List, Tuple, Type
 
 import pandas as pd
 
-from bofire.domain import Domain
 from bofire.domain.constraints import (
     Constraint,
     LinearConstraint,
@@ -50,13 +48,7 @@ class DummyStrategy(Strategy):
             LinearEqualityConstraint,
             LinearInequalityConstraint,
         ]
-    
+
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        return my_type in [
-            ContinuousInputFeature,
-            ContinuousOutputFeature
-        ]
-
-    def is_reduceable(self, domain: Domain) -> bool:
-        return False
+        return my_type in [ContinuousInputFeature, ContinuousOutputFeature]
