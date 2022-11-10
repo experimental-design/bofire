@@ -6,9 +6,9 @@ from bofire.domain.objectives import (
     ConstantObjective,
     DeltaObjective,
     MaximizeObjective,
-    MaxSigmoidObjective,
+    MaximizeSigmoidObjective,
     MinimizeObjective,
-    MinSigmoidObjective,
+    MinimizeSigmoidObjective,
     Objective,
     TargetObjective,
 )
@@ -103,7 +103,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             for invalid in [*INVALID_W, *INVALID_BOUNDS]
         ],
     },
-    MinSigmoidObjective: {
+    MinimizeSigmoidObjective: {
         "valids": [VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC)
@@ -115,7 +115,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             ]
         ],
     },
-    MaxSigmoidObjective: {
+    MaximizeSigmoidObjective: {
         "valids": [VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC)
