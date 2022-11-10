@@ -3,7 +3,7 @@ from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import validate_arguments, validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
@@ -150,8 +150,11 @@ class Strategy(BaseModel):
         """Abstract method to allow for customized tell functions in addition to self.tell()"""
         pass
 
+    @validate_arguments
     def ask(
-        self, candidate_count: Optional[NonNegativeInt] = None, add_pending: bool = False
+        self,
+        candidate_count: Optional[NonNegativeInt] = None,
+        add_pending: bool = False,
     ) -> pd.DataFrame:
         """Function to generate new candidates
 

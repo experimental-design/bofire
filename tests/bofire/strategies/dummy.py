@@ -38,7 +38,7 @@ class DummyStrategy(Strategy):
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self._class_}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
         )
 
     def has_sufficient_experiments(
@@ -60,4 +60,7 @@ class DummyStrategy(Strategy):
 
     @classmethod
     def is_desirability_implemented(cls, my_type: Type[DesirabilityFunction]) -> bool:
-        return my_type in [MinIdentityDesirabilityFunction, MaxIdentityDesirabilityFunction]
+        return my_type in [
+            MinIdentityDesirabilityFunction,
+            MaxIdentityDesirabilityFunction,
+        ]
