@@ -7,6 +7,7 @@ from pydantic import validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
+from bofire.domain.desirability_functions import DesirabilityFunction
 from bofire.domain.domain import Domain
 from bofire.domain.features import Feature
 from bofire.domain.util import BaseModel
@@ -150,23 +151,21 @@ class Strategy(BaseModel):
         pass
 
     def ask(
-        self, candidate_count: Optional[int] = None, add_pending: bool = False
+        self, candidate_count: Optional[NonNegativeInt] = None, add_pending: bool = False
     ) -> pd.DataFrame:
         """Function to generate new candidates
 
         Args:
-            candidate_count (int, optional): Number of candidates to be generated. If not provided the number
-            of candidates is determined automaticall. Defaults to None.
+            candidate_count (NonNegativeInt, optional): Number of candidates to be generated. If not provided, the number
+            of candidates is determined automatically. Defaults to None.
 
         Raises:
+            ValueError: if not enough experiments are passed to execute the strategy
             ValueError: if the number of generated candidates does not match the requested number
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
         """
-        if (candidate_count is not None) and (candidate_count < 1):
-            raise ValueError("Non negative candidate count is not supported.")
-
         if not self.has_sufficient_experiments():
             raise ValueError(
                 "Not enough experiments available to execute the strategy."
@@ -190,12 +189,12 @@ class Strategy(BaseModel):
     @abstractmethod
     def _ask(
         self,
-        candidate_count: Optional[int] = None,
+        candidate_count: Optional[NonNegativeInt] = None,
     ) -> pd.DataFrame:
         """Abstract ask method to allow for customized ask functions in addition to self.ask()
 
         Args:
-            candidate_count (int): Number of candidates to be generated
+            candidate_count (NonNegativeInt): Number of candidates to be generated
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -236,5 +235,18 @@ class Strategy(BaseModel):
 
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
+        """
+        pass
+
+    @classmethod
+    @abstractmethod
+    def is_desirability_implemented(cls, my_type: Type[DesirabilityFunction]) -> bool:
+        """Abstract method to check if a desirability type is implemented for the strategy
+
+        Args:
+            my_type (Type[DesirabilityFunction]): DesirabilityFunction class
+
+        Returns:
+            bool: True if the desirability type is valid for the strategy chosen, False otherwise
         """
         pass

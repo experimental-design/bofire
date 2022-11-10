@@ -9,6 +9,11 @@ from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
+from bofire.domain.desirability_functions import (
+    DesirabilityFunction,
+    MaxIdentityDesirabilityFunction,
+    MinIdentityDesirabilityFunction,
+)
 from bofire.domain.features import (
     ContinuousInputFeature,
     ContinuousOutputFeature,
@@ -52,3 +57,7 @@ class DummyStrategy(Strategy):
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         return my_type in [ContinuousInputFeature, ContinuousOutputFeature]
+
+    @classmethod
+    def is_desirability_implemented(cls, my_type: Type[DesirabilityFunction]) -> bool:
+        return my_type in [MinIdentityDesirabilityFunction, MaxIdentityDesirabilityFunction]
