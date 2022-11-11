@@ -16,13 +16,9 @@ from bofire.domain.util import BaseModel
 class Strategy(BaseModel):
     """Base class for all strategies
 
-    Args:
-        BaseModel (pydantic.BaseModel): Pydantic base model
-
     Attributes:
-        seed (NonNegativeInt, optional):                random seed to be used
-        domain (Domain):                                the problem definition
-        rng (np.random.Generator, optional):            the random generator used
+        domain (Domain): The optimization domain ie. optimization problem defintion.
+        seed (NonNegativeInt, optional): Random seed to be used, if no one defined, a seed is just sampled. Defaults to None.
     """
 
     class Config:
@@ -33,7 +29,7 @@ class Strategy(BaseModel):
     rng: Optional[np.random.Generator]
 
     def __init__(self, domain: Domain, seed=None, *args, **kwargs) -> None:
-        """Constructor of strategy"""
+        """Constructor of the strategy."""
         super().__init__(domain=domain, seed=seed, *args, **kwargs)
 
         # we setup a random seed here
@@ -45,7 +41,7 @@ class Strategy(BaseModel):
 
     @validator("domain")
     def validate_feature_count(cls, domain: Domain):
-        """Validator to ensure that at least one input and output feature is defined
+        """Validator to ensure that at least one input and output feature with objective are defined
 
         Args:
             domain (Domain): The domain to be used in the strategy
