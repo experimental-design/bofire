@@ -268,7 +268,7 @@ def test_strategy_ask_invalid_candidate_count(
 
     with mock.patch.object(DummyStrategy, "_ask", new=test_ask):
         with pytest.raises(ValueError):
-            strategy.ask(candidate_count=1)
+            strategy.ask(candidate_count=4)
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
