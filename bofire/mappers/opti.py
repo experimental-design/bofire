@@ -11,43 +11,43 @@ from bofire.domain.constraints import (
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
-from bofire.domain.desirability_functions import (
-    CloseToTargetDesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-    MinIdentityDesirabilityFunction,
-)
 from bofire.domain.features import (
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    DiscreteInputFeature,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+    DiscreteInput,
     InputFeature,
     OutputFeature,
+)
+from bofire.domain.objectives import (
+    CloseToTargetObjective,
+    MaximizeObjective,
+    MinimizeObjective,
 )
 
 
 def input2feature(config: Dict):
     if config["type"] == "continuous":
-        return ContinuousInputFeature(
+        return ContinuousInput(
             key=config["name"],
             lower_bound=config["domain"][0],
             upper_bound=config["domain"][1],
         )
     if config["type"] == "categorical":
-        return CategoricalInputFeature(key=config["name"], categories=config["domain"])
+        return CategoricalInput(key=config["name"], categories=config["domain"])
     if config["type"] == "discrete":
-        return DiscreteInputFeature(key=config["name"], values=config["domain"])
+        return DiscreteInput(key=config["name"], values=config["domain"])
     else:
         raise ValueError(f"Unknown parameter type {config['type']}.")
 
 
 def objective2feature(config: Dict):
     if config["type"] == "minimize":
-        d = MinIdentityDesirabilityFunction(w=1.0)
+        d = MinimizeObjective(w=1.0)
     elif config["type"] == "maximize":
-        d = MaxIdentityDesirabilityFunction(w=1.0)
+        d = MaximizeObjective(w=1.0)
     elif config["type"] == "close-to-target":
-        d = CloseToTargetDesirabilityFunction(
+        d = CloseToTargetObjective(
             w=1,
             target_value=config["target"],
             exponent=config.get("tolerance", 1.0),
@@ -55,7 +55,7 @@ def objective2feature(config: Dict):
         )
     else:
         raise ValueError(f"Unknown objective type {config['type']}.")
-    return ContinuousOutputFeature(key=config["name"], desirability_function=d)
+    return ContinuousOutput(key=config["name"], desirability_function=d)
 
 
 def constraint2constraint(config: Dict, input_feature_keys: Optional[list] = None):

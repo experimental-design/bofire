@@ -8,10 +8,10 @@ from sklearn.utils._testing import assert_array_equal
 
 from bofire.domain.domain import Domain
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
 )
 from bofire.utils.transformer import (
     CategoricalEncodingEnum,
@@ -27,25 +27,25 @@ from tests.bofire.domain.test_features import (
     VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
 )
 
-if1 = ContinuousInputFeature(
+if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if1",
     }
 )
-if2 = CategoricalDescriptorInputFeature(
+if2 = CategoricalDescriptorInput(
     **{
         **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         "key": "if2",
     }
 )
-if3 = CategoricalInputFeature(
+if3 = CategoricalInput(
     **{
         **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "if3",
     }
 )
-of1 = ContinuousOutputFeature(
+of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
