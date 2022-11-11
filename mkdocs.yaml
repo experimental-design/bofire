@@ -1,0 +1,51 @@
+site_name: BoFire
+site_url: https://experimental-design.github.io/bofire
+repo_name: experimental-design/bofire
+repo_url: https://github.com/experimental-design/bofire
+
+nav:
+  - index.md
+  - Install: install.md
+  - API Reference:
+    - Domain: ref-domain.md
+    - Constraints: ref-constraints.md
+    - Objectives: ref-objectives.md
+    - Features: ref-features.md
+    - Domain Util: ref-domain-util.md
+    - Mappers: ref-mappers.md
+    - Utils: ref-utils.md
+
+theme:
+  name: material
+  features:
+    - toc.integrate
+
+plugins:
+  - search
+  # https://mkdocstrings.github.io/
+  - mkdocstrings:
+      watch:  # watch for changes when serving locally
+        - bofire
+      # handlers:
+      #   python:
+      #     rendering:
+      #       show_root_heading: yes
+      #       show_root_full_path: no
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - admonition
+
+extra_css:
+  - stylesheets/style.css
+
+extra_javascript:
+  # math support, https://squidfunk.github.io/mkdocs-material/reference/mathjax/
+  # - javascripts/mathjax.js  # when enabled, formulas come with a vertical scrollbar
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
