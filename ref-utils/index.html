@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://experimental-design.github.io/bofire/ref-utils/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.9">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.20d9efc8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.472b142f.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.08040f6c.min.css">
@@ -41,8 +41,6 @@
     
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../stylesheets/style.css">
-    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -58,7 +56,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="None" data-md-color-accent="None">
   
     
     
@@ -2051,7 +2049,7 @@ are the corresponding coefficients.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">adjust_boundary</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">ContinuousInputFeature</span><span class="p">,</span> <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">adjust_boundary</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Adjusts the boundaries of a feature.</span>
 
 <span class="sd">    Args:</span>
@@ -2146,14 +2144,14 @@ are the corresponding coefficients.</p></td>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there continuous inputs</span>
-    <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)</span>
+    <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">continuous_inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># check that equality constraints only contain continuous inputs</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">linear_equalities</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">feat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">feat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">False</span>
     <span class="k">return</span> <span class="kc">True</span>
 </code></pre></div>
@@ -2282,8 +2280,8 @@ are the corresponding coefficients.</p></td>
     <span class="p">)</span>
 
     <span class="c1"># only consider continuous inputs</span>
-    <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)</span>
-    <span class="n">other_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousInputFeature</span><span class="p">])</span>
+    <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+    <span class="n">other_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousInput</span><span class="p">])</span>
 
     <span class="c1"># assemble Matrix A from equality constraints</span>
     <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_equalities</span><span class="p">)</span>
@@ -2936,7 +2934,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
         <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
             <span class="p">):</span>
 
@@ -2944,7 +2942,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                 <span class="bp">self</span><span class="o">.</span><span class="n">features2transformedFeatures</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">keys</span>
 
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
             <span class="p">):</span>
                 <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
@@ -2974,7 +2972,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
         <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
             <span class="p">):</span>
 
@@ -3015,7 +3013,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                     <span class="n">experiment</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span>
             <span class="p">):</span>
                 <span class="n">enc</span> <span class="o">=</span> <span class="n">OrdinalEncoder</span><span class="p">(</span><span class="n">categories</span><span class="o">=</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">categories</span><span class="p">])</span>
@@ -3026,7 +3024,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                 <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">enc</span>
 
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
             <span class="p">):</span>
                 <span class="c1"># Create one-hot encoding columns &amp; insert to DataSet</span>
@@ -3038,7 +3036,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
                 <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">enc</span>
 
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInputFeature</span><span class="p">):</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
                 <span class="n">var_min</span><span class="p">,</span> <span class="n">var_max</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">fit_scaling</span><span class="p">(</span>
                     <span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
@@ -3103,7 +3101,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
         <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
             <span class="p">):</span>
 
@@ -3137,7 +3135,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                 <span class="p">)</span>
 
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span>
             <span class="p">):</span>
 
@@ -3151,7 +3149,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                 <span class="p">)</span>  <span class="c1"># categorical kernel needs int as input to avoid numerical trouble. Thus, these columns are also not scaled</span>
 
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
             <span class="p">):</span>
 
@@ -3173,7 +3171,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                     <span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
                 <span class="p">)</span>
 
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInputFeature</span><span class="p">):</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
 
                 <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span>
@@ -3255,7 +3253,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
             <span class="c1"># Categorical variables with descriptors</span>
             <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
             <span class="p">):</span>
                 <span class="n">enc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
@@ -3275,7 +3273,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
             <span class="c1"># Categorical features using one-hot encoding</span>
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
             <span class="p">):</span>
                 <span class="c1"># Get encoder</span>
@@ -3295,7 +3293,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
             <span class="c1"># Categorical features using ordinal encoding</span>
             <span class="k">elif</span> <span class="p">(</span>
-                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
                 <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span>
             <span class="p">):</span>
                 <span class="c1"># Get encoder</span>
@@ -3308,7 +3306,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
                 <span class="n">candidate</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">enc</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
             <span class="c1"># Continuous features</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInputFeature</span><span class="p">):</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
                 <span class="n">candidate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">un_scale</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
 
             <span class="k">elif</span> <span class="p">(</span>
@@ -3323,7 +3321,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">):</span>
 
             <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">transformed_candidate</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousOutputFeature</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousOutput</span><span class="p">):</span>
                     <span class="n">candidate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">un_scale</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -3339,10 +3337,10 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
             <span class="c1"># removes all categorical features (incl. the descriptor ones)</span>
             <span class="p">[</span>
                 <span class="n">features</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">CategoricalInputFeature</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="c1"># add categorical descriptor features again</span>
-            <span class="n">features2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+            <span class="n">features2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
 
             <span class="n">features</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="n">features</span> <span class="o">+</span> <span class="n">features2</span>
@@ -3351,7 +3349,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="p">[</span>
                 <span class="n">features</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
             <span class="p">]</span>
 
         <span class="k">return</span> <span class="n">features</span>
@@ -3540,7 +3538,7 @@ Defaults to None.</p></td>
 
     <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
         <span class="p">):</span>
 
@@ -3548,7 +3546,7 @@ Defaults to None.</p></td>
             <span class="bp">self</span><span class="o">.</span><span class="n">features2transformedFeatures</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">keys</span>
 
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
         <span class="p">):</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="o">+</span> <span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">feature</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
@@ -3659,7 +3657,7 @@ Defaults to None.</p></td>
 
     <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
         <span class="p">):</span>
 
@@ -3700,7 +3698,7 @@ Defaults to None.</p></td>
                 <span class="n">experiment</span> <span class="o">=</span> <span class="n">experiment</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="n">column_name</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span>
         <span class="p">):</span>
             <span class="n">enc</span> <span class="o">=</span> <span class="n">OrdinalEncoder</span><span class="p">(</span><span class="n">categories</span><span class="o">=</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">categories</span><span class="p">])</span>
@@ -3711,7 +3709,7 @@ Defaults to None.</p></td>
             <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">enc</span>
 
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
         <span class="p">):</span>
             <span class="c1"># Create one-hot encoding columns &amp; insert to DataSet</span>
@@ -3723,7 +3721,7 @@ Defaults to None.</p></td>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">enc</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInputFeature</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
             <span class="n">var_min</span><span class="p">,</span> <span class="n">var_max</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">fit_scaling</span><span class="p">(</span>
                 <span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
@@ -4049,7 +4047,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
     <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
         <span class="c1"># Categorical variables with descriptors</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
         <span class="p">):</span>
             <span class="n">enc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span>
@@ -4069,7 +4067,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
 
         <span class="c1"># Categorical features using one-hot encoding</span>
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
         <span class="p">):</span>
             <span class="c1"># Get encoder</span>
@@ -4089,7 +4087,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
 
         <span class="c1"># Categorical features using ordinal encoding</span>
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span>
         <span class="p">):</span>
             <span class="c1"># Get encoder</span>
@@ -4102,7 +4100,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
             <span class="n">candidate</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">enc</span><span class="o">.</span><span class="n">inverse_transform</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
         <span class="c1"># Continuous features</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInputFeature</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
             <span class="n">candidate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">un_scale</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
 
         <span class="k">elif</span> <span class="p">(</span>
@@ -4117,7 +4115,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
     <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">):</span>
 
         <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="n">transformed_candidate</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousOutputFeature</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousOutput</span><span class="p">):</span>
                 <span class="n">candidate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">un_scale</span><span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">candidate</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
@@ -4205,7 +4203,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
 
     <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features_to_be_transformed</span><span class="p">():</span>
         <span class="k">if</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalDescriptorInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_encoding</span> <span class="o">==</span> <span class="n">DescriptorEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span>
         <span class="p">):</span>
 
@@ -4239,7 +4237,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
             <span class="p">)</span>
 
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span>
         <span class="p">):</span>
 
@@ -4253,7 +4251,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
             <span class="p">)</span>  <span class="c1"># categorical kernel needs int as input to avoid numerical trouble. Thus, these columns are also not scaled</span>
 
         <span class="k">elif</span> <span class="p">(</span>
-            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
             <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">categorical_encoding</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span>
         <span class="p">):</span>
 
@@ -4275,7 +4273,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
                 <span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
             <span class="p">)</span>
 
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInputFeature</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">encoders</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span>

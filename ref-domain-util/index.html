@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://experimental-design.github.io/bofire/ref-domain-util/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.9">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.20d9efc8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.472b142f.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.08040f6c.min.css">
@@ -41,8 +41,6 @@
     
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../stylesheets/style.css">
-    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -58,7 +56,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="None" data-md-color-accent="None">
   
     
     
@@ -367,6 +365,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#bofire.domain.util.filter_by_attribute" class="md-nav__link">
+    filter_by_attribute()
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bofire.domain.util.filter_by_class" class="md-nav__link">
+    filter_by_class()
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -451,6 +463,250 @@
 
 
 
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h2 id="bofire.domain.util.filter_by_attribute" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">filter_by_attribute</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">attribute_getter</span><span class="p">,</span> <span class="n">includes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exact</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns those data elements where the attribute is of one of the include types.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>data</code></td>
+        <td><code>List</code></td>
+        <td><p>to be filtered</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>attribute_getter</code></td>
+        <td><code>Callable[[Type], Any]</code></td>
+        <td><p>expects an item of the data list and returns the attribute to filter by</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>includes</code></td>
+        <td><code>Union[Type, List[Type]]</code></td>
+        <td><p>attribute types that should be kept, sub-type are included by default, see exact</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>excludes</code></td>
+        <td><code>Union[Type, List[Type]]</code></td>
+        <td><p>attribute types that will be excluded even if they are sub-types of or include types.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>exact</code></td>
+        <td><code>bool</code></td>
+        <td><p>true for not including subtypes</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List</code></td>
+      <td><p>list of data point with attributes as filtered for</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/util.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">filter_by_attribute</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+    <span class="n">attribute_getter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Type</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns those data elements where the attribute is of one of the include types.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: to be filtered</span>
+<span class="sd">        attribute_getter: expects an item of the data list and returns the attribute to filter by</span>
+<span class="sd">        includes: attribute types that should be kept, sub-type are included by default, see exact</span>
+<span class="sd">        excludes: attribute types that will be excluded even if they are sub-types of or include types.</span>
+<span class="sd">        exact: true for not including subtypes</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        list of data point with attributes as filtered for</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_with_attr</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">attribute_getter</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+            <span class="n">data_with_attr</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">filtered</span> <span class="o">=</span> <span class="n">filter_by_class</span><span class="p">(</span>
+        <span class="n">data_with_attr</span><span class="p">,</span>
+        <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
+        <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
+        <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="n">attribute_getter</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">filtered</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h2 id="bofire.domain.util.filter_by_class" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">filter_by_class</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">includes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">exact</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">key</span><span class="o">=&lt;</span><span class="n">function</span> <span class="o">&lt;</span><span class="k">lambda</span><span class="o">&gt;</span> <span class="n">at</span> <span class="mh">0x7fe6b9f1fca0</span><span class="o">&gt;</span><span class="p">)</span></code>
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns those data elements where are one of the include types.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>data</code></td>
+        <td><code>List</code></td>
+        <td><p>to be filtered</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>includes</code></td>
+        <td><code>Union[Type, List[Type]]</code></td>
+        <td><p>attribute types that should be kept, sub-type are included by default, see exact</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>excludes</code></td>
+        <td><code>Union[Type, List[Type]]</code></td>
+        <td><p>attribute types that will be excluded even if they are sub-types of or include types.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>exact</code></td>
+        <td><code>bool</code></td>
+        <td><p>true for not including subtypes</p></td>
+        <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>key</code></td>
+        <td><code>Callable[[Type], Any]</code></td>
+        <td><p>maps a data list item to something that is used for filtering, identity by default</p></td>
+        <td><code>&lt;function &lt;lambda&gt; at 0x7fe6b9f1fca0&gt;</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List</code></td>
+      <td><p>filtered list of data points</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/util.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">filter_by_class</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">key</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Type</span><span class="p">],</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Returns those data elements where are one of the include types.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: to be filtered</span>
+<span class="sd">        includes: attribute types that should be kept, sub-type are included by default, see exact</span>
+<span class="sd">        excludes: attribute types that will be excluded even if they are sub-types of or include types.</span>
+<span class="sd">        exact: true for not including subtypes</span>
+<span class="sd">        key: maps a data list item to something that is used for filtering, identity by default</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        filtered list of data points</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">includes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">includes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">includes</span> <span class="o">=</span> <span class="p">[</span><span class="n">includes</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">excludes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">excludes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">excludes</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">excludes</span> <span class="o">=</span> <span class="p">[</span><span class="n">excludes</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">includes</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">excludes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no filter provided&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">includes</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">includes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">object</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">([</span><span class="n">x</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">includes</span> <span class="k">if</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">excludes</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;includes and excludes overlap&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">exact</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span> <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="ow">in</span> <span class="n">includes</span> <span class="ow">and</span> <span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="n">d</span><span class="p">))</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">excludes</span>
+        <span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">d</span>
+        <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">data</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">includes</span><span class="p">))</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">excludes</span><span class="p">))</span>
+    <span class="p">]</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 

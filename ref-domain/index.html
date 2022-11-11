@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://experimental-design.github.io/bofire/ref-domain/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.9">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
     
     
       
@@ -19,7 +19,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.20d9efc8.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.472b142f.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.08040f6c.min.css">
@@ -41,8 +41,6 @@
     
       <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-      <link rel="stylesheet" href="../stylesheets/style.css">
-    
     <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
@@ -58,7 +56,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="None" data-md-color-accent="None">
   
     
     
@@ -432,15 +430,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.get_output_keys_by_desirability" class="md-nav__link">
-    get_output_keys_by_desirability()
+  <a href="#bofire.domain.domain.Domain.get_output_keys_by_objective" class="md-nav__link">
+    get_output_keys_by_objective()
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.get_outputs_by_desirability" class="md-nav__link">
-    get_outputs_by_desirability()
+  <a href="#bofire.domain.domain.Domain.get_outputs_by_objective" class="md-nav__link">
+    get_outputs_by_objective()
   </a>
   
 </li>
@@ -775,7 +773,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="c1"># gather continuous input_features in dictionary</span>
         <span class="n">continuous_input_features_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInputFeature</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
                 <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
 
         <span class="c1"># check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0</span>
@@ -951,20 +949,20 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">}[</span><span class="n">key</span><span class="p">]</span>
 
-    <span class="n">TDesirability</span> <span class="o">=</span> <span class="n">Type</span><span class="p">[</span><span class="n">DesirabilityFunction</span><span class="p">]</span>
+    <span class="n">TObjective</span> <span class="o">=</span> <span class="n">Type</span><span class="p">[</span><span class="n">Objective</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">get_outputs_by_desirability</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">get_outputs_by_objective</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">]</span> <span class="o">=</span> <span class="n">DesirabilityFunction</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Get output features filtered by the type of the attached desirability function.</span>
+        <span class="sd">&quot;&quot;&quot;Get output features filtered by the type of the attached objective.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes</span>
-<span class="sd">                to be returned. Defaults to DesirabilityFunction.</span>
-<span class="sd">            excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
+<span class="sd">                to be returned. Defaults to Objective.</span>
+<span class="sd">            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
 <span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
@@ -975,34 +973,32 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
                 <span class="n">filter_by_attribute</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutputFeature</span><span class="p">),</span>
-                    <span class="k">lambda</span> <span class="n">of</span><span class="p">:</span> <span class="n">of</span><span class="o">.</span><span class="n">desirability_function</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">of</span><span class="p">:</span> <span class="n">of</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
                     <span class="n">includes</span><span class="p">,</span>
                     <span class="n">excludes</span><span class="p">,</span>
                     <span class="n">exact</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_output_keys_by_desirability</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">get_output_keys_by_objective</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">]</span> <span class="o">=</span> <span class="n">DesirabilityFunction</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
+        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Get keys of output features filtered by the type of the attached desirability function.</span>
+        <span class="sd">&quot;&quot;&quot;Get keys of output features filtered by the type of the attached objective.</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes</span>
-<span class="sd">                to be returned. Defaults to DesirabilityFunction.</span>
-<span class="sd">            excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
+<span class="sd">                to be returned. Defaults to Objective.</span>
+<span class="sd">            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
 <span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: List of output feature keys fitting to the passed requirements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)</span>
-        <span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)]</span>
 
     <span class="k">def</span> <span class="nf">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">:</span> <span class="n">Constraint</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a constraint to the optimzation domain</span>
@@ -1075,7 +1071,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">f</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
         <span class="p">]</span>
         <span class="n">list_of_lists</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">[(</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">cat</span><span class="p">)</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
@@ -1092,7 +1088,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        &quot;&quot;&quot;</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)</span>
+            <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
 
         <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="p">[]</span>
@@ -1198,11 +1194,11 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="c1"># TODO: needs to be tested</span>
-    <span class="k">def</span> <span class="nf">evaluate_desirabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">evaluate_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
             <span class="p">[</span>
-                <span class="n">feat</span><span class="o">.</span><span class="n">desirability_function</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutputFeature</span><span class="p">)</span>
+                <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
+                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">)</span>
             <span class="p">],</span>
             <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
@@ -1342,15 +1338,15 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="p">]</span>
 
         <span class="c1"># round it</span>
-        <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)</span>
+        <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
         <span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
 
         <span class="c1"># coerce invalid to nan</span>
         <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_invalids</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span>
 
         <span class="c1"># group and aggregate</span>
-        <span class="n">agg</span> <span class="o">=</span> <span class="p">{</span><span class="n">feat</span><span class="p">:</span> <span class="s2">&quot;mean&quot;</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousOutputFeature</span><span class="p">)}</span>
+        <span class="n">agg</span> <span class="o">=</span> <span class="p">{</span><span class="n">feat</span><span class="p">:</span> <span class="s2">&quot;mean&quot;</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">)}</span>
         <span class="n">agg</span><span class="p">[</span><span class="s2">&quot;labcode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">delimiter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">):</span>
             <span class="n">agg</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;valid_</span><span class="si">{</span><span class="n">feat</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
@@ -1486,8 +1482,8 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
             <span class="n">feat</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
-        <span class="c1"># for each continuous output feature with an attached desirability object</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_keys_by_desirability</span><span class="p">(</span><span class="n">DesirabilityFunction</span><span class="p">):</span>
+        <span class="c1"># for each continuous output feature with an attached objective object</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
             <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
@@ -1503,7 +1499,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
         <span class="c1"># validate no additional cols exist</span>
         <span class="n">if_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">))</span>
-        <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span><span class="n">DesirabilityFunction</span><span class="p">))</span>
+        <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">))</span>
         <span class="c1"># input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">if_count</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">of_count</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional columns found&quot;</span><span class="p">)</span>
@@ -1532,21 +1528,15 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">_pred&quot;</span>
-                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span>
-                    <span class="n">DesirabilityFunction</span>
-                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">_sd&quot;</span>
-                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span>
-                    <span class="n">DesirabilityFunction</span>
-                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">_des&quot;</span>
-                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span>
-                    <span class="n">DesirabilityFunction</span>
-                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -1893,15 +1883,15 @@ involved output features.</p>
         <span class="p">]</span>
 
     <span class="c1"># round it</span>
-    <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)</span>
+    <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
     <span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
 
     <span class="c1"># coerce invalid to nan</span>
     <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_invalids</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span>
 
     <span class="c1"># group and aggregate</span>
-    <span class="n">agg</span> <span class="o">=</span> <span class="p">{</span><span class="n">feat</span><span class="p">:</span> <span class="s2">&quot;mean&quot;</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousOutputFeature</span><span class="p">)}</span>
+    <span class="n">agg</span> <span class="o">=</span> <span class="p">{</span><span class="n">feat</span><span class="p">:</span> <span class="s2">&quot;mean&quot;</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">)}</span>
     <span class="n">agg</span><span class="p">[</span><span class="s2">&quot;labcode&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">delimiter</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">tolist</span><span class="p">()))</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">):</span>
         <span class="n">agg</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;valid_</span><span class="si">{</span><span class="n">feat</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="mi">1</span>
@@ -2222,7 +2212,7 @@ involved output features.</p>
     <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">f</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInputFeature</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
     <span class="p">]</span>
     <span class="n">list_of_lists</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">[(</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">cat</span><span class="p">)</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
@@ -2727,7 +2717,7 @@ involved output features.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInputFeature</span><span class="p">)</span>
+        <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
 
     <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2824,15 +2814,15 @@ involved output features.</p>
 
 
 
-<h3 id="bofire.domain.domain.Domain.get_output_keys_by_desirability" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_output_keys_by_desirability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">desirability_functions</span><span class="o">.</span><span class="n">DesirabilityFunction</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
+<h3 id="bofire.domain.domain.Domain.get_output_keys_by_objective" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_output_keys_by_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">Objective</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
 
 
 </h3>
 
     <div class="doc doc-contents ">
 
-      <p>Get keys of output features filtered by the type of the attached desirability function.</p>
+      <p>Get keys of output features filtered by the type of the attached objective.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2847,15 +2837,15 @@ involved output features.</p>
   <tbody>
       <tr>
         <td><code>includes</code></td>
-        <td><code>Union[List[TDesirability], TDesirability]</code></td>
-        <td><p>Desirability function class or list of desirability function classes
-to be returned. Defaults to DesirabilityFunction.</p></td>
-        <td><code>&lt;class &#39;bofire.domain.desirability_functions.DesirabilityFunction&#39;&gt;</code></td>
+        <td><code>Union[List[TObjective], TObjective]</code></td>
+        <td><p>Objective class or list of objective classes
+to be returned. Defaults to Objective.</p></td>
+        <td><code>&lt;class &#39;bofire.domain.objectives.Objective&#39;&gt;</code></td>
       </tr>
       <tr>
         <td><code>excludes</code></td>
-        <td><code>Union[List[TDesirability], TDesirability, None]</code></td>
-        <td><p>Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.</p></td>
+        <td><code>Union[List[TObjective], TObjective, None]</code></td>
+        <td><p>Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
@@ -2883,26 +2873,24 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_keys_by_desirability</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_keys_by_objective</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
-    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">]</span> <span class="o">=</span> <span class="n">DesirabilityFunction</span><span class="p">,</span>
-    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
+    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Get keys of output features filtered by the type of the attached desirability function.</span>
+    <span class="sd">&quot;&quot;&quot;Get keys of output features filtered by the type of the attached objective.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes</span>
-<span class="sd">            to be returned. Defaults to DesirabilityFunction.</span>
-<span class="sd">        excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">        includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
+<span class="sd">            to be returned. Defaults to Objective.</span>
+<span class="sd">        excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
 <span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List[str]: List of output feature keys fitting to the passed requirements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span>
-        <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)</span>
-    <span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)]</span>
 </code></pre></div>
         </details>
     </div>
@@ -2915,15 +2903,15 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
 
 
 
-<h3 id="bofire.domain.domain.Domain.get_outputs_by_desirability" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_outputs_by_desirability</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">desirability_functions</span><span class="o">.</span><span class="n">DesirabilityFunction</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
+<h3 id="bofire.domain.domain.Domain.get_outputs_by_objective" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">Objective</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
 
 
 </h3>
 
     <div class="doc doc-contents ">
 
-      <p>Get output features filtered by the type of the attached desirability function.</p>
+      <p>Get output features filtered by the type of the attached objective.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2938,15 +2926,15 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
   <tbody>
       <tr>
         <td><code>includes</code></td>
-        <td><code>Union[List[TDesirability], TDesirability]</code></td>
-        <td><p>Desirability function class or list of desirability function classes
-to be returned. Defaults to DesirabilityFunction.</p></td>
-        <td><code>&lt;class &#39;bofire.domain.desirability_functions.DesirabilityFunction&#39;&gt;</code></td>
+        <td><code>Union[List[TObjective], TObjective]</code></td>
+        <td><p>Objective class or list of objective classes
+to be returned. Defaults to Objective.</p></td>
+        <td><code>&lt;class &#39;bofire.domain.objectives.Objective&#39;&gt;</code></td>
       </tr>
       <tr>
         <td><code>excludes</code></td>
-        <td><code>Union[List[TDesirability], TDesirability, None]</code></td>
-        <td><p>Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.</p></td>
+        <td><code>Union[List[TObjective], TObjective, None]</code></td>
+        <td><p>Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
@@ -2974,18 +2962,18 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_outputs_by_desirability</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_outputs_by_objective</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
-    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">]</span> <span class="o">=</span> <span class="n">DesirabilityFunction</span><span class="p">,</span>
-    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TDesirability</span><span class="p">],</span> <span class="n">TDesirability</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
+    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Get output features filtered by the type of the attached desirability function.</span>
+    <span class="sd">&quot;&quot;&quot;Get output features filtered by the type of the attached objective.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        includes (Union[List[TDesirability], TDesirability], optional): Desirability function class or list of desirability function classes</span>
-<span class="sd">            to be returned. Defaults to DesirabilityFunction.</span>
-<span class="sd">        excludes (Union[List[TDesirability], TDesirability, None], optional): Desirability function class or list of specific desirability classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">        includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
+<span class="sd">            to be returned. Defaults to Objective.</span>
+<span class="sd">        excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
 <span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
 
 <span class="sd">    Returns:</span>
@@ -2996,8 +2984,8 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
             <span class="n">filter_by_attribute</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutputFeature</span><span class="p">),</span>
-                <span class="k">lambda</span> <span class="n">of</span><span class="p">:</span> <span class="n">of</span><span class="o">.</span><span class="n">desirability_function</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">),</span>
+                <span class="k">lambda</span> <span class="n">of</span><span class="p">:</span> <span class="n">of</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
                 <span class="n">includes</span><span class="p">,</span>
                 <span class="n">excludes</span><span class="p">,</span>
                 <span class="n">exact</span><span class="p">,</span>
@@ -3607,8 +3595,8 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
         <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
         <span class="n">feat</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
-    <span class="c1"># for each continuous output feature with an attached desirability object</span>
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_keys_by_desirability</span><span class="p">(</span><span class="n">DesirabilityFunction</span><span class="p">):</span>
+    <span class="c1"># for each continuous output feature with an attached objective object</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
         <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
             <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
@@ -3624,7 +3612,7 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
     <span class="c1"># validate no additional cols exist</span>
     <span class="n">if_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">))</span>
-    <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_desirability</span><span class="p">(</span><span class="n">DesirabilityFunction</span><span class="p">))</span>
+    <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">))</span>
     <span class="c1"># input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">if_count</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">of_count</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional columns found&quot;</span><span class="p">)</span>
@@ -3988,7 +3976,7 @@ to be returned. Defaults to DesirabilityFunction.</p></td>
     <span class="c1"># gather continuous input_features in dictionary</span>
     <span class="n">continuous_input_features_dict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInputFeature</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
             <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
 
     <span class="c1"># check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0</span>
