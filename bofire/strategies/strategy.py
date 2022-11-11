@@ -126,33 +126,40 @@ class Strategy(BaseModel):
     def _init_domain(
         self,
     ) -> None:
-        """Abstract method to allow for customized functions in the constructor of Strategy"""
+        """Abstract method to allow for customized functions in the constructor of Strategy.
+
+        Called at the end of `__init__`.
+        """
         pass
 
     @property
-    def experiments(self):
+    def experiments(self) -> pd.DataFrame:
+        """Property returning the experiments associated with the current strategy.
+
+        Returns:
+            pd.DataFrame: Experiments.
+        """
         return self.domain.experiments
 
     @property
-    def pending_candidates(self):
+    def pending_candidates(self) -> pd.DataFrame:
+        """Candidates considered as pending.
+
+        Returns:
+            pd.DataFrame: pending candidates.
+        """
         return self.domain.candidates
 
     def tell(
         self,
         experiments: pd.DataFrame,
         replace: bool = False,
-    ) -> None:
+    ):
         """This function passes new experimental data to the optimizer
-
-        Irrelevant features are dropped if self.reduce is set to True
-        and the data is checked on validity before passed to the optimizer.
 
         Args:
             experiments (pd.DataFrame): DataFrame with experimental data
             replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
-
-        Raises:
-            ValueError: if the domain is not specified
         """
         if len(experiments) == 0:
             return
@@ -182,7 +189,7 @@ class Strategy(BaseModel):
             of candidates is determined automatically. Defaults to None.
 
         Raises:
-            ValueError: if not enough experiments are passed to execute the strategy
+            ValueError: if not enough experiments are available to execute the strategy
             ValueError: if the number of generated candidates does not match the requested number
 
         Returns:
@@ -216,7 +223,7 @@ class Strategy(BaseModel):
         """Abstract ask method to allow for customized ask functions in addition to self.ask()
 
         Args:
-            candidate_count (NonNegativeInt): Number of candidates to be generated
+            candidate_count (NonNegativeInt, optional): Number of candidates to be generated. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -227,7 +234,7 @@ class Strategy(BaseModel):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        """Abstract method to check if sufficient experiments are provided
+        """Abstract method to check if sufficient experiments are available.
 
         Returns:
             bool: True if number of passed experiments is sufficient, False otherwise
