@@ -1,3 +1,3 @@
 # Domain
 
-::: bofire.domain.desirability_functions
+::: bofire.domain.objectives
