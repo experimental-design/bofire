@@ -13,7 +13,8 @@ from bofire.domain.constraints import (
     NChooseKConstraint,
 )
 from bofire.domain.domain import Domain
-from bofire.domain.features import ContinuousInputFeature, ContinuousOutputFeature
+from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.objectives import TargetObjective
 from bofire.strategies.strategy import Strategy
 from tests.bofire.domain.test_constraints import (
     VALID_LINEAR_CONSTRAINT_SPEC,
@@ -24,28 +25,42 @@ from tests.bofire.domain.test_domain_validators import (
     generate_experiments,
 )
 from tests.bofire.domain.test_features import (
+    VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
 )
 from tests.bofire.strategies.dummy import DummyStrategy
 
-if1 = ContinuousInputFeature(
+if1 = ContinuousInput(
     **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "lower_bound": 0.0}
 )
-if2 = ContinuousInputFeature(
+if2 = ContinuousInput(
     **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if2", "lower_bound": 0.0}
 )
-of1 = ContinuousOutputFeature(
+if3 = CategoricalInput(
+    **{
+        **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
+        "key": "if3",
+    }
+)
+
+of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
     }
 )
-of2 = ContinuousOutputFeature(
+of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
     }
+)
+of3 = ContinuousOutput(key="of3", objective=None)
+
+of4 = ContinuousOutput(
+    key="of4",
+    objective=TargetObjective(w=1, target_value=5.0, tolerance=1.0, steepness=0.5),
 )
 
 c1 = LinearEqualityConstraint(
@@ -110,6 +125,52 @@ def test_strategy_constructor(
 def test_strategy_init_domain_invalid_constraints(
     domain: Domain,
 ):
+    with pytest.raises(ValidationError):
+        DummyStrategy(domain)
+
+
+@pytest.mark.parametrize(
+    "domain",
+    [
+        (
+            Domain(
+                input_features=input_features,
+                output_features=[of1],
+                constraints=[],
+            )
+        )
+        for input_features in [[if3], [if1, if3]]
+    ],
+)
+def test_strategy_init_domain_invalid_input(domain: Domain):
+    with pytest.raises(ValidationError):
+        DummyStrategy(domain)
+
+
+@pytest.mark.parametrize(
+    "domain",
+    [
+        (
+            Domain(
+                input_features=[if1, if2],
+                output_features=output_features,
+                constraints=[],
+            )
+        )
+        for output_features in [[of1, of4], [of4]]
+    ],
+)
+def test_strategy_init_domain_invalid_objective(domain: Domain):
+    with pytest.raises(ValidationError):
+        DummyStrategy(domain)
+
+
+def test_strategy_init_domain_noobjective():
+    domain = Domain(
+        input_features=[if1, if2],
+        output_features=[of3],
+        constraints=[],
+    )
     with pytest.raises(ValidationError):
         DummyStrategy(domain)
 

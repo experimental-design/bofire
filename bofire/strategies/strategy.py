@@ -7,9 +7,9 @@ from pydantic import validate_arguments, validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
-from bofire.domain.desirability_functions import DesirabilityFunction
 from bofire.domain.domain import Domain
 from bofire.domain.features import Feature
+from bofire.domain.objectives import Objective
 from bofire.domain.util import BaseModel
 
 
@@ -49,6 +49,7 @@ class Strategy(BaseModel):
         Raises:
             ValueError: if no input feature is specified
             ValueError: if no output feature is specified
+            ValueError: if not output feauture with an attached objective is specified
 
         Returns:
             Domain: the domain
@@ -57,6 +58,8 @@ class Strategy(BaseModel):
             raise ValueError("no input feature specified")
         if len(domain.output_features) == 0:
             raise ValueError("no output feature specified")
+        if len(domain.get_outputs_by_objective(Objective)) == 0:
+            raise ValueError("no output feature with objective specified")
         return domain
 
     @validator("domain")
@@ -96,6 +99,26 @@ class Strategy(BaseModel):
             if not cls.is_feature_implemented(type(feature)):
                 raise ValueError(
                     f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
+                )
+        return domain
+
+    @validator("domain")
+    def validate_objectives(cls, domain: Domain):
+        """Validator to ensure that all objectives defined in the domain are valid for the chosen strategy
+
+        Args:
+            domain (Domain): The domain to be used in the strategy
+
+        Raises:
+            ValueError: if a objective type is defined in the domain but is invalid for the strategy chosen
+
+        Returns:
+            Domain: the domain
+        """
+        for feature in domain.get_outputs_by_objective(Objective):
+            if not cls.is_objective_implemented(type(feature.objective)):
+                raise ValueError(
+                    f"Objective `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
                 )
         return domain
 
@@ -239,13 +262,13 @@ class Strategy(BaseModel):
 
     @classmethod
     @abstractmethod
-    def is_desirability_implemented(cls, my_type: Type[DesirabilityFunction]) -> bool:
-        """Abstract method to check if a desirability type is implemented for the strategy
+    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
+        """Abstract method to check if a objective type is implemented for the strategy
 
         Args:
-            my_type (Type[DesirabilityFunction]): DesirabilityFunction class
+            my_type (Type[Objective]): Objective class
 
         Returns:
-            bool: True if the desirability type is valid for the strategy chosen, False otherwise
+            bool: True if the objective type is valid for the strategy chosen, False otherwise
         """
         pass
