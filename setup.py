@@ -48,5 +48,13 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=install_requires,
-    extras_require={"testing": ["pytest", "mopti"]},
+    extras_require={
+        "testing": ["pytest", "mopti"],
+        "docs": [
+            "mkdocs",
+            "mkdocs-material",
+            "mkdocstrings>=0.18",
+            "mkdocstrings-python-legacy",
+        ],
+    },
 )
