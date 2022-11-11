@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Type
+from typing import Optional, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -278,4 +278,99 @@ class Strategy(BaseModel):
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
         """
+        pass
+
+
+class ModelPredictiveStrategy(Strategy):
+    """Base class for all model based strategies.
+
+    Provides abstract scaffold for fit, predict, and calc_acquistion methods.
+    """
+
+    def tell(
+        self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True
+    ):
+        """This function passes new experimental data to the optimizer.
+
+        Args:
+            experiments (pd.DataFrame): DataFrame with experimental data
+            replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
+            retrain (bool, optional): If True, model(s) are retrained when new experimental data is passed to the optimizer. Defaults to True.
+        """
+        super().tell(experiments, replace)
+        if retrain:
+            self.fit()
+
+    def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """Run predictions for the provided experiments. Only input features have to be provided.
+
+        Args:
+            experiments (pd.DataFrame): Experimental data for which predictions should be performed.
+
+        Returns:
+            pd.DataFrame: Dataframe with the predicted values.
+        """
+        # TODO: validate also here the experiments but only for the input_columns
+        transformed = self.transformer.transform(experiments)
+        preds, stds = self._predict(transformed)
+        if stds is not None:
+            predictions = pd.DataFrame(
+                data=np.hstack((preds, stds)),
+                columns=[
+                    "%s_pred" % featkey
+                    for featkey in self.domain.get_output_keys_by_objective(Objective)
+                ]
+                + [
+                    "%s_sd" % featkey
+                    for featkey in self.domain.get_output_keys_by_objective(Objective)
+                ],
+            )
+        else:
+            predictions = pd.DataFrame(
+                data=preds,
+                columns=[
+                    "%s_pred" % featkey
+                    for featkey in self.domain.get_output_keys_by_objective(Objective)
+                ],
+            )
+        return predictions
+
+    def calc_acquisition(
+        self, experiments: pd.DataFrame, combined: bool = False
+    ) -> Union[float, pd.Series]:
+        """Calculate the acquisition value(s) for a set of experiments/candidates
+
+        Args:
+            experiments (pd.DataFrame): Experiments/candidates for which the acquisiton value(s) should be calculated.
+            combined (bool, optional): If combined the combined acqisition value is calculated, else the individual ones. Defaults to False.
+
+
+        Returns:
+            Union[float, pd.Series]: In case of `combined==True`, a float is returned else a pd.Series containing the individual acquisition values.
+        """
+        transformed = self.transformer.transform(experiments)
+        return self._calc_acquisition(transformed, combined=combined)
+
+    @abstractmethod
+    def _calc_acquisition(self, transformed: pd.DataFrame, combined: bool = False):
+        """Abstract method in which the actual acquistion function calculation is happening. Has to be overwritten."""
+        pass
+
+    @abstractmethod
+    def _predict(self, experiments: pd.DataFrame):
+        """Abstract method in which the actual prediction is happening. Has to be overwritten."""
+        pass
+
+    def fit(self):
+        """Fit the model(s) to the experimental data."""
+        assert (
+            self.experiments is not None or len(self.experiments) == 0
+        ), "No fitting data available"
+        self.domain.validate_experiments(self.experiments, strict=True)
+        transformed = self.transformer.fit_transform(self.experiments)
+        self._fit(transformed)
+
+    @abstractmethod
+    def _fit(self, transformed: pd.DataFrame):
+        """Abstract method where the acutal prediction are occuring."""
         pass
