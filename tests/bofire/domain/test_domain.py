@@ -8,18 +8,17 @@ from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
-from bofire.domain.desirability_functions import TargetDesirabilityFunction
 from bofire.domain.domain import Domain, get_subdomain
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
     Feature,
     InputFeature,
     OutputFeature,
 )
+from bofire.domain.objectives import Objective, TargetObjective
 from bofire.domain.util import BaseModel
 
 
@@ -31,33 +30,23 @@ def test_empty_domain():
     )
 
 
-df = TargetDesirabilityFunction(
-    target_value=1,
-    steepness=2,
-    tolerance=3,
-    w=0.5,
-)
-
-
 class Bla(BaseModel):
     a: int
 
 
 nf = Bla(a=1)
 
-if_ = CategoricalInputFeature(key="if", categories=["a", "b"])
-of_ = ContinuousOutputFeature(key="of", desirability_function=df)
+obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
 
-
-if1 = ContinuousInputFeature(key="f1", upper_bound=10, lower_bound=0)
-if1_ = ContinuousInputFeature(key="f1", upper_bound=10, lower_bound=1)
-if2 = ContinuousInputFeature(key="f2", upper_bound=10, lower_bound=0)
-
-of1 = ContinuousOutputFeature(key="f1", desirability_function=df)
-of1_ = ContinuousOutputFeature(key="f1", desirability_function=df)
-of2 = ContinuousOutputFeature(key="f2", desirability_function=df)
-
-of3 = ContinuousOutputFeature(key="of3", desirability_function=df)
+if_ = CategoricalInput(key="if", categories=["a", "b"])
+of_ = ContinuousOutput(key="of", objective=obj)
+if1 = ContinuousInput(key="f1", upper_bound=10, lower_bound=0)
+if1_ = ContinuousInput(key="f1", upper_bound=10, lower_bound=1)
+if2 = ContinuousInput(key="f2", upper_bound=10, lower_bound=0)
+of1 = ContinuousOutput(key="f1", objective=obj)
+of1_ = ContinuousOutput(key="f1", objective=obj)
+of2 = ContinuousOutput(key="f2", objective=obj)
+of3 = ContinuousOutput(key="of3", objective=obj)
 
 
 @pytest.mark.parametrize(
@@ -210,7 +199,7 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
         (
             Domain(
                 input_features=[
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f1",
                         categories=["c11", "c12"],
                     ),
@@ -225,15 +214,15 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
         (
             Domain(
                 input_features=[
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f2",
                         categories=["c21", "c22", "c23"],
                     ),
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f3",
                         categories=["c31", "c32"],
                     ),
@@ -260,11 +249,11 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
         (
             Domain(
                 input_features=[
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInputFeature(
+                    CategoricalDescriptorInput(
                         key="f2",
                         categories=["c21", "c22"],
                         descriptors=["d21", "d22"],
@@ -275,17 +264,17 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
             [
                 [("f1", "c11"), ("f1", "c12")],
             ],
-            CategoricalInputFeature,
-            CategoricalDescriptorInputFeature,
+            CategoricalInput,
+            CategoricalDescriptorInput,
         ),
         (
             Domain(
                 input_features=[
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInputFeature(
+                    CategoricalDescriptorInput(
                         key="f2",
                         categories=["c21", "c22"],
                         descriptors=["d21", "d22"],
@@ -297,17 +286,17 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
                 [("f1", "c11"), ("f1", "c12")],
                 [("f2", "c21"), ("f2", "c22")],
             ],
-            CategoricalInputFeature,
+            CategoricalInput,
             None,
         ),
         (
             Domain(
                 input_features=[
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInputFeature(
+                    CategoricalDescriptorInput(
                         key="f2",
                         categories=["c21", "c22"],
                         descriptors=["d21", "d22"],
@@ -318,17 +307,17 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
             [
                 [("f2", "c21"), ("f2", "c22")],
             ],
-            CategoricalDescriptorInputFeature,
+            CategoricalDescriptorInput,
             None,
         ),
         (
             Domain(
                 input_features=[
-                    CategoricalInputFeature(
+                    CategoricalInput(
                         key="f1",
                         categories=["c11", "c12"],
                     ),
-                    CategoricalDescriptorInputFeature(
+                    CategoricalDescriptorInput(
                         key="f2",
                         categories=["c21", "c22"],
                         descriptors=["d21", "d22"],
@@ -337,8 +326,8 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
                 ],
             ),
             [],
-            CategoricalDescriptorInputFeature,
-            CategoricalInputFeature,
+            CategoricalDescriptorInput,
+            CategoricalInput,
         ),
     ],
 )
@@ -361,16 +350,16 @@ data = pd.DataFrame.from_dict(
     }
 )
 
-if1 = ContinuousInputFeature(key="x1", upper_bound=10, lower_bound=1)
-if2 = ContinuousInputFeature(key="x2", upper_bound=10, lower_bound=1)
+if1 = ContinuousInput(key="x1", upper_bound=10, lower_bound=1)
+if2 = ContinuousInput(key="x2", upper_bound=10, lower_bound=1)
 
-of1 = ContinuousOutputFeature(key="out1", desirability_function=df)
-of2 = ContinuousOutputFeature(key="out2", desirability_function=df)
+of1 = ContinuousOutput(key="out1", objective=obj)
+of2 = ContinuousOutput(key="out2", objective=obj)
 
 c1 = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[5, 5], rhs=15.0)
 
-of1_ = ContinuousOutputFeature_woDesFunc(key="out3")
-of2_ = ContinuousOutputFeature_woDesFunc(key="out4")
+of1_ = ContinuousOutput(key="out3", objective=None)
+of2_ = ContinuousOutput(key="out4", objective=None)
 
 domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
 domain2 = Domain(
@@ -539,18 +528,8 @@ def test_aggregate_by_duplicates():
         {
             "x1": [1.0, 2.0, 3.0, 1.0],
             "x2": [1.0, 2.0, 3.0, 1.0],
-            "out1": [
-                4.0,
-                5.0,
-                6.0,
-                3.0,
-            ],
-            "out2": [
-                -4.0,
-                -5.0,
-                -6.0,
-                -3.0,
-            ],
+            "out1": [4.0, 5.0, 6.0, 3.0],
+            "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
         }
@@ -559,11 +538,7 @@ def test_aggregate_by_duplicates():
         {
             "labcode": ["1-4", "2", "3"],
             "x1": [1.0, 2.0, 3.0],
-            "x2": [
-                1.0,
-                2.0,
-                3.0,
-            ],
+            "x2": [1.0, 2.0, 3.0],
             "out1": [3.5, 5.0, 6.0],
             "out2": [-3.5, -5.0, -6.0],
             "valid_out1": [1, 1, 1],
@@ -581,18 +556,8 @@ def test_aggregate_by_duplicates():
         {
             "x1": [1.0, 2.0, 3.0, 4.0],
             "x2": [1.0, 2.0, 3.0, 4.0],
-            "out1": [
-                4.0,
-                5.0,
-                6.0,
-                3.0,
-            ],
-            "out2": [
-                -4.0,
-                -5.0,
-                -6.0,
-                -3.0,
-            ],
+            "out1": [4.0, 5.0, 6.0, 3.0],
+            "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
         }
@@ -602,18 +567,8 @@ def test_aggregate_by_duplicates():
             "labcode": ["0", "1", "2", "3"],
             "x1": [1.0, 2.0, 3.0, 4.0],
             "x2": [1.0, 2.0, 3.0, 4.0],
-            "out1": [
-                4.0,
-                5.0,
-                6.0,
-                3.0,
-            ],
-            "out2": [
-                -4.0,
-                -5.0,
-                -6.0,
-                -3.0,
-            ],
+            "out1": [4.0, 5.0, 6.0, 3.0],
+            "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
         }
@@ -632,12 +587,9 @@ domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_
         (domain, OutputFeature, True, []),
         (domain, OutputFeature, False, [of1, of2, of1_, of2_]),
         (domain, OutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, True, [of1, of2]),
-        (domain, ContinuousOutputFeature, False, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, [of1_, of2_]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, [of1_, of2_]),
+        (domain, ContinuousOutput, True, [of1, of2, of1_, of2_]),
+        (domain, ContinuousOutput, False, [of1, of2, of1_, of2_]),
+        (domain, ContinuousOutput, None, [of1, of2, of1_, of2_]),
         (domain, InputFeature, True, []),
         (domain, InputFeature, False, [if1, if2]),
         (domain, InputFeature, None, [if1, if2]),
@@ -648,17 +600,35 @@ def test_get_features(domain, FeatureType, exact, expected):
 
 
 @pytest.mark.parametrize(
+    "domain, includes, excludes, exact, expected",
+    [
+        (domain, [Objective], [], True, []),
+        (domain, [Objective], [], False, [of1, of2]),
+        (domain, [TargetObjective], [], False, [of1, of2]),
+        (domain, [], [Objective], False, [of1_, of2_]),
+    ],
+)
+def test_get_outputs_by_desirability(
+    domain: Domain, includes, excludes, exact, expected
+):
+    assert (
+        domain.get_outputs_by_objective(
+            includes=includes,
+            excludes=excludes,
+            exact=exact,
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
     "domain, FeatureType, exact, expected",
     [
         (domain, OutputFeature, True, []),
         (domain, OutputFeature, False, ["out1", "out2", "out3", "out4"]),
         (domain, OutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, True, ["out1", "out2"]),
-        (domain, ContinuousOutputFeature, False, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, True, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, False, ["out3", "out4"]),
-        (domain, ContinuousOutputFeature_woDesFunc, None, ["out3", "out4"]),
+        (domain, ContinuousOutput, True, ["out1", "out2", "out3", "out4"]),
+        (domain, ContinuousOutput, None, ["out1", "out2", "out3", "out4"]),
         (domain, InputFeature, True, []),
         (domain, InputFeature, False, ["x1", "x2"]),
         (domain, InputFeature, None, ["x1", "x2"]),
@@ -666,6 +636,28 @@ def test_get_features(domain, FeatureType, exact, expected):
 )
 def test_get_feature_keys(domain, FeatureType, exact, expected):
     assert domain.get_feature_keys(FeatureType, exact=exact) == expected
+
+
+@pytest.mark.parametrize(
+    "domain, includes, excludes, exact, expected",
+    [
+        (domain, [Objective], [], False, ["out1", "out2"]),
+        (domain, [TargetObjective], [], False, ["out1", "out2"]),
+        (domain, [Objective], [], True, []),
+        (domain, [], [Objective], False, ["out3", "out4"]),
+    ],
+)
+def test_get_output_keys_by_desirability(
+    domain: Domain, includes, excludes, exact, expected
+):
+    assert (
+        domain.get_output_keys_by_objective(
+            includes=includes,
+            excludes=excludes,
+            exact=exact,
+        )
+        == expected
+    )
 
 
 @pytest.mark.parametrize(

@@ -8,18 +8,15 @@ from pydantic.types import confloat
 from bofire.domain.util import BaseModel
 
 # for the return functions we do not distinguish between multiplicative/ additive (i.e. *weight or **weight),
-# since when a desirability function is called directly, we only have one objective
+# since when a objective is called directly, we only have one objective
 
 
-class DesirabilityFunction(BaseModel):
-    """The base class for all desirability functions"""
+class Objective(BaseModel):
+    """The base class for all objectives"""
 
     @abstractmethod
-    def __call__(
-        self,
-        x: np.ndarray,
-    ) -> np.ndarray:
-        """Abstract method to define the call function for the class DesirabilityFunction
+    def __call__(self, x: np.ndarray) -> np.ndarray:
+        """Abstract method to define the call function for the class Objective
 
         Args:
             x (np.ndarray): An array of x values
@@ -40,10 +37,10 @@ class DesirabilityFunction(BaseModel):
         return ax
 
     def to_config(self) -> Dict:
-        """Generate serialized version of the desirability function.
+        """Generate serialized version of the objective.
 
         Returns:
-            Dict: Serialized version of the desirability function as dictionary.
+            Dict: Serialized version of the objective as dictionary.
         """
         return {
             "type": self.__class__.__name__,
@@ -51,56 +48,36 @@ class DesirabilityFunction(BaseModel):
         }
 
     @staticmethod
-    def from_config(config: Dict) -> "DesirabilityFunction":
-        """Generate desirability function out of serialized version.
+    def from_config(config: Dict) -> "Objective":
+        """Generate objective out of serialized version.
 
         Args:
-            config (Dict): Serialized version of a desirability function
+            config (Dict): Serialized version of an objective.
 
         Returns:
-            DesirabilityFunction: Instaniated desirability function of the type specified in the `config`.
+            Objective: Instaniated objective of the type specified in the `config`.
         """
         mapper = {
-            "NoDesirabilityFunction": NoDesirabilityFunction,
-            "MaxIdentityDesirabilityFunction": MaxIdentityDesirabilityFunction,
-            "MinIdentityDesirabilityFunction": MinIdentityDesirabilityFunction,
-            "DeltaIdentityDesirabilityFunction": DeltaIdentityDesirabilityFunction,
-            "MaxSigmoidDesirabilityFunction": MaxSigmoidDesirabilityFunction,
-            "MinSigmoidDesirabilityFunction": MinSigmoidDesirabilityFunction,
-            "ConstantDesirabilityFunction": ConstantDesirabilityFunction,
-            "TargetDesirabilityFunction": TargetDesirabilityFunction,
-            "CloseToTargetDesirabilityFunction": CloseToTargetDesirabilityFunction,
+            "MaximizeObjective": MaximizeObjective,
+            "MinimizeObjective": MinimizeObjective,
+            "DeltaObjective": DeltaObjective,
+            "MaximizeSigmoidObjective": MaximizeSigmoidObjective,
+            "MinimizeSigmoidObjective": MinimizeSigmoidObjective,
+            "ConstantObjective": ConstantObjective,
+            "TargetObjective": TargetObjective,
+            "CloseToTargetObjective": CloseToTargetObjective,
         }
         return mapper[config["type"]](**config)
 
 
-class NoDesirabilityFunction(DesirabilityFunction):
-    """Dummy desirability function to allow output features which should not be optimized
-
-    Args:
-        DesirabilityFunction (DesirabilityFunction): The base class for all desirability functions
-    """
-
-    def __call__(self, x: np.ndarray) -> None:
-        """Dummy call function returning None
-
-        Args:
-            x (np.ndarray): An array of x values
-
-        Returns:
-            None: No reward is returned
-        """
-        return None
-
-
-class IdentityDesirabilityFunction(DesirabilityFunction):
-    """A desirability function returning the identity as reward.
+class IdentityObjective(Objective):
+    """An objective returning the identity as reward.
     The return can be scaled, when a lower and upper bound are provided.
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function
-        lower_bound (float, optional): Lower bound for normalizing the desirability function between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
+        w (float): float between zero and one for weighting the objective
+        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
+        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
     w: confloat(gt=0, le=1)
@@ -138,25 +115,25 @@ class IdentityDesirabilityFunction(DesirabilityFunction):
         return (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
 
-class MaxIdentityDesirabilityFunction(IdentityDesirabilityFunction):
+class MaximizeObjective(IdentityObjective):
     """Child class from the identity function without modifications, since the parent class is already defined as maximization
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function
-        lower_bound (float, optional): Lower bound for normalizing the desirability function between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
+        w (float): float between zero and one for weighting the objective
+        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
+        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
     pass
 
 
-class MinIdentityDesirabilityFunction(IdentityDesirabilityFunction):
+class MinimizeObjective(IdentityObjective):
     """Class returning the negative identity as reward.
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function
-        lower_bound (float, optional): Lower bound for normalizing the desirability function between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the desirability function between zero and one. Defaults to one.
+        w (float): float between zero and one for weighting the objective
+        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
+        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
@@ -171,11 +148,11 @@ class MinIdentityDesirabilityFunction(IdentityDesirabilityFunction):
         return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
 
-class DeltaIdentityDesirabilityFunction(IdentityDesirabilityFunction):
+class DeltaObjective(IdentityObjective):
     """Class returning the difference between a reference value and identity as reward
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function
+        w (float): float between zero and one for weighting the objective
         ref_point (float): Reference value.
         scale (float, optional): Scaling factor for the difference. Defaults to one.
     """
@@ -195,11 +172,11 @@ class DeltaIdentityDesirabilityFunction(IdentityDesirabilityFunction):
         return (self.ref_point - x) * self.scale
 
 
-class SigmoidDesirabilityFunction(DesirabilityFunction):
-    """Base class for all sigmoid shaped desirability functions
+class SigmoidObjective(Objective):
+    """Base class for all sigmoid shaped objectives
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function.
+        w (float): float between zero and one for weighting the objective.
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
         tp (float): Turning point of the sigmoid function.
     """
@@ -209,11 +186,11 @@ class SigmoidDesirabilityFunction(DesirabilityFunction):
     w: confloat(gt=0, le=1)
 
 
-class MaxSigmoidDesirabilityFunction(SigmoidDesirabilityFunction):
-    """Class for a maximizing sigmoid desirability function
+class MaximizeSigmoidObjective(SigmoidObjective):
+    """Class for a maximizing sigmoid objective
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function.
+        w (float): float between zero and one for weighting the objective.
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
         tp (float): Turning point of the sigmoid function.
 
@@ -231,11 +208,11 @@ class MaxSigmoidDesirabilityFunction(SigmoidDesirabilityFunction):
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
 
-class MinSigmoidDesirabilityFunction(SigmoidDesirabilityFunction):
-    """Class for a minimizing a sigmoid desirability function
+class MinimizeSigmoidObjective(SigmoidObjective):
+    """Class for a minimizing a sigmoid objective
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function.
+        w (float): float between zero and one for weighting the objective.
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
         tp (float): Turning point of the sigmoid function.
     """
@@ -252,11 +229,11 @@ class MinSigmoidDesirabilityFunction(SigmoidDesirabilityFunction):
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
 
-class ConstantDesirabilityFunction(DesirabilityFunction):
-    """Constant desirability function to allow constrained output features which should not be optimized
+class ConstantObjective(Objective):
+    """Constant objective to allow constrained output features which should not be optimized
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function.
+        w (float): float between zero and one for weighting the objective.
     """
 
     w: float
@@ -273,13 +250,13 @@ class ConstantDesirabilityFunction(DesirabilityFunction):
         return np.ones(x.shape) * self.w
 
 
-class AbstractTargetDesirabilityFunction(DesirabilityFunction):
+class AbstractTargetObjective(Objective):
     w: confloat(gt=0, le=1)
     target_value: float
     tolerance: confloat(ge=0)
 
     def plot_details(self, ax):
-        """Plot function highlighting the tolerance area of the desirability function
+        """Plot function highlighting the tolerance area of the objective
 
         Args:
             ax (matplotlib.axes.Axes): Matplotlib axes object
@@ -297,7 +274,7 @@ class AbstractTargetDesirabilityFunction(DesirabilityFunction):
         return ax
 
 
-class CloseToTargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
+class CloseToTargetObjective(AbstractTargetObjective):
     exponent: float
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
@@ -306,11 +283,11 @@ class CloseToTargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
         ).abs() ** self.exponent - self.tolerance**self.exponent
 
 
-class TargetDesirabilityFunction(AbstractTargetDesirabilityFunction):
-    """Class for desirability functions for optimizing towards a target value
+class TargetObjective(AbstractTargetObjective):
+    """Class for objectives for optimizing towards a target value
 
     Attributes:
-        w (float): float between zero and one for weighting the desirability function.
+        w (float): float between zero and one for weighting the objective.
         target_value (float): target value that should be reached.
         tolerance (float): Tolerance for reaching the target. Has to be greater than zero.
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.

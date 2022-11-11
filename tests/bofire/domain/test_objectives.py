@@ -1,16 +1,16 @@
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.desirability_functions import (
-    CloseToTargetDesirabilityFunction,
-    ConstantDesirabilityFunction,
-    DeltaIdentityDesirabilityFunction,
-    DesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-    MaxSigmoidDesirabilityFunction,
-    MinIdentityDesirabilityFunction,
-    MinSigmoidDesirabilityFunction,
-    TargetDesirabilityFunction,
+from bofire.domain.objectives import (
+    CloseToTargetObjective,
+    ConstantObjective,
+    DeltaObjective,
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+    MinimizeSigmoidObjective,
+    Objective,
+    TargetObjective,
 )
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
@@ -64,7 +64,7 @@ INVALID_TOLERANCE = [
 ]
 
 DESIRABILITY_FUNCTION_SPECS = {
-    MinIdentityDesirabilityFunction: {
+    MinimizeObjective: {
         "valids": [VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC)
@@ -79,7 +79,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             ]
         ],
     },
-    MaxIdentityDesirabilityFunction: {
+    MaximizeObjective: {
         "valids": [VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC)
@@ -91,7 +91,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             for invalid in [*INVALID_W, *INVALID_BOUNDS]
         ],
     },
-    DeltaIdentityDesirabilityFunction: {
+    DeltaObjective: {
         "valids": [VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC)
@@ -103,7 +103,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             for invalid in [*INVALID_W, *INVALID_BOUNDS]
         ],
     },
-    MinSigmoidDesirabilityFunction: {
+    MinimizeSigmoidObjective: {
         "valids": [VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC)
@@ -115,7 +115,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             ]
         ],
     },
-    MaxSigmoidDesirabilityFunction: {
+    MaximizeSigmoidObjective: {
         "valids": [VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC)
@@ -127,7 +127,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             ]
         ],
     },
-    TargetDesirabilityFunction: {
+    TargetObjective: {
         "valids": [VALID_TARGET_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_TARGET_DESIRABILITY_FUNCTION_SPEC)
@@ -140,7 +140,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             ]
         ],
     },
-    CloseToTargetDesirabilityFunction: {
+    CloseToTargetObjective: {
         "valids": [VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC)
@@ -153,7 +153,7 @@ DESIRABILITY_FUNCTION_SPECS = {
             ]
         ],
     },
-    ConstantDesirabilityFunction: {
+    ConstantObjective: {
         "valids": [VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC],
         "invalids": [INVALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC],
     },
@@ -184,7 +184,7 @@ def test_valid_desirability_function_specs(cls, spec):
 def test_desirability_function_serialize(cls, spec):
     res = cls(**spec)
     config = res.to_config()
-    res2 = DesirabilityFunction.from_config(config)
+    res2 = Objective.from_config(config)
     assert res == res2
 
 

@@ -5,10 +5,10 @@ import pytest
 from bofire.domain.constraints import NChooseKConstraint
 from bofire.domain.domain import Domain
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
 )
 
 # NChooseKConstraint constraints 1
@@ -37,12 +37,12 @@ cc3 = [
 # input features
 continuous_input_features = []
 for i in range(6):
-    f = ContinuousInputFeature(key=str(i), lower_bound=0, upper_bound=1)
+    f = ContinuousInput(key=str(i), lower_bound=0, upper_bound=1)
     continuous_input_features.append(f)
-categorical_feature = CategoricalInputFeature(
+categorical_feature = CategoricalInput(
     key="categorical_feature", categories=["c1", "c2"]
 )
-categorical_descriptor_feature = CategoricalDescriptorInputFeature(
+categorical_descriptor_feature = CategoricalDescriptorInput(
     key="categorical_descriptor_feature",
     categories=["cd1", "cd2"],
     descriptors=["d1", "d2"],
@@ -50,7 +50,7 @@ categorical_descriptor_feature = CategoricalDescriptorInputFeature(
 )
 
 # output feature
-output_features = [ContinuousOutputFeature(key="y")]
+output_features = [ContinuousOutput(key="y")]
 
 
 """

@@ -8,11 +8,7 @@ from pydantic import Field, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
-from bofire.domain.desirability_functions import (
-    DesirabilityFunction,
-    MaxIdentityDesirabilityFunction,
-    NoDesirabilityFunction,
-)
+from bofire.domain.objectives import MaximizeObjective, Objective
 from bofire.domain.util import KeyModel, is_numeric, name2key
 
 
@@ -49,33 +45,33 @@ class Feature(KeyModel):
         }
 
     @staticmethod
-    def from_config(config: Dict) -> "DesirabilityFunction":
-        """Generate desirability function out of serialized version.
+    def from_config(config: Dict) -> "Objective":
+        """Generate objective out of serialized version.
 
         Args:
-            config (Dict): Serialized version of a desirability function
+            config (Dict): Serialized version of a objective
 
         Returns:
-            DesirabilityFunction: Instaniated desirability function of the type specified in the `config`.
+            Objective: Instantiated objective of the type specified in the `config`.
         """
         input_mapper = {
-            "ContinuousInputFeature": ContinuousInputFeature,
-            "DiscreteInputFeature": DiscreteInputFeature,
-            "CategoricalInputFeature": CategoricalInputFeature,
-            "CategoricalDescriptorInputFeature": CategoricalDescriptorInputFeature,
-            "ContinuousDescriptorInputFeature": ContinuousDescriptorInputFeature,
+            "ContinuousInput": ContinuousInput,
+            "DiscreteInput": DiscreteInput,
+            "CategoricalInput": CategoricalInput,
+            "CategoricalDescriptorInput": CategoricalDescriptorInput,
+            "ContinuousDescriptorInput": ContinuousDescriptorInput,
         }
         output_mapper = {
-            "ContinuousOutputFeature_woDesFunc": ContinuousOutputFeature_woDesFunc,
-            "ContinuousOutputFeature": ContinuousOutputFeature,
+            "ContinuousOutput": ContinuousOutput,
         }
         if config["type"] in input_mapper.keys():
             return input_mapper[config["type"]](**config)
         else:
-            d = DesirabilityFunction.from_config(config=config["desirability_function"])
-            return output_mapper[config["type"]](
-                key=config["key"], desirability_function=d
-            )
+            if "objective" in config.keys():
+                obj = Objective.from_config(config=config["objective"])
+            else:
+                obj = None
+            return output_mapper[config["type"]](key=config["key"], objective=obj)
 
 
 class InputFeature(Feature):
@@ -137,79 +133,6 @@ class InputFeature(Feature):
             pd.Series: Sampled values.
         """
         pass
-
-
-class OutputFeature(Feature):
-    """Base class for all output features.
-
-    Attributes:
-        desirability_function (Desirability_function, optional): Desirability function of
-            the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
-    """
-
-    desirability_function: Optional[DesirabilityFunction] = Field(
-        default_factory=lambda: MaxIdentityDesirabilityFunction(w=1.0)
-    )
-
-    def to_config(self) -> Dict:
-        """Generate serialized version of the feature.
-
-        Returns:
-            Dict: Serialized version of the feature as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            "key": self.key,
-            "desirability_function": self.desirability_function.to_config(),
-        }
-
-    def plot(
-        self,
-        lower: float,
-        upper: float,
-        df_data: Optional[pd.DataFrame] = None,
-        plot_details: bool = True,
-        line_options: Optional[Dict] = None,
-        scatter_options: Optional[Dict] = None,
-        label_options: Optional[Dict] = None,
-        title_options: Optional[Dict] = None,
-    ):
-        """Plot the assigned reward function.
-
-        Args:
-            lower (float): lower bound for the plot
-            upper (float): upper bound for the plot
-            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
-        """
-        line_options = line_options or {}
-        scatter_options = scatter_options or {}
-        label_options = label_options or {}
-        title_options = title_options or {}
-
-        line_options["color"] = line_options.get("color", "black")
-        scatter_options["color"] = scatter_options.get("color", "red")
-
-        x = np.linspace(lower, upper, 5000)
-        reward = self.desirability_function.__call__(x)
-        fig, ax = plt.subplots()
-        ax.plot(x, reward, **line_options)
-        # TODO: validate dataframe
-        if df_data is not None:
-            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
-            ax.scatter(
-                x_data,
-                self.desirability_function.__call__(x_data),
-                **scatter_options,
-            )
-        ax.set_title("Desirability %s" % self.key, **title_options)
-        ax.set_ylabel("Desirability", **label_options)
-        ax.set_xlabel(self.key, **label_options)
-        if plot_details:
-            ax = self.desirability_function.plot_details(ax=ax)
-        return fig, ax
-
-    def __str__(self) -> str:
-        return self.desirability_function.__class__.__name__
 
 
 class NumericalInputFeature(InputFeature):
@@ -292,7 +215,7 @@ class NumericalInputFeature(InputFeature):
         return lower, upper
 
 
-class ContinuousInputFeature(NumericalInputFeature):
+class ContinuousInput(NumericalInputFeature):
     """Base class for all continuous input features.
 
     Attributes:
@@ -371,7 +294,7 @@ class ContinuousInputFeature(NumericalInputFeature):
         return f"[{self.lower_bound},{self.upper_bound}]"
 
 
-class DiscreteInputFeature(NumericalInputFeature):
+class DiscreteInput(NumericalInputFeature):
     """Feature with discretized ordinal values allowed in the optimization.
 
     Attributes:
@@ -440,7 +363,7 @@ class DiscreteInputFeature(NumericalInputFeature):
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
-class ContinuousDescriptorInputFeature(ContinuousInputFeature):
+class ContinuousDescriptorInput(ContinuousInput):
     """Class for continuous input features with descriptors
 
     Attributes:
@@ -495,7 +418,7 @@ class ContinuousDescriptorInputFeature(ContinuousInputFeature):
         )
 
 
-class CategoricalInputFeature(InputFeature):
+class CategoricalInput(InputFeature):
     """Base class for all categorical input features.
 
     Attributes:
@@ -665,7 +588,7 @@ class CategoricalInputFeature(InputFeature):
         return f"{len(self.categories)} categories"
 
 
-class CategoricalDescriptorInputFeature(CategoricalInputFeature):
+class CategoricalDescriptorInput(CategoricalInput):
     """Class for categorical input features with descriptors
 
     Attributes:
@@ -795,32 +718,101 @@ class CategoricalDescriptorInputFeature(CategoricalInputFeature):
         )
 
 
-class ContinuousOutputFeature(OutputFeature):
+class OutputFeature(Feature):
+    """Base class for all output features.
+
+    Attributes:
+        key(str): Key of the Feature.
+    """
+
+
+class ContinuousOutput(OutputFeature):
     """The base class for a continuous output feature
 
     Attributes:
-        desirability_function (Desirability_function, optional): Desirability function of
-            the feature indicating in which direction it should be optimzed. Defaults to `MaxIdentityDesirabilityFunction`.
+        objective (objective, optional): objective of the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.
     """
 
-    pass
+    objective: Optional[Objective] = Field(
+        default_factory=lambda: MaximizeObjective(w=1.0)
+    )
 
+    def to_config(self) -> Dict:
+        """Generate serialized version of the feature.
 
-class ContinuousOutputFeature_woDesFunc(ContinuousOutputFeature):
-    """A class for continuous output features which should not be optimized. Deprecated."""
+        Returns:
+            Dict: Serialized version of the feature as dictionary.
+        """
+        config = {
+            "type": self.__class__.__name__,
+            "key": self.key,
+        }
+        if self.objective is not None:
+            config["objective"] = self.objective.to_config()
+        return config
 
-    desirability_function = NoDesirabilityFunction
+    def plot(
+        self,
+        lower: float,
+        upper: float,
+        df_data: Optional[pd.DataFrame] = None,
+        plot_details: bool = True,
+        line_options: Optional[Dict] = None,
+        scatter_options: Optional[Dict] = None,
+        label_options: Optional[Dict] = None,
+        title_options: Optional[Dict] = None,
+    ):
+        """Plot the assigned objective.
+
+        Args:
+            lower (float): lower bound for the plot
+            upper (float): upper bound for the plot
+            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
+        """
+        if self.objective is None:
+            raise ValueError(
+                f"No objective assigned for ContinuousOutputFeauture with key {self.key}."
+            )
+
+        line_options = line_options or {}
+        scatter_options = scatter_options or {}
+        label_options = label_options or {}
+        title_options = title_options or {}
+
+        line_options["color"] = line_options.get("color", "black")
+        scatter_options["color"] = scatter_options.get("color", "red")
+
+        x = np.linspace(lower, upper, 5000)
+        reward = self.objective.__call__(x)
+        fig, ax = plt.subplots()
+        ax.plot(x, reward, **line_options)
+        # TODO: validate dataframe
+        if df_data is not None:
+            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
+            ax.scatter(
+                x_data,
+                self.objective.__call__(x_data),
+                **scatter_options,
+            )
+        ax.set_title("Objective %s" % self.key, **title_options)
+        ax.set_ylabel("Objective", **label_options)
+        ax.set_xlabel(self.key, **label_options)
+        if plot_details:
+            ax = self.objective.plot_details(ax=ax)
+        return fig, ax
+
+    def __str__(self) -> str:
+        return "ContinuousOutputFeature"
 
 
 # A helper constant for the default value of the weight parameter
 FEATURE_ORDER = {
-    ContinuousInputFeature: 1,
-    ContinuousDescriptorInputFeature: 2,
-    DiscreteInputFeature: 3,
-    CategoricalInputFeature: 4,
-    CategoricalDescriptorInputFeature: 5,
-    ContinuousOutputFeature: 6,
-    ContinuousOutputFeature_woDesFunc: 7,
+    ContinuousInput: 1,
+    ContinuousDescriptorInput: 2,
+    DiscreteInput: 3,
+    CategoricalInput: 4,
+    CategoricalDescriptorInput: 5,
+    ContinuousOutput: 6,
 }
 
 
@@ -835,9 +827,7 @@ def is_continuous(var: Feature) -> bool:
         bool: True if continuous, else False
     """
     # TODO: generalize query via attribute continuousFeature (not existing yet!)
-    if isinstance(var, ContinuousInputFeature) or isinstance(
-        var, ContinuousOutputFeature
-    ):
+    if isinstance(var, ContinuousInput) or isinstance(var, ContinuousOutput):
         return True
     else:
         False
