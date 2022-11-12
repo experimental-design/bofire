@@ -281,6 +281,13 @@ class Strategy(BaseModel):
         pass
 
 
+class SamplingStrategy(Strategy):
+    """Base class for all sampling based strategies which doe not use any previous experiments to compute the next set of candidates."""
+
+    def _tell(self) -> None:
+        return
+
+
 class ModelPredictiveStrategy(Strategy):
     """Base class for all model based strategies.
 
