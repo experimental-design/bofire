@@ -281,7 +281,7 @@ class Strategy(BaseModel):
         pass
 
 
-class ModelPredictiveStrategy(Strategy):
+class PredictiveStrategy(Strategy):
     """Base class for all model based strategies.
 
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
