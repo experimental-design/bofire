@@ -785,13 +785,13 @@ class Domain(BaseModel):
         )
 
     def validate_candidates(
-        self,
-        candidates: pd.DataFrame,
+        self, candidates: pd.DataFrame, only_inputs: bool = False
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
         Args:
             candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)
+            only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.
 
         Raises:
             ValueError: when a column is missing for a defined input feature
@@ -808,27 +808,28 @@ class Domain(BaseModel):
             if feat.key not in candidates:
                 raise ValueError(f"no col for input feature `{feat.key}`")
             feat.validate_candidental(candidates[feat.key])
-        # for each continuous output feature with an attached objective object
-        for key in self.get_output_keys_by_objective(Objective):
-            # check that pred, sd, and des cols are specified and numerical
-            for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
-                if col not in candidates:
-                    raise ValueError("missing column {col}")
-                if (not is_numeric(candidates[col])) and (
-                    not candidates[col].isnull().values.all()
-                ):
-                    raise ValueError(
-                        f"not all values of output feature `{key}` are numerical"
-                    )
         # check if all constraints are fulfilled
         if self.is_fulfilled(candidates).all() is False:
             raise ValueError("Constraints not fulfilled.")
-        # validate no additional cols exist
-        if_count = len(self.get_features(InputFeature))
-        of_count = len(self.get_outputs_by_objective(Objective))
-        # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
-        if len(candidates.columns) != if_count + 3 * of_count:
-            raise ValueError("additional columns found")
+        # for each continuous output feature with an attached objective object
+        if not only_inputs:
+            for key in self.get_output_keys_by_objective(Objective):
+                # check that pred, sd, and des cols are specified and numerical
+                for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
+                    if col not in candidates:
+                        raise ValueError("missing column {col}")
+                    if (not is_numeric(candidates[col])) and (
+                        not candidates[col].isnull().values.all()
+                    ):
+                        raise ValueError(
+                            f"not all values of output feature `{key}` are numerical"
+                        )
+            # validate no additional cols exist
+            if_count = len(self.get_features(InputFeature))
+            of_count = len(self.get_outputs_by_objective(Objective))
+            # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
+            if len(candidates.columns) != if_count + 3 * of_count:
+                raise ValueError("additional columns found")
         return candidates
 
     @property

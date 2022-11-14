@@ -1,9 +1,9 @@
 from abc import abstractmethod
-from typing import Optional, Type, Union
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import validate_arguments, validator
+from pydantic import validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
@@ -176,17 +176,21 @@ class Strategy(BaseModel):
         """Abstract method to allow for customized tell functions in addition to self.tell()"""
         pass
 
-    @validate_arguments
     def ask(
         self,
         candidate_count: Optional[NonNegativeInt] = None,
         add_pending: bool = False,
+        candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates
 
         Args:
             candidate_count (NonNegativeInt, optional): Number of candidates to be generated. If not provided, the number
-            of candidates is determined automatically. Defaults to None.
+                of candidates is determined automatically. Defaults to None.
+            add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
+            candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided,
+                pool independent candidates are provided. Defaults to None.
+
 
         Raises:
             ValueError: if not enough experiments are available to execute the strategy
@@ -195,12 +199,24 @@ class Strategy(BaseModel):
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
         """
+        if candidate_count is not None and candidate_count < 1:
+            raise ValueError(
+                f"Candidate_count has to be at least 1 but got {candidate_count}."
+            )
         if not self.has_sufficient_experiments():
             raise ValueError(
                 "Not enough experiments available to execute the strategy."
             )
 
-        candidates = self._ask(candidate_count=candidate_count)
+        if candidate_pool is None:
+            candidates = self._ask(candidate_count=candidate_count)
+        else:
+            self.domain.validate_candidates(candidate_pool, only_inputs=True)
+            if candidate_count is not None:
+                assert candidate_count <= len(
+                    candidate_pool
+                ), "Number of requested candidates is larger than the pool from which they should be chosen."
+            candidates = self._choose_from_pool(candidate_pool, candidate_count)
 
         self.domain.validate_candidates(candidates=candidates)
 
@@ -220,13 +236,30 @@ class Strategy(BaseModel):
         self,
         candidate_count: Optional[NonNegativeInt] = None,
     ) -> pd.DataFrame:
-        """Abstract ask method to allow for customized ask functions in addition to self.ask()
+        """Abstract ask method to allow for customized ask functions in addition to self.ask().
 
         Args:
             candidate_count (NonNegativeInt, optional): Number of candidates to be generated. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
+        """
+        pass
+
+    @abstractmethod
+    def _choose_from_pool(
+        self,
+        candidate_pool: pd.DataFrame,
+        candidate_count: Optional[NonNegativeInt] = None,
+    ) -> pd.DataFrame:
+        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
+
+        Args:
+            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
+            candidate_count (Optional[NonNegativeInt], optional): Number of candidates to choose. Defaults to None.
+
+        Returns:
+            pd.DataFrame: The chosen set of candidates.
         """
         pass
 
@@ -334,27 +367,6 @@ class PredictiveStrategy(Strategy):
                 ],
             )
         return predictions
-
-    def calc_acquisition(
-        self, experiments: pd.DataFrame, combined: bool = False
-    ) -> Union[float, pd.Series]:
-        """Calculate the acquisition value(s) for a set of experiments/candidates
-
-        Args:
-            experiments (pd.DataFrame): Experiments/candidates for which the acquisiton value(s) should be calculated.
-            combined (bool, optional): If combined the combined acqisition value is calculated, else the individual ones. Defaults to False.
-
-
-        Returns:
-            Union[float, pd.Series]: In case of `combined==True`, a float is returned else a pd.Series containing the individual acquisition values.
-        """
-        transformed = self.transformer.transform(experiments)
-        return self._calc_acquisition(transformed, combined=combined)
-
-    @abstractmethod
-    def _calc_acquisition(self, transformed: pd.DataFrame, combined: bool = False):
-        """Abstract method in which the actual acquistion function calculation is happening. Has to be overwritten."""
-        pass
 
     @abstractmethod
     def _predict(self, experiments: pd.DataFrame):

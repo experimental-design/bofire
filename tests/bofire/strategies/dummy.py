@@ -1,7 +1,9 @@
 import inspect
-from typing import List, Tuple, Type
+from typing import List, Optional, Tuple, Type
 
+import numpy as np
 import pandas as pd
+from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import (
     Constraint,
@@ -31,6 +33,18 @@ class DummyStrategy(Strategy):
         raise NotImplementedError(
             f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
         )
+
+    def _choose_from_pool(
+        self,
+        candidate_pool: pd.DataFrame,
+        candidate_count: Optional[NonNegativeInt] = None,
+    ) -> pd.DataFrame:
+        candidates = candidate_pool.sample(candidate_count, replace=False)
+        for feat in self.domain.get_outputs_by_objective(Objective):
+            candidates[f"{feat.key}_pred"] = np.nan
+            candidates[f"{feat.key}_sd"] = np.nan
+            candidates[f"{feat.key}_des"] = np.nan
+        return candidates
 
     def has_sufficient_experiments(
         self,

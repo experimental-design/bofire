@@ -287,8 +287,39 @@ def test_strategy_ask_valid(
         strategy.ask(candidate_count=1)
 
 
+@pytest.mark.parametrize(
+    "domain, experiments, candidate_pool, candidate_count",
+    [
+        [domain, e3, generate_candidates(domain, 3), 2],
+        [domain, e3, generate_candidates(domain, 5), 3],
+    ],
+)
+def test_strategy_ask_valid_candidate_pool(
+    domain, experiments, candidate_pool, candidate_count
+):
+    strategy = DummyStrategy(domain)
+    strategy.tell(experiments)
+    strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
+
+
+@pytest.mark.parametrize(
+    "domain, experiments, candidate_pool, candidate_count",
+    [
+        [domain, e3, generate_candidates(domain, 3), -1],
+        [domain, e3, generate_candidates(domain, 3), 4],
+    ],
+)
+def test_ask_invalid_candidate_count_request_pool(
+    domain, experiments, candidate_pool, candidate_count
+):
+    strategy = DummyStrategy(domain)
+    strategy.tell(experiments)
+    with pytest.raises((AssertionError, ValueError)):
+        strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
+
+
 def test_ask_invalid_candidate_count_request():
     strategy = DummyStrategy(domain)
     strategy.tell(e3)
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValueError):
         strategy.ask(-1)
