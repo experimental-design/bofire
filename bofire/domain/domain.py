@@ -6,7 +6,12 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 
-from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
+from bofire.domain.constraints import (
+    Constraint,
+    Constraints,
+    LinearConstraint,
+    NChooseKConstraint,
+)
 from bofire.domain.features import (
     CategoricalInput,
     ContinuousInput,
@@ -28,7 +33,9 @@ class Domain(BaseModel):
 
     input_features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
     output_features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
-    constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+    constraints: Optional[Constraints] = Field(
+        default_factory=lambda: Constraints(constraints=[])
+    )
     experiments: Optional[pd.DataFrame]
     candidates: Optional[pd.DataFrame]
     """Representation of the optimization problem/domain
@@ -60,6 +67,13 @@ class Domain(BaseModel):
         if len(set(keys)) != len(keys):
             raise ValueError("feature keys are not unique")
         return v
+
+    @validator("constraints", always=True, pre=True)
+    def validate_constraints_list(cls, v, values):
+        if isinstance(v, list):
+            return Constraints(constraints=v)
+        else:
+            return v
 
     @validator("constraints", always=True)
     def validate_constraints(cls, v, values):
@@ -177,39 +191,16 @@ class Domain(BaseModel):
             pd.DataFrame: DataFrame listing all constraints of the domain with a description
         """
         df = pd.DataFrame(
-            index=range(len(self.get_constraints())),
+            index=range(len(self.constraints.get())),
             columns=["Type", "Description"],
             data={
-                "Type": [feat.__class__.__name__ for feat in self.get_constraints()],
+                "Type": [feat.__class__.__name__ for feat in self.constraints.get()],
                 "Description": [
-                    constraint.__str__() for constraint in self.get_constraints()
+                    constraint.__str__() for constraint in self.constraints.get()
                 ],
             },
         )
         return df
-
-    def get_constraints(
-        self,
-        includes: Union[Type, List[Type]] = Constraint,
-        excludes: Union[Type, List[Type]] = None,
-        exact: bool = False,
-    ) -> List[Constraint]:
-        """get constraints of the domain
-
-        Args:
-            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
-            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-
-        Returns:
-            List[Constraint]: List of constraints in the domain fitting to the passed requirements.
-        """
-        return filter_by_class(
-            self.constraints,
-            includes=includes,
-            excludes=excludes,
-            exact=exact,
-        )
 
     def get_features(
         self,
@@ -332,7 +323,7 @@ class Domain(BaseModel):
         Args:
             constraint (Constraint): object of class Constraint, which is added to the list
         """
-        self.constraints.append(constraint)
+        self.constraints.add(constraint)
 
     def add_feature(self, feature: Feature) -> None:
         """add a feature to list domain.features
@@ -413,14 +404,14 @@ class Domain(BaseModel):
              unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.get_constraints(NChooseKConstraint)) == 0:
+        if len(self.constraints.get(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
 
         # loops through each NChooseK constraint
-        for con in self.get_constraints(NChooseKConstraint):
+        for con in self.constraints.get(NChooseKConstraint):
             used_features_list = []
 
             for n in range(con.min_count, con.max_count + 1):
@@ -463,7 +454,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.get_constraints(NChooseKConstraint):
+            for con in self.constraints.get(NChooseKConstraint):
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
                     if f in con.features:
@@ -481,7 +472,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.get_constraints(NChooseKConstraint):
+        for con in self.constraints.get(NChooseKConstraint):
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
         features_in_cc.sort()
@@ -499,25 +490,6 @@ class Domain(BaseModel):
         #         used_features_list_final2.append(used), unused_features_list2.append(unused)
 
         return used_features_list_final, unused_features_list
-
-    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
-        """Method to check if all constraints are fulfilled on all rows of the provided dataframe
-
-        Args:
-            df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on
-
-        Returns:
-            Boolean: True if all constraints are fulfilled for all rows, false if not
-        """
-        if len(self.constraints) == 0:
-            return pd.Series([True] * len(experiments), index=experiments.index)
-        return pd.concat(
-            [c.satisfied(experiments) for c in self.constraints], axis=1
-        ).all(axis=1)
-
-    # TODO: needs to be tested
-    def evaluate_constraints(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
     # TODO: needs to be tested
     def evaluate_objectives(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -821,7 +793,7 @@ class Domain(BaseModel):
                         f"not all values of output feature `{key}` are numerical"
                     )
         # check if all constraints are fulfilled
-        if self.is_fulfilled(candidates).all() is False:
+        if self.constraints.is_fulfilled(candidates).all() is False:
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))

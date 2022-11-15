@@ -353,8 +353,12 @@ class Constraints(BaseModel):
     def __getitem__(self, i):
         return self.constraints[i]
 
-    def evaluate_constraints(self, experiments: pd.DataFrame) -> pd.DataFrame:
+    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
+
+    def add(self, constraint: Constraint):
+        assert isinstance(constraint, Constraint)
+        self.constraints.append(constraint)
 
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         """Method to check if all constraints are fulfilled on all rows of the provided dataframe
@@ -387,9 +391,11 @@ class Constraints(BaseModel):
         Returns:
             List[Constraint]: List of constraints in the domain fitting to the passed requirements.
         """
-        return filter_by_class(
-            self.constraints,
-            includes=includes,
-            excludes=excludes,
-            exact=exact,
+        return Constraints(
+            constraints=filter_by_class(
+                self.constraints,
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
+            )
         )

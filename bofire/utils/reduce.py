@@ -82,8 +82,8 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         return domain, AffineTransform([])
 
     # find linear equality constraints
-    linear_equalities = domain.get_constraints(LinearEqualityConstraint)
-    other_constraints = domain.get_constraints(
+    linear_equalities = domain.constraints.get(LinearEqualityConstraint)
+    other_constraints = domain.constraints.get(
         Constraint, excludes=[LinearEqualityConstraint]
     )
 
@@ -216,12 +216,12 @@ def check_domain_for_reduction(domain: Domain) -> bool:
         return False
 
     # are there any linear equality constraints?
-    linear_equalities = domain.get_constraints(LinearEqualityConstraint)
+    linear_equalities = domain.constraints.get(LinearEqualityConstraint)
     if len(linear_equalities) == 0:
         return False
 
     # are there no NChooseKConstraint constraints?
-    if len(domain.get_constraints([NChooseKConstraint])) > 0:
+    if len(domain.constraints.get([NChooseKConstraint])) > 0:
         return False
 
     # are there continuous inputs
@@ -290,7 +290,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
         coeffs_dict[e[0]] = coeffs
 
     constraints = []
-    for c in domain.get_constraints():
+    for c in domain.constraints.get():
         # Nonlinear constraints not supported
         if not isinstance(c, LinearConstraint):
             raise ValueError(
