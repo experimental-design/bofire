@@ -240,7 +240,7 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
 )
 def test_categorical_combinations_of_domain_defaults(domain, data):
     expected = list(itertools.product(*data))
-    assert domain.get_categorical_combinations() == expected
+    assert domain.input_features.get_categorical_combinations() == expected
 
 
 @pytest.mark.parametrize(
@@ -334,7 +334,9 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
 def test_categorical_combinations_of_domain_filtered(domain, data, include, exclude):
     expected = list(itertools.product(*data))
     assert (
-        domain.get_categorical_combinations(include=include, exclude=exclude)
+        domain.input_features.get_categorical_combinations(
+            include=include, exclude=exclude
+        )
         == expected
     )
 

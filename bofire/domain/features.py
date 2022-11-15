@@ -1,3 +1,4 @@
+import itertools
 from abc import abstractmethod
 from typing import Dict, List, Optional, Type, Union
 
@@ -926,6 +927,28 @@ class Features(BaseModel):
 class InputFeatures(Features):
 
     features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
+
+    def get_categorical_combinations(
+        self, include: Feature = InputFeature, exclude: Feature = None
+    ):
+        """get a list of tuples pairing the feature keys with a list of valid categories
+
+        Args:
+            include (Feature, optional): Features to be included. Defaults to InputFeature.
+            exclude (Feature, optional): Features to be excluded, e.g. subclasses of the included features. Defaults to None.
+
+        Returns:
+            List[(str, List[str])]: Returns a list of tuples pairing the feature keys with a list of valid categories (str)
+        """
+        features = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if isinstance(f, CategoricalInput) and not f.is_fixed()
+        ]
+        list_of_lists = [
+            [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
+        ]
+        return list(itertools.product(*list_of_lists))
 
 
 class OutputFeatures(Features):

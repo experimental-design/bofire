@@ -13,7 +13,6 @@ from bofire.domain.constraints import (
     NChooseKConstraint,
 )
 from bofire.domain.features import (
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     Feature,
@@ -333,28 +332,6 @@ class Domain(BaseModel):
             self.input_features = [f for f in self.input_features if f.key != key]
         if output_count > 0:
             self.output_features = [f for f in self.output_features if f.key != key]
-
-    def get_categorical_combinations(
-        self, include: Feature = InputFeature, exclude: Feature = None
-    ):
-        """get a list of tuples pairing the feature keys with a list of valid categories
-
-        Args:
-            include (Feature, optional): Features to be included. Defaults to InputFeature.
-            exclude (Feature, optional): Features to be excluded, e.g. subclasses of the included features. Defaults to None.
-
-        Returns:
-            List[(str, List[str])]: Returns a list of tuples pairing the feature keys with a list of valid categories (str)
-        """
-        features = [
-            f
-            for f in self.get_features(includes=include, excludes=exclude)
-            if isinstance(f, CategoricalInput) and not f.is_fixed()
-        ]
-        list_of_lists = [
-            [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
-        ]
-        return list(itertools.product(*list_of_lists))
 
     # getting list of fixed values
     def get_nchoosek_combinations(self):
