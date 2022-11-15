@@ -1,16 +1,16 @@
 from abc import abstractmethod
-from typing import Optional, Type
+from typing import Any, Optional, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import BaseModel, validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
 from bofire.domain.features import Feature
 from bofire.domain.objectives import Objective
-from bofire.domain.util import BaseModel
+from bofire.utils.transformer import Transformer
 
 
 class Strategy(BaseModel):
@@ -28,9 +28,8 @@ class Strategy(BaseModel):
     seed: Optional[NonNegativeInt]
     rng: Optional[np.random.Generator]
 
-    def __init__(self, domain: Domain, seed=None, *args, **kwargs) -> None:
-        """Constructor of the strategy."""
-        super().__init__(domain=domain, seed=seed, *args, **kwargs)
+    def __init__(self, **data: Any):
+        super().__init__(**data)
 
         # we setup a random seed here
         if self.seed is None:
@@ -320,6 +319,15 @@ class PredictiveStrategy(Strategy):
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
     """
 
+    is_fitted: bool = False
+    transformer: Optional[Transformer]
+
+    def __init__(self, **data: Any):
+        super().__init__(**data)
+        if self.domain.num_experiments > 0:
+            self.fit()
+            self._tell()
+
     def tell(
         self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True
     ):
@@ -330,9 +338,18 @@ class PredictiveStrategy(Strategy):
             replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
             retrain (bool, optional): If True, model(s) are retrained when new experimental data is passed to the optimizer. Defaults to True.
         """
-        super().tell(experiments, replace)
+        # maybe unite the preprocessor here with the one of the parent tell
+        if len(experiments) == 0:
+            return
+        if replace:
+            self.domain.set_experiments(experiments)
+        else:
+            self.domain.add_experiments(experiments)
         if retrain:
             self.fit()
+        # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
+        # to fitting the models like initializing the ACQF.
+        self._tell()
 
     def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Run predictions for the provided experiments. Only input features have to be provided.
@@ -343,6 +360,8 @@ class PredictiveStrategy(Strategy):
         Returns:
             pd.DataFrame: Dataframe with the predicted values.
         """
+        if self.is_fitted is not True:
+            raise ValueError("Model not yet fitted.")
         # TODO: validate also here the experiments but only for the input_columns
         transformed = self.transformer.transform(experiments)
         preds, stds = self._predict(transformed)
@@ -381,6 +400,7 @@ class PredictiveStrategy(Strategy):
         self.domain.validate_experiments(self.experiments, strict=True)
         transformed = self.transformer.fit_transform(self.experiments)
         self._fit(transformed)
+        self.is_fitted = True
 
     @abstractmethod
     def _fit(self, transformed: pd.DataFrame):

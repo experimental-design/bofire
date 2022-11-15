@@ -125,9 +125,9 @@ class Domain(BaseModel):
             "output_features": [feat.to_config() for feat in self.output_features],
             "constraints": [constraint.to_config() for constraint in self.constraints],
         }
-        if self.experiments is not None:
+        if self.num_experiments > 0:
             config["experiments"] = self.experiments.to_dict()
-        if self.candidates is not None:
+        if self.num_candidates > 0:
             config["candidates"] = self.candidates.to_dict()
         return config
 
@@ -151,9 +151,9 @@ class Domain(BaseModel):
             ],
         )
         if "experiments" in config.keys():
-            d.add_experiments(experiments=config["experiments"])
+            d.set_experiments(experiments=config["experiments"])
         if "candidates" in config.keys():
-            d.add_candidates(experiments=config["candidates"])
+            d.set_candidates(candidates=config["candidates"])
         return d
 
     def get_feature_reps_df(self) -> pd.DataFrame:
@@ -880,6 +880,12 @@ class Domain(BaseModel):
                 (self._candidates, candidates), ignore_index=True
             )
 
+    @property
+    def num_candidates(self) -> int:
+        if self.candidates is None:
+            return 0
+        return len(self.experiments)
+
     def set_experiments(self, experiments: pd.DataFrame):
         experiments = self.validate_experiments(experiments)
         self.experiments = experiments
@@ -892,6 +898,12 @@ class Domain(BaseModel):
             self.experiments = pd.concat(
                 (self.experiments, experiments), ignore_index=True
             )
+
+    @property
+    def num_experiments(self) -> int:
+        if self.experiments is None:
+            return 0
+        return len(self.experiments)
 
 
 def get_subdomain(
