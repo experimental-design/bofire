@@ -8,10 +8,10 @@ import pytest
 
 from bofire.domain.domain import Domain
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
     InputFeature,
     OutputFeature,
 )
@@ -24,50 +24,50 @@ from tests.bofire.domain.test_features import (
     VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
 )
 
-if1 = ContinuousInputFeature(
+if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "cont",
     }
 )
-if2 = CategoricalInputFeature(
+if2 = CategoricalInput(
     **{
         **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "cat",
     }
 )
-if3 = CategoricalDescriptorInputFeature(
+if3 = CategoricalDescriptorInput(
     **{
         **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         "key": "cat_",
     }
 )
-if4 = CategoricalInputFeature(
+if4 = CategoricalInput(
     **{
         **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "cat2",
         "allowed": [True, True, False],
     }
 )
-if5 = ContinuousInputFeature(
+if5 = ContinuousInput(
     **{
         **VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if5",
     }
 )
-if6 = CategoricalInputFeature(
+if6 = CategoricalInput(
     **{
         **VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "if6",
     }
 )
-of1 = ContinuousOutputFeature(
+of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "out1",
     }
 )
-of2 = ContinuousOutputFeature(
+of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "out2",
@@ -92,19 +92,19 @@ def generate_experiments(
             {
                 **{
                     f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)
-                    for f in domain.get_features(ContinuousInputFeature)
+                    for f in domain.get_features(ContinuousInput)
                 },
                 **{
                     k: random.random()
                     for k in [
-                        *domain.get_feature_keys(ContinuousOutputFeature),
+                        *domain.get_feature_keys(ContinuousOutput),
                     ]
                 },
                 **{
                     f.key: random.choice(f.categories)
                     if not only_allowed_categories
                     else random.choice(f.get_allowed_categories())
-                    for f in domain.get_features(CategoricalInputFeature)
+                    for f in domain.get_features(CategoricalInput)
                 },
             }
             for _ in range(row_count)
@@ -113,7 +113,7 @@ def generate_experiments(
     if include_labcode:
         experiments["labcode"] = [str(i) for i in range(row_count)]
     if force_all_categories:
-        for feat in domain.get_features(CategoricalInputFeature):
+        for feat in domain.get_features(CategoricalInput):
             categories = (
                 feat.categories
                 if len(feat.categories) <= row_count
@@ -129,23 +129,23 @@ def generate_candidates(domain: Domain, row_count: int = 5):
             {
                 **{
                     feat.key: random.uniform(feat.lower_bound, feat.upper_bound)
-                    for feat in domain.get_features(ContinuousInputFeature)
+                    for feat in domain.get_features(ContinuousInput)
                 },
                 **{
                     f"{k}_pred": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutputFeature)
+                    for k in domain.get_feature_keys(ContinuousOutput)
                 },
                 **{
                     f"{k}_sd": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutputFeature)
+                    for k in domain.get_feature_keys(ContinuousOutput)
                 },
                 **{
                     f"{k}_des": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutputFeature)
+                    for k in domain.get_feature_keys(ContinuousOutput)
                 },
                 **{
                     f.key: random.choice(f.get_allowed_categories())
-                    for f in domain.get_features(CategoricalInputFeature)
+                    for f in domain.get_features(CategoricalInput)
                 },
             }
             for _ in range(row_count)
@@ -156,12 +156,12 @@ def generate_candidates(domain: Domain, row_count: int = 5):
 def generate_invalid_candidates_bounds(domain, row_count: int = 5, error="lower"):
     candidates = generate_candidates(domain, row_count)
     if error == "lower":
-        candidates.loc[0, domain.get_feature_keys(ContinuousInputFeature)[0]] = (
-            domain.get_features(ContinuousInputFeature)[0].lower_bound - 0.1
+        candidates.loc[0, domain.get_feature_keys(ContinuousInput)[0]] = (
+            domain.get_features(ContinuousInput)[0].lower_bound - 0.1
         )
     else:
-        candidates.loc[0, domain.get_feature_keys(ContinuousInputFeature)[0]] = (
-            domain.get_features(ContinuousInputFeature)[0].upper_bound + 0.1
+        candidates.loc[0, domain.get_feature_keys(ContinuousInput)[0]] = (
+            domain.get_features(ContinuousInput)[0].upper_bound + 0.1
         )
     return candidates
 
@@ -356,7 +356,7 @@ def test_domain_validate_candidates_too_many_cols(
     + [
         (d, generate_candidates(d), key)
         for d in domains
-        for key_ in d.get_feature_keys(ContinuousOutputFeature)
+        for key_ in d.get_feature_keys(ContinuousOutput)
         for key in [f"{key_}_pred", f"{key_}_sd", f"{key_}_des"]
     ],
 )

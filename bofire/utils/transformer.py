@@ -14,10 +14,10 @@ from sklearn.preprocessing import (
 
 from bofire.domain.domain import Domain, DomainError
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
     InputFeature,
     OutputFeature,
     is_continuous,
@@ -96,7 +96,7 @@ class Transformer(BaseModel):
 
         for feature in self.get_features_to_be_transformed():
             if (
-                isinstance(feature, CategoricalDescriptorInputFeature)
+                isinstance(feature, CategoricalDescriptorInput)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
             ):
 
@@ -104,7 +104,7 @@ class Transformer(BaseModel):
                 self.features2transformedFeatures[feature.key] = keys
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
             ):
                 keys = [feature.key + "_" + str(t) for t in feature.categories]
@@ -134,7 +134,7 @@ class Transformer(BaseModel):
 
         for feature in self.get_features_to_be_transformed():
             if (
-                isinstance(feature, CategoricalDescriptorInputFeature)
+                isinstance(feature, CategoricalDescriptorInput)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
             ):
 
@@ -175,7 +175,7 @@ class Transformer(BaseModel):
                     experiment = experiment.drop(column_name, axis=1)
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
             ):
                 enc = OrdinalEncoder(categories=[feature.categories])
@@ -186,7 +186,7 @@ class Transformer(BaseModel):
                 self.encoders[feature.key] = enc
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
             ):
                 # Create one-hot encoding columns & insert to DataSet
@@ -198,7 +198,7 @@ class Transformer(BaseModel):
 
                 self.encoders[feature.key] = enc
 
-            elif isinstance(feature, ContinuousInputFeature):
+            elif isinstance(feature, ContinuousInput):
                 var_min, var_max = feature.lower_bound, feature.upper_bound
                 self.fit_scaling(
                     feature.key,
@@ -263,7 +263,7 @@ class Transformer(BaseModel):
 
         for feature in self.get_features_to_be_transformed():
             if (
-                isinstance(feature, CategoricalDescriptorInputFeature)
+                isinstance(feature, CategoricalDescriptorInput)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
             ):
 
@@ -297,7 +297,7 @@ class Transformer(BaseModel):
                 )
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
             ):
 
@@ -311,7 +311,7 @@ class Transformer(BaseModel):
                 )  # categorical kernel needs int as input to avoid numerical trouble. Thus, these columns are also not scaled
 
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
             ):
 
@@ -333,7 +333,7 @@ class Transformer(BaseModel):
                     feature.key, axis=1
                 )
 
-            elif isinstance(feature, ContinuousInputFeature):
+            elif isinstance(feature, ContinuousInput):
 
                 if self.encoders[feature.key] is not None:
                     values = np.atleast_2d(
@@ -415,7 +415,7 @@ class Transformer(BaseModel):
         for feature in self.get_features_to_be_transformed():
             # Categorical variables with descriptors
             if (
-                isinstance(feature, CategoricalDescriptorInputFeature)
+                isinstance(feature, CategoricalDescriptorInput)
                 and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
             ):
                 enc = self.encoders[feature.key]
@@ -435,7 +435,7 @@ class Transformer(BaseModel):
 
             # Categorical features using one-hot encoding
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
             ):
                 # Get encoder
@@ -455,7 +455,7 @@ class Transformer(BaseModel):
 
             # Categorical features using ordinal encoding
             elif (
-                isinstance(feature, CategoricalInputFeature)
+                isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
             ):
                 # Get encoder
@@ -468,7 +468,7 @@ class Transformer(BaseModel):
                 candidate[feature.key] = enc.inverse_transform(values)
 
             # Continuous features
-            elif isinstance(feature, ContinuousInputFeature):
+            elif isinstance(feature, ContinuousInput):
                 candidate = self.un_scale(feature.key, candidate)
 
             elif (
@@ -483,7 +483,7 @@ class Transformer(BaseModel):
         for feature in self.domain.get_features(OutputFeature):
 
             if feature.key in transformed_candidate.columns:
-                if isinstance(feature, ContinuousOutputFeature):
+                if isinstance(feature, ContinuousOutput):
                     candidate = self.un_scale(feature.key, candidate)
                 else:
                     raise NotImplementedError(
@@ -499,10 +499,10 @@ class Transformer(BaseModel):
             # removes all categorical features (incl. the descriptor ones)
             [
                 features.remove(feat)
-                for feat in self.domain.get_features(CategoricalInputFeature)
+                for feat in self.domain.get_features(CategoricalInput)
             ]
             # add categorical descriptor features again
-            features2 = self.domain.get_features(CategoricalDescriptorInputFeature)
+            features2 = self.domain.get_features(CategoricalDescriptorInput)
 
             features = (
                 features + features2
@@ -511,7 +511,7 @@ class Transformer(BaseModel):
         if self.descriptor_encoding is None:
             [
                 features.remove(feat)
-                for feat in self.domain.get_features(CategoricalDescriptorInputFeature)
+                for feat in self.domain.get_features(CategoricalDescriptorInput)
             ]
 
         return features

@@ -1,0 +1,42 @@
+site_name: BoFire
+site_url: https://experimental-design.github.io/bofire
+repo_name: experimental-design/bofire
+repo_url: https://github.com/experimental-design/bofire
+
+nav:
+  - index.md
+  - Install: install.md
+  - API Reference:
+    - Domain: ref-domain.md
+    - Constraints: ref-constraints.md
+    - Objectives: ref-objectives.md
+    - Features: ref-features.md
+    - Domain Util: ref-domain-util.md
+    - Mappers: ref-mappers.md
+    - Utils: ref-utils.md
+
+theme:
+  name: material
+  features:
+    - toc.integrate
+
+watch:
+  - bofire
+
+plugins:
+  - search
+  # https://mkdocstrings.github.io/
+  - mkdocstrings:
+
+markdown_extensions:
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.superfences
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - admonition
+
+extra_javascript:
+  - https://polyfill.io/v3/polyfill.min.js?features=es6
+  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js

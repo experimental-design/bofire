@@ -45,10 +45,22 @@ def is_categorical(s: pd.Series, categories: List[str]):
 def filter_by_attribute(
     data: List,
     attribute_getter: Callable[[Type], Any],
-    includes: Union[Type, List[Type]],
+    includes: Union[Type, List[Type]] = None,
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
-):
+) -> List:
+    """Returns those data elements where the attribute is of one of the include types.
+
+    Args:
+        data: to be filtered
+        attribute_getter: expects an item of the data list and returns the attribute to filter by
+        includes: attribute types that should be kept, sub-type are included by default, see exact
+        excludes: attribute types that will be excluded even if they are sub-types of or include types.
+        exact: true for not including subtypes
+
+    Returns:
+        list of data point with attributes as filtered for
+    """
     data_with_attr = []
     for d in data:
         try:
@@ -58,26 +70,36 @@ def filter_by_attribute(
             pass
 
     filtered = filter_by_class(
-        [(i, attribute_getter(d)) for i, d in enumerate(data_with_attr)],
+        data_with_attr,
         includes=includes,
         excludes=excludes,
         exact=exact,
-        key=lambda idx_desi_pair: idx_desi_pair[1],
+        key=attribute_getter,
     )
-    if len(filtered) == 0:
-        return filtered
-    else:
-        out_indices, _ = zip(*filtered)
-        return [data_with_attr[i] for i in out_indices]
+    return filtered
 
 
 def filter_by_class(
     data: List,
-    includes: Union[Type, List[Type]],
+    includes: Union[Type, List[Type]] = None,
     excludes: Union[Type, List[Type]] = None,
     exact: bool = False,
     key: Callable[[Type], Any] = lambda x: x,
 ) -> List:
+    """Returns those data elements where are one of the include types.
+
+    Args:
+        data: to be filtered
+        includes: attribute types that should be kept, sub-type are included by default, see exact
+        excludes: attribute types that will be excluded even if they are sub-types of or include types.
+        exact: true for not including subtypes
+        key: maps a data list item to something that is used for filtering, identity by default
+
+    Returns:
+        filtered list of data points
+    """
+    if includes is None:
+        includes = []
     if not isinstance(includes, list):
         includes = [includes]
     if excludes is None:
@@ -85,8 +107,12 @@ def filter_by_class(
     if not isinstance(excludes, list):
         excludes = [excludes]
 
-    if len(includes) == 0:
+    if len(includes) == len(excludes) == 0:
         raise ValueError("no filter provided")
+
+    if len(includes) == 0:
+        includes = [object]
+
     if len([x for x in includes if x in excludes]) > 0:
         raise ValueError("includes and excludes overlap")
 

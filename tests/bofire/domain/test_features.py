@@ -6,19 +6,19 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.desirability_functions import MinIdentityDesirabilityFunction
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousDescriptorInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    DiscreteInputFeature,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousDescriptorInput,
+    ContinuousInput,
+    ContinuousOutput,
+    DiscreteInput,
     Feature,
 )
+from bofire.domain.objectives import MinimizeObjective
 from tests.bofire.domain.utils import get_invalids
 
-desirability_function = MinIdentityDesirabilityFunction(w=1)
+objective = MinimizeObjective(w=1)
 
 VALID_CONTINUOUS_INPUT_FEATURE_SPEC = {
     "key": str(uuid.uuid4()),
@@ -98,7 +98,7 @@ VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC = {
 }
 
 FEATURE_SPECS = {
-    ContinuousInputFeature: {
+    ContinuousInput: {
         "valids": [
             VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         ],
@@ -106,7 +106,7 @@ FEATURE_SPECS = {
             *get_invalids(VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
         ],
     },
-    DiscreteInputFeature: {
+    DiscreteInput: {
         "valids": [
             VALID_DISCRETE_INPUT_FEATURE_SPEC,
         ],
@@ -121,7 +121,7 @@ FEATURE_SPECS = {
             ],
         ],
     },
-    ContinuousDescriptorInputFeature: {
+    ContinuousDescriptorInput: {
         "valids": [VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC],
         "invalids": [
             *get_invalids(VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC),
@@ -139,7 +139,7 @@ FEATURE_SPECS = {
             ],
         ],
     },
-    CategoricalInputFeature: {
+    CategoricalInput: {
         "valids": [
             VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
             {
@@ -169,7 +169,7 @@ FEATURE_SPECS = {
             ],
         ],
     },
-    CategoricalDescriptorInputFeature: {
+    CategoricalDescriptorInput: {
         "valids": [
             VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
             {
@@ -201,12 +201,16 @@ FEATURE_SPECS = {
             ],
         ],
     },
-    ContinuousOutputFeature: {
+    ContinuousOutput: {
         "valids": [
             VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
             {
                 **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
-                "desirability_function": desirability_function,
+                "objective": objective,
+            },
+            {
+                **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
+                "objective": None,
             },
         ],
         "invalids": [*get_invalids(VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)],
@@ -230,7 +234,7 @@ def test_valid_feature_specs(cls, spec):
         (cls, valid)
         for cls, data in FEATURE_SPECS.items()
         for valid in data["valids"]
-        if cls != ContinuousOutputFeature
+        if cls != ContinuousOutput
     ],
 )
 def test_sample(cls, spec):
@@ -266,11 +270,11 @@ def test_invalid_feature_specs(cls, spec):
 @pytest.mark.parametrize(
     "input_feature, expected",
     [
-        (ContinuousInputFeature(key="k", lower_bound=1, upper_bound=1), True),
-        (ContinuousInputFeature(key="k", lower_bound=1, upper_bound=2), False),
-        (ContinuousInputFeature(key="k", lower_bound=2, upper_bound=3), False),
+        (ContinuousInput(key="k", lower_bound=1, upper_bound=1), True),
+        (ContinuousInput(key="k", lower_bound=1, upper_bound=2), False),
+        (ContinuousInput(key="k", lower_bound=2, upper_bound=3), False),
         (
-            ContinuousDescriptorInputFeature(
+            ContinuousDescriptorInput(
                 key="k",
                 lower_bound=1,
                 upper_bound=1,
@@ -280,7 +284,7 @@ def test_invalid_feature_specs(cls, spec):
             True,
         ),
         (
-            ContinuousDescriptorInputFeature(
+            ContinuousDescriptorInput(
                 key="k",
                 lower_bound=1,
                 upper_bound=2,
@@ -290,7 +294,7 @@ def test_invalid_feature_specs(cls, spec):
             False,
         ),
         (
-            ContinuousDescriptorInputFeature(
+            ContinuousDescriptorInput(
                 key="k",
                 lower_bound=2,
                 upper_bound=3,
@@ -309,12 +313,12 @@ def test_continuous_input_feature_is_fixed(input_feature, expected):
     "input_feature, expected",
     [
         (
-            ContinuousInputFeature(key="if1", lower_bound=0.5, upper_bound=4.0),
+            ContinuousInput(key="if1", lower_bound=0.5, upper_bound=4.0),
             (0.5, 4.0),
         ),
-        (ContinuousInputFeature(key="if1", lower_bound=2.5, upper_bound=2.9), (1, 3.0)),
-        (ContinuousInputFeature(key="if2", lower_bound=1.0, upper_bound=3.0), (1, 3.0)),
-        (ContinuousInputFeature(key="if2", lower_bound=1.0, upper_bound=1.0), (1, 1.0)),
+        (ContinuousInput(key="if1", lower_bound=2.5, upper_bound=2.9), (1, 3.0)),
+        (ContinuousInput(key="if2", lower_bound=1.0, upper_bound=3.0), (1, 3.0)),
+        (ContinuousInput(key="if2", lower_bound=1.0, upper_bound=1.0), (1, 1.0)),
     ],
 )
 def test_continuous_input_feature_get_real_feature_bounds(input_feature, expected):
@@ -327,27 +331,27 @@ def test_continuous_input_feature_get_real_feature_bounds(input_feature, expecte
     "input_feature, values, strict",
     [
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             True,
         ),
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             False,
         ),
         (
-            ContinuousInputFeature(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             True,
         ),
         (
-            ContinuousInputFeature(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             False,
         ),
         (
-            ContinuousInputFeature(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.0, 3.0, 3.0]),
             False,
         ),
@@ -361,17 +365,17 @@ def test_continuous_input_feature_validate_valid(input_feature, values, strict):
     "input_feature, values, strict",
     [
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.0, "mama"]),
             True,
         ),
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.0, "mama"]),
             False,
         ),
         (
-            ContinuousInputFeature(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.0, 3.0, 3.0]),
             True,
         ),
@@ -386,11 +390,11 @@ def test_continuous_input_feature_validate_invalid(input_feature, values, strict
     "input_feature, values",
     [
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
         ),
         (
-            ContinuousInputFeature(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.0, 3.0, 3.0]),
         ),
     ],
@@ -403,19 +407,19 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
     "input_feature, values",
     [
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.1, "a"]),
         ),
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([2.9, 4.0]),
         ),
         (
-            ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([4.0, 6]),
         ),
         (
-            ContinuousInputFeature(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ContinuousInput(**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC),
             pd.Series([3.1, 3.2, 3.4]),
         ),
     ],
@@ -428,8 +432,8 @@ def test_continuous_input_feature_validate_candidental_invalid(input_feature, va
 @pytest.mark.parametrize(
     "input_feature, expected",
     [
-        (DiscreteInputFeature(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC), True),
-        (DiscreteInputFeature(**VALID_DISCRETE_INPUT_FEATURE_SPEC), False),
+        (DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC), True),
+        (DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC), False),
     ],
 )
 def test_discrete_input_feature_is_fixed(input_feature, expected):
@@ -440,12 +444,12 @@ def test_discrete_input_feature_is_fixed(input_feature, expected):
     "input_feature, expected_lower, expected_upper",
     [
         (
-            DiscreteInputFeature(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
+            DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
             VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC["values"][0],
             VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC["values"][0],
         ),
         (
-            DiscreteInputFeature(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
+            DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
             VALID_DISCRETE_INPUT_FEATURE_SPEC["values"][0],
             VALID_DISCRETE_INPUT_FEATURE_SPEC["values"][1],
         ),
@@ -460,15 +464,15 @@ def test_discrete_input_feature_bounds(input_feature, expected_lower, expected_u
     "input_feature, expected",
     [
         (
-            DiscreteInputFeature(key="if1", values=[2.0, 3.0]),
+            DiscreteInput(key="if1", values=[2.0, 3.0]),
             (1.0, 4.0),
         ),
         (
-            DiscreteInputFeature(key="if1", values=[0.0, 3.0]),
+            DiscreteInput(key="if1", values=[0.0, 3.0]),
             (0.0, 4.0),
         ),
         (
-            DiscreteInputFeature(key="if1", values=[2.0, 5.0]),
+            DiscreteInput(key="if1", values=[2.0, 5.0]),
             (1.0, 5.0),
         ),
     ],
@@ -485,11 +489,11 @@ def test_discrete_input_feature_get_real_feature_bounds(input_feature, expected)
     "input_feature, values",
     [
         (
-            DiscreteInputFeature(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
+            DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
             pd.Series([random.choice([1.0, 2.0]) for _ in range(20)]),
         ),
         (
-            DiscreteInputFeature(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
+            DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
             pd.Series([2.0, 2.0, 2.0]),
         ),
     ],
@@ -502,11 +506,11 @@ def test_discrete_input_feature_validate_candidental_valid(input_feature, values
     "input_feature, values",
     [
         (
-            DiscreteInputFeature(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
+            DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
             pd.Series([random.choice([1.0, 3.0, 2.0]) for _ in range(20)]),
         ),
         (
-            DiscreteInputFeature(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
+            DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
             pd.Series([1.0, 2.0, 2.0]),
         ),
     ],
@@ -520,27 +524,19 @@ def test_discrete_input_feature_validate_candidental_invalid(input_feature, valu
     "input_feature, expected",
     [
         (
-            CategoricalInputFeature(
-                key="if1", categories=["a", "b"], allowed=[True, True]
-            ),
+            CategoricalInput(key="if1", categories=["a", "b"], allowed=[True, True]),
             ["a", "b"],
         ),
         (
-            CategoricalInputFeature(
-                key="if2", categories=["a", "b"], allowed=[True, True]
-            ),
+            CategoricalInput(key="if2", categories=["a", "b"], allowed=[True, True]),
             ["a", "b"],
         ),
         (
-            CategoricalInputFeature(
-                key="if3", categories=["a", "b"], allowed=[True, False]
-            ),
+            CategoricalInput(key="if3", categories=["a", "b"], allowed=[True, False]),
             ["a"],
         ),
         (
-            CategoricalInputFeature(
-                key="if4", categories=["a", "b"], allowed=[True, False]
-            ),
+            CategoricalInput(key="if4", categories=["a", "b"], allowed=[True, False]),
             ["a", "b"],
         ),
     ],
@@ -557,27 +553,27 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
     "input_feature, values, strict",
     [
         (
-            CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
         (
-            CategoricalInputFeature(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            CategoricalInputFeature(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
         (
-            CategoricalInputFeature(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c1"]),
             False,
         ),
@@ -591,22 +587,22 @@ def test_categorical_input_feature_validate_valid(input_feature, values, strict)
     "input_feature, values, strict",
     [
         (
-            CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c4"]),
             True,
         ),
         (
-            CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c4"]),
             False,
         ),
         (
-            CategoricalInputFeature(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c1"]),
             True,
         ),
         (
-            CategoricalInputFeature(
+            CategoricalInput(
                 key="a", categories=["c1", "c2", "c3"], allowed=[True, True, False]
             ),
             pd.Series(["c1", "c2"]),
@@ -623,11 +619,11 @@ def test_categorical_input_feature_validate_invalid(input_feature, values, stric
     "input_feature, values",
     [
         (
-            CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
         ),
         (
-            CategoricalInputFeature(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c1"]),
         ),
     ],
@@ -640,11 +636,11 @@ def test_categorical_input_feature_validate_candidental_valid(input_feature, val
     "input_feature, values",
     [
         (
-            CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c2", "c4"]),
         ),
         (
-            CategoricalInputFeature(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             pd.Series(["c1", "c2"]),
         ),
     ],
@@ -658,7 +654,7 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
     "input_feature, expected",
     [
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 key="if1",
                 categories=["a", "b"],
                 allowed=[True, True],
@@ -672,7 +668,7 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
             ),
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 key="if2",
                 categories=["a", "b", "c"],
                 allowed=[True, False, True],
@@ -707,42 +703,42 @@ def test_categorical_descriptor_feature_get_real_descriptor_bounds(
     "input_feature, values, strict",
     [
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series(["c1", "c1"]),
             False,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series(["c2", "c3"]),
@@ -760,28 +756,28 @@ def test_categorical_descriptor_input_feature_validate_valid(
     "input_feature, values, strict",
     [
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series(["c1", "c4"]),
             True,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series(["c1", "c4"]),
             False,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series(["c1", "c1"]),
             True,
         ),
         (
-            CategoricalDescriptorInputFeature(
+            CategoricalDescriptorInput(
                 **VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
             ),
             pd.Series(["c2", "c3"]),
@@ -800,7 +796,7 @@ def test_categorical_descriptor_input_feature_validate_invalid(
     "input_feature, expected",
     [
         (
-            CategoricalInputFeature(key="k", categories=categories, allowed=allowed),
+            CategoricalInput(key="k", categories=categories, allowed=allowed),
             expected,
         )
         for categories, allowed, expected in [
@@ -822,7 +818,7 @@ def test_categorical_input_feature_is_fixed(input_feature, expected):
     "input_feature, expected",
     [
         (
-            CategoricalInputFeature(key="k", categories=categories, allowed=allowed),
+            CategoricalInput(key="k", categories=categories, allowed=allowed),
             expected,
         )
         for categories, allowed, expected in [
@@ -839,7 +835,7 @@ def test_categorical_input_feature_allowed_categories(input_feature, expected):
     "input_feature, expected",
     [
         (
-            CategoricalInputFeature(key="k", categories=categories, allowed=allowed),
+            CategoricalInput(key="k", categories=categories, allowed=allowed),
             expected,
         )
         for categories, allowed, expected in [
@@ -871,7 +867,7 @@ def test_categorical_input_feature_forbidden_categories(input_feature, expected)
 def test_categorical_descriptor_input_feature_as_dataframe(
     categories, descriptors, values
 ):
-    f = CategoricalDescriptorInputFeature(
+    f = CategoricalDescriptorInput(
         key="k", categories=categories, descriptors=descriptors, values=values
     )
     df = f.to_df()
@@ -888,7 +884,7 @@ def test_categorical_descriptor_input_feature_as_dataframe(
     ],
 )
 def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
-    f = ContinuousDescriptorInputFeature(
+    f = ContinuousDescriptorInput(
         key="k",
         lower_bound=1.0,
         upper_bound=2.0,
@@ -925,18 +921,16 @@ def test_categorical_descriptor_input_feature_from_dataframe(
         orient="index",
         columns=descriptors,
     )
-    f = CategoricalDescriptorInputFeature.from_df("k", df)
+    f = CategoricalDescriptorInput.from_df("k", df)
     assert f.categories == categories
     assert f.descriptors == descriptors
     assert f.values == values
 
 
-cont = ContinuousInputFeature(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC)
-cat = CategoricalInputFeature(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC)
-cat_ = CategoricalDescriptorInputFeature(
-    **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC
-)
-out = ContinuousOutputFeature(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)
+cont = ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC)
+cat = CategoricalInput(**VALID_CATEGORICAL_INPUT_FEATURE_SPEC)
+cat_ = CategoricalDescriptorInput(**VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC)
+out = ContinuousOutput(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)
 
 
 @pytest.mark.parametrize(

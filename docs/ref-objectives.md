@@ -1,0 +1,3 @@
+# Domain
+
+::: bofire.domain.objectives
