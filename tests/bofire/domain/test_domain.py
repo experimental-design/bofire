@@ -596,7 +596,7 @@ domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_
     ],
 )
 def test_get_features(domain, FeatureType, exact, expected):
-    assert domain.get_features(FeatureType, exact=exact) == expected
+    assert domain.get_features(FeatureType, exact=exact).features == expected
 
 
 @pytest.mark.parametrize(
@@ -608,15 +608,13 @@ def test_get_features(domain, FeatureType, exact, expected):
         (domain, [], [Objective], False, [of1_, of2_]),
     ],
 )
-def test_get_outputs_by_desirability(
-    domain: Domain, includes, excludes, exact, expected
-):
+def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, expected):
     assert (
-        domain.get_outputs_by_objective(
+        domain.output_features.get_by_objective(
             includes=includes,
             excludes=excludes,
             exact=exact,
-        )
+        ).features
         == expected
     )
 
@@ -647,11 +645,11 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
         (domain, [], [Objective], False, ["out3", "out4"]),
     ],
 )
-def test_get_output_keys_by_desirability(
+def test_get_output_keys_by_objective(
     domain: Domain, includes, excludes, exact, expected
 ):
     assert (
-        domain.get_output_keys_by_objective(
+        domain.output_features.get_keys_by_objective(
             includes=includes,
             excludes=excludes,
             exact=exact,

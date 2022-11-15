@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,7 +9,14 @@ from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
 from bofire.domain.objectives import MaximizeObjective, Objective
-from bofire.domain.util import KeyModel, is_numeric, name2key
+from bofire.domain.util import (
+    BaseModel,
+    KeyModel,
+    filter_by_attribute,
+    filter_by_class,
+    is_numeric,
+    name2key,
+)
 
 
 class Feature(KeyModel):
@@ -831,3 +838,156 @@ def is_continuous(var: Feature) -> bool:
         return True
     else:
         False
+
+
+class Features(BaseModel):
+
+    features: Optional[List[Feature]] = Field(default_factory=lambda: [])
+
+    def __iter__(self):
+        return iter(self.features)
+
+    def __len__(self):
+        return len(self.features)
+
+    def __getitem__(self, i):
+        return self.features[i]
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        return pd.concat([c(experiments) for c in self.constraints], axis=1)
+
+    def __add__(self, other):
+        return Features(features=self.features + other.features)
+
+    def remove(self, feature: Feature):
+        self.features.remove(feature)
+
+    def add(self, feature: Feature):
+        assert isinstance(feature, Feature)
+        self.features.append(feature)
+
+    def get_by_key(self, key: str):
+        return {f.key: f for f in self.features}[key]
+
+    def get(
+        self,
+        includes: Union[Type, List[Type]] = Feature,
+        excludes: Union[Type, List[Type]] = None,
+        exact: bool = False,
+    ) -> List[Feature]:
+        """get features of the domain
+
+        Args:
+            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
+            excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+            by_attribute (str, optional): If set it is filtered by the attribute specified in by `by_attribute`. Defaults to None.
+
+        Returns:
+            List[Feature]: List of features in the domain fitting to the passed requirements.
+        """
+        return self.__class__(
+            features=sorted(
+                filter_by_class(
+                    self.features,
+                    includes=includes,
+                    excludes=excludes,
+                    exact=exact,
+                )
+            )
+        )
+
+    def get_keys(
+        self,
+        includes: Union[Type, List[Type]] = Feature,
+        excludes: Union[Type, List[Type]] = None,
+        exact: bool = False,
+    ) -> List[str]:
+        """Method to get feature keys of the domain
+
+        Args:
+            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
+            excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+
+        Returns:
+            List[str]: List of feature keys fitting to the passed requirements.
+        """
+        return [
+            f.key
+            for f in self.get(
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
+            )
+        ]
+
+
+class InputFeatures(Features):
+
+    features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
+
+
+class OutputFeatures(Features):
+
+    features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
+
+    def get_by_objective(
+        self,
+        includes: Union[List[Type[Objective]], Type[Objective]] = Objective,
+        excludes: Union[List[Type[Objective]], Type[Objective], None] = None,
+        exact: bool = False,
+    ) -> List[OutputFeature]:
+        """Get output features filtered by the type of the attached objective.
+
+        Args:
+            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes
+                to be returned. Defaults to Objective.
+            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+
+        Returns:
+            List[OutputFeature]: List of output features fitting to the passed requirements.
+        """
+        if len(self.features) == 0:
+            return []
+        else:
+            return OutputFeatures(
+                features=sorted(
+                    filter_by_attribute(
+                        self.get(ContinuousOutput),
+                        lambda of: of.objective,
+                        includes,
+                        excludes,
+                        exact,
+                    )
+                )
+            )
+
+    def get_keys_by_objective(
+        self,
+        includes: Union[List[Type[Objective]], Type[Objective]] = Objective,
+        excludes: Union[List[Type[Objective]], Type[Objective], None] = None,
+        exact: bool = False,
+    ) -> List[str]:
+        """Get keys of output features filtered by the type of the attached objective.
+
+        Args:
+            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes
+                to be returned. Defaults to Objective.
+            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+
+        Returns:
+            List[str]: List of output feature keys fitting to the passed requirements.
+        """
+        return [f.key for f in self.get_by_objective(includes, excludes, exact)]
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        return pd.concat(
+            [
+                feat.objective(experiments[feat.name])
+                for feat in self.get_features(ContinuousOutput)
+            ],
+            axis=1,
+        )

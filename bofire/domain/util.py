@@ -24,6 +24,7 @@ class BaseModel(_BaseModel):
     class Config:
         validate_assignment = True
         arbitrary_types_allowed = True
+        copy_on_model_validation = False
 
 
 class KeyModel(BaseModel):

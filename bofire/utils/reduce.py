@@ -89,7 +89,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
 
     # only consider continuous inputs
     continuous_inputs = domain.get_features(ContinuousInput)
-    other_inputs = domain.get_features(InputFeature, excludes=[ContinuousInput])
+    other_inputs = domain.input_features.get(InputFeature, excludes=[ContinuousInput])
 
     # assemble Matrix A from equality constraints
     N = len(linear_equalities)
@@ -197,7 +197,6 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         _equalities.append((name_lhs, names_rhs, coeffs))
 
     trafo = AffineTransform(_equalities)
-
     # remove remaining dependencies of eliminated inputs from the problem
     _domain = remove_eliminated_inputs(_domain, trafo)
     return _domain, trafo
