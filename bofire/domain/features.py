@@ -928,6 +928,17 @@ class InputFeatures(Features):
 
     features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
 
+    def sample(self, n: int = 1) -> pd.DataFrame:
+        """Draw uniformly random samples
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+
+        Returns:
+            pd.DataFrame: Dataframe containing the samples.
+        """
+        return pd.concat([feat.sample(n) for feat in self.get(InputFeature)])
+
     def get_categorical_combinations(
         self, include: Feature = InputFeature, exclude: Feature = None
     ):
