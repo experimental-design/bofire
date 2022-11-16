@@ -37,7 +37,7 @@ def test_check_domain_for_reduction():
         input_features=[if1, if2],
         output_features=[of1, of2],
         constraints=[
-            LinearInequalityConstraint(
+            LinearInequalityConstraint.from_greater_equal(
                 features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.9
             )
         ],
@@ -101,7 +101,7 @@ def test_reduce_1_independent_linear_equality_constraints():
             LinearEqualityConstraint(
                 features=["x1", "x2"], coefficients=[-0.5, -0.5], rhs=0
             ),
-            LinearInequalityConstraint(
+            LinearInequalityConstraint.from_greater_equal(
                 features=["x1", "x2"], coefficients=[-1.0, -1.0], rhs=0
             ),
         ],
@@ -224,12 +224,12 @@ def test_doc_simple():
     assert len(_domain.constraints) == 2
 
     assert all(np.array(_domain.constraints[0].features) == np.array(["x2", "x3"]))
-    assert np.allclose(_domain.constraints[0].coefficients, [1.0, 1.0])
+    assert np.allclose(_domain.constraints[0].coefficients, [-1.0, -1.0])
     assert np.allclose(_domain.constraints[0].rhs, 0.0)
 
     assert all(np.array(_domain.constraints[1].features) == np.array(["x2", "x3"]))
-    assert np.allclose(_domain.constraints[1].coefficients, [-1.0, -1.0])
-    assert np.allclose(_domain.constraints[1].rhs, -0.9)
+    assert np.allclose(_domain.constraints[1].coefficients, [1.0, 1.0])
+    assert np.allclose(_domain.constraints[1].rhs, 0.9)
 
 
 def test_doc_complex():
@@ -261,7 +261,7 @@ def test_doc_complex():
     )
 
     domain.add_constraint(
-        LinearInequalityConstraint(
+        LinearInequalityConstraint.from_greater_equal(
             features=["A1", "A2"], coefficients=[-1.0, -2.0], rhs=-0.8
         )
     )
@@ -291,44 +291,43 @@ def test_doc_complex():
         [_domain.get_feature("B3").lower_bound, _domain.get_feature("B3").upper_bound],
         [0.1, 1.0],
     )
-
     assert all(
         np.array(_domain.constraints[0].features) == np.array(["A2", "A3", "A4"])
     )
-    assert np.allclose(_domain.constraints[0].coefficients, [-1.0, 1.0, 1.0])
-    assert np.allclose(_domain.constraints[0].rhs, 0.2)
+    assert np.allclose(_domain.constraints[0].coefficients, [1.0, -1.0, -1.0])
+    assert np.allclose(_domain.constraints[0].rhs, -0.2)
 
     assert all(
         np.array(_domain.constraints[1].features) == np.array(["A2", "A3", "A4"])
     )
-    assert np.allclose(_domain.constraints[1].coefficients, [1.0, 1.0, 1.0])
-    assert np.allclose(_domain.constraints[1].rhs, 0.1)
+    assert np.allclose(_domain.constraints[1].coefficients, [-1.0, -1.0, -1.0])
+    assert np.allclose(_domain.constraints[1].rhs, -0.1)
 
     assert all(
         np.array(_domain.constraints[2].features) == np.array(["A2", "A3", "A4"])
     )
-    assert np.allclose(_domain.constraints[2].coefficients, [-1.0, -1.0, -1.0])
-    assert np.allclose(_domain.constraints[2].rhs, -1.0)
+    assert np.allclose(_domain.constraints[2].coefficients, [1.0, 1.0, 1.0])
+    assert np.allclose(_domain.constraints[2].rhs, 1.0)
 
     assert all(np.array(_domain.constraints[3].features) == np.array(["B2", "B3"]))
     assert np.allclose(
         _domain.constraints[3].coefficients,
         [
-            1.0,
-            1.0,
+            -1.0,
+            -1.0,
         ],
     )
-    assert np.allclose(_domain.constraints[3].rhs, 0.1)
+    assert np.allclose(_domain.constraints[3].rhs, -0.1)
 
     assert all(np.array(_domain.constraints[4].features) == np.array(["B2", "B3"]))
     assert np.allclose(
         _domain.constraints[4].coefficients,
         [
-            -1.0,
-            -1.0,
+            1.0,
+            1.0,
         ],
     )
-    assert np.allclose(_domain.constraints[4].rhs, -0.7)
+    assert np.allclose(_domain.constraints[4].rhs, 0.7)
 
 
 # def test_AffineTransform_augment_data():
@@ -428,10 +427,10 @@ def test_reduce_large_problem():
                 coefficients=[1.0, 1.0, 1.0, 1.0],
                 rhs=1.0,
             ),
-            LinearInequalityConstraint(
+            LinearInequalityConstraint.from_greater_equal(
                 features=["x1", "x2"], coefficients=[-1.0, -1.0], rhs=-1.0
             ),
-            LinearInequalityConstraint(
+            LinearInequalityConstraint.from_greater_equal(
                 features=["x1", "x2", "x4"], coefficients=[-1.0, 1.0, -1.0], rhs=0.0
             ),
         ],
@@ -443,18 +442,17 @@ def test_reduce_large_problem():
         ("x2", ["x3"], [-0.5, 1.0]),
     ]
     assert len(_domain.constraints) == 3
-
     assert all(np.array(_domain.constraints[0].features) == np.array(["x3", "x4"]))
-    assert np.allclose(_domain.constraints[0].coefficients, [1.0, 1.0])
+    assert np.allclose(_domain.constraints[0].coefficients, [-1.0, -1.0])
     assert np.allclose(_domain.constraints[0].rhs, 0.0)
 
     assert all(np.array(_domain.constraints[1].features) == np.array(["x3", "x4"]))
-    assert np.allclose(_domain.constraints[1].coefficients, [0.5, 1.0])
-    assert np.allclose(_domain.constraints[1].rhs, -1.0)
+    assert np.allclose(_domain.constraints[1].coefficients, [-0.5, -1.0])
+    assert np.allclose(_domain.constraints[1].rhs, 1.0)
 
     assert all(np.array(_domain.constraints[2].features) == np.array(["x3", "x4"]))
-    assert np.allclose(_domain.constraints[2].coefficients, [-0.5, -1.0])
-    assert np.allclose(_domain.constraints[2].rhs, -1.0)
+    assert np.allclose(_domain.constraints[2].coefficients, [0.5, 1.0])
+    assert np.allclose(_domain.constraints[2].rhs, 1.0)
 
     assert np.allclose(
         [_domain.get_feature("x3").lower_bound, _domain.get_feature("x3").upper_bound],
