@@ -721,7 +721,7 @@ class Domain(BaseModel):
                         f"not all values of output feature `{key}` are numerical"
                     )
         # check if all constraints are fulfilled
-        if self.constraints.is_fulfilled(candidates).all() is False:
+        if not self.constraints.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")
         # validate no additional cols exist
         if_count = len(self.get_features(InputFeature))

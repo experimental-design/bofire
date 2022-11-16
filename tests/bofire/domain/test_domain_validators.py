@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+from bofire.domain.constraints import LinearEqualityConstraint
 from bofire.domain.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInput,
@@ -205,6 +206,13 @@ domain6 = Domain(
     output_features=[of1, of2],
     constraints=[],
 )
+domain7 = Domain(
+    input_features=[if1, if5],
+    output_features=[of1, of2],
+    constraints=[
+        LinearEqualityConstraint(features=["cont", "if5"], coefficients=[1, 1], rhs=500)
+    ],
+)
 
 domains = [domain0, domain1, domain2, domain3, domain4]
 
@@ -366,5 +374,13 @@ def test_domain_validate_candidates_not_numerical(
     key: str,
 ):
     candidates[key] = str(uuid.uuid4())
+    with pytest.raises(ValueError):
+        domain.validate_candidates(candidates)
+
+
+@pytest.mark.parametrize(
+    "domain, candidates", [(d, generate_candidates(d)) for d in [domain7]]
+)
+def test_domain_validate_candidates_constraint_not_fulfilled(domain, candidates):
     with pytest.raises(ValueError):
         domain.validate_candidates(candidates)
