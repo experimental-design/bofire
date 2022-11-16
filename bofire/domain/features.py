@@ -854,10 +854,13 @@ class Features(BaseModel):
     def __getitem__(self, i):
         return self.features[i]
 
-    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        return pd.concat([c(experiments) for c in self.constraints], axis=1)
-
     def __add__(self, other):
+        if type(self) != type(other):
+            return Features(features=self.features + other.features)
+        if type(other) == InputFeatures:
+            return InputFeatures(features=self.features + other.features)
+        if type(other) == OutputFeatures:
+            return OutputFeatures(features=self.features + other.features)
         return Features(features=self.features + other.features)
 
     def remove(self, feature: Feature):
@@ -939,6 +942,10 @@ class InputFeatures(Features):
         """
         return pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
 
+    def add(self, feature: InputFeature):
+        assert isinstance(feature, InputFeature)
+        self.features.append(feature)
+
     def get_categorical_combinations(
         self, include: Feature = InputFeature, exclude: Feature = None
     ):
@@ -965,6 +972,17 @@ class InputFeatures(Features):
 class OutputFeatures(Features):
 
     features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
+
+    @validator("features", pre=True)
+    def validate_output_features(cls, v, values):
+        for feat in v:
+            if not isinstance(feat, OutputFeature):
+                raise ValueError
+        return v
+
+    def add(self, feature: OutputFeature):
+        assert isinstance(feature, OutputFeature)
+        self.features.append(feature)
 
     def get_by_objective(
         self,
@@ -1020,8 +1038,8 @@ class OutputFeatures(Features):
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return pd.concat(
             [
-                feat.objective(experiments[feat.name])
-                for feat in self.get_features(ContinuousOutput)
+                feat.objective(experiments[feat.key])
+                for feat in self.get_by_objective(Objective)
             ],
             axis=1,
         )
