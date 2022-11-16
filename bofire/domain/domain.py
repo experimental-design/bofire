@@ -47,8 +47,9 @@ class Domain(BaseModel):
     @validator("input_features", always=True, pre=True)
     def validate_input_features_list(cls, v, values):
         if isinstance(v, list):
-            return InputFeatures(features=v)
-        if isinstance(v, Constraint):
+            v = InputFeatures(features=v)
+            return v
+        if isinstance(v, InputFeature):
             return InputFeatures(features=[v])
         else:
             return v
@@ -57,7 +58,7 @@ class Domain(BaseModel):
     def validate_output_features_list(cls, v, values):
         if isinstance(v, list):
             return OutputFeatures(features=v)
-        if isinstance(v, Constraint):
+        if isinstance(v, OutputFeature):
             return OutputFeatures(features=[v])
         else:
             return v
