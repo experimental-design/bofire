@@ -67,8 +67,8 @@ class Transformer(BaseModel):
     def __init__(
         self,
         domain,
-        descriptor_encoding=None,
-        categorical_encoding=None,
+        descriptor_encoding=None,  # TODO: default tbd!
+        categorical_encoding=None,  # TODO: default tbd!
         scale_inputs=None,
         scale_outputs=None,
     ) -> None:

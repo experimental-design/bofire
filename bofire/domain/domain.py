@@ -158,9 +158,9 @@ class Domain(BaseModel):
             "output_features": [feat.to_config() for feat in self.output_features],
             "constraints": [constraint.to_config() for constraint in self.constraints],
         }
-        if self.experiments is not None:
+        if self.num_experiments > 0:
             config["experiments"] = self.experiments.to_dict()
-        if self.candidates is not None:
+        if self.num_candidates > 0:
             config["candidates"] = self.candidates.to_dict()
         return config
 
@@ -184,9 +184,9 @@ class Domain(BaseModel):
             ],
         )
         if "experiments" in config.keys():
-            d.add_experiments(experiments=config["experiments"])
+            d.set_experiments(experiments=config["experiments"])
         if "candidates" in config.keys():
-            d.add_candidates(experiments=config["candidates"])
+            d.set_candidates(candidates=config["candidates"])
         return d
 
     def get_feature_reps_df(self) -> pd.DataFrame:
@@ -686,13 +686,13 @@ class Domain(BaseModel):
         )
 
     def validate_candidates(
-        self,
-        candidates: pd.DataFrame,
+        self, candidates: pd.DataFrame, only_inputs: bool = False
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
         Args:
             candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)
+            only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.
 
         Raises:
             ValueError: when a column is missing for a defined input feature
@@ -709,27 +709,28 @@ class Domain(BaseModel):
             if feat.key not in candidates:
                 raise ValueError(f"no col for input feature `{feat.key}`")
             feat.validate_candidental(candidates[feat.key])
-        # for each continuous output feature with an attached objective object
-        for key in self.output_features.get_keys_by_objective(Objective):
-            # check that pred, sd, and des cols are specified and numerical
-            for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
-                if col not in candidates:
-                    raise ValueError("missing column {col}")
-                if (not is_numeric(candidates[col])) and (
-                    not candidates[col].isnull().values.all()
-                ):
-                    raise ValueError(
-                        f"not all values of output feature `{key}` are numerical"
-                    )
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")
-        # validate no additional cols exist
-        if_count = len(self.get_features(InputFeature))
-        of_count = len(self.output_features.get_keys_by_objective(Objective))
-        # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
-        if len(candidates.columns) != if_count + 3 * of_count:
-            raise ValueError("additional columns found")
+        # for each continuous output feature with an attached objective object
+        if not only_inputs:
+            for key in self.output_features.get_keys_by_objective(Objective):
+                # check that pred, sd, and des cols are specified and numerical
+                for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
+                    if col not in candidates:
+                        raise ValueError("missing column {col}")
+                    if (not is_numeric(candidates[col])) and (
+                        not candidates[col].isnull().values.all()
+                    ):
+                        raise ValueError(
+                            f"not all values of output feature `{key}` are numerical"
+                        )
+            # validate no additional cols exist
+            if_count = len(self.get_features(InputFeature))
+            of_count = len(self.output_features.get_keys_by_objective(Objective))
+            # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
+            if len(candidates.columns) != if_count + 3 * of_count:
+                raise ValueError("additional columns found")
         return candidates
 
     @property
@@ -767,6 +768,10 @@ class Domain(BaseModel):
             ]
         )
 
+    def set_candidates(self, candidates: pd.DataFrame):
+        candidates = self.validate_candidates(candidates)
+        self.candidates = candidates
+
     def add_candidates(self, candidates: pd.DataFrame):
         candidates = self.validate_candidates(candidates)
         if candidates is None:
@@ -776,6 +781,16 @@ class Domain(BaseModel):
                 (self._candidates, candidates), ignore_index=True
             )
 
+    @property
+    def num_candidates(self) -> int:
+        if self.candidates is None:
+            return 0
+        return len(self.experiments)
+
+    def set_experiments(self, experiments: pd.DataFrame):
+        experiments = self.validate_experiments(experiments)
+        self.experiments = experiments
+
     def add_experiments(self, experiments: pd.DataFrame):
         experiments = self.validate_experiments(experiments)
         if experiments is None:
@@ -784,6 +799,12 @@ class Domain(BaseModel):
             self.experiments = pd.concat(
                 (self.experiments, experiments), ignore_index=True
             )
+
+    @property
+    def num_experiments(self) -> int:
+        if self.experiments is None:
+            return 0
+        return len(self.experiments)
 
 
 def get_subdomain(
