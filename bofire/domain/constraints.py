@@ -165,8 +165,8 @@ class LinearEqualityConstraint(LinearConstraint):
 class LinearInequalityConstraint(LinearConstraint):
     """Linear inequality constraint of the form `coefficients * x <= rhs`.
 
-    To instantiate a constraint of the form `coefficients * x <= rhs` multiply coefficients and rhs by -1, or
-    use the classmethod `from_smaller_equal`.
+    To instantiate a constraint of the form `coefficients * x >= rhs` multiply coefficients and rhs by -1, or
+    use the classmethod `from_greater_equal`.
 
     Attributes:
         features (list): list of feature keys (str) on which the constraint works on.
