@@ -842,6 +842,11 @@ def is_continuous(var: Feature) -> bool:
 
 
 class Features(BaseModel):
+    """Container of features, both input and output features are allowed.
+
+    Attributes:
+        features (List(Features)): list of the features.
+    """
 
     features: Optional[List[Feature]] = Field(default_factory=lambda: [])
 
@@ -867,10 +872,23 @@ class Features(BaseModel):
         self.features.remove(feature)
 
     def add(self, feature: Feature):
+        """Add a feature to the container.
+
+        Args:
+            feature (Feature): Feature to be added.
+        """
         assert isinstance(feature, Feature)
         self.features.append(feature)
 
-    def get_by_key(self, key: str):
+    def get_by_key(self, key: str) -> Feature:
+        """Get a feature by its key.
+
+        Args:
+            key (str): Feature key of the feature of interest
+
+        Returns:
+            Feature: Feature of interest
+        """
         return {f.key: f for f in self.features}[key]
 
     def get(
@@ -928,6 +946,11 @@ class Features(BaseModel):
 
 
 class InputFeatures(Features):
+    """Container of input features, only input features are allowed.
+
+    Attributes:
+        features (List(InputFeatures)): list of the features.
+    """
 
     features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
 
@@ -943,6 +966,11 @@ class InputFeatures(Features):
         return pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
 
     def add(self, feature: InputFeature):
+        """Add a input feature to the container.
+
+        Args:
+            feature (InputFeature): InputFeature to be added.
+        """
         assert isinstance(feature, InputFeature)
         self.features.append(feature)
 
@@ -970,6 +998,11 @@ class InputFeatures(Features):
 
 
 class OutputFeatures(Features):
+    """Container of output features, only output features are allowed.
+
+    Attributes:
+        features (List(OutputFeatures)): list of the features.
+    """
 
     features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
 
@@ -981,6 +1014,11 @@ class OutputFeatures(Features):
         return v
 
     def add(self, feature: OutputFeature):
+        """Add a output feature to the container.
+
+        Args:
+            feature (OutputFeature): OutputFeature to be added.
+        """
         assert isinstance(feature, OutputFeature)
         self.features.append(feature)
 
@@ -1036,6 +1074,14 @@ class OutputFeatures(Features):
         return [f.key for f in self.get_by_objective(includes, excludes, exact)]
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """Evaluate the objective for every
+
+        Args:
+            experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
+
+        Returns:
+            pd.DataFrame: Objective values for the experiments of interest.
+        """
         return pd.concat(
             [
                 feat.objective(experiments[feat.key])
