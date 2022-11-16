@@ -937,7 +937,7 @@ class InputFeatures(Features):
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
-        return pd.concat([feat.sample(n) for feat in self.get(InputFeature)])
+        return pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
 
     def get_categorical_combinations(
         self, include: Feature = InputFeature, exclude: Feature = None
