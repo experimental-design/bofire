@@ -138,11 +138,27 @@ def test_from_greater_equal():
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
 
 
+def test_as_greater_equal():
+    c = LinearInequalityConstraint.from_greater_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
+    features, coefficients, rhs = c.as_greater_equal()
+    assert c.rhs == rhs * -1.0
+    assert coefficients == [-1.0 * coef for coef in c.coefficients]
+    assert c.features == features
+
+
 def test_from_smaller_equal():
     c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
     assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"]
     assert c.coefficients == VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
+
+
+def test_as_smaller_equal():
+    c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
+    features, coefficients, rhs = c.as_smaller_equal()
+    assert c.rhs == rhs
+    assert coefficients == c.coefficients
+    assert c.features == features
 
 
 # test the Constraints Class
