@@ -106,6 +106,7 @@ def strategy():
 def test_strategy_constructor(
     domain: Domain,
 ):
+    print(domain)
     DummyStrategy(domain=domain)
 
 
@@ -189,7 +190,15 @@ e4 = generate_experiments(domain, 4)
 @pytest.mark.parametrize(
     "domain, experiments, replace",
     [
-        (domain, experiments, replace)
+        (
+            Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            ),
+            experiments,
+            replace,
+        )
         for experiments in [e1, e2]
         for replace in [True, False]
     ],
@@ -201,14 +210,26 @@ def test_strategy_tell_initial(
 ):
     """verify that tell correctly stores initial experiments"""
     strategy = DummyStrategy(domain=domain)
-    print(strategy.domain.experiments)
+    print("mama", strategy.domain.experiments)  # , strategy.domain.experiments.shape)
+    # print("mama", experiments.shape)
     strategy.tell(experiments=experiments, replace=replace)
+    print("papa", strategy.domain.experiments, strategy.domain.experiments.shape)
     assert strategy.domain.experiments.equals(experiments)
 
 
 @pytest.mark.parametrize(
     "domain, experimentss",
-    [(domain, experimentss) for experimentss in [[e1, e2], [e2, e1], [e1, e2, e3, e4]]],
+    [
+        (
+            Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            ),
+            experimentss,
+        )
+        for experimentss in [[e1, e2], [e2, e1], [e1, e2, e3, e4]]
+    ],
 )
 def test_strategy_tell_append(
     domain: Domain,
@@ -326,7 +347,20 @@ def test_ask_invalid_candidate_count_request():
 
 
 # test for PredictiveStrategy
-@pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
+@pytest.mark.parametrize(
+    "domain, experiments",
+    [
+        (
+            Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            ),
+            e,
+        )
+        for e in [e3, e4]
+    ],
+)
 def test_predictive_strategy_ask_valid(
     domain: Domain,
     experiments: pd.DataFrame,
@@ -342,14 +376,38 @@ def test_predictive_strategy_ask_valid(
         strategy.ask(candidate_count=1)
 
 
-@pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
+@pytest.mark.parametrize(
+    "domain, experiments",
+    [
+        (
+            Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            ),
+            e,
+        )
+        for e in [e3, e4]
+    ],
+)
 def test_predictive_strategy_predict(domain, experiments):
     strategy = DummyPredictiveStrategy(domain=domain)
     strategy.tell(experiments)
     strategy.predict(generate_candidates(domain=domain))
 
 
-@pytest.mark.parametrize("domain", [(domain)])
+@pytest.mark.parametrize(
+    "domain",
+    [
+        (
+            Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            )
+        )
+    ],
+)
 def test_predictive_strategy_predict_not_fitted(domain):
     strategy = DummyPredictiveStrategy(domain=domain)
     with pytest.raises(ValueError):

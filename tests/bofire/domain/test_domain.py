@@ -240,7 +240,7 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
 )
 def test_categorical_combinations_of_domain_defaults(domain, data):
     expected = list(itertools.product(*data))
-    assert domain.get_categorical_combinations() == expected
+    assert domain.input_features.get_categorical_combinations() == expected
 
 
 @pytest.mark.parametrize(
@@ -334,7 +334,9 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
 def test_categorical_combinations_of_domain_filtered(domain, data, include, exclude):
     expected = list(itertools.product(*data))
     assert (
-        domain.get_categorical_combinations(include=include, exclude=exclude)
+        domain.input_features.get_categorical_combinations(
+            include=include, exclude=exclude
+        )
         == expected
     )
 
@@ -596,7 +598,7 @@ domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_
     ],
 )
 def test_get_features(domain, FeatureType, exact, expected):
-    assert domain.get_features(FeatureType, exact=exact) == expected
+    assert domain.get_features(FeatureType, exact=exact).features == expected
 
 
 @pytest.mark.parametrize(
@@ -608,15 +610,13 @@ def test_get_features(domain, FeatureType, exact, expected):
         (domain, [], [Objective], False, [of1_, of2_]),
     ],
 )
-def test_get_outputs_by_desirability(
-    domain: Domain, includes, excludes, exact, expected
-):
+def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, expected):
     assert (
-        domain.get_outputs_by_objective(
+        domain.output_features.get_by_objective(
             includes=includes,
             excludes=excludes,
             exact=exact,
-        )
+        ).features
         == expected
     )
 
@@ -647,11 +647,11 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
         (domain, [], [Objective], False, ["out3", "out4"]),
     ],
 )
-def test_get_output_keys_by_desirability(
+def test_get_output_keys_by_objective(
     domain: Domain, includes, excludes, exact, expected
 ):
     assert (
-        domain.get_output_keys_by_objective(
+        domain.output_features.get_keys_by_objective(
             includes=includes,
             excludes=excludes,
             exact=exact,

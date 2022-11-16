@@ -30,7 +30,6 @@ class Strategy(BaseModel):
 
     def __init__(self, **data: Any):
         super().__init__(**data)
-
         # we setup a random seed here
         if self.seed is None:
             self.seed = np.random.default_rng().integers(1000)
@@ -57,7 +56,7 @@ class Strategy(BaseModel):
             raise ValueError("no input feature specified")
         if len(domain.output_features) == 0:
             raise ValueError("no output feature specified")
-        if len(domain.get_outputs_by_objective(Objective)) == 0:
+        if len(domain.output_features.get_by_objective(Objective)) == 0:
             raise ValueError("no output feature with objective specified")
         return domain
 
@@ -114,7 +113,7 @@ class Strategy(BaseModel):
         Returns:
             Domain: the domain
         """
-        for feature in domain.get_outputs_by_objective(Objective):
+        for feature in domain.output_features.get_by_objective(Objective):
             if not cls.is_objective_implemented(type(feature.objective)):
                 raise ValueError(
                     f"Objective `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
@@ -370,11 +369,15 @@ class PredictiveStrategy(Strategy):
                 data=np.hstack((preds, stds)),
                 columns=[
                     "%s_pred" % featkey
-                    for featkey in self.domain.get_output_keys_by_objective(Objective)
+                    for featkey in self.domain.output_features.get_by_objective(
+                        Objective
+                    )
                 ]
                 + [
                     "%s_sd" % featkey
-                    for featkey in self.domain.get_output_keys_by_objective(Objective)
+                    for featkey in self.domain.output_features.get_by_objective(
+                        Objective
+                    )
                 ],
             )
         else:
@@ -382,7 +385,9 @@ class PredictiveStrategy(Strategy):
                 data=preds,
                 columns=[
                     "%s_pred" % featkey
-                    for featkey in self.domain.get_output_keys_by_objective(Objective)
+                    for featkey in self.domain.output_features.get_by_objective(
+                        Objective
+                    )
                 ],
             )
         return predictions

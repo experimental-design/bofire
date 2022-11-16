@@ -41,7 +41,7 @@ class DummyStrategy(Strategy):
         candidate_count: Optional[NonNegativeInt] = None,
     ) -> pd.DataFrame:
         candidates = candidate_pool.sample(candidate_count, replace=False)
-        for feat in self.domain.get_outputs_by_objective(Objective):
+        for feat in self.domain.output_features.get_by_objective(Objective):
             candidates[f"{feat.key}_pred"] = np.nan
             candidates[f"{feat.key}_sd"] = np.nan
             candidates[f"{feat.key}_des"] = np.nan
@@ -106,7 +106,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
         candidate_count: Optional[NonNegativeInt] = None,
     ) -> pd.DataFrame:
         candidates = candidate_pool.sample(candidate_count, replace=False)
-        for feat in self.domain.get_outputs_by_objective(Objective):
+        for feat in self.domain.output_features.get_by_objective(Objective):
             candidates[f"{feat.key}_pred"] = np.nan
             candidates[f"{feat.key}_sd"] = np.nan
             candidates[f"{feat.key}_des"] = np.nan

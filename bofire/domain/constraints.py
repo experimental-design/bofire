@@ -1,13 +1,13 @@
 from abc import abstractmethod
-from typing import Dict, List
+from typing import Dict, List, Optional, Type, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import Field, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
-from bofire.domain.util import BaseModel
+from bofire.domain.util import BaseModel, filter_by_class
 
 
 class Constraint(BaseModel):
@@ -187,9 +187,9 @@ class LinearInequalityConstraint(LinearConstraint):
     #     noise = 10e-10
     #     return (self.lhs(df_data) >= self.rhs - noise).all()
 
-    def is_fulfilled(self, experiments: pd.DataFrame) -> np.array:
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         # noise = 10e-10 discuss with Behrang
-        return self(experiments).values <= 0
+        return self(experiments) <= 0
 
     @classmethod
     def from_greater_equal(
@@ -338,3 +338,80 @@ class NChooseKConstraint(Constraint):
         if self.none_also_valid:
             res += " (none is also ok)"
         return res
+
+
+class Constraints(BaseModel):
+
+    constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+
+    def __iter__(self):
+        return iter(self.constraints)
+
+    def __len__(self):
+        return len(self.constraints)
+
+    def __getitem__(self, i):
+        return self.constraints[i]
+
+    def __add__(self, other) -> "Constraints":
+        return Constraints(constraints=self.constraints + other.constraints)
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """Numerically evaluate all constraints
+
+        Args:
+            experiments (pd.DataFrame): data to evaluate the constraint on
+
+        Returns:
+            pd.DataFrame: Constraint evaluation for each of the constraints
+        """
+        return pd.concat([c(experiments) for c in self.constraints], axis=1)
+
+    def add(self, constraint: Constraint):
+        """Add a new constraint to `self`.
+
+        Args:
+            constraint (Constraint): Constraint to add.
+        """
+        assert isinstance(constraint, Constraint)
+        self.constraints.append(constraint)
+
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        """Check if all constraints are fulfilled on all rows of the provided dataframe
+
+        Args:
+            df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on
+
+        Returns:
+            Boolean: True if all constraints are fulfilled for all rows, false if not
+        """
+        if len(self.constraints) == 0:
+            return pd.Series([True] * len(experiments), index=experiments.index)
+        return pd.concat(
+            [c.is_fulfilled(experiments) for c in self.constraints], axis=1
+        ).all(axis=1)
+
+    def get(
+        self,
+        includes: Union[Type, List[Type]] = Constraint,
+        excludes: Union[Type, List[Type]] = None,
+        exact: bool = False,
+    ) -> List[Constraint]:
+        """get constraints of the domain
+
+        Args:
+            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
+            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
+            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+
+        Returns:
+            List[Constraint]: List of constraints in the domain fitting to the passed requirements.
+        """
+        return Constraints(
+            constraints=filter_by_class(
+                self.constraints,
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
+            )
+        )

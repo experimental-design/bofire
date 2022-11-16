@@ -3,12 +3,15 @@ from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.constraints import (
     Constraint,
+    Constraints,
+    LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInqualityConstraint,
 )
+from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeatures
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
 VALID_NCHOOSEKE_CONSTRAINT_SPEC = {
@@ -140,3 +143,113 @@ def test_from_smaller_equal():
     assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"]
     assert c.coefficients == VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
+
+
+# test the Constraints Class
+c1 = LinearEqualityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)
+c2 = LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)
+c3 = NChooseKConstraint(**VALID_NCHOOSEKE_CONSTRAINT_SPEC)
+c4 = NonlinearEqualityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
+c5 = NonlinearInqualityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
+c6 = LinearInequalityConstraint.from_smaller_equal(
+    features=["f1", "f2", "f3"], coefficients=[1, 1, 1], rhs=100.0
+)
+
+if1 = ContinuousInput(key="f1", lower_bound=0, upper_bound=2)
+if2 = ContinuousInput(key="f2", lower_bound=0, upper_bound=4)
+if3 = ContinuousInput(key="f3", lower_bound=3, upper_bound=8)
+
+input_features = InputFeatures(features=[if1, if2, if3])
+
+constraints = Constraints(constraints=[c1, c2, c3])
+constraints2 = Constraints(constraints=[c4, c5])
+constraints3 = Constraints(constraints=[c6])
+
+
+@pytest.mark.parametrize(
+    "constraints",
+    [
+        (["s"]),
+        ([LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)], 5),
+        (
+            [LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)],
+            ContinuousOutput(key="s"),
+        ),
+    ],
+)
+def test_constraints_invalid_constraint(constraints):
+    with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
+        Constraints(constraints=constraints)
+
+
+@pytest.mark.parametrize(
+    "constraints, ConstraintType, exact, expected",
+    [
+        (constraints, LinearConstraint, True, []),
+        (constraints, LinearConstraint, False, [c1, c2]),
+        (constraints, Constraint, False, [c1, c2, c3]),
+        (constraints, NChooseKConstraint, False, [c3]),
+    ],
+)
+def test_constraints_get(constraints, ConstraintType, exact, expected):
+    returned = constraints.get(ConstraintType, exact=exact).constraints
+    assert returned == expected
+    for i in range(len(expected)):
+        assert id(expected[i]) == id(returned[i])
+
+
+def test_constraints_plus():
+    returned = constraints + constraints2
+    assert returned.constraints == [c1, c2, c3, c4, c5]
+
+
+@pytest.mark.parametrize(
+    "constraints, num_candidates",
+    [
+        (constraints2, 5),
+    ],
+)
+def test_constraints_call(constraints, num_candidates):
+    candidates = input_features.sample(num_candidates)
+    returned = constraints(candidates)
+    assert returned.shape == (num_candidates, len(constraints))
+
+
+@pytest.mark.parametrize(
+    "constraints, num_candidates, fulfilled",
+    [
+        (constraints2, 5, False),
+        (constraints3, 5, True),
+    ],
+)
+def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
+    candidates = input_features.sample(num_candidates)
+    returned = constraints.is_fulfilled(candidates)
+    assert returned.shape == (num_candidates,)
+    assert returned.dtype == bool
+    assert returned.all() == fulfilled
+
+
+@pytest.mark.parametrize(
+    "constraints, constraint",
+    [
+        (constraints, c4),
+        (constraints, c6),
+    ],
+)
+def test_constraints_add_valid(constraints, constraint):
+    constraints.add(constraint)
+
+
+@pytest.mark.parametrize(
+    "constraints, constraint",
+    [
+        (constraints, "a"),
+        (constraints, 5),
+    ],
+)
+def test_constraints_add_invalid(constraints, constraint):
+    with pytest.raises(
+        (ValueError, TypeError, KeyError, ValidationError, AssertionError)
+    ):
+        constraints.add(constraint)

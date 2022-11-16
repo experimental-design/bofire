@@ -1,6 +1,7 @@
 import random
 import uuid
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
@@ -14,8 +15,12 @@ from bofire.domain.features import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
+    Features,
+    InputFeatures,
+    OutputFeature,
+    OutputFeatures,
 )
-from bofire.domain.objectives import MinimizeObjective
+from bofire.domain.objectives import MinimizeObjective, Objective
 from tests.bofire.domain.utils import get_invalids
 
 objective = MinimizeObjective(w=1)
@@ -956,3 +961,185 @@ out = ContinuousOutput(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)
 )
 def test_feature_sorting(unsorted_list, sorted_list):
     assert list(sorted(unsorted_list)) == sorted_list
+
+
+# test features container
+if1 = ContinuousInput(**{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1"})
+if2 = CategoricalInput(**{**VALID_CATEGORICAL_INPUT_FEATURE_SPEC, "key": "if2"})
+of1 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of1"})
+of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of2"})
+of3 = ContinuousOutput(key="of3", objective=None)
+
+input_features = InputFeatures(features=[if1, if2])
+output_features = OutputFeatures(features=[of1, of2])
+features = Features(features=[if1, if2, of1, of2])
+
+
+@pytest.mark.parametrize(
+    "FeatureContainer, features",
+    [
+        (Features, ["s"]),
+        (Features, [ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC), 5]),
+        (InputFeatures, ["s"]),
+        (InputFeatures, [ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC), 5]),
+        (
+            InputFeatures,
+            [
+                ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+                ContinuousOutput(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC),
+            ],
+        ),
+        (OutputFeatures, ["s"]),
+        (OutputFeatures, [ContinuousOutput(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC), 5]),
+        (
+            OutputFeatures,
+            [
+                ContinuousOutput(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC),
+                ContinuousInput(**VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
+            ],
+        ),
+    ],
+)
+def test_features_invalid_feature(FeatureContainer, features):
+    with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
+        FeatureContainer(features=features)
+
+
+@pytest.mark.parametrize(
+    "features1, features2, expected_type",
+    [
+        [input_features, input_features, InputFeatures],
+        [output_features, output_features, OutputFeatures],
+        [input_features, output_features, Features],
+        [output_features, input_features, Features],
+        [features, output_features, Features],
+        [features, input_features, Features],
+        [output_features, features, Features],
+        [input_features, features, Features],
+    ],
+)
+def test_features_plus(features1, features2, expected_type):
+    returned = features1 + features2
+    assert type(returned) == expected_type
+    assert len(returned) == (len(features1) + len(features2))
+
+
+@pytest.mark.parametrize(
+    "features, FeatureType, exact, expected",
+    [
+        (features, Feature, False, [if1, if2, of1, of2]),
+        (features, OutputFeature, False, [of1, of2]),
+        (input_features, ContinuousInput, False, [if1]),
+        (output_features, ContinuousOutput, False, [of1, of2]),
+    ],
+)
+def test_constraints_get(features, FeatureType, exact, expected):
+    returned = features.get(FeatureType, exact=exact)
+    assert returned.features == expected
+    for i in range(len(expected)):
+        assert id(expected[i]) == id(returned[i])
+    assert type(returned) == type(features)
+
+
+@pytest.mark.parametrize(
+    "features, FeatureType, exact, expected",
+    [
+        (features, Feature, False, ["if1", "if2", "of1", "of2"]),
+        (features, OutputFeature, False, ["of1", "of2"]),
+        (input_features, ContinuousInput, False, ["if1"]),
+        (output_features, ContinuousOutput, False, ["of1", "of2"]),
+    ],
+)
+def test_features_get_keys(features, FeatureType, exact, expected):
+    assert features.get_keys(FeatureType, exact=exact) == expected
+
+
+@pytest.mark.parametrize(
+    "features, key, expected",
+    [
+        (features, "if1", if1),
+        (output_features, "of1", of1),
+        (input_features, "if1", if1),
+    ],
+)
+def test_features_get_by_key(features, key, expected):
+    returned = features.get_by_key(key)
+    assert returned.key == expected.key
+    assert id(returned) == id(expected)
+
+
+@pytest.mark.parametrize(
+    "features, key",
+    [
+        (features, "if133"),
+        (output_features, "of3331"),
+        (input_features, "if1333333"),
+    ],
+)
+def test_features_get_by_key_invalid(features, key):
+    with pytest.raises(KeyError):
+        features.get_by_key(key)
+
+
+@pytest.mark.parametrize(
+    "features, feature",
+    [
+        (Features(features=[if1, if2]), of1),
+    ],
+)
+def test_features_add(features, feature):
+    features.add(feature)
+    assert features.get_by_key(of1.key).key == feature.key
+
+
+@pytest.mark.parametrize(
+    "features, feature",
+    [
+        (Features(features=[if1, if2]), "of1"),
+        (InputFeatures(features=[if1, if2]), of1),
+        (OutputFeatures(features=[of1, of2]), if1),
+    ],
+)
+def test_features_add_invalid(features, feature):
+    with pytest.raises(AssertionError):
+        features.add(feature)
+
+
+@pytest.mark.parametrize(
+    "features, num_samples",
+    [
+        (input_features, 1),
+        (input_features, 2),
+    ],
+)
+def test_input_features_sample(features, num_samples):
+    samples = features.sample(num_samples)
+    assert samples.shape == (num_samples, len(features))
+    assert list(samples.columns) == input_features.get_keys()
+
+
+@pytest.mark.parametrize(
+    "features, samples",
+    [
+        (
+            output_features,
+            pd.DataFrame(
+                columns=["of1", "of2"],
+                index=range(5),
+                data=np.random.uniform(size=(5, 2)),
+            ),
+        ),
+        (
+            OutputFeatures(features=[of1, of2, of3]),
+            pd.DataFrame(
+                columns=["of1", "of2", "of3"],
+                index=range(5),
+                data=np.random.uniform(size=(5, 3)),
+            ),
+        ),
+    ],
+)
+def test_output_features_call(features, samples):
+    o = features(samples)
+    assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
+    assert list(o.columns) == features.get_keys_by_objective(Objective)

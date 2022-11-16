@@ -6,29 +6,34 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 
-from bofire.domain.constraints import Constraint, LinearConstraint, NChooseKConstraint
+from bofire.domain.constraints import (
+    Constraint,
+    Constraints,
+    LinearConstraint,
+    NChooseKConstraint,
+)
 from bofire.domain.features import (
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     Feature,
     InputFeature,
+    InputFeatures,
     OutputFeature,
+    OutputFeatures,
 )
 from bofire.domain.objectives import Objective
-from bofire.domain.util import (
-    BaseModel,
-    filter_by_attribute,
-    filter_by_class,
-    is_numeric,
-)
+from bofire.domain.util import BaseModel, is_numeric
 
 
 class Domain(BaseModel):
 
-    input_features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
-    output_features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
-    constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+    input_features: Optional[InputFeatures] = Field(
+        default_factory=lambda: InputFeatures()
+    )
+    output_features: Optional[OutputFeatures] = Field(
+        default_factory=lambda: OutputFeatures()
+    )
+    constraints: Optional[Constraints] = Field(default_factory=lambda: Constraints())
     experiments: Optional[pd.DataFrame]
     candidates: Optional[pd.DataFrame]
     """Representation of the optimization problem/domain
@@ -38,6 +43,34 @@ class Domain(BaseModel):
         output_features (List[OutputFeature], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
     """
+
+    @validator("input_features", always=True, pre=True)
+    def validate_input_features_list(cls, v, values):
+        if isinstance(v, list):
+            v = InputFeatures(features=v)
+            return v
+        if isinstance(v, InputFeature):
+            return InputFeatures(features=[v])
+        else:
+            return v
+
+    @validator("output_features", always=True, pre=True)
+    def validate_output_features_list(cls, v, values):
+        if isinstance(v, list):
+            return OutputFeatures(features=v)
+        if isinstance(v, OutputFeature):
+            return OutputFeatures(features=[v])
+        else:
+            return v
+
+    @validator("constraints", always=True, pre=True)
+    def validate_constraints_list(cls, v, values):
+        if isinstance(v, list):
+            return Constraints(constraints=v)
+        if isinstance(v, Constraint):
+            return Constraints(constraints=[v])
+        else:
+            return v
 
     @validator("output_features", always=True)
     def validate_unique_output_feature_keys(cls, v, values):
@@ -177,39 +210,16 @@ class Domain(BaseModel):
             pd.DataFrame: DataFrame listing all constraints of the domain with a description
         """
         df = pd.DataFrame(
-            index=range(len(self.get_constraints())),
+            index=range(len(self.constraints.get())),
             columns=["Type", "Description"],
             data={
-                "Type": [feat.__class__.__name__ for feat in self.get_constraints()],
+                "Type": [feat.__class__.__name__ for feat in self.constraints.get()],
                 "Description": [
-                    constraint.__str__() for constraint in self.get_constraints()
+                    constraint.__str__() for constraint in self.constraints.get()
                 ],
             },
         )
         return df
-
-    def get_constraints(
-        self,
-        includes: Union[Type, List[Type]] = Constraint,
-        excludes: Union[Type, List[Type]] = None,
-        exact: bool = False,
-    ) -> List[Constraint]:
-        """get constraints of the domain
-
-        Args:
-            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
-            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-
-        Returns:
-            List[Constraint]: List of constraints in the domain fitting to the passed requirements.
-        """
-        return filter_by_class(
-            self.constraints,
-            includes=includes,
-            excludes=excludes,
-            exact=exact,
-        )
 
     def get_features(
         self,
@@ -228,15 +238,8 @@ class Domain(BaseModel):
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
         """
-        return list(
-            sorted(
-                filter_by_class(
-                    self.input_features + self.output_features,
-                    includes=includes,
-                    excludes=excludes,
-                    exact=exact,
-                )
-            )
+        return (self.input_features + self.output_features).get(
+            includes, excludes, exact
         )
 
     def get_feature_keys(
@@ -275,64 +278,13 @@ class Domain(BaseModel):
         """
         return {f.key: f for f in self.input_features + self.output_features}[key]
 
-    TObjective = Type[Objective]
-
-    def get_outputs_by_objective(
-        self,
-        includes: Union[List[TObjective], TObjective] = Objective,
-        excludes: Union[List[TObjective], TObjective, None] = None,
-        exact: bool = False,
-    ) -> List[OutputFeature]:
-        """Get output features filtered by the type of the attached objective.
-
-        Args:
-            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes
-                to be returned. Defaults to Objective.
-            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-
-        Returns:
-            List[OutputFeature]: List of output features fitting to the passed requirements.
-        """
-        if self.output_features is None:
-            return []
-        else:
-            return sorted(
-                filter_by_attribute(
-                    self.get_features(ContinuousOutput),
-                    lambda of: of.objective,
-                    includes,
-                    excludes,
-                    exact,
-                )
-            )
-
-    def get_output_keys_by_objective(
-        self,
-        includes: Union[List[TObjective], TObjective] = Objective,
-        excludes: Union[List[TObjective], TObjective, None] = None,
-        exact: bool = False,
-    ) -> List[str]:
-        """Get keys of output features filtered by the type of the attached objective.
-
-        Args:
-            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes
-                to be returned. Defaults to Objective.
-            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-
-        Returns:
-            List[str]: List of output feature keys fitting to the passed requirements.
-        """
-        return [f.key for f in self.get_outputs_by_objective(includes, excludes, exact)]
-
     def add_constraint(self, constraint: Constraint):
         """Add a constraint to the optimzation domain
 
         Args:
             constraint (Constraint): object of class Constraint, which is added to the list
         """
-        self.constraints.append(constraint)
+        self.constraints.add(constraint)
 
     def add_feature(self, feature: Feature) -> None:
         """add a feature to list domain.features
@@ -351,9 +303,9 @@ class Domain(BaseModel):
         if feature.key in self.get_feature_keys():
             raise ValueError(f"Feature with key {feature.key} already in domain.")
         if isinstance(feature, InputFeature):
-            self.input_features.append(feature)
+            self.input_features.add(feature)
         elif isinstance(feature, OutputFeature):
-            self.output_features.append(feature)
+            self.output_features.add(feature)
         else:
             raise TypeError(f"Cannot add feature of type {type(feature)}")
 
@@ -382,28 +334,6 @@ class Domain(BaseModel):
         if output_count > 0:
             self.output_features = [f for f in self.output_features if f.key != key]
 
-    def get_categorical_combinations(
-        self, include: Feature = InputFeature, exclude: Feature = None
-    ):
-        """get a list of tuples pairing the feature keys with a list of valid categories
-
-        Args:
-            include (Feature, optional): Features to be included. Defaults to InputFeature.
-            exclude (Feature, optional): Features to be excluded, e.g. subclasses of the included features. Defaults to None.
-
-        Returns:
-            List[(str, List[str])]: Returns a list of tuples pairing the feature keys with a list of valid categories (str)
-        """
-        features = [
-            f
-            for f in self.get_features(includes=include, excludes=exclude)
-            if isinstance(f, CategoricalInput) and not f.is_fixed()
-        ]
-        list_of_lists = [
-            [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
-        ]
-        return list(itertools.product(*list_of_lists))
-
     # getting list of fixed values
     def get_nchoosek_combinations(self):
         """get all possible NChooseK combinations
@@ -413,14 +343,14 @@ class Domain(BaseModel):
              unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.get_constraints(NChooseKConstraint)) == 0:
+        if len(self.constraints.get(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
 
         # loops through each NChooseK constraint
-        for con in self.get_constraints(NChooseKConstraint):
+        for con in self.constraints.get(NChooseKConstraint):
             used_features_list = []
 
             for n in range(con.min_count, con.max_count + 1):
@@ -463,7 +393,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.get_constraints(NChooseKConstraint):
+            for con in self.constraints.get(NChooseKConstraint):
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
                     if f in con.features:
@@ -481,7 +411,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.get_constraints(NChooseKConstraint):
+        for con in self.constraints.get(NChooseKConstraint):
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
         features_in_cc.sort()
@@ -499,35 +429,6 @@ class Domain(BaseModel):
         #         used_features_list_final2.append(used), unused_features_list2.append(unused)
 
         return used_features_list_final, unused_features_list
-
-    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
-        """Method to check if all constraints are fulfilled on all rows of the provided dataframe
-
-        Args:
-            df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on
-
-        Returns:
-            Boolean: True if all constraints are fulfilled for all rows, false if not
-        """
-        if len(self.constraints) == 0:
-            return pd.Series([True] * len(experiments), index=experiments.index)
-        return pd.concat(
-            [c.satisfied(experiments) for c in self.constraints], axis=1
-        ).all(axis=1)
-
-    # TODO: needs to be tested
-    def evaluate_constraints(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        return pd.concat([c(experiments) for c in self.constraints], axis=1)
-
-    # TODO: needs to be tested
-    def evaluate_objectives(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        return pd.concat(
-            [
-                feat.objective(experiments[feat.name])
-                for feat in self.get_features(ContinuousOutput)
-            ],
-            axis=1,
-        )
 
     def preprocess_experiments_one_valid_output(
         self,
@@ -809,11 +710,11 @@ class Domain(BaseModel):
                 raise ValueError(f"no col for input feature `{feat.key}`")
             feat.validate_candidental(candidates[feat.key])
         # check if all constraints are fulfilled
-        if self.is_fulfilled(candidates).all() is False:
+        if not self.constraints.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
-            for key in self.get_output_keys_by_objective(Objective):
+            for key in self.output_features.get_keys_by_objective(Objective):
                 # check that pred, sd, and des cols are specified and numerical
                 for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
                     if col not in candidates:
@@ -826,7 +727,7 @@ class Domain(BaseModel):
                         )
             # validate no additional cols exist
             if_count = len(self.get_features(InputFeature))
-            of_count = len(self.get_outputs_by_objective(Objective))
+            of_count = len(self.output_features.get_keys_by_objective(Objective))
             # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
             if len(candidates.columns) != if_count + 3 * of_count:
                 raise ValueError("additional columns found")
@@ -855,15 +756,15 @@ class Domain(BaseModel):
             self.get_feature_keys(InputFeature)
             + [
                 f"{output_feature_key}_pred"
-                for output_feature_key in self.get_outputs_by_objective(Objective)
+                for output_feature_key in self.output_features.get_by_key(Objective)
             ]
             + [
                 f"{output_feature_key}_sd"
-                for output_feature_key in self.get_outputs_by_objective(Objective)
+                for output_feature_key in self.output_features.get_by_key(Objective)
             ]
             + [
                 f"{output_feature_key}_des"
-                for output_feature_key in self.get_outputs_by_objective(Objective)
+                for output_feature_key in self.output_features.get_by_key(Objective)
             ]
         )
 
