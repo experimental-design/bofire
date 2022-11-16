@@ -2135,12 +2135,12 @@ are the corresponding coefficients.</p></td>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there any linear equality constraints?</span>
-    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
+    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_equalities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there no NChooseKConstraint constraints?</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">([</span><span class="n">NChooseKConstraint</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="n">NChooseKConstraint</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there continuous inputs</span>
@@ -2274,14 +2274,14 @@ are the corresponding coefficients.</p></td>
         <span class="k">return</span> <span class="n">domain</span><span class="p">,</span> <span class="n">AffineTransform</span><span class="p">([])</span>
 
     <span class="c1"># find linear equality constraints</span>
-    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
-    <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span>
+    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
+    <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="n">Constraint</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">]</span>
     <span class="p">)</span>
 
     <span class="c1"># only consider continuous inputs</span>
     <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
-    <span class="n">other_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousInput</span><span class="p">])</span>
+    <span class="n">other_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousInput</span><span class="p">])</span>
 
     <span class="c1"># assemble Matrix A from equality constraints</span>
     <span class="n">N</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_equalities</span><span class="p">)</span>
@@ -2389,7 +2389,6 @@ are the corresponding coefficients.</p></td>
         <span class="n">_equalities</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">name_lhs</span><span class="p">,</span> <span class="n">names_rhs</span><span class="p">,</span> <span class="n">coeffs</span><span class="p">))</span>
 
     <span class="n">trafo</span> <span class="o">=</span> <span class="n">AffineTransform</span><span class="p">(</span><span class="n">_equalities</span><span class="p">)</span>
-
     <span class="c1"># remove remaining dependencies of eliminated inputs from the problem</span>
     <span class="n">_domain</span> <span class="o">=</span> <span class="n">remove_eliminated_inputs</span><span class="p">(</span><span class="n">_domain</span><span class="p">,</span> <span class="n">trafo</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_domain</span><span class="p">,</span> <span class="n">trafo</span>
@@ -2501,7 +2500,7 @@ are the corresponding coefficients.</p></td>
         <span class="n">coeffs_dict</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">coeffs</span>
 
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="c1"># Nonlinear constraints not supported</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>

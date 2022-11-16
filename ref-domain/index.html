@@ -374,22 +374,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.get_categorical_combinations" class="md-nav__link">
-    get_categorical_combinations()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.domain.domain.Domain.get_constraint_reps_df" class="md-nav__link">
     get_constraint_reps_df()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.get_constraints" class="md-nav__link">
-    get_constraints()
   </a>
   
 </li>
@@ -425,27 +411,6 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.domain.Domain.get_nchoosek_combinations" class="md-nav__link">
     get_nchoosek_combinations()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.get_output_keys_by_objective" class="md-nav__link">
-    get_output_keys_by_objective()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.get_outputs_by_objective" class="md-nav__link">
-    get_outputs_by_objective()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.is_fulfilled" class="md-nav__link">
-    is_fulfilled()
   </a>
   
 </li>
@@ -700,9 +665,13 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Domain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 
-    <span class="n">input_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
-    <span class="n">output_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+    <span class="n">input_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">InputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">InputFeatures</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">output_features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">OutputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Constraints</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Constraints</span><span class="p">())</span>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span>
     <span class="sd">&quot;&quot;&quot;Representation of the optimization problem/domain</span>
@@ -712,6 +681,34 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        output_features (List[OutputFeature], optional): List of output features. Defaults to [].</span>
 <span class="sd">        constraints (List[Constraint], optional): List of constraints. Defaults to [].</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;input_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_input_features_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_output_features_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_constraints_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_unique_output_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
@@ -851,39 +848,16 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">            pd.DataFrame: DataFrame listing all constraints of the domain with a description</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">())),</span>
+            <span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">())),</span>
             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span><span class="p">],</span>
             <span class="n">data</span><span class="o">=</span><span class="p">{</span>
-                <span class="s2">&quot;Type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()],</span>
+                <span class="s2">&quot;Type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">()],</span>
                 <span class="s2">&quot;Description&quot;</span><span class="p">:</span> <span class="p">[</span>
-                    <span class="n">constraint</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+                    <span class="n">constraint</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
                 <span class="p">],</span>
             <span class="p">},</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">df</span>
-
-    <span class="k">def</span> <span class="nf">get_constraints</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
-<span class="sd">            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[Constraint]: List of constraints in the domain fitting to the passed requirements.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">filter_by_class</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
-            <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
-            <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
-            <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
-        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_features</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -902,15 +876,8 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Feature]: List of features in the domain fitting to the passed requirements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="nb">sorted</span><span class="p">(</span>
-                <span class="n">filter_by_class</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span>
-                    <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
-                    <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
-                    <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+            <span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_feature_keys</span><span class="p">(</span>
@@ -949,64 +916,13 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">}[</span><span class="n">key</span><span class="p">]</span>
 
-    <span class="n">TObjective</span> <span class="o">=</span> <span class="n">Type</span><span class="p">[</span><span class="n">Objective</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">get_outputs_by_objective</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Get output features filtered by the type of the attached objective.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
-<span class="sd">                to be returned. Defaults to Objective.</span>
-<span class="sd">            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[OutputFeature]: List of output features fitting to the passed requirements.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
-                <span class="n">filter_by_attribute</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">),</span>
-                    <span class="k">lambda</span> <span class="n">of</span><span class="p">:</span> <span class="n">of</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-                    <span class="n">includes</span><span class="p">,</span>
-                    <span class="n">excludes</span><span class="p">,</span>
-                    <span class="n">exact</span><span class="p">,</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">get_output_keys_by_objective</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Get keys of output features filtered by the type of the attached objective.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
-<span class="sd">                to be returned. Defaults to Objective.</span>
-<span class="sd">            excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: List of output feature keys fitting to the passed requirements.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)]</span>
-
     <span class="k">def</span> <span class="nf">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">:</span> <span class="n">Constraint</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a constraint to the optimzation domain</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            constraint (Constraint): object of class Constraint, which is added to the list</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">add_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature</span><span class="p">:</span> <span class="n">Feature</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;add a feature to list domain.features</span>
@@ -1025,9 +941,9 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature with key </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2"> already in domain.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot add feature of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -1056,28 +972,6 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">if</span> <span class="n">output_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">!=</span> <span class="n">key</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">get_categorical_combinations</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">include</span><span class="p">:</span> <span class="n">Feature</span> <span class="o">=</span> <span class="n">InputFeature</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Feature</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;get a list of tuples pairing the feature keys with a list of valid categories</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            include (Feature, optional): Features to be included. Defaults to InputFeature.</span>
-<span class="sd">            exclude (Feature, optional): Features to be excluded, e.g. subclasses of the included features. Defaults to None.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[(str, List[str])]: Returns a list of tuples pairing the feature keys with a list of valid categories (str)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">f</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
-        <span class="p">]</span>
-        <span class="n">list_of_lists</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="p">[(</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">cat</span><span class="p">)</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
-        <span class="p">]</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">list_of_lists</span><span class="p">))</span>
-
     <span class="c1"># getting list of fixed values</span>
     <span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
@@ -1087,14 +981,14 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">             unused_features_list is a list of lists containing features unused in each NChooseK combination.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
 
         <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># loops through each NChooseK constraint</span>
-        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="n">used_features_list</span> <span class="o">=</span> <span class="p">[]</span>
 
             <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">min_count</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
@@ -1137,7 +1031,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="p">[]</span>
             <span class="p">)</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
-            <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
                 <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># count of features in combo that are in con.features</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
@@ -1155,7 +1049,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
         <span class="c1"># features unused</span>
         <span class="n">features_in_cc</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="n">features_in_cc</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
         <span class="n">features_in_cc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">features_in_cc</span><span class="p">))</span>
         <span class="n">features_in_cc</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
@@ -1173,35 +1067,6 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="c1">#         used_features_list_final2.append(used), unused_features_list2.append(unused)</span>
 
         <span class="k">return</span> <span class="n">used_features_list_final</span><span class="p">,</span> <span class="n">unused_features_list</span>
-
-    <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Method to check if all constraints are fulfilled on all rows of the provided dataframe</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Boolean: True if all constraints are fulfilled for all rows, false if not</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">satisfied</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="c1"># TODO: needs to be tested</span>
-    <span class="k">def</span> <span class="nf">evaluate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-
-    <span class="c1"># TODO: needs to be tested</span>
-    <span class="k">def</span> <span class="nf">evaluate_objectives</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span>
-                <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">name</span><span class="p">])</span>
-                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">)</span>
-            <span class="p">],</span>
-            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">preprocess_experiments_one_valid_output</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1483,11 +1348,11 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
             <span class="n">feat</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
         <span class="c1"># check if all constraints are fulfilled</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
         <span class="c1"># for each continuous output feature with an attached objective object</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
-            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
                 <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
                     <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
@@ -1500,7 +1365,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
                         <span class="p">)</span>
             <span class="c1"># validate no additional cols exist</span>
             <span class="n">if_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">))</span>
-            <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">))</span>
+            <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">))</span>
             <span class="c1"># input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">if_count</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">of_count</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional columns found&quot;</span><span class="p">)</span>
@@ -1529,15 +1394,15 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">_pred&quot;</span>
-                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">_sd&quot;</span>
-                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="o">+</span> <span class="p">[</span>
                 <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">_des&quot;</span>
-                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -1584,7 +1449,6 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
 
   <div class="doc doc-children">
-
 
 
 
@@ -1721,7 +1585,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">    Args:</span>
 <span class="sd">        constraint (Constraint): object of class Constraint, which is added to the list</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -1802,9 +1666,9 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
     <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature with key </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2"> already in domain.&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot add feature of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -2092,8 +1956,6 @@ involved output features.</p>
 
 
 
-
-
   <div class="doc doc-object doc-method">
 
 
@@ -2168,91 +2030,6 @@ involved output features.</p>
 
 
 
-<h3 id="bofire.domain.domain.Domain.get_categorical_combinations" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_categorical_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">InputFeature</span><span class="s1">&#39;&gt;, exclude=None)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>get a list of tuples pairing the feature keys with a list of valid categories</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>include</code></td>
-        <td><code>Feature</code></td>
-        <td><p>Features to be included. Defaults to InputFeature.</p></td>
-        <td><code>&lt;class &#39;bofire.domain.features.InputFeature&#39;&gt;</code></td>
-      </tr>
-      <tr>
-        <td><code>exclude</code></td>
-        <td><code>Feature</code></td>
-        <td><p>Features to be excluded, e.g. subclasses of the included features. Defaults to None.</p></td>
-        <td><code>None</code></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[(str, List[str])]</code></td>
-      <td><p>Returns a list of tuples pairing the feature keys with a list of valid categories (str)</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_categorical_combinations</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">include</span><span class="p">:</span> <span class="n">Feature</span> <span class="o">=</span> <span class="n">InputFeature</span><span class="p">,</span> <span class="n">exclude</span><span class="p">:</span> <span class="n">Feature</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;get a list of tuples pairing the feature keys with a list of valid categories</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        include (Feature, optional): Features to be included. Defaults to InputFeature.</span>
-<span class="sd">        exclude (Feature, optional): Features to be excluded, e.g. subclasses of the included features. Defaults to None.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[(str, List[str])]: Returns a list of tuples pairing the feature keys with a list of valid categories (str)</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">f</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
-    <span class="p">]</span>
-    <span class="n">list_of_lists</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="p">[(</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">cat</span><span class="p">)</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
-    <span class="p">]</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">list_of_lists</span><span class="p">))</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
 <h3 id="bofire.domain.domain.Domain.get_constraint_reps_df" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_constraint_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
 
@@ -2287,108 +2064,16 @@ involved output features.</p>
 <span class="sd">        pd.DataFrame: DataFrame listing all constraints of the domain with a description</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-        <span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">())),</span>
+        <span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">())),</span>
         <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span><span class="p">],</span>
         <span class="n">data</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;Type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()],</span>
+            <span class="s2">&quot;Type&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">()],</span>
             <span class="s2">&quot;Description&quot;</span><span class="p">:</span> <span class="p">[</span>
-                <span class="n">constraint</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">()</span>
+                <span class="n">constraint</span><span class="o">.</span><span class="fm">__str__</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
             <span class="p">],</span>
         <span class="p">},</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">df</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.get_constraints" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">Constraint</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>get constraints of the domain</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>includes</code></td>
-        <td><code>Union[Constraint, List[Constraint]]</code></td>
-        <td><p>Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</p></td>
-        <td><code>&lt;class &#39;bofire.domain.constraints.Constraint&#39;&gt;</code></td>
-      </tr>
-      <tr>
-        <td><code>excludes</code></td>
-        <td><code>Union[Type, List[Type]]</code></td>
-        <td><p>Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>exact</code></td>
-        <td><code>bool</code></td>
-        <td><p>Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</p></td>
-        <td><code>False</code></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[Constraint]</code></td>
-      <td><p>List of constraints in the domain fitting to the passed requirements.</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_constraints</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
-    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
-<span class="sd">        excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[Constraint]: List of constraints in the domain fitting to the passed requirements.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">filter_by_class</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
-        <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
-        <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
-    <span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -2681,15 +2366,8 @@ involved output features.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Feature]: List of features in the domain fitting to the passed requirements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span>
-        <span class="nb">sorted</span><span class="p">(</span>
-            <span class="n">filter_by_class</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span>
-                <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
-                <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
-                <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+        <span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span>
     <span class="p">)</span>
 </code></pre></div>
         </details>
@@ -2739,14 +2417,14 @@ involved output features.</p>
 <span class="sd">         unused_features_list is a list of lists containing features unused in each NChooseK combination.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
 
     <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># loops through each NChooseK constraint</span>
-    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
         <span class="n">used_features_list</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">min_count</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">):</span>
@@ -2789,7 +2467,7 @@ involved output features.</p>
         <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">[]</span>
         <span class="p">)</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
-        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># count of features in combo that are in con.features</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
@@ -2807,7 +2485,7 @@ involved output features.</p>
 
     <span class="c1"># features unused</span>
     <span class="n">features_in_cc</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_constraints</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
         <span class="n">features_in_cc</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
     <span class="n">features_in_cc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">features_in_cc</span><span class="p">))</span>
     <span class="n">features_in_cc</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
@@ -2825,267 +2503,6 @@ involved output features.</p>
     <span class="c1">#         used_features_list_final2.append(used), unused_features_list2.append(unused)</span>
 
     <span class="k">return</span> <span class="n">used_features_list_final</span><span class="p">,</span> <span class="n">unused_features_list</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.get_output_keys_by_objective" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_output_keys_by_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">Objective</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Get keys of output features filtered by the type of the attached objective.</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>includes</code></td>
-        <td><code>Union[List[TObjective], TObjective]</code></td>
-        <td><p>Objective class or list of objective classes
-to be returned. Defaults to Objective.</p></td>
-        <td><code>&lt;class &#39;bofire.domain.objectives.Objective&#39;&gt;</code></td>
-      </tr>
-      <tr>
-        <td><code>excludes</code></td>
-        <td><code>Union[List[TObjective], TObjective, None]</code></td>
-        <td><p>Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>exact</code></td>
-        <td><code>bool</code></td>
-        <td><p>Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</p></td>
-        <td><code>False</code></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[str]</code></td>
-      <td><p>List of output feature keys fitting to the passed requirements.</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_keys_by_objective</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
-    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Get keys of output features filtered by the type of the attached objective.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
-<span class="sd">            to be returned. Defaults to Objective.</span>
-<span class="sd">        excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[str]: List of output feature keys fitting to the passed requirements.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)]</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.get_outputs_by_objective" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">objectives</span><span class="o">.</span><span class="n">Objective</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Get output features filtered by the type of the attached objective.</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>includes</code></td>
-        <td><code>Union[List[TObjective], TObjective]</code></td>
-        <td><p>Objective class or list of objective classes
-to be returned. Defaults to Objective.</p></td>
-        <td><code>&lt;class &#39;bofire.domain.objectives.Objective&#39;&gt;</code></td>
-      </tr>
-      <tr>
-        <td><code>excludes</code></td>
-        <td><code>Union[List[TObjective], TObjective, None]</code></td>
-        <td><p>Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</p></td>
-        <td><code>None</code></td>
-      </tr>
-      <tr>
-        <td><code>exact</code></td>
-        <td><code>bool</code></td>
-        <td><p>Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</p></td>
-        <td><code>False</code></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[OutputFeature]</code></td>
-      <td><p>List of output features fitting to the passed requirements.</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_outputs_by_objective</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span>
-    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Objective</span><span class="p">,</span>
-    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">TObjective</span><span class="p">],</span> <span class="n">TObjective</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Get output features filtered by the type of the attached objective.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        includes (Union[List[TObjective], TObjective], optional): Objective class or list of objective classes</span>
-<span class="sd">            to be returned. Defaults to Objective.</span>
-<span class="sd">        excludes (Union[List[TObjective], TObjective, None], optional): Objective class or list of specific objective classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[OutputFeature]: List of output features fitting to the passed requirements.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[]</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span>
-            <span class="n">filter_by_attribute</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">),</span>
-                <span class="k">lambda</span> <span class="n">of</span><span class="p">:</span> <span class="n">of</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
-                <span class="n">includes</span><span class="p">,</span>
-                <span class="n">excludes</span><span class="p">,</span>
-                <span class="n">exact</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.is_fulfilled" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Method to check if all constraints are fulfilled on all rows of the provided dataframe</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>df_data</code></td>
-        <td><code>pd.DataFrame</code></td>
-        <td><p>Dataframe with data, the constraint validity should be tested on</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>Boolean</code></td>
-      <td><p>True if all constraints are fulfilled for all rows, false if not</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Method to check if all constraints are fulfilled on all rows of the provided dataframe</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Boolean: True if all constraints are fulfilled for all rows, false if not</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">satisfied</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -3627,11 +3044,11 @@ to be returned. Defaults to Objective.</p></td>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
         <span class="n">feat</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
     <span class="c1"># check if all constraints are fulfilled</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
     <span class="c1"># for each continuous output feature with an attached objective object</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
             <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
@@ -3644,7 +3061,7 @@ to be returned. Defaults to Objective.</p></td>
                     <span class="p">)</span>
         <span class="c1"># validate no additional cols exist</span>
         <span class="n">if_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">))</span>
-        <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_outputs_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">))</span>
+        <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">))</span>
         <span class="c1"># input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">if_count</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">of_count</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional columns found&quot;</span><span class="p">)</span>
@@ -3759,6 +3176,7 @@ to be returned. Defaults to Objective.</p></td>
     </div>
 
   </div>
+
 
 
 
@@ -3935,6 +3353,7 @@ to be returned. Defaults to Objective.</p></td>
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
@@ -4027,6 +3446,7 @@ to be returned. Defaults to Objective.</p></td>
     </div>
 
   </div>
+
 
 
 

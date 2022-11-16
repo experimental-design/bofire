@@ -365,6 +365,47 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints" class="md-nav__link">
+    Constraints
+  </a>
+  
+    <nav class="md-nav" aria-label="Constraints">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints.__call__" class="md-nav__link">
+    __call__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints.add" class="md-nav__link">
+    add()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints.get" class="md-nav__link">
+    get()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints.is_fulfilled" class="md-nav__link">
+    is_fulfilled()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.domain.constraints.LinearConstraint" class="md-nav__link">
     LinearConstraint
   </a>
@@ -1049,6 +1090,422 @@ Constraint            (<span title="bofire.domain.util.BaseModel">BaseModel</spa
 
 
 
+<h2 id="bofire.domain.constraints.Constraints" class="doc doc-heading">
+        <code>
+Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
+  </span>
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Numerically evaluate all constraints</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            experiments (pd.DataFrame): data to evaluate the constraint on</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: Constraint evaluation for each of the constraints</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">:</span> <span class="n">Constraint</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Add a new constraint to `self`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            constraint (Constraint): Constraint to add.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Check if all constraints are fulfilled on all rows of the provided dataframe</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Boolean: True if all constraints are fulfilled for all rows, false if not</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
+        <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
+<span class="sd">            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Constraint]: List of constraints in the domain fitting to the passed requirements.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">filter_by_class</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
+                <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
+                <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
+                <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.Constraints.__call__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Numerically evaluate all constraints</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>experiments</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>data to evaluate the constraint on</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.DataFrame</code></td>
+      <td><p>Constraint evaluation for each of the constraints</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Numerically evaluate all constraints</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        experiments (pd.DataFrame): data to evaluate the constraint on</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Constraint evaluation for each of the constraints</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.Constraints.add" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Add a new constraint to <code>self</code>.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>constraint</code></td>
+        <td><code>Constraint</code></td>
+        <td><p>Constraint to add.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">:</span> <span class="n">Constraint</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Add a new constraint to `self`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        constraint (Constraint): Constraint to add.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.Constraints.get" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">Constraint</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>get constraints of the domain</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>includes</code></td>
+        <td><code>Union[Constraint, List[Constraint]]</code></td>
+        <td><p>Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</p></td>
+        <td><code>&lt;class &#39;bofire.domain.constraints.Constraint&#39;&gt;</code></td>
+      </tr>
+      <tr>
+        <td><code>excludes</code></td>
+        <td><code>Union[Type, List[Type]]</code></td>
+        <td><p>Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+      <tr>
+        <td><code>exact</code></td>
+        <td><code>bool</code></td>
+        <td><p>Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Constraint]</code></td>
+      <td><p>List of constraints in the domain fitting to the passed requirements.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
+    <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
+<span class="sd">        excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Constraint]: List of constraints in the domain fitting to the passed requirements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">filter_by_class</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span>
+            <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
+            <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
+            <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.Constraints.is_fulfilled" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Check if all constraints are fulfilled on all rows of the provided dataframe</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>df_data</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>Dataframe with data, the constraint validity should be tested on</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Boolean</code></td>
+      <td><p>True if all constraints are fulfilled for all rows, false if not</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Check if all constraints are fulfilled on all rows of the provided dataframe</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Boolean: True if all constraints are fulfilled for all rows, false if not</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h2 id="bofire.domain.constraints.LinearConstraint" class="doc doc-heading">
         <code>
 LinearConstraint            (<a class="autorefs autorefs-internal" title="bofire.domain.constraints.Constraint" href="#bofire.domain.constraints.Constraint">Constraint</a>)
@@ -1547,9 +2004,9 @@ use the classmethod <code>from_smaller_equal</code>.</p>
     <span class="c1">#     noise = 10e-10</span>
     <span class="c1">#     return (self.lhs(df_data) &gt;= self.rhs - noise).all()</span>
 
-    <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
         <span class="c1"># noise = 10e-10 discuss with Behrang</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_greater_equal</span><span class="p">(</span>
@@ -1808,9 +2265,9 @@ use the classmethod <code>from_smaller_equal</code>.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
     <span class="c1"># noise = 10e-10 discuss with Behrang</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span><span class="o">.</span><span class="n">values</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
 </code></pre></div>
         </details>
     </div>
