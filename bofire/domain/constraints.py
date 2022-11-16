@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Type, TypeVar, Union, overload
 
 import numpy as np
 import pandas as pd
@@ -68,6 +68,10 @@ class Constraint(BaseModel):
         return mapper[config["type"]](**config)
 
 
+TFeatureKeys = conlist(item_type=str, min_items=2)
+TCoefficients = conlist(item_type=float, min_items=2)
+
+
 class LinearConstraint(Constraint):
     """Abstract base class for linear equality and inequality constraints.
 
@@ -77,8 +81,8 @@ class LinearConstraint(Constraint):
         rhs (float): Right-hand side of the constraint
     """
 
-    features: conlist(item_type=str, min_items=2)
-    coefficients: conlist(item_type=float, min_items=2)
+    features: TFeatureKeys
+    coefficients: TCoefficients
     rhs: float
 
     @validator("features")
@@ -210,7 +214,7 @@ class LinearInequalityConstraint(LinearConstraint):
 
     @classmethod
     def from_smaller_equal(
-        cls, features: List[float], coefficients: List[float], rhs: float
+        cls, features: List[str], coefficients: List[float], rhs: float
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x <= rhs`.
 
@@ -268,7 +272,7 @@ class NChooseKConstraint(Constraint):
             this flag decides if zero active features are also allowed.
     """
 
-    features: conlist(item_type=str, min_items=2)
+    features: TFeatureKeys
     min_count: int
     max_count: int
     none_also_valid: bool
@@ -340,9 +344,12 @@ class NChooseKConstraint(Constraint):
         return res
 
 
+TConstraint = TypeVar("TConstraint", bound=Constraint)
+
+
 class Constraints(BaseModel):
 
-    constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+    constraints: List[Constraint] = Field(default_factory=lambda: [])
 
     def __iter__(self):
         return iter(self.constraints)
@@ -353,7 +360,7 @@ class Constraints(BaseModel):
     def __getitem__(self, i):
         return self.constraints[i]
 
-    def __add__(self, other) -> "Constraints":
+    def __add__(self, other: "Constraints") -> "Constraints":
         return Constraints(constraints=self.constraints + other.constraints)
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -391,12 +398,30 @@ class Constraints(BaseModel):
             [c.is_fulfilled(experiments) for c in self.constraints], axis=1
         ).all(axis=1)
 
+    @overload
     def get(
         self,
-        includes: Union[Type, List[Type]] = Constraint,
-        excludes: Union[Type, List[Type]] = None,
+        includes: Type[TConstraint],
+        excludes: Union[Type[Constraint], List[Type[Constraint]], None] = None,
+        exact: bool = False,
+    ) -> List[TConstraint]:
+        ...
+
+    @overload
+    def get(
+        self,
+        includes: List[Type[Constraint]],
+        excludes: Union[Type[Constraint], List[Type[Constraint]], None] = None,
         exact: bool = False,
     ) -> List[Constraint]:
+        ...
+
+    def get(
+        self,
+        includes: Union[Type[TConstraint], List[Type[Constraint]]] = Constraint,
+        excludes: Union[Type[Constraint], List[Type[Constraint]], None] = None,
+        exact: bool = False,
+    ) -> Union[List[TConstraint], List[Constraint]]:
         """get constraints of the domain
 
         Args:
@@ -407,11 +432,9 @@ class Constraints(BaseModel):
         Returns:
             List[Constraint]: List of constraints in the domain fitting to the passed requirements.
         """
-        return Constraints(
-            constraints=filter_by_class(
-                self.constraints,
-                includes=includes,
-                excludes=excludes,
-                exact=exact,
-            )
+        return filter_by_class(
+            self.constraints,
+            includes=includes,
+            excludes=excludes,
+            exact=exact,
         )

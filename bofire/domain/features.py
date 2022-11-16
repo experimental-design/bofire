@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import itertools
 from abc import abstractmethod
-from typing import Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union, overload
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +36,8 @@ class Feature(KeyModel):
         Returns:
             bool: True if the other class is larger than self, else False
         """
-        order_self = FEATURE_ORDER[type(self)]
+        # TODO: add order of base class to FEATURE_ORDER and remove type: ignore
+        order_self = FEATURE_ORDER[type(self)]  # type: ignore
         order_other = FEATURE_ORDER[type(other)]
         if order_self == order_other:
             return self.key < other.key
@@ -53,7 +56,7 @@ class Feature(KeyModel):
         }
 
     @staticmethod
-    def from_config(config: Dict) -> "Objective":
+    def from_config(config: Dict) -> "Feature":
         """Generate objective out of serialized version.
 
         Args:
@@ -145,6 +148,9 @@ class InputFeature(Feature):
 
 class NumericalInputFeature(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
+
+    lower_bound: Union[float, int]
+    upper_bound: Union[float, int]
 
     def is_fixed(self):
         """Method to check if the feature is fixed
@@ -302,6 +308,9 @@ class ContinuousInput(NumericalInputFeature):
         return f"[{self.lower_bound},{self.upper_bound}]"
 
 
+TDiscreteVals = conlist(item_type=float, min_items=1)
+
+
 class DiscreteInput(NumericalInputFeature):
     """Feature with discretized ordinal values allowed in the optimization.
 
@@ -310,7 +319,7 @@ class DiscreteInput(NumericalInputFeature):
         values(List[float]): the discretized allowed values during the optimization.
     """
 
-    values: conlist(item_type=float, min_items=1)
+    values: TDiscreteVals
 
     @validator("values")
     def validate_values_unique(cls, values):
@@ -352,7 +361,7 @@ class DiscreteInput(NumericalInputFeature):
             pd.Series: _uggested candidates for the feature
         """
         super().validate_candidental(values)
-        if not np.isin(values.values, np.array(self.values)).all():
+        if not np.isin(values.to_numpy(), np.array(self.values)).all():
             raise ValueError(
                 f"Not allowed values in candidates for feature {self.key}."
             )
@@ -370,6 +379,9 @@ class DiscreteInput(NumericalInputFeature):
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
 
+TDescriptors = conlist(item_type=str, min_items=1)
+
+
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
 class ContinuousDescriptorInput(ContinuousInput):
     """Class for continuous input features with descriptors
@@ -381,8 +393,8 @@ class ContinuousDescriptorInput(ContinuousInput):
         values (List[float]): Values of the descriptors.
     """
 
-    descriptors: conlist(item_type=str, min_items=1)
-    values: conlist(item_type=float, min_items=1)
+    descriptors: TDescriptors
+    values: TDiscreteVals
 
     @validator("descriptors")
     def descriptors_to_keys(cls, descriptors):
@@ -426,6 +438,10 @@ class ContinuousDescriptorInput(ContinuousInput):
         )
 
 
+TCategoryVals = conlist(item_type=str, min_items=2)
+TAllowedVals = Optional[conlist(item_type=bool, min_items=2)]
+
+
 class CategoricalInput(InputFeature):
     """Base class for all categorical input features.
 
@@ -434,8 +450,8 @@ class CategoricalInput(InputFeature):
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
     """
 
-    categories: conlist(item_type=str, min_items=2)
-    allowed: Optional[conlist(item_type=bool, min_items=2)]
+    categories: TCategoryVals
+    allowed: TAllowedVals
 
     @validator("categories")
     def validate_categories_unique(cls, categories):
@@ -485,6 +501,8 @@ class CategoricalInput(InputFeature):
         Returns:
             [bool]: True if there is only one allowed category
         """
+        if self.allowed is None:
+            return False
         return sum(self.allowed) == 1
 
     def fixed_value(self):
@@ -504,6 +522,8 @@ class CategoricalInput(InputFeature):
         Returns:
             list of str: The allowed categories
         """
+        if self.allowed is None:
+            return []
         return [c for c, a in zip(self.categories, self.allowed) if a]
 
     def validate_experimental(
@@ -596,6 +616,11 @@ class CategoricalInput(InputFeature):
         return f"{len(self.categories)} categories"
 
 
+TCategoricalDescriptorVals = conlist(
+    item_type=conlist(item_type=float, min_items=1), min_items=1
+)
+
+
 class CategoricalDescriptorInput(CategoricalInput):
     """Class for categorical input features with descriptors
 
@@ -606,8 +631,8 @@ class CategoricalDescriptorInput(CategoricalInput):
         calues (List[List[float]]): List of lists representing the descriptor values.
     """
 
-    descriptors: conlist(item_type=str, min_items=1)
-    values: conlist(item_type=conlist(item_type=float, min_items=1), min_items=1)
+    descriptors: TDescriptors
+    values: TCategoricalDescriptorVals
 
     @validator("descriptors")
     def validate_descriptors(cls, descriptors):
@@ -663,7 +688,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         data = {cat: values for cat, values in zip(self.categories, self.values)}
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
 
-    def get_real_descriptor_bounds(self, values) -> pd.Series:
+    def get_real_descriptor_bounds(self, values) -> pd.DataFrame:
         """Method to generate a dataFrame as tabular overview of lower and upper bounds of the descriptors (excluding non-allowed descriptors)
 
         Args:
@@ -733,6 +758,8 @@ class OutputFeature(Feature):
         key(str): Key of the Feature.
     """
 
+    objective: Optional[Objective]
+
 
 class ContinuousOutput(OutputFeature):
     """The base class for a continuous output feature
@@ -751,7 +778,7 @@ class ContinuousOutput(OutputFeature):
         Returns:
             Dict: Serialized version of the feature as dictionary.
         """
-        config = {
+        config: Dict[str, Any] = {
             "type": self.__class__.__name__,
             "key": self.key,
         }
@@ -790,7 +817,7 @@ class ContinuousOutput(OutputFeature):
         line_options["color"] = line_options.get("color", "black")
         scatter_options["color"] = scatter_options.get("color", "red")
 
-        x = np.linspace(lower, upper, 5000)
+        x = pd.DataFrame(np.linspace(lower, upper, 5000))
         reward = self.objective.__call__(x)
         fig, ax = plt.subplots()
         ax.plot(x, reward, **line_options)
@@ -798,8 +825,8 @@ class ContinuousOutput(OutputFeature):
         if df_data is not None:
             x_data = df_data.loc[df_data[self.key].notna(), self.key].values
             ax.scatter(
-                x_data,
-                self.objective.__call__(x_data),
+                x_data,  # type: ignore
+                self.objective.__call__(x_data),  # type: ignore
                 **scatter_options,
             )
         ax.set_title("Objective %s" % self.key, **title_options)
@@ -838,7 +865,10 @@ def is_continuous(var: Feature) -> bool:
     if isinstance(var, ContinuousInput) or isinstance(var, ContinuousOutput):
         return True
     else:
-        False
+        return False
+
+
+TFeature = TypeVar("TFeature", bound=Feature)
 
 
 class Features(BaseModel):
@@ -848,7 +878,7 @@ class Features(BaseModel):
         features (List(Features)): list of the features.
     """
 
-    features: Optional[List[Feature]] = Field(default_factory=lambda: [])
+    features: List[Feature] = Field(default_factory=lambda: [])
 
     def __iter__(self):
         return iter(self.features)
@@ -860,8 +890,6 @@ class Features(BaseModel):
         return self.features[i]
 
     def __add__(self, other):
-        if type(self) != type(other):
-            return Features(features=self.features + other.features)
         if type(other) == InputFeatures:
             return InputFeatures(features=self.features + other.features)
         if type(other) == OutputFeatures:
@@ -891,12 +919,30 @@ class Features(BaseModel):
         """
         return {f.key: f for f in self.features}[key]
 
+    @overload
     def get(
         self,
-        includes: Union[Type, List[Type]] = Feature,
-        excludes: Union[Type, List[Type]] = None,
+        includes: Type[TFeature],
+        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
+        exact: bool = False,
+    ) -> List[TFeature]:
+        ...
+
+    @overload
+    def get(
+        self,
+        includes: List[Type[Feature]],
+        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
         exact: bool = False,
     ) -> List[Feature]:
+        ...
+
+    def get(
+        self,
+        includes: Union[Type[TFeature], List[Type[Feature]]],
+        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
+        exact: bool = False,
+    ) -> Union[List[TFeature], List[Feature]]:
         """get features of the domain
 
         Args:
@@ -908,14 +954,12 @@ class Features(BaseModel):
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
         """
-        return self.__class__(
-            features=sorted(
-                filter_by_class(
-                    self.features,
-                    includes=includes,
-                    excludes=excludes,
-                    exact=exact,
-                )
+        return sorted(
+            filter_by_class(
+                self.features,
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
             )
         )
 
@@ -952,7 +996,7 @@ class InputFeatures(Features):
         features (List(InputFeatures)): list of the features.
     """
 
-    features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
+    features: List[InputFeature] = Field(default_factory=lambda: [])
 
     def sample(self, n: int = 1) -> pd.DataFrame:
         """Draw uniformly random samples
@@ -975,7 +1019,9 @@ class InputFeatures(Features):
         self.features.append(feature)
 
     def get_categorical_combinations(
-        self, include: Feature = InputFeature, exclude: Feature = None
+        self,
+        include: Type[Feature] = InputFeature,
+        exclude: Optional[Type[InputFeature]] = None,
     ):
         """get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -1004,7 +1050,7 @@ class OutputFeatures(Features):
         features (List(OutputFeatures)): list of the features.
     """
 
-    features: Optional[List[OutputFeature]] = Field(default_factory=lambda: [])
+    features: List[OutputFeature] = Field(default_factory=lambda: [])
 
     @validator("features", pre=True)
     def validate_output_features(cls, v, values):
@@ -1027,7 +1073,7 @@ class OutputFeatures(Features):
         includes: Union[List[Type[Objective]], Type[Objective]] = Objective,
         excludes: Union[List[Type[Objective]], Type[Objective], None] = None,
         exact: bool = False,
-    ) -> List[OutputFeature]:
+    ) -> "OutputFeatures":
         """Get output features filtered by the type of the attached objective.
 
         Args:
@@ -1040,7 +1086,7 @@ class OutputFeatures(Features):
             List[OutputFeature]: List of output features fitting to the passed requirements.
         """
         if len(self.features) == 0:
-            return []
+            return OutputFeatures(features=[])
         else:
             return OutputFeatures(
                 features=sorted(
@@ -1084,8 +1130,9 @@ class OutputFeatures(Features):
         """
         return pd.concat(
             [
-                feat.objective(experiments[feat.key])
-                for feat in self.get_by_objective(Objective)
+                feat.objective(experiments[[feat.key]])
+                for feat in self.features
+                if feat.objective is not None
             ],
             axis=1,
         )
