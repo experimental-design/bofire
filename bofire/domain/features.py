@@ -452,7 +452,7 @@ class CategoricalInput(InputFeature):
     """
 
     categories: TCategoryVals
-    allowed: TAllowedVals
+    allowed: TAllowedVals = None
 
     @validator("categories")
     def validate_categories_unique(cls, categories):

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 import numpy as np
 from scipy import sparse
@@ -16,8 +16,8 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
     def __init__(
         self,
         *,
-        categories: List[List[str]] = "auto",
-        descriptors: List[List[str]] = "auto",
+        categories: Union[str, List[List[str]]] = "auto",
+        descriptors: Union[str, List[List[str]]] = "auto",
         values: List[List[List[float]]],
         sparse: bool = False,
         dtype=np.float64,
@@ -67,11 +67,13 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
             )
             raise ValueError(msg)
 
-    def _fit(self, X, handle_unknown="error", force_all_finite=True):
+    def _fit(
+        self, X, handle_unknown="error", force_all_finite: Union[str, bool] = True
+    ):
         self._check_n_features(X, reset=True)
         self._check_feature_names(X, reset=True)
         X_list, n_samples, n_features = self._check_X(
-            X, force_all_finite=force_all_finite
+            X, force_all_finite=force_all_finite  # type: ignore
         )
         self.n_features_in_ = n_features
 
@@ -96,7 +98,7 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
 
         for values in self.values:
             descriptor_list, n_categories_i, n_descriptors = self._check_X(
-                values, force_all_finite=force_all_finite
+                values, force_all_finite=force_all_finite  # type: ignore
             )
             self.values_.append(descriptor_list)
             self.n_categories_i.append(n_categories_i)
@@ -194,7 +196,7 @@ class CategoricalDescriptorEncoder(_BaseEncoder):
         X_int, X_mask = self._transform(
             X,
             handle_unknown=self.handle_unknown,
-            force_all_finite="allow-nan",
+            force_all_finite="allow-nan",  # type: ignore
             warn_on_unknown=warn_on_unknown,
         )
 
