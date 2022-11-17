@@ -179,7 +179,7 @@ class Domain(BaseModel):
             output_features=OutputFeatures(
                 features=[
                     typing.cast(OutputFeature, Feature.from_config(feat))
-                    for feat in config["input_features"]
+                    for feat in config["output_features"]
                 ]
             ),
             constraints=Constraints(
@@ -693,9 +693,9 @@ class Domain(BaseModel):
         if len(set(expected + cols)) != len(cols):
             raise ValueError(f"expected the following cols: `{expected}`, got `{cols}`")
         # check values of continuous input features
-        if experiments[self.get_feature_keys(InputFeature)].isnull().any():
+        if experiments[self.get_feature_keys(InputFeature)].isnull().to_numpy().any():
             raise ValueError("there are null values")
-        if experiments[self.get_feature_keys(InputFeature)].isna().any():
+        if experiments[self.get_feature_keys(InputFeature)].isna().to_numpy().any():
             raise ValueError("there are na values")
         # run the individual validators
         for feat in self.get_features(InputFeature):
@@ -764,7 +764,7 @@ class Domain(BaseModel):
                     if col not in candidates:
                         raise ValueError("missing column {col}")
                     if (not is_numeric(candidates[col])) and (
-                        not candidates[col].isnull().all()
+                        not candidates[col].isnull().to_numpy().all()
                     ):
                         raise ValueError(
                             f"not all values of output feature `{key}` are numerical"
@@ -843,8 +843,10 @@ class Domain(BaseModel):
 
     def add_experiments(self, experiments: pd.DataFrame):
         experiments = self.validate_experiments(experiments)
-        if experiments is None or self.experiments is None:
+        if experiments is None:
             self.experiments = None
+        elif self.experiments is None:
+            self.experiments = experiments
         else:
             self.experiments = pd.concat(
                 (self.experiments, experiments), ignore_index=True
@@ -896,7 +898,6 @@ def get_subdomain(
     assert len(input_feature_keys) > 0, "At least one input feature has to be provided."
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
-        assert isinstance(c, (LinearConstraint, NChooseKConstraint))
         for key in c.features:
             if key not in input_feature_keys:
                 raise ValueError(

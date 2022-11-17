@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Type, TypeVar, Union, overload
+from typing import Dict, List, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -398,30 +398,12 @@ class Constraints(BaseModel):
             [c.is_fulfilled(experiments) for c in self.constraints], axis=1
         ).all(axis=1)
 
-    @overload
     def get(
         self,
-        includes: Type[TConstraint],
-        excludes: Union[Type[Constraint], List[Type[Constraint]], None] = None,
-        exact: bool = False,
-    ) -> List[TConstraint]:
-        ...
-
-    @overload
-    def get(
-        self,
-        includes: List[Type[Constraint]],
-        excludes: Union[Type[Constraint], List[Type[Constraint]], None] = None,
+        includes: Union[Type, List[Type]] = Constraint,
+        excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
     ) -> List[Constraint]:
-        ...
-
-    def get(
-        self,
-        includes: Union[Type[TConstraint], List[Type[Constraint]]] = Constraint,
-        excludes: Union[Type[Constraint], List[Type[Constraint]], None] = None,
-        exact: bool = False,
-    ) -> Union[List[TConstraint], List[Constraint]]:
         """get constraints of the domain
 
         Args:
@@ -432,9 +414,11 @@ class Constraints(BaseModel):
         Returns:
             List[Constraint]: List of constraints in the domain fitting to the passed requirements.
         """
-        return filter_by_class(
-            self.constraints,
-            includes=includes,
-            excludes=excludes,
-            exact=exact,
+        return Constraints(
+            constraints=filter_by_class(
+                self.constraints,
+                includes=includes,
+                excludes=excludes,
+                exact=exact,
+            )
         )

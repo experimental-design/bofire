@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union, overload
+from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -85,6 +85,9 @@ class Feature(KeyModel):
             return output_mapper[config["type"]](key=config["key"], objective=obj)
 
 
+TFeature = TypeVar("TFeature", bound=Feature)
+
+
 class InputFeature(Feature):
     """Base class for all input features."""
 
@@ -148,9 +151,6 @@ class InputFeature(Feature):
 
 class NumericalInputFeature(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
-
-    lower_bound: Union[float, int]
-    upper_bound: Union[float, int]
 
     def is_fixed(self):
         """Method to check if the feature is fixed
@@ -890,6 +890,8 @@ class Features(BaseModel):
         return self.features[i]
 
     def __add__(self, other):
+        if type(self) != type(other):
+            return Features(features=self.features + other.features)
         if type(other) == InputFeatures:
             return InputFeatures(features=self.features + other.features)
         if type(other) == OutputFeatures:
@@ -919,30 +921,12 @@ class Features(BaseModel):
         """
         return {f.key: f for f in self.features}[key]
 
-    @overload
     def get(
         self,
-        includes: Type[TFeature],
-        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
-        exact: bool = False,
-    ) -> List[TFeature]:
-        ...
-
-    @overload
-    def get(
-        self,
-        includes: List[Type[Feature]],
-        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
+        includes: Union[Type, List[Type]] = Feature,
+        excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
     ) -> List[Feature]:
-        ...
-
-    def get(
-        self,
-        includes: Union[Type[TFeature], List[Type[Feature]]],
-        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
-        exact: bool = False,
-    ) -> Union[List[TFeature], List[Feature]]:
         """get features of the domain
 
         Args:
@@ -954,12 +938,14 @@ class Features(BaseModel):
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
         """
-        return sorted(
-            filter_by_class(
-                self.features,
-                includes=includes,
-                excludes=excludes,
-                exact=exact,
+        return self.__class__(
+            features=sorted(
+                filter_by_class(
+                    self.features,
+                    includes=includes,
+                    excludes=excludes,
+                    exact=exact,
+                )
             )
         )
 

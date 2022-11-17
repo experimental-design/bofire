@@ -283,11 +283,11 @@ class AbstractTargetObjective(Objective):
 
 class CloseToTargetObjective(AbstractTargetObjective):
     exponent: float
-    target: float
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return (
-            np.abs(x - self.target) ** self.exponent - self.tolerance**self.exponent
+            np.abs(x - self.target_value) ** self.exponent
+            - self.tolerance**self.exponent
         )
 
 
