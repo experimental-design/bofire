@@ -1343,10 +1343,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">            pd.DataFrame: dataframe with suggested experiments (candidates)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># check that each input feature has a col and is valid in itself</span>
-        <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
-            <span class="n">feat</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
         <span class="c1"># check if all constraints are fulfilled</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
@@ -3039,10 +3036,7 @@ involved output features.</p>
 <span class="sd">        pd.DataFrame: dataframe with suggested experiments (candidates)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># check that each input feature has a col and is valid in itself</span>
-    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
-        <span class="n">feat</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
     <span class="c1"># check if all constraints are fulfilled</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>

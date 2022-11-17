@@ -799,8 +799,36 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.features.InputFeatures.sample" class="md-nav__link">
-    sample()
+  <a href="#bofire.domain.features.InputFeatures.get_fixed" class="md-nav__link">
+    get_fixed()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.InputFeatures.get_free" class="md-nav__link">
+    get_free()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.InputFeatures.sample_sobol" class="md-nav__link">
+    sample_sobol()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.InputFeatures.sample_uniform" class="md-nav__link">
+    sample_uniform()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.InputFeatures.validate_inputs" class="md-nav__link">
+    validate_inputs()
   </a>
   
 </li>
@@ -826,6 +854,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.domain.features.NumericalInputFeature.from_unit_range" class="md-nav__link">
+    from_unit_range()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.domain.features.NumericalInputFeature.get_real_feature_bounds" class="md-nav__link">
     get_real_feature_bounds()
   </a>
@@ -835,6 +870,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.features.NumericalInputFeature.is_fixed" class="md-nav__link">
     is_fixed()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.NumericalInputFeature.to_unit_range" class="md-nav__link">
+    to_unit_range()
   </a>
   
 </li>
@@ -5629,7 +5671,23 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 
     <span class="n">features</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
-    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">get_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputFeatures&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Gets all features in `self` that are fixed and returns them as new `InputFeatures` object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            InputFeatures: Input features object containing only fixed features.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">feat</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()])</span>
+
+    <span class="k">def</span> <span class="nf">get_free</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputFeatures&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Gets all features in `self` that are not fixed and returns them as new `InputFeatures` object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            InputFeatures: Input features object containing only non-fixed features.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">feat</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()])</span>
+
+    <span class="k">def</span> <span class="nf">sample_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
 
 <span class="sd">        Args:</span>
@@ -5638,7 +5696,60 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Dataframe containing the samples.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample_sobol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n (int, optional): Number of samples. Defaults to 1.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: Dataframe containing the samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">free_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_free</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">Sobol</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">free_features</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">from_unit_range</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="p">(</span><span class="n">DiscreteInput</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">DiscreteInput</span><span class="p">):</span>
+                    <span class="n">levels</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">levels</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()</span>
+                <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">levels</span><span class="p">)[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown input feature with key </span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+            <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">))</span>
+        <span class="n">samples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fixed</span><span class="p">():</span>
+            <span class="n">samples</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">fixed_value</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">samples</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)]</span>
+
+    <span class="k">def</span> <span class="nf">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Validate a pandas dataframe with input feature values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            inputs (pd.Dataframe): Inputs to validate.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: Raises a Valueerror if a feature based validation raises an exception.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Dataframe: Validated dataframe</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+            <span class="n">feature</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">inputs</span>
 
     <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature</span><span class="p">:</span> <span class="n">InputFeature</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Add a input feature to the container.</span>
@@ -5827,8 +5938,190 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 
 
 
-<h3 id="bofire.domain.features.InputFeatures.sample" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
+<h3 id="bofire.domain.features.InputFeatures.get_fixed" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Gets all features in <code>self</code> that are fixed and returns them as new <code>InputFeatures</code> object.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>InputFeatures</code></td>
+      <td><p>Input features object containing only fixed features.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputFeatures&quot;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Gets all features in `self` that are fixed and returns them as new `InputFeatures` object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        InputFeatures: Input features object containing only fixed features.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">feat</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()])</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.InputFeatures.get_free" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_free</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Gets all features in <code>self</code> that are not fixed and returns them as new <code>InputFeatures</code> object.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>InputFeatures</code></td>
+      <td><p>Input features object containing only non-fixed features.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_free</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputFeatures&quot;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Gets all features in `self` that are not fixed and returns them as new `InputFeatures` object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        InputFeatures: Input features object containing only non-fixed features.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">feat</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()])</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.InputFeatures.sample_sobol" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sample_sobol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Draw uniformly random samples</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>n</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of samples. Defaults to 1.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.DataFrame</code></td>
+      <td><p>Dataframe containing the samples.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample_sobol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n (int, optional): Number of samples. Defaults to 1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Dataframe containing the samples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">free_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_free</span><span class="p">()</span>
+    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">Sobol</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">free_features</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">from_unit_range</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="p">(</span><span class="n">DiscreteInput</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">DiscreteInput</span><span class="p">):</span>
+                <span class="n">levels</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">values</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">levels</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()</span>
+            <span class="n">bins</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">levels</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">digitize</span><span class="p">(</span><span class="n">X</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">bins</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">levels</span><span class="p">)[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown input feature with key </span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="n">res</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">))</span>
+    <span class="n">samples</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fixed</span><span class="p">():</span>
+        <span class="n">samples</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">fixed_value</span><span class="p">()</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">samples</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)]</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.InputFeatures.sample_uniform" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sample_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
 
 
 </h3>
@@ -5873,7 +6166,7 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/features.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
 
 <span class="sd">    Args:</span>
@@ -5882,7 +6175,99 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Dataframe containing the samples.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.InputFeatures.validate_inputs" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Validate a pandas dataframe with input feature values.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>inputs</code></td>
+        <td><code>pd.Dataframe</code></td>
+        <td><p>Inputs to validate.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>Raises a Valueerror if a feature based validation raises an exception.</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Dataframe</code></td>
+      <td><p>Validated dataframe</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Validate a pandas dataframe with input feature values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        inputs (pd.Dataframe): Inputs to validate.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: Raises a Valueerror if a feature based validation raises an exception.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.Dataframe: Validated dataframe</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col for input feature `</span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`&quot;</span><span class="p">)</span>
+        <span class="n">feature</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">inputs</span>
 </code></pre></div>
         </details>
     </div>
@@ -5926,6 +6311,48 @@ NumericalInputFeature            (<a class="autorefs autorefs-internal" title="b
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">NumericalInputFeature</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Abstracht base class for all numerical (ordinal) input features.&quot;&quot;&quot;</span>
 
+    <span class="k">def</span> <span class="nf">to_unit_range</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">use_real_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Convert to the unit range between 0 and 1.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values (pd.Series): values to be transformed</span>
+<span class="sd">            use_real_bounds (bool, optional): if True, use the bounds from the actual values else the bounds from the feature.</span>
+<span class="sd">                Defaults to False.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If lower_bound == upper bound an error is raised</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series: transformed values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">use_real_bounds</span><span class="p">:</span>
+            <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_real_feature_bounds</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span>
+        <span class="k">if</span> <span class="n">lower</span> <span class="o">==</span> <span class="n">upper</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Fixed feature cannot be transformed to unit range.&quot;</span><span class="p">)</span>
+        <span class="n">valrange</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">values</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span> <span class="o">/</span> <span class="n">valrange</span>
+
+    <span class="k">def</span> <span class="nf">from_unit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Convert from unit range.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values (pd.Series): values to transform from.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: if the feature is fixed raise a value error.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series: _description_</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Fixed feature cannot be transformed from unit range.&quot;</span><span class="p">)</span>
+        <span class="n">valrange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">values</span> <span class="o">*</span> <span class="n">valrange</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span>
+
     <span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Method to check if the feature is fixed</span>
 
@@ -5950,7 +6377,8 @@ NumericalInputFeature            (<a class="autorefs autorefs-internal" title="b
 
 <span class="sd">        Args:</span>
 <span class="sd">            values (pd.Series): A dataFrame with experiments</span>
-<span class="sd">            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.</span>
+<span class="sd">            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not.</span>
+<span class="sd">                Defaults to False.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: when a value is not numerical</span>
@@ -6071,6 +6499,95 @@ NumericalInputFeature            (<a class="autorefs autorefs-internal" title="b
 
 
 
+<h3 id="bofire.domain.features.NumericalInputFeature.from_unit_range" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_unit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Convert from unit range.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.Series</code></td>
+        <td><p>values to transform from.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>if the feature is fixed raise a value error.</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p><em>description</em></p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">from_unit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Convert from unit range.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        values (pd.Series): values to transform from.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: if the feature is fixed raise a value error.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.Series: _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Fixed feature cannot be transformed from unit range.&quot;</span><span class="p">)</span>
+    <span class="n">valrange</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">values</span> <span class="o">*</span> <span class="n">valrange</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 id="bofire.domain.features.NumericalInputFeature.get_real_feature_bounds" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_real_feature_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
 
@@ -6175,6 +6692,110 @@ NumericalInputFeature            (<a class="autorefs autorefs-internal" title="b
 <span class="sd">        Boolean: True when the feature is fixed, false otherwise.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.NumericalInputFeature.to_unit_range" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_unit_range</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">use_real_bounds</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Convert to the unit range between 0 and 1.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.Series</code></td>
+        <td><p>values to be transformed</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>use_real_bounds</code></td>
+        <td><code>bool</code></td>
+        <td><p>if True, use the bounds from the actual values else the bounds from the feature.
+Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>If lower_bound == upper bound an error is raised</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p>transformed values.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_unit_range</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">use_real_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Convert to the unit range between 0 and 1.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        values (pd.Series): values to be transformed</span>
+<span class="sd">        use_real_bounds (bool, optional): if True, use the bounds from the actual values else the bounds from the feature.</span>
+<span class="sd">            Defaults to False.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If lower_bound == upper bound an error is raised</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.Series: transformed values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">use_real_bounds</span><span class="p">:</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_real_feature_bounds</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span>
+    <span class="k">if</span> <span class="n">lower</span> <span class="o">==</span> <span class="n">upper</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Fixed feature cannot be transformed to unit range.&quot;</span><span class="p">)</span>
+    <span class="n">valrange</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">values</span> <span class="o">-</span> <span class="n">lower</span><span class="p">)</span> <span class="o">/</span> <span class="n">valrange</span>
 </code></pre></div>
         </details>
     </div>
@@ -6307,7 +6928,8 @@ NumericalInputFeature            (<a class="autorefs autorefs-internal" title="b
       <tr>
         <td><code>strict</code></td>
         <td><code>bool</code></td>
-        <td><p>Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.</p></td>
+        <td><p>Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not.
+Defaults to False.</p></td>
         <td><code>False</code></td>
       </tr>
   </tbody>
@@ -6353,7 +6975,8 @@ NumericalInputFeature            (<a class="autorefs autorefs-internal" title="b
 
 <span class="sd">    Args:</span>
 <span class="sd">        values (pd.Series): A dataFrame with experiments</span>
-<span class="sd">        strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.</span>
+<span class="sd">        strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not.</span>
+<span class="sd">            Defaults to False.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: when a value is not numerical</span>
