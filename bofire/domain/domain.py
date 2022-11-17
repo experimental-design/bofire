@@ -733,11 +733,7 @@ class Domain(BaseModel):
             pd.DataFrame: dataframe with suggested experiments (candidates)
         """
         # check that each input feature has a col and is valid in itself
-        for feat in self.get_features(InputFeature):
-            if feat.key not in candidates:
-                raise ValueError(f"no col for input feature `{feat.key}`")
-            assert isinstance(feat, InputFeature)
-            feat.validate_candidental(candidates[feat.key])
+        self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")

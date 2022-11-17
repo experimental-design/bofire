@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import warnings
 from abc import abstractmethod
 from typing import Any, Dict, List, Optional, Type, TypeVar, Union
 
@@ -10,6 +11,7 @@ import pandas as pd
 from pydantic import Field, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
+from scipy.stats.qmc import Sobol
 
 from bofire.domain.objectives import MaximizeObjective, Objective
 from bofire.domain.util import (
@@ -152,6 +154,48 @@ class InputFeature(Feature):
 class NumericalInputFeature(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
 
+    def to_unit_range(
+        self, values: pd.Series, use_real_bounds: bool = False
+    ) -> pd.Series:
+        """Convert to the unit range between 0 and 1.
+
+        Args:
+            values (pd.Series): values to be transformed
+            use_real_bounds (bool, optional): if True, use the bounds from the actual values else the bounds from the feature.
+                Defaults to False.
+
+        Raises:
+            ValueError: If lower_bound == upper bound an error is raised
+
+        Returns:
+            pd.Series: transformed values.
+        """
+        if use_real_bounds:
+            lower, upper = self.get_real_feature_bounds(values)
+        else:
+            lower, upper = self.lower_bound, self.upper_bound
+        if lower == upper:
+            raise ValueError("Fixed feature cannot be transformed to unit range.")
+        valrange = upper - lower
+        return (values - lower) / valrange
+
+    def from_unit_range(self, values: pd.Series) -> pd.Series:
+        """Convert from unit range.
+
+        Args:
+            values (pd.Series): values to transform from.
+
+        Raises:
+            ValueError: if the feature is fixed raise a value error.
+
+        Returns:
+            pd.Series: _description_
+        """
+        if self.is_fixed():
+            raise ValueError("Fixed feature cannot be transformed from unit range.")
+        valrange = self.upper_bound - self.lower_bound
+        return (values * valrange) + self.lower_bound
+
     def is_fixed(self):
         """Method to check if the feature is fixed
 
@@ -177,7 +221,8 @@ class NumericalInputFeature(InputFeature):
 
         Args:
             values (pd.Series): A dataFrame with experiments
-            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.
+            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not.
+                Defaults to False.
 
         Raises:
             ValueError: when a value is not numerical
@@ -985,7 +1030,23 @@ class InputFeatures(Features):
 
     features: List[InputFeature] = Field(default_factory=lambda: [])
 
-    def sample(self, n: int = 1) -> pd.DataFrame:
+    def get_fixed(self) -> "InputFeatures":
+        """Gets all features in `self` that are fixed and returns them as new `InputFeatures` object.
+
+        Returns:
+            InputFeatures: Input features object containing only fixed features.
+        """
+        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])
+
+    def get_free(self) -> "InputFeatures":
+        """Gets all features in `self` that are not fixed and returns them as new `InputFeatures` object.
+
+        Returns:
+            InputFeatures: Input features object containing only non-fixed features.
+        """
+        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])
+
+    def sample_uniform(self, n: int = 1) -> pd.DataFrame:
         """Draw uniformly random samples
 
         Args:
@@ -994,7 +1055,60 @@ class InputFeatures(Features):
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
-        return pd.concat([feat.sample(n) for feat in self.features], axis=1)
+        return self.validate_inputs(
+            pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
+        )
+
+    def sample_sobol(self, n: int) -> pd.DataFrame:
+        """Draw uniformly random samples
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+
+        Returns:
+            pd.DataFrame: Dataframe containing the samples.
+        """
+        free_features = self.get_free()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            X = Sobol(len(free_features)).random(n)
+        res = []
+        for i, feat in enumerate(free_features):
+            if isinstance(feat, ContinuousInput):
+                x = feat.from_unit_range(X[:, i])
+            elif isinstance(feat, (DiscreteInput, CategoricalInput)):
+                if isinstance(feat, DiscreteInput):
+                    levels = feat.values
+                else:
+                    levels = feat.get_allowed_categories()
+                bins = np.linspace(0, 1, len(levels) + 1)
+                idx = np.digitize(X[:, i], bins) - 1
+                x = np.array(levels)[idx]
+            else:
+                raise (ValueError(f"Unknown input feature with key {feat.key}"))
+            res.append(pd.Series(x, name=feat.key))
+        samples = pd.concat(res, axis=1)
+        for feat in self.get_fixed():
+            samples[feat.key] = feat.fixed_value()
+        return self.validate_inputs(samples)[self.get_keys(InputFeature)]
+
+    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
+        """Validate a pandas dataframe with input feature values.
+
+        Args:
+            inputs (pd.Dataframe): Inputs to validate.
+
+        Raises:
+            ValueError: Raises a Valueerror if a feature based validation raises an exception.
+
+        Returns:
+            pd.Dataframe: Validated dataframe
+        """
+        for feature in self:
+            if feature.key not in inputs:
+                raise ValueError(f"no col for input feature `{feature.key}`")
+            feature.validate_candidental(inputs[feature.key])
+        return inputs
 
     def add(self, feature: InputFeature):
         """Add a input feature to the container.
