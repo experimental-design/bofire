@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -165,8 +165,8 @@ class LinearEqualityConstraint(LinearConstraint):
 class LinearInequalityConstraint(LinearConstraint):
     """Linear inequality constraint of the form `coefficients * x <= rhs`.
 
-    To instantiate a constraint of the form `coefficients * x <= rhs` multiply coefficients and rhs by -1, or
-    use the classmethod `from_smaller_equal`.
+    To instantiate a constraint of the form `coefficients * x >= rhs` multiply coefficients and rhs by -1, or
+    use the classmethod `from_greater_equal`.
 
     Attributes:
         features (list): list of feature keys (str) on which the constraint works on.
@@ -190,6 +190,22 @@ class LinearInequalityConstraint(LinearConstraint):
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         # noise = 10e-10 discuss with Behrang
         return self(experiments) <= 0
+
+    def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
+        """Return attributes in the smaller equal convention
+
+        Returns:
+            Tuple[List[str], List[float], float]: features, coefficients, rhs
+        """
+        return self.features, self.coefficients, self.rhs
+
+    def as_greater_equal(self) -> Tuple[List[str], List[float], float]:
+        """Return attributes in the greater equal convention
+
+        Returns:
+            Tuple[List[str], List[float], float]: features, coefficients, rhs
+        """
+        return self.features, [-1.0 * c for c in self.coefficients], -1.0 * self.rhs
 
     @classmethod
     def from_greater_equal(

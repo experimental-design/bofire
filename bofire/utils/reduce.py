@@ -144,7 +144,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         ind = np.where(B[i, :-1] != 0)[0]
         if len(ind) > 0 and B[i, -1] < np.inf:
             if len(list(names[ind])) > 1:
-                c = LinearInequalityConstraint(
+                c = LinearInequalityConstraint.from_greater_equal(
                     features=list(names[ind]),
                     coefficients=(-1.0 * B[i, ind]).tolist(),
                     rhs=B[i, -1] * -1.0,
@@ -163,7 +163,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         ind = np.where(B[i + M - 1, :-1] != 0)[0]
         if len(ind) > 0 and B[i + M - 1, -1] < np.inf:
             if len(list(names[ind])) > 1:
-                c = LinearInequalityConstraint(
+                c = LinearInequalityConstraint.from_greater_equal(
                     features=list(names[ind]),
                     coefficients=(-1.0 * B[i + M - 1, ind]).tolist(),
                     rhs=B[i + M - 1, -1] * -1.0,
