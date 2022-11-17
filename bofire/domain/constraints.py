@@ -403,7 +403,7 @@ class Constraints(BaseModel):
         includes: Union[Type, List[Type]] = Constraint,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
-    ) -> List[Constraint]:
+    ) -> "Constraints":
         """get constraints of the domain
 
         Args:

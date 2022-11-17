@@ -158,7 +158,8 @@ class NumericalInputFeature(InputFeature):
         Returns:
             Boolean: True when the feature is fixed, false otherwise.
         """
-        return self.lower_bound == self.upper_bound
+        # TODO: the bounds are declared in the derived classes, hence the type checks fail here :(.
+        return self.lower_bound == self.upper_bound  # type: ignore
 
     def fixed_value(self):
         """Method to get the value to which the feature is fixed
@@ -167,7 +168,7 @@ class NumericalInputFeature(InputFeature):
             Float: Return the feature value or None if the feature is not fixed.
         """
         if self.is_fixed():
-            return self.lower_bound
+            return self.lower_bound  # type: ignore
         else:
             return None
 
@@ -224,8 +225,8 @@ class NumericalInputFeature(InputFeature):
         Returns:
             (float, float): Returns lower and upper bound based on the passed data
         """
-        lower = min(self.lower_bound, values.min())
-        upper = max(self.upper_bound, values.max())
+        lower = min(self.lower_bound, values.min())  # type: ignore
+        upper = max(self.upper_bound, values.max())  # type: ignore
         return lower, upper
 
 
@@ -926,7 +927,7 @@ class Features(BaseModel):
         includes: Union[Type, List[Type]] = Feature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
-    ) -> List[Feature]:
+    ) -> Features:
         """get features of the domain
 
         Args:
@@ -993,7 +994,7 @@ class InputFeatures(Features):
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
-        return pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
+        return pd.concat([feat.sample(n) for feat in self.features], axis=1)
 
     def add(self, feature: InputFeature):
         """Add a input feature to the container.
@@ -1074,10 +1075,11 @@ class OutputFeatures(Features):
         if len(self.features) == 0:
             return OutputFeatures(features=[])
         else:
+            # TODO: why only continuous output?
             return OutputFeatures(
                 features=sorted(
                     filter_by_attribute(
-                        self.get(ContinuousOutput),
+                        self.get(ContinuousOutput).features,
                         lambda of: of.objective,
                         includes,
                         excludes,

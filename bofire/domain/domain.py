@@ -1,7 +1,7 @@
 import itertools
 import typing
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Type, Union, overload
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -17,11 +17,11 @@ from bofire.domain.features import (
     ContinuousInput,
     ContinuousOutput,
     Feature,
+    Features,
     InputFeature,
     InputFeatures,
     OutputFeature,
     OutputFeatures,
-    TFeature,
 )
 from bofire.domain.objectives import Objective
 from bofire.domain.util import BaseModel, is_numeric
@@ -227,30 +227,12 @@ class Domain(BaseModel):
         )
         return df
 
-    @overload
     def get_features(
         self,
-        includes: Type[TFeature] = Feature,
+        includes: Union[Type[Feature], List[Type[Feature]]] = Feature,
         excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
         exact: bool = False,
-    ) -> List[TFeature]:
-        ...
-
-    @overload
-    def get_features(
-        self,
-        includes: List[Type[Feature]],
-        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
-        exact: bool = False,
-    ) -> List[Feature]:
-        ...
-
-    def get_features(
-        self,
-        includes: Union[Type[TFeature], List[Type[Feature]]] = Feature,
-        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
-        exact: bool = False,
-    ) -> Union[List[TFeature], List[Feature]]:
+    ) -> Features:
         """get features of the domain
 
         Args:
@@ -898,7 +880,8 @@ def get_subdomain(
     assert len(input_feature_keys) > 0, "At least one input feature has to be provided."
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
-        for key in c.features:
+        # TODO: fix type hint
+        for key in c.features:  # type: ignore
             if key not in input_feature_keys:
                 raise ValueError(
                     f"Removed input feature {key} is used in a constraint."
