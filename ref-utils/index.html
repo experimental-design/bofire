@@ -754,8 +754,8 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="o">*</span><span class="p">,</span>
-        <span class="n">categories</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-        <span class="n">descriptors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="n">categories</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+        <span class="n">descriptors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
         <span class="n">sparse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
@@ -805,11 +805,13 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
             <span class="p">)</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">handle_unknown</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">handle_unknown</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_n_features</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_feature_names</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">reset</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">X_list</span><span class="p">,</span> <span class="n">n_samples</span><span class="p">,</span> <span class="n">n_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_X</span><span class="p">(</span>
-            <span class="n">X</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="o">=</span><span class="n">force_all_finite</span>
+            <span class="n">X</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="o">=</span><span class="n">force_all_finite</span>  <span class="c1"># type: ignore</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">n_features_in_</span> <span class="o">=</span> <span class="n">n_features</span>
 
@@ -834,7 +836,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
 
         <span class="k">for</span> <span class="n">values</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">:</span>
             <span class="n">descriptor_list</span><span class="p">,</span> <span class="n">n_categories_i</span><span class="p">,</span> <span class="n">n_descriptors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_X</span><span class="p">(</span>
-                <span class="n">values</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="o">=</span><span class="n">force_all_finite</span>
+                <span class="n">values</span><span class="p">,</span> <span class="n">force_all_finite</span><span class="o">=</span><span class="n">force_all_finite</span>  <span class="c1"># type: ignore</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">values_</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">descriptor_list</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">n_categories_i</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">n_categories_i</span><span class="p">)</span>
@@ -932,7 +934,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <span class="n">X_int</span><span class="p">,</span> <span class="n">X_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span>
             <span class="n">X</span><span class="p">,</span>
             <span class="n">handle_unknown</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handle_unknown</span><span class="p">,</span>
-            <span class="n">force_all_finite</span><span class="o">=</span><span class="s2">&quot;allow-nan&quot;</span><span class="p">,</span>
+            <span class="n">force_all_finite</span><span class="o">=</span><span class="s2">&quot;allow-nan&quot;</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
             <span class="n">warn_on_unknown</span><span class="o">=</span><span class="n">warn_on_unknown</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -1140,8 +1142,8 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">categories</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
-    <span class="n">descriptors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">categories</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="n">descriptors</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]],</span>
     <span class="n">sparse</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
@@ -1607,7 +1609,7 @@ Input features.
     <span class="n">X_int</span><span class="p">,</span> <span class="n">X_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transform</span><span class="p">(</span>
         <span class="n">X</span><span class="p">,</span>
         <span class="n">handle_unknown</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">handle_unknown</span><span class="p">,</span>
-        <span class="n">force_all_finite</span><span class="o">=</span><span class="s2">&quot;allow-nan&quot;</span><span class="p">,</span>
+        <span class="n">force_all_finite</span><span class="o">=</span><span class="s2">&quot;allow-nan&quot;</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
         <span class="n">warn_on_unknown</span><span class="o">=</span><span class="n">warn_on_unknown</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -2150,6 +2152,7 @@ are the corresponding coefficients.</p></td>
 
     <span class="c1"># check that equality constraints only contain continuous inputs</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">linear_equalities</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">feat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">):</span>
                 <span class="k">return</span> <span class="kc">False</span>
@@ -2280,7 +2283,9 @@ are the corresponding coefficients.</p></td>
     <span class="p">)</span>
 
     <span class="c1"># only consider continuous inputs</span>
-    <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+    <span class="n">continuous_inputs</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+    <span class="p">]</span>
     <span class="n">other_inputs</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousInput</span><span class="p">])</span>
 
     <span class="c1"># assemble Matrix A from equality constraints</span>
@@ -2292,8 +2297,8 @@ are the corresponding coefficients.</p></td>
 
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">linear_equalities</span><span class="p">)):</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">linear_equalities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-
-        <span class="n">A_aug</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearEqualityConstraint</span><span class="p">)</span>
+        <span class="n">A_aug</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span>  <span class="c1"># type: ignore</span>
         <span class="n">A_aug</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;rhs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span>
     <span class="n">A_aug</span> <span class="o">=</span> <span class="n">A_aug</span><span class="o">.</span><span class="n">values</span>
 
@@ -2344,9 +2349,8 @@ are the corresponding coefficients.</p></td>
                 <span class="n">_domain</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">key</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">adjust_boundary</span><span class="p">(</span>
-                    <span class="n">_domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ind</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span>
-                <span class="p">)</span>
+                <span class="n">feat</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">_domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+                <span class="n">adjust_boundary</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ind</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1e-16</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
@@ -2363,8 +2367,9 @@ are the corresponding coefficients.</p></td>
                 <span class="n">_domain</span><span class="o">.</span><span class="n">add_constraint</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">key</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">feat</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">_domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
                 <span class="n">adjust_boundary</span><span class="p">(</span>
-                    <span class="n">_domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">),</span>
+                    <span class="n">feat</span><span class="p">,</span>
                     <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ind</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
                     <span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -2528,8 +2533,9 @@ are the corresponding coefficients.</p></td>
 
             <span class="n">_features</span> <span class="o">=</span> <span class="n">_features</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">_coefficients</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-16</span><span class="p">]</span>
             <span class="n">_coefficients</span> <span class="o">=</span> <span class="n">_coefficients</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">_coefficients</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-16</span><span class="p">]</span>
-
+            <span class="n">_c</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearEqualityConstraint</span><span class="p">):</span>
+
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
                     <span class="n">_c</span> <span class="o">=</span> <span class="n">LinearEqualityConstraint</span><span class="p">(</span>
                         <span class="n">features</span><span class="o">=</span><span class="n">_features</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
@@ -2553,12 +2559,13 @@ are the corresponding coefficients.</p></td>
                 <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">feat</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
                     <span class="n">adjust_boundary</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_rhs</span><span class="p">)</span>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
 
             <span class="c1"># check if constraint is always fulfilled/not fulfilled</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">totally_removed</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="n">_c</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                 <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_c</span><span class="o">.</span><span class="n">features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">_c</span><span class="o">.</span><span class="n">rhs</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="k">pass</span>
                 <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_c</span><span class="o">.</span><span class="n">features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">_c</span><span class="o">.</span><span class="n">rhs</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -2567,7 +2574,7 @@ are the corresponding coefficients.</p></td>
                     <span class="k">pass</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_c</span><span class="p">)</span>
-    <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
+    <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">domain</span>
 </code></pre></div>
         </details>
@@ -2661,7 +2668,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
             <span class="n">pivots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
             <span class="n">max_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="p">:,</span> <span class="n">col</span><span class="p">]))</span> <span class="o">+</span> <span class="n">row</span>
             <span class="c1"># switch to most stable row</span>
-            <span class="n">A</span><span class="p">[[</span><span class="n">row</span><span class="p">,</span> <span class="n">max_row</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[[</span><span class="n">max_row</span><span class="p">,</span> <span class="n">row</span><span class="p">],</span> <span class="p">:]</span>
+            <span class="n">A</span><span class="p">[[</span><span class="n">row</span><span class="p">,</span> <span class="n">max_row</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[[</span><span class="n">max_row</span><span class="p">,</span> <span class="n">row</span><span class="p">],</span> <span class="p">:]</span>  <span class="c1"># type: ignore</span>
             <span class="c1"># normalize row</span>
             <span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/=</span> <span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
             <span class="c1"># eliminate other elements from column</span>

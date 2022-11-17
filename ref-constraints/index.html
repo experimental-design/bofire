@@ -726,6 +726,9 @@
 
 
 
+
+
+
   <div class="doc doc-object doc-class">
 
 
@@ -1123,7 +1126,7 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
@@ -1134,7 +1137,7 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
     <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">+</span> <span class="n">other</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -1177,7 +1180,7 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
         <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
         <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
 
 <span class="sd">        Args:</span>
@@ -1407,7 +1410,7 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
     <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
     <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]:</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
 
 <span class="sd">    Args:</span>
@@ -1574,8 +1577,8 @@ LinearConstraint            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        rhs (float): Right-hand side of the constraint</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">features</span><span class="p">:</span> <span class="n">conlist</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">min_items</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">coefficients</span><span class="p">:</span> <span class="n">conlist</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">min_items</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">TFeatureKeys</span>
+    <span class="n">coefficients</span><span class="p">:</span> <span class="n">TCoefficients</span>
     <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;features&quot;</span><span class="p">)</span>
@@ -2057,7 +2060,7 @@ use the classmethod <code>from_greater_equal</code>.</p>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_smaller_equal</span><span class="p">(</span>
-        <span class="bp">cls</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">coefficients</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
+        <span class="bp">cls</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">coefficients</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Class method to construct linear inequality constraint of the form `coefficients * x &lt;= rhs`.</span>
 
@@ -2315,7 +2318,7 @@ use the classmethod <code>from_greater_equal</code>.</p>
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@classmethod</span>
 <span class="k">def</span> <span class="nf">from_smaller_equal</span><span class="p">(</span>
-    <span class="bp">cls</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">coefficients</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="bp">cls</span><span class="p">,</span> <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">coefficients</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span>
 <span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class method to construct linear inequality constraint of the form `coefficients * x &lt;= rhs`.</span>
 
@@ -2474,7 +2477,7 @@ this flag decides if zero active features are also allowed.</p></td>
 <span class="sd">            this flag decides if zero active features are also allowed.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">features</span><span class="p">:</span> <span class="n">conlist</span><span class="p">(</span><span class="n">item_type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span> <span class="n">min_items</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">features</span><span class="p">:</span> <span class="n">TFeatureKeys</span>
     <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">max_count</span><span class="p">:</span> <span class="nb">int</span>
     <span class="n">none_also_valid</span><span class="p">:</span> <span class="nb">bool</span>

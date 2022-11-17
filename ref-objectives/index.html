@@ -691,9 +691,9 @@ AbstractTargetObjective            (<a class="autorefs autorefs-internal" title=
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">AbstractTargetObjective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
     <span class="n">target_value</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">tolerance</span><span class="p">:</span> <span class="n">confloat</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">tolerance</span><span class="p">:</span> <span class="n">TGe0</span>
 
     <span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
@@ -1206,7 +1206,7 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 <span class="sd">        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">w</span><span class="p">:</span> <span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
     <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>
 
@@ -2045,7 +2045,7 @@ Objective            (<span title="bofire.domain.util.BaseModel">BaseModel</span
     <span class="sd">&quot;&quot;&quot;The base class for all objectives&quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Abstract method to define the call function for the class Objective</span>
 
 <span class="sd">        Args:</span>
@@ -2168,7 +2168,7 @@ Objective            (<span title="bofire.domain.util.BaseModel">BaseModel</span
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;Abstract method to define the call function for the class Objective</span>
 
 <span class="sd">    Args:</span>
@@ -2452,9 +2452,9 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        tp (float): Turning point of the sigmoid function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">steepness</span><span class="p">:</span> <span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">steepness</span><span class="p">:</span> <span class="n">TGt0</span>
     <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
 </code></pre></div>
         </details>
 
@@ -2482,6 +2482,9 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
     </div>
 
   </div>
+
+
+
 
 
 
@@ -2550,7 +2553,7 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">steepness</span><span class="p">:</span> <span class="n">confloat</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">steepness</span><span class="p">:</span> <span class="n">TGt0</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values.</span>
