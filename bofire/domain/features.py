@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -155,8 +155,8 @@ class NumericalInputFeature(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
 
     def to_unit_range(
-        self, values: pd.Series, use_real_bounds: bool = False
-    ) -> pd.Series:
+        self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
+    ) -> Union[pd.Series, np.ndarray]:
         """Convert to the unit range between 0 and 1.
 
         Args:
@@ -173,13 +173,15 @@ class NumericalInputFeature(InputFeature):
         if use_real_bounds:
             lower, upper = self.get_real_feature_bounds(values)
         else:
-            lower, upper = self.lower_bound, self.upper_bound
+            lower, upper = self.lower_bound, self.upper_bound  # type: ignore
         if lower == upper:
             raise ValueError("Fixed feature cannot be transformed to unit range.")
         valrange = upper - lower
         return (values - lower) / valrange
 
-    def from_unit_range(self, values: pd.Series) -> pd.Series:
+    def from_unit_range(
+        self, values: Union[pd.Series, np.ndarray]
+    ) -> Union[pd.Series, np.ndarray]:
         """Convert from unit range.
 
         Args:
@@ -193,8 +195,8 @@ class NumericalInputFeature(InputFeature):
         """
         if self.is_fixed():
             raise ValueError("Fixed feature cannot be transformed from unit range.")
-        valrange = self.upper_bound - self.lower_bound
-        return (values * valrange) + self.lower_bound
+        valrange = self.upper_bound - self.lower_bound  # type: ignore
+        return (values * valrange) + self.lower_bound  # type: ignore
 
     def is_fixed(self):
         """Method to check if the feature is fixed
@@ -261,7 +263,9 @@ class NumericalInputFeature(InputFeature):
             )
         return values
 
-    def get_real_feature_bounds(self, values: pd.Series):
+    def get_real_feature_bounds(
+        self, values: Union[pd.Series, np.ndarray]
+    ) -> Tuple[float, float]:
         """Method to extract the feature boundaries from the provided experimental data
 
         Args:
@@ -1036,7 +1040,7 @@ class InputFeatures(Features):
         Returns:
             InputFeatures: Input features object containing only fixed features.
         """
-        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])
+        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])  # type: ignore
 
     def get_free(self) -> "InputFeatures":
         """Gets all features in `self` that are not fixed and returns them as new `InputFeatures` object.
@@ -1044,7 +1048,7 @@ class InputFeatures(Features):
         Returns:
             InputFeatures: Input features object containing only non-fixed features.
         """
-        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])
+        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
 
     def sample_uniform(self, n: int = 1) -> pd.DataFrame:
         """Draw uniformly random samples
@@ -1056,7 +1060,7 @@ class InputFeatures(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         return self.validate_inputs(
-            pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
+            pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)  # type: ignore
         )
 
     def sample_sobol(self, n: int) -> pd.DataFrame:
@@ -1089,7 +1093,7 @@ class InputFeatures(Features):
             res.append(pd.Series(x, name=feat.key))
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()
+            samples[feat.key] = feat.fixed_value()  # type: ignore
         return self.validate_inputs(samples)[self.get_keys(InputFeature)]
 
     def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
@@ -1107,7 +1111,7 @@ class InputFeatures(Features):
         for feature in self:
             if feature.key not in inputs:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            feature.validate_candidental(inputs[feature.key])
+            feature.validate_candidental(inputs[feature.key])  # type: ignore
         return inputs
 
     def add(self, feature: InputFeature):
