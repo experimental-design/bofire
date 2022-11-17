@@ -1059,7 +1059,7 @@ class InputFeatures(Features):
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
             samples[feat.key] = feat.fixed_value()
-        return self.validate_inputs(samples)
+        return self.validate_inputs(samples)[self.get_keys(InputFeature)]
 
     def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.

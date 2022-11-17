@@ -1057,6 +1057,13 @@ if3 = ContinuousInput(**{**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if
 if4 = CategoricalInput(**{**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC, "key": "if4"})
 if5 = DiscreteInput(**{**VALID_DISCRETE_INPUT_FEATURE_SPEC, "key": "if5"})
 if6 = DiscreteInput(**{**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC, "key": "if6"})
+if7 = CategoricalInput(
+    **{
+        **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
+        "key": "if7",
+        "allowed": [True, False, True],
+    }
+)
 
 
 of1 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of1"})
@@ -1233,12 +1240,14 @@ def test_input_features_get_free(features, expected):
     [
         (input_features, 1),
         (input_features, 2),
+        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1),
+        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1024),
     ],
 )
 def test_input_features_sample_uniform(features, num_samples):
     samples = features.sample_uniform(num_samples)
     assert samples.shape == (num_samples, len(features))
-    assert list(samples.columns) == input_features.get_keys()
+    assert list(samples.columns) == features.get_keys()
 
 
 @pytest.mark.parametrize(
@@ -1246,12 +1255,14 @@ def test_input_features_sample_uniform(features, num_samples):
     [
         (input_features, 1),
         (input_features, 2),
+        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1),
+        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1024),
     ],
 )
 def test_input_features_sample_sobol(features, num_samples):
     samples = features.sample_sobol(num_samples)
     assert samples.shape == (num_samples, len(features))
-    assert list(samples.columns) == input_features.get_keys()
+    assert list(samples.columns) == features.get_keys()
 
 
 @pytest.mark.parametrize(
