@@ -16,6 +16,7 @@ from bofire.domain.features import (
     DiscreteInput,
     Feature,
     Features,
+    InputFeature,
     InputFeatures,
     OutputFeature,
     OutputFeatures,
@@ -106,6 +107,7 @@ FEATURE_SPECS = {
     ContinuousInput: {
         "valids": [
             VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
+            VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
@@ -114,6 +116,7 @@ FEATURE_SPECS = {
     DiscreteInput: {
         "valids": [
             VALID_DISCRETE_INPUT_FEATURE_SPEC,
+            VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_DISCRETE_INPUT_FEATURE_SPEC),
@@ -151,6 +154,7 @@ FEATURE_SPECS = {
                 **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
                 "allowed": [True, False, True],
             },
+            VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
@@ -181,6 +185,7 @@ FEATURE_SPECS = {
                 **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
                 "allowed": [True, False, True],
             },
+            VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC),
@@ -221,6 +226,22 @@ FEATURE_SPECS = {
         "invalids": [*get_invalids(VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)],
     },
 }
+
+
+@pytest.mark.parametrize(
+    "cls, spec, n",
+    [
+        (cls, valid, n)
+        for cls, data in FEATURE_SPECS.items()
+        for valid in data["valids"]
+        for n in [1, 5]
+    ],
+)
+def test_input_feature_sample(cls, spec, n):
+    feature = cls(**spec)
+    if isinstance(feature, InputFeature):
+        samples = feature.sample(n)
+        feature.validate_candidental(samples)
 
 
 @pytest.mark.parametrize(
@@ -1113,7 +1134,7 @@ def test_features_add_invalid(features, feature):
     ],
 )
 def test_input_features_sample(features, num_samples):
-    samples = features.sample(num_samples)
+    samples = features.sample_uniform(num_samples)
     assert samples.shape == (num_samples, len(features))
     assert list(samples.columns) == input_features.get_keys()
 

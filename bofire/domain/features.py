@@ -146,6 +146,44 @@ class InputFeature(Feature):
 class NumericalInputFeature(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
 
+    def to_unit_range(
+        self, values: pd.Series, use_real_bounds: bool = False
+    ) -> pd.Series:
+        """_summary_
+
+        Args:
+            values (pd.Series): _description_
+            use_real_bounds (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            pd.Series: _description_
+        """
+        if use_real_bounds:
+            lower, upper = self.get_real_feature_bounds(values)
+        else:
+            lower, upper = self.lower_bound, self.upper_bound
+        valrange = upper - lower
+        return values - lower / valrange
+
+    def from_unit_range(
+        self, values: pd.Series, use_real_bounds: bool = False
+    ) -> pd.Series:
+        """_summary_
+
+        Args:
+            values (pd.Series): _description_
+            use_real_bounds (bool, optional): _description_. Defaults to False.
+
+        Returns:
+            pd.Series: _description_
+        """
+        if use_real_bounds:
+            lower, upper = self.get_real_feature_bounds(values)
+        else:
+            lower, upper = self.lower_bound, self.upper_bound
+        valrange = upper - lower
+        return (values * valrange) + lower
+
     def is_fixed(self):
         """Method to check if the feature is fixed
 
@@ -954,7 +992,7 @@ class InputFeatures(Features):
 
     features: Optional[List[InputFeature]] = Field(default_factory=lambda: [])
 
-    def sample(self, n: int = 1) -> pd.DataFrame:
+    def sample_uniform(self, n: int = 1) -> pd.DataFrame:
         """Draw uniformly random samples
 
         Args:
@@ -964,6 +1002,17 @@ class InputFeatures(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         return pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
+
+    def sample_sobol(self, n: int) -> pd.DataFrame:
+        """Draw uniformly random samples
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+
+        Returns:
+            pd.DataFrame: Dataframe containing the samples.
+        """
+        pass
 
     def add(self, feature: InputFeature):
         """Add a input feature to the container.
