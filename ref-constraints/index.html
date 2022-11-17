@@ -468,6 +468,20 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.LinearInequalityConstraint.as_greater_equal" class="md-nav__link">
+    as_greater_equal()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.LinearInequalityConstraint.as_smaller_equal" class="md-nav__link">
+    as_smaller_equal()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.domain.constraints.LinearInequalityConstraint.from_greater_equal" class="md-nav__link">
     from_greater_equal()
   </a>
@@ -1947,8 +1961,8 @@ LinearInequalityConstraint            (<a class="autorefs autorefs-internal" tit
     <div class="doc doc-contents ">
 
       <p>Linear inequality constraint of the form <code>coefficients * x &lt;= rhs</code>.</p>
-<p>To instantiate a constraint of the form <code>coefficients * x &lt;= rhs</code> multiply coefficients and rhs by -1, or
-use the classmethod <code>from_smaller_equal</code>.</p>
+<p>To instantiate a constraint of the form <code>coefficients * x &gt;= rhs</code> multiply coefficients and rhs by -1, or
+use the classmethod <code>from_greater_equal</code>.</p>
 
 <p><strong>Attributes:</strong></p>
 <table>
@@ -1982,8 +1996,8 @@ use the classmethod <code>from_smaller_equal</code>.</p>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">LinearInequalityConstraint</span><span class="p">(</span><span class="n">LinearConstraint</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Linear inequality constraint of the form `coefficients * x &lt;= rhs`.</span>
 
-<span class="sd">    To instantiate a constraint of the form `coefficients * x &lt;= rhs` multiply coefficients and rhs by -1, or</span>
-<span class="sd">    use the classmethod `from_smaller_equal`.</span>
+<span class="sd">    To instantiate a constraint of the form `coefficients * x &gt;= rhs` multiply coefficients and rhs by -1, or</span>
+<span class="sd">    use the classmethod `from_greater_equal`.</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        features (list): list of feature keys (str) on which the constraint works on.</span>
@@ -2007,6 +2021,22 @@ use the classmethod <code>from_smaller_equal</code>.</p>
     <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
         <span class="c1"># noise = 10e-10 discuss with Behrang</span>
         <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">as_smaller_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return attributes in the smaller equal convention</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[List[str], List[float], float]: features, coefficients, rhs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
+
+    <span class="k">def</span> <span class="nf">as_greater_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;Return attributes in the greater equal convention</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[List[str], List[float], float]: features, coefficients, rhs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">],</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
 
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">from_greater_equal</span><span class="p">(</span>
@@ -2064,6 +2094,98 @@ use the classmethod <code>from_smaller_equal</code>.</p>
 
 
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.LinearInequalityConstraint.as_greater_equal" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_greater_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Return attributes in the greater equal convention</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[str], List[float], float]</code></td>
+      <td><p>features, coefficients, rhs</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_greater_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return attributes in the greater equal convention</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[List[str], List[float], float]: features, coefficients, rhs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">],</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.LinearInequalityConstraint.as_smaller_equal" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">as_smaller_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Return attributes in the smaller equal convention</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[str], List[float], float]</code></td>
+      <td><p>features, coefficients, rhs</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">as_smaller_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;Return attributes in the smaller equal convention</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[List[str], List[float], float]: features, coefficients, rhs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">coefficients</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">rhs</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
