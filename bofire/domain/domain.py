@@ -463,6 +463,7 @@ class Domain(BaseModel):
                 experiments = self.experiments
             else:
                 return None
+        assert experiments is not None
         clean_exp = experiments.loc[
             (experiments["valid_%s" % output_feature_key] == 1)
             & (experiments[output_feature_key].notna())
@@ -499,6 +500,7 @@ class Domain(BaseModel):
                     feat, OutputFeature
                 ), f"feat {key} is not an OutputFeature"
 
+        assert experiments is not None
         clean_exp = experiments.query(
             " & ".join(["(`valid_%s` > 0)" % key for key in output_feature_keys])
         )
@@ -528,6 +530,7 @@ class Domain(BaseModel):
         # clean_exp = experiments.query(" or ".join(["(valid_%s > 0)" % key for key in output_feature_keys]))
         # clean_exp = clean_exp.query(" or ".join(["%s.notna()" % key for key in output_feature_keys]))
 
+        assert experiments is not None
         clean_exp = experiments.query(
             " or ".join(
                 [
