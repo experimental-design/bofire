@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional, Type
+from typing import Any, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import Feature
+from bofire.domain.features import Feature, OutputFeature
 from bofire.domain.objectives import Objective
 from bofire.utils.transformer import Transformer
 
@@ -76,7 +76,7 @@ class Strategy(BaseModel):
         for constraint in domain.constraints:
             if not cls.is_constraint_implemented(type(constraint)):
                 raise ValueError(
-                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
                 )
         return domain
 
@@ -96,7 +96,7 @@ class Strategy(BaseModel):
         for feature in domain.input_features + domain.output_features:
             if not cls.is_feature_implemented(type(feature)):
                 raise ValueError(
-                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
+                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
                 )
         return domain
 
@@ -114,9 +114,11 @@ class Strategy(BaseModel):
             Domain: the domain
         """
         for feature in domain.output_features.get_by_objective(Objective):
+            assert isinstance(feature, OutputFeature)
+            assert feature.objective is not None
             if not cls.is_objective_implemented(type(feature.objective)):
                 raise ValueError(
-                    f"Objective `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
+                    f"Objective `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
                 )
         return domain
 
@@ -131,7 +133,7 @@ class Strategy(BaseModel):
         pass
 
     @property
-    def experiments(self) -> pd.DataFrame:
+    def experiments(self) -> Optional[pd.DataFrame]:
         """Property returning the experiments associated with the current strategy.
 
         Returns:
@@ -140,7 +142,7 @@ class Strategy(BaseModel):
         return self.domain.experiments
 
     @property
-    def pending_candidates(self) -> pd.DataFrame:
+    def pending_candidates(self) -> Optional[pd.DataFrame]:
         """Candidates considered as pending.
 
         Returns:
@@ -361,6 +363,7 @@ class PredictiveStrategy(Strategy):
         """
         if self.is_fitted is not True:
             raise ValueError("Model not yet fitted.")
+        assert self.transformer is not None
         # TODO: validate also here the experiments but only for the input_columns
         transformed = self.transformer.transform(experiments)
         preds, stds = self._predict(transformed)
@@ -393,15 +396,16 @@ class PredictiveStrategy(Strategy):
         return predictions
 
     @abstractmethod
-    def _predict(self, experiments: pd.DataFrame):
+    def _predict(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """Abstract method in which the actual prediction is happening. Has to be overwritten."""
         pass
 
     def fit(self):
         """Fit the model(s) to the experimental data."""
         assert (
-            self.experiments is not None or len(self.experiments) == 0
+            self.experiments is not None and len(self.experiments) > 0
         ), "No fitting data available"
+        assert self.transformer is not None
         self.domain.validate_experiments(self.experiments, strict=True)
         transformed = self.transformer.fit_transform(self.experiments)
         self._fit(transformed)

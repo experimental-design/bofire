@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 from abc import abstractmethod
 from typing import Dict
 
 import numpy as np
+import pandas as pd
 from pydantic.class_validators import root_validator
 from pydantic.types import confloat
 
@@ -10,12 +13,16 @@ from bofire.domain.util import BaseModel
 # for the return functions we do not distinguish between multiplicative/ additive (i.e. *weight or **weight),
 # since when a objective is called directly, we only have one objective
 
+TGt0 = confloat(gt=0)
+TGe0 = confloat(ge=0)
+TWeight = confloat(gt=0, le=1)
+
 
 class Objective(BaseModel):
     """The base class for all objectives"""
 
     @abstractmethod
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: pd.DataFrame) -> pd.DataFrame:
         """Abstract method to define the call function for the class Objective
 
         Args:
@@ -80,7 +87,7 @@ class IdentityObjective(Objective):
         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
-    w: confloat(gt=0, le=1)
+    w: TWeight
     lower_bound: float = 0
     upper_bound: float = 1
 
@@ -181,9 +188,9 @@ class SigmoidObjective(Objective):
         tp (float): Turning point of the sigmoid function.
     """
 
-    steepness: confloat(gt=0)
+    steepness: TGt0
     tp: float
-    w: confloat(gt=0, le=1)
+    w: TWeight
 
 
 class MaximizeSigmoidObjective(SigmoidObjective):
@@ -251,9 +258,9 @@ class ConstantObjective(Objective):
 
 
 class AbstractTargetObjective(Objective):
-    w: confloat(gt=0, le=1)
+    w: TWeight
     target_value: float
-    tolerance: confloat(ge=0)
+    tolerance: TGe0
 
     def plot_details(self, ax):
         """Plot function highlighting the tolerance area of the objective
@@ -279,8 +286,9 @@ class CloseToTargetObjective(AbstractTargetObjective):
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         return (
-            x - self.target
-        ).abs() ** self.exponent - self.tolerance**self.exponent
+            np.abs(x - self.target_value) ** self.exponent
+            - self.tolerance**self.exponent
+        )
 
 
 class TargetObjective(AbstractTargetObjective):
@@ -294,7 +302,7 @@ class TargetObjective(AbstractTargetObjective):
 
     """
 
-    steepness: confloat(gt=0)
+    steepness: TGt0
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """The call function returning a reward for passed x values.
