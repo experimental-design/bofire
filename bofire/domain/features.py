@@ -1001,7 +1001,9 @@ class InputFeatures(Features):
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
-        return pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
+        return self.validate_inputs(
+            pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)
+        )
 
     def sample_sobol(self, n: int) -> pd.DataFrame:
         """Draw uniformly random samples
@@ -1013,6 +1015,24 @@ class InputFeatures(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         pass
+
+    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
+        """Validate a pandas dataframe with input feature values.
+
+        Args:
+            inputs (pd.Dataframe): Inputs to validate.
+
+        Raises:
+            ValueError: Raises a Valueerror if a feature based validation raises an exception.
+
+        Returns:
+            pd.Dataframe: Validated dataframe
+        """
+        for feature in self:
+            if feature.key not in inputs:
+                raise ValueError(f"no col for input feature `{feature.key}`")
+            feature.validate_candidental(inputs[feature.key])
+        return inputs
 
     def add(self, feature: InputFeature):
         """Add a input feature to the container.
