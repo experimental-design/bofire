@@ -226,7 +226,7 @@ def test_constraints_plus():
     ],
 )
 def test_constraints_call(constraints, num_candidates):
-    candidates = input_features.sample(num_candidates)
+    candidates = input_features.sample_uniform(num_candidates)
     returned = constraints(candidates)
     assert returned.shape == (num_candidates, len(constraints))
 
@@ -239,7 +239,7 @@ def test_constraints_call(constraints, num_candidates):
     ],
 )
 def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
-    candidates = input_features.sample(num_candidates)
+    candidates = input_features.sample_uniform(num_candidates)
     returned = constraints.is_fulfilled(candidates)
     assert returned.shape == (num_candidates,)
     assert returned.dtype == bool
