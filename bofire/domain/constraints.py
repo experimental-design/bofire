@@ -368,10 +368,23 @@ class Constraints(BaseModel):
     constraints: List[Constraint] = Field(default_factory=lambda: [])
 
     def to_config(self) -> List:
+        """Serializes a `Constraints` object.
+
+        Returns:
+            List: Constraints objects as serialized list.
+        """
         return [constraint.to_config() for constraint in self.constraints]
 
     @classmethod
     def from_config(cls, config: List) -> "Constraints":
+        """Instantiates a `Constraints` object based on the serialized list.
+
+        Args:
+            config (List): Serialized `Constraints` object as list.
+
+        Returns:
+            Constraints: Initialized `Constraints` object.
+        """
         return cls(
             constraints=[Constraint.from_config(constraint) for constraint in config]
         )
