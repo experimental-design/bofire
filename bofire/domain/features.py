@@ -3,15 +3,16 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, validate_arguments, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conlist
-from scipy.stats.qmc import Sobol
+from pydantic.types import conint, conlist
+from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.domain.objectives import MaximizeObjective, Objective
 from bofire.domain.util import (
@@ -1025,6 +1026,15 @@ class Features(BaseModel):
         ]
 
 
+Tnum_samples = conint(gt=0)
+
+
+class SamplingMethodEnum(Enum):
+    UNIFORM = "UNIFORM"
+    SOBOL = "SOBOL"
+    LHS = "LHS"
+
+
 class InputFeatures(Features):
     """Container of input features, only input features are allowed.
 
@@ -1050,32 +1060,33 @@ class InputFeatures(Features):
         """
         return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
 
-    def sample_uniform(self, n: int = 1) -> pd.DataFrame:
-        """Draw uniformly random samples
+    @validate_arguments
+    def sample(
+        self,
+        n: Tnum_samples = 1,
+        method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+    ) -> pd.DataFrame:
+        """Draw sobol samples
 
         Args:
-            n (int, optional): Number of samples. Defaults to 1.
+            n (int, optional): Number of samples, has to be larger than 0. Defaults to 1.
+            method (SamplingMethodEnum, optional): Method to use, implemented methods are `UNIFORM`, `SOBOL` and `LHS`.
+                Defaults to `UNIFORM`.
 
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
-        return self.validate_inputs(
-            pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)  # type: ignore
-        )
-
-    def sample_sobol(self, n: int) -> pd.DataFrame:
-        """Draw uniformly random samples
-
-        Args:
-            n (int, optional): Number of samples. Defaults to 1.
-
-        Returns:
-            pd.DataFrame: Dataframe containing the samples.
-        """
+        if method == SamplingMethodEnum.UNIFORM:
+            return self.validate_inputs(
+                pd.concat([feat.sample(n) for feat in self.get(InputFeature)], axis=1)  # type: ignore
+            )
         free_features = self.get_free()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            X = Sobol(len(free_features)).random(n)
+        if method == SamplingMethodEnum.SOBOL:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                X = Sobol(len(free_features)).random(n)
+        else:
+            X = LatinHypercube(len(free_features)).random(n)
         res = []
         for i, feat in enumerate(free_features):
             if isinstance(feat, ContinuousInput):

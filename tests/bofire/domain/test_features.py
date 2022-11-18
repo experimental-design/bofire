@@ -1236,31 +1236,19 @@ def test_input_features_get_free(features, expected):
 
 
 @pytest.mark.parametrize(
-    "features, num_samples",
+    "features, num_samples, method",
     [
-        (input_features, 1),
-        (input_features, 2),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1024),
+        (features, num_samples, method)
+        for features in [
+            input_features,
+            InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]),
+        ]
+        for num_samples in [1, 2, 1024]
+        for method in ["UNIFORM", "SOBOL", "LHS"]
     ],
 )
-def test_input_features_sample_uniform(features, num_samples):
-    samples = features.sample_uniform(num_samples)
-    assert samples.shape == (num_samples, len(features))
-    assert list(samples.columns) == features.get_keys()
-
-
-@pytest.mark.parametrize(
-    "features, num_samples",
-    [
-        (input_features, 1),
-        (input_features, 2),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]), 1024),
-    ],
-)
-def test_input_features_sample_sobol(features, num_samples):
-    samples = features.sample_sobol(num_samples)
+def test_input_features_sample(features, num_samples, method):
+    samples = features.sample(num_samples, method=method)
     assert samples.shape == (num_samples, len(features))
     assert list(samples.columns) == features.get_keys()
 
