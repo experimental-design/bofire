@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -930,6 +930,48 @@ class Features(BaseModel):
 
     features: List[Feature] = Field(default_factory=lambda: [])
 
+    def to_config(self) -> Dict:
+        """Serialize the features container.
+
+        Returns:
+            Dict: serialized features container
+        """
+        return {
+            "type": "general",
+            "features": [feat.to_config() for feat in self.features],
+        }
+
+    @staticmethod
+    def from_config(config: Dict) -> "Features":
+        """Instantiates a `Feature` object from a dictionary created by the `to_config`method.
+
+        Args:
+            config (Dict): Serialized features dictionary
+
+        Returns:
+            Features: instantiated features object
+        """
+        if config["type"] == "inputs":
+            return InputFeatures(
+                features=[
+                    cast(InputFeature, Feature.from_config(feat))
+                    for feat in config["features"]
+                ]
+            )
+        if config["type"] == "outputs":
+            return OutputFeatures(
+                features=[
+                    cast(OutputFeature, Feature.from_config(feat))
+                    for feat in config["features"]
+                ]
+            )
+        if config["type"] == "general":
+            return Features(
+                features=[Feature.from_config(feat) for feat in config["features"]]
+            )
+        else:
+            raise ValueError(f"Unknown type {config['type']} provided.")
+
     def __iter__(self):
         return iter(self.features)
 
@@ -1033,6 +1075,12 @@ class InputFeatures(Features):
     """
 
     features: List[InputFeature] = Field(default_factory=lambda: [])
+
+    def to_config(self) -> Dict:
+        return {
+            "type": "inputs",
+            "features": [feat.to_config() for feat in self.features],
+        }
 
     def get_fixed(self) -> "InputFeatures":
         """Gets all features in `self` that are fixed and returns them as new `InputFeatures` object.
@@ -1156,6 +1204,12 @@ class OutputFeatures(Features):
     """
 
     features: List[OutputFeature] = Field(default_factory=lambda: [])
+
+    def to_config(self) -> Dict:
+        return {
+            "type": "outputs",
+            "features": [feat.to_config() for feat in self.features],
+        }
 
     @validator("features", pre=True)
     def validate_output_features(cls, v, values):
