@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -953,11 +953,17 @@ class Features(BaseModel):
         """
         if config["type"] == "inputs":
             return InputFeatures(
-                features=[Feature.from_config(feat) for feat in config["features"]]  # type: ignore
+                features=[
+                    cast(InputFeature, Feature.from_config(feat))
+                    for feat in config["features"]
+                ]
             )
         if config["type"] == "outputs":
             return OutputFeatures(
-                features=[Feature.from_config(feat) for feat in config["features"]]  # type: ignore
+                features=[
+                    cast(OutputFeature, Feature.from_config(feat))
+                    for feat in config["features"]
+                ]
             )
         if config["type"] == "general":
             return Features(
