@@ -387,6 +387,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints.from_config" class="md-nav__link">
+    from_config()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.domain.constraints.Constraints.get" class="md-nav__link">
     get()
   </a>
@@ -396,6 +403,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.constraints.Constraints.is_fulfilled" class="md-nav__link">
     is_fulfilled()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.constraints.Constraints.to_config" class="md-nav__link">
+    to_config()
   </a>
   
 </li>
@@ -1128,6 +1142,28 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
 
     <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
+    <span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Serializes a `Constraints` object.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List: Constraints objects as serialized list.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">constraint</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">]</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Instantiates a `Constraints` object based on the serialized list.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config (List): Serialized `Constraints` object as list.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Constraints: Initialized `Constraints` object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">Constraint</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">config</span><span class="p">]</span>
+        <span class="p">)</span>
+
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
 
@@ -1347,6 +1383,80 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
 
 
 
+<h3 id="bofire.domain.constraints.Constraints.from_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Instantiates a <code>Constraints</code> object based on the serialized list.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>config</code></td>
+        <td><code>List</code></td>
+        <td><p>Serialized <code>Constraints</code> object as list.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Constraints</code></td>
+      <td><p>Initialized <code>Constraints</code> object.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">List</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Instantiates a `Constraints` object based on the serialized list.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config (List): Serialized `Constraints` object as list.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Constraints: Initialized `Constraints` object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">Constraint</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">config</span><span class="p">]</span>
+    <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
 <h3 id="bofire.domain.constraints.Constraints.get" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">includes</span><span class="o">=&lt;</span><span class="k">class</span> <span class="err">&#39;</span><span class="nc">bofire</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">Constraint</span><span class="s1">&#39;&gt;, excludes=None, exact=False)</span></code>
 
@@ -1501,6 +1611,52 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
         <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
     <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.constraints.Constraints.to_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Serializes a <code>Constraints</code> object.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List</code></td>
+      <td><p>Constraints objects as serialized list.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Serializes a `Constraints` object.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List: Constraints objects as serialized list.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">constraint</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">]</span>
 </code></pre></div>
         </details>
     </div>

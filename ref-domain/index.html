@@ -788,9 +788,9 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">            Dict: Serialized version of the domain as dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">],</span>
-            <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">],</span>
-            <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">constraint</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span>
+            <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
+            <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
+            <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
         <span class="p">}</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_experiments</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
@@ -806,24 +806,13 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">            config (Dict): Serialized version of a domain as dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">d</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">input_features</span><span class="o">=</span><span class="n">InputFeatures</span><span class="p">(</span>
-                <span class="n">features</span><span class="o">=</span><span class="p">[</span>
-                    <span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
-                    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]</span>
-                <span class="p">]</span>
+            <span class="n">input_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
+                <span class="n">InputFeatures</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">])</span>
             <span class="p">),</span>
-            <span class="n">output_features</span><span class="o">=</span><span class="n">OutputFeatures</span><span class="p">(</span>
-                <span class="n">features</span><span class="o">=</span><span class="p">[</span>
-                    <span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
-                    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_features&quot;</span><span class="p">]</span>
-                <span class="p">]</span>
+            <span class="n">output_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
+                <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_features&quot;</span><span class="p">])</span>
             <span class="p">),</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="p">(</span>
-                <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
-                    <span class="n">Constraint</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">]</span>
-                <span class="p">]</span>
-            <span class="p">),</span>
+            <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">]),</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="s2">&quot;experiments&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">d</span><span class="o">.</span><span class="n">set_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">])</span>
@@ -2040,24 +2029,13 @@ involved output features.</p>
 <span class="sd">        config (Dict): Serialized version of a domain as dictionary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">d</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
-        <span class="n">input_features</span><span class="o">=</span><span class="n">InputFeatures</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
-                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]</span>
-            <span class="p">]</span>
+        <span class="n">input_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
+            <span class="n">InputFeatures</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">])</span>
         <span class="p">),</span>
-        <span class="n">output_features</span><span class="o">=</span><span class="n">OutputFeatures</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
-                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_features&quot;</span><span class="p">]</span>
-            <span class="p">]</span>
+        <span class="n">output_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
+            <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_features&quot;</span><span class="p">])</span>
         <span class="p">),</span>
-        <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="p">(</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
-                <span class="n">Constraint</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-                <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">]</span>
-            <span class="p">]</span>
-        <span class="p">),</span>
+        <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">]),</span>
     <span class="p">)</span>
     <span class="k">if</span> <span class="s2">&quot;experiments&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
         <span class="n">d</span><span class="o">.</span><span class="n">set_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">])</span>
@@ -2972,9 +2950,9 @@ involved output features.</p>
 <span class="sd">        Dict: Serialized version of the domain as dictionary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">],</span>
-        <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">],</span>
-        <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">constraint</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span>
+        <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
+        <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
+        <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
     <span class="p">}</span>
     <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_experiments</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>

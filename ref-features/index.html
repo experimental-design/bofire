@@ -703,6 +703,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.domain.features.Features.from_config" class="md-nav__link">
+    from_config()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.domain.features.Features.get" class="md-nav__link">
     get()
   </a>
@@ -719,6 +726,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.features.Features.get_keys" class="md-nav__link">
     get_keys()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.Features.to_config" class="md-nav__link">
+    to_config()
   </a>
   
 </li>
@@ -822,6 +836,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.features.InputFeatures.sample_uniform" class="md-nav__link">
     sample_uniform()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.InputFeatures.to_config" class="md-nav__link">
+    to_config()
   </a>
   
 </li>
@@ -939,6 +960,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.features.OutputFeatures.get_keys_by_objective" class="md-nav__link">
     get_keys_by_objective()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.features.OutputFeatures.to_config" class="md-nav__link">
+    to_config()
   </a>
   
 </li>
@@ -4778,6 +4806,48 @@ Features            (<span title="bofire.domain.util.BaseModel">BaseModel</span>
 
     <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Feature</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
+    <span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Serialize the features container.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict: serialized features container</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;general&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
+        <span class="p">}</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Features&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Instantiates a `Feature` object from a dictionary created by the `to_config`method.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config (Dict): Serialized features dictionary</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Features: instantiated features object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;inputs&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span>
+                <span class="n">features</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">cast</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;outputs&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span>
+                <span class="n">features</span><span class="o">=</span><span class="p">[</span>
+                    <span class="n">cast</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
+                    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;general&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">Features</span><span class="p">(</span>
+                <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]]</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown type </span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> provided.&quot;</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
 
@@ -4936,6 +5006,97 @@ Features            (<span title="bofire.domain.util.BaseModel">BaseModel</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">Feature</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.Features.from_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Instantiates a <code>Feature</code> object from a dictionary created by the <code>to_config</code>method.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>config</code></td>
+        <td><code>Dict</code></td>
+        <td><p>Serialized features dictionary</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Features</code></td>
+      <td><p>instantiated features object</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@staticmethod</span>
+<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Features&quot;</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Instantiates a `Feature` object from a dictionary created by the `to_config`method.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        config (Dict): Serialized features dictionary</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Features: instantiated features object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;inputs&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">cast</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;outputs&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span>
+                <span class="n">cast</span><span class="p">(</span><span class="n">OutputFeature</span><span class="p">,</span> <span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;general&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">Features</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">Feature</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;features&quot;</span><span class="p">]]</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown type </span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> provided.&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -5207,6 +5368,55 @@ Features            (<span title="bofire.domain.util.BaseModel">BaseModel</span>
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.Features.to_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Serialize the features container.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Dict</code></td>
+      <td><p>serialized features container</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Serialize the features container.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dict: serialized features container</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;general&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
+    <span class="p">}</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -5685,6 +5895,12 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+
+    <span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;inputs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
+        <span class="p">}</span>
 
     <span class="k">def</span> <span class="nf">get_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;InputFeatures&quot;</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;Gets all features in `self` that are fixed and returns them as new `InputFeatures` object.</span>
@@ -6197,6 +6413,50 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.InputFeatures.to_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Serialize the features container.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Dict</code></td>
+      <td><p>serialized features container</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;inputs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
+    <span class="p">}</span>
 </code></pre></div>
         </details>
     </div>
@@ -7166,6 +7426,12 @@ OutputFeatures            (<a class="autorefs autorefs-internal" title="bofire.d
 
     <span class="n">features</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
+    <span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;outputs&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
+        <span class="p">}</span>
+
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;features&quot;</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_output_features</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
@@ -7581,6 +7847,50 @@ to be returned. Defaults to Objective.</p></td>
 <span class="sd">        List[str]: List of output feature keys fitting to the passed requirements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)]</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.features.OutputFeatures.to_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Serialize the features container.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Dict</code></td>
+      <td><p>serialized features container</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;outputs&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;features&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">to_config</span><span class="p">()</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
+    <span class="p">}</span>
 </code></pre></div>
         </details>
     </div>
