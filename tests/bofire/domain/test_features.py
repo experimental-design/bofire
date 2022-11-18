@@ -1075,6 +1075,13 @@ output_features = OutputFeatures(features=[of1, of2])
 features = Features(features=[if1, if2, of1, of2])
 
 
+@pytest.mark.parametrize("features", [input_features, output_features, features])
+def test_features_serialie(features):
+    config = features.to_config()
+    nfeatures = Features.from_config(config=config)
+    assert nfeatures == features
+
+
 @pytest.mark.parametrize(
     "FeatureContainer, features",
     [
