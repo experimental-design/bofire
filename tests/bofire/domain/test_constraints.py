@@ -182,6 +182,13 @@ constraints2 = Constraints(constraints=[c4, c5])
 constraints3 = Constraints(constraints=[c6])
 
 
+@pytest.mark.parametrize("constraints", [constraints, constraints2, constraints3])
+def test_constraints_serialize(constraints):
+    config = constraints.to_config()
+    nconstraints = Constraints.from_config(config=config)
+    assert constraints == nconstraints
+
+
 @pytest.mark.parametrize(
     "constraints",
     [
