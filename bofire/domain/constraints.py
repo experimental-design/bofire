@@ -367,6 +367,15 @@ class Constraints(BaseModel):
 
     constraints: List[Constraint] = Field(default_factory=lambda: [])
 
+    def to_config(self) -> List:
+        return [constraint.to_config() for constraint in self.constraints]
+
+    @classmethod
+    def from_config(cls, config: List) -> "Constraints":
+        return cls(
+            constraints=[Constraint.from_config(constraint) for constraint in config]
+        )
+
     def __iter__(self):
         return iter(self.constraints)
 

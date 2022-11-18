@@ -152,9 +152,9 @@ class Domain(BaseModel):
             Dict: Serialized version of the domain as dictionary.
         """
         config: Dict[str, Any] = {
-            "input_features": [feat.to_config() for feat in self.input_features],
-            "output_features": [feat.to_config() for feat in self.output_features],
-            "constraints": [constraint.to_config() for constraint in self.constraints],
+            "input_features": self.input_features.to_config(),
+            "output_features": self.output_features.to_config(),
+            "constraints": self.constraints.to_config(),
         }
         if self.experiments is not None and self.num_experiments > 0:
             config["experiments"] = self.experiments.to_dict()
@@ -170,24 +170,13 @@ class Domain(BaseModel):
             config (Dict): Serialized version of a domain as dictionary.
         """
         d = cls(
-            input_features=InputFeatures(
-                features=[
-                    typing.cast(InputFeature, Feature.from_config(feat))
-                    for feat in config["input_features"]
-                ]
+            input_features=typing.cast(
+                InputFeatures, InputFeatures.from_config(config["input_features"])
             ),
-            output_features=OutputFeatures(
-                features=[
-                    typing.cast(OutputFeature, Feature.from_config(feat))
-                    for feat in config["output_features"]
-                ]
+            output_features=typing.cast(
+                OutputFeatures, OutputFeatures.from_config(config["output_features"])
             ),
-            constraints=Constraints(
-                constraints=[
-                    Constraint.from_config(constraint)
-                    for constraint in config["constraints"]
-                ]
-            ),
+            constraints=Constraints.from_config(config["constraints"]),
         )
         if "experiments" in config.keys():
             d.set_experiments(experiments=config["experiments"])

@@ -930,6 +930,13 @@ class Features(BaseModel):
 
     features: List[Feature] = Field(default_factory=lambda: [])
 
+    def to_config(self) -> List:
+        return [feat.to_config() for feat in self.features]
+
+    @classmethod
+    def from_config(cls, config: List) -> Features:
+        return cls(features=[Feature.from_config(feat) for feat in config])
+
     def __iter__(self):
         return iter(self.features)
 
