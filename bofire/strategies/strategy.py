@@ -191,6 +191,7 @@ class Strategy(BaseModel):
 
 
         Raises:
+            ValueError: if candidate count is smaller than 1
             ValueError: if not enough experiments are available to execute the strategy
             ValueError: if the number of generated candidates does not match the requested number
 

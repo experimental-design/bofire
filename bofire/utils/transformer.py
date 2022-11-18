@@ -88,8 +88,8 @@ class Transformer(BaseModel):
         """
         super().__init__(
             domain=domain,
-            descriptor_encoding=descriptor_encoding,
-            categorical_encoding=categorical_encoding,
+            descriptor_encoding=descriptor_encoding.name, #TODO: check, if .name necessary!
+            categorical_encoding=categorical_encoding.name,
             scale_inputs=scale_inputs,
             scale_outputs=scale_outputs,
         )
