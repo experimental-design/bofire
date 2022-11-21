@@ -3,11 +3,18 @@ from typing import Type
 
 import numpy as np
 import pandas as pd
+import torch
+from botorch.utils.sampling import get_polytope_samples
 from pydantic import validate_arguments, validator
 
 from bofire.domain import Domain
-from bofire.domain.constraints import Constraint, LinearInequalityConstraint
+from bofire.domain.constraints import (
+    Constraint,
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
 from bofire.domain.features import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     Feature,
@@ -20,6 +27,7 @@ from bofire.strategies.strategy import (
     validate_features,
     validate_input_feature_count,
 )
+from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 class Sampler(BaseModel):
@@ -70,9 +78,66 @@ class Sampler(BaseModel):
         pass
 
 
-class ConstrainedSampler(Sampler):
+class PolytopeSampler(Sampler):
     def _sample(self, n: Tnum_samples) -> pd.DataFrame:
-        return super()._sample(n)
+
+        # get the bounds
+        lower = [
+            feat.lower_bound
+            for feat in self.domain.get_features(ContinuousInput)
+            if not feat.is_fixed()
+        ]
+        upper = [
+            feat.upper_bound
+            for feat in self.domain.get_features(ContinuousInput)
+            if not feat.is_fixed()
+        ]
+        bounds = torch.tensor([lower, upper]).to(**tkwargs)
+
+        # now use the hit and run sampler
+        candidates = get_polytope_samples(
+            n=n,
+            bounds=bounds.to(**tkwargs),
+            inequality_constraints=get_linear_constraints(
+                domain=self.domain,
+                constraint=LinearInequalityConstraint,
+                unit_scaled=False,
+            ),
+            equality_constraints=get_linear_constraints(
+                domain=self.domain,
+                constraint=LinearEqualityConstraint,
+                unit_scaled=False,
+            ),
+            n_burnin=1000,
+            # thinning=200
+        )
+
+        # check that the random generated candidates are not always the same
+        if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
+            raise ValueError("Generated candidates are not unique!")
+
+        free_continuals = [
+            feat.key
+            for feat in self.domain.get_features(ContinuousInput)
+            if not feat.is_fixed()
+        ]
+
+        # setup the output
+        samples = pd.DataFrame(
+            data=candidates.detach().numpy().reshape(n, len(free_continuals)),
+            index=range(n),
+            columns=free_continuals,
+        )
+
+        # setup the categoricals as uniform sampled vals
+        for feat in self.domain.get_features(CategoricalInput):
+            samples[feat.key] = feat.sample(n)
+
+        # setup the fixed continuous ones
+        for feat in self.domain.input_features.get_fixed():
+            samples[feat.key] = feat.fixed_value()
+
+        return samples
 
 
 class RejectionSampler(Sampler):
