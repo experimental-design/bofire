@@ -14,6 +14,7 @@ from bofire.domain.features import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    DiscreteInput,
     Feature,
     InputFeature,
     OutputFeature,
@@ -84,6 +85,27 @@ def test_invalid_domain_arg_types(input_features, output_features, constraints):
             output_features=output_features,
             constraints=constraints,
         )
+
+
+@pytest.mark.parametrize(
+    "input_features, constraints",
+    [
+        (
+            [
+                ContinuousInput(key="if1", lower_bound=0, upper_bound=1),
+                DiscreteInput(key="if2", values=[0.2, 0.7, 1.0]),
+            ],
+            [
+                LinearEqualityConstraint(
+                    features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=11
+                )
+            ],
+        )
+    ],
+)
+def test_invalid_type_in_linear_constraints(input_features, constraints):
+    with pytest.raises(ValidationError):
+        Domain(input_features=input_features, constraints=constraints)
 
 
 @pytest.mark.parametrize(
