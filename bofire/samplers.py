@@ -222,7 +222,7 @@ class RejectionSampler(Sampler):
         valid_samples = []
         while n_found < n:
             if n_iters > self.max_iters:
-                raise Exception("Maximum iterations exceeded in rejection sampling.")
+                raise ValueError("Maximum iterations exceeded in rejection sampling.")
             samples = self.domain.input_features.sample(
                 self.num_base_samples, method=self.sampling_method
             )

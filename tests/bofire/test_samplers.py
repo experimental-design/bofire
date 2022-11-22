@@ -41,7 +41,13 @@ def test_rejection_sampler(features, constraints, sampling_method, num_samples):
 
 
 def test_rejection_sampler_not_converged():
-    pass
+    domain = Domain(
+        input_features=input_features,
+        constraints=constraints,
+    )
+    sampler = RejectionSampler(domain=domain, num_base_samples=16, max_iters=2)
+    with pytest.raises(ValueError):
+        sampler(128)
 
 
 if1 = ContinuousInput(
