@@ -21,17 +21,17 @@ def get_linear_constraints(
         lower = []
         upper = []
         rhs = 0.0
-        for i, featkey in enumerate(c.features):
+        for i, featkey in enumerate(c.features):  # type: ignore
             idx = domain.get_feature_keys(InputFeature).index(featkey)
             feat = domain.get_feature(featkey)
-            if feat.is_fixed():
-                rhs -= feat.fixed_value() * c.coefficients[i]
+            if feat.is_fixed():  # type: ignore
+                rhs -= feat.fixed_value() * c.coefficients[i]  # type: ignore
             else:
-                lower.append(feat.lower_bound)
-                upper.append(feat.upper_bound)
+                lower.append(feat.lower_bound)  # type: ignore
+                upper.append(feat.upper_bound)  # type: ignore
                 indices.append(idx)
                 coefficients.append(
-                    c.coefficients[i]
+                    c.coefficients[i]  # type: ignore
                 )  # if unit_scaled == False else c_scaled.coefficients[i])
         if unit_scaled:
             lower = np.array(lower)
@@ -42,7 +42,7 @@ def get_linear_constraints(
                 (
                     torch.tensor(indices),
                     -torch.tensor(scaled_coefficients).to(**tkwargs),
-                    -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),
+                    -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),  # type: ignore
                 )
             )
         else:
@@ -50,7 +50,7 @@ def get_linear_constraints(
                 (
                     torch.tensor(indices),
                     -torch.tensor(coefficients).to(**tkwargs),
-                    -(rhs + c.rhs),
+                    -(rhs + c.rhs),  # type: ignore
                 )
             )
     return constraints
