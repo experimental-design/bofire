@@ -49,7 +49,7 @@ def get_linear_constraints(
             constraints.append(
                 (
                     torch.tensor(indices),
-                    torch.tensor(coefficients).to(**tkwargs),
+                    -torch.tensor(coefficients).to(**tkwargs),
                     -(rhs + c.rhs),
                 )
             )

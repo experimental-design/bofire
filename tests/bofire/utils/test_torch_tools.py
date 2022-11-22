@@ -62,7 +62,7 @@ def test_get_linear_constraints():
     assert len(constraints) == 1
     assert constraints[0][2] == c2.rhs * -1
     assert torch.allclose(constraints[0][0], torch.tensor([0, 1]))
-    # assert torch.allclose(constraints[0][1]) ==
+    assert torch.allclose(constraints[0][1], torch.tensor([-1.0, -1.0]).to(**tkwargs))
 
     domain = Domain(
         input_features=[if1, if2, if3, if4],
@@ -72,12 +72,16 @@ def test_get_linear_constraints():
     assert len(constraints) == 1
     assert constraints[0][2] == -1 * (c1.rhs - 0.1)
     assert len(constraints[0][0]) == len(c1.features) - 1
+    assert torch.allclose(constraints[0][0], torch.tensor([0, 1, 2]))
+    assert torch.allclose(constraints[0][1], torch.tensor([-1, -1, -1]).to(**tkwargs))
     assert len(constraints[0][1]) == len(c1.coefficients) - 1
     constraints = get_linear_constraints(domain, LinearInequalityConstraint)
     assert len(constraints) == 1
     assert constraints[0][2] == c2.rhs * -1
     assert len(constraints[0][0]) == len(c2.features)
     assert len(constraints[0][1]) == len(c2.coefficients)
+    assert torch.allclose(constraints[0][0], torch.tensor([0, 1]))
+    assert torch.allclose(constraints[0][1], torch.tensor([-1.0, -1.0]).to(**tkwargs))
 
     domain = Domain(
         input_features=[if1, if2, if3, if4, if5],
@@ -88,14 +92,20 @@ def test_get_linear_constraints():
     assert constraints[0][2] == (c1.rhs - 0.1) * -1
     assert len(constraints[0][0]) == len(c1.features) - 1
     assert len(constraints[0][1]) == len(c1.coefficients) - 1
+    assert torch.allclose(constraints[0][0], torch.tensor([0, 1, 2]))
+    assert torch.allclose(constraints[0][1], torch.tensor([-1, -1, -1]).to(**tkwargs))
     constraints = get_linear_constraints(domain, LinearInequalityConstraint)
     assert len(constraints) == 2
     assert constraints[0][2] == c2.rhs * -1
     assert len(constraints[0][0]) == len(c2.features)
     assert len(constraints[0][1]) == len(c2.coefficients)
+    assert torch.allclose(constraints[0][0], torch.tensor([0, 1]))
+    assert torch.allclose(constraints[0][1], torch.tensor([-1.0, -1.0]).to(**tkwargs))
     assert constraints[1][2] == (c3.rhs - 0.5 * 0.1) * -1
     assert len(constraints[1][0]) == len(c3.features) - 1
     assert len(constraints[1][1]) == len(c3.coefficients) - 1
+    assert torch.allclose(constraints[1][0], torch.tensor([0, 1]))
+    assert torch.allclose(constraints[1][1], torch.tensor([-1.0, -1.0]).to(**tkwargs))
 
 
 def test_get_linear_constraints_unit_scaled():
@@ -130,3 +140,4 @@ def test_get_linear_constraints_unit_scaled():
     assert torch.allclose(
         constraints[0][1], torch.tensor([0.4, 0.6, 0.5]).to(**tkwargs) * -1
     )
+    assert torch.allclose(constraints[0][0], torch.tensor([1, 2, 0]))
