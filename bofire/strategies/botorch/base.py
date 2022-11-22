@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition import MCAcquisitionObjective
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.cross_validation import gen_loo_cv_folds
 from botorch.models import MixedSingleTaskGP, ModelListGP
 from botorch.models.gpytorch import GPyTorchModel
@@ -17,7 +18,6 @@ from pydantic.class_validators import root_validator, validator
 from pydantic.types import NonNegativeInt, conlist
 
 from bofire.domain.constraints import (
-    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -27,18 +27,17 @@ from bofire.domain.features import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
-    ContinuousOutput,
-    Feature,
     InputFeature,
-    OutputFeature,
     is_continuous,
 )
 from bofire.domain.util import BaseModel
 from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.utils.models import get_and_fit_model
+from bofire.strategies.botorch.utils.objectives import AquisitionObjective
 from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import (
+    AcquisitionFunctionEnum,
     CategoricalEncodingEnum,
     CategoricalMethodEnum,
     DescriptorEncodingEnum,
@@ -79,9 +78,10 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     model_specs: Optional[conlist(item_type=ModelSpec, min_items=1)]
     objective: Optional[MCAcquisitionObjective]
+    aquisition_funciton: Optional[AcquisitionFunctionEnum]
+    acqf: Optional[AcquisitionFunction]
     sampler: Optional[SobolQMCNormalSampler]
     model: Optional[GPyTorchModel]
-    transformer: Optional[Transformer] 
     features2idx: Dict = Field(default_factory=lambda: {})
     input_feature_keys: List[str] = Field(default_factory=lambda: [])
     is_fitted: bool = False
@@ -688,7 +688,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         else:
             models = [self.model]
         importances = {}
-        for m, featkey in zip(models,self.domain.get_feature_keys(ContinuousOutputFeature, excludes=[ContinuousOutputFeature_woDesFunc])):
+        for m, featkey in zip(models,self.domain.output_features.get_keys_by_objective(excludes=None)):
             # in case of MixedGP ignore it
             if not isinstance(m,MixedSingleTaskGP) and self.get_model_spec(featkey).get("ard",True):
                 ls = m.covar_module.base_kernel.lengthscale

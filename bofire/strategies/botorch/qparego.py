@@ -1,5 +1,4 @@
-from enum import Enum
-from typing import List, Optional, Tuple, Type
+from typing import Type
 
 import numpy as np
 import pandas as pd
@@ -9,8 +8,6 @@ from botorch.acquisition.utils import get_acquisition_function
 from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
-from pydantic import validator
-from pydantic.types import conint, conlist
 
 from bofire.domain.constraints import (
     Constraint,
@@ -19,21 +16,12 @@ from bofire.domain.constraints import (
     NChooseKConstraint,
 )
 from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput, Feature
-from bofire.domain.objectives import (
-    IdentityObjective,
-    MaximizeObjective,
-    MinimizeObjective,
-    Objective,
-)
+from bofire.domain.objectives import IdentityObjective, Objective
 from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
-from bofire.utils.enum import CategoricalMethodEnum
+from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
 from bofire.utils.multiobjective import get_ref_point_mask
 
-
-class AcquisitionFunctionEnum(Enum):
-    QNEI = "QNEI"
-    QEI = "QEI"
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
 # currently it works only with categorical and desriptor method free, botorch feature to implement acqf_list_mixed needs to be 
@@ -41,8 +29,7 @@ class AcquisitionFunctionEnum(Enum):
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
-
-    base_acquisition_function: AcquisitionFunctionEnum = AcquisitionFunctionEnum.QNEI
+    name: str = "botorch.qparego"
 
     def _init_acqf(self) -> None:
         pass
@@ -65,7 +52,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 == False
             ):
                 raise ValueError(
-                    "Only `MaxIdentityDesirabilityFunction` and `MinIdentityDesirabilityFunction` supported."
+                    "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
             if feat.objective.w != 1.0:
                 raise ValueError("Only objective functions with weight 1 are supported.")
@@ -73,6 +60,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             raise ValueError("Only FREE optimization method for categoricals supported so far.")
         if len(self.domain.get_features(CategoricalDescriptorInput))>0 and self.descriptor_method != CategoricalMethodEnum.FREE:
             raise ValueError("Only FREE optimization method for Categorical with Descriptor supported so far.")
+
         super()._init_domain()
         return
 
@@ -97,7 +85,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             
 
             acqf = get_acquisition_function(
-                acquisition_function_name="qNEI" if self.base_acquisition_function == AcquisitionFunctionEnum.QNEI else "qEI",
+                acquisition_function_name="qNEI" if self.acqf == AcquisitionFunctionEnum.QNEI else "qEI",
                 model = self.model,
                 objective = objective,
                 X_observed = observed_x,

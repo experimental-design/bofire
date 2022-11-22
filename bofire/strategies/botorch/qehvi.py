@@ -25,10 +25,9 @@ from bofire.utils.multiobjective import get_ref_point_mask
 
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
     ref_point: Optional[dict]
-    acqf: Optional[AcquisitionFunction]
     ref_point_mask: Optional[np.ndarray]
     objective: Optional[MCMultiOutputObjective]
-
+    name: str = "botorch.qehvi"
 
     def _init_acqf(self) -> None:
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
@@ -152,6 +151,8 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
+    name: str = "botorch.qnehvi"
+
     def _init_acqf(self) -> None:
         # TODO move this into general helper function as done in OU
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)

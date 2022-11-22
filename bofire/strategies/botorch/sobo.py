@@ -3,7 +3,6 @@ from typing import Dict, List, Optional, Type
 
 import pandas as pd
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -20,18 +19,10 @@ from bofire.strategies.botorch.utils.objectives import (
     AdditiveObjective,
     MultiplicativeObjective,
 )
-
-
-class AcquisitionFunctionEnum(Enum):
-    QNEI = "QNEI"
-    QUCB = "QUCB"
-    QEI = "QEI"
-    QPI = "QPI"
+from bofire.utils.enum import AcquisitionFunctionEnum
 
 
 class BoTorchSoboStrategy(BotorchBasicBoStrategy):
-    acquisition_function: AcquisitionFunctionEnum
-    acqf: Optional[AcquisitionFunction]
     name: str = "botorch.sobo"
 
     def _init_acqf(self, df_pending=None) -> None:

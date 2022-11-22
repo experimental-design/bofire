@@ -3,7 +3,8 @@ import random
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from bofire.strategies.strategy import KernelEnum, ModelSpec, ScalerEnum
+from bofire.strategies.botorch.base import ModelSpec
+from bofire.utils.enum import KernelEnum, ScalerEnum
 from tests.bofire.domain.utils import get_invalids
 
 VALID_MODEL_SPEC_SPEC = {
