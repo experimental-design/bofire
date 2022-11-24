@@ -138,11 +138,27 @@ def test_from_greater_equal():
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
 
 
+def test_as_greater_equal():
+    c = LinearInequalityConstraint.from_greater_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
+    features, coefficients, rhs = c.as_greater_equal()
+    assert c.rhs == rhs * -1.0
+    assert coefficients == [-1.0 * coef for coef in c.coefficients]
+    assert c.features == features
+
+
 def test_from_smaller_equal():
     c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
     assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"]
     assert c.coefficients == VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
     assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
+
+
+def test_as_smaller_equal():
+    c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
+    features, coefficients, rhs = c.as_smaller_equal()
+    assert c.rhs == rhs
+    assert coefficients == c.coefficients
+    assert c.features == features
 
 
 # test the Constraints Class
@@ -164,6 +180,13 @@ input_features = InputFeatures(features=[if1, if2, if3])
 constraints = Constraints(constraints=[c1, c2, c3])
 constraints2 = Constraints(constraints=[c4, c5])
 constraints3 = Constraints(constraints=[c6])
+
+
+@pytest.mark.parametrize("constraints", [constraints, constraints2, constraints3])
+def test_constraints_serialize(constraints):
+    config = constraints.to_config()
+    nconstraints = Constraints.from_config(config=config)
+    assert constraints == nconstraints
 
 
 @pytest.mark.parametrize(
@@ -210,7 +233,7 @@ def test_constraints_plus():
     ],
 )
 def test_constraints_call(constraints, num_candidates):
-    candidates = input_features.sample(num_candidates)
+    candidates = input_features.sample(num_candidates, "UNIFORM")
     returned = constraints(candidates)
     assert returned.shape == (num_candidates, len(constraints))
 
@@ -223,7 +246,7 @@ def test_constraints_call(constraints, num_candidates):
     ],
 )
 def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
-    candidates = input_features.sample(num_candidates)
+    candidates = input_features.sample(num_candidates, "UNIFORM")
     returned = constraints.is_fulfilled(candidates)
     assert returned.shape == (num_candidates,)
     assert returned.dtype == bool

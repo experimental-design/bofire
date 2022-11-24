@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import List, Tuple
+from typing import List, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -7,6 +7,7 @@ import pandas as pd
 from bofire.domain import Domain
 from bofire.domain.constraints import (
     Constraint,
+    Constraints,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -88,7 +89,9 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     )
 
     # only consider continuous inputs
-    continuous_inputs = domain.get_features(ContinuousInput)
+    continuous_inputs = [
+        cast(ContinuousInput, f) for f in domain.get_features(ContinuousInput)
+    ]
     other_inputs = domain.input_features.get(InputFeature, excludes=[ContinuousInput])
 
     # assemble Matrix A from equality constraints
@@ -100,8 +103,8 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
 
     for i in range(len(linear_equalities)):
         c = linear_equalities[i]
-
-        A_aug.loc[i, c.features] = c.coefficients
+        assert isinstance(c, LinearEqualityConstraint)
+        A_aug.loc[i, c.features] = c.coefficients  # type: ignore
         A_aug.loc[i, "rhs"] = c.rhs
     A_aug = A_aug.values
 
@@ -144,7 +147,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         ind = np.where(B[i, :-1] != 0)[0]
         if len(ind) > 0 and B[i, -1] < np.inf:
             if len(list(names[ind])) > 1:
-                c = LinearInequalityConstraint(
+                c = LinearInequalityConstraint.from_greater_equal(
                     features=list(names[ind]),
                     coefficients=(-1.0 * B[i, ind]).tolist(),
                     rhs=B[i, -1] * -1.0,
@@ -152,9 +155,8 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 _domain.add_constraint(c)
             else:
                 key = names[ind][0]
-                adjust_boundary(
-                    _domain.get_feature(key), (-1.0 * B[i, ind])[0], B[i, -1] * -1.0
-                )
+                feat = cast(ContinuousInput, _domain.get_feature(key))
+                adjust_boundary(feat, (-1.0 * B[i, ind])[0], B[i, -1] * -1.0)
         else:
             if B[i, -1] < -1e-16:
                 raise Exception("There is no solution that fulfills the constraints.")
@@ -163,7 +165,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         ind = np.where(B[i + M - 1, :-1] != 0)[0]
         if len(ind) > 0 and B[i + M - 1, -1] < np.inf:
             if len(list(names[ind])) > 1:
-                c = LinearInequalityConstraint(
+                c = LinearInequalityConstraint.from_greater_equal(
                     features=list(names[ind]),
                     coefficients=(-1.0 * B[i + M - 1, ind]).tolist(),
                     rhs=B[i + M - 1, -1] * -1.0,
@@ -171,8 +173,9 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 _domain.add_constraint(c)
             else:
                 key = names[ind][0]
+                feat = cast(ContinuousInput, _domain.get_feature(key))
                 adjust_boundary(
-                    _domain.get_feature(key),
+                    feat,
                     (-1.0 * B[i + M - 1, ind])[0],
                     B[i + M - 1, -1] * -1.0,
                 )
@@ -230,6 +233,7 @@ def check_domain_for_reduction(domain: Domain) -> bool:
 
     # check that equality constraints only contain continuous inputs
     for c in linear_equalities:
+        assert isinstance(c, LinearConstraint)
         for feat in c.features:
             if feat not in domain.get_feature_keys(ContinuousInput):
                 return False
@@ -317,8 +321,9 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
 
             _features = _features[np.abs(_coefficients) > 1e-16]
             _coefficients = _coefficients[np.abs(_coefficients) > 1e-16]
-
+            _c = None
             if isinstance(c, LinearEqualityConstraint):
+
                 if len(_features) > 1:
                     _c = LinearEqualityConstraint(
                         features=_features.tolist(),
@@ -342,12 +347,13 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                 elif len(_features) == 0:
                     totally_removed = True
                 else:
-                    feat = domain.get_feature(_features[0])
+                    feat = cast(ContinuousInput, domain.get_feature(_features[0]))
                     adjust_boundary(feat, _coefficients[0], _rhs)
                     totally_removed = True
 
             # check if constraint is always fulfilled/not fulfilled
             if not totally_removed:
+                assert _c is not None
                 if len(_c.features) == 0 and _c.rhs >= 0:
                     pass
                 elif len(_c.features) == 0 and _c.rhs < 0:
@@ -356,7 +362,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                     pass
                 else:
                     constraints.append(_c)
-    domain.constraints = constraints
+    domain.constraints = Constraints(constraints=constraints)
     return domain
 
 
@@ -387,7 +393,7 @@ def rref(A: np.ndarray, tol: float = 1e-8) -> Tuple[np.ndarray, List[int]]:
             pivots.append(col)
             max_row = np.argmax(np.abs(A[row:, col])) + row
             # switch to most stable row
-            A[[row, max_row], :] = A[[max_row, row], :]
+            A[[row, max_row], :] = A[[max_row, row], :]  # type: ignore
             # normalize row
             A[row, :] /= A[row, col]
             # eliminate other elements from column

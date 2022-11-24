@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -68,6 +68,10 @@ class Constraint(BaseModel):
         return mapper[config["type"]](**config)
 
 
+TFeatureKeys = conlist(item_type=str, min_items=2)
+TCoefficients = conlist(item_type=float, min_items=2)
+
+
 class LinearConstraint(Constraint):
     """Abstract base class for linear equality and inequality constraints.
 
@@ -77,8 +81,8 @@ class LinearConstraint(Constraint):
         rhs (float): Right-hand side of the constraint
     """
 
-    features: conlist(item_type=str, min_items=2)
-    coefficients: conlist(item_type=float, min_items=2)
+    features: TFeatureKeys
+    coefficients: TCoefficients
     rhs: float
 
     @validator("features")
@@ -165,8 +169,8 @@ class LinearEqualityConstraint(LinearConstraint):
 class LinearInequalityConstraint(LinearConstraint):
     """Linear inequality constraint of the form `coefficients * x <= rhs`.
 
-    To instantiate a constraint of the form `coefficients * x <= rhs` multiply coefficients and rhs by -1, or
-    use the classmethod `from_smaller_equal`.
+    To instantiate a constraint of the form `coefficients * x >= rhs` multiply coefficients and rhs by -1, or
+    use the classmethod `from_greater_equal`.
 
     Attributes:
         features (list): list of feature keys (str) on which the constraint works on.
@@ -191,6 +195,22 @@ class LinearInequalityConstraint(LinearConstraint):
         # noise = 10e-10 discuss with Behrang
         return self(experiments) <= 0
 
+    def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
+        """Return attributes in the smaller equal convention
+
+        Returns:
+            Tuple[List[str], List[float], float]: features, coefficients, rhs
+        """
+        return self.features, self.coefficients, self.rhs
+
+    def as_greater_equal(self) -> Tuple[List[str], List[float], float]:
+        """Return attributes in the greater equal convention
+
+        Returns:
+            Tuple[List[str], List[float], float]: features, coefficients, rhs
+        """
+        return self.features, [-1.0 * c for c in self.coefficients], -1.0 * self.rhs
+
     @classmethod
     def from_greater_equal(
         cls, features: List[str], coefficients: List[float], rhs: float
@@ -210,7 +230,7 @@ class LinearInequalityConstraint(LinearConstraint):
 
     @classmethod
     def from_smaller_equal(
-        cls, features: List[float], coefficients: List[float], rhs: float
+        cls, features: List[str], coefficients: List[float], rhs: float
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x <= rhs`.
 
@@ -268,7 +288,7 @@ class NChooseKConstraint(Constraint):
             this flag decides if zero active features are also allowed.
     """
 
-    features: conlist(item_type=str, min_items=2)
+    features: TFeatureKeys
     min_count: int
     max_count: int
     none_also_valid: bool
@@ -340,9 +360,34 @@ class NChooseKConstraint(Constraint):
         return res
 
 
+TConstraint = TypeVar("TConstraint", bound=Constraint)
+
+
 class Constraints(BaseModel):
 
-    constraints: Optional[List[Constraint]] = Field(default_factory=lambda: [])
+    constraints: List[Constraint] = Field(default_factory=lambda: [])
+
+    def to_config(self) -> List:
+        """Serializes a `Constraints` object.
+
+        Returns:
+            List: Constraints objects as serialized list.
+        """
+        return [constraint.to_config() for constraint in self.constraints]
+
+    @classmethod
+    def from_config(cls, config: List) -> "Constraints":
+        """Instantiates a `Constraints` object based on the serialized list.
+
+        Args:
+            config (List): Serialized `Constraints` object as list.
+
+        Returns:
+            Constraints: Initialized `Constraints` object.
+        """
+        return cls(
+            constraints=[Constraint.from_config(constraint) for constraint in config]
+        )
 
     def __iter__(self):
         return iter(self.constraints)
@@ -353,7 +398,7 @@ class Constraints(BaseModel):
     def __getitem__(self, i):
         return self.constraints[i]
 
-    def __add__(self, other) -> "Constraints":
+    def __add__(self, other: "Constraints") -> "Constraints":
         return Constraints(constraints=self.constraints + other.constraints)
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -396,7 +441,7 @@ class Constraints(BaseModel):
         includes: Union[Type, List[Type]] = Constraint,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
-    ) -> List[Constraint]:
+    ) -> "Constraints":
         """get constraints of the domain
 
         Args:

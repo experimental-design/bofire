@@ -25,3 +25,4 @@ jobs:
         run: |
           pip install .[testing]
           pytest tests
+          pyright

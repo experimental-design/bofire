@@ -16,6 +16,7 @@ from bofire.domain.features import (
     DiscreteInput,
     Feature,
     Features,
+    InputFeature,
     InputFeatures,
     OutputFeature,
     OutputFeatures,
@@ -106,6 +107,7 @@ FEATURE_SPECS = {
     ContinuousInput: {
         "valids": [
             VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
+            VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_CONTINUOUS_INPUT_FEATURE_SPEC),
@@ -114,6 +116,7 @@ FEATURE_SPECS = {
     DiscreteInput: {
         "valids": [
             VALID_DISCRETE_INPUT_FEATURE_SPEC,
+            VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_DISCRETE_INPUT_FEATURE_SPEC),
@@ -151,6 +154,7 @@ FEATURE_SPECS = {
                 **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
                 "allowed": [True, False, True],
             },
+            VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_CATEGORICAL_INPUT_FEATURE_SPEC),
@@ -181,6 +185,7 @@ FEATURE_SPECS = {
                 **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
                 "allowed": [True, False, True],
             },
+            VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         ],
         "invalids": [
             *get_invalids(VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC),
@@ -221,6 +226,22 @@ FEATURE_SPECS = {
         "invalids": [*get_invalids(VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)],
     },
 }
+
+
+@pytest.mark.parametrize(
+    "cls, spec, n",
+    [
+        (cls, valid, n)
+        for cls, data in FEATURE_SPECS.items()
+        for valid in data["valids"]
+        for n in [1, 5]
+    ],
+)
+def test_input_feature_sample(cls, spec, n):
+    feature = cls(**spec)
+    if isinstance(feature, InputFeature):
+        samples = feature.sample(n)
+        feature.validate_candidental(samples)
 
 
 @pytest.mark.parametrize(
@@ -432,6 +453,72 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
 def test_continuous_input_feature_validate_candidental_invalid(input_feature, values):
     with pytest.raises(ValueError):
         input_feature.validate_candidental(values)
+
+
+@pytest.mark.parametrize(
+    "feature, xt, expected",
+    [
+        (
+            ContinuousInput(key="a", lower_bound=0, upper_bound=10),
+            pd.Series(np.linspace(0, 1, 11)),
+            np.linspace(0, 10, 11),
+        ),
+        (
+            ContinuousInput(key="a", lower_bound=-10, upper_bound=20),
+            pd.Series(np.linspace(0, 1)),
+            np.linspace(-10, 20),
+        ),
+    ],
+)
+def test_continuous_input_feature_from_unit_range(feature, xt, expected):
+    x = feature.from_unit_range(xt)
+    assert np.allclose(x.values, expected)
+
+
+@pytest.mark.parametrize(
+    "feature, x, expected, real",
+    [
+        (
+            ContinuousInput(key="a", lower_bound=0, upper_bound=10),
+            pd.Series(np.linspace(0, 10, 11)),
+            np.linspace(0, 1, 11),
+            True,
+        ),
+        (
+            ContinuousInput(key="a", lower_bound=-10, upper_bound=20),
+            pd.Series(np.linspace(-10, 20)),
+            np.linspace(0, 1),
+            True,
+        ),
+        (
+            ContinuousInput(key="a", lower_bound=0, upper_bound=10),
+            pd.Series(np.linspace(0, 10, 11)),
+            np.linspace(0, 1, 11),
+            False,
+        ),
+        (
+            ContinuousInput(key="a", lower_bound=-10, upper_bound=20),
+            pd.Series(np.linspace(-10, 20)),
+            np.linspace(0, 1),
+            False,
+        ),
+        (
+            ContinuousInput(key="a", lower_bound=0, upper_bound=9),
+            pd.Series(np.linspace(0, 10, 11)),
+            np.linspace(0, 1, 11),
+            True,
+        ),
+        (
+            ContinuousInput(key="a", lower_bound=0, upper_bound=9),
+            pd.Series(np.linspace(0, 10, 11)),
+            np.linspace(0, 10 / 9, 11),
+            False,
+        ),
+    ],
+)
+def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
+    xt = feature.to_unit_range(x)
+    assert np.allclose(xt.values, expected, real)
 
 
 @pytest.mark.parametrize(
@@ -966,6 +1053,19 @@ def test_feature_sorting(unsorted_list, sorted_list):
 # test features container
 if1 = ContinuousInput(**{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1"})
 if2 = CategoricalInput(**{**VALID_CATEGORICAL_INPUT_FEATURE_SPEC, "key": "if2"})
+if3 = ContinuousInput(**{**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if3"})
+if4 = CategoricalInput(**{**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC, "key": "if4"})
+if5 = DiscreteInput(**{**VALID_DISCRETE_INPUT_FEATURE_SPEC, "key": "if5"})
+if6 = DiscreteInput(**{**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC, "key": "if6"})
+if7 = CategoricalInput(
+    **{
+        **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
+        "key": "if7",
+        "allowed": [True, False, True],
+    }
+)
+
+
 of1 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of1"})
 of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of2"})
 of3 = ContinuousOutput(key="of3", objective=None)
@@ -973,6 +1073,13 @@ of3 = ContinuousOutput(key="of3", objective=None)
 input_features = InputFeatures(features=[if1, if2])
 output_features = OutputFeatures(features=[of1, of2])
 features = Features(features=[if1, if2, of1, of2])
+
+
+@pytest.mark.parametrize("features", [input_features, output_features, features])
+def test_features_serialie(features):
+    config = features.to_config()
+    nfeatures = Features.from_config(config=config)
+    assert nfeatures == features
 
 
 @pytest.mark.parametrize(
@@ -1106,16 +1213,51 @@ def test_features_add_invalid(features, feature):
 
 
 @pytest.mark.parametrize(
-    "features, num_samples",
+    "features, expected",
     [
-        (input_features, 1),
-        (input_features, 2),
+        (InputFeatures(features=[if1, if2]), []),
+        (InputFeatures(features=[if1, if2, if3, if4, if5, if6]), [if3, if4, if6]),
     ],
 )
-def test_input_features_sample(features, num_samples):
-    samples = features.sample(num_samples)
+def test_input_features_get_fixed(features, expected):
+    returned = features.get_fixed()
+    assert isinstance(features, InputFeatures)
+    assert returned.features == expected
+    for i in range(len(expected)):
+        assert id(expected[i]) == id(returned[i])
+
+
+@pytest.mark.parametrize(
+    "features, expected",
+    [
+        (InputFeatures(features=[if1, if2]), [if1, if2]),
+        (InputFeatures(features=[if1, if2, if3, if4, if5, if6]), [if1, if2, if5]),
+    ],
+)
+def test_input_features_get_free(features, expected):
+    returned = features.get_free()
+    assert isinstance(features, InputFeatures)
+    assert returned.features == expected
+    for i in range(len(expected)):
+        assert id(expected[i]) == id(returned[i])
+
+
+@pytest.mark.parametrize(
+    "features, num_samples, method",
+    [
+        (features, num_samples, method)
+        for features in [
+            input_features,
+            InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]),
+        ]
+        for num_samples in [1, 2, 1024]
+        for method in ["UNIFORM", "SOBOL", "LHS"]
+    ],
+)
+def test_input_features_sample(features, num_samples, method):
+    samples = features.sample(num_samples, method=method)
     assert samples.shape == (num_samples, len(features))
-    assert list(samples.columns) == input_features.get_keys()
+    assert list(samples.columns) == features.get_keys()
 
 
 @pytest.mark.parametrize(

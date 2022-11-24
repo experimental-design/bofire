@@ -49,7 +49,7 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     extras_require={
-        "testing": ["pytest", "mopti"],
+        "testing": ["mock", "mopti", "pyright", "pytest"],
         "docs": [
             "mkdocs",
             "mkdocs-material",

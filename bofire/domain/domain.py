@@ -1,6 +1,7 @@
 import itertools
+import typing
 from copy import deepcopy
-from typing import Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -16,6 +17,7 @@ from bofire.domain.features import (
     ContinuousInput,
     ContinuousOutput,
     Feature,
+    Features,
     InputFeature,
     InputFeatures,
     OutputFeature,
@@ -27,15 +29,11 @@ from bofire.domain.util import BaseModel, is_numeric
 
 class Domain(BaseModel):
 
-    input_features: Optional[InputFeatures] = Field(
-        default_factory=lambda: InputFeatures()
-    )
-    output_features: Optional[OutputFeatures] = Field(
-        default_factory=lambda: OutputFeatures()
-    )
-    constraints: Optional[Constraints] = Field(default_factory=lambda: Constraints())
-    experiments: Optional[pd.DataFrame]
-    candidates: Optional[pd.DataFrame]
+    input_features: InputFeatures = Field(default_factory=lambda: InputFeatures())
+    output_features: OutputFeatures = Field(default_factory=lambda: OutputFeatures())
+    constraints: Constraints = Field(default_factory=lambda: Constraints())
+    experiments: Optional[pd.DataFrame] = None
+    candidates: Optional[pd.DataFrame] = None
     """Representation of the optimization problem/domain
 
     Attributes:
@@ -119,6 +117,39 @@ class Domain(BaseModel):
         return v
 
     @validator("constraints", always=True)
+    def validate_linear_constraints(cls, v, values):
+        """Validate if all features included in linear constraints are continuous ones.
+
+        Args:
+            v (List[Constraint]): List of constraints or empty if no constraints are defined
+            values (List[InputFeature]): List of input features of the domain
+
+        Raises:
+            ValueError: _description_
+
+
+        Returns:
+           List[Constraint]: List of constraints defined for the domain
+        """
+        if "input_features" not in values:
+            return v
+
+        # gather continuous input_features in dictionary
+        continuous_input_features_dict = {}
+        for f in values["input_features"]:
+            if type(f) is ContinuousInput:
+                continuous_input_features_dict[f.key] = f
+
+        # check if non continuous input features appear in linear constraints
+        for c in v:
+            if isinstance(c, LinearConstraint):
+                for f in c.features:
+                    assert (
+                        f in continuous_input_features_dict
+                    ), f"{f} must be continuous."
+        return v
+
+    @validator("constraints", always=True)
     def validate_lower_bounds_in_nchoosek_constraints(cls, v, values):
         """Validate the lower bound as well if the chosen number of allowed features is continuous.
 
@@ -153,14 +184,14 @@ class Domain(BaseModel):
         Returns:
             Dict: Serialized version of the domain as dictionary.
         """
-        config = {
-            "input_features": [feat.to_config() for feat in self.input_features],
-            "output_features": [feat.to_config() for feat in self.output_features],
-            "constraints": [constraint.to_config() for constraint in self.constraints],
+        config: Dict[str, Any] = {
+            "input_features": self.input_features.to_config(),
+            "output_features": self.output_features.to_config(),
+            "constraints": self.constraints.to_config(),
         }
-        if self.num_experiments > 0:
+        if self.experiments is not None and self.num_experiments > 0:
             config["experiments"] = self.experiments.to_dict()
-        if self.num_candidates > 0:
+        if self.candidates is not None and self.num_candidates > 0:
             config["candidates"] = self.candidates.to_dict()
         return config
 
@@ -172,16 +203,13 @@ class Domain(BaseModel):
             config (Dict): Serialized version of a domain as dictionary.
         """
         d = cls(
-            input_features=[
-                Feature.from_config(feat) for feat in config["input_features"]
-            ],
-            output_features=[
-                Feature.from_config(feat) for feat in config["output_features"]
-            ],
-            constraints=[
-                Constraint.from_config(constraint)
-                for constraint in config["constraints"]
-            ],
+            input_features=typing.cast(
+                InputFeatures, InputFeatures.from_config(config["input_features"])
+            ),
+            output_features=typing.cast(
+                OutputFeatures, OutputFeatures.from_config(config["output_features"])
+            ),
+            constraints=Constraints.from_config(config["constraints"]),
         )
         if "experiments" in config.keys():
             d.set_experiments(experiments=config["experiments"])
@@ -210,12 +238,12 @@ class Domain(BaseModel):
             pd.DataFrame: DataFrame listing all constraints of the domain with a description
         """
         df = pd.DataFrame(
-            index=range(len(self.constraints.get())),
+            index=range(len(self.constraints)),
             columns=["Type", "Description"],
             data={
-                "Type": [feat.__class__.__name__ for feat in self.constraints.get()],
+                "Type": [feat.__class__.__name__ for feat in self.constraints],
                 "Description": [
-                    constraint.__str__() for constraint in self.constraints.get()
+                    constraint.__str__() for constraint in self.constraints
                 ],
             },
         )
@@ -223,10 +251,10 @@ class Domain(BaseModel):
 
     def get_features(
         self,
-        includes: Union[Type, List[Type]] = Feature,
-        excludes: Union[Type, List[Type]] = None,
+        includes: Union[Type[Feature], List[Type[Feature]]] = Feature,
+        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
         exact: bool = False,
-    ) -> List[Feature]:
+    ) -> Features:
         """get features of the domain
 
         Args:
@@ -323,16 +351,21 @@ class Domain(BaseModel):
             raise ValueError(
                 f"Feature {key} cannot be removed as experiments/candidates are already set."
             )
-        input_count = len([f for f in self.input_features if f.key == key])
-        output_count = len([f for f in self.output_features if f.key == key])
+        input_count = sum(1 for f in self.input_features if f.key == key)
+        output_count = sum(1 for f in self.output_features if f.key == key)
         if input_count == 0 and output_count == 0:
             raise KeyError(f"no feature with key {key} found")
         if input_count + output_count > 1:
             raise ValueError(f"more than one feature with key {key} found")
         if input_count > 0:
-            self.input_features = [f for f in self.input_features if f.key != key]
+            self.input_features = InputFeatures(
+                features=[f for f in self.input_features.features if f.key != key]
+            )
+
         if output_count > 0:
-            self.output_features = [f for f in self.output_features if f.key != key]
+            self.output_features = OutputFeatures(
+                features=[f for f in self.output_features.features if f.key != key]
+            )
 
     # getting list of fixed values
     def get_nchoosek_combinations(self):
@@ -351,6 +384,7 @@ class Domain(BaseModel):
 
         # loops through each NChooseK constraint
         for con in self.constraints.get(NChooseKConstraint):
+            assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
             for n in range(con.min_count, con.max_count + 1):
@@ -394,6 +428,7 @@ class Domain(BaseModel):
                 []
             )  # list of bools tracking if constraints are fulfilled
             for con in self.constraints.get(NChooseKConstraint):
+                assert isinstance(con, NChooseKConstraint)
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
                     if f in con.features:
@@ -412,6 +447,7 @@ class Domain(BaseModel):
         # features unused
         features_in_cc = []
         for con in self.constraints.get(NChooseKConstraint):
+            assert isinstance(con, NChooseKConstraint)
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
         features_in_cc.sort()
@@ -434,7 +470,7 @@ class Domain(BaseModel):
         self,
         output_feature_key: str,
         experiments: Optional[pd.DataFrame] = None,
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """Method to get a dataframe where non-valid entries of the provided output feature are removed
 
         Args:
@@ -449,6 +485,7 @@ class Domain(BaseModel):
                 experiments = self.experiments
             else:
                 return None
+        assert experiments is not None
         clean_exp = experiments.loc[
             (experiments["valid_%s" % output_feature_key] == 1)
             & (experiments[output_feature_key].notna())
@@ -461,7 +498,7 @@ class Domain(BaseModel):
         self,
         experiments: Optional[pd.DataFrame] = None,
         output_feature_keys: Optional[List] = None,
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """Method to get a dataframe where non-valid entries of all output feature are removed
 
         Args:
@@ -485,6 +522,7 @@ class Domain(BaseModel):
                     feat, OutputFeature
                 ), f"feat {key} is not an OutputFeature"
 
+        assert experiments is not None
         clean_exp = experiments.query(
             " & ".join(["(`valid_%s` > 0)" % key for key in output_feature_keys])
         )
@@ -494,7 +532,7 @@ class Domain(BaseModel):
 
     def preprocess_experiments_any_valid_output(
         self, experiments: Optional[pd.DataFrame] = None
-    ) -> pd.DataFrame:
+    ) -> Optional[pd.DataFrame]:
         """Method to get a dataframe where at least one output feature has a valid entry
 
         Args:
@@ -514,6 +552,7 @@ class Domain(BaseModel):
         # clean_exp = experiments.query(" or ".join(["(valid_%s > 0)" % key for key in output_feature_keys]))
         # clean_exp = clean_exp.query(" or ".join(["%s.notna()" % key for key in output_feature_keys]))
 
+        assert experiments is not None
         clean_exp = experiments.query(
             " or ".join(
                 [
@@ -557,7 +596,10 @@ class Domain(BaseModel):
             Tuple[pd.DataFrame, list]: Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates
         """
         # prepare the parent frame
-        experiments = self.preprocess_experiments_any_valid_output(experiments).copy()
+
+        preprocessed = self.preprocess_experiments_any_valid_output(experiments)
+        assert preprocessed is not None
+        experiments = preprocessed.copy()
         if "labcode" not in experiments.columns:
             experiments["labcode"] = [
                 str(i + 1).zfill(int(np.ceil(np.log10(experiments.shape[0]))))
@@ -573,14 +615,16 @@ class Domain(BaseModel):
         experiments = self.coerce_invalids(experiments)
 
         # group and aggregate
-        agg = {feat: "mean" for feat in self.get_feature_keys(ContinuousOutput)}
+        agg: Dict[str, Any] = {
+            feat: "mean" for feat in self.get_feature_keys(ContinuousOutput)
+        }
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.get_feature_keys(OutputFeature):
             agg[f"valid_{feat}"] = lambda x: 1
 
         grouped = experiments.groupby(self.get_feature_keys(InputFeature))
         duplicated_labcodes = [
-            sorted(group.labcode.values.tolist())
+            sorted(group.labcode.to_numpy().tolist())
             for _, group in grouped
             if group.shape[0] > 1
         ]
@@ -639,12 +683,15 @@ class Domain(BaseModel):
         # we allow here for a column named labcode used to identify experiments
         if "labcode" in cols:
             # test that labcodes are not na
-            if experiments.labcode.isnull().values.any():
+            if experiments.labcode.isnull().to_numpy().any():
                 raise ValueError("there are labcodes with null value")
-            if experiments.labcode.isna().values.any():
+            if experiments.labcode.isna().to_numpy().any():
                 raise ValueError("there are labcodes with nan value")
             # test that labcodes are distinct
-            if len(set(experiments.labcode.values.tolist())) != experiments.shape[0]:
+            if (
+                len(set(experiments.labcode.to_numpy().tolist()))
+                != experiments.shape[0]
+            ):
                 raise ValueError("labcodes are not unique")
             # we remove the labcode from the cols list to proceed as before
             cols.remove("labcode")
@@ -653,12 +700,13 @@ class Domain(BaseModel):
         if len(set(expected + cols)) != len(cols):
             raise ValueError(f"expected the following cols: `{expected}`, got `{cols}`")
         # check values of continuous input features
-        if experiments[self.get_feature_keys(InputFeature)].isnull().values.any():
+        if experiments[self.get_feature_keys(InputFeature)].isnull().to_numpy().any():
             raise ValueError("there are null values")
-        if experiments[self.get_feature_keys(InputFeature)].isna().values.any():
+        if experiments[self.get_feature_keys(InputFeature)].isna().to_numpy().any():
             raise ValueError("there are na values")
         # run the individual validators
         for feat in self.get_features(InputFeature):
+            assert isinstance(feat, InputFeature)
             feat.validate_experimental(experiments[feat.key], strict=strict)
         return experiments
 
@@ -677,9 +725,11 @@ class Domain(BaseModel):
                 experiments.loc[experiments[feat].notna()].shape[0],
                 experiments.loc[experiments[feat].notna(), "valid_%s" % feat].sum(),
             ]
+        preprocessed = self.preprocess_experiments_all_valid_outputs(experiments)
+        assert preprocessed is not None
         data["all"] = [
             experiments.shape[0],
-            self.preprocess_experiments_all_valid_outputs(experiments).shape[0],
+            preprocessed.shape[0],
         ]
         return pd.DataFrame.from_dict(
             data, orient="index", columns=["measured", "valid"]
@@ -705,10 +755,7 @@ class Domain(BaseModel):
             pd.DataFrame: dataframe with suggested experiments (candidates)
         """
         # check that each input feature has a col and is valid in itself
-        for feat in self.get_features(InputFeature):
-            if feat.key not in candidates:
-                raise ValueError(f"no col for input feature `{feat.key}`")
-            feat.validate_candidental(candidates[feat.key])
+        self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")
@@ -720,7 +767,7 @@ class Domain(BaseModel):
                     if col not in candidates:
                         raise ValueError("missing column {col}")
                     if (not is_numeric(candidates[col])) and (
-                        not candidates[col].isnull().values.all()
+                        not candidates[col].isnull().to_numpy().all()
                     ):
                         raise ValueError(
                             f"not all values of output feature `{key}` are numerical"
@@ -756,15 +803,21 @@ class Domain(BaseModel):
             self.get_feature_keys(InputFeature)
             + [
                 f"{output_feature_key}_pred"
-                for output_feature_key in self.output_features.get_by_key(Objective)
+                for output_feature_key in self.output_features.get_keys_by_objective(
+                    Objective
+                )
             ]
             + [
                 f"{output_feature_key}_sd"
-                for output_feature_key in self.output_features.get_by_key(Objective)
+                for output_feature_key in self.output_features.get_keys_by_objective(
+                    Objective
+                )
             ]
             + [
                 f"{output_feature_key}_des"
-                for output_feature_key in self.output_features.get_by_key(Objective)
+                for output_feature_key in self.output_features.get_keys_by_objective(
+                    Objective
+                )
             ]
         )
 
@@ -785,7 +838,7 @@ class Domain(BaseModel):
     def num_candidates(self) -> int:
         if self.candidates is None:
             return 0
-        return len(self.experiments)
+        return len(self.candidates)
 
     def set_experiments(self, experiments: pd.DataFrame):
         experiments = self.validate_experiments(experiments)
@@ -795,6 +848,8 @@ class Domain(BaseModel):
         experiments = self.validate_experiments(experiments)
         if experiments is None:
             self.experiments = None
+        elif self.experiments is None:
+            self.experiments = experiments
         else:
             self.experiments = pd.concat(
                 (self.experiments, experiments), ignore_index=True
@@ -846,7 +901,8 @@ def get_subdomain(
     assert len(input_feature_keys) > 0, "At least one input feature has to be provided."
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
-        for key in c.features:
+        # TODO: fix type hint
+        for key in c.features:  # type: ignore
             if key not in input_feature_keys:
                 raise ValueError(
                     f"Removed input feature {key} is used in a constraint."

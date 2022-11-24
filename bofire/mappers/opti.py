@@ -17,7 +17,9 @@ from bofire.domain.features import (
     ContinuousOutput,
     DiscreteInput,
     InputFeature,
+    InputFeatures,
     OutputFeature,
+    OutputFeatures,
 )
 from bofire.domain.objectives import (
     CloseToTargetObjective,
@@ -55,7 +57,7 @@ def objective2feature(config: Dict):
         )
     else:
         raise ValueError(f"Unknown objective type {config['type']}.")
-    return ContinuousOutput(key=config["name"], desirability_function=d)
+    return ContinuousOutput(key=config["name"], objective=d)
 
 
 def constraint2constraint(config: Dict, input_feature_keys: Optional[list] = None):
@@ -75,13 +77,9 @@ def constraint2constraint(config: Dict, input_feature_keys: Optional[list] = Non
             none_also_valid=False,
         )
     if config["type"] == "non-linear-equality":
-        return NonlinearEqualityConstraint(
-            features=input_feature_keys, expression=config["expression"]
-        )
+        return NonlinearEqualityConstraint(expression=config["expression"])
     if config["type"] == "non-linear-inequality":
-        return NonlinearInqualityConstraint(
-            features=input_feature_keys, expression=config["expression"]
-        )
+        return NonlinearInqualityConstraint(expression=config["expression"])
     raise ValueError(f"Unknown constraint type {config['type']}.")
 
 
@@ -92,7 +90,10 @@ def problem2domain(config: Dict):
         input_features.append(input2feature(pconfig))
     for pconfig, oconfig in zip(config["outputs"], config["objectives"]):
         output_features.append(objective2feature(oconfig))
-    domain = Domain(input_features=input_features, output_features=output_features)
+    domain = Domain(
+        input_features=InputFeatures(features=input_features),
+        output_features=OutputFeatures(features=output_features),
+    )
     if "constraints" in config:
         for cconfig in config["constraints"]:
             domain.add_constraint(
