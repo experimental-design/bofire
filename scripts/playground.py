@@ -43,13 +43,13 @@ constraints = [con1, con2]
 
 domain = Domain(input_features=input_features, output_features=output_features, constraints=constraints)
 
-strategy = SOBO(domain=domain, acquisition_function='QNEI')
+#strategy = SOBO(domain=domain, acquisition_function='QNEI')
 
-#strategy = BoTorchQehviStrategy(domain=domain, ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QNEI')
+strategy = BoTorchQehviStrategy(domain=domain) # #ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QNEI')
 
-model_specs = ModelSpec(output_feature = 'y1', input_features = ['x1', 'x2', 'x3'], kernel = "MATERN_25", ard =True, scaler = "NORMALIZE")
-strategy = BoTorchQparegoStrategy(domain=domain, ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QEI', model_specs=[model_specs])
-strategy = DummyStrategy(domain=domain) #, acquisition_function='QNEI')
+#model_specs = ModelSpec(output_feature = 'y1', input_features = ['x1', 'x2', 'x3'], kernel = "MATERN_25", ard =True, scaler = "NORMALIZE")
+#strategy = BoTorchQparegoStrategy(domain=domain, ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QEI', model_specs=[model_specs])
+#strategy = DummyStrategy(domain=domain) #, acquisition_function='QNEI')
 
 
 

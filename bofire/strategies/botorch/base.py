@@ -45,6 +45,7 @@ from bofire.utils.enum import (
     KernelEnum,
     ScalerEnum,
 )
+from bofire.utils.torch_tools import get_linear_constraints
 from bofire.utils.transformer import Transformer
 
 
@@ -329,8 +330,8 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=self.domain.constraints.get(includes=LinearEqualityConstraint),
-                inequality_constraints=self.domain.constraints.get(includes=LinearInequalityConstraint),
+                equality_constraints=get_linear_constraints(LinearEqualityConstraint),
+                inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
                 fixed_features=self.get_fixed_features(),
                 return_best_only=True,
             )
@@ -347,8 +348,8 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=self.domain.constraints.get(includes=LinearEqualityConstraint),
-                inequality_constraints=self.domain.constraints.get(includes=LinearInequalityConstraint),
+                equality_constraints=get_linear_constraints(LinearEqualityConstraint),
+                inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
                 fixed_features_list=self.get_categorical_combinations(),
             )
             # options={"seed":self.seed})
@@ -360,8 +361,8 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=self.domain.constraints.get(includes=LinearEqualityConstraint),
-                inequality_constraints=self.domain.constraints.get(includes=LinearInequalityConstraint),
+                equality_constraints=get_linear_constraints(LinearEqualityConstraint),
+                inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
                 fixed_features_list=self.get_fixed_values_list(),
             )
 
@@ -390,7 +391,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         for i, feat in enumerate(self.domain.output_features.get_by_objective(excludes=None)):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.desirability_function(preds[:, i])
+            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])
 
         df_candidates[self.input_feature_keys] = candidates[0].detach().numpy()
 

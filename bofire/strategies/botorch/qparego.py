@@ -21,6 +21,7 @@ from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
 from bofire.utils.multiobjective import get_ref_point_mask
+from bofire.utils.torch_tools import get_linear_constraints
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
@@ -102,12 +103,8 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             bounds = self.get_bounds(),
             num_restarts = self.num_restarts,
             raw_samples = self.num_raw_samples,
-            equality_constraints=self.domain.constraints.get(
-                    includes=LinearEqualityConstraint
-                ),
-            inequality_constraints=self.domain.constraints.get(
-                    includes=LinearInequalityConstraint
-                ),
+            equality_constraints=get_linear_constraints(LinearEqualityConstraint),
+            inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
             fixed_features=self.get_fixed_features(),
             options={"batch_limit": 5, "maxiter": 200},
         )
