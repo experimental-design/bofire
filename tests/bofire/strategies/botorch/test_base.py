@@ -15,20 +15,19 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
 )
 from bofire.domain.features import (
-    CategoricalDescriptorInputFeature,
-    CategoricalInputFeature,
-    ContinuousInputFeature,
-    ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
     Feature,
     OutputFeature,
 )
+from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.domain.util import KeyModel
 from bofire.strategies.botorch import tkwargs
-from bofire.strategies.botorch.base import BotorchBasicBoStrategy
+from bofire.strategies.botorch.base import BotorchBasicBoStrategy, ModelSpec
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
 from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective
-from bofire.strategies.strategy import ModelSpec
 from tests.bofire.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
@@ -82,52 +81,59 @@ class DummyStrategy(BotorchBasicBoStrategy):
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         return my_type in [
-            ContinuousInputFeature,
-            ContinuousOutputFeature
+            ContinuousInput,
+            ContinuousOutput
+        ]
+    
+    @classmethod
+    def is_objective_implemented(cls, my_type: Type[Feature]) -> bool:
+        return my_type in [
+            MinimizeObjective,
+            MaximizeObjective
         ]
 
-if1 = ContinuousInputFeature(**{
+if1 = ContinuousInput(**{
     **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     "key": "if1",
 })
-if2 = ContinuousInputFeature(**{
+if2 = ContinuousInput(**{
     **VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
     "key": "if2",
 })
 
-if3 = CategoricalInputFeature(**{
+if3 = CategoricalInput(**{
     **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     "key": "if3",
 })
 
-if4 = CategoricalInputFeature(**{
+if4 = CategoricalInput(**{
     **VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
     "key": "if4",
 })
 
-if5 = CategoricalDescriptorInputFeature(**{
+if5 = CategoricalDescriptorInput(**{
     **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     "key": "if5",
 })
 
-if6 = CategoricalDescriptorInputFeature(**{
+if6 = CategoricalDescriptorInput(**{
     **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     "key": "if6",
 })
 
 if7 = DummyFeature(key = "if7")
 
-if8 = CategoricalDescriptorInputFeature(**{
+if8 = CategoricalDescriptorInput(**{
     **VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     "key": "if8",
     })
 
-of1 = ContinuousOutputFeature(**{
+of1 = ContinuousOutput(**{
     **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
     "key": "of1",
 })
 
-of2 = ContinuousOutputFeature(**{
+of2 = ContinuousOutput(**{
     **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
     "key": "of2",
 })
@@ -342,7 +348,7 @@ def test_base_get_bounds_fit():
     strategy.experiments = generate_experiments(domain, 100, tol = 2.)
     opt_bounds = strategy.get_bounds(optimize=True)
     fit_bounds = strategy.get_bounds(optimize=False)
-    for i,key in enumerate(domain.get_feature_keys(ContinuousInputFeature)):
+    for i,key in enumerate(domain.get_feature_keys(ContinuousInput)):
         assert fit_bounds[0,i] < opt_bounds[0,i]
         assert fit_bounds[1,i] > opt_bounds[1,i]
         assert fit_bounds[0,i] == strategy.experiments[key].min()

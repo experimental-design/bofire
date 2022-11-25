@@ -16,7 +16,12 @@ from bofire.domain.constraints import (
     NChooseKConstraint,
 )
 from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput, Feature
-from bofire.domain.objectives import IdentityObjective, Objective
+from bofire.domain.objectives import (
+    IdentityObjective,
+    MaximizeObjective,
+    MinimizeObjective,
+    Objective,
+)
 from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
@@ -146,6 +151,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        if my_type != IdentityObjective:
+        if my_type not in [MaximizeObjective, MinimizeObjective]:
             return False
         return True

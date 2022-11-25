@@ -2,7 +2,6 @@ from typing import List, Optional, Type
 
 import numpy as np
 import torch
-from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
@@ -17,17 +16,23 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 
 from bofire.domain.constraints import Constraint, NChooseKConstraint
 from bofire.domain.features import Feature, InputFeature
-from bofire.domain.objectives import IdentityObjective, Objective
+from bofire.domain.objectives import (
+    IdentityObjective,
+    MaximizeObjective,
+    MinimizeObjective,
+    Objective,
+)
 from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
 
 
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
-    #ref_point: Optional[dict]
-    #ref_point_mask: Optional[np.ndarray]
-    #objective: Optional[MCMultiOutputObjective]
-    #name: str = "botorch.qehvi"
+    test: int
+    ref_point: Optional[dict]
+    ref_point_mask: Optional[np.ndarray]
+    objective: Optional[MCMultiOutputObjective]
+    name: str = "botorch.qehvi"
 
     def _init_acqf(self) -> None:
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
@@ -101,13 +106,14 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         self.ref_point_mask = get_ref_point_mask(self.domain)
         super()._init_domain()
         return
-
+    
     def get_adjusted_refpoint(self):
         if self.ref_point is not None:
             return (self.ref_point_mask * np.array([self.ref_point[feat] for feat in self.domain.output_features.get_keys_by_objective(excludes=None)])).tolist()
         # we have to push all results through the objective functions and then take the min values
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
         return(df[self.domain.output_features.get_keys_by_objective(excludes=None)].values*self.ref_point_mask).min(axis=0).tolist()
+
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -122,7 +128,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         if my_type == NChooseKConstraint:
             return False
         return True
-    
+
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         """Method to check if a specific feature type is implemented for the strategy
@@ -134,7 +140,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             bool: True if the feature type is valid for the strategy chosen, False otherwise
         """
         return True
-    
+
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
         """Method to check if a objective type is implemented for the strategy
@@ -145,7 +151,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
         """
-        if my_type != IdentityObjective:
+        if my_type not in [MaximizeObjective, MinimizeObjective]:
             return False
         return True
 
