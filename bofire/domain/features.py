@@ -840,7 +840,7 @@ class ContinuousOutput(OutputFeature):
         self,
         lower: float,
         upper: float,
-        df_data: Optional[pd.DataFrame] = None,
+        experiments: Optional[pd.DataFrame] = None,
         plot_details: bool = True,
         line_options: Optional[Dict] = None,
         scatter_options: Optional[Dict] = None,
@@ -852,7 +852,7 @@ class ContinuousOutput(OutputFeature):
         Args:
             lower (float): lower bound for the plot
             upper (float): upper bound for the plot
-            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
+            experiments (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
         """
         if self.objective is None:
             raise ValueError(
@@ -867,13 +867,13 @@ class ContinuousOutput(OutputFeature):
         line_options["color"] = line_options.get("color", "black")
         scatter_options["color"] = scatter_options.get("color", "red")
 
-        x = pd.DataFrame(np.linspace(lower, upper, 5000))
+        x = pd.Series(np.linspace(lower, upper, 5000))
         reward = self.objective.__call__(x)
         fig, ax = plt.subplots()
         ax.plot(x, reward, **line_options)
         # TODO: validate dataframe
-        if df_data is not None:
-            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
+        if experiments is not None:
+            x_data = experiments.loc[experiments[self.key].notna(), self.key].values
             ax.scatter(
                 x_data,  # type: ignore
                 self.objective.__call__(x_data),  # type: ignore

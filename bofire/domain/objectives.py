@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Dict
+from typing import Dict, Union
 
 import numpy as np
 import pandas as pd
@@ -22,7 +22,7 @@ class Objective(BaseModel):
     """The base class for all objectives"""
 
     @abstractmethod
-    def __call__(self, x: pd.DataFrame) -> pd.DataFrame:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """Abstract method to define the call function for the class Objective
 
         Args:
@@ -110,7 +110,7 @@ class IdentityObjective(Objective):
             )
         return values
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
@@ -143,7 +143,7 @@ class MinimizeObjective(IdentityObjective):
         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
@@ -167,7 +167,7 @@ class DeltaObjective(IdentityObjective):
     ref_point: float
     scale: float = 1
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
@@ -203,7 +203,7 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
@@ -224,7 +224,7 @@ class MinimizeSigmoidObjective(SigmoidObjective):
         tp (float): Turning point of the sigmoid function.
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
@@ -245,7 +245,7 @@ class ConstantObjective(Objective):
 
     w: float
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning the fixed value as reward
 
         Args:
@@ -284,7 +284,7 @@ class AbstractTargetObjective(Objective):
 class CloseToTargetObjective(AbstractTargetObjective):
     exponent: float
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         return (
             np.abs(x - self.target_value) ** self.exponent
             - self.tolerance**self.exponent
@@ -304,7 +304,7 @@ class TargetObjective(AbstractTargetObjective):
 
     steepness: TGt0
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values.
 
         Args:

@@ -21,7 +21,11 @@ from bofire.domain.features import (
     OutputFeature,
     OutputFeatures,
 )
-from bofire.domain.objectives import MinimizeObjective, Objective
+from bofire.domain.objectives import (
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+    Objective,
+)
 from tests.bofire.domain.utils import get_invalids
 
 objective = MinimizeObjective(w=1)
@@ -1297,3 +1301,28 @@ def test_output_features_call(features, samples):
     o = features(samples)
     assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
     assert list(o.columns) == features.get_keys_by_objective(Objective)
+
+
+@pytest.mark.parametrize(
+    "feature, data",
+    [
+        (
+            ContinuousOutput(
+                key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
+            ),
+            None,
+        ),
+        (
+            ContinuousOutput(
+                key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
+            ),
+            pd.DataFrame(
+                columns=["of1", "of2", "of3"],
+                index=range(5),
+                data=np.random.uniform(size=(5, 3)),
+            ),
+        ),
+    ],
+)
+def test_output_feature_plot(feature, data):
+    feature.plot(lower=0, upper=30, experiments=data)
