@@ -117,6 +117,39 @@ class Domain(BaseModel):
         return v
 
     @validator("constraints", always=True)
+    def validate_linear_constraints(cls, v, values):
+        """Validate if all features included in linear constraints are continuous ones.
+
+        Args:
+            v (List[Constraint]): List of constraints or empty if no constraints are defined
+            values (List[InputFeature]): List of input features of the domain
+
+        Raises:
+            ValueError: _description_
+
+
+        Returns:
+           List[Constraint]: List of constraints defined for the domain
+        """
+        if "input_features" not in values:
+            return v
+
+        # gather continuous input_features in dictionary
+        continuous_input_features_dict = {}
+        for f in values["input_features"]:
+            if type(f) is ContinuousInput:
+                continuous_input_features_dict[f.key] = f
+
+        # check if non continuous input features appear in linear constraints
+        for c in v:
+            if isinstance(c, LinearConstraint):
+                for f in c.features:
+                    assert (
+                        f in continuous_input_features_dict
+                    ), f"{f} must be continuous."
+        return v
+
+    @validator("constraints", always=True)
     def validate_lower_bounds_in_nchoosek_constraints(cls, v, values):
         """Validate the lower bound as well if the chosen number of allowed features is continuous.
 
