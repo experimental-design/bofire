@@ -1,4 +1,7 @@
+import numpy as np
 import pytest
+import torch
+from botorch.utils.objective import soft_eval_constraint
 from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.objectives import (
@@ -199,3 +202,24 @@ def test_desirability_function_serialize(cls, spec):
 def test_invalid_desirability_function_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
         _ = cls(**spec)
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        (MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
+        (MinimizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
+        (TargetObjective(w=1, target_value=15, steepness=2, tolerance=5)),
+    ],
+)
+def test_maximize_sigmoid_objective_get_callables(objective):
+    cs = objective.get_callables(idx=0)
+
+    x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
+    y = torch.ones([500])
+
+    for c in cs:
+        xtt = c(x)
+        y *= soft_eval_constraint(xtt, 1.0 / objective.steepness)
+
+    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), y.numpy().ravel())
