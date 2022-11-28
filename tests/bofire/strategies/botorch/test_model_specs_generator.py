@@ -27,46 +27,28 @@ if2 = ContinuousInput(
 of1 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of1"})
 of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of2"})
 
-'''(
-            BoTorchSoboStrategy(domain=Domain(
-                input_features=[],
-                output_features=[],
-                constraints=[],
-            ),
-                **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-            ),
-            Domain(
-                input_features=[],
-                output_features=[],
-                constraints=[],
-            ),
-            0,
-        ),'''
 
 @pytest.mark.parametrize(
-    "strategy, domain, expected_count",
+    "strategy, expected_count",
     [
         (
-            BoTorchSoboStrategy(domain=Domain(
-                input_features=[if1],
-                output_features=[of1, of2],
-                constraints=[],
-            ),
+            BoTorchSoboStrategy(
+                domain=Domain(
+                    input_features=[if1],
+                    output_features=[of1, of2],
+                    constraints=[],
+                ),
                 **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-            ),
-            Domain(
-                input_features=[if1],
-                output_features=[of1, of2],
-                constraints=[],
             ),
             2,
         ),
         (
-            BoTorchSoboStrategy(domain=Domain(
-                input_features=[if1],
-                output_features=[of1, of2],
-                constraints=[],
-            ),
+            BoTorchSoboStrategy(
+                domain=Domain(
+                    input_features=[if1],
+                    output_features=[of1, of2],
+                    constraints=[],
+                ),
                 **{
                     **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
                     "model_specs": [
@@ -78,108 +60,93 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of2"})
                             }
                         )
                     ],
-                }
-            ),
-            Domain(
-                input_features=[if1],
-                output_features=[of1, of2],
-                constraints=[],
+                },
             ),
             2,
         ),
     ],
 )
-def test_generate_model_specs(strategy: Strategy, domain: Domain, expected_count: int):
-    model_specs = BotorchBasicBoStrategy._generate_model_specs(domain, strategy.model_specs)
+def test_generate_model_specs(strategy: Strategy, expected_count: int):
+    model_specs = BotorchBasicBoStrategy._generate_model_specs(
+        strategy.domain, strategy.specs
+    )
     assert len(model_specs) == expected_count
 
 
 @pytest.mark.parametrize(
-    "strategy, domain",
+    "strategy, specs",
     [
         (
-            BoTorchSoboStrategy(domain=Domain(
-                input_features=[if1],
-                output_features=[of1],
-                constraints=[],
+            BoTorchSoboStrategy(
+                domain=Domain(
+                    input_features=[if1],
+                    output_features=[of1],
+                    constraints=[],
+                ),
+                **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
             ),
-                **{
-                    **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-                    "model_specs": [
-                        ModelSpec(
-                            **{
-                                **VALID_MODEL_SPEC_SPEC,
-                                "output_feature": "unknown",
-                                "input_features": ["if1"],
-                            }
-                        )
-                    ],
-                }
-            ),
-            Domain(
-                input_features=[if1],
-                output_features=[of1],
-                constraints=[],
-            ),
+            [
+                ModelSpec(
+                    **{
+                        **VALID_MODEL_SPEC_SPEC,
+                        "output_feature": "unknown",
+                        "input_features": ["if1"],
+                    }
+                )
+            ],
         ),
         (
-            BoTorchSoboStrategy(domain=Domain(
-                input_features=[if1],
-                output_features=[of1],
-                constraints=[],
+            BoTorchSoboStrategy(
+                domain=Domain(
+                    input_features=[if1],
+                    output_features=[of1],
+                    constraints=[],
+                ),
+                **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
             ),
-                **{
-                    **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-                    "model_specs": [
-                        ModelSpec(
-                            **{
-                                **VALID_MODEL_SPEC_SPEC,
-                                "output_feature": "of1",
-                                "input_features": ["unknown"],
-                            }
-                        )
-                    ],
-                }
-            ),
-            Domain(
-                input_features=[if1],
-                output_features=[of1],
-                constraints=[],
-            )
-        ),
-    ],
-)
-def test_generate_model_specs_invalid(strategy: Strategy, domain: Domain):
-    with pytest.raises(KeyError):
-        BotorchBasicBoStrategy._generate_model_specs(domain, strategy.model_specs)
-
-
-def test_generate_valid_model_specs_not_overwrite():
-    domain = Domain(
-        input_features=[if1, if2],
-        output_features=[of1, of2],
-        constraints=[],
-    )
-    strategy = BoTorchSoboStrategy(
-        **{
-            **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-            "model_specs": [
+            [
                 ModelSpec(
                     **{
                         **VALID_MODEL_SPEC_SPEC,
                         "output_feature": "of1",
-                        "input_features": ["if2"],
+                        "input_features": ["unknown"],
                     }
                 )
             ],
-        }
-    )
-    
-    model_specs = Strategy._generate_model_specs(domain, strategy.model_specs)
+        ),
+    ],
+)
+def test_generate_model_specs_invalid(strategy: Strategy, specs: ModelSpec):
+    with pytest.raises(KeyError):
+        BotorchBasicBoStrategy._generate_model_specs(strategy.domain, specs)
+
+
+"""@pytest.mark.parametrize(
+    "strategy, specs",
+    [
+        BoTorchSoboStrategy(
+            domain=Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            ),
+            **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
+        ),
+        [
+            ModelSpec(
+                **{
+                    **VALID_MODEL_SPEC_SPEC,
+                    "output_feature": "of1",
+                    "input_features": ["if2"],
+                }
+            )
+        ],
+    ],
+)
+def test_generate_valid_model_specs_not_overwrite(strategy: Strategy, specs: ModelSpec):
+
+    model_specs = Strategy._generate_model_specs(strategy.domain, specs)
     assert len(model_specs) == 2
-    model_specs = {
-        model_spec.output_feature: model_spec
-        for model_spec in model_specs
-    }
+    model_specs = {model_spec.output_feature: model_spec for model_spec in model_specs}
     assert model_specs["of1"].input_features == ["if2"]
-    assert model_specs["of2"].input_features == ["if1", "if2"]
+    assert model_specs["of2"].input_features == ["if1", "if2"]"""

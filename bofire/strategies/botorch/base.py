@@ -27,6 +27,7 @@ from bofire.domain.features import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
+    ContinuousOutput,
     InputFeature,
     is_continuous,
 )
@@ -51,43 +52,55 @@ from bofire.utils.transformer import Transformer
 
 class ModelSpec(BaseModel):
     """Model specifications defining a model to be used as regression model
-    
+
     Attributes:
         output_feature (str):       output the model should predict
         input_features (List[str]): list of input feature keys to be used for the model
-        kernel (KernelEnum):        the kernel to be used 
-        ard (bool):                 boolean to switch automated relevance detection of input features on/off   
-        scaler (ScalerEnum):        the scaling method to be used for the 
+        kernel (KernelEnum):        the kernel to be used
+        ard (bool):                 boolean to switch automated relevance detection of input features on/off
+        scaler (ScalerEnum):        the scaling method to be used for the
         name (str, optional):       the name is set in the strategy
     Raises:
         ValueError: when passed input features are not uniquely named
     """
+
     output_feature: str
     input_features: conlist(item_type=str, min_items=1)
     kernel: KernelEnum
     ard: bool
     scaler: ScalerEnum
-    name: Optional[str] #is set in strategies
+    name: Optional[str]  # is set in strategies
+
+    @validator("input_features", allow_reuse=True)
+    def validate_input_features(cls, v):
+        if len(v) != len(set(v)):
+            raise ValueError("input features are not unique")
+        return v
+
+    def get(self, keyname: str, value: Optional[str]):
+        return getattr(self, keyname, value)
+
 
 class BotorchBasicBoStrategy(PredictiveStrategy):
     num_sobol_samples: PositiveInt = 512
     num_restarts: PositiveInt = 8
     num_raw_samples: PositiveInt = 1024
-    descriptor_encoding: DescriptorEncodingEnum  = DescriptorEncodingEnum.DESCRIPTOR # set defaults, cause when you have only continuous features its annoying to define categorical stuff
-    descriptor_method : DescriptorMethodEnum = DescriptorMethodEnum.EXHAUSTIVE
+    descriptor_encoding: DescriptorEncodingEnum = (
+        DescriptorEncodingEnum.DESCRIPTOR
+    )  # set defaults, cause when you have only continuous features its annoying to define categorical stuff
+    descriptor_method: DescriptorMethodEnum = DescriptorMethodEnum.EXHAUSTIVE
     categorical_encoding: CategoricalEncodingEnum = CategoricalEncodingEnum.ORDINAL
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     model_specs: Optional[conlist(item_type=ModelSpec, min_items=1)]
     objective: Optional[MCAcquisitionObjective]
-    aquisition_funciton: Optional[AcquisitionFunctionEnum]
+    acquisition_function: Optional[AcquisitionFunctionEnum]
     acqf: Optional[AcquisitionFunction]
     sampler: Optional[SobolQMCNormalSampler]
     model: Optional[GPyTorchModel]
     features2idx: Dict = Field(default_factory=lambda: {})
     input_feature_keys: List[str] = Field(default_factory=lambda: [])
     is_fitted: bool = False
-    use_combined_bounds:bool = True # parameter to switch to legacy behavior
-
+    use_combined_bounds: bool = True  # parameter to switch to legacy behavior
 
     @validator("num_sobol_samples")
     def validate_num_sobol_samples(cls, v):
@@ -104,26 +117,28 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 "number raw samples have to be of the power of 2 to increase performance"
             )
         return v
-    
+
     @validator("categorical_method")
     def validate_descriptor_method(cls, v, values):
-        if v == CategoricalMethodEnum.FREE and values["categorical_encoding"]==CategoricalEncodingEnum.ORDINAL:
+        if (
+            v == CategoricalMethodEnum.FREE
+            and values["categorical_encoding"] == CategoricalEncodingEnum.ORDINAL
+        ):
             raise ValueError(
                 "Categorical encoding is incompatible with chosen handling method"
             )
         return v
-    
+
     @root_validator(pre=False)
     def update_model_specs_for_domain(cls, values):
-        """Ensures that a prediction model is specified for each output feature
-        """
+        """Ensures that a prediction model is specified for each output feature"""
         if values["domain"] is not None:
             values["model_specs"] = BotorchBasicBoStrategy._generate_model_specs(
                 values["domain"],
                 values["model_specs"],
             )
         return values
-    
+
     @staticmethod
     def _generate_model_specs(
         domain: Domain,
@@ -144,33 +159,35 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         output_features = domain.output_features.get_keys_by_objective(excludes=None)
         if model_specs is None:
             model_specs = []
-        existing_specs = [
-            model_spec.output_feature
-            for model_spec in model_specs
-        ]
+        existing_specs = [model_spec.output_feature for model_spec in model_specs]
         for key in existing_specs:
             if key not in output_features:
-                raise KeyError(f"there is a model spec for an unknown output feature {key}")
+                raise KeyError(
+                    f"there is a model spec for an unknown output feature {key}"
+                )
         for model_spec in model_specs:
             for input_feature in model_spec.input_features:
                 if input_feature not in input_features:
-                    raise KeyError(f"model spec of {model_spec.output_feature} has an unknown input feature: {input_feature}")
+                    raise KeyError(
+                        f"model spec of {model_spec.output_feature} has an unknown input feature: {input_feature}"
+                    )
         for output_feature in output_features:
             if output_feature in existing_specs:
                 continue
-            model_specs.append(ModelSpec(
-                output_feature=output_feature,
-                input_features=[*input_features],
-                kernel=KernelEnum.MATERN_25,
-                ard=True,
-                scaler=ScalerEnum.NORMALIZE,
-            ))
+            model_specs.append(
+                ModelSpec(
+                    output_feature=output_feature,
+                    input_features=[*input_features],
+                    kernel=KernelEnum.MATERN_25,
+                    ard=True,
+                    scaler=ScalerEnum.NORMALIZE,
+                )
+            )
         assert len(model_specs) == len(output_features)
         return model_specs
 
     def _init_domain(self):
-        """set up the transformer and the objective
-        """
+        """set up the transformer and the objective"""
         if self.descriptor_encoding == DescriptorEncodingEnum.CATEGORICAL:
             self.descriptor_method = DescriptorMethodEnum(self.categorical_method.value)
 
@@ -178,8 +195,8 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             domain=self.domain,
             descriptor_encoding=self.descriptor_encoding,
             categorical_encoding=self.categorical_encoding,
-            scale_inputs = None,
-            scale_outputs = None
+            scale_inputs=None,
+            scale_outputs=None,
         )
 
         for feat in self.domain.get_feature_keys(InputFeature):
@@ -191,7 +208,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
         torch.manual_seed(self.seed)
 
-        self.sampler = SobolQMCNormalSampler(self.num_sobol_samples)  # ,seed=self.seed) #TODO: leave this decision open?
+        self.sampler = SobolQMCNormalSampler(
+            self.num_sobol_samples
+        )  # ,seed=self.seed) #TODO: leave this decision open?
         self.init_objective()
 
     # helper functions
@@ -201,22 +220,22 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 return spec
         raise ValueError("No model_spec found for feature %s" % output_feature_key)
 
-    def get_feature_indices(self,output_feature_key):
+    def get_feature_indices(self, output_feature_key):
         indices = []
         for key in self.domain.get_feature_keys(InputFeature):
             if key in self.get_model_spec(output_feature_key).input_features:
                 indices += self.features2idx[key]
         return indices
 
-    def get_training_tensors(self,transformed: pd.DataFrame, output_feature_key: str):
-        train_X = torch.from_numpy(
-            transformed[self.input_feature_keys].values
-        ).to(**tkwargs)
+    def get_training_tensors(self, transformed: pd.DataFrame, output_feature_key: str):
+        train_X = torch.from_numpy(transformed[self.input_feature_keys].values).to(
+            **tkwargs
+        )
         train_Y = torch.from_numpy(
             transformed[output_feature_key].values.reshape([-1, 1])
         ).to(**tkwargs)
         return train_X, train_Y
-    
+
     def _fit(self, transformed: pd.DataFrame):
         """[summary]
 
@@ -224,8 +243,12 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             transformed (pd.DataFrame): [description]
         """
         models = []
-        for i, ofeat in enumerate(self.domain.get_features(ContinuousOutputFeature, exact=True)):
-            transformed_temp = self.domain.preprocess_experiments_one_valid_output(transformed, ofeat.key)
+        for i, ofeat in enumerate(
+            self.domain.get_features(ContinuousOutput, exact=True)
+        ):
+            transformed_temp = self.domain.preprocess_experiments_one_valid_output(
+                experiments=transformed, output_feature_key=ofeat.key
+            )
             train_X, train_Y = self.get_training_tensors(transformed_temp, ofeat.key)
 
             models.append(
@@ -234,11 +257,18 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     train_Y=train_Y,
                     active_dims=self.get_feature_indices(ofeat.key),
                     cat_dims=self.categorical_dims,
-                    scaler_name=self.get_model_spec(ofeat.key).get("scaler", ScalerEnum.NORMALIZE),
-                    bounds = self.get_bounds(optimize=False) if self.use_combined_bounds else None,
-                    kernel_name=self.get_model_spec(ofeat.key).get("kernel", KernelEnum.MATERN_25),
+                    scaler_name=self.get_model_spec(ofeat.key).get(
+                        "scaler", ScalerEnum.NORMALIZE
+                    ),
+                    bounds=self.get_bounds(optimize=False)
+                    if self.use_combined_bounds
+                    else None,
+                    kernel_name=self.get_model_spec(ofeat.key).get(
+                        "kernel", KernelEnum.MATERN_25
+                    ),
                     use_ard=self.get_model_spec(ofeat.key).get("ard", True),
-                    use_categorical_kernel=self.categorical_encoding==CategoricalEncodingEnum.ORDINAL
+                    use_categorical_kernel=self.categorical_encoding
+                    == CategoricalEncodingEnum.ORDINAL,
                 )
             )
         if len(models) == 1:
@@ -279,13 +309,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         acqf_values = self.acqf.forward(X).cpu().detach().numpy()
 
         return candidate_pool.iloc[acqf_values.argmax(candidate_count)]
-        
+
     @property
     def categorical_dims(self):
-        desc_categorical_features = self.domain.get_features(
-            CategoricalDescriptorInput
-        )
-        categorical_features = self.domain.get_features(CategoricalInput,exact=True)
+        desc_categorical_features = self.domain.get_features(CategoricalDescriptorInput)
+        categorical_features = self.domain.get_features(CategoricalInput, exact=True)
         indices = []
         for feat in categorical_features:
             indices += self.features2idx[feat.key]
@@ -314,15 +342,16 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # - categoricals with one hot and exhaustive screening, could be in combination with garrido merchan - check
         # - categoricals with one hot and OEN, could be in combination with garrido merchan - OEN not implemented
         # - descriptized categoricals not yet implemented
-        num_categorical_features = len(
-            self.domain.get_features(CategoricalInput)
-        )
+        num_categorical_features = len(self.domain.get_features(CategoricalInput))
         num_categorical_combinations = len(self.domain.get_categorical_combinations())
 
         if (
             (num_categorical_features == 0)
             or (num_categorical_combinations == 1)
-            or ((self.categorical_method == CategoricalMethodEnum.FREE) and (self.descriptor_method == DescriptorMethodEnum.FREE))
+            or (
+                (self.categorical_method == CategoricalMethodEnum.FREE)
+                and (self.descriptor_method == DescriptorMethodEnum.FREE)
+            )
         ) and len(self.domain.constraints.get(NChooseKConstraint)) == 0:
             candidates = optimize_acqf(
                 acq_function=self.acqf,
@@ -331,14 +360,16 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
                 equality_constraints=get_linear_constraints(LinearEqualityConstraint),
-                inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
+                inequality_constraints=get_linear_constraints(
+                    LinearInequalityConstraint
+                ),
                 fixed_features=self.get_fixed_features(),
                 return_best_only=True,
             )
             # options={"seed":self.seed})
 
         elif (
-            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE) 
+            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
             or (self.descriptor_method == DescriptorMethodEnum.EXHAUSTIVE)
         ) and len(self.domain.constraints.get(NChooseKConstraint)) == 0:
             # TODO: marry this withe groups of XY
@@ -349,7 +380,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
                 equality_constraints=get_linear_constraints(LinearEqualityConstraint),
-                inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
+                inequality_constraints=get_linear_constraints(
+                    LinearInequalityConstraint
+                ),
                 fixed_features_list=self.get_categorical_combinations(),
             )
             # options={"seed":self.seed})
@@ -362,7 +395,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
                 equality_constraints=get_linear_constraints(LinearEqualityConstraint),
-                inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
+                inequality_constraints=get_linear_constraints(
+                    LinearInequalityConstraint
+                ),
                 fixed_features_list=self.get_fixed_values_list(),
             )
 
@@ -374,21 +409,36 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # otherwise the prediction holds only for the infeasible solution, this solution should then also be
         # applicable for >1d descriptors
         preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()
-        stds = np.sqrt(
-            self.model.posterior(X=candidates[0]).variance.detach().numpy()
-        )
+        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())
 
         df_candidates = pd.DataFrame(
             data=np.nan,
             index=range(candidate_count),
             columns=self.input_feature_keys
-            + [i + "_pred" for i in self.domain.output_features.get_keys_by_objective(excludes=None)]
-            + [i + "_sd" for i in self.domain.output_features.get_keys_by_objective(excludes=None)]
-            + [i + "_des" for i in self.domain.output_features.get_keys_by_objective(excludes=None)]
+            + [
+                i + "_pred"
+                for i in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
+            + [
+                i + "_sd"
+                for i in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
+            + [
+                i + "_des"
+                for i in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
             # ["reward","acqf","strategy"]
         )
 
-        for i, feat in enumerate(self.domain.output_features.get_by_objective(excludes=None)):
+        for i, feat in enumerate(
+            self.domain.output_features.get_by_objective(excludes=None)
+        ):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
             df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])
@@ -409,7 +459,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return
 
     @abstractmethod
-    def _init_acqf(self,) -> None:
+    def _init_acqf(
+        self,
+    ) -> None:
         pass
 
     def init_objective(self) -> None:
@@ -417,7 +469,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return
 
     @abstractmethod
-    def _init_objective(self,) -> None:
+    def _init_objective(
+        self,
+    ) -> None:
         pass
 
     def get_bounds(self, optimize=True):
@@ -455,17 +509,17 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         upper += df.loc["upper"].tolist()
                 elif self.categorical_encoding == CategoricalEncodingEnum.ORDINAL:
                     lower.append(0)
-                    upper.append(len(var.categories)-1)
+                    upper.append(len(var.categories) - 1)
                 else:
                     for _ in var.categories:
                         lower.append(0.0)
-                        upper.append(1.0) 
+                        upper.append(1.0)
             else:
                 raise IOError("Feature type not known!")
 
         return torch.tensor([lower, upper]).to(**tkwargs)
 
-    def get_fixed_features(self): 
+    def get_fixed_features(self):
         """provides the values of all fixed features
 
         Raises:
@@ -481,9 +535,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             if self.experiments is not None:
                 experiments = self.experiments
             else:
-                #TODO: catch if no experiements are provided
-                print("Call strategy.tell first. The transfomer needs to be fitted here")
-            _ = self.transformer.fit_transform(experiments) 
+                # TODO: catch if no experiements are provided
+                print(
+                    "Call strategy.tell first. The transfomer needs to be fitted here"
+                )
+            _ = self.transformer.fit_transform(experiments)
 
         for _, var in enumerate(self.domain.get_features(InputFeature)):
             if var.fixed_value() is not None:
@@ -495,7 +551,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     fixed_features[self.features2idx[var.key][0]] = var.fixed_value()
 
                 elif (
-                    isinstance(var, CategoricalDescriptorInputFeature)
+                    isinstance(var, CategoricalDescriptorInput)
                     and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
                 ):
                     for j, idx in enumerate(self.features2idx[var.key]):
@@ -505,8 +561,8 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         #     fixed_features[idx]= self.transform.encoders[var.descriptors[j]].transform(values)
                         # else:
                         fixed_features[idx] = var.values[category_index][j]
-                
-                elif isinstance(var, CategoricalInputFeature):
+
+                elif isinstance(var, CategoricalInput):
                     if self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT:
                         transformed = (
                             self.transformer.encoders[var.key]
@@ -514,34 +570,37 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                             .toarray()
                         )
                         for j, idx in enumerate(self.features2idx[var.key]):
-                            fixed_features[idx] = transformed[0, j] 
+                            fixed_features[idx] = transformed[0, j]
                     elif self.categorical_encoding == CategoricalEncodingEnum.ORDINAL:
                         transformed = self.transformer.encoders[var.key].transform(
                             np.array([[var.fixed_value()]])
                         )
-                        fixed_features[
-                            self.features2idx[var.key][0]
-                        ] = transformed[0][0]
+                        fixed_features[self.features2idx[var.key][0]] = transformed[0][
+                            0
+                        ]
                     else:
                         pass
                 else:
                     raise NotImplementedError(
                         "The feature type %s is not known" % var.__class__.__name__
                     )
-        # in case the optimization method is free and not allowed categories are present 
+        # in case the optimization method is free and not allowed categories are present
         # one has to fix also them
-        if self.categorical_method == CategoricalMethodEnum.FREE and self.categorical_encoding==CategoricalEncodingEnum.ONE_HOT:
+        if (
+            self.categorical_method == CategoricalMethodEnum.FREE
+            and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
+        ):
             for feat in self.get_true_categorical_features():
                 if feat.is_fixed() == False:
                     for cat in feat.get_forbidden_categories():
                         transformed = (
-                                self.transformer.encoders[feat.key]
-                                .transform(np.array([[cat]]))
-                                .toarray()
-                            )
+                            self.transformer.encoders[feat.key]
+                            .transform(np.array([[cat]]))
+                            .toarray()
+                        )
                         # we fix those indices to zero where one has a 1 as response from the transformer
                         for j, idx in enumerate(self.features2idx[feat.key]):
-                            if transformed[0,j] == 1.:
+                            if transformed[0, j] == 1.0:
                                 fixed_features[idx] = 0
         return fixed_features
 
@@ -555,29 +614,32 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         if self.descriptor_encoding == DescriptorEncodingEnum.CATEGORICAL:
             return self.domain.get_features(CategoricalInput)
         else:
-            return self.domain.get_features(CategoricalInput, excludes= [CategoricalDescriptorInput])
+            return self.domain.get_features(
+                CategoricalInput, excludes=[CategoricalDescriptorInput]
+            )
 
     def get_categorical_combinations(self):
-        """provides all possible combinations of fixed values 
+        """provides all possible combinations of fixed values
 
         Returns:
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
         """
         fixed_basis = self.get_fixed_features()
-        include = CategoricalInputFeature
+        include = CategoricalInput
         exclude = None
-        
-        if (
-            (self.descriptor_method == DescriptorMethodEnum.FREE) 
-            and (self.categorical_method == CategoricalMethodEnum.FREE)
+
+        if (self.descriptor_method == DescriptorMethodEnum.FREE) and (
+            self.categorical_method == CategoricalMethodEnum.FREE
         ):
             return [{}]
         elif self.descriptor_method == DescriptorMethodEnum.FREE:
-            exclude=CategoricalDescriptorInputFeature
+            exclude = CategoricalDescriptorInput
         elif self.categorical_method == CategoricalMethodEnum.FREE:
-            include = CategoricalDescriptorInputFeature
-            
-        combos = self.domain.get_categorical_combinations(include=include, exclude=exclude)
+            include = CategoricalDescriptorInput
+
+        combos = self.domain.get_categorical_combinations(
+            include=include, exclude=exclude
+        )
         # now build up the fixed feature list
         if len(combos) == 1:
             return [fixed_basis]
@@ -591,7 +653,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     feat, val = pair
                     feature = self.domain.get_feature(feat)
                     if (
-                        isinstance(feature, CategoricalDescriptorInputFeature)
+                        isinstance(feature, CategoricalDescriptorInput)
                         and self.descriptor_encoding
                         == DescriptorEncodingEnum.DESCRIPTOR
                     ):
@@ -600,7 +662,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         for j, idx in enumerate(self.features2idx[feat]):
                             fixed_features[idx] = feature.values[index][j]
 
-                    elif isinstance(feature, CategoricalInputFeature):
+                    elif isinstance(feature, CategoricalInput):
                         if self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT:
                             transformed = (
                                 self.transformer.encoders[feat]
@@ -623,9 +685,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     def get_nchoosek_combinations(self):
 
-        '''
+        """
         generate a list of fixed values dictionaries from n-choose-k constraints
-        '''
+        """
 
         # generate botorch-friendly fixed values
         used_features, unused_features = self.domain.get_nchoosek_combinations()
@@ -636,11 +698,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             # sets unused features to zero
             for f_key in unused:
                 fixed_values[self.features2idx[f_key][0]] = 0.0
-            
+
             fixed_values_list_cc.append(fixed_values)
 
         if len(fixed_values_list_cc) == 0:
-            fixed_values_list_cc.append({})    # any better alternative here?
+            fixed_values_list_cc.append({})  # any better alternative here?
 
         return fixed_values_list_cc
 
@@ -650,8 +712,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         fixed_values_full = []
 
         if (
-            (self.categorical_method == CategoricalMethodEnum.FREE and self.descriptor_method == DescriptorMethodEnum.FREE)
-            or (self.categorical_method == CategoricalMethodEnum.FREE and self.descriptor_encoding == DescriptorEncodingEnum.CATEGORICAL)
+            self.categorical_method == CategoricalMethodEnum.FREE
+            and self.descriptor_method == DescriptorMethodEnum.FREE
+        ) or (
+            self.categorical_method == CategoricalMethodEnum.FREE
+            and self.descriptor_encoding == DescriptorEncodingEnum.CATEGORICAL
         ):
             ff1 = self.get_fixed_features()
             for ff2 in self.get_concurrency_combinations():
@@ -665,53 +730,70 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     ff.update(ff2)
                     fixed_values_full.append(ff)
 
-
         return fixed_values_full
 
-    def has_sufficient_experiments(self,) -> bool:
+    def has_sufficient_experiments(
+        self,
+    ) -> bool:
         if self.experiments is None:
             return False
-        degrees_of_freedom =  len(self.domain.get_features(InputFeature)) - len(self.get_fixed_features()) 
-        #degrees_of_freedom = len(self.domain.get_features(InputFeature)) + 1
+        degrees_of_freedom = len(self.domain.get_features(InputFeature)) - len(
+            self.get_fixed_features()
+        )
+        # degrees_of_freedom = len(self.domain.get_features(InputFeature)) + 1
         if self.experiments.shape[0] > degrees_of_freedom + 1:
             return True
         return False
 
     # TODO: test this at a later stage at this is not super important for the first release
     def feature_importances(self, plot: bool = False):
-        if plot: from bofire.utils.viz import plot_fi
+        if plot:
+            from bofire.utils.viz import plot_fi
         if self.is_fitted != True:
             raise ValueError(
                 "Cannot calculate feature_importances without a fitted model."
             )
-        elif isinstance(self.model,ModelListGP):
+        elif isinstance(self.model, ModelListGP):
             models = self.model.models
         else:
             models = [self.model]
         importances = {}
-        for m, featkey in zip(models,self.domain.output_features.get_keys_by_objective(excludes=None)):
+        for m, featkey in zip(
+            models, self.domain.output_features.get_keys_by_objective(excludes=None)
+        ):
             # in case of MixedGP ignore it
-            if not isinstance(m,MixedSingleTaskGP) and self.get_model_spec(featkey).get("ard",True):
+            if not isinstance(m, MixedSingleTaskGP) and self.get_model_spec(
+                featkey
+            ).get("ard", True):
                 ls = m.covar_module.base_kernel.lengthscale
                 feature_keys = []
                 for key in self.domain.get_feature_keys(InputFeature):
                     if key in self.get_model_spec(featkey).input_features:
-                        feature_keys += self.transformer.features2transformedFeatures.get(key,[key])
-                fi = (1./ls).detach().cpu().numpy().ravel()
-                importances[featkey] = [feature_keys,fi]
-                if plot: plot_fi(featurenames = feature_keys, importances = fi, comment = featkey)
+                        feature_keys += (
+                            self.transformer.features2transformedFeatures.get(
+                                key, [key]
+                            )
+                        )
+                fi = (1.0 / ls).detach().cpu().numpy().ravel()
+                importances[featkey] = [feature_keys, fi]
+                if plot:
+                    plot_fi(featurenames=feature_keys, importances=fi, comment=featkey)
         return importances
 
-    def cross_validate(self,transformed: pd.DataFrame, nfolds: int = -1):
+    def cross_validate(self, transformed: pd.DataFrame, nfolds: int = -1):
 
         if nfolds != -1:
             raise NotImplementedError("Only LOOCV implemented so far!")
 
         results = []
-        for i, ofeat in enumerate(self.domain.output_features.get_by_objective(exclude=None)):
-            transformed_temp = self.domain.preprocess_experiments_one_valid_output(transformed, ofeat.key)
+        for i, ofeat in enumerate(
+            self.domain.output_features.get_by_objective(exclude=None)
+        ):
+            transformed_temp = self.domain.preprocess_experiments_one_valid_output(
+                experiments=transformed, output_feature_key=ofeat.key
+            )
             train_X, train_Y = self.get_training_tensors(transformed_temp, ofeat.key)
-            
+
             # create folds
             cv_folds = gen_loo_cv_folds(train_X=train_X, train_Y=train_Y)
 
@@ -721,22 +803,23 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 train_Y=cv_folds.train_Y,
                 active_dims=self.get_feature_indices(ofeat.key),
                 cat_dims=self.categorical_dims,
-                scaler_name=self.get_model_spec(ofeat.key).get("scaler", ScalerEnum.NORMALIZE),
-                kernel_name=self.get_model_spec(ofeat.key).get("kernel", KernelEnum.MATERN_25),
+                scaler_name=self.get_model_spec(ofeat.key).get(
+                    "scaler", ScalerEnum.NORMALIZE
+                ),
+                kernel_name=self.get_model_spec(ofeat.key).get(
+                    "kernel", KernelEnum.MATERN_25
+                ),
                 use_ard=self.get_model_spec(ofeat.key).get("ard", True),
-                use_categorical_kernel=self.categorical_encoding==CategoricalEncodingEnum.ORDINAL,
-                cv=True
+                use_categorical_kernel=self.categorical_encoding
+                == CategoricalEncodingEnum.ORDINAL,
+                cv=True,
             )
 
             with torch.no_grad():
-                posterior = model_cv.posterior(
-                    cv_folds.test_X, observation_noise=False
-                )
+                posterior = model_cv.posterior(cv_folds.test_X, observation_noise=False)
 
             observed = cv_folds.test_Y.squeeze().detach().numpy()
             mean = posterior.mean.squeeze().detach().numpy
             std = np.sqrt(posterior.variance.squeeze().detach().numpy())
             results.append((observed, mean, std))
         return results
-
-    

@@ -1098,7 +1098,7 @@ class InputFeatures(Features):
         Returns:
             InputFeatures: Input features object containing only fixed features.
         """
-        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])  # type: ignore
+        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])
 
     def get_free(self) -> "InputFeatures":
         """Gets all features in `self` that are not fixed and returns them as new `InputFeatures` object.
@@ -1106,7 +1106,7 @@ class InputFeatures(Features):
         Returns:
             InputFeatures: Input features object containing only non-fixed features.
         """
-        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
+        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])
 
     @validate_arguments
     def sample(
@@ -1154,6 +1154,57 @@ class InputFeatures(Features):
         for feat in self.get_fixed():
             samples[feat.key] = feat.fixed_value()  # type: ignore
         return self.validate_inputs(samples)[self.get_keys(InputFeature)]
+
+    def sample_sobol(self, n: int) -> pd.DataFrame:
+        """Draw uniformly random samples
+
+        Args:
+            n (int, optional): Number of samples. Defaults to 1.
+
+        Returns:
+            pd.DataFrame: Dataframe containing the samples.
+        """
+        free_features = self.get_free()
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            X = Sobol(len(free_features)).random(n)
+        res = []
+        for i, feat in enumerate(free_features):
+            if isinstance(feat, ContinuousInput):
+                x = feat.from_unit_range(X[:, i])
+            elif isinstance(feat, (DiscreteInput, CategoricalInput)):
+                if isinstance(feat, DiscreteInput):
+                    levels = feat.values
+                else:
+                    levels = feat.get_allowed_categories()
+                bins = np.linspace(0, 1, len(levels) + 1)
+                idx = np.digitize(X[:, i], bins) - 1
+                x = np.array(levels)[idx]
+            else:
+                raise (ValueError(f"Unknown input feature with key {feat.key}"))
+            res.append(pd.Series(x, name=feat.key))
+        samples = pd.concat(res, axis=1)
+        for feat in self.get_fixed():
+            samples[feat.key] = feat.fixed_value()
+        return self.validate_inputs(samples)[self.get_keys(InputFeature)]
+
+    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
+        """Validate a pandas dataframe with input feature values.
+
+        Args:
+            inputs (pd.Dataframe): Inputs to validate.
+
+        Raises:
+            ValueError: Raises a Valueerror if a feature based validation raises an exception.
+
+        Returns:
+            pd.Dataframe: Validated dataframe
+        """
+        for feature in self:
+            if feature.key not in inputs:
+                raise ValueError(f"no col for input feature `{feature.key}`")
+            feature.validate_candidental(inputs[feature.key])
+        return inputs
 
     def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.

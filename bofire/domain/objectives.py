@@ -254,7 +254,8 @@ class ConstantObjective(Objective):
         Returns:
             np.ndarray: An array of passed constants with the shape of the passed x values array.
         """
-        return np.ones(x.shape) * self.w
+        x_type = type(x)
+        return x_type(np.ones(x.shape) * self.w)
 
 
 class AbstractTargetObjective(Objective):

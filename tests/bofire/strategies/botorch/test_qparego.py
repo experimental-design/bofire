@@ -12,6 +12,7 @@ from botorch.acquisition.multi_objective.objective import (
 )
 
 from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.base import (
     CategoricalEncodingEnum,
     CategoricalMethodEnum,
@@ -22,7 +23,6 @@ from bofire.strategies.botorch.qparego import (
     AcquisitionFunctionEnum,
     BoTorchQparegoStrategy,
 )
-from bofire.strategies.strategy import RandomStrategy
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 
@@ -46,34 +46,47 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
     "invalids": [
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "descriptor_encoding": None},
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "categorical_encoding": None},
-        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "categorical_encoding": "ORDINAL", "categorical_method": "FREE"},
+        {
+            **VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
+            "categorical_encoding": "ORDINAL",
+            "categorical_method": "FREE",
+        },
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": -1},
     ],
 }
 
 
-@pytest.mark.parametrize("domain", [
-    invalid_domains[0],
-    invalid_domains[1],
-])
+@pytest.mark.parametrize(
+    "domain",
+    [
+        invalid_domains[0],
+        invalid_domains[1],
+    ],
+)
 def test_invalid_qparego_init_domain(domain):
     with pytest.raises(ValueError):
         BoTorchQparegoStrategy(domain)
 
 
-
-@pytest.mark.parametrize("num_test_candidates, base_acquisition_function", [
-    (num_test_candidates, base_acquisition_function)
-    for num_test_candidates in range(1,3)
-    for base_acquisition_function in list(AcquisitionFunctionEnum)
-])
+@pytest.mark.parametrize(
+    "num_test_candidates, base_acquisition_function",
+    [
+        (num_test_candidates, base_acquisition_function)
+        for num_test_candidates in range(1, 3)
+        for base_acquisition_function in list(AcquisitionFunctionEnum)
+    ],
+)
 def test_qparego(num_test_candidates, base_acquisition_function):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = RandomStrategy(benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(random_strategy.ask(candidate_count=10)[0])
+    random_strategy = PolytopeSampler(benchmark.domain)
+    experiments = benchmark.run_candidate_experiments(
+        random_strategy.ask(candidate_count=10)[0]
+    )
     # init strategy
-    my_strategy = BoTorchQparegoStrategy(benchmark.domain, base_acquisition_function=base_acquisition_function)
+    my_strategy = BoTorchQparegoStrategy(
+        benchmark.domain, base_acquisition_function=base_acquisition_function
+    )
     my_strategy.tell(experiments)
     # ask
     candidates, _ = my_strategy.ask(num_test_candidates)

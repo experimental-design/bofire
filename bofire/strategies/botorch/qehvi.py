@@ -28,7 +28,6 @@ from bofire.utils.multiobjective import get_ref_point_mask
 
 
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
-    test: int
     ref_point: Optional[dict]
     ref_point_mask: Optional[np.ndarray]
     objective: Optional[MCMultiOutputObjective]
@@ -36,7 +35,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
     def _init_acqf(self) -> None:
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
-        
+
         train_obj = (
             df[self.domain.output_features.get_keys_by_objective(excludes=None)].values
             * self.ref_point_mask
@@ -79,7 +78,8 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         )
         weights = weights * self.ref_point_mask
         self.objective = WeightedMCMultiOutputObjective(
-            outcomes=list(range(len(weights))), weights=torch.from_numpy(weights).to(**tkwargs)
+            outcomes=list(range(len(weights))),
+            weights=torch.from_numpy(weights).to(**tkwargs),
         )
         return
 
@@ -89,31 +89,54 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 "At least two output features has to be defined in the domain."
             )
         for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if (
-                isinstance(feat.objective, IdentityObjective)
-                == False
-            ):
+            if isinstance(feat.objective, IdentityObjective) == False:
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
             if feat.objective.w != 1.0:
                 raise ValueError("Only objectives with weight 1 are supported.")
         if self.ref_point is not None:
-            if len(self.ref_point) != len(self.domain.output_features.get_by_objective(excludes=None)):
-                raise ValueError("Dimensionality of provided ref_point does not match number of output features.")
-            for feat in self.domain.output_features.get_keys_by_objective(excludes=None):
-                assert feat in self.ref_point.keys(), f'No reference point defined for output feature {feat}.'
+            if len(self.ref_point) != len(
+                self.domain.output_features.get_by_objective(excludes=None)
+            ):
+                raise ValueError(
+                    "Dimensionality of provided ref_point does not match number of output features."
+                )
+            for feat in self.domain.output_features.get_keys_by_objective(
+                excludes=None
+            ):
+                assert (
+                    feat in self.ref_point.keys()
+                ), f"No reference point defined for output feature {feat}."
         self.ref_point_mask = get_ref_point_mask(self.domain)
         super()._init_domain()
         return
-    
+
     def get_adjusted_refpoint(self):
         if self.ref_point is not None:
-            return (self.ref_point_mask * np.array([self.ref_point[feat] for feat in self.domain.output_features.get_keys_by_objective(excludes=None)])).tolist()
+            return (
+                self.ref_point_mask
+                * np.array(
+                    [
+                        self.ref_point[feat]
+                        for feat in self.domain.output_features.get_keys_by_objective(
+                            excludes=None
+                        )
+                    ]
+                )
+            ).tolist()
         # we have to push all results through the objective functions and then take the min values
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
-        return(df[self.domain.output_features.get_keys_by_objective(excludes=None)].values*self.ref_point_mask).min(axis=0).tolist()
-
+        return (
+            (
+                df[
+                    self.domain.output_features.get_keys_by_objective(excludes=None)
+                ].values
+                * self.ref_point_mask
+            )
+            .min(axis=0)
+            .tolist()
+        )
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -171,7 +194,9 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
         # now transform it
         df_transform = self.transformer.transform(df)
         # now transform to torch
-        train_x = torch.from_numpy(df_transform[self.input_feature_keys].values).to(**tkwargs)
+        train_x = torch.from_numpy(df_transform[self.input_feature_keys].values).to(
+            **tkwargs
+        )
         # if the reference point is not defined it has to be calculated from data
         self.acqf = qNoisyExpectedHypervolumeImprovement(
             model=self.model,
