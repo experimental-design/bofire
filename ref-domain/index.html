@@ -472,6 +472,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.domain.domain.Domain.validate_linear_constraints" class="md-nav__link">
+    validate_linear_constraints()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.domain.domain.Domain.validate_lower_bounds_in_nchoosek_constraints" class="md-nav__link">
     validate_lower_bounds_in_nchoosek_constraints()
   </a>
@@ -750,6 +757,39 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> in constraint unknown (</span><span class="si">{</span><span class="n">keys</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_linear_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
+<span class="sd">            values (List[InputFeature]): List of input features of the domain</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: _description_</span>
+
+
+<span class="sd">        Returns:</span>
+<span class="sd">           List[Constraint]: List of constraints defined for the domain</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;input_features&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+
+        <span class="c1"># gather continuous input_features in dictionary</span>
+        <span class="n">continuous_input_features_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
+                <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+
+        <span class="c1"># check if non continuous input features appear in linear constraints</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+                    <span class="k">assert</span> <span class="p">(</span>
+                        <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_input_features_dict</span>
+                    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
         <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -3387,6 +3427,120 @@ involved output features.</p>
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.domain.Domain.validate_linear_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_linear_constraints</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Validate if all features included in linear constraints are continuous ones.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>v</code></td>
+        <td><code>List[Constraint]</code></td>
+        <td><p>List of constraints or empty if no constraints are defined</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>List[InputFeature]</code></td>
+        <td><p>List of input features of the domain</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p><em>description</em></p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Constraint]</code></td>
+      <td><p>List of constraints defined for the domain</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_linear_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
+<span class="sd">        values (List[InputFeature]): List of input features of the domain</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: _description_</span>
+
+
+<span class="sd">    Returns:</span>
+<span class="sd">       List[Constraint]: List of constraints defined for the domain</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;input_features&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="c1"># gather continuous input_features in dictionary</span>
+    <span class="n">continuous_input_features_dict</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
+            <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+
+    <span class="c1"># check if non continuous input features appear in linear constraints</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
+                <span class="k">assert</span> <span class="p">(</span>
+                    <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_input_features_dict</span>
+                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
+    <span class="k">return</span> <span class="n">v</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 

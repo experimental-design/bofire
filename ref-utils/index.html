@@ -551,6 +551,26 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.utils.torch_tools" class="md-nav__link">
+    torch_tools
+  </a>
+  
+    <nav class="md-nav" aria-label="torch_tools">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.torch_tools.get_linear_constraints" class="md-nav__link">
+    get_linear_constraints()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.utils.transformer" class="md-nav__link">
     transformer
   </a>
@@ -2679,6 +2699,168 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
     <span class="n">prec</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">tol</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">prec</span><span class="p">),</span> <span class="n">pivots</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.utils.torch_tools" class="doc doc-heading">
+        <code>torch_tools</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.torch_tools.get_linear_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_linear_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">constraint</span><span class="p">,</span> <span class="n">unit_scaled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Converts linear constraints to the form required by BoTorch.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>domain</code></td>
+        <td><code>Domain</code></td>
+        <td><p>Optimization problem definition.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>constraint</code></td>
+        <td><code>Union[LinearEqualityConstraint, LinearInequalityConstraint]</code></td>
+        <td><p>Type of constraint that should be converted.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>unit_scaled</code></td>
+        <td><code>bool</code></td>
+        <td><p>If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Tuple[Tensor, Tensor, float]]</code></td>
+      <td><p>List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_linear_constraints</span><span class="p">(</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
+    <span class="n">constraint</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">,</span> <span class="n">LinearInequalityConstraint</span><span class="p">],</span>
+    <span class="n">unit_scaled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;Converts linear constraints to the form required by BoTorch.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        domain (Domain): Optimization problem definition.</span>
+<span class="sd">        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint]): Type of constraint that should be converted.</span>
+<span class="sd">        unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">constraint</span><span class="p">):</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">coefficients</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">rhs</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span>
+            <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
+                <span class="n">rhs</span> <span class="o">-=</span> <span class="n">feat</span><span class="o">.</span><span class="n">fixed_value</span><span class="p">()</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="n">upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="n">coefficients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+                <span class="p">)</span>  <span class="c1"># if unit_scaled == False else c_scaled.coefficients[i])</span>
+        <span class="k">if</span> <span class="n">unit_scaled</span><span class="p">:</span>
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">upper</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
+            <span class="n">scaled_coefficients</span> <span class="o">=</span> <span class="n">s</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
+                    <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">scaled_coefficients</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                    <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span> <span class="o">*</span> <span class="n">lower</span><span class="p">)),</span>  <span class="c1"># type: ignore</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
+                    <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+                    <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">),</span>  <span class="c1"># type: ignore</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>
         </details>
     </div>

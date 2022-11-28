@@ -827,15 +827,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.features.InputFeatures.sample_sobol" class="md-nav__link">
-    sample_sobol()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.features.InputFeatures.sample_uniform" class="md-nav__link">
-    sample_uniform()
+  <a href="#bofire.domain.features.InputFeatures.sample" class="md-nav__link">
+    sample()
   </a>
   
 </li>
@@ -973,6 +966,13 @@
         
       </ul>
     </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bofire.domain.features.SamplingMethodEnum" class="md-nav__link">
+    SamplingMethodEnum
+  </a>
   
 </li>
       
@@ -5918,32 +5918,33 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">feat</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()])</span>  <span class="c1"># type: ignore</span>
 
-    <span class="k">def</span> <span class="nf">sample_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
+    <span class="nd">@validate_arguments</span>
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">n</span><span class="p">:</span> <span class="n">Tnum_samples</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="n">SamplingMethodEnum</span> <span class="o">=</span> <span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Draw sobol samples</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            n (int, optional): Number of samples. Defaults to 1.</span>
+<span class="sd">            n (int, optional): Number of samples, has to be larger than 0. Defaults to 1.</span>
+<span class="sd">            method (SamplingMethodEnum, optional): Method to use, implemented methods are `UNIFORM`, `SOBOL` and `LHS`.</span>
+<span class="sd">                Defaults to `UNIFORM`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Dataframe containing the samples.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
-            <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">sample_sobol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            n (int, optional): Number of samples. Defaults to 1.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            pd.DataFrame: Dataframe containing the samples.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
+                <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="p">)</span>
         <span class="n">free_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_free</span><span class="p">()</span>
-        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-            <span class="n">X</span> <span class="o">=</span> <span class="n">Sobol</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">SOBOL</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+                <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">Sobol</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">LatinHypercube</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
         <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">free_features</span><span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
@@ -6265,15 +6266,15 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 
 
 
-<h3 id="bofire.domain.features.InputFeatures.sample_sobol" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">sample_sobol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span></code>
+<h3 id="bofire.domain.features.InputFeatures.sample" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">method</span><span class="o">=&lt;</span><span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">:</span> <span class="s1">&#39;UNIFORM&#39;</span><span class="o">&gt;</span><span class="p">)</span></code>
 
 
 </h3>
 
     <div class="doc doc-contents ">
 
-      <p>Draw uniformly random samples</p>
+      <p>Draw sobol samples</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -6289,8 +6290,15 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
       <tr>
         <td><code>n</code></td>
         <td><code>int</code></td>
-        <td><p>Number of samples. Defaults to 1.</p></td>
-        <td><em>required</em></td>
+        <td><p>Number of samples, has to be larger than 0. Defaults to 1.</p></td>
+        <td><code>1</code></td>
+      </tr>
+      <tr>
+        <td><code>method</code></td>
+        <td><code>SamplingMethodEnum</code></td>
+        <td><p>Method to use, implemented methods are <code>UNIFORM</code>, <code>SOBOL</code> and <code>LHS</code>.
+Defaults to <code>UNIFORM</code>.</p></td>
+        <td><code>&lt;SamplingMethodEnum.UNIFORM: &#39;UNIFORM&#39;&gt;</code></td>
       </tr>
   </tbody>
 </table>
@@ -6311,19 +6319,33 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/features.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample_sobol</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validate_arguments</span>
+<span class="k">def</span> <span class="nf">sample</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="n">Tnum_samples</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">SamplingMethodEnum</span> <span class="o">=</span> <span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Draw sobol samples</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        n (int, optional): Number of samples. Defaults to 1.</span>
+<span class="sd">        n (int, optional): Number of samples, has to be larger than 0. Defaults to 1.</span>
+<span class="sd">        method (SamplingMethodEnum, optional): Method to use, implemented methods are `UNIFORM`, `SOBOL` and `LHS`.</span>
+<span class="sd">            Defaults to `UNIFORM`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Dataframe containing the samples.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">UNIFORM</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="p">)</span>
     <span class="n">free_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_free</span><span class="p">()</span>
-    <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
-        <span class="n">X</span> <span class="o">=</span> <span class="n">Sobol</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="n">SamplingMethodEnum</span><span class="o">.</span><span class="n">SOBOL</span><span class="p">:</span>
+        <span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">)</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">Sobol</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">LatinHypercube</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">free_features</span><span class="p">))</span><span class="o">.</span><span class="n">random</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
     <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">free_features</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
@@ -6343,76 +6365,6 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_fixed</span><span class="p">():</span>
         <span class="n">samples</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">fixed_value</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">samples</span><span class="p">)[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)]</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.features.InputFeatures.sample_uniform" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">sample_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Draw uniformly random samples</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>n</code></td>
-        <td><code>int</code></td>
-        <td><p>Number of samples. Defaults to 1.</p></td>
-        <td><code>1</code></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>pd.DataFrame</code></td>
-      <td><p>Dataframe containing the samples.</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/features.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample_uniform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Draw uniformly random samples</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        n (int, optional): Number of samples. Defaults to 1.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        pd.DataFrame: Dataframe containing the samples.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">feat</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-    <span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -7907,6 +7859,58 @@ to be returned. Defaults to Objective.</p></td>
     </div>
 
   </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="bofire.domain.features.SamplingMethodEnum" class="doc doc-heading">
+        <code>
+SamplingMethodEnum            (<span title="enum.Enum">Enum</span>)
+        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+      <p>An enumeration.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/features.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">SamplingMethodEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">UNIFORM</span> <span class="o">=</span> <span class="s2">&quot;UNIFORM&quot;</span>
+    <span class="n">SOBOL</span> <span class="o">=</span> <span class="s2">&quot;SOBOL&quot;</span>
+    <span class="n">LHS</span> <span class="o">=</span> <span class="s2">&quot;LHS&quot;</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
 
 
 
