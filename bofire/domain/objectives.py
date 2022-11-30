@@ -23,7 +23,7 @@ class BotorchConstrainedObjective:
     """This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints."""
 
     @abstractmethod
-    def get_callables(self, idx: int) -> List[Callable[[Tensor], Tensor]]:
+    def to_constraints(self, idx: int) -> List[Callable[[Tensor], Tensor]]:
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Args:
@@ -231,7 +231,7 @@ class MaximizeSigmoidObjective(SigmoidObjective):
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
-    def get_callables(self, idx: int):
+    def to_constraints(self, idx: int):
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Args:
@@ -263,7 +263,7 @@ class MinimizeSigmoidObjective(SigmoidObjective):
         """
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
-    def get_callables(self, idx: int):
+    def to_constraints(self, idx: int):
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Args:
@@ -372,7 +372,7 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
             )
         )
 
-    def get_callables(self, idx: int):
+    def to_constraints(self, idx: int):
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.

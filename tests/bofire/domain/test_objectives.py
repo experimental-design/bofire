@@ -212,8 +212,8 @@ def test_invalid_desirability_function_specs(cls, spec):
         (TargetObjective(w=1, target_value=15, steepness=2, tolerance=5)),
     ],
 )
-def test_maximize_sigmoid_objective_get_callables(objective):
-    cs = objective.get_callables(idx=0)
+def test_maximize_sigmoid_objective_to_constraints(objective):
+    cs = objective.to_constraints(idx=0)
 
     x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
     y = torch.ones([500])
