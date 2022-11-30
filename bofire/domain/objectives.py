@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Dict
+from typing import Callable, Dict, List, Union
 
 import numpy as np
 import pandas as pd
 from pydantic.class_validators import root_validator
 from pydantic.types import confloat
+from torch import Tensor
 
 from bofire.domain.util import BaseModel
 
@@ -18,11 +19,27 @@ TGe0 = confloat(ge=0)
 TWeight = confloat(gt=0, le=1)
 
 
+class BotorchConstrainedObjective:
+    """This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints."""
+
+    @abstractmethod
+    def to_constraints(self, idx: int) -> List[Callable[[Tensor], Tensor]]:
+        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
+
+        Args:
+            idx (int): Index of the constraint objective in the list of outputs.
+
+        Returns:
+            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+        """
+        pass
+
+
 class Objective(BaseModel):
     """The base class for all objectives"""
 
     @abstractmethod
-    def __call__(self, x: pd.DataFrame) -> pd.DataFrame:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """Abstract method to define the call function for the class Objective
 
         Args:
@@ -110,7 +127,7 @@ class IdentityObjective(Objective):
             )
         return values
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
@@ -143,7 +160,7 @@ class MinimizeObjective(IdentityObjective):
         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
@@ -167,7 +184,7 @@ class DeltaObjective(IdentityObjective):
     ref_point: float
     scale: float = 1
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
@@ -179,7 +196,7 @@ class DeltaObjective(IdentityObjective):
         return (self.ref_point - x) * self.scale
 
 
-class SigmoidObjective(Objective):
+class SigmoidObjective(Objective, BotorchConstrainedObjective):
     """Base class for all sigmoid shaped objectives
 
     Attributes:
@@ -203,7 +220,7 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
@@ -213,6 +230,17 @@ class MaximizeSigmoidObjective(SigmoidObjective):
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+
+    def to_constraints(self, idx: int):
+        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
+
+        Args:
+            idx (int): Index of the constraint objective in the list of outputs.
+
+        Returns:
+            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+        """
+        return [lambda Z: (Z[..., idx] - self.tp) * -1.0]
 
 
 class MinimizeSigmoidObjective(SigmoidObjective):
@@ -224,7 +252,7 @@ class MinimizeSigmoidObjective(SigmoidObjective):
         tp (float): Turning point of the sigmoid function.
     """
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
@@ -234,6 +262,17 @@ class MinimizeSigmoidObjective(SigmoidObjective):
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
         """
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+
+    def to_constraints(self, idx: int):
+        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
+
+        Args:
+            idx (int): Index of the constraint objective in the list of outputs.
+
+        Returns:
+            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+        """
+        return [lambda Z: (Z[..., idx] - self.tp)]
 
 
 class ConstantObjective(Objective):
@@ -245,7 +284,7 @@ class ConstantObjective(Objective):
 
     w: float
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning the fixed value as reward
 
         Args:
@@ -284,14 +323,14 @@ class AbstractTargetObjective(Objective):
 class CloseToTargetObjective(AbstractTargetObjective):
     exponent: float
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         return (
             np.abs(x - self.target_value) ** self.exponent
             - self.tolerance**self.exponent
         )
 
 
-class TargetObjective(AbstractTargetObjective):
+class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
     """Class for objectives for optimizing towards a target value
 
     Attributes:
@@ -304,7 +343,7 @@ class TargetObjective(AbstractTargetObjective):
 
     steepness: TGt0
 
-    def __call__(self, x: np.ndarray) -> np.ndarray:
+    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values.
 
         Args:
@@ -332,3 +371,19 @@ class TargetObjective(AbstractTargetObjective):
                 )
             )
         )
+
+    def to_constraints(self, idx: int):
+        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
+
+        Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.
+
+        Args:
+            idx (int): Index of the constraint objective in the list of outputs.
+
+        Returns:
+            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+        """
+        return [
+            lambda Z: (Z[..., idx] - (self.target_value - self.tolerance)) * -1.0,
+            lambda Z: (Z[..., idx] - (self.target_value + self.tolerance)),
+        ]
