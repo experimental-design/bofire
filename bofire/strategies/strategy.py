@@ -123,8 +123,6 @@ class Strategy(BaseModel):
 
         self._init_domain()
 
-    # @root_validator(pre=True)
-    # def validate_objectives(cls, values):
     @validator("domain")
     def validate_objectives(cls, domain: Domain):
         """Validator to ensure that all objectives defined in the domain are valid for the chosen strategy

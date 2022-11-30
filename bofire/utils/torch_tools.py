@@ -1,8 +1,14 @@
+from typing import List, Tuple, Union
+
 import numpy as np
 import torch
+from torch import Tensor
 
 from bofire.domain import Domain
-from bofire.domain.constraints import LinearConstraint
+from bofire.domain.constraints import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
 from bofire.domain.features import InputFeature
 
 tkwargs = {
@@ -12,8 +18,20 @@ tkwargs = {
 
 
 def get_linear_constraints(
-    domain: Domain, constraint: LinearConstraint, unit_scaled: bool = False
-):
+    domain: Domain,
+    constraint: Union[LinearEqualityConstraint, LinearInequalityConstraint],
+    unit_scaled: bool = False,
+) -> List[Tuple[Tensor, Tensor, float]]:
+    """Converts linear constraints to the form required by BoTorch.
+
+    Args:
+        domain (Domain): Optimization problem definition.
+        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint]): Type of constraint that should be converted.
+        unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
+    """
     constraints = []
     for c in domain.constraints.get(constraint):
         indices = []

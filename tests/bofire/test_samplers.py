@@ -37,7 +37,7 @@ def test_rejection_sampler(features, constraints, sampling_method, num_samples):
         constraints=constraints,
     )
     sampler = RejectionSampler(domain=domain, sampling_method=sampling_method)
-    sampler(num_samples)
+    sampler.ask(num_samples)
 
 
 def test_rejection_sampler_not_converged():
@@ -47,7 +47,7 @@ def test_rejection_sampler_not_converged():
     )
     sampler = RejectionSampler(domain=domain, num_base_samples=16, max_iters=2)
     with pytest.raises(ValueError):
-        sampler(128)
+        sampler.ask(128)
 
 
 if1 = ContinuousInput(
@@ -112,5 +112,5 @@ domains = [
 )
 def test_RandomStrategyConstraints(domain, candidate_count):
     sampler = PolytopeSampler(domain=domain)
-    samples = sampler(candidate_count)
+    samples = sampler.ask(candidate_count)
     assert len(samples) == candidate_count

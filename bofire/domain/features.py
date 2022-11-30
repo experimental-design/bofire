@@ -841,7 +841,7 @@ class ContinuousOutput(OutputFeature):
         self,
         lower: float,
         upper: float,
-        df_data: Optional[pd.DataFrame] = None,
+        experiments: Optional[pd.DataFrame] = None,
         plot_details: bool = True,
         line_options: Optional[Dict] = None,
         scatter_options: Optional[Dict] = None,
@@ -853,7 +853,7 @@ class ContinuousOutput(OutputFeature):
         Args:
             lower (float): lower bound for the plot
             upper (float): upper bound for the plot
-            df_data (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
+            experiments (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
         """
         if self.objective is None:
             raise ValueError(
@@ -868,13 +868,13 @@ class ContinuousOutput(OutputFeature):
         line_options["color"] = line_options.get("color", "black")
         scatter_options["color"] = scatter_options.get("color", "red")
 
-        x = pd.DataFrame(np.linspace(lower, upper, 5000))
+        x = pd.Series(np.linspace(lower, upper, 5000))
         reward = self.objective.__call__(x)
         fig, ax = plt.subplots()
         ax.plot(x, reward, **line_options)
         # TODO: validate dataframe
-        if df_data is not None:
-            x_data = df_data.loc[df_data[self.key].notna(), self.key].values
+        if experiments is not None:
+            x_data = experiments.loc[experiments[self.key].notna(), self.key].values
             ax.scatter(
                 x_data,  # type: ignore
                 self.objective.__call__(x_data),  # type: ignore
@@ -1135,39 +1135,6 @@ class InputFeatures(Features):
                 X = Sobol(len(free_features)).random(n)
         else:
             X = LatinHypercube(len(free_features)).random(n)
-        res = []
-        for i, feat in enumerate(free_features):
-            if isinstance(feat, ContinuousInput):
-                x = feat.from_unit_range(X[:, i])
-            elif isinstance(feat, (DiscreteInput, CategoricalInput)):
-                if isinstance(feat, DiscreteInput):
-                    levels = feat.values
-                else:
-                    levels = feat.get_allowed_categories()
-                bins = np.linspace(0, 1, len(levels) + 1)
-                idx = np.digitize(X[:, i], bins) - 1
-                x = np.array(levels)[idx]
-            else:
-                raise (ValueError(f"Unknown input feature with key {feat.key}"))
-            res.append(pd.Series(x, name=feat.key))
-        samples = pd.concat(res, axis=1)
-        for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()  # type: ignore
-        return self.validate_inputs(samples)[self.get_keys(InputFeature)]
-
-    def sample_sobol(self, n: int) -> pd.DataFrame:
-        """Draw uniformly random samples
-
-        Args:
-            n (int, optional): Number of samples. Defaults to 1.
-
-        Returns:
-            pd.DataFrame: Dataframe containing the samples.
-        """
-        free_features = self.get_free()
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            X = Sobol(len(free_features)).random(n)
         res = []
         for i, feat in enumerate(free_features):
             if isinstance(feat, ContinuousInput):

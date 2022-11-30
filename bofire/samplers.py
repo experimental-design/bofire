@@ -63,7 +63,7 @@ class Sampler(BaseModel):
     )
 
     @validate_arguments
-    def __call__(self, n: Tnum_samples) -> pd.DataFrame:
+    def ask(self, n: Tnum_samples) -> pd.DataFrame:
         """Generates the samples.
 
         Args:
