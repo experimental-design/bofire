@@ -358,6 +358,26 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.domain.objectives.BotorchConstrainedObjective" class="md-nav__link">
+    BotorchConstrainedObjective
+  </a>
+  
+    <nav class="md-nav" aria-label="BotorchConstrainedObjective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.objectives.BotorchConstrainedObjective.to_constraints" class="md-nav__link">
+    to_constraints()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.domain.objectives.ConstantObjective" class="md-nav__link">
     ConstantObjective
   </a>
@@ -446,6 +466,13 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bofire.domain.objectives.MaximizeSigmoidObjective.to_constraints" class="md-nav__link">
+    to_constraints()
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -482,6 +509,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.objectives.MinimizeSigmoidObjective.__call__" class="md-nav__link">
     __call__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.objectives.MinimizeSigmoidObjective.to_constraints" class="md-nav__link">
+    to_constraints()
   </a>
   
 </li>
@@ -550,6 +584,13 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.objectives.TargetObjective.__call__" class="md-nav__link">
     __call__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.domain.objectives.TargetObjective.to_constraints" class="md-nav__link">
+    to_constraints()
   </a>
   
 </li>
@@ -817,6 +858,132 @@ AbstractTargetObjective            (<a class="autorefs autorefs-internal" title=
 
 
 
+  <div class="doc doc-object doc-class">
+
+
+
+<h2 id="bofire.domain.objectives.BotorchConstrainedObjective" class="doc doc-heading">
+        <code>
+BotorchConstrainedObjective        </code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+      <p>This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">BotorchConstrainedObjective</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints.&quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.objectives.BotorchConstrainedObjective.to_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code> to setup ouput constrained optimizations.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>idx</code></td>
+        <td><code>int</code></td>
+        <td><p>Index of the constraint objective in the list of outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@abstractmethod</span>
+<span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">pass</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
 
   <div class="doc doc-object doc-class">
 
@@ -866,7 +1033,7 @@ ConstantObjective            (<a class="autorefs autorefs-internal" title="bofir
 
     <span class="n">w</span><span class="p">:</span> <span class="nb">float</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning the fixed value as reward</span>
 
 <span class="sd">        Args:</span>
@@ -946,7 +1113,7 @@ ConstantObjective            (<a class="autorefs autorefs-internal" title="bofir
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning the fixed value as reward</span>
 
 <span class="sd">    Args:</span>
@@ -1036,7 +1203,7 @@ DeltaObjective            (<a class="autorefs autorefs-internal" title="bofire.d
     <span class="n">ref_point</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">        Args:</span>
@@ -1117,7 +1284,7 @@ DeltaObjective            (<a class="autorefs autorefs-internal" title="bofire.d
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">    Args:</span>
@@ -1229,7 +1396,7 @@ The return can be scaled, when a lower and upper bound are provided.</p>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">        Args:</span>
@@ -1311,7 +1478,7 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">    Args:</span>
@@ -1579,7 +1746,7 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">        Args:</span>
@@ -1589,6 +1756,17 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 <span class="sd">            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">]</span>
 </code></pre></div>
         </details>
 
@@ -1658,7 +1836,7 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">    Args:</span>
@@ -1674,6 +1852,74 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.objectives.MaximizeSigmoidObjective.to_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code> to setup ouput constrained optimizations.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>idx</code></td>
+        <td><code>int</code></td>
+        <td><p>Index of the constraint objective in the list of outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">]</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -1745,7 +1991,7 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 <span class="sd">        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">        Args:</span>
@@ -1824,7 +2070,7 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">    Args:</span>
@@ -1911,7 +2157,7 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 <span class="sd">        tp (float): Turning point of the sigmoid function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">        Args:</span>
@@ -1921,6 +2167,17 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 <span class="sd">            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)]</span>
 </code></pre></div>
         </details>
 
@@ -1990,7 +2247,7 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">    Args:</span>
@@ -2006,6 +2263,74 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.objectives.MinimizeSigmoidObjective.to_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code> to setup ouput constrained optimizations.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>idx</code></td>
+        <td><code>int</code></td>
+        <td><p>Index of the constraint objective in the list of outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)]</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -2045,7 +2370,7 @@ Objective            (<span title="bofire.domain.util.BaseModel">BaseModel</span
     <span class="sd">&quot;&quot;&quot;The base class for all objectives&quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;Abstract method to define the call function for the class Objective</span>
 
 <span class="sd">        Args:</span>
@@ -2168,7 +2493,7 @@ Objective            (<span title="bofire.domain.util.BaseModel">BaseModel</span
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;Abstract method to define the call function for the class Objective</span>
 
 <span class="sd">    Args:</span>
@@ -2400,7 +2725,7 @@ Objective            (<span title="bofire.domain.util.BaseModel">BaseModel</span
 
 <h2 id="bofire.domain.objectives.SigmoidObjective" class="doc doc-heading">
         <code>
-SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objectives.Objective" href="#bofire.domain.objectives.Objective">Objective</a>)
+SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objectives.Objective" href="#bofire.domain.objectives.Objective">Objective</a>, <a class="autorefs autorefs-internal" title="bofire.domain.objectives.BotorchConstrainedObjective" href="#bofire.domain.objectives.BotorchConstrainedObjective">BotorchConstrainedObjective</a>)
         </code>
 
 
@@ -2443,7 +2768,7 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">SigmoidObjective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">SigmoidObjective</span><span class="p">(</span><span class="n">Objective</span><span class="p">,</span> <span class="n">BotorchConstrainedObjective</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Base class for all sigmoid shaped objectives</span>
 
 <span class="sd">    Attributes:</span>
@@ -2494,7 +2819,7 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
 
 <h2 id="bofire.domain.objectives.TargetObjective" class="doc doc-heading">
         <code>
-TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objectives.AbstractTargetObjective" href="#bofire.domain.objectives.AbstractTargetObjective">AbstractTargetObjective</a>)
+TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objectives.AbstractTargetObjective" href="#bofire.domain.objectives.AbstractTargetObjective">AbstractTargetObjective</a>, <a class="autorefs autorefs-internal" title="bofire.domain.objectives.BotorchConstrainedObjective" href="#bofire.domain.objectives.BotorchConstrainedObjective">BotorchConstrainedObjective</a>)
         </code>
 
 
@@ -2542,7 +2867,7 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">TargetObjective</span><span class="p">(</span><span class="n">AbstractTargetObjective</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">TargetObjective</span><span class="p">(</span><span class="n">AbstractTargetObjective</span><span class="p">,</span> <span class="n">BotorchConstrainedObjective</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Class for objectives for optimizing towards a target value</span>
 
 <span class="sd">    Attributes:</span>
@@ -2555,7 +2880,7 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 
     <span class="n">steepness</span><span class="p">:</span> <span class="n">TGt0</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values.</span>
 
 <span class="sd">        Args:</span>
@@ -2583,6 +2908,22 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">        Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)),</span>
+        <span class="p">]</span>
 </code></pre></div>
         </details>
 
@@ -2653,7 +2994,7 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
     <span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values.</span>
 
 <span class="sd">    Args:</span>
@@ -2687,6 +3028,80 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 
   </div>
 
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.objectives.TargetObjective.to_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code> to setup ouput constrained optimizations.</p>
+<p>Here two callables are returned as the constraint is a product of the <code>MaximizeSigmoidObjective</code> and <code>MinimizeSigmoidObjective</code>.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>idx</code></td>
+        <td><code>int</code></td>
+        <td><p>Index of the constraint objective in the list of outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
+
+<span class="sd">    Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)),</span>
+    <span class="p">]</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
