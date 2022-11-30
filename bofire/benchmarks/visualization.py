@@ -3,7 +3,7 @@ from typing import List, Optional, Sequence, Union
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from everest.study import PoolStudy, Study
+from bofire.utils.study import PoolStudy, Study
 from matplotlib.axes import Axes
 
 

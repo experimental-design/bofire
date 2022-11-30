@@ -38,57 +38,79 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         elif self.acquisition_function == AcquisitionFunctionEnum.QPI:
             self.init_qPI()
         else:
-            raise NotImplementedError("ACQF %s is not implemented." % self.acquisition_function)
-        
+            raise NotImplementedError(
+                "ACQF %s is not implemented." % self.acquisition_function
+            )
+
         self.acqf.set_X_pending(df_pending)
         return
 
     def _init_objective(self):
-        self.objective = MultiplicativeObjective(targets=[var.objective for var in self.domain.output_features.get_by_objective(excludes=None)])
+        self.objective = MultiplicativeObjective(
+            targets=[
+                var.objective
+                for var in self.domain.output_features.get_by_objective(excludes=None)
+            ]
+        )
         return
 
-    def get_fbest(self, experiments = None):
-        if experiments is None: experiments = self.experiments
+    def get_fbest(self, experiments=None):
+        if experiments is None:
+            experiments = self.experiments
         df_valid = self.domain.preprocess_experiments_all_valid_outputs(experiments)
-        samples = torch.from_numpy(df_valid[self.domain.output_features.get_keys_by_objective(excludes=None)].values).to(**tkwargs)
+        samples = torch.from_numpy(
+            df_valid[
+                self.domain.output_features.get_keys_by_objective(excludes=None)
+            ].values
+        ).to(**tkwargs)
         return self.objective.forward(samples=samples).detach().numpy().max()
 
     def init_qNEI(self):
 
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
+        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
         transformed = self.transformer.transform(clean_experiments)
-        t_features, targets = self.get_training_tensors(transformed, self.domain.output_features.get_keys_by_objective(excludes=None))
+        t_features, targets = self.get_training_tensors(
+            transformed,
+            self.domain.output_features.get_keys_by_objective(excludes=None),
+        )
 
         self.acqf = qNoisyExpectedImprovement(
             model=self.model,
             X_baseline=t_features,
             sampler=self.sampler,
-            objective=self.objective
-        ) 
+            objective=self.objective,
+        )
         return
 
-    def init_qUCB(self,beta=0.2):
+    def init_qUCB(self, beta=0.2):
         # TODO: handle beta
-        self.acqf= qUpperConfidenceBound(self.model, beta, self.sampler, objective=self.objective)
+        self.acqf = qUpperConfidenceBound(
+            self.model, beta, self.sampler, objective=self.objective
+        )
 
         return
 
     def init_qEI(self):
-        
+
         best_f = self.get_fbest()
-        
-        self.acqf = qExpectedImprovement(self.model, best_f, self.sampler,objective=self.objective)
+
+        self.acqf = qExpectedImprovement(
+            self.model, best_f, self.sampler, objective=self.objective
+        )
 
         return
 
     def init_qPI(self):
-                
+
         best_f = self.get_fbest()
-        self.acqf = qProbabilityOfImprovement(self.model,best_f,self.sampler,objective=self.objective) 
-                           
+        self.acqf = qProbabilityOfImprovement(
+            self.model, best_f, self.sampler, objective=self.objective
+        )
+
         return
-  
-    
+
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         """Method to check if a specific constraint type is implemented for the strategy
@@ -125,20 +147,21 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         """
         return True
 
+
 class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
 
     name: str = "botorch.sobo.additive"
 
     def _init_objective(self):
-        self.objective = AdditiveObjective(targets=[var.objective for var in self.domain.output_features.get_by_objective(excludes=None)])
+        self.objective = AdditiveObjective(
+            targets=[
+                var.objective
+                for var in self.domain.output_features.get_by_objective(excludes=None)
+            ]
+        )
         return
+
 
 class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
 
     name: str = "botorch.sobo.multiplicative"
-
-
-
-
-
-    

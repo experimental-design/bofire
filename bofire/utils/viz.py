@@ -1,4 +1,3 @@
-
 import itertools
 import math
 from typing import List, Optional, Tuple
@@ -9,34 +8,41 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 from bofire.domain import Domain
-from bofire.domain.desirability_functions import IdentityDesirabilityFunction
-from bofire.domain.features import (
-    ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
-    OutputFeature,
-)
+from bofire.domain.features import ContinuousOutput, OutputFeature
+from bofire.domain.objectives import IdentityObjective
 from bofire.utils.multiobjective import get_pareto_front
 
 
-def plot_pareto_fronts(domain: Domain, experiments:pd.DataFrame, output_feature_keys: Optional[list] = None, ncols:int=3):
+def plot_pareto_fronts(
+    domain: Domain,
+    experiments: pd.DataFrame,
+    output_feature_keys: Optional[list] = None,
+    ncols: int = 3,
+):
     if output_feature_keys is None:
-        output_feature_keys = domain.get_features(OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc])
+        output_feature_keys = domain.output_features.get_by_objective(excludes=None)
     else:
-        assert len(output_feature_keys) >= 2, "At least two output feature keys has to be provided."
+        assert (
+            len(output_feature_keys) >= 2
+        ), "At least two output feature keys has to be provided."
         for key in output_feature_keys:
             feat = domain.get_feature(key)
-            assert isinstance(feat, ContinuousOutputFeature)
-            assert isinstance(feat.desirability_function, IdentityDesirabilityFunction)
+            assert isinstance(feat, ContinuousOutput)
+            assert isinstance(feat.objective, IdentityObjective)
 
     assert len(output_feature_keys) > 1, "Only one output feature in domain."
-    combis = list(itertools.combinations(output_feature_keys,2))
-    nrows = math.ceil(len(combis)/ncols)
-    ncols = ncols if len(combis)>=ncols else len(combis)
+    combis = list(itertools.combinations(output_feature_keys, 2))
+    nrows = math.ceil(len(combis) / ncols)
+    ncols = ncols if len(combis) >= ncols else len(combis)
 
-    experiments = domain.preprocess_experiments_all_valid_outputs(experiments, output_feature_keys)
+    experiments = domain.preprocess_experiments_all_valid_outputs(
+        experiments, output_feature_keys
+    )
     pareto_experiments = get_pareto_front(domain, experiments, output_feature_keys)
-    
-    fig, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=[6.4*ncols,4.8*nrows])
+
+    fig, axes = plt.subplots(
+        ncols=ncols, nrows=nrows, figsize=[6.4 * ncols, 4.8 * nrows]
+    )
 
     for i, combi in enumerate(combis):
         if len(combis) == 1:
@@ -44,69 +50,97 @@ def plot_pareto_fronts(domain: Domain, experiments:pd.DataFrame, output_feature_
         elif len(combis) <= ncols:
             ax = axes[i]
         else:
-            irow = i//ncols
+            irow = i // ncols
             icol = i % ncols
-            ax = axes[irow,icol]
+            ax = axes[irow, icol]
         specific_pareto_experiments = get_pareto_front(domain, experiments, list(combi))
         ax.scatter(experiments[combi[0]], experiments[combi[1]], label="all")
-        ax.scatter(pareto_experiments[combi[0]], pareto_experiments[combi[1]], label="optimal")
-        ax.scatter(specific_pareto_experiments[combi[0]], specific_pareto_experiments[combi[1]], label="specific")
+        ax.scatter(
+            pareto_experiments[combi[0]], pareto_experiments[combi[1]], label="optimal"
+        )
+        ax.scatter(
+            specific_pareto_experiments[combi[0]],
+            specific_pareto_experiments[combi[1]],
+            label="specific",
+        )
         ax.set_xlabel(combi[0])
         ax.set_ylabel(combi[1])
         ax.legend()
     # set blanks
-    if (nrows*ncols > len(output_feature_keys)) and (nrows > 1):
-        for i in range((nrows*ncols)%len(output_feature_keys)):
-            axes[-1, -1*(i+1)].axis("off")
+    if (nrows * ncols > len(output_feature_keys)) and (nrows > 1):
+        for i in range((nrows * ncols) % len(output_feature_keys)):
+            axes[-1, -1 * (i + 1)].axis("off")
     return fig, axes
 
-def plot_hists(keys, experiments: pd.DataFrame, ncols:int=3):
-    nrows = math.ceil(len(keys)/ncols)
-    ncols = ncols if len(keys)>=ncols else len(keys)
-    axes = experiments.hist(keys, figsize=[4.8*ncols,4*nrows], layout=(nrows,ncols))
+
+def plot_hists(keys, experiments: pd.DataFrame, ncols: int = 3):
+    nrows = math.ceil(len(keys) / ncols)
+    ncols = ncols if len(keys) >= ncols else len(keys)
+    axes = experiments.hist(
+        keys, figsize=[4.8 * ncols, 4 * nrows], layout=(nrows, ncols)
+    )
     return axes
 
-def plot_duplicates(experiments: pd.DataFrame, duplicated_labcodes: list, output_features:list, ncols:int=3):
-    nrows = math.ceil(len(output_features)/ncols)
-    ncols = ncols if len(output_features)>=ncols else len(output_features)
-    fig, axes = plt.subplots(ncols=ncols, nrows=nrows, figsize=[6.4*ncols,4.8*nrows])
+
+def plot_duplicates(
+    experiments: pd.DataFrame,
+    duplicated_labcodes: list,
+    output_features: list,
+    ncols: int = 3,
+):
+    nrows = math.ceil(len(output_features) / ncols)
+    ncols = ncols if len(output_features) >= ncols else len(output_features)
+    fig, axes = plt.subplots(
+        ncols=ncols, nrows=nrows, figsize=[6.4 * ncols, 4.8 * nrows]
+    )
     for j, output_feature in enumerate(output_features):
         if len(output_features) == 1:
             ax = axes
         elif len(output_features) <= ncols:
             ax = axes[j]
         else:
-            irow = j//ncols
+            irow = j // ncols
             icol = j % ncols
-            ax = axes[irow,icol]
+            ax = axes[irow, icol]
         for i, d in enumerate(duplicated_labcodes):
             # plot all
-            data = experiments.loc[experiments.labcode.isin(d) & experiments[output_feature].notna(), output_feature].values
-            ax.scatter(len(data)*[i], data)
+            data = experiments.loc[
+                experiments.labcode.isin(d) & experiments[output_feature].notna(),
+                output_feature,
+            ].values
+            ax.scatter(len(data) * [i], data)
             # mark invalids
-            data = experiments.loc[experiments.labcode.isin(d) & experiments[output_feature].notna() & (experiments[f"valid_{output_feature}"] == 0), output_feature].values
-            ax.scatter(len(data)*[i], data, color = "black", marker = "x")
+            data = experiments.loc[
+                experiments.labcode.isin(d)
+                & experiments[output_feature].notna()
+                & (experiments[f"valid_{output_feature}"] == 0),
+                output_feature,
+            ].values
+            ax.scatter(len(data) * [i], data, color="black", marker="x")
         ax.set_xticks(list(range(len(duplicated_labcodes))))
-        ax.set_xticklabels([lcs[0] for lcs in duplicated_labcodes], rotation=45., ha="right")
+        ax.set_xticklabels(
+            [lcs[0] for lcs in duplicated_labcodes], rotation=45.0, ha="right"
+        )
         ax.set_ylabel(output_feature)
         ax.set_title(f"Duplicates {output_feature}")
         ax.grid(axis="x")
         plt.tight_layout()
     # set blanks
-    if (nrows*ncols > len(output_features)) and (nrows > 1):
-        for i in range((nrows*ncols)%len(output_features)):
-            axes[-1, -1*(i+1)].axis("off")
+    if (nrows * ncols > len(output_features)) and (nrows > 1):
+        for i in range((nrows * ncols) % len(output_features)):
+            axes[-1, -1 * (i + 1)].axis("off")
 
     return fig, ax
 
+
 def parity(
-    datasets: List[Tuple[np.array,np.array]],
+    datasets: List[Tuple[np.array, np.array]],
     datalabels: Optional[List[str]] = None,
     uncertainties: Optional[List[np.array]] = None,
     uncertainty_scale: int = 1,
     hoffset: Optional[float] = None,
-    title: str ="",
-    ax: Optional[Axes] = None
+    title: str = "",
+    ax: Optional[Axes] = None,
 ):
     if datalabels is None:
         datalabels = [None for i in range(len(datasets))]
@@ -123,7 +157,9 @@ def parity(
     for i, dset in enumerate(datasets):
         ax.scatter(dset[0], dset[1], label=datalabels[i])
         if uncertainties[i] is not None:
-            ax.errorbar(dset[0],dset[1],yerr=uncertainties[i]*uncertainty_scale, fmt='none')
+            ax.errorbar(
+                dset[0], dset[1], yerr=uncertainties[i] * uncertainty_scale, fmt="none"
+            )
         if dset[0].max() > ymax:
             ymax = dset[0].max()
         if dset[0].min() < ymin:
@@ -138,14 +174,15 @@ def parity(
     ax.legend()
     return ax
 
+
 def plot_fi(
     featurenames,
     importances,
     std=None,
     significance=None,
-    comment:str="",
-    sort: bool = True
-    ):
+    comment: str = "",
+    sort: bool = True,
+):
     """[summary]
 
     Args:
