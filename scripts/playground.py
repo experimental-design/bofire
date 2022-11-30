@@ -32,7 +32,9 @@ from tests.bofire.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
 )
+from tests.bofire.strategies.botorch.test_qehvi import BOTORCH_QEHVI_STRATEGY_SPECS
 from tests.bofire.strategies.dummy import DummyStrategy
+from tests.bofire.utils.test_multiobjective import dfs, invalid_domains
 
 feature1 = ContinuousInput(key="x1", lower_bound=0.0, upper_bound=0.7)
 feature2 = ContinuousInput(key="x2", lower_bound=0.0, upper_bound=0.45)
@@ -64,13 +66,16 @@ domain = Domain(
     constraints=constraints,
 )
 
-strategy = SOBO(domain=domain, acquisition_function="QNEI")
+# strategy = SOBO(domain=domain, acquisition_function="QNEI")
 
-experiments = generate_experiments(domain)
-strategy._choose_from_pool(experiments, 5)
+strategy = BoTorchQehviStrategy(**BOTORCH_QEHVI_STRATEGY_SPECS["valids"][2])
 
-strategy.tell(experiments)
-strategy.get_fbest(experiments)
+experiments_train = generate_experiments(domain, 10)
+experiments_test = generate_experiments(domain, 10)
+strategy.tell(experiments_train)
+candidates = strategy._choose_from_pool(experiments_test, 5)
+
+strategy.get_fbest(experiments_test)
 
 strategy = BoTorchQehviStrategy(
     domain=domain

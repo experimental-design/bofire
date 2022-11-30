@@ -30,6 +30,7 @@ from tests.bofire.strategies.botorch.test_base import data, domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
+    "domain": domains[2],
     "acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,

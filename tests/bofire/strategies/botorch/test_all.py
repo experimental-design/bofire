@@ -22,7 +22,7 @@ STRATEGY_SPECS = {
     BoTorchQnehviStrategy: BOTORCH_QEHVI_STRATEGY_SPECS,
     BoTorchQparegoStrategy: BOTORCH_QPAREGO_STRATEGY_SPECS,
 }
-#TODO: add ModelPredictiveStrategy
+
 
 @pytest.mark.parametrize(
     "cls, spec",

@@ -129,7 +129,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             )
         return v
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def update_model_specs_for_domain(cls, values):
         """Ensures that a prediction model is specified for each output feature"""
         if values["domain"] is not None:
@@ -284,7 +284,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())
         return preds, stds
 
-    # TODO: Check whats happening here!
     def _choose_from_pool(
         self,
         candidate_pool: pd.DataFrame,
@@ -300,7 +299,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             pd.DataFrame: The chosen set of candidates.
         """
 
-        # TODO: is candidate pool passed transformed already?
         transformed = self.transformer.transform(candidate_pool)
 
         X = torch.from_numpy(transformed[self.input_feature_keys].values).to(**tkwargs)
@@ -308,7 +306,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
         acqf_values = self.acqf.forward(X).cpu().detach().numpy()
 
-        return candidate_pool.iloc[acqf_values.argmax(candidate_count)]
+        return candidate_pool.iloc[
+            np.argpartition(acqf_values, -1 * candidate_count)[-candidate_count:]
+        ]
 
     @property
     def categorical_dims(self):
@@ -343,7 +343,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # - categoricals with one hot and OEN, could be in combination with garrido merchan - OEN not implemented
         # - descriptized categoricals not yet implemented
         num_categorical_features = len(self.domain.get_features(CategoricalInput))
-        num_categorical_combinations = len(self.domain.get_categorical_combinations())
+        num_categorical_combinations = len(
+            self.domain.input_features.get_categorical_combinations()
+        )
 
         if (
             (num_categorical_features == 0)
@@ -535,8 +537,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             if self.experiments is not None:
                 experiments = self.experiments
             else:
-                # TODO: catch if no experiements are provided
-                print(
+                raise ValueError(
                     "Call strategy.tell first. The transfomer needs to be fitted here"
                 )
             _ = self.transformer.fit_transform(experiments)
@@ -637,7 +638,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         elif self.categorical_method == CategoricalMethodEnum.FREE:
             include = CategoricalDescriptorInput
 
-        combos = self.domain.get_categorical_combinations(
+        combos = self.domain.input_features.get_categorical_combinations(
             include=include, exclude=exclude
         )
         # now build up the fixed feature list
@@ -708,7 +709,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     def get_fixed_values_list(self):
 
-        # CARTESIAN PRODUCTS: fixed values from categorical combinations X fixed values from concurrency constraints
+        # CARTESIAN PRODUCTS: fixed values from categorical combinations X fixed values from nchoosek constraints
         fixed_values_full = []
 
         if (
@@ -719,13 +720,13 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             and self.descriptor_encoding == DescriptorEncodingEnum.CATEGORICAL
         ):
             ff1 = self.get_fixed_features()
-            for ff2 in self.get_concurrency_combinations():
+            for ff2 in self.get_nchoosek_combinations():
                 ff = ff1.copy()
                 ff.update(ff2)
                 fixed_values_full.append(ff)
         else:
             for ff1 in self.get_categorical_combinations():
-                for ff2 in self.get_concurrency_combinations():
+                for ff2 in self.get_nchoosek_combinations():
                     ff = ff1.copy()
                     ff.update(ff2)
                     fixed_values_full.append(ff)

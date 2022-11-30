@@ -12,6 +12,9 @@ from botorch.acquisition.multi_objective.objective import (
 )
 
 from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.domain.domain import Domain
+from bofire.domain.features import ContinuousInput, ContinuousOutput
+from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.base import (
     CategoricalEncodingEnum,
@@ -20,10 +23,44 @@ from bofire.strategies.botorch.base import (
     DescriptorMethodEnum,
 )
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
+from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
+from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 
+if1 = ContinuousInput(
+    **{
+        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
+        "key": "if1",
+    }
+)
+
+if2 = ContinuousInput(
+    **{
+        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
+        "key": "if2",
+    }
+)
+
+if3 = ContinuousInput(
+    **{
+        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
+        "key": "if3",
+    }
+)
+
+of1 = ContinuousOutput(
+    objective=MaximizeObjective(w=1),
+    key="of1",
+)
+
+of2 = ContinuousOutput(
+    objective=MinimizeObjective(w=1),
+    key="of2",
+)
+
 VALID_BOTORCH_QEHVI_STRATEGY_SPEC = {
+    "domain": Domain(input_features=[if1, if2, if3], output_features=[of1, of2]),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
@@ -38,7 +75,7 @@ BOTORCH_QEHVI_STRATEGY_SPECS = {
         VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
         {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "seed": 1},
         {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
-        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "ref_point": {"a": 1.0, "b": 2, "c": 3}},
+        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "ref_point": {"of1": 1.0, "of2": 2}},
     ],
     "invalids": [
         {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "descriptor_encoding": None},
@@ -77,7 +114,7 @@ def test_qehvi_get_adjusted_refpoint(domain, ref_point, experiments, expected):
     strategy.domain.set_experiments(experiments)
     adjusted_ref_point = strategy.get_adjusted_refpoint()
     assert isinstance(adjusted_ref_point, list)
-    assert np.allclose(expected, np.ndarray(adjusted_ref_point))
+    assert np.allclose(expected, np.asarray(adjusted_ref_point))
 
 
 @pytest.mark.parametrize(

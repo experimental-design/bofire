@@ -3,7 +3,7 @@ from typing import Any, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, root_validator, validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint
@@ -123,6 +123,8 @@ class Strategy(BaseModel):
 
         self._init_domain()
 
+    # @root_validator(pre=True)
+    # def validate_objectives(cls, values):
     @validator("domain")
     def validate_objectives(cls, domain: Domain):
         """Validator to ensure that all objectives defined in the domain are valid for the chosen strategy
@@ -141,7 +143,7 @@ class Strategy(BaseModel):
             assert feature.objective is not None
             if not cls.is_objective_implemented(type(feature.objective)):
                 raise ValueError(
-                    f"Objective `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
+                    f"Objective `{type(feature.objective)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
                 )
         return domain
 

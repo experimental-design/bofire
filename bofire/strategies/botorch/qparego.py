@@ -30,7 +30,7 @@ from bofire.utils.torch_tools import get_linear_constraints
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
-# currently it works only with categorical and desriptor method free, botorch feature to implement acqf_list_mixed needs to be 
+# currently it works only with categorical and desriptor method free, botorch feature to implement acqf_list_mixed needs to be
 # implemented first https://github.com/pytorch/botorch/issues/1272
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
@@ -53,19 +53,28 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 "At least two output features has to be defined in the domain."
             )
         for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if (
-                isinstance(feat.objective, IdentityObjective)
-                == False
-            ):
+            if isinstance(feat.objective, IdentityObjective) == False:
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
             if feat.objective.w != 1.0:
-                raise ValueError("Only objective functions with weight 1 are supported.")
-        if len(self.domain.get_features(CategoricalInput))>0 and self.categorical_method != CategoricalMethodEnum.FREE:
-            raise ValueError("Only FREE optimization method for categoricals supported so far.")
-        if len(self.domain.get_features(CategoricalDescriptorInput))>0 and self.descriptor_method != CategoricalMethodEnum.FREE:
-            raise ValueError("Only FREE optimization method for Categorical with Descriptor supported so far.")
+                raise ValueError(
+                    "Only objective functions with weight 1 are supported."
+                )
+        if (
+            len(self.domain.get_features(CategoricalInput)) > 0
+            and self.categorical_method != CategoricalMethodEnum.FREE
+        ):
+            raise ValueError(
+                "Only FREE optimization method for categoricals supported so far."
+            )
+        if (
+            len(self.domain.get_features(CategoricalDescriptorInput)) > 0
+            and self.descriptor_method != CategoricalMethodEnum.FREE
+        ):
+            raise ValueError(
+                "Only FREE optimization method for Categorical with Descriptor supported so far."
+            )
 
         super()._init_domain()
         return
@@ -75,69 +84,110 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
         acqf_list = []
         with torch.no_grad():
-            clean_experiments = self.domain.preprocess_experiments_any_valid_output(self.experiments)
+            clean_experiments = self.domain.preprocess_experiments_any_valid_output(
+                self.experiments
+            )
             transformed = self.transformer.transform(clean_experiments)
-            train_x, _ = self.get_training_tensors(transformed, self.domain.output_features.get_keys_by_objective(excludes=None))
+            train_x, _ = self.get_training_tensors(
+                transformed,
+                self.domain.output_features.get_keys_by_objective(excludes=None),
+            )
             pred = self.model.posterior(train_x).mean
 
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
+        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
         transformed = self.transformer.transform(clean_experiments)
-        observed_x, _ = self.get_training_tensors(transformed, self.domain.output_features.get_keys_by_objective(excludes=None))
+        observed_x, _ = self.get_training_tensors(
+            transformed,
+            self.domain.output_features.get_keys_by_objective(excludes=None),
+        )
 
         for i in range(candidate_count):
-            ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(**tkwargs)
-            weights = sample_simplex(len(self.domain.output_features.get_keys_by_objective(excludes=None)), **tkwargs).squeeze()*ref_point_mask
-            objective = GenericMCObjective(get_chebyshev_scalarization(weights=weights, Y=pred))
-            
+            ref_point_mask = torch.from_numpy(
+                get_ref_point_mask(domain=self.domain)
+            ).to(**tkwargs)
+            weights = (
+                sample_simplex(
+                    len(
+                        self.domain.output_features.get_keys_by_objective(excludes=None)
+                    ),
+                    **tkwargs
+                ).squeeze()
+                * ref_point_mask
+            )
+            objective = GenericMCObjective(
+                get_chebyshev_scalarization(weights=weights, Y=pred)
+            )
 
             acqf = get_acquisition_function(
-                acquisition_function_name="qNEI" if self.acqf == AcquisitionFunctionEnum.QNEI else "qEI",
-                model = self.model,
-                objective = objective,
-                X_observed = observed_x,
-                mc_samples = self.num_sobol_samples,
-                qmc = True, 
-                prune_baseline = True
+                acquisition_function_name="qNEI"
+                if self.acqf == AcquisitionFunctionEnum.QNEI
+                else "qEI",
+                model=self.model,
+                objective=objective,
+                X_observed=observed_x,
+                mc_samples=self.num_sobol_samples,
+                qmc=True,
+                prune_baseline=True,
             )
             acqf_list.append(acqf)
-        
+
         # optimize
 
         candidates = optimize_acqf_list(
-            acq_function_list = acqf_list,
-            bounds = self.get_bounds(),
-            num_restarts = self.num_restarts,
-            raw_samples = self.num_raw_samples,
-            equality_constraints=get_linear_constraints(LinearEqualityConstraint),
-            inequality_constraints=get_linear_constraints(LinearInequalityConstraint),
+            acq_function_list=acqf_list,
+            bounds=self.get_bounds(),
+            num_restarts=self.num_restarts,
+            raw_samples=self.num_raw_samples,
+            equality_constraints=get_linear_constraints(
+                domain=self.domain, constraint=LinearEqualityConstraint
+            ),
+            inequality_constraints=get_linear_constraints(
+                domain=self.domain, constraint=LinearInequalityConstraint
+            ),
             fixed_features=self.get_fixed_features(),
             options={"batch_limit": 5, "maxiter": 200},
         )
 
         preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()
-        stds = np.sqrt(
-            self.model.posterior(X=candidates[0]).variance.detach().numpy()
-        )
+        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())
 
         df_candidates = pd.DataFrame(
             data=np.nan,
             index=range(candidate_count),
             columns=self.input_feature_keys
-            + [i + "_pred" for i in self.domain.output_features.get_keys_by_objective(excludes=None)]
-            + [i + "_sd" for i in self.domain.output_features.get_keys_by_objective(excludes=None)]
-            + [i + "_des" for i in self.domain.output_features.get_keys_by_objective(excludes=None)]
+            + [
+                i + "_pred"
+                for i in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
+            + [
+                i + "_sd"
+                for i in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
+            + [
+                i + "_des"
+                for i in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
             # ["reward","acqf","strategy"]
         )
 
-        for i, feat in enumerate(self.domain.output_features.get_by_objective(excludes=None)):
+        for i, feat in enumerate(
+            self.domain.output_features.get_by_objective(excludes=None)
+        ):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
             df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])
 
         df_candidates[self.input_feature_keys] = candidates[0].detach().numpy()
 
-        configs = self.get_candidate_log(candidates)
-        return self.transformer.inverse_transform(df_candidates), configs
+        return self.transformer.inverse_transform(df_candidates)
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

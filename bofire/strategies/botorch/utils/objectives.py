@@ -37,7 +37,12 @@ class MultiplicativeObjective(AquisitionObjective):
         return
 
     def reward(self, x, objective):
-        return np.sign(objective(x)) * np.abs(objective(x)) ** objective.w, 0.0
+        if torch.is_tensor(x):
+            reward = torch.sign(objective(x)) * torch.abs(objective(x)) ** objective.w
+        else:
+            reward = np.sign(objective(x)) * np.abs(objective(x)) ** objective.w
+
+        return reward, 0.0
 
     def forward(self, samples, X=None):
         infeasible_cost = 0.0

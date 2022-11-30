@@ -19,6 +19,7 @@ from bofire.utils.enum import (
     DescriptorEncodingEnum,
     DescriptorMethodEnum,
 )
+from tests.bofire.domain.test_domain_validators import generate_experiments
 
 # NChooseK constraints 1
 cc1a = NChooseKConstraint(
@@ -817,9 +818,10 @@ test_cases.append(test_case)
 
 @pytest.mark.parametrize("test_case", test_cases)
 def test_concurrency_fixed_values(test_case):
+    experiments = generate_experiments(domain=test_case["domain"])
+
     sobo = BoTorchSoboStrategy(
         domain=test_case["domain"],
-        experiments=experiments,
         acquisition_function=AcquisitionFunctionEnum.QNEI,
         descriptor_method=test_case["descriptor_method"],
         categorical_method=test_case["categorical_method"],
@@ -827,6 +829,8 @@ def test_concurrency_fixed_values(test_case):
         categorical_encoding=test_case["categorical_encoding"],
         seed=0,
     )
+
+    sobo.tell(experiments)
     fixed_values = sobo.get_fixed_values_list()
     # assert len(fixed_values) == len(test_case['test_fixed_values'])
     for features in test_case["test_fixed_values"]:

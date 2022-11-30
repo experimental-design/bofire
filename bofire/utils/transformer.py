@@ -79,17 +79,18 @@ class Transformer(BaseModel):
 
         super().__init__(
             domain=domain,
-            descriptor_encoding= (
-                 descriptor_encoding.name
-                 if isinstance(descriptor_encoding, Enum)
-                 else None
-             ),
-            categorical_encoding=
-             (
-                 categorical_encoding.name
-                 if isinstance(categorical_encoding, Enum)
-                 else None
-             ),
+            descriptor_encoding=descriptor_encoding,
+            # (
+            #     descriptor_encoding.name
+            #     if isinstance(descriptor_encoding, Enum)
+            #     else None
+            # ),
+            categorical_encoding=categorical_encoding,
+            # (
+            #     categorical_encoding.name
+            #     if isinstance(categorical_encoding, Enum)
+            #     else None
+            # ),
             scale_inputs=scale_inputs,
             scale_outputs=scale_outputs,
         )

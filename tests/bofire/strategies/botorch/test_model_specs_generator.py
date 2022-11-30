@@ -33,22 +33,12 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of2"})
     [
         (
             BoTorchSoboStrategy(
-                domain=Domain(
-                    input_features=[if1],
-                    output_features=[of1, of2],
-                    constraints=[],
-                ),
                 **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
             ),
             2,
         ),
         (
             BoTorchSoboStrategy(
-                domain=Domain(
-                    input_features=[if1],
-                    output_features=[of1, of2],
-                    constraints=[],
-                ),
                 **{
                     **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
                     "model_specs": [
@@ -68,7 +58,7 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of2"})
 )
 def test_generate_model_specs(strategy: Strategy, expected_count: int):
     model_specs = BotorchBasicBoStrategy._generate_model_specs(
-        strategy.domain, strategy.specs
+        domain=strategy.domain, model_specs=strategy.model_specs
     )
     assert len(model_specs) == expected_count
 
@@ -78,11 +68,6 @@ def test_generate_model_specs(strategy: Strategy, expected_count: int):
     [
         (
             BoTorchSoboStrategy(
-                domain=Domain(
-                    input_features=[if1],
-                    output_features=[of1],
-                    constraints=[],
-                ),
                 **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
             ),
             [
@@ -97,11 +82,6 @@ def test_generate_model_specs(strategy: Strategy, expected_count: int):
         ),
         (
             BoTorchSoboStrategy(
-                domain=Domain(
-                    input_features=[if1],
-                    output_features=[of1],
-                    constraints=[],
-                ),
                 **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
             ),
             [

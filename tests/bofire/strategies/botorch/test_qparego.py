@@ -23,18 +23,20 @@ from bofire.strategies.botorch.qparego import (
     AcquisitionFunctionEnum,
     BoTorchQparegoStrategy,
 )
+from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
+    "domain": domains[2],
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
     "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
-    "descriptor_method": random.choice(list(DescriptorMethodEnum)),
-    "categorical_encoding": random.choice(list(CategoricalEncodingEnum)),
+    "descriptor_method": "FREE",
+    "categorical_encoding": "ONE_HOT",
     "base_acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
-    "categorical_method": "EXHAUSTIVE",
+    "categorical_method": "FREE",
 }
 
 BOTORCH_QPAREGO_STRATEGY_SPECS = {
@@ -65,7 +67,7 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
 )
 def test_invalid_qparego_init_domain(domain):
     with pytest.raises(ValueError):
-        BoTorchQparegoStrategy(domain)
+        BoTorchQparegoStrategy(domain=domain)
 
 
 @pytest.mark.parametrize(
@@ -79,15 +81,13 @@ def test_invalid_qparego_init_domain(domain):
 def test_qparego(num_test_candidates, base_acquisition_function):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(
-        random_strategy.ask(candidate_count=10)[0]
-    )
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.run_candidate_experiments(random_strategy._sample(n=10))
     # init strategy
     my_strategy = BoTorchQparegoStrategy(
-        benchmark.domain, base_acquisition_function=base_acquisition_function
+        domain=benchmark.domain, base_acquisition_function=base_acquisition_function
     )
     my_strategy.tell(experiments)
     # ask
-    candidates, _ = my_strategy.ask(num_test_candidates)
+    candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates
