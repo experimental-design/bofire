@@ -8,12 +8,8 @@ import pandas as pd
 from matplotlib.axes import Axes
 
 from bofire.domain import Domain
-from bofire.domain.desirability_functions import IdentityDesirabilityFunction
-from bofire.domain.features import (
-    ContinuousOutputFeature,
-    ContinuousOutputFeature_woDesFunc,
-    OutputFeature,
-)
+from bofire.domain.features import ContinuousOutput, OutputFeature
+from bofire.domain.objectives import IdentityObjective
 from bofire.utils.multiobjective import get_pareto_front
 
 
@@ -24,17 +20,15 @@ def plot_pareto_fronts(
     ncols: int = 3,
 ):
     if output_feature_keys is None:
-        output_feature_keys = domain.get_features(
-            OutputFeature, excludes=[ContinuousOutputFeature_woDesFunc]
-        )
+        output_feature_keys = domain.get_features(OutputFeature)
     else:
         assert (
             len(output_feature_keys) >= 2
         ), "At least two output feature keys has to be provided."
         for key in output_feature_keys:
             feat = domain.get_feature(key)
-            assert isinstance(feat, ContinuousOutputFeature)
-            assert isinstance(feat.desirability_function, IdentityDesirabilityFunction)
+            assert isinstance(feat, ContinuousOutput)
+            assert isinstance(feat.objective, IdentityObjective)
 
     assert len(output_feature_keys) > 1, "Only one output feature in domain."
     combis = list(itertools.combinations(output_feature_keys, 2))

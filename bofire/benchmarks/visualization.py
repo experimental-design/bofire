@@ -2,8 +2,9 @@ from typing import Optional, Sequence, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from everest.study import PoolStudy, Study
 from matplotlib.axes import Axes
+
+from bofire.utils.study import PoolStudy, Study
 
 
 # TODO: Maybe unite both plots
