@@ -6,10 +6,7 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.acquisition.multi_objective.objective import (
-    MCMultiOutputObjective,
-    WeightedMCMultiOutputObjective,
-)
+from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputObjective
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.domain.domain import Domain
@@ -18,13 +15,11 @@ from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.base import (
     CategoricalEncodingEnum,
-    CategoricalMethodEnum,
     DescriptorEncodingEnum,
     DescriptorMethodEnum,
 )
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
-from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 

@@ -1,7 +1,6 @@
 import copy
 from abc import abstractmethod
-from enum import Enum
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,7 +11,6 @@ from botorch.cross_validation import gen_loo_cv_folds
 from botorch.models import MixedSingleTaskGP, ModelListGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
-from botorch.sampling.samplers import SobolQMCNormalSampler
 from pydantic import Field, PositiveInt
 from pydantic.class_validators import root_validator, validator
 from pydantic.types import NonNegativeInt, conlist
@@ -32,13 +30,10 @@ from bofire.domain.features import (
     is_continuous,
 )
 from bofire.domain.util import BaseModel
-from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.utils.models import get_and_fit_model
-from bofire.strategies.botorch.utils.objectives import AquisitionObjective
 from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import (
-    AcquisitionFunctionEnum,
     CategoricalEncodingEnum,
     CategoricalMethodEnum,
     DescriptorEncodingEnum,
@@ -46,7 +41,7 @@ from bofire.utils.enum import (
     KernelEnum,
     ScalerEnum,
 )
-from bofire.utils.torch_tools import get_linear_constraints
+from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 from bofire.utils.transformer import Transformer
 
 
@@ -93,9 +88,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     model_specs: Optional[conlist(item_type=ModelSpec, min_items=1)]
     objective: Optional[MCAcquisitionObjective]
-    acquisition_function: Optional[AcquisitionFunctionEnum]
     acqf: Optional[AcquisitionFunction]
-    sampler: Optional[SobolQMCNormalSampler]
     model: Optional[GPyTorchModel]
     features2idx: Dict = Field(default_factory=lambda: {})
     input_feature_keys: List[str] = Field(default_factory=lambda: [])
@@ -104,7 +97,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     @validator("num_sobol_samples")
     def validate_num_sobol_samples(cls, v):
-        if is_power_of_two(v) == False:
+        if is_power_of_two(v) is False:
             raise ValueError(
                 "number sobol samples have to be of the power of 2 to increase performance"
             )
@@ -112,7 +105,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     @validator("num_raw_samples")
     def validate_num_raw_samples(cls, v):
-        if is_power_of_two(v) == False:
+        if is_power_of_two(v) is False:
             raise ValueError(
                 "number raw samples have to be of the power of 2 to increase performance"
             )
@@ -207,10 +200,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             self.input_feature_keys += tr
 
         torch.manual_seed(self.seed)
-
-        self.sampler = SobolQMCNormalSampler(
-            self.num_sobol_samples
-        )  # ,seed=self.seed) #TODO: leave this decision open?
         self.init_objective()
 
     # helper functions
@@ -592,7 +581,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             and self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT
         ):
             for feat in self.get_true_categorical_features():
-                if feat.is_fixed() == False:
+                if feat.is_fixed() is False:
                     for cat in feat.get_forbidden_categories():
                         transformed = (
                             self.transformer.encoders[feat.key]
@@ -750,7 +739,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     def feature_importances(self, plot: bool = False):
         if plot:
             from bofire.utils.viz import plot_fi
-        if self.is_fitted != True:
+        if self.is_fitted is False:
             raise ValueError(
                 "Cannot calculate feature_importances without a fitted model."
             )

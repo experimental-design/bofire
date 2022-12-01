@@ -1,5 +1,5 @@
 import math
-from typing import List, Optional
+from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -22,13 +22,16 @@ class MultiObjective(Study):
     def get_fbest(self, experiments: Optional[pd.DataFrame] = None):
         if experiments is None:
             experiments = self.experiments
-        optimal_experiments = get_pareto_front(self.domain,experiments)
+        optimal_experiments = get_pareto_front(self.domain, experiments)
         return compute_hypervolume(self.domain, optimal_experiments, self.ref_point)
 
     def __init__(self, **data):
         super().__init__(**data)
-        if len(self.domain.output_features.get_by_objective(excludes=None)) < 2: #TODO: update, when more features without DesFunc are implemented!
+        if (
+            len(self.domain.output_features.get_by_objective(excludes=None)) < 2
+        ):  # TODO: update, when more features without DesFunc are implemented!
             raise ValueError("received singelobjective domain.")
+
 
 class DTLZ2(MultiObjective):
 
@@ -37,7 +40,7 @@ class DTLZ2(MultiObjective):
     k: Optional[int]
 
     @validator("dim")
-    def validate_dim(cls,dim,values):
+    def validate_dim(cls, dim, values):
         num_objectives = values["num_objectives"]
         if dim <= values["num_objectives"]:
             raise ValueError(
@@ -46,31 +49,39 @@ class DTLZ2(MultiObjective):
         return dim
 
     @property
-    def best_possible_hypervolume(self)->float:
+    def best_possible_hypervolume(self) -> float:
         # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
         hypercube_vol = self.ref_point[0] ** self.num_objectives
         pos_hypersphere_vol = (
             math.pi ** (self.num_objectives / 2)
             / gamma(self.num_objectives / 2 + 1)
-            / 2 ** self.num_objectives
+            / 2**self.num_objectives
         )
         return hypercube_vol - pos_hypersphere_vol
 
     def setup_domain(self):
         domain = Domain()
         for i in range(self.dim):
-            domain.add_feature(ContinuousInput(key="x_%i" % (i),lower_bound=0.0,upper_bound=1.0))
+            domain.add_feature(
+                ContinuousInput(key="x_%i" % (i), lower_bound=0.0, upper_bound=1.0)
+            )
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
-            domain.add_feature(ContinuousOutput(key=f"f_{i}",desirability_function=MinimizeObjective(w=1.)))
-        self.ref_point = {feat:1.1 for feat in domain.get_feature_keys(ContinuousOutput)}
+            domain.add_feature(
+                ContinuousOutput(
+                    key=f"f_{i}", desirability_function=MinimizeObjective(w=1.0)
+                )
+            )
+        self.ref_point = {
+            feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
+        }
         return domain
 
     def run_candidate_experiments(self, candidates):
         X = candidates[self.domain.get_feature_keys(InputFeature)].values
-        X_m = X[...,-self.k:]
-        g_X = ((X_m - 0.5)**2).sum(axis=-1)
+        X_m = X[..., -self.k :]
+        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
         g_X_plus1 = 1 + g_X
         fs = []
         pi_over_2 = math.pi / 2
@@ -81,8 +92,17 @@ class DTLZ2(MultiObjective):
             if i > 0:
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
-        candidates[self.domain.output_features.get_keys_by_objective(excludes=None)]=np.stack(fs,axis=-1)
-        candidates[["valid_%s" % feat for feat in self.domain.output_features.get_keys_by_objective(excludes=None)]] = 1
+        candidates[
+            self.domain.output_features.get_keys_by_objective(excludes=None)
+        ] = np.stack(fs, axis=-1)
+        candidates[
+            [
+                "valid_%s" % feat
+                for feat in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
+        ] = 1
         return candidates[self.domain.experiment_column_names].copy()
 
 
@@ -95,36 +115,43 @@ class SnarBenchmark(MultiObjective):
 
         # Decision variables
         # "residence time in minutes"
-        domain.add_feature(ContinuousInput(key="tau", lower_bound=0.5, upper_bound=2.))
+        domain.add_feature(ContinuousInput(key="tau", lower_bound=0.5, upper_bound=2.0))
 
         # "equivalents of pyrrolidine"
-        domain.add_feature(ContinuousInput(key="equiv_pldn", lower_bound=1.0, upper_bound=5.))
+        domain.add_feature(
+            ContinuousInput(key="equiv_pldn", lower_bound=1.0, upper_bound=5.0)
+        )
 
         # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
-        domain.add_feature(ContinuousInput(key="conc_dfnb", lower_bound=0.1, upper_bound=0.5))
+        domain.add_feature(
+            ContinuousInput(key="conc_dfnb", lower_bound=0.1, upper_bound=0.5)
+        )
 
         # "Reactor temperature in degress celsius"
-        domain.add_feature(ContinuousInput(key="temperature", lower_bound=30, upper_bound=120.))
+        domain.add_feature(
+            ContinuousInput(key="temperature", lower_bound=30, upper_bound=120.0)
+        )
 
         # Objectives
         # "space time yield (kg/m^3/h)"
-        domain.add_feature(ContinuousOutput(
-            key="sty",
-            desirability_function = MaximizeObjective(w=1.)
-        ))
+        domain.add_feature(
+            ContinuousOutput(key="sty", desirability_function=MaximizeObjective(w=1.0))
+        )
 
         # "E-factor"
-        domain.add_feature(ContinuousOutput(
-            key="e_factor",
-            desirability_function=MinimizeObjective(w=1.),
-        ))
+        domain.add_feature(
+            ContinuousOutput(
+                key="e_factor",
+                desirability_function=MinimizeObjective(w=1.0),
+            )
+        )
 
-        self.ref_point = {"e_factor":10.7, "sty":2957.}
+        self.ref_point = {"e_factor": 10.7, "sty": 2957.0}
         return domain
 
     @property
     def best_possible_hypervolume(self):
-        return 10000.
+        return 10000.0
 
     def run_candidate_experiments(self, candidates):
         stys = []
@@ -137,12 +164,19 @@ class SnarBenchmark(MultiObjective):
             y, e_factor, res = self._integrate_equations(tau, equiv_pldn, conc_dfnb, T)
             stys.append(y)
             e_factors.append(e_factor)
-            #candidates["sty"] = y
-            #candidates["e_factor"] = e_factor
+            # candidates["sty"] = y
+            # candidates["e_factor"] = e_factor
 
-        candidates["sty"]=stys
-        candidates["e_factor"]=e_factors
-        candidates[["valid_%s" % feat for feat in self.domain.output_features.get_keys_by_objective(excludes=None)]] = 1
+        candidates["sty"] = stys
+        candidates["e_factor"] = e_factors
+        candidates[
+            [
+                "valid_%s" % feat
+                for feat in self.domain.output_features.get_keys_by_objective(
+                    excludes=None
+                )
+            ]
+        ] = 1
         return candidates[self.domain.experiment_column_names].copy()
 
     def _integrate_equations(self, tau, equiv_pldn, conc_dfnb, temperature, **kwargs):
@@ -154,11 +188,11 @@ class SnarBenchmark(MultiObjective):
         # Flowrate and residence time
         V = 5  # mL
         q_tot = V / tau
-        C1_0 = kwargs.get("C1_0", 2.0)  # reservoir concentration of 1 is 1 M = 1 mM
-        C2_0 = kwargs.get("C2_0", 4.2)  # reservoir concentration of  2 is 2 M = 2 mM
-        q_1 = self.C_i[0] / C1_0 * q_tot  # flowrate of 1 (dfnb)
-        q_2 = self.C_i[1] / C2_0 * q_tot  # flowrate of 2 (pldn)
-        q_eth = q_tot - q_1 - q_2  # flowrate of ethanol
+        # C1_0 = kwargs.get("C1_0", 2.0)  # reservoir concentration of 1 is 1 M = 1 mM
+        # C2_0 = kwargs.get("C2_0", 4.2)  # reservoir concentration of  2 is 2 M = 2 mM
+        # q_1 = self.C_i[0] / C1_0 * q_tot  # flowrate of 1 (dfnb)
+        # q_2 = self.C_i[1] / C2_0 * q_tot  # flowrate of 2 (pldn)
+        # q_eth = q_tot - q_1 - q_2  # flowrate of ethanol
 
         # Integrate
         res = solve_ivp(self._integrand, [0, tau], self.C_i, args=(temperature,))

@@ -2,7 +2,6 @@ import random
 
 import pandas as pd
 import pytest
-from pydantic.error_wrappers import ValidationError
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.benchmarks.singleobjective import Ackley

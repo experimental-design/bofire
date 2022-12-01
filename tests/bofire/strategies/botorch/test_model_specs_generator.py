@@ -1,6 +1,5 @@
 import pytest
 
-from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy, ModelSpec
 from bofire.strategies.botorch.sobo import BoTorchSoboStrategy

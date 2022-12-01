@@ -8,8 +8,6 @@ from bofire.strategies.botorch.sobo import (
     BoTorchSoboMultiplicativeStrategy,
     BoTorchSoboStrategy,
 )
-from tests.bofire.domain.test_domain_validators import generate_experiments
-from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_qehvi import BOTORCH_QEHVI_STRATEGY_SPECS
 from tests.bofire.strategies.botorch.test_qparego import BOTORCH_QPAREGO_STRATEGY_SPECS
 from tests.bofire.strategies.botorch.test_sobo import BOTORCH_SOBO_STRATEGY_SPECS
@@ -43,7 +41,7 @@ def test_valid_strategy_specs(cls, spec):
 )
 def test_invalid_strategy_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
-        res = cls(**spec)
+        cls(**spec)
 
 
 # TODO: add per-strategy test for strategy.has_sufficient_experiments

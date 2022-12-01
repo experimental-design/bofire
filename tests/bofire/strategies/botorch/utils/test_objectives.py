@@ -1,16 +1,10 @@
 import itertools
 import random
-import sys
 
 import numpy as np
 import pytest
 import torch
-from sklearn.preprocessing import scale
-from sklearn.utils._testing import (
-    _convert_container,
-    assert_allclose,
-    assert_array_equal,
-)
+from sklearn.utils._testing import assert_allclose
 
 from bofire.domain.objectives import (
     CloseToTargetObjective,

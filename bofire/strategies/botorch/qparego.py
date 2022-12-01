@@ -22,11 +22,14 @@ from bofire.domain.objectives import (
     MinimizeObjective,
     Objective,
 )
-from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
-from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
+from bofire.utils.enum import (
+    AcquisitionFunctionEnum,
+    CategoricalMethodEnum,
+    DescriptorMethodEnum,
+)
 from bofire.utils.multiobjective import get_ref_point_mask
-from bofire.utils.torch_tools import get_linear_constraints
+from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
@@ -53,7 +56,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 "At least two output features has to be defined in the domain."
             )
         for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) == False:
+            if isinstance(feat.objective, IdentityObjective) is False:
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
@@ -61,16 +64,14 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 raise ValueError(
                     "Only objective functions with weight 1 are supported."
                 )
-        if (
-            len(self.domain.get_features(CategoricalInput)) > 0
-            and self.categorical_method != CategoricalMethodEnum.FREE
+        if (len(self.domain.get_features(CategoricalInput)) > 0) and (
+            self.categorical_method != CategoricalMethodEnum.FREE
         ):
             raise ValueError(
                 "Only FREE optimization method for categoricals supported so far."
             )
-        if (
-            len(self.domain.get_features(CategoricalDescriptorInput)) > 0
-            and self.descriptor_method != CategoricalMethodEnum.FREE
+        if (len(self.domain.get_features(CategoricalDescriptorInput)) > 0) and (
+            self.descriptor_method != DescriptorMethodEnum.FREE
         ):
             raise ValueError(
                 "Only FREE optimization method for Categorical with Descriptor supported so far."

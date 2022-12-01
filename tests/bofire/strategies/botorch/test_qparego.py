@@ -1,31 +1,17 @@
 import random
 
-import numpy as np
 import pytest
-from botorch.acquisition.multi_objective import (
-    qExpectedHypervolumeImprovement,
-    qNoisyExpectedHypervolumeImprovement,
-)
-from botorch.acquisition.multi_objective.objective import (
-    MCMultiOutputObjective,
-    WeightedMCMultiOutputObjective,
-)
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.samplers import PolytopeSampler
-from bofire.strategies.botorch.base import (
-    CategoricalEncodingEnum,
-    CategoricalMethodEnum,
-    DescriptorEncodingEnum,
-    DescriptorMethodEnum,
-)
+from bofire.strategies.botorch.base import DescriptorEncodingEnum
 from bofire.strategies.botorch.qparego import (
     AcquisitionFunctionEnum,
     BoTorchQparegoStrategy,
 )
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
-from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
+from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[2],

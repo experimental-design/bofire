@@ -13,6 +13,7 @@ from bofire.strategies.botorch.utils.models import (
     get_dim_subsets,
 )
 from bofire.utils.enum import KernelEnum, ScalerEnum
+from bofire.utils.torch_tools import tkwargs
 
 
 @pytest.mark.parametrize(
@@ -67,7 +68,7 @@ def test_contKernelFactory_invalid(kernel_name, expected_kernel):
 )
 def test_invalid_get_dim_subsets(d, active_dims, cat_dims):
     with pytest.raises((ValueError, TypeError, KeyError)):
-        res = get_dim_subsets(d, active_dims, cat_dims)
+        get_dim_subsets(d, active_dims, cat_dims)
 
 
 @pytest.mark.parametrize(
@@ -88,8 +89,12 @@ def test_valid_get_dim_subsets(d, active_dims, cat_dims, expected):
     assert cat_active_dims == expected[2]
 
 
-train_X = torch.cat([torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1)
-train_Y = torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True) + train_X[..., -1:]
+train_X = torch.cat([torch.rand(20, 2), torch.randint(3, (20, 1))], dim=-1).to(
+    **tkwargs
+)
+train_Y = (
+    torch.sin(train_X[..., :-1]).sum(dim=1, keepdim=True) + train_X[..., -1:]
+).to(**tkwargs)
 
 
 @pytest.mark.parametrize(
@@ -150,7 +155,7 @@ def test_get_and_fit_model(
 
     assert isinstance(model.outcome_transform, Standardize)
 
-    if len(cat_dims) != 0 and use_categorical_kernel == True:
+    if len(cat_dims) != 0 and use_categorical_kernel is True:
         assert isinstance(model, MixedSingleTaskGP)
     else:
         assert isinstance(model, SingleTaskGP)

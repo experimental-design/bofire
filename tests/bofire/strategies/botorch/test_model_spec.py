@@ -17,7 +17,7 @@ VALID_MODEL_SPEC_SPEC = {
 
 VALID_MODEL_SPEC_LIST = [
     ModelSpec(**VALID_MODEL_SPEC_SPEC),
-    ModelSpec(**VALID_MODEL_SPEC_SPEC),
+    ModelSpec(**{**VALID_MODEL_SPEC_SPEC, "output_feature": "of2"}),
 ]
 
 

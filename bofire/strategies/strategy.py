@@ -3,7 +3,7 @@ from typing import Any, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, root_validator, validator
+from pydantic import BaseModel, validator
 from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraints import Constraint

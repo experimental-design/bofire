@@ -17,15 +17,10 @@ from bofire.strategies.botorch.sobo import (
 from bofire.utils.enum import (
     AcquisitionFunctionEnum,
     CategoricalEncodingEnum,
-    CategoricalMethodEnum,
     DescriptorEncodingEnum,
     DescriptorMethodEnum,
 )
-from tests.bofire.domain.test_domain_validators import (
-    generate_candidates,
-    generate_experiments,
-)
-from tests.bofire.domain.utils import get_invalids
+from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import data, domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
@@ -95,6 +90,7 @@ def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
     # test acqf calc
     acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
     assert acqf_vals.shape[0] == num_test_candidates
+    domain.experiments = None
 
 
 @pytest.mark.parametrize(
@@ -115,4 +111,5 @@ def test_SOBO_get_fbest(domain, experiments, Strategy, expected):
     )
     my_strategy.domain.set_experiments(experiments)
     fbest = my_strategy.get_fbest()
+    domain.experiments = None
     assert np.allclose(fbest, expected)

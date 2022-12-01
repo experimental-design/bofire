@@ -1170,24 +1170,6 @@ class InputFeatures(Features):
         for feature in self:
             if feature.key not in inputs:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            feature.validate_candidental(inputs[feature.key])
-        return inputs
-
-    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
-        """Validate a pandas dataframe with input feature values.
-
-        Args:
-            inputs (pd.Dataframe): Inputs to validate.
-
-        Raises:
-            ValueError: Raises a Valueerror if a feature based validation raises an exception.
-
-        Returns:
-            pd.Dataframe: Validated dataframe
-        """
-        for feature in self:
-            if feature.key not in inputs:
-                raise ValueError(f"no col for input feature `{feature.key}`")
             feature.validate_candidental(inputs[feature.key])  # type: ignore
         return inputs
 

@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import Optional, Type
 
 import numpy as np
 import torch
@@ -22,16 +22,16 @@ from bofire.domain.objectives import (
     MinimizeObjective,
     Objective,
 )
-from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
+from bofire.utils.torch_tools import tkwargs
 
 
+# TODO: unite this by using get_acquisiton
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
     ref_point: Optional[dict]
     ref_point_mask: Optional[np.ndarray]
     objective: Optional[MCMultiOutputObjective]
-    name: str = "botorch.qehvi"
 
     def _init_acqf(self) -> None:
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
@@ -60,13 +60,15 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             model=self.model,
             ref_point=ref_point,  # use known reference point
             partitioning=partitioning,
-            sampler=self.sampler,
+            # sampler=self.sampler,
             # define an objective that specifies which outcomes are the objectives
             objective=self.objective,
             # TODO: implement constraints
             # specify that the constraint is on the last outcome
             # constraints=[lambda Z: Z[..., -1]],
         )
+        # todo comment in after new botorch deployment
+        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return
 
     def _init_objective(self) -> None:
@@ -89,7 +91,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 "At least two output features has to be defined in the domain."
             )
         for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) == False:
+            if isinstance(feat.objective, IdentityObjective) is False:
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
@@ -180,8 +182,6 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
-    name: str = "botorch.qnehvi"
-
     def _init_acqf(self) -> None:
         # TODO move this into general helper function as done in OU
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
@@ -202,8 +202,10 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             model=self.model,
             ref_point=self.get_adjusted_refpoint(),
             X_baseline=train_x,
-            sampler=self.sampler,
+            # sampler=self.sampler,
             prune_baseline=True,
             objective=self.objective,
         )
+        # todo comment in after new botorch deployment
+        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return

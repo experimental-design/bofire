@@ -1,5 +1,3 @@
-from typing import List
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -67,40 +65,40 @@ TEST CASES:
 CASE 1: 6 continuous features, 2 overlapping NChooseK constraints, none_also_valid: True, True
 CASE 2: 6 continuous features, 2 overlapping NChooseK constraints, none_also_valid: False, True
 
-CASE 3: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 3: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: EXHAUSTIVE, categorical_method: EXHAUSTIVE, descriptor_encoding: DESCRIPTOR, categorical_encoding: ONE_HOT
 
-CASE 4: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 4: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: EXHAUSTIVE, categorical_method: EXHAUSTIVE, descriptor_encoding: CATEGORICAL, categorical_encoding: ONE_HOT
 
-CASE 5: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 5: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: EXHAUSTIVE, categorical_method: EXHAUSTIVE, descriptor_encoding: DESCRIPTOR, categorical_encoding: ORDINAL
 
-CASE 6: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 6: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: EXHAUSTIVE, categorical_method: EXHAUSTIVE, descriptor_encoding: CATEGORICAL, categorical_encoding: ORDINAL
 
-CASE 7: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 7: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: EXHAUSTIVE, categorical_method: FREE, descriptor_encoding: DESCRIPTOR, categorical_encoding: ONE_HOT
 
-CASE 8: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 8: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: EXHAUSTIVE, categorical_method: FREE, descriptor_encoding: CATEGORICAL, categorical_encoding: ONE_HOT
 
-CASE 9: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 9: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: FREE, categorical_method: EXHAUSTIVE, descriptor_encoding: CATEGORICAL, categorical_encoding: ORDINAL
 
-CASE 10: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 10: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: FREE, categorical_method: EXHAUSTIVE, descriptor_encoding: CATEGORICAL, categorical_encoding: ONE_HOT
 
-CASE 11: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 11: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: FREE, categorical_method: EXHAUSTIVE, descriptor_encoding: DESCRIPTOR, categorical_encoding: ORDINAL
 
-CASE 12: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 12: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: FREE, categorical_method: EXHAUSTIVE, descriptor_encoding: DESCRIPTOR, categorical_encoding: ONE_HOT
 
-CASE 13: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 13: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: FREE, categorical_method: FREE, descriptor_encoding: CATEGORICAL, categorical_encoding: ONE_HOT
 
-CASE 14: 4 continuous features, 1 NChooseK constraint, none_also_valid: True, 
+CASE 14: 4 continuous features, 1 NChooseK constraint, none_also_valid: True,
 descriptor_method: FREE, categorical_method: FREE, descriptor_encoding: DESCRIPTOR, categorical_encoding: ONE_HOT
 """
 

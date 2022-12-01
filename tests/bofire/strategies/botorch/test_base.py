@@ -24,14 +24,11 @@ from bofire.domain.features import (
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.domain.util import KeyModel
-from bofire.strategies.botorch import tkwargs
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy, ModelSpec
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
 from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective
-from tests.bofire.domain.test_domain_validators import (
-    generate_candidates,
-    generate_experiments,
-)
+from bofire.utils.torch_tools import tkwargs
+from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.domain.test_features import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
@@ -480,6 +477,7 @@ def test_base_get_bounds_fit():
     assert fit_bounds[0, -1] == 1
     assert fit_bounds[1, -2] == 5
     assert fit_bounds[1, -1] == 7
+    domain.experiments = None
 
 
 @pytest.mark.parametrize(
@@ -541,6 +539,7 @@ def test_base_get_fixed_features(
     fixed_features = myStrategy.get_fixed_features()
 
     assert fixed_features == expected
+    domain.experiments = None
 
 
 @pytest.mark.parametrize(
@@ -709,12 +708,13 @@ def test_base_get_categorical_combinations(
     combo = myStrategy.get_categorical_combinations()
 
     assert combo == expected
+    domain.experiments = None
 
 
 @pytest.mark.parametrize("domain", [(domains[0])])
 def test_base_invalid_pair_encoding_method(domain):
     with pytest.raises(ValueError):
-        myStrategy = DummyStrategy(
+        DummyStrategy(
             domain=domain, categorical_encoding="ORDINAL", categorical_method="FREE"
         )
 
@@ -779,6 +779,7 @@ def test_base_fit(domain, data, acquisition_function, expected):
     myStrategy.fit()
 
     assert isinstance(myStrategy.model, expected)
+    domain.experiments = None
 
 
 @pytest.mark.parametrize(
@@ -831,6 +832,7 @@ def test_base_predict(domain, data, acquisition_function):
         domain.get_feature_keys(OutputFeature)
     )
     assert data.index[-1] == predictions.index[-1]
+    domain.experiments = None
 
 
 @pytest.mark.parametrize(
@@ -859,6 +861,7 @@ def test_base_categorical_dims(
     )
     categorical_dims = myStrategy.categorical_dims
     assert categorical_dims == expected
+    domain.experiments = None
 
 
 # ask, tell and has_sufficient_experiments are tested in test_all
@@ -1116,3 +1119,4 @@ def test_base_get_feature_indices(
 
     for i, key in enumerate(myStrategy.domain.get_feature_keys(OutputFeature)):
         assert myStrategy.get_feature_indices(key) == expected[i]
+    domain.experiments = None
