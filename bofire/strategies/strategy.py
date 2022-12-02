@@ -141,7 +141,7 @@ class Strategy(BaseModel):
             assert feature.objective is not None
             if not cls.is_objective_implemented(type(feature.objective)):
                 raise ValueError(
-                    f"Objective `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
+                    f"Objective `{type(feature.objective)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
                 )
         return domain
 
@@ -216,6 +216,7 @@ class Strategy(BaseModel):
 
 
         Raises:
+            ValueError: if candidate count is smaller than 1
             ValueError: if not enough experiments are available to execute the strategy
             ValueError: if the number of generated candidates does not match the requested number
 

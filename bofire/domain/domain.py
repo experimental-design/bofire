@@ -470,7 +470,7 @@ class Domain(BaseModel):
         self,
         output_feature_key: str,
         experiments: Optional[pd.DataFrame] = None,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Method to get a dataframe where non-valid entries of the provided output feature are removed
 
         Args:
@@ -484,7 +484,7 @@ class Domain(BaseModel):
             if self.experiments is not None:
                 experiments = self.experiments
             else:
-                return None
+                raise ValueError("No experiments available for preprocessing.")
         assert experiments is not None
         clean_exp = experiments.loc[
             (experiments["valid_%s" % output_feature_key] == 1)
@@ -498,7 +498,7 @@ class Domain(BaseModel):
         self,
         experiments: Optional[pd.DataFrame] = None,
         output_feature_keys: Optional[List] = None,
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Method to get a dataframe where non-valid entries of all output feature are removed
 
         Args:
@@ -512,7 +512,7 @@ class Domain(BaseModel):
             if self.experiments is not None:
                 experiments = self.experiments
             else:
-                return None
+                raise ValueError("No experiments available for preprocessing.")
         if (output_feature_keys is None) or (len(output_feature_keys) == 0):
             output_feature_keys = self.get_feature_keys(OutputFeature)
         else:
@@ -532,7 +532,7 @@ class Domain(BaseModel):
 
     def preprocess_experiments_any_valid_output(
         self, experiments: Optional[pd.DataFrame] = None
-    ) -> Optional[pd.DataFrame]:
+    ) -> pd.DataFrame:
         """Method to get a dataframe where at least one output feature has a valid entry
 
         Args:
@@ -545,7 +545,7 @@ class Domain(BaseModel):
             if self.experiments is not None:
                 experiments = self.experiments
             else:
-                return None
+                raise ValueError("No experiments available for preprocessing.")
 
         output_feature_keys = self.get_feature_keys(OutputFeature)
 

@@ -1,6 +1,5 @@
 import logging
-from enum import Enum
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -23,6 +22,11 @@ from bofire.domain.features import (
     is_continuous,
 )
 from bofire.utils.categoricalDescriptorEncoder import CategoricalDescriptorEncoder
+from bofire.utils.enum import (
+    CategoricalEncodingEnum,
+    DescriptorEncodingEnum,
+    ScalerEnum,
+)
 
 # with warnings.catch_warnings():
 #    warnings.simplefilter("ignore")
@@ -31,25 +35,10 @@ from bofire.utils.categoricalDescriptorEncoder import CategoricalDescriptorEncod
 # warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
 
-class ScalerEnum(Enum):
-    NORMALIZE = "NORMALIZE"
-    STANDARDIZE = "STANDARDIZE"
-
-
-class CategoricalEncodingEnum(Enum):
-    ONE_HOT = "ONE_HOT"
-    ORDINAL = "ORDINAL"
-
-
-class DescriptorEncodingEnum(Enum):
-    DESCRIPTOR = "DESCRIPTOR"
-    CATEGORICAL = "CATEGORICAL"
-
-
 class Transformer(BaseModel):
     domain: Domain
-    descriptor_encoding: Optional[DescriptorEncodingEnum]
-    categorical_encoding: Optional[CategoricalEncodingEnum]
+    descriptor_encoding: Optional[Union[DescriptorEncodingEnum, None]]
+    categorical_encoding: Optional[Union[CategoricalEncodingEnum, None]]
     scale_inputs: Optional[ScalerEnum] = None
     scale_outputs: Optional[ScalerEnum] = None
     is_fitted: bool = False
@@ -86,10 +75,21 @@ class Transformer(BaseModel):
             scale_inputs/ scale_outputs (ScalerEnum, optional):
                 In-/Outputs can be standardized, normalized or not scaled. Defaults to None.
         """
+
         super().__init__(
             domain=domain,
             descriptor_encoding=descriptor_encoding,
+            # (
+            #     descriptor_encoding.name
+            #     if isinstance(descriptor_encoding, Enum)
+            #     else None
+            # ),
             categorical_encoding=categorical_encoding,
+            # (
+            #     categorical_encoding.name
+            #     if isinstance(categorical_encoding, Enum)
+            #     else None
+            # ),
             scale_inputs=scale_inputs,
             scale_outputs=scale_outputs,
         )

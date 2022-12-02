@@ -13,12 +13,12 @@ from bofire.domain.features import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.utils.transformer import (
+from bofire.utils.enum import (
     CategoricalEncodingEnum,
     DescriptorEncodingEnum,
     ScalerEnum,
-    Transformer,
 )
+from bofire.utils.transformer import Transformer
 from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.domain.test_features import (
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,

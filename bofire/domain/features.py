@@ -1301,7 +1301,7 @@ class OutputFeatures(Features):
         """
         return pd.concat(
             [
-                feat.objective(experiments[[feat.key]])
+                feat.objective(experiments[[feat.key]])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
             ],
