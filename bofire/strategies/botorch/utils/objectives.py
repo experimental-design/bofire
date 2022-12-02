@@ -1,5 +1,4 @@
 from abc import abstractmethod
-from typing import Tuple
 
 import numpy as np
 import torch
@@ -13,7 +12,6 @@ from bofire.domain.objectives import (
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
-    Objective,
     TargetObjective,
 )
 from bofire.utils.torch_tools import tkwargs

@@ -23,6 +23,33 @@ from bofire.strategies.botorch.utils.objectives import (
 
 
 @pytest.mark.parametrize(
+    "objective, desFunc",
+    [
+        (objective, desFunc)
+        for objective in [MultiplicativeObjective, AdditiveObjective]
+        for desFunc in [
+            DeltaObjective(w=0.5, ref_point=1.0, scale=0.8),
+            MaximizeObjective(w=0.5),
+            MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+            MinimizeObjective(w=0.5),
+            MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+            TargetObjective(target_value=5.0, steepness=1.0, tolerance=1e-3, w=0.5),
+            CloseToTargetObjective(
+                target_value=5.0, exponent=1.0, tolerance=1e-3, w=0.5
+            ),
+            ConstantObjective(w=0.5, value=1.0),
+        ]
+    ],
+)
+def test_Objective_not_implemented(objective, desFunc):
+    one_objective = objective(desFunc)
+    x = torch.rand(20, 1)
+
+    with pytest.raises(NotImplementedError):
+        one_objective.reward(x, None)
+
+
+@pytest.mark.parametrize(
     "desFunc",
     [
         (desFunc)
