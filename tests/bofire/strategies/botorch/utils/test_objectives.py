@@ -68,19 +68,21 @@ def test_Objective_not_implemented(objective, desFunc):
     ],
 )
 def test_Objective_desirability_function(desFunc):
-    samples = samples = torch.rand(20, 1, requires_grad=True)
-
+    samples = torch.rand(20, 1, requires_grad=True)
+    a_samples = samples.detach().numpy()
     objective = MultiplicativeObjective(desFunc)
+    print(desFunc)
+    print(objective.reward(samples, desFunc)[0].detach().numpy())
     assert_allclose(
         objective.reward(samples, desFunc)[0].detach().numpy(),
-        np.sign(desFunc(samples)) * np.abs(desFunc(samples)) ** 0.5,
+        np.sign(desFunc(a_samples)) * np.abs(desFunc(a_samples)) ** 0.5,
         rtol=1e-06,
     )
 
     objective = AdditiveObjective(desFunc)
     assert_allclose(
         objective.reward(samples, desFunc)[0].detach().numpy(),
-        desFunc(samples) * 0.5,
+        desFunc(a_samples) * 0.5,
         rtol=1e-06,
     )
 
@@ -177,7 +179,7 @@ def test_MultiplicativeObjective_forward():
 
     forward_reward = objective.forward(samples)
 
-    assert_allclose(exp_reward, forward_reward, rtol=1e-06)
+    assert_allclose(exp_reward, forward_reward.detach().numpy(), rtol=1e-06)
 
 
 def test_AdditiveObjective_forward():
@@ -207,7 +209,7 @@ def test_AdditiveObjective_forward():
 
     forward_reward = objective.forward(samples)
 
-    assert_allclose(exp_reward, forward_reward, rtol=1e-06)
+    assert_allclose(exp_reward, forward_reward.detach().numpy(), rtol=1e-06)
 
 
 # TODO: test sigmoid behaviour
