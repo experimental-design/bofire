@@ -22,9 +22,9 @@ jobs:
           flake8 --verbose bofire tests
           isort . --check-only --verbose
       - name: Pyright
-        run: pyright
-      - name: Run tests
         run: |
           pip install .[testing]
-          pytest tests
           pyright
+      - name: Run tests
+        run: pytest tests
+          
