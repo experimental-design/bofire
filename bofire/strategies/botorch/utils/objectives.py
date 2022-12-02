@@ -1,8 +1,8 @@
 from abc import abstractmethod
 
-import numpy as np
 import torch
 from botorch.acquisition import MCAcquisitionObjective  # type: ignore
+from torch import Tensor
 
 from bofire.domain.objectives import (
     CloseToTargetObjective,
@@ -37,49 +37,57 @@ class AquisitionObjective(MCAcquisitionObjective):
         pass"""
 
     @abstractmethod
-    def reward_constant(self, x: np.array, value, w) -> torch.tensor:
+    def reward_constant(self, x: Tensor, value: float, w: float) -> Tensor:
         pass
 
     @abstractmethod
     def reward_target(
-        self, x: torch.tensor, w, target_value, tolerance, steepness
-    ) -> torch.tensor:
+        self,
+        x: Tensor,
+        w: float,
+        target_value: float,
+        tolerance: float,
+        steepness: float,
+    ) -> Tensor:
         pass
 
     @abstractmethod
     def reward_close_to_target(
-        self, x: torch.tensor, w, target_value, tolerance, exponent
-    ) -> torch.tensor:
+        self,
+        x: Tensor,
+        w: float,
+        target_value: float,
+        tolerance: float,
+        exponent: float,
+    ) -> Tensor:
         pass
 
     @abstractmethod
     def reward_min(
-        self, x: torch.tensor, w: np.array, tp: np.array, steepness: np.array, **kwargs
-    ) -> np.array:
+        self, x: Tensor, w: float, tp: float, steepness: float, **kwargs
+    ) -> Tensor:
         pass
 
     @abstractmethod
     def reward_max(
-        self, x: torch.tensor, w: np.array, tp: np.array, steepness: np.array, **kwargs
-    ) -> np.array:
+        self, x: Tensor, w: float, tp: float, steepness: float, **kwargs
+    ) -> Tensor:
         pass
 
     @abstractmethod
     def reward_max_identity(
-        self, x: torch.tensor, w: np.array, lower_bound: np.array, upper_bound: np.array
-    ) -> torch.tensor:
+        self, x: Tensor, w: float, lower_bound: float, upper_bound: float
+    ) -> Tensor:
         pass
 
     @abstractmethod
     def reward_min_identity(
-        self, x: torch.tensor, w: np.array, lower_bound: np.array, upper_bound: np.array
-    ) -> torch.tensor:
+        self, x: Tensor, w: float, lower_bound: float, upper_bound: float
+    ) -> Tensor:
         pass
 
     @abstractmethod
-    def reward_delta_identity(
-        x: torch.tensor, w: np.array, ref_point: np.array
-    ) -> torch.tensor:
+    def reward_delta_identity(x: Tensor, w: float, ref_point: float) -> Tensor:
         pass
 
     @abstractmethod
