@@ -22,13 +22,13 @@ class MultiObjective(Study):
     def get_fbest(self, experiments: Optional[pd.DataFrame] = None):
         if experiments is None:
             experiments = self.experiments
-        optimal_experiments = get_pareto_front(self.domain, experiments)
-        return compute_hypervolume(self.domain, optimal_experiments, self.ref_point)
+        optimal_experiments = get_pareto_front(self.domain, experiments)  # type: ignore
+        return compute_hypervolume(self.domain, optimal_experiments, self.ref_point)  # type: ignore
 
     def __init__(self, **data):
         super().__init__(**data)
         if (
-            len(self.domain.output_features.get_by_objective(excludes=None)) < 2
+            len(self.domain.output_features.get_by_objective(excludes=None)) < 2  # type: ignore
         ):  # TODO: update, when more features without DesFunc are implemented!
             raise ValueError("received singelobjective domain.")
 
@@ -52,7 +52,7 @@ class DTLZ2(MultiObjective):
     def best_possible_hypervolume(self) -> float:
         # hypercube - volume of hypersphere in R^d such that all coordinates are
         # positive
-        hypercube_vol = self.ref_point[0] ** self.num_objectives
+        hypercube_vol = self.ref_point[0] ** self.num_objectives  # type: ignore
         pos_hypersphere_vol = (
             math.pi ** (self.num_objectives / 2)
             / gamma(self.num_objectives / 2 + 1)
@@ -69,9 +69,7 @@ class DTLZ2(MultiObjective):
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
             domain.add_feature(
-                ContinuousOutput(
-                    key=f"f_{i}", desirability_function=MinimizeObjective(w=1.0)
-                )
+                ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
             )
         self.ref_point = {
             feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
@@ -79,8 +77,8 @@ class DTLZ2(MultiObjective):
         return domain
 
     def run_candidate_experiments(self, candidates):
-        X = candidates[self.domain.get_feature_keys(InputFeature)].values
-        X_m = X[..., -self.k :]
+        X = candidates[self.domain.get_feature_keys(InputFeature)].values  # type: ignore
+        X_m = X[..., -self.k :]  # type: ignore
         g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
         g_X_plus1 = 1 + g_X
         fs = []
@@ -93,17 +91,17 @@ class DTLZ2(MultiObjective):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
         candidates[
-            self.domain.output_features.get_keys_by_objective(excludes=None)
+            self.domain.output_features.get_keys_by_objective(excludes=None)  # type: ignore
         ] = np.stack(fs, axis=-1)
         candidates[
             [
                 "valid_%s" % feat
-                for feat in self.domain.output_features.get_keys_by_objective(
+                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
                     excludes=None
                 )
             ]
         ] = 1
-        return candidates[self.domain.experiment_column_names].copy()
+        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
 
 
 class SnarBenchmark(MultiObjective):
@@ -135,14 +133,14 @@ class SnarBenchmark(MultiObjective):
         # Objectives
         # "space time yield (kg/m^3/h)"
         domain.add_feature(
-            ContinuousOutput(key="sty", desirability_function=MaximizeObjective(w=1.0))
+            ContinuousOutput(key="sty", objective=MaximizeObjective(w=1.0))
         )
 
         # "E-factor"
         domain.add_feature(
             ContinuousOutput(
                 key="e_factor",
-                desirability_function=MinimizeObjective(w=1.0),
+                objective=MinimizeObjective(w=1.0),
             )
         )
 
@@ -172,12 +170,12 @@ class SnarBenchmark(MultiObjective):
         candidates[
             [
                 "valid_%s" % feat
-                for feat in self.domain.output_features.get_keys_by_objective(
+                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
                     excludes=None
                 )
             ]
         ] = 1
-        return candidates[self.domain.experiment_column_names].copy()
+        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
 
     def _integrate_equations(self, tau, equiv_pldn, conc_dfnb, temperature, **kwargs):
         # Initial Concentrations in mM
@@ -242,7 +240,7 @@ class SnarBenchmark(MultiObjective):
         # Reaction Rates
         r = np.zeros(5)
         for i in [0, 1]:  # Set to reactants when close
-            C[i] = 0 if C[i] < 1e-6 * self.C_i[i] else C[i]
+            C[i] = 0 if C[i] < 1e-6 * self.C_i[i] else C[i]  # type: ignore
         r[0] = -(k_a + k_b) * C[0] * C[1]
         r[1] = -(k_a + k_b) * C[0] * C[1] - k_c * C[1] * C[2] - k_d * C[1] * C[3]
         r[2] = k_a * C[0] * C[1] - k_c * C[1] * C[2]

@@ -1,4 +1,3 @@
-import time
 from abc import abstractmethod
 from enum import Enum
 from typing import Callable, Optional
@@ -47,10 +46,10 @@ class Study(BaseModel):
 
     def reset(self):
         self.experiments = pd.DataFrame(
-            columns=self.domain.experiment_column_names, dtype="float64"
+            columns=self.domain.experiment_column_names, dtype="float64"  # type: ignore
         )
         self.candidates = pd.DataFrame(
-            columns=self.domain.candidate_column_names, dtype="float64"
+            columns=self.domain.candidate_column_names, dtype="float64"  # type: ignore
         )
         self.meta = pd.DataFrame(
             columns=[
@@ -65,70 +64,70 @@ class Study(BaseModel):
         )
         return
 
-    def optimize(
-        self,
-        strategy: Strategy,
-        num_iterations: int = 100,
-        batch_size: int = 1,
-        progress_bar: bool = True,
-    ):
-        self.strategy = strategy
-        self.strategy.init_domain(self.domain)
-        # if len(self.experiments) > 0: self.strategy.tell(self.experiments)
+    # def optimize(
+    #     self,
+    #     strategy: Strategy,
+    #     num_iterations: int = 100,
+    #     batch_size: int = 1,
+    #     progress_bar: bool = True,
+    # ):
+    #     self.strategy = strategy
+    #     self.strategy.init_domain(self.domain)
+    #     # if len(self.experiments) > 0: self.strategy.tell(self.experiments)
 
-        with tqdm(
-            range(num_iterations),
-            disable=True if progress_bar is False else False,
-            postfix={
-                "fbest": "?",
-            },
-        ) as pbar:
-            for i in pbar:
-                start = time.time()
-                candidates, extras = strategy.ask(
-                    candidate_count=batch_size,
-                    allow_insufficient_experiments=True,
-                )
-                # self.candidates = self.candidates.append(candidates,ignore_index=True)
-                self.candidates = pd.concat(
-                    (self.candidates, candidates), ignore_index=True
-                )
-                ask_time = time.time() - start
+    #     with tqdm(
+    #         range(num_iterations),
+    #         disable=True if progress_bar is False else False,
+    #         postfix={
+    #             "fbest": "?",
+    #         },
+    #     ) as pbar:
+    #         for i in pbar:
+    #             start = time.time()
+    #             candidates, extras = strategy.ask(
+    #                 candidate_count=batch_size,
+    #                 allow_insufficient_experiments=True,
+    #             )
+    #             # self.candidates = self.candidates.append(candidates,ignore_index=True)
+    #             self.candidates = pd.concat(
+    #                 (self.candidates, candidates), ignore_index=True
+    #             )
+    #             ask_time = time.time() - start
 
-                start = time.time()
-                experiments = self.run_candidate_experiments(candidates)
-                # self.experiments = self.experiments.append(experiments,ignore_index=True)
-                self.experiments = pd.concat(
-                    (self.experiments, experiments), ignore_index=True
-                )
-                experiment_time = time.time() - start
+    #             start = time.time()
+    #             experiments = self.run_candidate_experiments(candidates)
+    #             # self.experiments = self.experiments.append(experiments,ignore_index=True)
+    #             self.experiments = pd.concat(
+    #                 (self.experiments, experiments), ignore_index=True
+    #             )
+    #             experiment_time = time.time() - start
 
-                start = time.time()
-                self.strategy.tell(experiments=self.experiments, replace=True)
-                tell_time = time.time() - start
+    #             start = time.time()
+    #             self.strategy.tell(experiments=self.experiments, replace=True)
+    #             tell_time = time.time() - start
 
-                fbest = self.get_fbest()
-                self.meta = pd.concat(
-                    (
-                        self.meta,
-                        pd.DataFrame(
-                            data=[
-                                [ask_time, experiment_time, tell_time, i, fbest]
-                                for j in range(len(candidates))
-                            ],
-                            columns=[
-                                "ask_time",
-                                "experiment_time",
-                                "tell_time",
-                                "batch",
-                                "fbest",
-                            ],
-                        ),
-                    ),
-                    ignore_index=True,
-                )
-                pbar.set_postfix({"fbest": fbest})
-        return
+    #             fbest = self.get_fbest()
+    #             self.meta = pd.concat(
+    #                 (
+    #                     self.meta,
+    #                     pd.DataFrame(
+    #                         data=[
+    #                             [ask_time, experiment_time, tell_time, i, fbest]
+    #                             for j in range(len(candidates))
+    #                         ],
+    #                         columns=[
+    #                             "ask_time",
+    #                             "experiment_time",
+    #                             "tell_time",
+    #                             "batch",
+    #                             "fbest",
+    #                         ],
+    #                     ),
+    #                 ),
+    #                 ignore_index=True,
+    #             )
+    #             pbar.set_postfix({"fbest": fbest})
+    #     return
 
 
 class MetricsEnum(Enum):
@@ -230,7 +229,7 @@ class PoolStudy(BaseModel):
 
     @property
     def picked_experiments(self):
-        return self.experiments.loc[self.meta.iteration.notna()]
+        return self.experiments.loc[self.meta.iteration.notna()]  # type: ignore
 
     @property
     def num_picked_experiments(self):
@@ -238,7 +237,7 @@ class PoolStudy(BaseModel):
 
     @property
     def open_experiments(self):
-        return self.experiments.loc[self.meta.iteration.isna()]
+        return self.experiments.loc[self.meta.iteration.isna()]  # type: ignore
 
     @property
     def num_open_experiments(self):
@@ -246,7 +245,7 @@ class PoolStudy(BaseModel):
 
     @property
     def num_iterations(self):
-        return int(self.meta.iteration.max())
+        return int(self.meta.iteration.max())  # type: ignore
 
     def get_fbest(self, experiments: pd.DataFrame):
         if self.metrics is None:
@@ -256,10 +255,10 @@ class PoolStudy(BaseModel):
             return compute_hypervolume(
                 domain=self.domain,
                 optimal_experiments=opt_exps,
-                ref_point=self.ref_point,
+                ref_point=self.ref_point,  # type: ignore
             )
         elif self.metrics == MetricsEnum.STRATEGY:
-            return self.strategy.get_fbest(experiments)
+            return self.strategy.get_fbest(experiments)  # type: ignore
 
     @property
     def expected_random(self):
@@ -270,7 +269,7 @@ class PoolStudy(BaseModel):
         K the number of good solutions.
         """
         K = (
-            get_pareto_front(self.experiments).shape[0]
+            get_pareto_front(domain=self.domain, experiments=self.experiments).shape[0]
             if self.metrics == MetricsEnum.HYPERVOLUME
             else 1
         )
@@ -284,7 +283,7 @@ class PoolStudy(BaseModel):
         progress_bar: bool = True,
         early_stopping=False,
     ):
-        self.strategy = strategy(self.domain)
+        self.strategy = strategy(self.domain)  # type: ignore
 
         if candidate_count > 1:
             raise ValueError("batch_size > 1 not yet implemented.")
@@ -301,9 +300,9 @@ class PoolStudy(BaseModel):
             for i in pbar:
                 strategy.tell(self.picked_experiments)
                 acqf_values = strategy._choose_from_pool(self.open_experiments)
-                picked_idx = self.open_experiments.iloc[acqf_values.argmax()].name
-                self.meta.loc[picked_idx, "iteration"] = i + 1
+                picked_idx = self.open_experiments.iloc[acqf_values.argmax()].name  # type: ignore
+                self.meta.loc[picked_idx, "iteration"] = i + 1  # type: ignore
                 cfbest = self.get_fbest(self.picked_experiments)
-                pbar.set_postfix({"dist2best": fbest - cfbest})
-                if np.allclose(fbest, cfbest) and early_stopping:
+                pbar.set_postfix({"dist2best": fbest - cfbest})  # type: ignore
+                if np.allclose(fbest, cfbest) and early_stopping:  # type: ignore
                     break

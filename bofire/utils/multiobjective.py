@@ -12,7 +12,7 @@ from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 
 def get_ref_point_mask(
     domain: Domain, output_feature_keys: Optional[list] = None
-) -> np.array:
+) -> np.ndarray:
     if output_feature_keys is None:
         output_feature_keys = domain.output_features.get_keys_by_objective(
             excludes=None
@@ -22,9 +22,9 @@ def get_ref_point_mask(
     mask = []
     for key in output_feature_keys:
         feat = domain.get_feature(key)
-        if isinstance(feat.objective, MaximizeObjective):
+        if isinstance(feat.objective, MaximizeObjective):  # type: ignore
             mask.append(1.0)
-        elif isinstance(feat.objective, MinimizeObjective):
+        elif isinstance(feat.objective, MinimizeObjective):  # type: ignore
             mask.append(-1.0)
         else:
             raise ValueError(

@@ -19,7 +19,7 @@ class SingleObjective(Study):
     def __init__(self, **data):
         super().__init__(**data)
         if (
-            len(self.domain.output_features.get_by_objective(excludes=None)) > 1
+            len(self.domain.output_features.get_by_objective(excludes=None)) > 1  # type: ignore
         ):  # TODO: update, when more features without DesFunc are implemented!
             raise ValueError("received multiobjective domain.")
 
@@ -28,9 +28,9 @@ class SingleObjective(Study):
     def get_fbest(self, experiments: Optional[pd.DataFrame] = None):
         if experiments is None:
             experiments = self.experiments
-        ofeat = self.domain.output_features.get_by_objective(excludes=None)[0]
-        desirability = ofeat.desirability_function(experiments[ofeat.key])
-        return experiments.at[desirability.argmax(), ofeat.key]
+        ofeat = self.domain.output_features.get_by_objective(excludes=None)[0]  # type: ignore
+        desirability = ofeat.desirability_function(experiments[ofeat.key])  # type: ignore
+        return experiments.at[desirability.argmax(), ofeat.key]  # type: ignore
 
 
 class Himmelblau(SingleObjective):
@@ -50,7 +50,7 @@ class Himmelblau(SingleObjective):
 
         desirability_function = MinimizeObjective(w=1.0)
         domain.add_feature(
-            ContinuousOutput(key="y", desirability_function=desirability_function)
+            ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
         )
 
         if self.use_constraints:
@@ -60,7 +60,7 @@ class Himmelblau(SingleObjective):
     def run_candidate_experiments(self, candidates: pd.DataFrame, **kwargs):
         candidates.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
         candidates["valid_y"] = 1
-        return candidates[self.domain.experiment_column_names].copy()
+        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
 
 
 class Ackley(SingleObjective):
@@ -125,9 +125,7 @@ class Ackley(SingleObjective):
             )
 
         # Objective
-        domain.add_feature(
-            ContinuousOutput(key="y", desirability_function=MaximizeObjective(w=1))
-        )
+        domain.add_feature(ContinuousOutput(key="y", objective=MaximizeObjective(w=1)))
         return domain
 
     def run_candidate_experiments(self, candidates, **kwargs):
@@ -137,9 +135,9 @@ class Ackley(SingleObjective):
 
         if self.categorical:
             # c = pd.to_numeric(candidates["category"], downcast="float")
-            c = candidates.loc[:, "category"].values.astype(np.float)
+            c = candidates.loc[:, "category"].values.astype(np.float64)
         if self.descriptor:
-            d = candidates.loc[:, "descriptor"].values.astype(np.float)
+            d = candidates.loc[:, "descriptor"].values.astype(np.float64)
 
         z = x + c + d
 
@@ -153,128 +151,7 @@ class Ackley(SingleObjective):
         # save evaluated points for plotting
         self.evaluated_points.append(x.tolist())
 
-        return candidates[self.domain.experiment_column_names].copy()
-
-    def plot(self, ax=None, **kwargs):
-        """Make a plot of the experiments evaluated thus far
-        Parameters
-        ----------
-        ax: `matplotlib.pyplot.axes`, optional
-            An existing axis to apply the plot to
-        Returns
-        -------
-        if ax is None returns a tuple with the first component
-        as the a new figure and the second component the axis
-        if ax is a matplotlib axis, returns only the axis
-        Raises
-        ------
-        ValueError
-            If there are no points to plot
-        """
-        assert self.dim <= 2, "plot only works for dim <= 2"
-        if self.categorical:
-            assert (
-                self.num_categories == 1
-            ), "plot only works for num_categories == 1 if categorical=True"
-
-        import matplotlib.pyplot as plt
-        from matplotlib.collections import PatchCollection
-        from matplotlib.patches import Polygon
-
-        # evaluated points in <run_experiments> and optional points added by the user
-        extra_points = kwargs.get("extra_points", None)
-
-        # polygons objects to be plotted
-        polygons = kwargs.get("polygons", None)
-
-        points = self.evaluated_points
-        if extra_points is not None:
-            points.append(extra_points)
-        if extra_points is None:
-            if points is None:
-                raise ValueError("No points to plot.")
-        else:
-            if points is None:
-                points = extra_points
-            else:
-                points.append(extra_points)
-
-        if ax is None:
-            fig, ax = plt.subplots(1)
-            return_fig = True
-        else:
-            return_fig = False
-
-        # get domain bounds and plot frame/axes
-        bounds_x_1 = [
-            self.domain.get_feature("x_1").lower_bound,
-            self.domain.get_feature("x_1").upper_bound,
-        ]
-        bounds_x_2 = [
-            self.domain.get_feature("x_2").lower_bound,
-            self.domain.get_feature("x_2").upper_bound,
-        ]
-        expand_bounds = 1
-        plt.axis(
-            [
-                bounds_x_1[0] - expand_bounds,
-                bounds_x_1[1] + expand_bounds,
-                bounds_x_2[0] - expand_bounds,
-                bounds_x_2[1] + expand_bounds,
-            ]
-        )
-
-        ax.axvline(x=bounds_x_1[0], color="k", linestyle="--")
-        ax.axhline(y=bounds_x_2[0], color="k", linestyle="--")
-        ax.axvline(x=bounds_x_1[1], color="k", linestyle="--")
-        ax.axhline(y=bounds_x_2[1], color="k", linestyle="--")
-
-        # plot contour
-        xlist = np.linspace(
-            bounds_x_1[0] - expand_bounds, bounds_x_1[1] + expand_bounds, 1000
-        )
-        ylist = np.linspace(
-            bounds_x_2[0] - expand_bounds, bounds_x_2[1] + expand_bounds, 1000
-        )
-        x_1, x_2 = np.meshgrid(xlist, ylist)
-
-        first_term = -20 * np.exp(-0.2 * np.sqrt(1 / 2 * (x_1**2 + x_2**2)))
-        second_term = -np.exp(
-            1 / self.dim * (np.cos(2 * np.pi * x_1) + np.cos(2 * np.pi * x_2))
-        )
-        z = -(first_term + second_term + 20 + np.exp(1))
-
-        ax.contour(x_1, x_2, z, levels=None, alpha=0.3)
-
-        # plot evaluated and extra points with enumeration
-        for c in range(len(points)):
-            tmp_x_1, tmp_x_2 = points[c][0], points[c][1]
-            ax.scatter(tmp_x_1, tmp_x_2)
-            ax.text(tmp_x_1 + 0.01, tmp_x_2 + 0.01, c + 1, fontsize=7)
-
-        # plot constraints
-        if len(self.domain.constraints) > 0:
-            x = np.linspace(bounds_x_1[0], bounds_x_1[1], 400)
-            y = np.linspace(bounds_x_2[0], bounds_x_2[1], 400)
-            x_1, x_2 = np.meshgrid(x, y)
-            for c in self.domain.constraints:
-                z = eval(c.lhs)
-                ax.contour(x_1, x_2, z, [0], colors="grey", linestyles="dashed")
-
-        # plot polygons
-        if polygons:
-            patches = []
-            for i in range(len(polygons)):
-                polygon_obj = Polygon(polygons[i], True, hatch="x")
-                patches.append(polygon_obj)
-
-            p = PatchCollection(patches, facecolors="None", edgecolors="grey", alpha=1)
-            ax.add_collection(p)
-
-        if return_fig:
-            return fig, ax
-        else:
-            return ax
+        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
 
     def reset(self):
         super().reset()

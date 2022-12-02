@@ -1098,7 +1098,7 @@ class InputFeatures(Features):
         Returns:
             InputFeatures: Input features object containing only fixed features.
         """
-        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])
+        return InputFeatures(features=[feat for feat in self if feat.is_fixed()])  # type: ignore
 
     def get_free(self) -> "InputFeatures":
         """Gets all features in `self` that are not fixed and returns them as new `InputFeatures` object.
@@ -1106,7 +1106,7 @@ class InputFeatures(Features):
         Returns:
             InputFeatures: Input features object containing only non-fixed features.
         """
-        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])
+        return InputFeatures(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
 
     @validate_arguments
     def sample(
@@ -1152,7 +1152,7 @@ class InputFeatures(Features):
             res.append(pd.Series(x, name=feat.key))
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()
+            samples[feat.key] = feat.fixed_value()  # type: ignore
         return self.validate_inputs(samples)[self.get_keys(InputFeature)]
 
     def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
@@ -1301,7 +1301,7 @@ class OutputFeatures(Features):
         """
         return pd.concat(
             [
-                feat.objective(experiments[[feat.key]])
+                feat.objective(experiments[[feat.key]])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
             ],
