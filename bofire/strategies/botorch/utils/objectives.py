@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import torch
-from botorch.acquisition import MCAcquisitionObjective
+from botorch.acquisition import MCAcquisitionObjective  # type: ignore
 
 from bofire.domain.objectives import Objective
 
@@ -23,7 +23,7 @@ class AquisitionObjective(MCAcquisitionObjective):
         return len(self.targets)
 
     @abstractmethod
-    def reward(x: np.array, objective: Objective) -> Tuple[np.ndarray, float]:
+    def reward(x: np.ndarray, objective: Objective) -> Tuple[np.ndarray, float]:
         pass
 
     @abstractmethod

@@ -43,6 +43,8 @@ from bofire.utils.enum import (
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 from bofire.utils.transformer import Transformer
 
+Tkeys = conlist(item_type=str, min_items=1)
+
 
 class ModelSpec(BaseModel):
     """Model specifications defining a model to be used as regression model
@@ -59,11 +61,10 @@ class ModelSpec(BaseModel):
     """
 
     output_feature: str
-    input_features: conlist(item_type=str, min_items=1)
+    input_features: Tkeys
     kernel: KernelEnum
     ard: bool
     scaler: ScalerEnum
-    name: Optional[str]  # is set in strategies
 
     @validator("input_features", allow_reuse=True)
     def validate_input_features(cls, v):
@@ -73,6 +74,9 @@ class ModelSpec(BaseModel):
 
     def get(self, keyname: str, value: Optional[str]):
         return getattr(self, keyname, value)
+
+
+Tmodelspecs = conlist(item_type=ModelSpec, min_items=1)
 
 
 class BotorchBasicBoStrategy(PredictiveStrategy):
@@ -85,7 +89,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     descriptor_method: DescriptorMethodEnum = DescriptorMethodEnum.EXHAUSTIVE
     categorical_encoding: CategoricalEncodingEnum = CategoricalEncodingEnum.ORDINAL
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    model_specs: Optional[conlist(item_type=ModelSpec, min_items=1)]
+    model_specs: Optional[Tmodelspecs]
     objective: Optional[MCAcquisitionObjective]
     acqf: Optional[AcquisitionFunction]
     model: Optional[GPyTorchModel]
@@ -134,7 +138,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     @staticmethod
     def _generate_model_specs(
         domain: Domain,
-        model_specs: List[ModelSpec] = None,
+        model_specs: Optional[List[ModelSpec]] = None,
     ) -> List[ModelSpec]:
         """Method to generate model specifications when no model specs are passed
         As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
@@ -203,7 +207,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     # helper functions
     def get_model_spec(self, output_feature_key):
-        for spec in self.model_specs:
+        for spec in self.model_specs:  # type: ignore
             if spec.output_feature == output_feature_key:
                 return spec
         raise ValueError("No model_spec found for feature %s" % output_feature_key)
@@ -220,7 +224,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             **tkwargs
         )
         train_Y = torch.from_numpy(
-            transformed[output_feature_key].values.reshape([-1, 1])
+            transformed[output_feature_key].values.reshape([-1, 1])  # type: ignore
         ).to(**tkwargs)
         return train_X, train_Y
 
@@ -245,16 +249,16 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     train_Y=train_Y,
                     active_dims=self.get_feature_indices(ofeat.key),
                     cat_dims=self.categorical_dims,
-                    scaler_name=self.get_model_spec(ofeat.key).get(
-                        "scaler", ScalerEnum.NORMALIZE
+                    scaler_name=self.get_model_spec(ofeat.key).get(  # type: ignore
+                        "scaler", ScalerEnum.NORMALIZE  # type: ignore
                     ),
                     bounds=self.get_bounds(optimize=False)
                     if self.use_combined_bounds
                     else None,
-                    kernel_name=self.get_model_spec(ofeat.key).get(
-                        "kernel", KernelEnum.MATERN_25
+                    kernel_name=self.get_model_spec(ofeat.key).get(  # type: ignore
+                        "kernel", KernelEnum.MATERN_25  # type: ignore
                     ),
-                    use_ard=self.get_model_spec(ofeat.key).get("ard", True),
+                    use_ard=self.get_model_spec(ofeat.key).get("ard", True),  # type: ignore
                     use_categorical_kernel=self.categorical_encoding
                     == CategoricalEncodingEnum.ORDINAL,
                 )
@@ -268,10 +272,31 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     def _predict(self, transformed: pd.DataFrame):
         X = torch.from_numpy(transformed[self.input_feature_keys].values).to(**tkwargs)
-        preds = self.model.posterior(X=X).mean.cpu().detach().numpy()
-        stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())
+        preds = self.model.posterior(X=X).mean.cpu().detach().numpy()  # type: ignore
+        stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())  # type: ignore
         return preds, stds
 
+    # TODO: test this
+    def calc_acquisition(
+        self, candidates: pd.DataFrame, combined: bool = False
+    ) -> np.ndarray:
+        """Calculate the acqusition value for a set of experiments.
+
+        Args:
+            candidates (pd.DataFrame): Dataframe with experimentes for which the acqf value should be calculated.
+            combined (bool, optional): If combined an acquisition value for the whole batch is calculated, else individual ones.
+                Defaults to False.
+
+        Returns:
+            np.ndarray: Dataframe with the acquisition values.
+        """
+        transformed = self.transformer.transform(candidates)  # type: ignore
+        X = torch.from_numpy(transformed[self.input_feature_keys].values).to(**tkwargs)
+        if combined is False:
+            X = X.unsqueeze(-2)
+        return self.acqf.forward(X).cpu().detach().numpy()  # type: ignore
+
+    # TODO: test this
     def _choose_from_pool(
         self,
         candidate_pool: pd.DataFrame,
@@ -287,15 +312,10 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             pd.DataFrame: The chosen set of candidates.
         """
 
-        transformed = self.transformer.transform(candidate_pool)
-
-        X = torch.from_numpy(transformed[self.input_feature_keys].values).to(**tkwargs)
-        X = X.unsqueeze(-2)
-
-        acqf_values = self.acqf.forward(X).cpu().detach().numpy()
+        acqf_values = self.calc_acquisition(candidate_pool)
 
         return candidate_pool.iloc[
-            np.argpartition(acqf_values, -1 * candidate_count)[-candidate_count:]
+            np.argpartition(acqf_values, -1 * candidate_count)[-candidate_count:]  # type: ignore
         ]
 
     @property
@@ -349,9 +369,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(LinearEqualityConstraint),
+                equality_constraints=get_linear_constraints(
+                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                ),
                 inequality_constraints=get_linear_constraints(
-                    LinearInequalityConstraint
+                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
                 ),
                 fixed_features=self.get_fixed_features(),
                 return_best_only=True,
@@ -369,11 +391,13 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(LinearEqualityConstraint),
-                inequality_constraints=get_linear_constraints(
-                    LinearInequalityConstraint
+                equality_constraints=get_linear_constraints(
+                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
                 ),
-                fixed_features_list=self.get_categorical_combinations(),
+                inequality_constraints=get_linear_constraints(
+                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                ),
+                ed_features_list=self.get_categorical_combinations(),
             )
             # options={"seed":self.seed})
 
@@ -384,9 +408,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(LinearEqualityConstraint),
+                equality_constraints=get_linear_constraints(
+                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                ),
                 inequality_constraints=get_linear_constraints(
-                    LinearInequalityConstraint
+                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
                 ),
                 fixed_features_list=self.get_fixed_values_list(),
             )
@@ -398,8 +424,8 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # TODO: in case of free we have to transform back the candidates first and then compute the metrics
         # otherwise the prediction holds only for the infeasible solution, this solution should then also be
         # applicable for >1d descriptors
-        preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()
-        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())
+        preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()  # type: ignore
+        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())  # type: ignore
 
         df_candidates = pd.DataFrame(
             data=np.nan,
@@ -431,11 +457,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         ):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])
+            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
 
         df_candidates[self.input_feature_keys] = candidates[0].detach().numpy()
 
-        return self.transformer.inverse_transform(df_candidates)
+        return self.transformer.inverse_transform(df_candidates)  # type: ignore
 
     def _tell(self) -> None:
         if self.has_sufficient_experiments():
@@ -482,8 +508,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     lower.append(var.lower_bound)
                     upper.append(var.upper_bound)
                 else:
-                    lb, ub = var.get_real_feature_bounds(self.experiments[var.key])
-                    lower.append(lb), upper.append(ub)
+                    lb, ub = var.get_real_feature_bounds(self.experiments[var.key])  # type: ignore
+                    lower.append(lb)
+                    upper.append(ub)
             elif isinstance(var, CategoricalInput):
                 if (
                     isinstance(var, CategoricalDescriptorInput)
@@ -491,10 +518,10 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 ):
                     if optimize:
                         df = var.to_df().loc[var.get_allowed_categories()]
-                        lower += df.min().values.tolist()
-                        upper += df.max().values.tolist()
+                        lower += df.min().values.tolist()  # type: ignore
+                        upper += df.max().values.tolist()  # type: ignore
                     else:
-                        df = var.get_real_descriptor_bounds(self.experiments[var.key])
+                        df = var.get_real_descriptor_bounds(self.experiments[var.key])  # type: ignore
                         lower += df.loc["lower"].tolist()
                         upper += df.loc["upper"].tolist()
                 elif self.categorical_encoding == CategoricalEncodingEnum.ORDINAL:
@@ -521,30 +548,30 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         fixed_features = {}
         # we need the transform object now with instantiated encoders which means it has to be called at least once before
         # get_fixed_features is called
-        if not self.transformer.is_fitted:
+        if not self.transformer.is_fitted:  # type: ignore
             if self.experiments is not None:
                 experiments = self.experiments
             else:
                 raise ValueError(
                     "Call strategy.tell first. The transfomer needs to be fitted here"
                 )
-            _ = self.transformer.fit_transform(experiments)
+            _ = self.transformer.fit_transform(experiments)  # type: ignore
 
         for _, var in enumerate(self.domain.get_features(InputFeature)):
-            if var.fixed_value() is not None:
+            if var.fixed_value() is not None:  # type: ignore
                 if is_continuous(var):
                     # we use the scaler in botorch and thus, we have no scaler stored in transfrom.encoders by convention
                     # if var.key in self.transform.encoders.keys():
                     #     fixed_features[self.transform.features2idx[var.key][0]]= self.transform.encoders[var.key].transform(var.fixed_value())
                     # else:
-                    fixed_features[self.features2idx[var.key][0]] = var.fixed_value()
+                    fixed_features[self.features2idx[var.key][0]] = var.fixed_value()  # type: ignore
 
                 elif (
                     isinstance(var, CategoricalDescriptorInput)
                     and self.descriptor_encoding == DescriptorEncodingEnum.DESCRIPTOR
                 ):
                     for j, idx in enumerate(self.features2idx[var.key]):
-                        category_index = var.categories.index(var.fixed_value())
+                        category_index = var.categories.index(var.fixed_value())  # type: ignore
                         # values = var.values[category_index][j]
                         # if var.key in self.transform.encoders.keys():
                         #     fixed_features[idx]= self.transform.encoders[var.descriptors[j]].transform(values)
@@ -554,14 +581,14 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 elif isinstance(var, CategoricalInput):
                     if self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT:
                         transformed = (
-                            self.transformer.encoders[var.key]
+                            self.transformer.encoders[var.key]  # type: ignore
                             .transform(np.array([[var.fixed_value()]]))
                             .toarray()
                         )
                         for j, idx in enumerate(self.features2idx[var.key]):
                             fixed_features[idx] = transformed[0, j]
                     elif self.categorical_encoding == CategoricalEncodingEnum.ORDINAL:
-                        transformed = self.transformer.encoders[var.key].transform(
+                        transformed = self.transformer.encoders[var.key].transform(  # type: ignore
                             np.array([[var.fixed_value()]])
                         )
                         fixed_features[self.features2idx[var.key][0]] = transformed[0][
@@ -583,7 +610,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 if feat.is_fixed() is False:
                     for cat in feat.get_forbidden_categories():
                         transformed = (
-                            self.transformer.encoders[feat.key]
+                            self.transformer.encoders[feat.key]  # type: ignore
                             .transform(np.array([[cat]]))
                             .toarray()
                         )
@@ -601,9 +628,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             list: list of features treated as categoricals
         """
         if self.descriptor_encoding == DescriptorEncodingEnum.CATEGORICAL:
-            return self.domain.get_features(CategoricalInput)
+            return self.domain.get_features(CategoricalInput)  # type: ignore
         else:
-            return self.domain.get_features(
+            return self.domain.get_features(  # type: ignore
                 CategoricalInput, excludes=[CategoricalDescriptorInput]
             )
 
@@ -654,7 +681,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     elif isinstance(feature, CategoricalInput):
                         if self.categorical_encoding == CategoricalEncodingEnum.ONE_HOT:
                             transformed = (
-                                self.transformer.encoders[feat]
+                                self.transformer.encoders[feat]  # type: ignore
                                 .transform(np.array([[val]]))
                                 .toarray()
                             )
@@ -662,12 +689,12 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         elif (
                             self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
                         ):
-                            transformed = self.transformer.encoders[feat].transform(
+                            transformed = self.transformer.encoders[feat].transform(  # type: ignore
                                 np.array([[val]])
                             )
 
                         for j, idx in enumerate(self.features2idx[feat]):
-                            fixed_features[idx] = transformed[0, j]
+                            fixed_features[idx] = transformed[0, j]  # type: ignore
 
                 list_of_fixed_features.append(fixed_features)
         return list_of_fixed_features

@@ -1,7 +1,7 @@
 from typing import Type
 
 import torch
-from botorch.acquisition.monte_carlo import (
+from botorch.acquisition.monte_carlo import (  # type: ignore
     qExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
@@ -41,13 +41,13 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
                 "ACQF %s is not implemented." % self.acquisition_function
             )
 
-        self.acqf.set_X_pending(df_pending)
+        self.acqf.set_X_pending(df_pending)  # type: ignore
         return
 
     def _init_objective(self):
         self.objective = MultiplicativeObjective(
             targets=[
-                var.objective
+                var.objective  # type: ignore
                 for var in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -62,7 +62,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
                 self.domain.output_features.get_keys_by_objective(excludes=None)
             ].values
         ).to(**tkwargs)
-        return self.objective.forward(samples=samples).detach().numpy().max()
+        return self.objective.forward(samples=samples).detach().numpy().max()  # type: ignore
 
     # TODO refactor this by using get_acquisition_function
     def init_qNEI(self):
@@ -70,10 +70,10 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
-        transformed = self.transformer.transform(clean_experiments)
+        transformed = self.transformer.transform(clean_experiments)  # type: ignore
         t_features, targets = self.get_training_tensors(
             transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),
+            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
         )
 
         self.acqf = qNoisyExpectedImprovement(
@@ -145,13 +145,10 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
-
-    name: str = "botorch.sobo.additive"
-
     def _init_objective(self):
         self.objective = AdditiveObjective(
             targets=[
-                var.objective
+                var.objective  # type: ignore
                 for var in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -159,5 +156,4 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
 
 
 class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
-
-    name: str = "botorch.sobo.multiplicative"
+    pass

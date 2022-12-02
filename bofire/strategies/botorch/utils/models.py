@@ -26,27 +26,27 @@ class ContKernelFactory(BaseModel):
         if self.kernel == KernelEnum.MATERN_25:
             return MaternKernel(
                 nu=2.5,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             )
         elif self.kernel == KernelEnum.MATERN_15:
             return MaternKernel(
                 nu=1.5,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             )
         elif self.kernel == KernelEnum.MATERN_05:
             return MaternKernel(
                 nu=0.5,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             )
         elif self.kernel == KernelEnum.RBF:
             return RBFKernel(
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_prior=GammaPrior(3.0, 6.0),
             )
@@ -58,7 +58,7 @@ class ContKernelFactory(BaseModel):
             return MaternKernel(
                 nu=2.5,
                 batch_shape=batch_shape,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_constraint=GreaterThan(1e-04),
             )
@@ -66,7 +66,7 @@ class ContKernelFactory(BaseModel):
             return MaternKernel(
                 nu=1.5,
                 batch_shape=batch_shape,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_constraint=GreaterThan(1e-04),
             )
@@ -74,14 +74,14 @@ class ContKernelFactory(BaseModel):
             return MaternKernel(
                 nu=0.5,
                 batch_shape=batch_shape,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_constraint=GreaterThan(1e-04),
             )
         else:
             return RBFKernel(
                 batch_shape=batch_shape,
-                ard_num_dims=len(self.active_dims) if self.use_ard else None,
+                ard_num_dims=len(self.active_dims) if self.use_ard else None,  # type: ignore
                 active_dims=self.active_dims,
                 lengthscale_constraint=GreaterThan(1e-04),
             )

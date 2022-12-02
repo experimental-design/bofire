@@ -41,7 +41,7 @@ from bofire.strategies.botorch.utils.objectives import (
     ],
 )
 def test_Objective_desirability_function(desFunc):
-    samples = samples = torch.rand(20, 1)
+    samples = samples = torch.rand(20, 1, requires_grad=True)
 
     objective = MultiplicativeObjective(desFunc)
     assert_allclose(
@@ -68,7 +68,7 @@ def test_Objective_desirability_function(desFunc):
     ],
 )
 def test_Objective_max_identity(batch_shape, m, dtype):
-    samples = torch.rand(*batch_shape, 2, m, dtype=dtype)
+    samples = torch.rand(*batch_shape, 2, m, dtype=dtype, requires_grad=True)
     desFunc = MaximizeObjective(w=0.5)
 
     objective = MultiplicativeObjective(desFunc)
@@ -88,7 +88,7 @@ def test_Objective_max_identity(batch_shape, m, dtype):
     ],
 )
 def test_Objective_min_identity(batch_shape, m, dtype):
-    samples = torch.rand(*batch_shape, 2, m, dtype=dtype)
+    samples = torch.rand(*batch_shape, 2, m, dtype=dtype, requires_grad=True)
     desFunc = MinimizeObjective(w=0.5)
 
     objective = MultiplicativeObjective(desFunc)
@@ -108,7 +108,7 @@ def test_Objective_min_identity(batch_shape, m, dtype):
     ],
 )
 def test_Objective_delta_identity(batch_shape, m, dtype):
-    samples = torch.rand(*batch_shape, 2, m, dtype=dtype)
+    samples = torch.rand(*batch_shape, 2, m, dtype=dtype, requires_grad=True)
 
     desFunc = DeltaObjective(w=0.5, ref_point=5.0, scale=0.8)
 
@@ -142,7 +142,7 @@ def test_MultiplicativeObjective_forward():
 
     objective = MultiplicativeObjective([desFunc, desFunc2])
 
-    samples = torch.rand(20, 2)
+    samples = torch.rand(20, 2, requires_grad=True)
     reward, _ = objective.reward(samples[:, 0], desFunc)
     reward2, _ = objective.reward(samples[:, 1], desFunc2)
 
@@ -172,7 +172,7 @@ def test_AdditiveObjective_forward():
 
     objective = AdditiveObjective([desFunc, desFunc2])
 
-    samples = torch.rand(20, 2)
+    samples = torch.rand(20, 2, requires_grad=True)
     reward, _ = objective.reward(samples[:, 0], desFunc)
     reward2, _ = objective.reward(samples[:, 1], desFunc2)
 

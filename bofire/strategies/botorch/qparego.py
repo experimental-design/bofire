@@ -54,11 +54,11 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 "At least two output features has to be defined in the domain."
             )
         for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) is False:
+            if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
-            if feat.objective.w != 1.0:
+            if feat.objective.w != 1.0:  # type: ignore
                 raise ValueError(
                     "Only objective functions with weight 1 are supported."
                 )
@@ -86,20 +86,20 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             clean_experiments = self.domain.preprocess_experiments_any_valid_output(
                 self.experiments
             )
-            transformed = self.transformer.transform(clean_experiments)
+            transformed = self.transformer.transform(clean_experiments)  # type: ignore
             train_x, _ = self.get_training_tensors(
                 transformed,
-                self.domain.output_features.get_keys_by_objective(excludes=None),
+                self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
             )
-            pred = self.model.posterior(train_x).mean
+            pred = self.model.posterior(train_x).mean  # type: ignore
 
         clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
-        transformed = self.transformer.transform(clean_experiments)
+        transformed = self.transformer.transform(clean_experiments)  # type: ignore
         observed_x, _ = self.get_training_tensors(
             transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),
+            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
         )
 
         for i in range(candidate_count):
@@ -140,17 +140,17 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             num_restarts=self.num_restarts,
             raw_samples=self.num_raw_samples,
             equality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearEqualityConstraint
+                domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
             ),
             inequality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearInequalityConstraint
+                domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
             ),
             fixed_features=self.get_fixed_features(),
             options={"batch_limit": 5, "maxiter": 200},
         )
 
-        preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()
-        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())
+        preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()  # type: ignore
+        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())  # type: ignore
 
         df_candidates = pd.DataFrame(
             data=np.nan,
@@ -182,11 +182,11 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         ):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])
+            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
 
         df_candidates[self.input_feature_keys] = candidates[0].detach().numpy()
 
-        return self.transformer.inverse_transform(df_candidates)
+        return self.transformer.inverse_transform(df_candidates)  # type: ignore
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

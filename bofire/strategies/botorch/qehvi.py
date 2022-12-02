@@ -43,7 +43,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         ref_point = self.get_adjusted_refpoint()
         weights = np.array(
             [
-                feat.objective.w
+                feat.objective.w  # type: ignore
                 for feat in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -74,7 +74,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
     def _init_objective(self) -> None:
         weights = np.array(
             [
-                feat.objective.w
+                feat.objective.w  # type: ignore
                 for feat in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -91,11 +91,11 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 "At least two output features has to be defined in the domain."
             )
         for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) is False:
+            if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
                 )
-            if feat.objective.w != 1.0:
+            if feat.objective.w != 1.0:  # type: ignore
                 raise ValueError("Only objectives with weight 1 are supported.")
         if self.ref_point is not None:
             if len(self.ref_point) != len(
@@ -192,7 +192,7 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             inplace=False,
         )
         # now transform it
-        df_transform = self.transformer.transform(df)
+        df_transform = self.transformer.transform(df)  # type: ignore
         # now transform to torch
         train_x = torch.from_numpy(df_transform[self.input_feature_keys].values).to(
             **tkwargs
