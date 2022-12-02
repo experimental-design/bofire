@@ -36,7 +36,7 @@ from bofire.strategies.botorch.utils.objectives import (
             CloseToTargetObjective(
                 target_value=5.0, exponent=1.0, tolerance=1e-3, w=0.5
             ),
-            ConstantObjective(w=0.5),
+            ConstantObjective(w=0.5, value=1.0),
         ]
     ],
 )
@@ -135,7 +135,7 @@ def test_MultiplicativeObjective_forward():
             CloseToTargetObjective(
                 target_value=5.0, exponent=1.0, tolerance=1e-3, w=1.0
             ),
-            ConstantObjective(w=1.0),
+            ConstantObjective(w=0.5, value=1.0),
         ],
         k=2,
     )
@@ -165,7 +165,7 @@ def test_AdditiveObjective_forward():
             CloseToTargetObjective(
                 target_value=5.0, exponent=1.0, tolerance=1e-3, w=1.0
             ),
-            ConstantObjective(w=1.0),
+            ConstantObjective(w=0.5, value=1.0),
         ],
         k=2,
     )

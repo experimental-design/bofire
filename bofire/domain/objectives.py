@@ -280,9 +280,11 @@ class ConstantObjective(Objective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective.
+        value (float): constant return value
     """
 
-    w: float
+    w: TWeight
+    value: float
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning the fixed value as reward
@@ -294,7 +296,7 @@ class ConstantObjective(Objective):
             np.ndarray: An array of passed constants with the shape of the passed x values array.
         """
         x_type = type(x)
-        return x_type(np.ones(x.shape) * self.w)
+        return x_type(np.ones(x.shape) * self.value)
 
 
 class AbstractTargetObjective(Objective):
