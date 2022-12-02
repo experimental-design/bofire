@@ -18,7 +18,8 @@ from bofire.domain.objectives import (
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
 VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC = {
-    "w": 100.0,
+    "value": 100.0,
+    "w": 0.5,
 }
 
 INVALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC = {
