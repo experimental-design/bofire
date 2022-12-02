@@ -7,8 +7,7 @@ import pandas as pd
 import torch
 from botorch.acquisition import MCAcquisitionObjective
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.cross_validation import gen_loo_cv_folds
-from botorch.models import MixedSingleTaskGP, ModelListGP
+from botorch.models import ModelListGP
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
 from pydantic import Field, PositiveInt
@@ -734,82 +733,3 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         if self.experiments.shape[0] > degrees_of_freedom + 1:
             return True
         return False
-
-    # TODO: test this at a later stage at this is not super important for the first release
-    def feature_importances(self, plot: bool = False):
-        if plot:
-            from bofire.utils.viz import plot_fi
-        if self.is_fitted is False:
-            raise ValueError(
-                "Cannot calculate feature_importances without a fitted model."
-            )
-        elif isinstance(self.model, ModelListGP):
-            models = self.model.models
-        else:
-            models = [self.model]
-        importances = {}
-        for m, featkey in zip(
-            models, self.domain.output_features.get_keys_by_objective(excludes=None)
-        ):
-            # in case of MixedGP ignore it
-            if not isinstance(m, MixedSingleTaskGP) and self.get_model_spec(
-                featkey
-            ).get("ard", True):
-                ls = m.covar_module.base_kernel.lengthscale
-                feature_keys = []
-                for key in self.domain.get_feature_keys(InputFeature):
-                    if key in self.get_model_spec(featkey).input_features:
-                        feature_keys += (
-                            self.transformer.features2transformedFeatures.get(
-                                key, [key]
-                            )
-                        )
-                fi = (1.0 / ls).detach().cpu().numpy().ravel()
-                importances[featkey] = [feature_keys, fi]
-                if plot:
-                    plot_fi(featurenames=feature_keys, importances=fi, comment=featkey)
-        return importances
-
-    def cross_validate(self, transformed: pd.DataFrame, nfolds: int = -1):
-
-        if nfolds != -1:
-            raise NotImplementedError("Only LOOCV implemented so far!")
-
-        results = []
-        for i, ofeat in enumerate(
-            self.domain.output_features.get_by_objective(exclude=None)
-        ):
-            transformed_temp = self.domain.preprocess_experiments_one_valid_output(
-                experiments=transformed, output_feature_key=ofeat.key
-            )
-            train_X, train_Y = self.get_training_tensors(transformed_temp, ofeat.key)
-
-            # create folds
-            cv_folds = gen_loo_cv_folds(train_X=train_X, train_Y=train_Y)
-
-            # setup the model
-            model_cv = get_and_fit_model(
-                train_X=cv_folds.train_X,
-                train_Y=cv_folds.train_Y,
-                active_dims=self.get_feature_indices(ofeat.key),
-                cat_dims=self.categorical_dims,
-                scaler_name=self.get_model_spec(ofeat.key).get(
-                    "scaler", ScalerEnum.NORMALIZE
-                ),
-                kernel_name=self.get_model_spec(ofeat.key).get(
-                    "kernel", KernelEnum.MATERN_25
-                ),
-                use_ard=self.get_model_spec(ofeat.key).get("ard", True),
-                use_categorical_kernel=self.categorical_encoding
-                == CategoricalEncodingEnum.ORDINAL,
-                cv=True,
-            )
-
-            with torch.no_grad():
-                posterior = model_cv.posterior(cv_folds.test_X, observation_noise=False)
-
-            observed = cv_folds.test_Y.squeeze().detach().numpy()
-            mean = posterior.mean.squeeze().detach().numpy
-            std = np.sqrt(posterior.variance.squeeze().detach().numpy())
-            results.append((observed, mean, std))
-        return results

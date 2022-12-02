@@ -38,8 +38,6 @@ from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
-    name: str = "botorch.qparego"
-
     def _init_acqf(self) -> None:
         pass
 
