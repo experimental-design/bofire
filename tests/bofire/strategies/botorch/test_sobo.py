@@ -6,6 +6,7 @@ from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
+    qSimpleRegret,
     qUpperConfidenceBound,
 )
 
@@ -76,6 +77,7 @@ def test_SOBO_not_fitted(domain, acqf):
             ("qNEI", qNoisyExpectedImprovement),
             ("qPI", qProbabilityOfImprovement),
             ("qUCB", qUpperConfidenceBound),
+            ("qSR", qSimpleRegret),
         ]
         for num_test_candidates in range(1, 3)
     ],
@@ -91,25 +93,3 @@ def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
     acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
     assert acqf_vals.shape[0] == num_test_candidates
     domain.experiments = None
-
-
-"""@pytest.mark.parametrize(
-    "domain, experiments, Strategy, expected",
-    [
-        (domains[0], data[0], BoTorchSoboStrategy, 12.0),
-        (domains[1], data[1], BoTorchSoboStrategy, 12.0),
-        (domains[3], data[3], BoTorchSoboStrategy, 12.0),
-        (domains[2], data[2], BoTorchSoboAdditiveStrategy, 12.0 + 105.0),
-        (domains[4], data[4], BoTorchSoboAdditiveStrategy, 12.0 + 105.0),
-        (domains[2], data[2], BoTorchSoboMultiplicativeStrategy, 12.0 * 105.0),
-        (domains[4], data[4], BoTorchSoboMultiplicativeStrategy, 12.0 * 105.0),
-    ],
-)
-def test_SOBO_get_fbest(domain, experiments, Strategy, expected):
-    my_strategy = Strategy(
-        domain=domain, acquisition_function=random.choice(list(AcquisitionFunctionEnum))
-    )
-    my_strategy.domain.set_experiments(experiments)
-    fbest = my_strategy.get_fbest()
-    domain.experiments = None
-    assert np.allclose(fbest, expected)"""
