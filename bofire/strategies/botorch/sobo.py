@@ -1,12 +1,7 @@
 from typing import Type
 
 import torch
-from botorch.acquisition.monte_carlo import (  # type: ignore
-    qExpectedImprovement,
-    qNoisyExpectedImprovement,
-    qProbabilityOfImprovement,
-    qUpperConfidenceBound,
-)
+from botorch.acquisition import get_acquisition_function
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.features import Feature
@@ -24,87 +19,46 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
     acquisition_function: AcquisitionFunctionEnum
 
-    def _init_acqf(self, df_pending=None) -> None:
+    def _init_acqf(
+        self, df_pending=None, use_quasi_MC_sampling=True, mc_samples=500, beta=0.2
+    ) -> None:
         assert self.is_fitted is True, "Model not trained."
 
-        # init acqf
-        if self.acquisition_function == AcquisitionFunctionEnum.QNEI:
-            self.init_qNEI()
-        elif self.acquisition_function == AcquisitionFunctionEnum.QUCB:
-            self.init_qUCB()
-        elif self.acquisition_function == AcquisitionFunctionEnum.QEI:
-            self.init_qEI()
-        elif self.acquisition_function == AcquisitionFunctionEnum.QPI:
-            self.init_qPI()
-        else:
-            raise NotImplementedError(
-                "ACQF %s is not implemented." % self.acquisition_function
-            )
+        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
+        transformed = self.transformer.transform(clean_experiments)
+        X_train, Y_train = self.get_training_tensors(
+            transformed,
+            self.domain.output_features.get_keys_by_objective(excludes=None),
+        )
 
-        self.acqf.set_X_pending(df_pending)  # type: ignore
+        X_pending = None
+        if df_pending is not None:
+            X_pending = torch.from_numpy(
+                self.transformer.transform(df_pending)[self.input_feature_keys].values
+            ).to(**tkwargs)
+
+        self.acqf = get_acquisition_function(
+            self.acquisition_function.value,
+            self.model,
+            self.objective,
+            X_observed=X_train,
+            X_pending=X_pending,
+            constraints=None,
+            mc_samples=mc_samples,
+            qmc=use_quasi_MC_sampling,
+            beta=beta,
+        )
         return
 
     def _init_objective(self):
         self.objective = MultiplicativeObjective(
             targets=[
-                var.objective  # type: ignore
+                var.objective
                 for var in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
-        return
-
-    def get_fbest(self, experiments=None):
-        if experiments is None:
-            experiments = self.experiments
-        df_valid = self.domain.preprocess_experiments_all_valid_outputs(experiments)
-        samples = torch.from_numpy(
-            df_valid[
-                self.domain.output_features.get_keys_by_objective(excludes=None)
-            ].values
-        ).to(**tkwargs)
-        return self.objective.forward(samples=samples).detach().numpy().max()  # type: ignore
-
-    # TODO refactor this by using get_acquisition_function
-    def init_qNEI(self):
-
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
-            self.experiments
-        )
-        transformed = self.transformer.transform(clean_experiments)  # type: ignore
-        t_features, targets = self.get_training_tensors(
-            transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
-        )
-
-        self.acqf = qNoisyExpectedImprovement(
-            model=self.model, X_baseline=t_features, objective=self.objective
-        )
-        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
-        return
-
-    def init_qUCB(self, beta=0.2):
-        # TODO: handle beta
-        self.acqf = qUpperConfidenceBound(self.model, beta, objective=self.objective)
-        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
-        return
-
-    def init_qEI(self):
-
-        best_f = self.get_fbest()
-
-        self.acqf = qExpectedImprovement(self.model, best_f, objective=self.objective)
-        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
-
-        return
-
-    def init_qPI(self):
-
-        best_f = self.get_fbest()
-        self.acqf = qProbabilityOfImprovement(
-            self.model, best_f, objective=self.objective
-        )
-        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
-
         return
 
     @classmethod
@@ -145,10 +99,13 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
+
+    name: str = "botorch.sobo.additive"
+
     def _init_objective(self):
         self.objective = AdditiveObjective(
             targets=[
-                var.objective  # type: ignore
+                var.objective
                 for var in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -156,4 +113,5 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
 
 
 class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
-    pass
+
+    name: str = "botorch.sobo.multiplicative"
