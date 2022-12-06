@@ -397,7 +397,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 inequality_constraints=get_linear_constraints(
                     domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
                 ),
-                ed_features_list=self.get_categorical_combinations(),
+                fixed_features_list=self.get_categorical_combinations(),
             )
             # options={"seed":self.seed})
 

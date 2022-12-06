@@ -7,7 +7,12 @@ from botorch.utils.multi_objective import is_non_dominated
 from botorch.utils.multi_objective.hypervolume import Hypervolume
 
 from bofire.domain import Domain
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.domain.objectives import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+    MinimizeSigmoidObjective,
+)
 
 
 def get_ref_point_mask(
@@ -22,13 +27,13 @@ def get_ref_point_mask(
     mask = []
     for key in output_feature_keys:
         feat = domain.get_feature(key)
-        if isinstance(feat.objective, MaximizeObjective):  # type: ignore
+        if isinstance(feat.objective, MaximizeObjective) or isinstance(feat.objective, MaximizeSigmoidObjective):  # type: ignore
             mask.append(1.0)
-        elif isinstance(feat.objective, MinimizeObjective):  # type: ignore
+        elif isinstance(feat.objective, MinimizeObjective) or isinstance(feat.objective, MinimizeSigmoidObjective):  # type: ignore
             mask.append(-1.0)
         else:
             raise ValueError(
-                "Only `MaximizeObjective` and `MinimizeObjective` supported."
+                "Only `MaximizeObjective`, `MinimizeObjective`, `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective` supported."
             )
     return np.array(mask)
 

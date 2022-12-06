@@ -17,10 +17,11 @@ from bofire.domain.features import CategoricalInput, ContinuousInput, Continuous
 from bofire.domain.objectives import (
     ConstantObjective,
     MaximizeObjective,
+    MaximizeSigmoidObjective,
     MinimizeObjective,
 )
 from bofire.strategies.botorch.base import ModelSpec
-from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy
+from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
 from bofire.strategies.botorch.sobo import BoTorchSoboStrategy as SOBO
 from bofire.strategies.botorch.utils.objectives import (
@@ -43,9 +44,13 @@ feature3 = ContinuousInput(key="x3", lower_bound=0.0, upper_bound=0.7)
 feature4 = CategoricalInput(key="c1", categories=["A", "B", "C", "D"])
 
 # "target": {"type": "min", "steepness": 0.5, "tp": 14.7}
-feature_out_1 = ContinuousOutput(key="y1", objective=MaximizeObjective(w=1))
+feature_out_1 = ContinuousOutput(
+    key="y1", objective=MaximizeSigmoidObjective(w=0.5, steepness=1.0, tp=1.0)
+)
 # "target": {"type": "identity"}}
-feature_out_2 = ContinuousOutput(key="y2", objective=MaximizeObjective(w=1))
+feature_out_2 = ContinuousOutput(
+    key="y2", objective=MaximizeSigmoidObjective(w=0.5, steepness=1.0, tp=1.0)
+)
 
 
 input_features = [feature1, feature2, feature3, feature4]
@@ -68,18 +73,15 @@ domain = Domain(
 
 # strategy = SOBO(domain=domain, acquisition_function="QNEI")
 
-strategy = BoTorchQehviStrategy(**BOTORCH_QEHVI_STRATEGY_SPECS["valids"][2])
+strategy = BoTorchQnehviStrategy(
+    domain=domain
+)  # , **BOTORCH_QEHVI_STRATEGY_SPECS["valids"][2])
 
 experiments_train = generate_experiments(domain, 10)
 experiments_test = generate_experiments(domain, 10)
 strategy.tell(experiments_train)
 candidates = strategy._choose_from_pool(experiments_test, 5)
-
-strategy.get_fbest(experiments_test)
-
-strategy = BoTorchQehviStrategy(
-    domain=domain
-)  # #ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QNEI')
+candidates2 = strategy.ask(candidate_count=2)
 
 # model_specs = ModelSpec(output_feature = 'y1', input_features = ['x1', 'x2', 'x3'], kernel = "MATERN_25", ard =True, scaler = "NORMALIZE")
 # strategy = BoTorchQparegoStrategy(domain=domain, ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QEI', model_specs=[model_specs])

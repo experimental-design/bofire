@@ -19,8 +19,11 @@ from bofire.domain.features import Feature, InputFeature
 from bofire.domain.objectives import (
     IdentityObjective,
     MaximizeObjective,
+    MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
     Objective,
+    TargetObjective,
 )
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
@@ -47,6 +50,18 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 for feat in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
+
+        index = [
+            idx
+            for idx, feat in enumerate(
+                self.domain.output_features.get_by_objective(excludes=None).features
+            )
+            if isinstance(
+                feat.objective,
+                (MaximizeSigmoidObjective, MinimizeSigmoidObjective, TargetObjective),
+            )
+        ]
+
         # compute points that are better than the known reference point
         better_than_ref = (train_obj > ref_point).all(axis=-1)
         # partition non-dominated space into disjoint rectangles
@@ -63,9 +78,14 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             # sampler=self.sampler,
             # define an objective that specifies which outcomes are the objectives
             objective=self.objective,
-            # TODO: implement constraints
-            # specify that the constraint is on the last outcome
-            # constraints=[lambda Z: Z[..., -1]],
+            constraints=[
+                self.domain.output_features.get_by_objective(excludes=None)
+                .features[idx]
+                .objective.to_constraints(idx)[0]
+                for idx in index
+            ]
+            if len(index) > 0
+            else None,
         )
         # todo comment in after new botorch deployment
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
@@ -78,6 +98,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 for feat in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
+
         weights = weights * self.ref_point_mask
         self.objective = WeightedMCMultiOutputObjective(
             outcomes=list(range(len(weights))),
@@ -90,13 +111,13 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
-                raise ValueError(
-                    "Only `MaximizeObjective` and `MinimizeObjective` supported."
-                )
-            if feat.objective.w != 1.0:  # type: ignore
-                raise ValueError("Only objectives with weight 1 are supported.")
+        # for feat in self.domain.output_features.get_by_objective(excludes=None):
+        # if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
+        #     raise ValueError(
+        #         "Only `MaximizeObjective` and `MinimizeObjective` supported."
+        #     )
+        # if feat.objective.w != 1.0:  # type: ignore
+        #     raise ValueError("Only objectives with weight 1 are supported.")
         if self.ref_point is not None:
             if len(self.ref_point) != len(
                 self.domain.output_features.get_by_objective(excludes=None)
@@ -176,8 +197,8 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
         """
-        if my_type not in [MaximizeObjective, MinimizeObjective]:
-            return False
+        # if my_type not in [MaximizeObjective, MinimizeObjective]:
+        #    return False
         return True
 
 
@@ -197,6 +218,18 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
         train_x = torch.from_numpy(df_transform[self.input_feature_keys].values).to(
             **tkwargs
         )
+
+        index = [
+            idx
+            for idx, feat in enumerate(
+                self.domain.output_features.get_by_objective(excludes=None).features
+            )
+            if isinstance(
+                feat.objective,
+                (MaximizeSigmoidObjective, MinimizeSigmoidObjective, TargetObjective),
+            )
+        ]
+
         # if the reference point is not defined it has to be calculated from data
         self.acqf = qNoisyExpectedHypervolumeImprovement(
             model=self.model,
@@ -205,6 +238,14 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             # sampler=self.sampler,
             prune_baseline=True,
             objective=self.objective,
+            constraints=[
+                self.domain.output_features.get_by_objective(excludes=None)
+                .features[idx]
+                .objective.to_constraints(idx)[0]
+                for idx in index
+            ]
+            if len(index) > 0
+            else None,
         )
         # todo comment in after new botorch deployment
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])

@@ -19,8 +19,11 @@ from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput,
 from bofire.domain.objectives import (
     IdentityObjective,
     MaximizeObjective,
+    MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
     Objective,
+    TargetObjective,
 )
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.enum import (
@@ -115,9 +118,24 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 ).squeeze()
                 * ref_point_mask
             )
-            objective = GenericMCObjective(
-                get_chebyshev_scalarization(weights=weights, Y=pred)
-            )
+
+            scalarization = get_chebyshev_scalarization(weights=weights, Y=pred)
+            index = [
+                idx
+                for idx, feat in enumerate(
+                    self.domain.output_features.get_by_objective(excludes=None).features
+                )
+                if isinstance(
+                    feat.objective,
+                    (
+                        MaximizeSigmoidObjective,
+                        MinimizeSigmoidObjective,
+                        TargetObjective,
+                    ),
+                )
+            ]
+
+            objective = GenericMCObjective(scalarization)
 
             acqf = get_acquisition_function(
                 acquisition_function_name="qNEI"
@@ -129,6 +147,14 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 mc_samples=self.num_sobol_samples,
                 qmc=True,
                 prune_baseline=True,
+                constraints=[
+                    self.domain.output_features.get_by_objective(excludes=None)
+                    .features[idx]
+                    .objective.to_constraints(idx)[0]
+                    for idx in index
+                ]
+                if len(index) > 0
+                else None,
             )
             acqf_list.append(acqf)
 
