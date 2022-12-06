@@ -73,14 +73,21 @@ domain = Domain(
 
 # strategy = SOBO(domain=domain, acquisition_function="QNEI")
 
-strategy = BoTorchQnehviStrategy(
-    domain=domain
-)  # , **BOTORCH_QEHVI_STRATEGY_SPECS["valids"][2])
+# strategy = BoTorchQnehviStrategy(
+#     domain=domain
+# )
+
+strategy = BoTorchQparegoStrategy(
+    domain=domain,
+    categorical_method="FREE",
+    descriptor_method="FREE",
+    categorical_encoding="ONE_HOT",
+)
 
 experiments_train = generate_experiments(domain, 10)
 experiments_test = generate_experiments(domain, 10)
 strategy.tell(experiments_train)
-candidates = strategy._choose_from_pool(experiments_test, 5)
+# candidates = strategy._choose_from_pool(experiments_test, 5)
 candidates2 = strategy.ask(candidate_count=2)
 
 # model_specs = ModelSpec(output_feature = 'y1', input_features = ['x1', 'x2', 'x3'], kernel = "MATERN_25", ard =True, scaler = "NORMALIZE")

@@ -56,15 +56,15 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        for feat in self.domain.output_features.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
-                raise ValueError(
-                    "Only `MaximizeObjective` and `MinimizeObjective` supported."
-                )
-            if feat.objective.w != 1.0:  # type: ignore
-                raise ValueError(
-                    "Only objective functions with weight 1 are supported."
-                )
+        # for feat in self.domain.output_features.get_by_objective(excludes=None):
+        #     if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
+        #         raise ValueError(
+        #             "Only `MaximizeObjective` and `MinimizeObjective` supported."
+        #         )
+        #     if feat.objective.w != 1.0:  # type: ignore
+        #         raise ValueError(
+        #             "Only objective functions with weight 1 are supported."
+        #         )
         if (len(self.domain.get_features(CategoricalInput)) > 0) and (
             self.categorical_method != CategoricalMethodEnum.FREE
         ):
@@ -226,6 +226,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        if my_type not in [MaximizeObjective, MinimizeObjective]:
-            return False
+        # if my_type not in [MaximizeObjective, MinimizeObjective]:
+        #     return False
         return True
