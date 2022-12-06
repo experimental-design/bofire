@@ -19,7 +19,12 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.objectives import Objective, TargetObjective
+from bofire.domain.objectives import (
+    BotorchConstrainedObjective,
+    MaximizeObjective,
+    Objective,
+    TargetObjective,
+)
 from bofire.domain.util import BaseModel
 
 
@@ -379,6 +384,8 @@ if2 = ContinuousInput(key="x2", upper_bound=10, lower_bound=1)
 
 of1 = ContinuousOutput(key="out1", objective=obj)
 of2 = ContinuousOutput(key="out2", objective=obj)
+of3 = ContinuousOutput(key="out3", objective=MaximizeObjective(w=1.0))
+
 
 c1 = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[5, 5], rhs=15.0)
 
@@ -388,6 +395,9 @@ of2_ = ContinuousOutput(key="out4", objective=None)
 domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
 domain2 = Domain(
     input_features=[if1, if2], output_features=[of1, of2], constraints=[c1]
+)
+domain3 = Domain(
+    input_features=[if1, if2], output_features=[of3, of2, of1], constraints=[c1]
 )
 
 
@@ -630,6 +640,8 @@ def test_get_features(domain, FeatureType, exact, expected):
         (domain, [Objective], [], False, [of1, of2]),
         (domain, [TargetObjective], [], False, [of1, of2]),
         (domain, [], [Objective], False, [of1_, of2_]),
+        (domain, [BotorchConstrainedObjective], [], False, [of1, of2]),
+        (domain3, [BotorchConstrainedObjective], [], False, [of1, of2]),
     ],
 )
 def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, expected):
