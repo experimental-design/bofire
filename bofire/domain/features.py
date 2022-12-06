@@ -3,7 +3,6 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, cast
 
 import matplotlib.pyplot as plt
@@ -23,6 +22,7 @@ from bofire.domain.util import (
     is_numeric,
     name2key,
 )
+from bofire.utils.enum import SamplingMethodEnum
 
 
 class Feature(KeyModel):
@@ -1069,12 +1069,6 @@ class Features(BaseModel):
 
 
 Tnum_samples = conint(gt=0)
-
-
-class SamplingMethodEnum(Enum):
-    UNIFORM = "UNIFORM"
-    SOBOL = "SOBOL"
-    LHS = "LHS"
 
 
 class InputFeatures(Features):

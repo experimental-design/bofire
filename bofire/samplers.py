@@ -22,7 +22,6 @@ from bofire.domain.features import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    SamplingMethodEnum,
     Tnum_samples,
 )
 from bofire.domain.util import BaseModel
@@ -31,6 +30,7 @@ from bofire.strategies.strategy import (
     validate_features,
     validate_input_feature_count,
 )
+from bofire.utils.enum import SamplingMethodEnum
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
