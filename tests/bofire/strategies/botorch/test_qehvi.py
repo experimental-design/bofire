@@ -87,7 +87,7 @@ BOTORCH_QEHVI_STRATEGY_SPECS = {
 
 @pytest.mark.parametrize(
     "domain, ref_point",
-    [(invalid_domains[0], None), (invalid_domains[1], None), (valid_domains[0], [0])],
+    [(invalid_domains[0], None), (valid_domains[0], [0])],
 )
 def test_invalid_qehvi_init_domain(domain, ref_point):
     with pytest.raises(ValueError):

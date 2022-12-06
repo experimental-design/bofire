@@ -48,7 +48,6 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
     "domain",
     [
         invalid_domains[0],
-        invalid_domains[1],
     ],
 )
 def test_invalid_qparego_init_domain(domain):

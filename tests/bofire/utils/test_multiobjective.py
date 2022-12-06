@@ -62,11 +62,11 @@ valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2, of3, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of1, of3, of4]),
+    Domain(input_features=[if1, if2], output_features=[of1, of5]),
 ]
 
 invalid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1]),
-    Domain(input_features=[if1, if2], output_features=[of1, of5]),
 ]
 
 dfs = [
