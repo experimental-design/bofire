@@ -1,6 +1,5 @@
 from typing import Type
 
-import torch
 from botorch.acquisition import get_acquisition_function
 
 from bofire.domain.constraints import Constraint
@@ -12,42 +11,36 @@ from bofire.strategies.botorch.utils.objectives import (
     MultiplicativeObjective,
 )
 from bofire.utils.enum import AcquisitionFunctionEnum
-from bofire.utils.torch_tools import tkwargs
 
 
 class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
     acquisition_function: AcquisitionFunctionEnum
 
-    def _init_acqf(
-        self, df_pending=None, use_quasi_MC_sampling=True, mc_samples=500, beta=0.2
-    ) -> None:
+    def _init_acqf(self, beta=0.2) -> None:
         assert self.is_fitted is True, "Model not trained."
 
         clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
-        transformed = self.transformer.transform(clean_experiments)
-        X_train, Y_train = self.get_training_tensors(
+        transformed = self.transformer.transform(clean_experiments)  # type: ignore
+        X_train, _ = self.get_training_tensors(
             transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),
+            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
         )
 
+        # TODO: refactor pending experiments
         X_pending = None
-        if df_pending is not None:
-            X_pending = torch.from_numpy(
-                self.transformer.transform(df_pending)[self.input_feature_keys].values
-            ).to(**tkwargs)
 
         self.acqf = get_acquisition_function(
             self.acquisition_function.value,
-            self.model,
-            self.objective,
+            self.model,  # type: ignore
+            self.objective,  # type: ignore
             X_observed=X_train,
             X_pending=X_pending,
             constraints=None,
-            mc_samples=mc_samples,
-            qmc=use_quasi_MC_sampling,
+            mc_samples=self.num_sobol_samples,
+            qmc=True,
             beta=beta,
         )
         return
@@ -55,7 +48,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     def _init_objective(self):
         self.objective = MultiplicativeObjective(
             targets=[
-                var.objective
+                var.objective  # type: ignore
                 for var in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -99,13 +92,10 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
-
-    name: str = "botorch.sobo.additive"
-
     def _init_objective(self):
         self.objective = AdditiveObjective(
             targets=[
-                var.objective
+                var.objective  # type: ignore
                 for var in self.domain.output_features.get_by_objective(excludes=None)
             ]
         )
@@ -113,5 +103,4 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
 
 
 class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
-
-    name: str = "botorch.sobo.multiplicative"
+    pass
