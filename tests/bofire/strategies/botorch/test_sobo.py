@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import pytest
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
@@ -10,11 +9,7 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bofire.strategies.botorch.sobo import (
-    BoTorchSoboAdditiveStrategy,
-    BoTorchSoboMultiplicativeStrategy,
-    BoTorchSoboStrategy,
-)
+from bofire.strategies.botorch.sobo import BoTorchSoboStrategy
 from bofire.utils.enum import (
     AcquisitionFunctionEnum,
     CategoricalEncodingEnum,
@@ -22,7 +17,7 @@ from bofire.utils.enum import (
     DescriptorMethodEnum,
 )
 from tests.bofire.domain.test_domain_validators import generate_experiments
-from tests.bofire.strategies.botorch.test_base import data, domains
+from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
