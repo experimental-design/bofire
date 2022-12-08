@@ -1,3 +1,4 @@
+import math
 import random
 
 import pytest
@@ -9,7 +10,14 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
-from bofire.strategies.botorch.sobo import BoTorchSoboStrategy
+from bofire.strategies.botorch.sobo import (
+    BoTorchSoboStrategy,
+    qEI,
+    qNEI,
+    qPI,
+    qSR,
+    qUCB,
+)
 from bofire.utils.enum import (
     AcquisitionFunctionEnum,
     CategoricalEncodingEnum,
@@ -73,6 +81,11 @@ def test_SOBO_not_fitted(domain, acqf):
             ("qPI", qProbabilityOfImprovement),
             ("qUCB", qUpperConfidenceBound),
             ("qSR", qSimpleRegret),
+            (qEI(), qExpectedImprovement),
+            (qNEI(), qNoisyExpectedImprovement),
+            (qPI(), qProbabilityOfImprovement),
+            (qUCB(), qUpperConfidenceBound),
+            (qSR(), qSimpleRegret),
         ]
         for num_test_candidates in range(1, 3)
     ],
@@ -88,3 +101,13 @@ def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
     acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
     assert acqf_vals.shape[0] == num_test_candidates
     domain.experiments = None
+
+
+def test_SOBO_init_qUCB():
+    beta = 0.5
+    acqf = qUCB(beta=beta)
+    strategy = BoTorchSoboStrategy(domain=domains[0], acquisition_function=acqf)
+    experiments = generate_experiments(domains[0], 20)
+    strategy.tell(experiments)
+    assert strategy.acqf.beta_prime == math.sqrt(beta * math.pi / 2)
+    domains[0].experiments = None

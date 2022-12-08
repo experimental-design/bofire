@@ -1,6 +1,7 @@
-from typing import Type
+from typing import Type, Union
 
 from botorch.acquisition import get_acquisition_function
+from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.features import Feature
@@ -13,11 +14,56 @@ from bofire.strategies.botorch.utils.objectives import (
 from bofire.utils.enum import AcquisitionFunctionEnum
 
 
+class AcquisitionFunction(BaseModel):
+    @staticmethod
+    @validate_arguments
+    def from_enum(acquistion_function_enum: AcquisitionFunctionEnum):
+        if acquistion_function_enum == AcquisitionFunctionEnum.QEI:
+            return qEI()
+        if acquistion_function_enum == AcquisitionFunctionEnum.QNEI:
+            return qNEI()
+        if acquistion_function_enum == AcquisitionFunctionEnum.QPI:
+            return qPI()
+        if acquistion_function_enum == AcquisitionFunctionEnum.QSR:
+            return qSR()
+        if acquistion_function_enum == AcquisitionFunctionEnum.QUCB:
+            return qUCB()
+        else:
+            raise ValueError(acquistion_function_enum)
+
+
+class qNEI(AcquisitionFunction):
+    pass
+
+
+class qEI(AcquisitionFunction):
+    pass
+
+
+class qSR(AcquisitionFunction):
+    pass
+
+
+class qUCB(AcquisitionFunction):
+    beta: PositiveFloat = 0.2
+
+
+class qPI(AcquisitionFunction):
+    tau: PositiveFloat = 1e-3
+
+
 class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
-    acquisition_function: AcquisitionFunctionEnum
+    acquisition_function: Union[AcquisitionFunction, AcquisitionFunctionEnum]
 
-    def _init_acqf(self, beta=0.2) -> None:
+    @validator("acquisition_function")
+    def validate_descriptor_method(cls, v):
+        if isinstance(v, AcquisitionFunction):
+            return v
+        else:
+            return AcquisitionFunction.from_enum(v)
+
+    def _init_acqf(self) -> None:
         assert self.is_fitted is True, "Model not trained."
 
         clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
@@ -33,7 +79,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         X_pending = None
 
         self.acqf = get_acquisition_function(
-            self.acquisition_function.value,
+            self.acquisition_function.__class__.__name__,
             self.model,  # type: ignore
             self.objective,  # type: ignore
             X_observed=X_train,
@@ -41,7 +87,12 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
             constraints=None,
             mc_samples=self.num_sobol_samples,
             qmc=True,
-            beta=beta,
+            beta=self.acquisition_function.beta
+            if isinstance(self.acquisition_function, qUCB)
+            else 0.2,
+            tau=self.acquisition_function.tau
+            if isinstance(self.acquisition_function, qPI)
+            else 1e-3,
         )
         return
 
