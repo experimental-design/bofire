@@ -26,6 +26,7 @@ from bofire.domain.features import (
     ContinuousInput,
     ContinuousOutput,
     InputFeature,
+    OutputFeature,
     is_continuous,
 )
 from bofire.domain.util import BaseModel
@@ -152,7 +153,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             List[ModelSpec]: List of model specification classes
         """
         input_features = domain.get_feature_keys(InputFeature)
-        output_features = domain.output_features.get_keys_by_objective(excludes=None)
+        # TODO: shouldn't this be domain.get_feature_keys(OutputFeature)? Otherwise outputs without objective are skipped
+        # output_features = (domain.output_features.get_keys_by_objective())
+        output_features = domain.get_feature_keys(OutputFeature)
         if model_specs is None:
             model_specs = []
         existing_specs = [model_spec.output_feature for model_spec in model_specs]

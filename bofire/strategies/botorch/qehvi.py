@@ -1,3 +1,4 @@
+import itertools
 from typing import Optional, Type
 
 import numpy as np
@@ -17,6 +18,8 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from bofire.domain.constraints import Constraint, NChooseKConstraint
 from bofire.domain.features import Feature, InputFeature
 from bofire.domain.objectives import (
+    BotorchConstrainedObjective,
+    CloseToTargetObjective,
     IdentityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -40,25 +43,31 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
 
         train_obj = (
-            df[self.domain.output_features.get_keys_by_objective(excludes=None)].values
+            df[
+                self.domain.output_features.get_keys_by_objective(
+                    excludes=BotorchConstrainedObjective
+                )
+            ].values
             * self.ref_point_mask
         )
         ref_point = self.get_adjusted_refpoint()
         weights = np.array(
             [
                 feat.objective.w  # type: ignore
-                for feat in self.domain.output_features.get_by_objective(excludes=None)
+                for feat in self.domain.output_features.get_by_objective(
+                    excludes=BotorchConstrainedObjective
+                )
             ]
         )
 
-        index = [
+        index_constraints = [
             idx
             for idx, feat in enumerate(
-                self.domain.output_features.get_by_objective(excludes=None).features
+                self.domain.output_features.get_by_objective().features
             )
             if isinstance(
                 feat.objective,
-                (MaximizeSigmoidObjective, MinimizeSigmoidObjective, TargetObjective),
+                BotorchConstrainedObjective,
             )
         ]
 
@@ -78,13 +87,17 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             # sampler=self.sampler,
             # define an objective that specifies which outcomes are the objectives
             objective=self.objective,
-            constraints=[
-                self.domain.output_features.get_by_objective(excludes=None)
-                .features[idx]
-                .objective.to_constraints(idx)[0]
-                for idx in index
-            ]
-            if len(index) > 0
+            constraints=list(
+                itertools.chain(
+                    *[
+                        self.domain.output_features.get_by_objective()
+                        .features[idx]
+                        .objective.to_constraints(idx)
+                        for idx in index_constraints
+                    ]
+                )
+            )
+            if len(index_constraints) > 0
             else None,
         )
         # todo comment in after new botorch deployment
@@ -95,38 +108,55 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         weights = np.array(
             [
                 feat.objective.w  # type: ignore
-                for feat in self.domain.output_features.get_by_objective(excludes=None)
+                for feat in self.domain.output_features.get_by_objective(
+                    excludes=BotorchConstrainedObjective
+                )
             ]
         )
 
+        index_objectives = [
+            idx
+            for idx, feat in enumerate(
+                self.domain.output_features.get_by_objective().features
+            )
+            if not isinstance(feat.objective, BotorchConstrainedObjective)
+        ]
+
         weights = weights * self.ref_point_mask
         self.objective = WeightedMCMultiOutputObjective(
-            outcomes=list(range(len(weights))),
+            outcomes=index_objectives,
             weights=torch.from_numpy(weights).to(**tkwargs),
         )
         return
 
     def _init_domain(self) -> None:
-        if len(self.domain.output_features.get_by_objective(excludes=None)) < 2:
+        if (
+            len(
+                self.domain.output_features.get_by_objective(
+                    excludes=BotorchConstrainedObjective
+                )
+            )
+            < 2
+        ):
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        # for feat in self.domain.output_features.get_by_objective(excludes=None):
-        # if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
-        #     raise ValueError(
-        #         "Only `MaximizeObjective` and `MinimizeObjective` supported."
-        #     )
-        # if feat.objective.w != 1.0:  # type: ignore
-        #     raise ValueError("Only objectives with weight 1 are supported.")
+        for feat in self.domain.output_features.get_by_objective(
+            excludes=[BotorchConstrainedObjective]
+        ):
+            if feat.objective.w != 1.0:  # type: ignore
+                raise ValueError("Only objectives with weight 1 are supported.")
         if self.ref_point is not None:
             if len(self.ref_point) != len(
-                self.domain.output_features.get_by_objective(excludes=None)
+                self.domain.output_features.get_by_objective(
+                    excludes=[BotorchConstrainedObjective]
+                )
             ):
                 raise ValueError(
-                    "Dimensionality of provided ref_point does not match number of output features."
+                    "Dimensionality of provided ref_point does not match number of output featuresto be optimized."
                 )
             for feat in self.domain.output_features.get_keys_by_objective(
-                excludes=None
+                excludes=BotorchConstrainedObjective
             ):
                 assert (
                     feat in self.ref_point.keys()
@@ -143,7 +173,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                     [
                         self.ref_point[feat]
                         for feat in self.domain.output_features.get_keys_by_objective(
-                            excludes=None
+                            excludes=BotorchConstrainedObjective
                         )
                     ]
                 )
@@ -153,7 +183,9 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         return (
             (
                 df[
-                    self.domain.output_features.get_keys_by_objective(excludes=None)
+                    self.domain.output_features.get_keys_by_objective(
+                        excludes=BotorchConstrainedObjective
+                    )
                 ].values
                 * self.ref_point_mask
             )
@@ -197,8 +229,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
         """
-        # if my_type not in [MaximizeObjective, MinimizeObjective]:
-        #    return False
+
         return True
 
 
@@ -222,12 +253,9 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
         index = [
             idx
             for idx, feat in enumerate(
-                self.domain.output_features.get_by_objective(excludes=None).features
+                self.domain.output_features.get_by_objective().features
             )
-            if isinstance(
-                feat.objective,
-                (MaximizeSigmoidObjective, MinimizeSigmoidObjective, TargetObjective),
-            )
+            if isinstance(feat.objective, BotorchConstrainedObjective)
         ]
 
         # if the reference point is not defined it has to be calculated from data
@@ -238,12 +266,16 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             # sampler=self.sampler,
             prune_baseline=True,
             objective=self.objective,
-            constraints=[
-                self.domain.output_features.get_by_objective(excludes=None)
-                .features[idx]
-                .objective.to_constraints(idx)[0]
-                for idx in index
-            ]
+            constraints=list(
+                itertools.chain(
+                    *[
+                        self.domain.output_features.get_by_objective()
+                        .features[idx]
+                        .objective.to_constraints(idx)
+                        for idx in index
+                    ]
+                )
+            )
             if len(index) > 0
             else None,
         )

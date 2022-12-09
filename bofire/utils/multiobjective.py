@@ -8,10 +8,12 @@ from botorch.utils.multi_objective.hypervolume import Hypervolume
 
 from bofire.domain import Domain
 from bofire.domain.objectives import (
+    CloseToTargetObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
+    TargetObjective,
 )
 
 
@@ -20,20 +22,20 @@ def get_ref_point_mask(
 ) -> np.ndarray:
     if output_feature_keys is None:
         output_feature_keys = domain.output_features.get_keys_by_objective(
-            excludes=None
+            includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
         )
     if len(output_feature_keys) < 2:
         raise ValueError("At least two output features have to be provided.")
     mask = []
-    for key in output_feature_keys:
+    for key in output_feature_keys:  # TDO: how to handle CloseToTarget here?
         feat = domain.get_feature(key)
-        if isinstance(feat.objective, MaximizeObjective) or isinstance(feat.objective, MaximizeSigmoidObjective):  # type: ignore
+        if isinstance(feat.objective, (MaximizeObjective, CloseToTargetObjective)):  # type: ignore
             mask.append(1.0)
-        elif isinstance(feat.objective, MinimizeObjective) or isinstance(feat.objective, MinimizeSigmoidObjective):  # type: ignore
+        elif isinstance(feat.objective, (MinimizeObjective)):  # type: ignore
             mask.append(-1.0)
         else:
             raise ValueError(
-                "Only `MaximizeObjective`, `MinimizeObjective`, `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective` supported."
+                "Only `MaximizeObjective` and `MinimizeObjective` supported."
             )
     return np.array(mask)
 

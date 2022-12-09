@@ -1,9 +1,10 @@
+import itertools
 from typing import Type
 
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition.objective import GenericMCObjective
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.acquisition.utils import get_acquisition_function
 from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
@@ -17,6 +18,7 @@ from bofire.domain.constraints import (
 )
 from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput, Feature
 from bofire.domain.objectives import (
+    BotorchConstrainedObjective,
     IdentityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -56,15 +58,11 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        # for feat in self.domain.output_features.get_by_objective(excludes=None):
-        #     if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
-        #         raise ValueError(
-        #             "Only `MaximizeObjective` and `MinimizeObjective` supported."
-        #         )
-        #     if feat.objective.w != 1.0:  # type: ignore
-        #         raise ValueError(
-        #             "Only objective functions with weight 1 are supported."
-        #         )
+        for feat in self.domain.output_features.get_by_objective(excludes=None):
+            if feat.objective.w != 1.0:  # type: ignore
+                raise ValueError(
+                    "Only objective functions with weight 1 are supported."
+                )
         if (len(self.domain.get_features(CategoricalInput)) > 0) and (
             self.categorical_method != CategoricalMethodEnum.FREE
         ):
@@ -112,30 +110,47 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             weights = (
                 sample_simplex(
                     len(
-                        self.domain.output_features.get_keys_by_objective(excludes=None)
+                        self.domain.output_features.get_keys_by_objective(
+                            includes=[MaximizeObjective, MinimizeObjective]
+                        )
                     ),
                     **tkwargs
                 ).squeeze()
                 * ref_point_mask
             )
 
-            scalarization = get_chebyshev_scalarization(weights=weights, Y=pred)
-            index = [
+            index_constraints = [
                 idx
                 for idx, feat in enumerate(
-                    self.domain.output_features.get_by_objective(excludes=None).features
+                    self.domain.output_features.get_by_objective().features
                 )
                 if isinstance(
                     feat.objective,
-                    (
-                        MaximizeSigmoidObjective,
-                        MinimizeSigmoidObjective,
-                        TargetObjective,
-                    ),
+                    BotorchConstrainedObjective,
                 )
             ]
 
-            objective = GenericMCObjective(scalarization)
+            index_objectives = [
+                idx
+                for idx, feat in enumerate(
+                    self.domain.output_features.get_by_objective().features
+                )
+                if not isinstance(
+                    feat.objective,
+                    BotorchConstrainedObjective,
+                )
+            ]
+
+            scalarization = get_chebyshev_scalarization(
+                weights=weights, Y=pred[..., index_objectives]
+            )
+
+            if len(index_constraints) > 0:
+                objective = self.get_constrained_mc_objective(
+                    index_objectives, index_constraints, scalarization
+                )
+            else:
+                objective = GenericMCObjective(scalarization)
 
             acqf = get_acquisition_function(
                 acquisition_function_name="qNEI"
@@ -147,14 +162,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 mc_samples=self.num_sobol_samples,
                 qmc=True,
                 prune_baseline=True,
-                constraints=[
-                    self.domain.output_features.get_by_objective(excludes=None)
-                    .features[idx]
-                    .objective.to_constraints(idx)[0]
-                    for idx in index
-                ]
-                if len(index) > 0
-                else None,
             )
             acqf_list.append(acqf)
 
@@ -214,6 +221,27 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
         return self.transformer.inverse_transform(df_candidates)  # type: ignore
 
+    def get_constrained_mc_objective(
+        self, index_objectives, index_constraints, scalarization
+    ):
+        def objective(Z):
+            return scalarization(Z[..., index_objectives])
+
+        constrained_objective = ConstrainedMCObjective(
+            objective=objective,
+            constraints=list(
+                itertools.chain(
+                    *[
+                        self.domain.output_features.get_by_objective(excludes=None)
+                        .features[idx]
+                        .objective.to_constraints(idx)
+                        for idx in index_constraints
+                    ]
+                )
+            ),
+        )
+        return constrained_objective
+
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         if my_type == NChooseKConstraint:
@@ -226,6 +254,5 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        # if my_type not in [MaximizeObjective, MinimizeObjective]:
-        #     return False
+
         return True
