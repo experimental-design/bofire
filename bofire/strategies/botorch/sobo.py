@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Type
 
 from botorch.acquisition import get_acquisition_function
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
@@ -54,10 +54,10 @@ class qPI(AcquisitionFunction):
 
 class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
-    acquisition_function: Union[AcquisitionFunction, AcquisitionFunctionEnum]
+    acquisition_function: AcquisitionFunction
 
-    @validator("acquisition_function")
-    def validate_descriptor_method(cls, v):
+    @validator("acquisition_function", pre=True)
+    def validate_acquisition_function(cls, v):
         if isinstance(v, AcquisitionFunction):
             return v
         else:
