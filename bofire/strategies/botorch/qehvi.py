@@ -153,7 +153,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 )
             ):
                 raise ValueError(
-                    "Dimensionality of provided ref_point does not match number of output featuresto be optimized."
+                    "Dimensionality of provided ref_point does not match number of output features to be optimized."
                 )
             for feat in self.domain.output_features.get_keys_by_objective(
                 excludes=BotorchConstrainedObjective

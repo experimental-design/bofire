@@ -3,15 +3,23 @@ import random
 import pytest
 
 from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.domain.constraints import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.base import DescriptorEncodingEnum
 from bofire.strategies.botorch.qparego import (
     AcquisitionFunctionEnum,
     BoTorchQparegoStrategy,
 )
+from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
-from tests.bofire.utils.test_multiobjective import invalid_domains
+from tests.bofire.utils.test_multiobjective import invalid_domains, valid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[2],
@@ -21,7 +29,7 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": "FREE",
     "categorical_encoding": "ONE_HOT",
-    "base_acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
+    "acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
     "categorical_method": "FREE",
 }
 
@@ -40,19 +48,48 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
             "categorical_method": "FREE",
         },
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": -1},
+        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "domain": invalid_domains[0]},
     ],
 }
 
 
 @pytest.mark.parametrize(
-    "domain",
+    "specs", [(specs) for specs in BOTORCH_QPAREGO_STRATEGY_SPECS["valids"]]
+)
+def test_calc_acquisition(specs):
+    strategy = BoTorchQparegoStrategy(**specs)
+
+    with pytest.raises(ValueError):
+        strategy.calc_acquisition(
+            experiments=generate_experiments(domain=specs["domain"])
+        )
+
+
+@pytest.mark.parametrize(
+    "domain, strategy, typeConstraint",
     [
-        invalid_domains[0],
+        (random.choice(valid_domains), BoTorchQparegoStrategy, typeConstraint)
+        for typeConstraint in [
+            NonlinearEqualityConstraint,
+            NonlinearInequalityConstraint,
+            LinearInequalityConstraint,
+            LinearEqualityConstraint,
+        ]
     ],
 )
-def test_invalid_qparego_init_domain(domain):
-    with pytest.raises(ValueError):
-        BoTorchQparegoStrategy(domain=domain)
+def test_qehvi_is_constraint_implemented_valid(domain, strategy, typeConstraint):
+    strategy = strategy(domain=domain)
+    assert strategy.is_constraint_implemented(typeConstraint) == True
+
+
+@pytest.mark.parametrize(
+    "domain, strategy, typeConstraint",
+    [(random.choice(valid_domains), BoTorchQparegoStrategy, NChooseKConstraint)],
+)
+def test_qehvi_is_constraint_implemented_invalid(domain, strategy, typeConstraint):
+    strategy = strategy(domain=domain)
+
+    assert strategy.is_constraint_implemented(typeConstraint) == False
 
 
 @pytest.mark.parametrize(

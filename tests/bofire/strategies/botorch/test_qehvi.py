@@ -9,6 +9,13 @@ from botorch.acquisition.multi_objective import (
 from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputObjective
 
 from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.domain.constraints import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
 from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
@@ -87,7 +94,13 @@ BOTORCH_QEHVI_STRATEGY_SPECS = {
 
 @pytest.mark.parametrize(
     "domain, ref_point",
-    [(invalid_domains[0], None), (valid_domains[0], [0])],
+    [
+        (invalid_domains[0], None),
+        (invalid_domains[1], None),
+        (invalid_domains[2], None),
+        (valid_domains[0], [0]),
+        (valid_domains[0], {"of1": 0}),
+    ],
 )
 def test_invalid_qehvi_init_domain(domain, ref_point):
     with pytest.raises(ValueError):
@@ -110,6 +123,37 @@ def test_qehvi_get_adjusted_refpoint(domain, ref_point, experiments, expected):
     adjusted_ref_point = strategy.get_adjusted_refpoint()
     assert isinstance(adjusted_ref_point, list)
     assert np.allclose(expected, np.asarray(adjusted_ref_point))
+
+
+@pytest.mark.parametrize(
+    "domain, strategy, typeConstraint",
+    [
+        (random.choice(valid_domains), strategy, typeConstraint)
+        for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
+        for typeConstraint in [
+            NonlinearEqualityConstraint,
+            NonlinearInequalityConstraint,
+            LinearInequalityConstraint,
+            LinearEqualityConstraint,
+        ]
+    ],
+)
+def test_qehvi_is_constraint_implemented_validd(domain, strategy, typeConstraint):
+    strategy = strategy(domain=domain)
+    assert strategy.is_constraint_implemented(typeConstraint) == True
+
+
+@pytest.mark.parametrize(
+    "domain, strategy, typeConstraint",
+    [
+        (random.choice(valid_domains), strategy, NChooseKConstraint)
+        for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
+    ],
+)
+def test_qehvi_is_constraint_implemented_invalid(domain, strategy, typeConstraint):
+    strategy = strategy(domain=domain)
+
+    assert strategy.is_constraint_implemented(typeConstraint) == False
 
 
 @pytest.mark.parametrize(

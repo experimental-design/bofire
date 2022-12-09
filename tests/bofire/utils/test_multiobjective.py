@@ -55,6 +55,11 @@ of5 = ContinuousOutput(
     objective=MaximizeSigmoidObjective(w=1, tp=1, steepness=1),
     key="of5",
 )
+of6 = ContinuousOutput(
+    objective=MinimizeObjective(w=0.5),
+    key="of6",
+)
+
 
 valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2]),
@@ -62,11 +67,12 @@ valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2, of3, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of1, of3, of4]),
-    Domain(input_features=[if1, if2], output_features=[of1, of5]),
 ]
 
 invalid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1]),
+    Domain(input_features=[if1, if2], output_features=[of1, of5]),
+    Domain(input_features=[if1, if2], output_features=[of1, of5, of6]),
 ]
 
 dfs = [
@@ -159,7 +165,7 @@ def test_get_ref_point_mask_subset(domain, subset, expected):
     assert np.allclose(get_ref_point_mask(domain, output_feature_keys=subset), expected)
 
 
-@pytest.mark.parametrize("domain", invalid_domains)
+@pytest.mark.parametrize("domain", invalid_domains[:-1])
 def test_invalid_get_ref_point_mask(domain):
     with pytest.raises(ValueError):
         get_ref_point_mask(domain)
