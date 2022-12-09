@@ -10,10 +10,7 @@ from bofire.domain import Domain
 from bofire.domain.objectives import (
     CloseToTargetObjective,
     MaximizeObjective,
-    MaximizeSigmoidObjective,
     MinimizeObjective,
-    MinimizeSigmoidObjective,
-    TargetObjective,
 )
 
 

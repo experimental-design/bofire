@@ -17,17 +17,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 
 from bofire.domain.constraints import Constraint, NChooseKConstraint
 from bofire.domain.features import Feature, InputFeature
-from bofire.domain.objectives import (
-    BotorchConstrainedObjective,
-    CloseToTargetObjective,
-    IdentityObjective,
-    MaximizeObjective,
-    MaximizeSigmoidObjective,
-    MinimizeObjective,
-    MinimizeSigmoidObjective,
-    Objective,
-    TargetObjective,
-)
+from bofire.domain.objectives import BotorchConstrainedObjective, Objective
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import tkwargs

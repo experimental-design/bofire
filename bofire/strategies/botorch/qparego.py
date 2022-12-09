@@ -19,13 +19,9 @@ from bofire.domain.constraints import (
 from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput, Feature
 from bofire.domain.objectives import (
     BotorchConstrainedObjective,
-    IdentityObjective,
     MaximizeObjective,
-    MaximizeSigmoidObjective,
     MinimizeObjective,
-    MinimizeSigmoidObjective,
     Objective,
-    TargetObjective,
 )
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.enum import (
