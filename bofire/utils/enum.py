@@ -64,7 +64,10 @@ class DescriptorEncodingEnum(Enum):
 
 
 class AcquisitionFunctionEnum(Enum):
-    QNEI = "QNEI"
-    QUCB = "QUCB"
-    QEI = "QEI"
-    QPI = "QPI"
+    QNEI = "qNEI"
+    QUCB = "qUCB"
+    QEI = "qEI"
+    QPI = "qPI"
+    QSR = "qSR"
+    # QEHVI = "qEHVI"
+    # QNEHVI = "qNEHVI"
