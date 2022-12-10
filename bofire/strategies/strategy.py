@@ -102,8 +102,8 @@ class Strategy(BaseModel):
         arbitrary_types_allowed = True
 
     domain: Domain
-    seed: Optional[NonNegativeInt]
-    rng: Optional[np.random.Generator]
+    seed: Optional[NonNegativeInt] = None
+    rng: Optional[np.random.Generator] = None
 
     _validate_constraints = validator("domain", allow_reuse=True)(validate_constraints)
     _validate_features = validator("domain", allow_reuse=True)(validate_features)
@@ -345,7 +345,7 @@ class PredictiveStrategy(Strategy):
     """
 
     is_fitted: bool = False
-    transformer: Optional[Transformer]
+    transformer: Optional[Transformer] = None
 
     def __init__(self, **data: Any):
         super().__init__(**data)

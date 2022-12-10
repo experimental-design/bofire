@@ -89,10 +89,10 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     descriptor_method: DescriptorMethodEnum = DescriptorMethodEnum.EXHAUSTIVE
     categorical_encoding: CategoricalEncodingEnum = CategoricalEncodingEnum.ORDINAL
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    model_specs: Optional[Tmodelspecs]
-    objective: Optional[MCAcquisitionObjective]
-    acqf: Optional[AcquisitionFunction]
-    model: Optional[GPyTorchModel]
+    model_specs: Optional[Tmodelspecs] = None
+    objective: Optional[MCAcquisitionObjective] = None
+    acqf: Optional[AcquisitionFunction] = None
+    model: Optional[GPyTorchModel] = None
     features2idx: Dict = Field(default_factory=lambda: {})
     input_feature_keys: List[str] = Field(default_factory=lambda: [])
     is_fitted: bool = False
