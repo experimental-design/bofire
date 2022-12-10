@@ -1,8 +1,9 @@
-from abc import ABCMeta, abstractmethod
+from abc import abstractmethod
 from typing import Callable, List, Optional, Protocol, Tuple
 
 import numpy as np
 import pandas as pd
+from multiprocess.pool import Pool
 from tqdm import tqdm
 
 from bofire.domain.domain import Domain
@@ -55,15 +56,14 @@ class StrategyFactory(Protocol):
 
 
 def _single_run(
-    run_idx: int,
-    benchmark: Benchmark,
-    strategy_factory: StrategyFactory,
-    n_iterations: int,
-    metric: Callable[[Domain], float],
-    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
-    n_candidates: int = 1,
+    run_idx,
+    benchmark,
+    strategy_factory,
+    n_iterations,
+    metric,
+    initial_sampler,
+    n_candidates,
 ) -> Tuple[Benchmark, pd.Series]:
-
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
         Y = benchmark.f(X)
@@ -79,7 +79,9 @@ def _single_run(
         XY = pd.concat([X, Y], axis=1)
         strategy.tell(XY)
         metric_values[i] = metric(strategy.domain)
-        pbar.set_description(f"{metric_values[i]:0.3f}")
+        pbar.set_description(
+            f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
+        )
     return benchmark, pd.Series(metric_values)
 
 
@@ -89,21 +91,39 @@ def run(
     n_iterations: int,
     metric: Callable[[Domain], float],
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
-    n_candidates: int = 1,
-    n_runs: int = 1,
-) -> List[Tuple[Benchmark, pd.DataFrame]]:
+    n_candidates_per_proposal: int = 1,
+    n_runs: int = 5,
+    n_procs: int = 5,
+) -> List[Tuple[Benchmark, pd.Series]]:
+    """Run a benchmark problem several times in parallel
 
-    results = list()
-    for run_idx in range(n_runs):
-        run_result = _single_run(
+    Args:
+        benchmark: problem to be benchmarked
+        strategy_factory: creates the strategy to be benchmarked on the benchmark problem
+        n_iterations: number of times the strategy is asked
+        metric: measure of success, e.g, best value found so far for single objective or
+                hypervolume for multi-objective
+        initial_sampler: Creates initial data
+        n_candidates: also known as batch size, number of proposals made at once by the strategy
+        n_runs: number of runs
+        n_procs: number of parallel processes to execute the runs
+
+    Returns:
+        per run, a tuple with the benchmark object containing the proposed data and metric values
+    """
+    p = Pool(min(n_procs, n_runs))
+
+    def make_args(run_idx: int):
+        return (
             run_idx,
             benchmark,
             strategy_factory,
             n_iterations,
             metric,
             initial_sampler,
-            n_candidates,
+            n_candidates_per_proposal,
         )
-        results.append(run_result)
 
+    results = [p.apply_async(_single_run, make_args(i)) for i in range(n_runs)]
+    results = [r.get() for r in results]
     return results
