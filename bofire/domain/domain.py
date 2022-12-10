@@ -1,7 +1,7 @@
 import itertools
 import typing
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -314,11 +314,11 @@ class Domain(BaseModel):
         """
         self.constraints.add(constraint)
 
-    def add_feature(self, feature: Feature) -> None:
-        """add a feature to list domain.features
+    def add_features(self, features: Features) -> None:
+        """add a features to list domain.features
 
         Args:
-            feature (Feature): object of class Feature, which is added to the list
+            features: to be added to the input- or output-feature0-list depending on the type
 
         Raises:
             ValueError: if the feature key is already in the domain
@@ -328,14 +328,15 @@ class Domain(BaseModel):
             raise ValueError(
                 "Feature cannot be added as experiments/candidates are already set."
             )
-        if feature.key in self.get_feature_keys():
-            raise ValueError(f"Feature with key {feature.key} already in domain.")
-        if isinstance(feature, InputFeature):
-            self.input_features.add(feature)
-        elif isinstance(feature, OutputFeature):
-            self.output_features.add(feature)
+        for feature in features:
+            if feature.key in self.get_feature_keys():
+                raise ValueError(f"Feature with key {feature.key} already in domain.")
+        if isinstance(features, InputFeatures):
+            self.input_features = cast(InputFeatures, self.input_features + features)
+        elif isinstance(features, OutputFeature):
+            self.output_features = cast(OutputFeatures, self.output_features + features)
         else:
-            raise TypeError(f"Cannot add feature of type {type(feature)}")
+            raise TypeError(f"Cannot add features of type {type(features)}")
 
     def remove_feature_by_key(self, key):
         """removes a feature from domain indicated by its key

@@ -3,7 +3,18 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -994,15 +1005,6 @@ class Features(BaseModel):
     def remove(self, feature: Feature):
         self.features.remove(feature)
 
-    def add(self, feature: Feature):
-        """Add a feature to the container.
-
-        Args:
-            feature (Feature): Feature to be added.
-        """
-        assert isinstance(feature, Feature)
-        self.features.append(feature)
-
     def get_by_key(self, key: str) -> Feature:
         """Get a feature by its key.
 
@@ -1078,7 +1080,7 @@ class InputFeatures(Features):
         features (List(InputFeatures)): list of the features.
     """
 
-    features: List[InputFeature] = Field(default_factory=lambda: [])
+    features: Sequence[InputFeature] = Field(default_factory=lambda: [])
 
     def to_config(self) -> Dict:
         return {
@@ -1167,15 +1169,6 @@ class InputFeatures(Features):
             feature.validate_candidental(inputs[feature.key])  # type: ignore
         return inputs
 
-    def add(self, feature: InputFeature):
-        """Add a input feature to the container.
-
-        Args:
-            feature (InputFeature): InputFeature to be added.
-        """
-        assert isinstance(feature, InputFeature)
-        self.features.append(feature)
-
     def get_categorical_combinations(
         self,
         include: Type[Feature] = InputFeature,
@@ -1208,7 +1201,7 @@ class OutputFeatures(Features):
         features (List(OutputFeatures)): list of the features.
     """
 
-    features: List[OutputFeature] = Field(default_factory=lambda: [])
+    features: Sequence[OutputFeature] = Field(default_factory=lambda: [])
 
     def to_config(self) -> Dict:
         return {
@@ -1222,15 +1215,6 @@ class OutputFeatures(Features):
             if not isinstance(feat, OutputFeature):
                 raise ValueError
         return v
-
-    def add(self, feature: OutputFeature):
-        """Add a output feature to the container.
-
-        Args:
-            feature (OutputFeature): OutputFeature to be added.
-        """
-        assert isinstance(feature, OutputFeature)
-        self.features.append(feature)
 
     def get_by_objective(
         self,

@@ -109,26 +109,20 @@ def test_get_linear_constraints():
 
 
 def test_get_linear_constraints_unit_scaled():
-    domain = Domain()
-    domain.add_feature(
-        ContinuousInput(key="base_polymer", lower_bound=0.3, upper_bound=0.7)
-    )
-    domain.add_feature(
-        ContinuousInput(key="glas_fibre", lower_bound=0.1, upper_bound=0.7)
-    )
-    domain.add_feature(
-        ContinuousInput(key="additive", lower_bound=0.1, upper_bound=0.6)
-    )
-    domain.add_feature(
-        ContinuousInput(key="temperature", lower_bound=30.0, upper_bound=700.0)
-    )
-    domain.add_constraint(
+    input_features = [
+        ContinuousInput(key="base_polymer", lower_bound=0.3, upper_bound=0.7),
+        ContinuousInput(key="glas_fibre", lower_bound=0.1, upper_bound=0.7),
+        ContinuousInput(key="additive", lower_bound=0.1, upper_bound=0.6),
+        ContinuousInput(key="temperature", lower_bound=30.0, upper_bound=700.0),
+    ]
+    constraints = [
         LinearEqualityConstraint(
             coefficients=[1.0, 1.0, 1.0],
             features=["base_polymer", "glas_fibre", "additive"],
             rhs=1.0,
         )
-    )
+    ]
+    domain = Domain(input_features=input_features, constraints=constraints)
 
     constraints = get_linear_constraints(
         domain, LinearEqualityConstraint, unit_scaled=True

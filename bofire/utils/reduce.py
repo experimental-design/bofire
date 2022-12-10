@@ -13,7 +13,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.features import ContinuousInput, InputFeature
+from bofire.domain.features import ContinuousInput, InputFeature, InputFeatures
 
 ### this module is based on the original implementation in basf/opti.
 
@@ -137,10 +137,13 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         output_features=deepcopy(domain.output_features),
         constraints=deepcopy(other_constraints),
     )
-    for i, feat in enumerate(continuous_inputs):
-        # add all inputs that were not eliminated
-        if i not in pivots:
-            _domain.add_feature(deepcopy(feat))
+    new_inputs = [
+        deepcopy(feat) for i, feat in enumerate(continuous_inputs) if i not in pivots
+    ]
+    new_inputs = InputFeatures(features=new_inputs)
+    all_inputs = _domain.input_features + new_inputs
+    assert isinstance(all_inputs, InputFeatures)
+    _domain.input_features = all_inputs
 
     for i in pivots:
         # reduce equation system of upper bounds

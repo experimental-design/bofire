@@ -13,8 +13,8 @@ def test_benchmark():
     sobo_factory = partial(BoTorchSoboStrategy, acquisition_function=qEI())
 
     n_initial_samples = 10
-    n_runs = 3
-    n_iterations = 2
+    n_runs = 2
+    n_iterations = 1
 
     def sample(domain):
         nonlocal n_initial_samples

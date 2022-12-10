@@ -199,14 +199,20 @@ def test_reduce_3_independent_linear_equality_constraints():
 
 def test_doc_simple():
     domain = Domain()
-    domain.add_feature(ContinuousInput(key="x1", lower_bound=0.1, upper_bound=1.0))
-    domain.add_feature(ContinuousInput(key="x2", lower_bound=0.0, upper_bound=0.8))
-    domain.add_feature(ContinuousInput(key="x3", lower_bound=0.3, upper_bound=0.9))
-    domain.add_feature(ContinuousOutput(key="y"))
-    domain.add_constraint(
-        LinearEqualityConstraint(
-            features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
-        )
+    input_features = [
+        ContinuousInput(key="x1", lower_bound=0.1, upper_bound=1.0),
+        ContinuousInput(key="x2", lower_bound=0.0, upper_bound=0.8),
+        ContinuousInput(key="x3", lower_bound=0.3, upper_bound=0.9),
+    ]
+    output_features = [ContinuousOutput(key="y")]
+    domain = Domain(
+        input_features=input_features,
+        output_features=output_features,
+        constraints=[
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
+            )
+        ],
     )
 
     _domain, transform = reduce_domain(domain)
@@ -235,37 +241,31 @@ def test_doc_simple():
 def test_doc_complex():
     domain = Domain()
 
-    domain.add_feature(ContinuousInput(key="A1", lower_bound=0.0, upper_bound=0.9))
-    domain.add_feature(ContinuousInput(key="A2", lower_bound=0.0, upper_bound=0.8))
-    domain.add_feature(ContinuousInput(key="A3", lower_bound=0.0, upper_bound=0.9))
-    domain.add_feature(ContinuousInput(key="A4", lower_bound=0.0, upper_bound=0.9))
-
-    domain.add_feature(ContinuousInput(key="B1", lower_bound=0.3, upper_bound=0.9))
-    domain.add_feature(ContinuousInput(key="B2", lower_bound=0.0, upper_bound=0.8))
-    domain.add_feature(ContinuousInput(key="B3", lower_bound=0.1, upper_bound=1.0))
-
-    domain.add_feature(CategoricalInput(key="Process", categories=["p1", "p2", "p3"]))
-    domain.add_feature(CategoricalInput(key="Discrete", categories=["a1", "a2", "a3"]))
-
-    domain.add_constraint(
+    input_features = [
+        ContinuousInput(key="A1", lower_bound=0.0, upper_bound=0.9),
+        ContinuousInput(key="A2", lower_bound=0.0, upper_bound=0.8),
+        ContinuousInput(key="A3", lower_bound=0.0, upper_bound=0.9),
+        ContinuousInput(key="A4", lower_bound=0.0, upper_bound=0.9),
+        ContinuousInput(key="B1", lower_bound=0.3, upper_bound=0.9),
+        ContinuousInput(key="B2", lower_bound=0.0, upper_bound=0.8),
+        ContinuousInput(key="B3", lower_bound=0.1, upper_bound=1.0),
+        CategoricalInput(key="Process", categories=["p1", "p2", "p3"]),
+        CategoricalInput(key="Discrete", categories=["a1", "a2", "a3"]),
+    ]
+    constraints = [
         LinearEqualityConstraint(
             features=["A1", "A2", "A3", "A4"],
             coefficients=[1.0, 1.0, 1.0, 1.0],
             rhs=1.0,
-        )
-    )
-    domain.add_constraint(
+        ),
         LinearEqualityConstraint(
             features=["B1", "B2", "B3"], coefficients=[1.0, 1.0, 1], rhs=1.0
-        )
-    )
-
-    domain.add_constraint(
+        ),
         LinearInequalityConstraint.from_greater_equal(
             features=["A1", "A2"], coefficients=[-1.0, -2.0], rhs=-0.8
-        )
-    )
-
+        ),
+    ]
+    domain = Domain(input_features=input_features, constraints=constraints)
     _domain, transform = reduce_domain(domain)
 
     assert len(_domain.get_features()) == 7
