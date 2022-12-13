@@ -1351,3 +1351,77 @@ class OutputFeatures(Features):
             ],
             axis=1,
         )
+
+    def preprocess_experiments_one_valid_output(
+        self,
+        output_feature_key: str,
+        experiments: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Method to get a dataframe where non-valid entries of the provided output feature are removed
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data
+            output_feature_key (str): The feature based on which non-valid entries rows are removed
+
+        Returns:
+            pd.DataFrame: Dataframe with all experiments where only valid entries of the specific feature are included
+        """
+        clean_exp = experiments.loc[
+            (experiments["valid_%s" % output_feature_key] == 1)
+            & (experiments[output_feature_key].notna())
+        ]
+
+        return clean_exp
+
+    def preprocess_experiments_all_valid_outputs(
+        self,
+        experiments: pd.DataFrame,
+        output_feature_keys: Optional[List] = None,
+    ) -> pd.DataFrame:
+        """Method to get a dataframe where non-valid entries of all output feature are removed
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data
+            output_feature_keys (Optional[List], optional): List of output feature keys which should be considered for removal of invalid values. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Dataframe with all experiments where only valid entries of the selected features are included
+        """
+        if (output_feature_keys is None) or (len(output_feature_keys) == 0):
+            output_feature_keys = self.get_keys(OutputFeature)
+
+        clean_exp = experiments.query(
+            " & ".join(["(`valid_%s` > 0)" % key for key in output_feature_keys])
+        )
+        clean_exp = clean_exp.dropna(subset=output_feature_keys)
+
+        return clean_exp
+
+    def preprocess_experiments_any_valid_output(
+        self, experiments: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Method to get a dataframe where at least one output feature has a valid entry
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data
+
+        Returns:
+            pd.DataFrame: Dataframe with all experiments where at least one output feature has a valid entry
+        """
+
+        output_feature_keys = self.get_keys(OutputFeature)
+
+        # clean_exp = experiments.query(" or ".join(["(valid_%s > 0)" % key for key in output_feature_keys]))
+        # clean_exp = clean_exp.query(" or ".join(["%s.notna()" % key for key in output_feature_keys]))
+
+        assert experiments is not None
+        clean_exp = experiments.query(
+            " or ".join(
+                [
+                    "((`valid_%s` >0) & `%s`.notna())" % (key, key)
+                    for key in output_feature_keys
+                ]
+            )
+        )
+
+        return clean_exp

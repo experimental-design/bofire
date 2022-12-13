@@ -56,7 +56,9 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     def get_fbest(self, experiments=None):
         if experiments is None:
             experiments = self.experiments
-        df_valid = self.domain.preprocess_experiments_all_valid_outputs(experiments)
+        df_valid = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+            experiments
+        )
         samples = torch.from_numpy(
             df_valid[
                 self.domain.output_features.get_keys_by_objective(excludes=None)
@@ -67,8 +69,10 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     # TODO refactor this by using get_acquisition_function
     def init_qNEI(self):
 
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
-            self.experiments
+        clean_experiments = (
+            self.domain.output_features.preprocess_experiments_all_valid_outputs(
+                self.experiments
+            )
         )
         transformed = self.transformer.transform(clean_experiments)  # type: ignore
         t_features, targets = self.get_training_tensors(

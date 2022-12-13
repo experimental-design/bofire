@@ -83,8 +83,8 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
         acqf_list = []
         with torch.no_grad():
-            clean_experiments = self.domain.preprocess_experiments_any_valid_output(
-                self.experiments
+            clean_experiments = self.domain.output_features.preprocess_experiments_any_valid_output(
+                self.experiments  # type: ignore
             )
             transformed = self.transformer.transform(clean_experiments)  # type: ignore
             train_x, _ = self.get_training_tensors(
@@ -93,8 +93,8 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             )
             pred = self.model.posterior(train_x).mean  # type: ignore
 
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
-            self.experiments
+        clean_experiments = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+            self.experiments  # type: ignore
         )
         transformed = self.transformer.transform(clean_experiments)  # type: ignore
         observed_x, _ = self.get_training_tensors(

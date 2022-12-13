@@ -238,8 +238,10 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         for i, ofeat in enumerate(
             self.domain.get_features(ContinuousOutput, exact=True)
         ):
-            transformed_temp = self.domain.preprocess_experiments_one_valid_output(
-                experiments=transformed, output_feature_key=ofeat.key
+            transformed_temp = (
+                self.domain.output_features.preprocess_experiments_one_valid_output(
+                    experiments=transformed, output_feature_key=ofeat.key
+                )
             )
             train_X, train_Y = self.get_training_tensors(transformed_temp, ofeat.key)
 

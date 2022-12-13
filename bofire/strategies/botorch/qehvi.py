@@ -34,7 +34,9 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
     objective: Optional[MCMultiOutputObjective]
 
     def _init_acqf(self) -> None:
-        df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
+        df = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
 
         train_obj = (
             df[self.domain.output_features.get_keys_by_objective(excludes=None)].values
@@ -128,7 +130,9 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 )
             ).tolist()
         # we have to push all results through the objective functions and then take the min values
-        df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
+        df = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
         return (
             (
                 df[
@@ -184,7 +188,9 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
     def _init_acqf(self) -> None:
         # TODO move this into general helper function as done in OU
-        df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
+        df = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
 
         df = df.drop_duplicates(
             subset=[var.key for var in self.domain.get_features(InputFeature)],
