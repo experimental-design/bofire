@@ -22,7 +22,9 @@ from bofire.domain.util import (
     is_numeric,
     name2key,
 )
-from bofire.utils.enum import SamplingMethodEnum
+from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum
+
+_CAT_SEP = "_"
 
 
 class Feature(KeyModel):
@@ -152,7 +154,7 @@ class InputFeature(Feature):
         pass
 
 
-class NumericalInputFeature(InputFeature):
+class NumericalInput(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
 
     def to_unit_range(
@@ -280,7 +282,7 @@ class NumericalInputFeature(InputFeature):
         return lower, upper
 
 
-class ContinuousInput(NumericalInputFeature):
+class ContinuousInput(NumericalInput):
     """Base class for all continuous input features.
 
     Attributes:
@@ -362,7 +364,7 @@ class ContinuousInput(NumericalInputFeature):
 TDiscreteVals = conlist(item_type=float, min_items=1)
 
 
-class DiscreteInput(NumericalInputFeature):
+class DiscreteInput(NumericalInput):
     """Feature with discretized ordinal values allowed in the optimization.
 
     Attributes:
@@ -645,6 +647,25 @@ class CategoricalInput(InputFeature):
             list(set(list(set(values.tolist())) + self.get_allowed_categories()))
         )
 
+    def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
+        return pd.DataFrame(
+            {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories},
+            dtype=float,
+        )
+
+    def to_dummy_encoding(self, values: pd.Series) -> pd.DataFrame:
+        return pd.DataFrame(
+            {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories[1:]},
+            dtype=float,
+        )
+
+    def to_ordinal_encoding(self, values: pd.Series) -> pd.Series:
+        enc = pd.Series(range(len(self.categories)), index=list(self.categories))
+        s = enc[values]
+        s.index = values.index
+        s.name = self.key
+        return s
+
     def sample(self, n: int) -> pd.Series:
         """Draw random samples from the feature.
 
@@ -679,7 +700,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         categories (List[str]): Names of the categories.
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
         descriptors (List[str]): List of strings representing the names of the descriptors.
-        calues (List[List[float]]): List of lists representing the descriptor values.
+        values (List[List[float]]): List of lists representing the descriptor values.
     """
 
     descriptors: TDescriptors
@@ -799,6 +820,14 @@ class CategoricalDescriptorInput(CategoricalInput):
             allowed=[True for _ in range(len(df))],
             descriptors=list(df.columns),
             values=df.values.tolist(),
+        )
+
+    def to_descriptor_encoding(self, values: pd.Series) -> pd.DataFrame:
+        return pd.DataFrame(
+            data=values.map(
+                {cat: value for cat, value in zip(self.categories, self.values)}
+            ).values.tolist(),  # type: ignore
+            columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
         )
 
 
@@ -1199,6 +1228,27 @@ class InputFeatures(Features):
             [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
         ]
         return list(itertools.product(*list_of_lists))
+
+    def transform(self, experiments: pd.DataFrame, specs: Dict) -> pd.DataFrame:
+        specs = self._validate_transform_specs(specs)
+        transformed = []
+        for feat in self.get():
+            s = experiments[feat.key]
+            if feat.key not in specs.keys():
+                transformed.append(s)
+            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                transformed.append(feat.to_onehot_encoding(s))  # type: ignore
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                transformed.append(feat.to_ordinal_encoding(s))  # type: ignore
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                transformed.append(feat.to_dummy_encoding(s))  # type: ignore
+            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                transformed.append(feat.to_descriptor_encoding(s))  # type: ignore
+        return pd.concat(transformed, axis=1)
+
+    def _validate_transform_specs(self, specs: Dict):
+        # if set([])set([feat.key for feat in self.get()])
+        return specs
 
 
 class OutputFeatures(Features):

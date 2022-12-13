@@ -4,7 +4,7 @@ import uuid
 import numpy as np
 import pandas as pd
 import pytest
-from pandas.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal, assert_series_equal
 from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.features import (
@@ -744,6 +744,75 @@ def test_categorical_input_feature_validate_candidental_valid(input_feature, val
 def test_categorical_input_feature_validate_candidental_invalid(input_feature, values):
     with pytest.raises(ValueError):
         input_feature.validate_candidental(values)
+
+
+def test_categorical_to_one_hot_encoding():
+    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    samples = pd.Series(["A", "A", "C", "B"])
+    t_samples = c.to_onehot_encoding(samples)
+    assert_frame_equal(
+        t_samples,
+        pd.DataFrame(
+            data=[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
+            columns=["c_B", "c_A", "c_C"],
+        ),
+    )
+
+
+def test_categorical_to_dummy_encoding():
+    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    samples = pd.Series(["A", "A", "C", "B"])
+    t_samples = c.to_dummy_encoding(samples)
+    assert_frame_equal(
+        t_samples,
+        pd.DataFrame(
+            data=[[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
+            columns=["c_A", "c_C"],
+        ),
+    )
+
+
+def test_categorical_to_label_encoding():
+    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    samples = pd.Series(["A", "A", "C", "B"])
+    t_samples = c.to_ordinal_encoding(samples)
+    assert_series_equal(t_samples, pd.Series([1, 1, 2, 0], name="c"))
+
+
+def test_categorical_descriptor_to_label_encoding():
+    c = CategoricalDescriptorInput(
+        key="c",
+        categories=["B", "A", "C"],
+        descriptors=["d1", "d2"],
+        values=[[1, 2], [3, 4], [5, 6]],
+    )
+    samples = pd.Series(["A", "A", "C", "B"])
+    t_samples = c.to_descriptor_encoding(samples)
+    assert_frame_equal(
+        t_samples,
+        pd.DataFrame(
+            data=[[3.0, 4.0], [3.0, 4.0], [5.0, 6.0], [1.0, 2.0]],
+            columns=["c_d1", "c_d2"],
+        ),
+    )
+
+
+def test_categorical_descriptor_to_label_encoding_1d():
+    c = CategoricalDescriptorInput(
+        key="c",
+        categories=["B", "A", "C"],
+        descriptors=["d1"],
+        values=[[1], [3], [5]],
+    )
+    samples = pd.Series(["A", "A", "C", "B"])
+    t_samples = c.to_descriptor_encoding(samples)
+    assert_frame_equal(
+        t_samples,
+        pd.DataFrame(
+            data=[[3.0], [3.0], [5.0], [1.0]],
+            columns=["c_d1"],
+        ),
+    )
 
 
 @pytest.mark.parametrize(
