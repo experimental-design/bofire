@@ -490,7 +490,6 @@ class Domain(BaseModel):
             (experiments["valid_%s" % output_feature_key] == 1)
             & (experiments[output_feature_key].notna())
         ]
-        # clean_exp = clean_exp.dropna()
 
         return clean_exp
 
