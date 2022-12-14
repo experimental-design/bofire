@@ -1,16 +1,16 @@
-from functools import partial
-
 import pandas as pd
 
 import bofire.benchmarks.benchmark as benchmark
 from bofire.benchmarks.zdt import ZDT1
+from bofire.domain.domain import Domain
 from bofire.samplers import RejectionSampler
-from bofire.strategies.botorch.sobo import BoTorchSoboStrategy, qEI
+from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
+from bofire.utils.multiobjective import compute_hypervolume
 
 
 def test_benchmark():
     zdt1 = ZDT1(n_inputs=5)
-    sobo_factory = partial(BoTorchSoboStrategy, acquisition_function=qEI())
+    qparego_factory = BoTorchQparegoStrategy
 
     n_initial_samples = 10
     n_runs = 3
@@ -21,15 +21,23 @@ def test_benchmark():
         n_initial_samples = n_initial_samples
         sampler = RejectionSampler(domain=domain)
         sampled = sampler.ask(n_initial_samples)
+
         return sampled
+
+    def hypervolume(domain: Domain) -> float:
+        assert domain.experiments is not None
+        return compute_hypervolume(
+            domain, domain.experiments, ref_point={"y1": 10, "y2": 10}
+        )
 
     results = benchmark.run(
         zdt1,
-        sobo_factory,
+        strategy_factory=qparego_factory,
         n_iterations=n_iterations,
-        metric=benchmark.best_multiplicative,
+        metric=hypervolume,
         initial_sampler=sample,
         n_runs=n_runs,
+        n_procs=1,
     )
 
     assert len(results) == n_runs

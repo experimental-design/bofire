@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from copy import deepcopy
 from typing import Callable, List, Optional, Protocol, Tuple
 
 import numpy as np
@@ -56,24 +57,24 @@ class StrategyFactory(Protocol):
 
 
 def _single_run(
-    run_idx,
-    benchmark,
-    strategy_factory,
-    n_iterations,
-    metric,
-    initial_sampler,
-    n_candidates,
+    run_idx: int,
+    benchmark: Benchmark,
+    strategy_factory: StrategyFactory,
+    n_iterations: int,
+    metric: Callable[[Domain], float],
+    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
+    n_candidates_per_proposals: int,
 ) -> Tuple[Benchmark, pd.Series]:
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
-        benchmark.domain.experiments = XY
+        benchmark.domain.add_experiments(XY)
     strategy = strategy_factory(domain=benchmark.domain)
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
-        X = strategy.ask(candidate_count=n_candidates)
+        X = strategy.ask(candidate_count=n_candidates_per_proposals)
         X = X[benchmark.domain.input_features.get_keys()]
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
@@ -111,12 +112,11 @@ def run(
     Returns:
         per run, a tuple with the benchmark object containing the proposed data and metric values
     """
-    p = Pool(min(n_procs, n_runs))
 
     def make_args(run_idx: int):
         return (
             run_idx,
-            benchmark,
+            deepcopy(benchmark),
             strategy_factory,
             n_iterations,
             metric,
@@ -124,6 +124,10 @@ def run(
             n_candidates_per_proposal,
         )
 
-    results = [p.apply_async(_single_run, make_args(i)) for i in range(n_runs)]
-    results = [r.get() for r in results]
+    if n_procs == 1:
+        results = [_single_run(*make_args(i)) for i in range(n_runs)]
+    else:
+        p = Pool(min(n_procs, n_runs))
+        results = [p.apply_async(_single_run, make_args(i)) for i in range(n_runs)]
+        results = [r.get() for r in results]
     return results
