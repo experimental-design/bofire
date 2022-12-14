@@ -18,7 +18,6 @@ def test_benchmark():
 
     def sample(domain):
         nonlocal n_initial_samples
-        n_initial_samples = n_initial_samples
         sampler = RejectionSampler(domain=domain)
         sampled = sampler.ask(n_initial_samples)
 
