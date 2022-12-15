@@ -43,6 +43,8 @@ class CategoricalEncodingEnum(Enum):
 
     ONE_HOT = "ONE_HOT"
     ORDINAL = "ORDINAL"
+    # DUMMY = "DUMMY"
+    # DESCRIPTOR = "DESCRIPTOR"
 
 
 class DescriptorMethodEnum(Enum):
@@ -68,3 +70,8 @@ class AcquisitionFunctionEnum(Enum):
     QUCB = "QUCB"
     QEI = "QEI"
     QPI = "QPI"
+
+
+class OutputFilteringEnum(Enum):
+    ALL = "ALL"
+    ANY = "ANY"
