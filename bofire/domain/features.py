@@ -857,7 +857,7 @@ class ContinuousOutput(OutputFeature):
         """
         if self.objective is None:
             raise ValueError(
-                f"No objective assigned for ContinuousOutputFeauture with key {self.key}."
+                f"No objective assigned for ContinuousOutputFeature with key {self.key}."
             )
 
         line_options = line_options or {}

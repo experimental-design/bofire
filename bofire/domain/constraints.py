@@ -63,7 +63,7 @@ class Constraint(BaseModel):
             "LinearInequalityConstraint": LinearInequalityConstraint,
             "NChooseKConstraint": NChooseKConstraint,
             "NonlinearEqualityConstraint": NonlinearEqualityConstraint,
-            "NonlinearInqualityConstraint": NonlinearInqualityConstraint,
+            "NonlinearInequalityConstraint": NonlinearInequalityConstraint,
         }
         return mapper[config["type"]](**config)
 
@@ -269,7 +269,7 @@ class NonlinearEqualityConstraint(NonlinearConstraint):
         return f"{self.expression}==0"
 
 
-class NonlinearInqualityConstraint(NonlinearConstraint):
+class NonlinearInequalityConstraint(NonlinearConstraint):
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         return self(experiments) <= 0
 

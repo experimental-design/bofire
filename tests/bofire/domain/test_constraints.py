@@ -9,7 +9,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    NonlinearInqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeatures
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
@@ -80,7 +80,7 @@ CONSTRAINT_SPECS = {
         "valids": [VALID_NONLINEAR_CONSTRAINT_SPEC],
         "invalids": [INVALID_NONLINEAR_CONSTRAINT_SPEC],
     },
-    NonlinearInqualityConstraint: {
+    NonlinearInequalityConstraint: {
         "valids": [VALID_NONLINEAR_CONSTRAINT_SPEC],
         "invalids": [INVALID_NONLINEAR_CONSTRAINT_SPEC],
     },
@@ -166,7 +166,7 @@ c1 = LinearEqualityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)
 c2 = LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)
 c3 = NChooseKConstraint(**VALID_NCHOOSEKE_CONSTRAINT_SPEC)
 c4 = NonlinearEqualityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
-c5 = NonlinearInqualityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
+c5 = NonlinearInequalityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
 c6 = LinearInequalityConstraint.from_smaller_equal(
     features=["f1", "f2", "f3"], coefficients=[1, 1, 1], rhs=100.0
 )

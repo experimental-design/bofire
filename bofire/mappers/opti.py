@@ -9,7 +9,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    NonlinearInqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.domain.features import (
     CategoricalInput,
@@ -79,7 +79,7 @@ def constraint2constraint(config: Dict, input_feature_keys: Optional[list] = Non
     if config["type"] == "non-linear-equality":
         return NonlinearEqualityConstraint(expression=config["expression"])
     if config["type"] == "non-linear-inequality":
-        return NonlinearInqualityConstraint(expression=config["expression"])
+        return NonlinearInequalityConstraint(expression=config["expression"])
     raise ValueError(f"Unknown constraint type {config['type']}.")
 
 
