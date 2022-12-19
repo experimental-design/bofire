@@ -27,12 +27,12 @@ class ZDT1(Benchmark):
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
             for i in range(n_inputs)
         ]
-        inputs = InputFeatures(features=input_features)
+        inputs = InputFeatures(features=input_features)  # type: ignore
         output_features = [
             ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
-        outputs = OutputFeatures(features=output_features)
+        outputs = OutputFeatures(features=output_features)  # type: ignore
         self._domain = Domain(input_features=inputs, output_features=outputs)
 
     @property
