@@ -492,14 +492,20 @@ class Transformer(BaseModel):
         return candidate
 
     def get_features_to_be_transformed(self):
-
         excludes = []
         if self.categorical_encoding is None:
             excludes.append(CategoricalInput)
+            features_cat_desc = self.domain.get_features(CategoricalDescriptorInput)
+        else:
+            features_cat_desc = []
+
         if self.descriptor_encoding is None:
             excludes.append(CategoricalDescriptorInput)
-
-        return self.domain.get_features(InputFeature, excludes=excludes)
+            features_cat_desc = []
+        return (
+            self.domain.get_features(InputFeature, excludes=excludes)
+            + features_cat_desc
+        )
 
     def fit_scaling(
         self,
