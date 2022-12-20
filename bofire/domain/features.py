@@ -1229,6 +1229,34 @@ class InputFeatures(Features):
         ]
         return list(itertools.product(*list_of_lists))
 
+    def get_transformed_indices(self, specs: Dict):
+        specs = self._validate_transform_specs(specs)
+        features2idx = {}
+        counter = 0
+        for _, feat in enumerate(self.get()):
+            if feat.key not in specs.keys():
+                features2idx[feat.key] = [counter]
+                counter += 1
+            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                features2idx[feat.key] = (
+                    np.array(range(len(feat.categories))) + counter
+                ).tolist()
+                counter += len(feat.categories)
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                features2idx[feat.key] = [counter]
+                counter += 1
+            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                features2idx[feat.key] = (
+                    np.array(range(len(feat.categories) - 1)) + counter
+                ).tolist()
+                counter += len(feat.categories) - 1
+            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                features2idx[feat.key] = (
+                    np.array(range(len(feat.descriptors))) + counter
+                ).tolist()
+                counter += len(feat.descriptors)
+        return features2idx
+
     def transform(
         self, experiments: pd.DataFrame, specs: Dict
     ) -> Tuple[pd.DataFrame, Dict, List]:
@@ -1264,7 +1292,6 @@ class InputFeatures(Features):
                 non_numerical_features.append(feat.key)
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 transformed.append(feat.to_descriptor_encoding(s))  # type: ignore
-                transformed.append(feat.to_dummy_encoding(s))  # type: ignore
                 features2idx[feat.key] = (
                     np.array(range(len(feat.descriptors))) + counter
                 ).tolist()

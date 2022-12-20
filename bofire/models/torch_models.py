@@ -1,3 +1,4 @@
+import itertools
 from abc import abstractmethod
 from typing import Dict, List, Optional
 
@@ -28,15 +29,11 @@ from bofire.domain.features import (
     CategoricalInput,
     InputFeatures,
     NumericalInput,
+    OutputFeatures,
 )
 from bofire.domain.util import BaseModel
 from bofire.models.model import Model, TrainableModel
-from bofire.utils.enum import (
-    CategoricalEncodingEnum,
-    DescriptorEncodingEnum,
-    OutputFilteringEnum,
-    ScalerEnum,
-)
+from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, get_bounds, tkwargs
 
 
@@ -142,17 +139,17 @@ class BotorchModel(Model):
                 )
             else:
                 v[key] = CategoricalEncodingEnum.ONE_HOT
-        # TODO: refactor descriptor enums
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in descriptor_keys:
-            if v.get(key, CategoricalEncodingEnum.ONE_HOT) not in [
-                DescriptorEncodingEnum.DESCRIPTOR
+            if v.get(key, CategoricalEncodingEnum.DESCRIPTOR) not in [
+                CategoricalEncodingEnum.DESCRIPTOR,
+                CategoricalEncodingEnum.ONE_HOT,
             ]:
                 raise ValueError(
                     "Botorch based models have to use one hot encodings or descriptor encodings for categoricals."
                 )
-            else:
-                v[key] = DescriptorEncodingEnum.DESCRIPTOR
+            elif v.get(key) is None:
+                v[key] = CategoricalEncodingEnum.DESCRIPTOR
         for key in input_features.get_keys(NumericalInput):
             if v.get(key) is not None:
                 raise ValueError(
@@ -168,19 +165,6 @@ class BotorchModel(Model):
             stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())  # type: ignore
         return preds, stds
 
-    # def to_cloudpickle(self, fname):
-    #     if self.model is not None:
-    #         torch.save(
-    #             self.model, f"{fname}", pickle_module=torch_pickle_module  # type: ignore
-    #         )
-    #     else:
-    #         raise ValueError("Model not fitted, nothing to store.")
-
-    # def from_cloudpickle(self, fname):
-    #     self.model = torch.load(
-    #         open(fname, "rb"), pickle_module=torch_pickle_module  # type: ignore
-    #     )
-
 
 class BotorchModels(BaseModel):
 
@@ -188,6 +172,19 @@ class BotorchModels(BaseModel):
 
     @validator("models")
     def validate_models(cls, v, values):
+        # validate that all models are single output models
+        # TODO: this restriction has to be removed at some point
+        for model in v:
+            if len(model.output_features) != 1:
+                raise ValueError("Only single output models allowed.")
+        # check that the output feature keys are distinct
+        used_output_feature_keys = list(
+            itertools.chain.from_iterable(
+                [model.output_features.get_keys() for model in v]
+            )
+        )
+        if len(set(used_output_feature_keys)) != len(used_output_feature_keys):
+            raise ValueError("Output feature keys are not unique across models.")
         # get the feature keys present in all models
         used_feature_keys = []
         for model in v:
@@ -196,30 +193,50 @@ class BotorchModels(BaseModel):
                     used_feature_keys.append(key)
         # check that the features and preprocessing steps are equal trough the models
         for key in used_feature_keys:
-            # TODO: catch KeyError
-            features = [model.input_features.get_by_key(key) for model in v]
-            # TODO: catch None
-            preproccessing = [model.input_preprocessing_specs.get(key) for model in v]
+            features = [
+                model.input_features.get_by_key(key)
+                for model in v
+                if key in model.input_features.get_keys()
+            ]
+            preproccessing = [
+                model.input_preprocessing_specs[key]
+                for model in v
+                if key in model.input_preprocessing_specs
+            ]
             if all(features) is False:
                 raise ValueError(f"Features with key {key} are incompatible.")
-            if all(preproccessing) is False:
+            if len(set(preproccessing)) > 1:
                 raise ValueError(
-                    f"Preprocessing steps for fetures with {key} are incompatible."
+                    f"Preprocessing steps for features with {key} are incompatible."
                 )
         return v
+
+    @property
+    def input_preprocessing_specs(self) -> Dict:
+        return {
+            key: value
+            for model in self.models
+            for key, value in model.input_preprocessing_specs.items()
+        }
 
     def fit(self, experiments: pd.DataFrame):
         for model in self.models:
             if isinstance(model, TrainableModel):
                 model.fit(experiments)
 
-    def get_indices(self, feature_key: str) -> List[int]:
-        raise NotImplementedError
-
-    def _check_compability(self, input_features):
+    def _check_compability(
+        self, input_features: InputFeatures, output_features: OutputFeatures
+    ):
+        used_output_feature_keys = list(
+            itertools.chain.from_iterable(
+                [model.output_features.get_keys() for model in self.models]
+            )
+        )
+        if sorted(used_output_feature_keys) != sorted(output_features.get_keys()):
+            raise ValueError("Output features do not match.")
         used_feature_keys = []
         for i, model in enumerate(self.models):
-            if len(model.input_features) > input_features:
+            if len(model.input_features) > len(input_features):
                 raise ValueError(
                     f"Model with index {i} has more features than acceptable."
                 )
@@ -239,32 +256,44 @@ class BotorchModels(BaseModel):
         if len(used_feature_keys) != len(input_features):
             raise ValueError("Unused features are present.")
 
-    def compatibilize(self, input_features: InputFeatures) -> ModelList:
-        # TODO: check if models are compatible to external input features
+    def compatibilize(
+        self, input_features: InputFeatures, output_features: OutputFeatures
+    ) -> ModelList:
+        # check if models are compatible to provided inputs and outputs
+        # of the optimization domain
+        self._check_compability(
+            input_features=input_features, output_features=output_features
+        )
+        features2idx = input_features.get_transformed_indices(
+            self.input_preprocessing_specs
+        )
         botorch_models = []
-        for model in self.models:
+        # we sort the models by sorting them with their occurence in output_features
+        for output_feature_key in output_features.get_keys():
+            # get the corresponding model
+            model = {model.output_features[0].key: model for model in self.models}[
+                output_feature_key
+            ]
+            # in case that inputs are complete we do not need to adjust anything
             if len(model.input_features) == len(input_features):
                 botorch_models.append(model.model)
+            # in this case we have to care for the indices
             if len(model.input_features) < len(input_features):
-                missing_features_keys = set(input_features.get_keys()) - set(
-                    model.input_features.get_keys()
-                )
                 indices = []
-                for key in missing_features_keys:
-                    # TODO: use features2idx for this purpose
-                    indices += self.get_indices(key)
-                filter = FilterFeatures(
+                for key in model.input_features.get_keys():
+                    indices += features2idx[key]
+                features_filter = FilterFeatures(
                     feature_indices=torch.tensor(indices, dtype=torch.int64),
                     transform_on_train=False,
                 )
 
                 if model.model.input_transform is not None:
                     model.model.input_transform = ChainedInputTransform(
-                        tf1=filter, tf2=model.model.input_transform
+                        tf1=features_filter, tf2=model.model.input_transform
                     )
                 else:
-                    model.model.input_transform = filter
-                botorch_models.append(model)
+                    model.model.input_transform = features_filter
+                botorch_models.append(model.model)
         return ModelList(*botorch_models)
 
 

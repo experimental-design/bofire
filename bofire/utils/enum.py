@@ -43,8 +43,8 @@ class CategoricalEncodingEnum(Enum):
 
     ONE_HOT = "ONE_HOT"
     ORDINAL = "ORDINAL"
-    # DUMMY = "DUMMY"
-    # DESCRIPTOR = "DESCRIPTOR"
+    DUMMY = "DUMMY"
+    DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
 class DescriptorMethodEnum(Enum):
