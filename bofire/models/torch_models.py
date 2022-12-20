@@ -286,13 +286,16 @@ class BotorchModels(BaseModel):
                     feature_indices=torch.tensor(indices, dtype=torch.int64),
                     transform_on_train=False,
                 )
-
-                if model.model.input_transform is not None:
+                if (
+                    hasattr(model.model, "input_transform")
+                    and model.model.input_transform is not None
+                ):
                     model.model.input_transform = ChainedInputTransform(
                         tf1=features_filter, tf2=model.model.input_transform
                     )
                 else:
                     model.model.input_transform = features_filter
+
                 botorch_models.append(model.model)
         return ModelList(*botorch_models)
 
@@ -442,8 +445,8 @@ class EmpiricalModel(BotorchModel):
     """All necessary functions has to be implemented in the model which can then be loaded
     from cloud pickle.
 
-    Args:
-        BotorchModel (_type_): _description_
+    Attributes:
+        model (DeterministicModel): Botorch model instance.
     """
 
-    model: Optional[DeterministicModel]
+    model: Optional[DeterministicModel] = None
