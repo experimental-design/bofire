@@ -45,7 +45,3 @@ def test_benchmark():
         assert bench.domain.experiments.shape[0] == n_initial_samples + n_iterations
         assert best.shape[0] == n_iterations
         assert isinstance(best, pd.Series)
-
-
-if __name__ == "__main__":
-    test_benchmark()

@@ -178,7 +178,7 @@ class Transformer(BaseModel):
                 isinstance(feature, CategoricalInput)
                 and self.categorical_encoding == CategoricalEncodingEnum.ORDINAL
             ):
-                enc = OrdinalEncoder(categories=[feature.categories])
+                enc = OrdinalEncoder(categories=[feature.categories])  # type: ignore
 
                 values = pd.DataFrame(experiment[feature.key], columns=[feature.key])
                 enc.fit(values)
@@ -191,7 +191,7 @@ class Transformer(BaseModel):
             ):
                 # Create one-hot encoding columns & insert to DataSet
                 # TODO: drop in oneHot encoder testen
-                enc = OneHotEncoder(categories=[feature.categories])
+                enc = OneHotEncoder(categories=[feature.categories])  # type: ignore
 
                 values = pd.DataFrame(experiment[feature.key], columns=[feature.key])
                 enc.fit(values)
@@ -492,29 +492,14 @@ class Transformer(BaseModel):
         return candidate
 
     def get_features_to_be_transformed(self):
-        features = self.domain.get_features(InputFeature)
 
+        excludes = []
         if self.categorical_encoding is None:
-
-            # removes all categorical features (incl. the descriptor ones)
-            [
-                features.remove(feat)
-                for feat in self.domain.get_features(CategoricalInput)
-            ]
-            # add categorical descriptor features again
-            features2 = self.domain.get_features(CategoricalDescriptorInput)
-
-            features = (
-                features + features2
-            )  # TODO: change, when Benjamin implemented new get_feature
-
+            excludes.append(CategoricalInput)
         if self.descriptor_encoding is None:
-            [
-                features.remove(feat)
-                for feat in self.domain.get_features(CategoricalDescriptorInput)
-            ]
+            excludes.append(CategoricalDescriptorInput)
 
-        return features
+        return self.domain.get_features(InputFeature, excludes=excludes)
 
     def fit_scaling(
         self,

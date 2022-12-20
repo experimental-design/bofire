@@ -3,18 +3,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import (
-    Any,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-    cast,
-)
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -97,9 +86,6 @@ class Feature(KeyModel):
             else:
                 obj = None
             return output_mapper[config["type"]](key=config["key"], objective=obj)
-
-
-TFeature = TypeVar("TFeature", bound=Feature)
 
 
 class InputFeature(Feature):
@@ -930,7 +916,7 @@ def is_continuous(var: Feature) -> bool:
         return False
 
 
-TFeature = TypeVar("TFeature", bound=Feature)
+FeatureSequence = Union[List[Feature], Tuple[Feature]]
 
 
 class Features(BaseModel):
@@ -940,7 +926,7 @@ class Features(BaseModel):
         features (List(Features)): list of the features.
     """
 
-    features: List[Feature] = Field(default_factory=lambda: [])
+    features: FeatureSequence = Field(default_factory=lambda: [])
 
     def to_config(self) -> Dict:
         """Serialize the features container.
@@ -993,17 +979,34 @@ class Features(BaseModel):
     def __getitem__(self, i):
         return self.features[i]
 
-    def __add__(self, other):
-        if type(self) != type(other):
-            return Features(features=self.features + other.features)
-        if type(other) == InputFeatures:
-            return InputFeatures(features=self.features + other.features)
-        if type(other) == OutputFeatures:
-            return OutputFeatures(features=self.features + other.features)
-        return Features(features=self.features + other.features)
+    def __add__(self, other: Union[Sequence[Feature], Features]):
+        if isinstance(other, Features):
+            other_feature_seq = other.features
+        else:
+            other_feature_seq = other
+        new_feature_seq = list(itertools.chain(self.features, other_feature_seq))
 
-    def remove(self, feature: Feature):
-        self.features.remove(feature)
+        def is_feats_of_type(feats, ftype_collection, ftype_element):
+            return isinstance(feats, ftype_collection) or (
+                not isinstance(feats, Features)
+                and (len(feats) > 0 and isinstance(feats[0], ftype_element))
+            )
+
+        def is_infeats(feats):
+            return is_feats_of_type(feats, InputFeatures, InputFeature)
+
+        def is_outfeats(feats):
+            return is_feats_of_type(feats, OutputFeatures, OutputFeature)
+
+        if is_infeats(self) and is_infeats(other):
+            return InputFeatures(
+                features=cast(Tuple[InputFeature, ...], new_feature_seq)
+            )
+        if is_outfeats(self) and is_outfeats(other):
+            return OutputFeatures(
+                features=cast(Tuple[OutputFeature, ...], new_feature_seq)
+            )
+        return Features(features=new_feature_seq)
 
     def get_by_key(self, key: str) -> Feature:
         """Get a feature by its key.

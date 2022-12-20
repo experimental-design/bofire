@@ -375,3 +375,19 @@ def test_transformer_dtype(
     dtypes = data_tr.dtypes
 
     assert_array_equal(dtypes.values, np.array(exp_dtype))
+
+
+if __name__ == "__main__":
+    test_transformer_dtype(
+        domain=domain,
+        df_data=df_data,
+        descriptor_encoding="DESCRIPTOR",
+        categorical_encoding=None,
+        exp_dtype=[
+            np.dtype("float64"),
+            np.dtype("float64"),
+            np.dtype("float64"),
+            np.dtype("O"),
+            np.dtype("float64"),
+        ],
+    )

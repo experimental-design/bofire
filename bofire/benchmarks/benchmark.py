@@ -16,7 +16,7 @@ from bofire.strategies.strategy import Strategy
 # TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
 def best(domain: Domain, reduction: Callable[[pd.DataFrame], pd.Series]):
     assert domain.experiments is not None
-    outputs_with_objectives = domain.output_features.get_by_objective(Objective)
+    outputs_with_objectives = domain.outputs().get_by_objective(Objective)
     output_values = domain.experiments[outputs_with_objectives.get_keys()]
     objective_values = list()
     for output, col_name in zip(outputs_with_objectives, output_values):
@@ -75,7 +75,7 @@ def _single_run(
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
         X = strategy.ask(candidate_count=n_candidates_per_proposals)
-        X = X[benchmark.domain.input_features.get_keys()]
+        X = X[benchmark.domain.inputs().get_keys()]
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
         strategy.tell(XY)
