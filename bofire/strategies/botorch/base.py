@@ -152,7 +152,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             List[ModelSpec]: List of model specification classes
         """
         input_features = domain.get_feature_keys(InputFeature)
-        output_features = domain.outputs().get_keys_by_objective(excludes=None)
+        output_features = domain.outputs.get_keys_by_objective(excludes=None)
         if model_specs is None:
             model_specs = []
         existing_specs = [model_spec.output_feature for model_spec in model_specs]
@@ -352,7 +352,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # - descriptized categoricals not yet implemented
         num_categorical_features = len(self.domain.get_features(CategoricalInput))
         num_categorical_combinations = len(
-            self.domain.inputs().get_categorical_combinations()
+            self.domain.inputs.get_categorical_combinations()
         )
         assert self.acqf is not None
 
@@ -363,7 +363,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 (self.categorical_method == CategoricalMethodEnum.FREE)
                 and (self.descriptor_method == DescriptorMethodEnum.FREE)
             )
-        ) and len(self.domain.cnstrs().get(NChooseKConstraint)) == 0:
+        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
             candidates = optimize_acqf(
                 acq_function=self.acqf,
                 bounds=self.get_bounds(),
@@ -384,7 +384,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         elif (
             (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
             or (self.descriptor_method == DescriptorMethodEnum.EXHAUSTIVE)
-        ) and len(self.domain.cnstrs().get(NChooseKConstraint)) == 0:
+        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
             # TODO: marry this withe groups of XY
             candidates = optimize_acqf_mixed(
                 acq_function=self.acqf,
@@ -402,7 +402,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             )
             # options={"seed":self.seed})
 
-        elif len(self.domain.cnstrs().get(NChooseKConstraint)) > 0:
+        elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
             candidates = optimize_acqf_mixed(
                 acq_function=self.acqf,
                 bounds=self.get_bounds(),
@@ -434,20 +434,20 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             columns=self.input_feature_keys
             + [
                 i + "_pred"
-                for i in self.domain.outputs().get_keys_by_objective(excludes=None)
+                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
             + [
                 i + "_sd"
-                for i in self.domain.outputs().get_keys_by_objective(excludes=None)
+                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
             + [
                 i + "_des"
-                for i in self.domain.outputs().get_keys_by_objective(excludes=None)
+                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
             # ["reward","acqf","strategy"]
         )
 
-        for i, feat in enumerate(self.domain.outputs().get_by_objective(excludes=None)):
+        for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
             df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
@@ -646,7 +646,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         elif self.categorical_method == CategoricalMethodEnum.FREE:
             include = CategoricalDescriptorInput
 
-        combos = self.domain.inputs().get_categorical_combinations(
+        combos = self.domain.inputs.get_categorical_combinations(
             include=include, exclude=exclude
         )
         # now build up the fixed feature list

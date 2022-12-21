@@ -37,14 +37,14 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
 
         train_obj = (
-            df[self.domain.outputs().get_keys_by_objective(excludes=None)].values
+            df[self.domain.outputs.get_keys_by_objective(excludes=None)].values
             * self.ref_point_mask
         )
         ref_point = self.get_adjusted_refpoint()
         weights = np.array(
             [
                 feat.objective.w  # type: ignore
-                for feat in self.domain.outputs().get_by_objective(excludes=None)
+                for feat in self.domain.outputs.get_by_objective(excludes=None)
             ]
         )
         # compute points that are better than the known reference point
@@ -76,7 +76,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         weights = np.array(
             [
                 feat.objective.w  # type: ignore
-                for feat in self.domain.outputs().get_by_objective(excludes=None)
+                for feat in self.domain.outputs.get_by_objective(excludes=None)
             ]
         )
         weights = weights * self.ref_point_mask
@@ -87,11 +87,11 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         return
 
     def _init_domain(self) -> None:
-        if len(self.domain.outputs().get_by_objective(excludes=None)) < 2:
+        if len(self.domain.outputs.get_by_objective(excludes=None)) < 2:
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        for feat in self.domain.outputs().get_by_objective(excludes=None):
+        for feat in self.domain.outputs.get_by_objective(excludes=None):
             if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
@@ -100,12 +100,12 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 raise ValueError("Only objectives with weight 1 are supported.")
         if self.ref_point is not None:
             if len(self.ref_point) != len(
-                self.domain.outputs().get_by_objective(excludes=None)
+                self.domain.outputs.get_by_objective(excludes=None)
             ):
                 raise ValueError(
                     "Dimensionality of provided ref_point does not match number of output features."
                 )
-            for feat in self.domain.outputs().get_keys_by_objective(excludes=None):
+            for feat in self.domain.outputs.get_keys_by_objective(excludes=None):
                 assert (
                     feat in self.ref_point.keys()
                 ), f"No reference point defined for output feature {feat}."
@@ -120,7 +120,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 * np.array(
                     [
                         self.ref_point[feat]
-                        for feat in self.domain.outputs().get_keys_by_objective(
+                        for feat in self.domain.outputs.get_keys_by_objective(
                             excludes=None
                         )
                     ]
@@ -130,7 +130,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         df = self.domain.preprocess_experiments_all_valid_outputs(self.experiments)
         return (
             (
-                df[self.domain.outputs().get_keys_by_objective(excludes=None)].values
+                df[self.domain.outputs.get_keys_by_objective(excludes=None)].values
                 * self.ref_point_mask
             )
             .min(axis=0)

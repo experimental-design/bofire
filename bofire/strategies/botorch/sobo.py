@@ -100,7 +100,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         self.objective = MultiplicativeObjective(
             targets=[
                 var.objective  # type: ignore
-                for var in self.domain.outputs().get_by_objective(excludes=None)
+                for var in self.domain.outputs.get_by_objective(excludes=None)
             ]
         )
         return
@@ -147,7 +147,7 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
         self.objective = AdditiveObjective(
             targets=[
                 var.objective  # type: ignore
-                for var in self.domain.outputs().get_by_objective(excludes=None)
+                for var in self.domain.outputs.get_by_objective(excludes=None)
             ]
         )
         return

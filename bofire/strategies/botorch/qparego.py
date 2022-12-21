@@ -49,11 +49,11 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     def _init_domain(self) -> None:
         # first part of this is doubled with qehvi --> maybe create a common base class
-        if len(self.domain.outputs().get_by_objective(excludes=None)) < 2:
+        if len(self.domain.outputs.get_by_objective(excludes=None)) < 2:
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        for feat in self.domain.outputs().get_by_objective(excludes=None):
+        for feat in self.domain.outputs.get_by_objective(excludes=None):
             if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
@@ -108,7 +108,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             ).to(**tkwargs)
             weights = (
                 sample_simplex(
-                    len(self.domain.outputs().get_keys_by_objective(excludes=None)),
+                    len(self.domain.outputs.get_keys_by_objective(excludes=None)),
                     **tkwargs
                 ).squeeze()
                 * ref_point_mask
@@ -157,20 +157,20 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             columns=self.input_feature_keys
             + [
                 i + "_pred"
-                for i in self.domain.outputs().get_keys_by_objective(excludes=None)
+                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
             + [
                 i + "_sd"
-                for i in self.domain.outputs().get_keys_by_objective(excludes=None)
+                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
             + [
                 i + "_des"
-                for i in self.domain.outputs().get_keys_by_objective(excludes=None)
+                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
             # ["reward","acqf","strategy"]
         )
 
-        for i, feat in enumerate(self.domain.outputs().get_by_objective(excludes=None)):
+        for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
             df_candidates[feat.key + "_pred"] = preds[:, i]
             df_candidates[feat.key + "_sd"] = stds[:, i]
             df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore

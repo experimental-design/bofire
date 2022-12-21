@@ -125,7 +125,7 @@ class PolytopeSampler(Sampler):
 
     def _sample(self, n: Tnum_samples) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
-            return self.domain.inputs().sample(n, SamplingMethodEnum.UNIFORM)
+            return self.domain.inputs.sample(n, SamplingMethodEnum.UNIFORM)
 
         # get the bounds
         lower = [
@@ -180,7 +180,7 @@ class PolytopeSampler(Sampler):
             samples[feat.key] = feat.sample(n)  # type: ignore
 
         # setup the fixed continuous ones
-        for feat in self.domain.inputs().get_fixed():
+        for feat in self.domain.inputs.get_fixed():
             samples[feat.key] = feat.fixed_value()  # type: ignore
 
         return samples
@@ -216,17 +216,17 @@ class RejectionSampler(Sampler):
 
     def _sample(self, n: Tnum_samples) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
-            return self.domain.inputs().sample(n, self.sampling_method)
+            return self.domain.inputs.sample(n, self.sampling_method)
         n_iters = 0
         n_found = 0
         valid_samples = []
         while n_found < n:
             if n_iters > self.max_iters:
                 raise ValueError("Maximum iterations exceeded in rejection sampling.")
-            samples = self.domain.inputs().sample(
+            samples = self.domain.inputs.sample(
                 self.num_base_samples, method=self.sampling_method
             )
-            valid = self.domain.cnstrs().is_fulfilled(samples)
+            valid = self.domain.cnstrs.is_fulfilled(samples)
             n_found += np.sum(valid)
             valid_samples.append(samples[valid])
             n_iters += 1

@@ -54,14 +54,17 @@ class Domain(BaseModel):
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
     """
 
+    @property
     def outputs(self) -> OutputFeatures:
         """Returns output features as OutputFeatures"""
         return cast(OutputFeatures, self.output_features)
 
+    @property
     def inputs(self) -> InputFeatures:
         """Returns input features as InputFeatures"""
         return cast(InputFeatures, self.input_features)
 
+    @property
     def cnstrs(self) -> Constraints:
         return cast(Constraints, self.constraints)
 
@@ -342,14 +345,14 @@ class Domain(BaseModel):
              unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.cnstrs().get(NChooseKConstraint)) == 0:
+        if len(self.cnstrs.get(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
 
         # loops through each NChooseK constraint
-        for con in self.cnstrs().get(NChooseKConstraint):
+        for con in self.cnstrs.get(NChooseKConstraint):
             assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
@@ -393,7 +396,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.cnstrs().get(NChooseKConstraint):
+            for con in self.cnstrs.get(NChooseKConstraint):
                 assert isinstance(con, NChooseKConstraint)
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
@@ -412,7 +415,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.cnstrs().get(NChooseKConstraint):
+        for con in self.cnstrs.get(NChooseKConstraint):
             assert isinstance(con, NChooseKConstraint)
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
@@ -724,7 +727,7 @@ class Domain(BaseModel):
         assert isinstance(self.input_features, InputFeatures)
         self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
-        if not self.cnstrs().is_fulfilled(candidates).all():
+        if not self.cnstrs.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")
         # for each continuous output feature with an attached objective object
         if not only_inputs:

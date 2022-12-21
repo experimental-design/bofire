@@ -634,13 +634,11 @@ def test_get_features(domain, FeatureType, exact, expected):
 )
 def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, expected):
     assert (
-        domain.outputs()
-        .get_by_objective(
+        domain.outputs.get_by_objective(
             includes=includes,
             excludes=excludes,
             exact=exact,
-        )
-        .features
+        ).features
         == expected
     )
 
@@ -675,7 +673,7 @@ def test_get_output_keys_by_objective(
     domain: Domain, includes, excludes, exact, expected
 ):
     assert (
-        domain.outputs().get_keys_by_objective(
+        domain.outputs.get_keys_by_objective(
             includes=includes,
             excludes=excludes,
             exact=exact,

@@ -83,8 +83,8 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         return domain, AffineTransform([])
 
     # find linear equality constraints
-    linear_equalities = domain.cnstrs().get(LinearEqualityConstraint)
-    other_constraints = domain.cnstrs().get(
+    linear_equalities = domain.cnstrs.get(LinearEqualityConstraint)
+    other_constraints = domain.cnstrs.get(
         Constraint, excludes=[LinearEqualityConstraint]
     )
 
@@ -92,7 +92,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     continuous_inputs = [
         cast(ContinuousInput, f) for f in domain.get_features(ContinuousInput)
     ]
-    other_inputs = domain.inputs().get(InputFeature, excludes=[ContinuousInput])
+    other_inputs = domain.inputs.get(InputFeature, excludes=[ContinuousInput])
 
     # assemble Matrix A from equality constraints
     N = len(linear_equalities)
@@ -140,7 +140,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     new_inputs = [
         deepcopy(feat) for i, feat in enumerate(continuous_inputs) if i not in pivots
     ]
-    all_inputs = _domain.inputs() + new_inputs
+    all_inputs = _domain.inputs + new_inputs
     assert isinstance(all_inputs, InputFeatures)
     _domain.input_features = all_inputs
 
@@ -187,7 +187,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 raise Exception("There is no solution that fulfills the constraints.")
 
     if len(constraints) > 0:
-        _domain.set_constraints_unvalidated(_domain.cnstrs() + constraints)
+        _domain.set_constraints_unvalidated(_domain.cnstrs + constraints)
 
     # assemble equalities
     _equalities = []
@@ -224,12 +224,12 @@ def check_domain_for_reduction(domain: Domain) -> bool:
         return False
 
     # are there any linear equality constraints?
-    linear_equalities = domain.cnstrs().get(LinearEqualityConstraint)
+    linear_equalities = domain.cnstrs.get(LinearEqualityConstraint)
     if len(linear_equalities) == 0:
         return False
 
     # are there no NChooseKConstraint constraints?
-    if len(domain.cnstrs().get([NChooseKConstraint])) > 0:
+    if len(domain.cnstrs.get([NChooseKConstraint])) > 0:
         return False
 
     # are there continuous inputs
@@ -299,7 +299,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
         coeffs_dict[e[0]] = coeffs
 
     constraints = []
-    for c in domain.cnstrs().get():
+    for c in domain.cnstrs.get():
         # Nonlinear constraints not supported
         if not isinstance(c, LinearConstraint):
             raise ValueError(
