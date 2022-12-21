@@ -643,7 +643,7 @@ def test_botorch_models_fit_and_compatibilize():
     assert isinstance(combined.models[1].input_transform.tf2, OneHotToNumeric)
     # check predictions
     # transform experiments to torch
-    trX, _, _ = input_features.transform(
+    trX = input_features.transform(
         experiments=experiments, specs={"x_cat": CategoricalEncodingEnum.ONE_HOT}
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)
@@ -748,7 +748,7 @@ def test_empirical_model():
     assert isinstance(combined.models[1].input_transform.tf2, OneHotToNumeric)
     # check predictions
     # transform experiments to torch
-    trX, _, _ = input_features.transform(
+    trX = input_features.transform(
         experiments=experiments, specs={"x_cat": CategoricalEncodingEnum.ONE_HOT}
     )
     X = torch.from_numpy(trX.values).to(**tkwargs)

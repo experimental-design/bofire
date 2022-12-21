@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -25,7 +25,7 @@ class Model(BaseModel):
         # validate
         X = self.input_features.validate_inputs(X)
         # transform
-        Xt, _, _ = self.input_features.transform(X, self.input_preprocessing_specs)
+        Xt = self.input_features.transform(X, self.input_preprocessing_specs)
         # predict
         preds, stds = self._predict(Xt)
         # postprocess
@@ -43,8 +43,6 @@ class Model(BaseModel):
 class TrainableModel:
 
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    features2idx: Optional[Dict] = None
-    non_numerical_features: Optional[List] = None
 
     def fit(self, experiments: pd.DataFrame):
         # preprocess
@@ -53,12 +51,9 @@ class TrainableModel:
         X = self.input_features.validate_inputs(experiments)
         Y = experiments[self.output_features.get_keys()].values
         # transform
-        (
-            transformed_X,
-            self.features2idx,
-            self.non_numerical_features,
-        ) = self.input_features.transform(X, self.input_preprocessing_specs)
-        transformed_X = transformed_X.values
+        transformed_X = self.input_features.transform(
+            X, self.input_preprocessing_specs
+        ).values
         # fit
         self._fit(X=transformed_X, Y=Y)
 

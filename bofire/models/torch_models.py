@@ -264,9 +264,7 @@ class BotorchModels(BaseModel):
         self._check_compability(
             input_features=input_features, output_features=output_features
         )
-        features2idx = input_features.get_transformed_indices(
-            self.input_preprocessing_specs
-        )
+        features2idx = input_features._get_features2idx(self.input_preprocessing_specs)
         botorch_models = []
         # we sort the models by sorting them with their occurence in output_features
         for output_feature_key in output_features.get_keys():
@@ -307,11 +305,21 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
     _output_filtering: OutputFilteringEnum = (
         OutputFilteringEnum.ALL
     )  # only relevant for training
-    features2idx: Optional[Dict] = None  # only relevant for training
-    non_numerical_features: Optional[List] = None  # only relevant for training
+    # features2idx: Optional[Dict] = None  # only relevant for training
+    # non_numerical_features: Optional[List] = None  # only relevant for training
     training_specs: Dict = {}  # only relevant for training
 
     def _fit(self, X: np.ndarray, Y: np.ndarray):
+        # get transform meta information
+        features2idx = self.input_features._get_features2idx(
+            specs=self.input_preprocessing_specs
+        )
+        non_numerical_features = [
+            key
+            for key, value in self.input_preprocessing_specs.items()
+            if value != CategoricalEncodingEnum.DESCRIPTOR
+        ]
+
         # transform from numpy to torch
         tX, tY = torch.from_numpy(X).to(**tkwargs), torch.from_numpy(Y).to(**tkwargs)
 
@@ -323,8 +331,8 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         d = tX.shape[-1]
 
         cat_dims = []
-        for feat in self.non_numerical_features:
-            cat_dims += self.features2idx[feat]
+        for feat in non_numerical_features:
+            cat_dims += features2idx[feat]
 
         ord_dims, _, _ = get_dim_subsets(
             d=d, active_dims=list(range(d)), cat_dims=cat_dims
@@ -375,11 +383,20 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.MixedSingleTaskGP]
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    features2idx: Optional[Dict] = None
-    non_numerical_features: Optional[List] = None
+    # features2idx: Optional[Dict] = None
+    # non_numerical_features: Optional[List] = None
     training_specs: Dict = {}
 
     def _fit(self, X: np.ndarray, Y: np.ndarray):
+        # get transform meta information
+        features2idx = self.input_features._get_features2idx(
+            specs=self.input_preprocessing_specs
+        )
+        non_numerical_features = [
+            key
+            for key, value in self.input_preprocessing_specs.items()
+            if value != CategoricalEncodingEnum.DESCRIPTOR
+        ]
         # transform from numpy to torch
         tX, tY = torch.from_numpy(X).to(**tkwargs), torch.from_numpy(Y).to(**tkwargs)
 
@@ -393,14 +410,14 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
 
         ord_dims = []
         for feat in self.input_features.get():
-            if feat.key not in self.non_numerical_features:
-                ord_dims += self.features2idx[feat.key]
+            if feat.key not in non_numerical_features:
+                ord_dims += features2idx[feat.key]
         cat_dims = list(
-            range(len(ord_dims), len(ord_dims) + len(self.non_numerical_features))
+            range(len(ord_dims), len(ord_dims) + len(non_numerical_features))
         )
         categorical_features = {
-            self.features2idx[feat][0]: len(self.features2idx[feat])
-            for feat in self.non_numerical_features
+            features2idx[feat][0]: len(features2idx[feat])
+            for feat in non_numerical_features
         }
 
         # first get the scaler
