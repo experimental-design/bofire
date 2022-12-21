@@ -1325,30 +1325,6 @@ def test_features_get_by_key_invalid(features, key):
 
 
 @pytest.mark.parametrize(
-    "features, feature",
-    [
-        (Features(features=[if1, if2]), of1),
-    ],
-)
-def test_features_add(features, feature):
-    features.add(feature)
-    assert features.get_by_key(of1.key).key == feature.key
-
-
-@pytest.mark.parametrize(
-    "features, feature",
-    [
-        (Features(features=[if1, if2]), "of1"),
-        (InputFeatures(features=[if1, if2]), of1),
-        (OutputFeatures(features=[of1, of2]), if1),
-    ],
-)
-def test_features_add_invalid(features, feature):
-    with pytest.raises(AssertionError):
-        features.add(feature)
-
-
-@pytest.mark.parametrize(
     "features, expected",
     [
         (InputFeatures(features=[if1, if2]), []),

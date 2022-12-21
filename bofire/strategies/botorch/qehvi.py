@@ -39,14 +39,14 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         )
 
         train_obj = (
-            df[self.domain.output_features.get_keys_by_objective(excludes=None)].values
+            df[self.domain.outputs.get_keys_by_objective(excludes=None)].values
             * self.ref_point_mask
         )
         ref_point = self.get_adjusted_refpoint()
         weights = np.array(
             [
                 feat.objective.w  # type: ignore
-                for feat in self.domain.output_features.get_by_objective(excludes=None)
+                for feat in self.domain.outputs.get_by_objective(excludes=None)
             ]
         )
         # compute points that are better than the known reference point
@@ -57,6 +57,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             # use observations that are better than the specified reference point and feasible
             Y=torch.from_numpy(train_obj[better_than_ref]),
         )
+        assert self.model is not None
         # setup the acqf
         self.acqf = qExpectedHypervolumeImprovement(
             model=self.model,
@@ -77,7 +78,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         weights = np.array(
             [
                 feat.objective.w  # type: ignore
-                for feat in self.domain.output_features.get_by_objective(excludes=None)
+                for feat in self.domain.outputs.get_by_objective(excludes=None)
             ]
         )
         weights = weights * self.ref_point_mask
@@ -88,11 +89,11 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         return
 
     def _init_domain(self) -> None:
-        if len(self.domain.output_features.get_by_objective(excludes=None)) < 2:
+        if len(self.domain.outputs.get_by_objective(excludes=None)) < 2:
             raise ValueError(
                 "At least two output features has to be defined in the domain."
             )
-        for feat in self.domain.output_features.get_by_objective(excludes=None):
+        for feat in self.domain.outputs.get_by_objective(excludes=None):
             if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
                 raise ValueError(
                     "Only `MaximizeObjective` and `MinimizeObjective` supported."
@@ -101,14 +102,12 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 raise ValueError("Only objectives with weight 1 are supported.")
         if self.ref_point is not None:
             if len(self.ref_point) != len(
-                self.domain.output_features.get_by_objective(excludes=None)
+                self.domain.outputs.get_by_objective(excludes=None)
             ):
                 raise ValueError(
                     "Dimensionality of provided ref_point does not match number of output features."
                 )
-            for feat in self.domain.output_features.get_keys_by_objective(
-                excludes=None
-            ):
+            for feat in self.domain.outputs.get_keys_by_objective(excludes=None):
                 assert (
                     feat in self.ref_point.keys()
                 ), f"No reference point defined for output feature {feat}."
@@ -123,7 +122,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 * np.array(
                     [
                         self.ref_point[feat]
-                        for feat in self.domain.output_features.get_keys_by_objective(
+                        for feat in self.domain.outputs.get_keys_by_objective(
                             excludes=None
                         )
                     ]
@@ -135,9 +134,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         )
         return (
             (
-                df[
-                    self.domain.output_features.get_keys_by_objective(excludes=None)
-                ].values
+                df[self.domain.outputs.get_keys_by_objective(excludes=None)].values
                 * self.ref_point_mask
             )
             .min(axis=0)
@@ -203,6 +200,7 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
         train_x = torch.from_numpy(df_transform[self.input_feature_keys].values).to(
             **tkwargs
         )
+        assert self.model is not None
         # if the reference point is not defined it has to be calculated from data
         self.acqf = qNoisyExpectedHypervolumeImprovement(
             model=self.model,

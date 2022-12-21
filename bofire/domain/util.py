@@ -1,4 +1,5 @@
-from typing import Any, Callable, List, Type, Union
+import collections
+from typing import Any, Callable, List, Sequence, Type, Union
 
 import pandas as pd
 from pydantic import BaseModel as _BaseModel
@@ -44,10 +45,10 @@ def is_categorical(s: pd.Series, categories: List[str]):
 
 
 def filter_by_attribute(
-    data: List,
+    data: Sequence,
     attribute_getter: Callable[[Type], Any],
-    includes: Union[Type, List[Type]] = None,
-    excludes: Union[Type, List[Type]] = None,
+    includes: Union[Type, Sequence[Type]] = None,
+    excludes: Union[Type, Sequence[Type]] = None,
     exact: bool = False,
 ) -> List:
     """Returns those data elements where the attribute is of one of the include types.
@@ -81,9 +82,9 @@ def filter_by_attribute(
 
 
 def filter_by_class(
-    data: List,
-    includes: Union[Type, List[Type]] = None,
-    excludes: Union[Type, List[Type]] = None,
+    data: Sequence,
+    includes: Union[Type, Sequence[Type]] = None,
+    excludes: Union[Type, Sequence[Type]] = None,
     exact: bool = False,
     key: Callable[[Type], Any] = lambda x: x,
 ) -> List:
@@ -101,11 +102,11 @@ def filter_by_class(
     """
     if includes is None:
         includes = []
-    if not isinstance(includes, list):
+    if not isinstance(includes, collections.Sequence):
         includes = [includes]
     if excludes is None:
         excludes = []
-    if not isinstance(excludes, list):
+    if not isinstance(excludes, collections.Sequence):
         excludes = [excludes]
 
     if len(includes) == len(excludes) == 0:

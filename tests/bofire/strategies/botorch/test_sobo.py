@@ -1,18 +1,22 @@
+import math
 import random
 
-import numpy as np
 import pytest
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
+    qSimpleRegret,
     qUpperConfidenceBound,
 )
 
 from bofire.strategies.botorch.sobo import (
-    BoTorchSoboAdditiveStrategy,
-    BoTorchSoboMultiplicativeStrategy,
     BoTorchSoboStrategy,
+    qEI,
+    qNEI,
+    qPI,
+    qSR,
+    qUCB,
 )
 from bofire.utils.enum import (
     AcquisitionFunctionEnum,
@@ -21,7 +25,7 @@ from bofire.utils.enum import (
     DescriptorMethodEnum,
 )
 from tests.bofire.domain.test_domain_validators import generate_experiments
-from tests.bofire.strategies.botorch.test_base import data, domains
+from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
@@ -72,10 +76,16 @@ def test_SOBO_not_fitted(domain, acqf):
     [
         (domains[0], acqf_inp[0], acqf_inp[1], num_test_candidates)
         for acqf_inp in [
-            ("QEI", qExpectedImprovement),
-            ("QNEI", qNoisyExpectedImprovement),
-            ("QPI", qProbabilityOfImprovement),
-            ("QUCB", qUpperConfidenceBound),
+            ("qEI", qExpectedImprovement),
+            ("qNEI", qNoisyExpectedImprovement),
+            ("qPI", qProbabilityOfImprovement),
+            ("qUCB", qUpperConfidenceBound),
+            ("qSR", qSimpleRegret),
+            (qEI(), qExpectedImprovement),
+            (qNEI(), qNoisyExpectedImprovement),
+            (qPI(), qProbabilityOfImprovement),
+            (qUCB(), qUpperConfidenceBound),
+            (qSR(), qSimpleRegret),
         ]
         for num_test_candidates in range(1, 3)
     ],
@@ -93,23 +103,11 @@ def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
     domain.experiments = None
 
 
-@pytest.mark.parametrize(
-    "domain, experiments, Strategy, expected",
-    [
-        (domains[0], data[0], BoTorchSoboStrategy, 12.0),
-        (domains[1], data[1], BoTorchSoboStrategy, 12.0),
-        (domains[3], data[3], BoTorchSoboStrategy, 12.0),
-        (domains[2], data[2], BoTorchSoboAdditiveStrategy, 12.0 + 105.0),
-        (domains[4], data[4], BoTorchSoboAdditiveStrategy, 12.0 + 105.0),
-        (domains[2], data[2], BoTorchSoboMultiplicativeStrategy, 12.0 * 105.0),
-        (domains[4], data[4], BoTorchSoboMultiplicativeStrategy, 12.0 * 105.0),
-    ],
-)
-def test_SOBO_get_fbest(domain, experiments, Strategy, expected):
-    my_strategy = Strategy(
-        domain=domain, acquisition_function=random.choice(list(AcquisitionFunctionEnum))
-    )
-    my_strategy.domain.set_experiments(experiments)
-    fbest = my_strategy.get_fbest()
-    domain.experiments = None
-    assert np.allclose(fbest, expected)
+def test_SOBO_init_qUCB():
+    beta = 0.5
+    acqf = qUCB(beta=beta)
+    strategy = BoTorchSoboStrategy(domain=domains[0], acquisition_function=acqf)
+    experiments = generate_experiments(domains[0], 20)
+    strategy.tell(experiments)
+    assert strategy.acqf.beta_prime == math.sqrt(beta * math.pi / 2)
+    domains[0].experiments = None

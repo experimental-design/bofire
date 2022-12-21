@@ -1,5 +1,7 @@
+import collections.abc
 from abc import abstractmethod
-from typing import Dict, List, Tuple, Type, TypeVar, Union
+from itertools import chain
+from typing import Dict, List, Sequence, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -365,7 +367,7 @@ TConstraint = TypeVar("TConstraint", bound=Constraint)
 
 class Constraints(BaseModel):
 
-    constraints: List[Constraint] = Field(default_factory=lambda: [])
+    constraints: Sequence[Constraint] = Field(default_factory=lambda: [])
 
     def to_config(self) -> List:
         """Serializes a `Constraints` object.
@@ -398,8 +400,15 @@ class Constraints(BaseModel):
     def __getitem__(self, i):
         return self.constraints[i]
 
-    def __add__(self, other: "Constraints") -> "Constraints":
-        return Constraints(constraints=self.constraints + other.constraints)
+    def __add__(
+        self, other: Union[Sequence[Constraint], "Constraints"]
+    ) -> "Constraints":
+        if isinstance(other, collections.abc.Sequence):
+            other_constraints = other
+        else:
+            other_constraints = other.constraints
+        constraints = list(chain(self.constraints, other_constraints))
+        return Constraints(constraints=constraints)
 
     def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Numerically evaluate all constraints
@@ -411,15 +420,6 @@ class Constraints(BaseModel):
             pd.DataFrame: Constraint evaluation for each of the constraints
         """
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
-
-    def add(self, constraint: Constraint):
-        """Add a new constraint to `self`.
-
-        Args:
-            constraint (Constraint): Constraint to add.
-        """
-        assert isinstance(constraint, Constraint)
-        self.constraints.append(constraint)
 
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         """Check if all constraints are fulfilled on all rows of the provided dataframe

@@ -12,6 +12,7 @@ from bofire.domain.constraints import (
     NonlinearInqualityConstraint,
 )
 from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeatures
+from bofire.utils.enum import SamplingMethodEnum
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
 VALID_NCHOOSEKE_CONSTRAINT_SPEC = {
@@ -233,7 +234,7 @@ def test_constraints_plus():
     ],
 )
 def test_constraints_call(constraints, num_candidates):
-    candidates = input_features.sample(num_candidates, "UNIFORM")
+    candidates = input_features.sample(num_candidates, SamplingMethodEnum.UNIFORM)
     returned = constraints(candidates)
     assert returned.shape == (num_candidates, len(constraints))
 
@@ -246,33 +247,8 @@ def test_constraints_call(constraints, num_candidates):
     ],
 )
 def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
-    candidates = input_features.sample(num_candidates, "UNIFORM")
+    candidates = input_features.sample(num_candidates, SamplingMethodEnum.UNIFORM)
     returned = constraints.is_fulfilled(candidates)
     assert returned.shape == (num_candidates,)
     assert returned.dtype == bool
     assert returned.all() == fulfilled
-
-
-@pytest.mark.parametrize(
-    "constraints, constraint",
-    [
-        (constraints, c4),
-        (constraints, c6),
-    ],
-)
-def test_constraints_add_valid(constraints, constraint):
-    constraints.add(constraint)
-
-
-@pytest.mark.parametrize(
-    "constraints, constraint",
-    [
-        (constraints, "a"),
-        (constraints, 5),
-    ],
-)
-def test_constraints_add_invalid(constraints, constraint):
-    with pytest.raises(
-        (ValueError, TypeError, KeyError, ValidationError, AssertionError)
-    ):
-        constraints.add(constraint)

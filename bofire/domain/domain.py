@@ -1,7 +1,8 @@
+import collections.abc
 import itertools
 import typing
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -29,11 +30,22 @@ from bofire.domain.util import BaseModel, is_numeric
 
 class Domain(BaseModel):
 
-    input_features: InputFeatures = Field(default_factory=lambda: InputFeatures())
-    output_features: OutputFeatures = Field(default_factory=lambda: OutputFeatures())
-    constraints: Constraints = Field(default_factory=lambda: Constraints())
+    # The types describe what we expect to be passed as arguments.
+    # They will be converted to InputFeatures and OutputFeatures, respectively.
+    input_features: Union[Sequence[InputFeature], InputFeatures] = Field(
+        default_factory=lambda: InputFeatures()
+    )
+    output_features: Union[Sequence[OutputFeature], OutputFeatures] = Field(
+        default_factory=lambda: OutputFeatures()
+    )
+
+    constraints: Union[Sequence[Constraint], Constraints] = Field(
+        default_factory=lambda: Constraints()
+    )
+
     experiments: Optional[pd.DataFrame] = None
     candidates: Optional[pd.DataFrame] = None
+
     """Representation of the optimization problem/domain
 
     Attributes:
@@ -42,9 +54,23 @@ class Domain(BaseModel):
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
     """
 
+    @property
+    def outputs(self) -> OutputFeatures:
+        """Returns output features as OutputFeatures"""
+        return cast(OutputFeatures, self.output_features)
+
+    @property
+    def inputs(self) -> InputFeatures:
+        """Returns input features as InputFeatures"""
+        return cast(InputFeatures, self.input_features)
+
+    @property
+    def cnstrs(self) -> Constraints:
+        return cast(Constraints, self.constraints)
+
     @validator("input_features", always=True, pre=True)
     def validate_input_features_list(cls, v, values):
-        if isinstance(v, list):
+        if isinstance(v, collections.abc.Sequence):
             v = InputFeatures(features=v)
             return v
         if isinstance(v, InputFeature):
@@ -54,7 +80,7 @@ class Domain(BaseModel):
 
     @validator("output_features", always=True, pre=True)
     def validate_output_features_list(cls, v, values):
-        if isinstance(v, list):
+        if isinstance(v, collections.abc.Sequence):
             return OutputFeatures(features=v)
         if isinstance(v, OutputFeature):
             return OutputFeatures(features=[v])
@@ -71,18 +97,18 @@ class Domain(BaseModel):
             return v
 
     @validator("output_features", always=True)
-    def validate_unique_output_feature_keys(cls, v, values):
-        """Validates if provided output feature keys are unique
+    def validate_unique_feature_keys(cls, v: OutputFeatures, values) -> OutputFeatures:
+        """Validates if provided input and output feature keys are unique
 
         Args:
-            v (List[OutputFeature]): List of all output features of the domain.
-            values (List[InputFeature]): Dict containing a list of input features as single entry.
+            v (OutputFeatures): List of all output features of the domain.
+            value (Dict[str, InputFeatures]): Dict containing a list of input features as single entry.
 
         Raises:
             ValueError: Feature keys are not unique.
 
         Returns:
-            List[OutputFeature]: Returns the list of output features when no error is thrown.
+            OutputFeatures: Keeps output features as given.
         """
         if "input_features" not in values:
             return v
@@ -184,6 +210,9 @@ class Domain(BaseModel):
         Returns:
             Dict: Serialized version of the domain as dictionary.
         """
+        assert isinstance(self.input_features, InputFeatures)
+        assert isinstance(self.output_features, OutputFeatures)
+        assert isinstance(self.constraints, Constraints)
         config: Dict[str, Any] = {
             "input_features": self.input_features.to_config(),
             "output_features": self.output_features.to_config(),
@@ -266,9 +295,9 @@ class Domain(BaseModel):
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
         """
-        return (self.input_features + self.output_features).get(
-            includes, excludes, exact
-        )
+        assert isinstance(self.input_features, InputFeatures)
+        features = self.input_features + self.output_features
+        return features.get(includes, excludes, exact)
 
     def get_feature_keys(
         self,
@@ -304,68 +333,8 @@ class Domain(BaseModel):
         Returns:
             Feature: The feature with the passed key
         """
+        assert isinstance(self.input_features, InputFeatures)
         return {f.key: f for f in self.input_features + self.output_features}[key]
-
-    def add_constraint(self, constraint: Constraint):
-        """Add a constraint to the optimzation domain
-
-        Args:
-            constraint (Constraint): object of class Constraint, which is added to the list
-        """
-        self.constraints.add(constraint)
-
-    def add_feature(self, feature: Feature) -> None:
-        """add a feature to list domain.features
-
-        Args:
-            feature (Feature): object of class Feature, which is added to the list
-
-        Raises:
-            ValueError: if the feature key is already in the domain
-            TypeError: if the feature type is neither Input nor Output feature
-        """
-        if (self.experiments is not None) or (self.candidates is not None):
-            raise ValueError(
-                "Feature cannot be added as experiments/candidates are already set."
-            )
-        if feature.key in self.get_feature_keys():
-            raise ValueError(f"Feature with key {feature.key} already in domain.")
-        if isinstance(feature, InputFeature):
-            self.input_features.add(feature)
-        elif isinstance(feature, OutputFeature):
-            self.output_features.add(feature)
-        else:
-            raise TypeError(f"Cannot add feature of type {type(feature)}")
-
-    def remove_feature_by_key(self, key):
-        """removes a feature from domain indicated by its key
-
-        Args:
-            key (str): feature key
-
-        Raises:
-            KeyError: when the key is not found in the domain
-            ValueError: when more than one feature with key is found
-        """
-        if (self.experiments is not None) or (self.candidates is not None):
-            raise ValueError(
-                f"Feature {key} cannot be removed as experiments/candidates are already set."
-            )
-        input_count = sum(1 for f in self.input_features if f.key == key)
-        output_count = sum(1 for f in self.output_features if f.key == key)
-        if input_count == 0 and output_count == 0:
-            raise KeyError(f"no feature with key {key} found")
-        if input_count + output_count > 1:
-            raise ValueError(f"more than one feature with key {key} found")
-        if input_count > 0:
-            self.input_features = InputFeatures(
-                features=[f for f in self.input_features.features if f.key != key]
-            )
-
-        if output_count > 0:
-            self.output_features = OutputFeatures(
-                features=[f for f in self.output_features.features if f.key != key]
-            )
 
     # getting list of fixed values
     def get_nchoosek_combinations(self):
@@ -376,14 +345,14 @@ class Domain(BaseModel):
              unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.constraints.get(NChooseKConstraint)) == 0:
+        if len(self.cnstrs.get(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
 
         # loops through each NChooseK constraint
-        for con in self.constraints.get(NChooseKConstraint):
+        for con in self.cnstrs.get(NChooseKConstraint):
             assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
@@ -427,7 +396,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.constraints.get(NChooseKConstraint):
+            for con in self.cnstrs.get(NChooseKConstraint):
                 assert isinstance(con, NChooseKConstraint)
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
@@ -446,7 +415,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.constraints.get(NChooseKConstraint):
+        for con in self.cnstrs.get(NChooseKConstraint):
             assert isinstance(con, NChooseKConstraint)
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
@@ -661,12 +630,14 @@ class Domain(BaseModel):
             pd.DataFrame: dataframe with suggested experiments (candidates)
         """
         # check that each input feature has a col and is valid in itself
+        assert isinstance(self.input_features, InputFeatures)
         self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
-        if not self.constraints.is_fulfilled(candidates).all():
+        if not self.cnstrs.is_fulfilled(candidates).all():
             raise ValueError("Constraints not fulfilled.")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
+            assert isinstance(self.output_features, OutputFeatures)
             for key in self.output_features.get_keys_by_objective(Objective):
                 # check that pred, sd, and des cols are specified and numerical
                 for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
@@ -705,6 +676,7 @@ class Domain(BaseModel):
         Returns:
             List[str]: List of columns in the candidate dataframe (input feature keys + input feature keys_pred, input feature keys_sd, input feature keys_des)
         """
+        assert isinstance(self.output_features, OutputFeatures)
         return (
             self.get_feature_keys(InputFeature)
             + [
@@ -761,6 +733,15 @@ class Domain(BaseModel):
                 (self.experiments, experiments), ignore_index=True
             )
 
+    def _set_constraints_unvalidated(
+        self, constraints: Union[Sequence[Constraint], Constraints]
+    ):
+        """Hack for reduce_domain"""
+        self.constraints = Constraints(constraints=[])
+        if isinstance(constraints, Constraints):
+            constraints = constraints.constraints
+        self.constraints.constraints = constraints
+
     @property
     def num_experiments(self) -> int:
         if self.experiments is None:
@@ -771,7 +752,7 @@ class Domain(BaseModel):
 def get_subdomain(
     domain: Domain,
     feature_keys: List,
-):
+) -> Domain:
     """removes all features not defined as argument creating a subdomain of the provided domain
 
     Args:
@@ -789,33 +770,31 @@ def get_subdomain(
         Domain: A new domain containing only parts of the original domain
     """
     assert len(feature_keys) >= 2, "At least two features have to be provided."
-    output_feature_keys = []
-    input_feature_keys = []
-    subdomain = deepcopy(domain)
+    output_features = []
+    input_features = []
     for key in feature_keys:
         try:
             feat = domain.get_feature(key)
         except KeyError:
             raise ValueError(f"Feature {key} not present in domain.")
         if isinstance(feat, InputFeature):
-            input_feature_keys.append(key)
+            input_features.append(feat)
         else:
-            output_feature_keys.append(key)
-    assert (
-        len(output_feature_keys) > 0
-    ), "At least one output feature has to be provided."
-    assert len(input_feature_keys) > 0, "At least one input feature has to be provided."
+            output_features.append(feat)
+    assert len(output_features) > 0, "At least one output feature has to be provided."
+    assert len(input_features) > 0, "At least one input feature has to be provided."
+    input_features = InputFeatures(features=input_features)
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
         # TODO: fix type hint
         for key in c.features:  # type: ignore
-            if key not in input_feature_keys:
+            if key not in input_features.get_keys():
                 raise ValueError(
                     f"Removed input feature {key} is used in a constraint."
                 )
-
-    for key in set(domain.get_feature_keys(Feature)) - set(feature_keys):
-        subdomain.remove_feature_by_key(key)
+    subdomain = deepcopy(domain)
+    subdomain.input_features = input_features
+    subdomain.output_features = output_features
     return subdomain
 
 

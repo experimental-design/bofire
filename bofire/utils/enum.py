@@ -70,6 +70,7 @@ class AcquisitionFunctionEnum(Enum):
     QUCB = "QUCB"
     QEI = "QEI"
     QPI = "QPI"
+    QSR = "qSR"
 
 
 class OutputFilteringEnum(Enum):

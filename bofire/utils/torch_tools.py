@@ -103,7 +103,7 @@ def get_linear_constraints(
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
-    for c in domain.constraints.get(constraint):
+    for c in domain.cnstrs.get(constraint):
         indices = []
         coefficients = []
         lower = []
