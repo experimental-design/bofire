@@ -1352,77 +1352,133 @@ class InputFeatures(Features):
         ]
         return list(itertools.product(*list_of_lists))
 
-    def get_transformed_indices(self, specs: Dict):
-        specs = self._validate_transform_specs(specs)
+    def _get_features2idx(
+        self, specs: Dict[str, CategoricalEncodingEnum]
+    ) -> Dict[str, Tuple[int]]:
+        """Generates a dictionary which specifies which key is mapped to
+        which column indices when applying `transform`.
+
+        Args:
+            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            Dict[str, Tuple[int]]: Dictionary mapping feature keys to column indices.
+        """
+        self._validate_transform_specs(specs)
         features2idx = {}
         counter = 0
         for _, feat in enumerate(self.get()):
             if feat.key not in specs.keys():
-                features2idx[feat.key] = [counter]
+                features2idx[feat.key] = (counter,)
                 counter += 1
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
-                features2idx[feat.key] = (
-                    np.array(range(len(feat.categories))) + counter
-                ).tolist()
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(feat.categories))) + counter).tolist()
+                )
                 counter += len(feat.categories)
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
-                features2idx[feat.key] = [counter]
+                features2idx[feat.key] = (counter,)
                 counter += 1
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
-                features2idx[feat.key] = (
-                    np.array(range(len(feat.categories) - 1)) + counter
-                ).tolist()
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(feat.categories) - 1)) + counter).tolist()
+                )
                 counter += len(feat.categories) - 1
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                features2idx[feat.key] = (
-                    np.array(range(len(feat.descriptors))) + counter
-                ).tolist()
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(feat.descriptors))) + counter).tolist()
+                )
                 counter += len(feat.descriptors)
         return features2idx
 
     def transform(
-        self, experiments: pd.DataFrame, specs: Dict
-    ) -> Tuple[pd.DataFrame, Dict, List]:
+        self, experiments: pd.DataFrame, specs: Dict[str, CategoricalEncodingEnum]
+    ) -> pd.DataFrame:
+        """Transform a dataframe back to the represenation specified in `specs`.
+
+        Currently only input categoricals are supported.
+
+        Args:
+            experiments (pd.DataFrame): Data dataframe to be transformed.
+            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            pd.DataFrame: Transformed dataframe. Only input features are included.
+        """
         specs = self._validate_transform_specs(specs)
         transformed = []
-        features2idx = {}
-        non_numerical_features = []
-        counter = 0
-        for i, feat in enumerate(self.get()):
+        for feat in self.get():
             s = experiments[feat.key]
             if feat.key not in specs.keys():
                 transformed.append(s)
-                features2idx[feat.key] = [counter]
-                counter += 1
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
                 transformed.append(feat.to_onehot_encoding(s))  # type: ignore
-                features2idx[feat.key] = (
-                    np.array(range(len(feat.categories))) + counter
-                ).tolist()
-                counter += len(feat.categories)
-                non_numerical_features.append(feat.key)
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
                 transformed.append(feat.to_ordinal_encoding(s))  # type: ignore
-                features2idx[feat.key] = [counter]
-                counter += 1
-                non_numerical_features.append(feat.key)
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
                 transformed.append(feat.to_dummy_encoding(s))  # type: ignore
-                features2idx[feat.key] = (
-                    np.array(range(len(feat.categories) - 1)) + counter
-                ).tolist()
-                counter += len(feat.categories) - 1
-                non_numerical_features.append(feat.key)
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 transformed.append(feat.to_descriptor_encoding(s))  # type: ignore
-                features2idx[feat.key] = (
-                    np.array(range(len(feat.descriptors))) + counter
-                ).tolist()
-                counter += len(feat.descriptors)
-        return pd.concat(transformed, axis=1), features2idx, non_numerical_features
+        return pd.concat(transformed, axis=1)
 
-    def _validate_transform_specs(self, specs: Dict):
-        # if set([])set([feat.key for feat in self.get()])
+    def inverse_transform(
+        self, experiments: pd.DataFrame, specs: Dict[str, CategoricalEncodingEnum]
+    ) -> pd.DataFrame:
+        """Transform a dataframe back to the original representations.
+
+        The original applied transformation has to be provided via the specs dictionary.
+        Currently only input categoricals are supported.
+
+        Args:
+            experiments (pd.DataFrame): Transformed data dataframe.
+            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            pd.DataFrame: Back transformed dataframe. Only input features are included.
+        """
+        self._validate_transform_specs(specs=specs)
+        transformed = []
+        for feat in self.get():
+            if feat.key not in specs.keys():
+                transformed.append(experiments[feat.key])
+            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                transformed.append(feat.from_onehot_encoding(experiments))
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                transformed.append(feat.from_ordinal_encoding(experiments[feat.key]))
+            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                transformed.append(feat.from_dummy_encoding(experiments))
+            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                transformed.append(feat.from_descriptor_encoding(experiments))
+        return pd.concat(transformed, axis=1)
+
+    def _validate_transform_specs(self, specs: Dict[str, CategoricalEncodingEnum]):
+        """Checks the validity of the transform specs .
+
+        Args:
+            specs (Dict[str, CategoricalEncodingEnum]): Transform specs to be validated.
+        """
+        # first check that the keys in the specs dict are correct also correct feature keys
+        if len(set(specs.keys()) - set(self.get_keys(CategoricalInput))) > 0:
+            raise ValueError("Unknown features specified in transform specs.")
+        # next check that all values are of type CategoricalEncodingEnum
+        if not (
+            all([isinstance(enc, CategoricalEncodingEnum) for enc in specs.values()])
+        ):
+            raise ValueError("Unknown transform specified.")
+        # next check that only Categoricalwithdescriptor have the value DESCRIPTOR
+        descriptor_keys = [
+            key
+            for key, value in specs.items()
+            if value == CategoricalEncodingEnum.DESCRIPTOR
+        ]
+        if (
+            len(set(descriptor_keys) - set(self.get_keys(CategoricalDescriptorInput)))
+            > 0
+        ):
+            raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")
         return specs
 
 

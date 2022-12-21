@@ -26,6 +26,7 @@ from bofire.domain.objectives import (
     MinimizeObjective,
     Objective,
 )
+from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
 from tests.bofire.domain.utils import get_invalids
 
 objective = MinimizeObjective(w=1)
@@ -1370,6 +1371,111 @@ def test_input_features_sample(features, num_samples, method):
     samples = features.sample(num_samples, method=method)
     assert samples.shape == (num_samples, len(features))
     assert list(samples.columns) == features.get_keys()
+
+
+@pytest.mark.parametrize(
+    "specs",
+    [
+        ({"x4": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x1": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x2": ScalerEnum.NORMALIZE}),
+        ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
+    ],
+)
+def test_input_features_validate_transform_specs_invalid(specs):
+    inps = InputFeatures(
+        features=[
+            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            CategoricalInput(key="x2", categories=["apple", "banana"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4]],
+            ),
+        ]
+    )
+    with pytest.raises(ValueError):
+        inps._validate_transform_specs(specs)
+
+
+@pytest.mark.parametrize(
+    "specs",
+    [
+        ({"x2": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x3": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+            }
+        ),
+    ],
+)
+def test_input_features_validate_transform_valid(specs):
+    inps = InputFeatures(
+        features=[
+            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            CategoricalInput(key="x2", categories=["apple", "banana"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4]],
+            ),
+        ]
+    )
+    inps._validate_transform_specs(specs)
+
+
+@pytest.mark.parametrize(
+    "specs, expected",
+    [
+        (
+            {"x2": CategoricalEncodingEnum.ONE_HOT},
+            {"x1": (0,), "x2": (2, 3, 4), "x3": (1,)},
+        ),
+        (
+            {"x3": CategoricalEncodingEnum.ONE_HOT},
+            {"x1": (0,), "x2": (5,), "x3": (1, 2, 3, 4)},
+        ),
+        (
+            {"x3": CategoricalEncodingEnum.DESCRIPTOR},
+            {"x1": (0,), "x2": (3,), "x3": (1, 2)},
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            {"x1": (0,), "x2": (3, 4, 5), "x3": (1, 2)},
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+            },
+            {"x1": (0,), "x2": (5, 6, 7), "x3": (1, 2, 3, 4)},
+        ),
+    ],
+)
+def test_input_features_get_features2idx(specs, expected):
+    inps = InputFeatures(
+        features=[
+            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana", "orange", "cherry"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+            ),
+        ]
+    )
+    print(expected)
+    print(inps._get_features2idx(specs))
+    assert inps._get_features2idx(specs) == expected
 
 
 @pytest.mark.parametrize(
