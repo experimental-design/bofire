@@ -45,7 +45,7 @@ def validate_features(cls, domain: Domain):
     Returns:
         Domain: the domain
     """
-    for feature in domain.input_features + domain.output_features:
+    for feature in domain.inputs + domain.output_features:
         if not cls.is_feature_implemented(type(feature)):
             raise ValueError(
                 f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
@@ -85,7 +85,7 @@ def validate_output_feature_count(cls, domain: Domain):
     """
     if len(domain.output_features) == 0:
         raise ValueError("no output feature specified")
-    if len(domain.output_features.get_by_objective(Objective)) == 0:
+    if len(domain.outputs.get_by_objective(Objective)) == 0:
         raise ValueError("no output feature with objective specified")
     return domain
 
@@ -136,7 +136,7 @@ class Strategy(BaseModel):
         Returns:
             Domain: the domain
         """
-        for feature in domain.output_features.get_by_objective(Objective):
+        for feature in domain.outputs.get_by_objective(Objective):
             assert isinstance(feature, OutputFeature)
             assert feature.objective is not None
             if not cls.is_objective_implemented(type(feature.objective)):
@@ -396,15 +396,11 @@ class PredictiveStrategy(Strategy):
                 data=np.hstack((preds, stds)),
                 columns=[
                     "%s_pred" % featkey
-                    for featkey in self.domain.output_features.get_by_objective(
-                        Objective
-                    )
+                    for featkey in self.domain.outputs.get_by_objective(Objective)
                 ]
                 + [
                     "%s_sd" % featkey
-                    for featkey in self.domain.output_features.get_by_objective(
-                        Objective
-                    )
+                    for featkey in self.domain.outputs.get_by_objective(Objective)
                 ],
             )
         else:
@@ -412,9 +408,7 @@ class PredictiveStrategy(Strategy):
                 data=preds,
                 columns=[
                     "%s_pred" % featkey
-                    for featkey in self.domain.output_features.get_by_objective(
-                        Objective
-                    )
+                    for featkey in self.domain.outputs.get_by_objective(Objective)
                 ],
             )
         return predictions

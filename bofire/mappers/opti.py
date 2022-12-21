@@ -95,10 +95,12 @@ def problem2domain(config: Dict):
         output_features=OutputFeatures(features=output_features),
     )
     if "constraints" in config:
+        constraints = []
         for cconfig in config["constraints"]:
-            domain.add_constraint(
+            constraints.append(
                 constraint2constraint(cconfig, domain.get_feature_keys(InputFeature))
             )
+        domain.constraints = constraints
     if "data" in config:
         experiments = pd.read_json(json.dumps(config["data"]), orient="split")
 

@@ -10,6 +10,8 @@ from bofire.domain.features import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    InputFeatures,
+    OutputFeatures,
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.utils.study import Study
@@ -39,23 +41,24 @@ class Himmelblau(SingleObjective):
     best_possible_f: float = 0.0
 
     def setup_domain(self):
-        domain = Domain()
+        input_feature_list = []
 
-        domain.add_feature(
+        input_feature_list.append(
             ContinuousInput(key="x_1", lower_bound=-4.0, upper_bound=4.0)
         )
-        domain.add_feature(
+        input_feature_list.append(
             ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=6.0)
         )  # ToDo, check for correct bounds
 
         desirability_function = MinimizeObjective(w=1.0)
-        domain.add_feature(
-            ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
-        )
+        output_feature = ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
 
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
-        return domain
+        return Domain(
+            input_features=InputFeatures(features=input_feature_list),
+            output_features=OutputFeatures(features=[output_feature]),
+        )
 
     def run_candidate_experiments(self, candidates: pd.DataFrame, **kwargs):
         candidates.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
@@ -95,11 +98,10 @@ class Ackley(SingleObjective):
     #     return v
 
     def setup_domain(self):
-        domain = Domain()
-
+        input_feature_list = []
         # Decision variables
         if self.categorical:
-            domain.add_feature(
+            input_feature_list.append(
                 CategoricalInput(
                     key="category",
                     categories=[str(x) for x in range(self.num_categories)],
@@ -107,7 +109,7 @@ class Ackley(SingleObjective):
             )
 
         if self.descriptor:
-            domain.add_feature(
+            input_feature_list.append(
                 CategoricalDescriptorInput(
                     key="descriptor",
                     categories=[str(x) for x in range(self.num_categories)],
@@ -118,15 +120,19 @@ class Ackley(SingleObjective):
 
         # continuous input features
         for d in range(self.dim):
-            domain.add_feature(
+            input_feature_list.append(
                 ContinuousInput(
                     key=f"x_{d+1}", lower_bound=self.lower, upper_bound=self.upper
                 )
             )
 
         # Objective
-        domain.add_feature(ContinuousOutput(key="y", objective=MaximizeObjective(w=1)))
-        return domain
+        output_feature = ContinuousOutput(key="y", objective=MaximizeObjective(w=1))
+
+        return Domain(
+            input_features=InputFeatures(features=input_feature_list),
+            output_features=OutputFeatures(features=[output_feature]),
+        )
 
     def run_candidate_experiments(self, candidates, **kwargs):
         x = np.array([candidates[f"x_{d+1}"] for d in range(self.dim)])

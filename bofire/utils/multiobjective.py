@@ -14,9 +14,7 @@ def get_ref_point_mask(
     domain: Domain, output_feature_keys: Optional[list] = None
 ) -> np.ndarray:
     if output_feature_keys is None:
-        output_feature_keys = domain.output_features.get_keys_by_objective(
-            excludes=None
-        )
+        output_feature_keys = domain.outputs.get_keys_by_objective(excludes=None)
     if len(output_feature_keys) < 2:
         raise ValueError("At least two output features have to be provided.")
     mask = []
@@ -39,9 +37,7 @@ def get_pareto_front(
     output_feature_keys: Optional[list] = None,
 ) -> pd.DataFrame:
     if output_feature_keys is None:
-        output_feature_keys = domain.output_features.get_keys_by_objective(
-            excludes=None
-        )
+        output_feature_keys = domain.outputs.get_keys_by_objective(excludes=None)
     assert (
         len(output_feature_keys) >= 2
     ), "At least two output features have to be provided."
@@ -66,9 +62,7 @@ def compute_hypervolume(
             np.array(
                 [
                     ref_point[feat]
-                    for feat in domain.output_features.get_keys_by_objective(
-                        excludes=None
-                    )
+                    for feat in domain.outputs.get_keys_by_objective(excludes=None)
                 ]
             )
             * ref_point_mask
@@ -77,7 +71,7 @@ def compute_hypervolume(
     return hv.compute(
         torch.from_numpy(
             optimal_experiments[
-                domain.output_features.get_keys_by_objective(excludes=None)
+                domain.outputs.get_keys_by_objective(excludes=None)
             ].values
             * ref_point_mask
         )
@@ -90,13 +84,11 @@ def infer_ref_point(
     df = domain.preprocess_experiments_all_valid_outputs(experiments)
     mask = get_ref_point_mask(domain)
     ref_point_array = (
-        df[domain.output_features.get_keys_by_objective(excludes=None)].values * mask
+        df[domain.outputs.get_keys_by_objective(excludes=None)].values * mask
     ).min(axis=0)
     if return_masked is False:
         ref_point_array /= mask
     return {
         feat: ref_point_array[i]
-        for i, feat in enumerate(
-            domain.output_features.get_keys_by_objective(excludes=None)
-        )
+        for i, feat in enumerate(domain.outputs.get_keys_by_objective(excludes=None))
     }

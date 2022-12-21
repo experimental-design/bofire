@@ -27,12 +27,12 @@ class ZDT1(Benchmark):
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
             for i in range(n_inputs)
         ]
-        inputs = InputFeatures(features=input_features)  # type: ignore
+        inputs = InputFeatures(features=input_features)
         output_features = [
             ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
-        outputs = OutputFeatures(features=output_features)  # type: ignore
+        outputs = OutputFeatures(features=output_features)
         self._domain = Domain(input_features=inputs, output_features=outputs)
 
     @property
@@ -40,7 +40,7 @@ class ZDT1(Benchmark):
         return self._domain
 
     def f(self, X: pd.DataFrame) -> pd.DataFrame:
-        x = X[self._domain.input_features.get_keys()[1:]].to_numpy()
+        x = X[self._domain.inputs.get_keys()[1:]].to_numpy()
         g = 1 + 9 / (self.n_inputs - 1) * np.sum(x, axis=1)
         y1 = X["x1"].to_numpy()
         y2 = g * (1 - (y1 / g) ** 0.5)
@@ -49,4 +49,4 @@ class ZDT1(Benchmark):
     def get_optima(self, points=100):
         x = np.linspace(0, 1, points)
         y = np.stack([x, 1 - np.sqrt(x)], axis=1)
-        return pd.DataFrame(y, columns=self.domain.output_features.get_keys())
+        return pd.DataFrame(y, columns=self.domain.outputs.get_keys())

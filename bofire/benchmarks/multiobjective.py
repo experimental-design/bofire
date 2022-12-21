@@ -9,7 +9,13 @@ from scipy.integrate import solve_ivp
 from scipy.special import gamma
 
 from bofire.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeature
+from bofire.domain.features import (
+    ContinuousInput,
+    ContinuousOutput,
+    InputFeature,
+    InputFeatures,
+    OutputFeatures,
+)
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.utils.multiobjective import compute_hypervolume, get_pareto_front
 from bofire.utils.study import Study
@@ -61,16 +67,21 @@ class DTLZ2(MultiObjective):
         return hypercube_vol - pos_hypersphere_vol
 
     def setup_domain(self):
-        domain = Domain()
+        input_features = []
         for i in range(self.dim):
-            domain.add_feature(
+            input_features.append(
                 ContinuousInput(key="x_%i" % (i), lower_bound=0.0, upper_bound=1.0)
             )
+        output_features = []
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
-            domain.add_feature(
+            output_features.append(
                 ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
             )
+        domain = Domain(
+            input_features=InputFeatures(features=input_features),
+            output_features=OutputFeatures(features=output_features),
+        )
         self.ref_point = {
             feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
         }
@@ -109,43 +120,33 @@ class SnarBenchmark(MultiObjective):
     C_i: Optional[np.ndarray]
 
     def setup_domain(self):
-        domain = Domain()
 
         # Decision variables
         # "residence time in minutes"
-        domain.add_feature(ContinuousInput(key="tau", lower_bound=0.5, upper_bound=2.0))
-
-        # "equivalents of pyrrolidine"
-        domain.add_feature(
-            ContinuousInput(key="equiv_pldn", lower_bound=1.0, upper_bound=5.0)
-        )
-
-        # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
-        domain.add_feature(
-            ContinuousInput(key="conc_dfnb", lower_bound=0.1, upper_bound=0.5)
-        )
-
-        # "Reactor temperature in degress celsius"
-        domain.add_feature(
-            ContinuousInput(key="temperature", lower_bound=30, upper_bound=120.0)
-        )
-
+        input_features = [
+            ContinuousInput(key="tau", lower_bound=0.5, upper_bound=2.0),
+            # "equivalents of pyrrolidine"
+            ContinuousInput(key="equiv_pldn", lower_bound=1.0, upper_bound=5.0),
+            # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
+            ContinuousInput(key="conc_dfnb", lower_bound=0.1, upper_bound=0.5),
+            # "Reactor temperature in degress celsius"
+            ContinuousInput(key="temperature", lower_bound=30, upper_bound=120.0),
+        ]
         # Objectives
         # "space time yield (kg/m^3/h)"
-        domain.add_feature(
-            ContinuousOutput(key="sty", objective=MaximizeObjective(w=1.0))
-        )
-
-        # "E-factor"
-        domain.add_feature(
+        output_features = [
+            ContinuousOutput(key="sty", objective=MaximizeObjective(w=1.0)),
+            # "E-factor"
             ContinuousOutput(
                 key="e_factor",
                 objective=MinimizeObjective(w=1.0),
-            )
-        )
-
+            ),
+        ]
         self.ref_point = {"e_factor": 10.7, "sty": 2957.0}
-        return domain
+        return Domain(
+            input_features=InputFeatures(features=input_features),
+            output_features=OutputFeatures(features=output_features),
+        )
 
     @property
     def best_possible_hypervolume(self):
