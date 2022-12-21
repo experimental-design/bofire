@@ -745,7 +745,7 @@ class CategoricalInput(InputFeature):
             pd.Series: Series with categorical values.
         """
         enc = np.array(self.categories)
-        return pd.Series(enc[values], index=values.index)
+        return pd.Series(enc[values], index=values.index, name=self.key)
 
     def sample(self, n: int) -> pd.Series:
         """Draw random samples from the feature.

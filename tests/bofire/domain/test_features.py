@@ -1437,6 +1437,14 @@ def test_input_features_validate_transform_valid(specs):
             {"x1": (0,), "x2": (2, 3, 4), "x3": (1,)},
         ),
         (
+            {"x2": CategoricalEncodingEnum.DUMMY},
+            {"x1": (0,), "x2": (2, 3), "x3": (1,)},
+        ),
+        (
+            {"x2": CategoricalEncodingEnum.ORDINAL},
+            {"x1": (0,), "x2": (2,), "x3": (1,)},
+        ),
+        (
             {"x3": CategoricalEncodingEnum.ONE_HOT},
             {"x1": (0,), "x2": (5,), "x3": (1, 2, 3, 4)},
         ),
@@ -1473,9 +1481,54 @@ def test_input_features_get_features2idx(specs, expected):
             ),
         ]
     )
-    print(expected)
-    print(inps._get_features2idx(specs))
     assert inps._get_features2idx(specs) == expected
+
+
+@pytest.mark.parametrize(
+    "specs",
+    [
+        ({"x2": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x2": CategoricalEncodingEnum.DUMMY}),
+        ({"x2": CategoricalEncodingEnum.ORDINAL}),
+        ({"x3": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+            }
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+            }
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.DUMMY,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+            }
+        ),
+    ],
+)
+def test_input_features_transform(specs):
+    inps = InputFeatures(
+        features=[
+            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana", "orange", "cherry"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+            ),
+        ]
+    )
+    samples = inps.sample(n=10)
+    transformed = inps.transform(experiments=samples, specs=specs)
+    untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
+    assert_frame_equal(samples, untransformed)
 
 
 @pytest.mark.parametrize(
