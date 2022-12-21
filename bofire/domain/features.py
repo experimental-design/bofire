@@ -648,23 +648,107 @@ class CategoricalInput(InputFeature):
         )
 
     def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
+        """Converts values to a one-hot encoding.
+
+        Args:
+            values (pd.Series): Series to be transformed.
+
+        Returns:
+            pd.DataFrame: One-hot transformed data frame.
+        """
         return pd.DataFrame(
             {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories},
             dtype=float,
         )
 
+    def from_onehot_encoding(self, values: pd.DataFrame) -> pd.Series:
+        """Converts values back from one-hot encoding.
+
+        Args:
+            values (pd.DataFrame): One-hot encoded values.
+
+        Raises:
+            ValueError: If one-hot columns not present in `values`.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+            )
+        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
+        s.name = self.key
+        return s
+
     def to_dummy_encoding(self, values: pd.Series) -> pd.DataFrame:
+        """Converts values to a dummy-hot encoding, dropping the first categorical level.
+
+        Args:
+            values (pd.Series): Series to be transformed.
+
+        Returns:
+            pd.DataFrame: Dummy-hot transformed data frame.
+        """
         return pd.DataFrame(
             {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories[1:]},
             dtype=float,
         )
 
+    def from_dummy_encoding(self, values: pd.DataFrame) -> pd.Series:
+        """Convert points back from dummy encoding.
+
+        Args:
+            values (pd.DataFrame): Dummy-hot encoded values.
+
+        Raises:
+            ValueError: If one-hot columns not present in `values`.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols[1:]]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols[1:]}."
+            )
+        values = values.copy()
+        values[cat_cols[0]] = 1 - values[cat_cols[1:]].sum(axis=1)
+        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
+        s.name = self.key
+        return s
+
     def to_ordinal_encoding(self, values: pd.Series) -> pd.Series:
+        """Converts values to an ordinal integer based encoding.
+
+        Args:
+            values (pd.Series): Series to be transformed.
+
+        Returns:
+            pd.Series: Ordinal encoded values.
+        """
         enc = pd.Series(range(len(self.categories)), index=list(self.categories))
         s = enc[values]
         s.index = values.index
         s.name = self.key
         return s
+
+    def from_ordinal_encoding(self, values: pd.Series) -> pd.Series:
+        """Convertes values back from ordinal encoding.
+
+        Args:
+            values (pd.Series): Ordinal encoded series.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        enc = np.array(self.categories)
+        return pd.Series(enc[values], index=values.index)
 
     def sample(self, n: int) -> pd.Series:
         """Draw random samples from the feature.
@@ -823,12 +907,55 @@ class CategoricalDescriptorInput(CategoricalInput):
         )
 
     def to_descriptor_encoding(self, values: pd.Series) -> pd.DataFrame:
+        """Converts values to descriptor encoding.
+
+        Args:
+            values (pd.Series): Values to transform.
+
+        Returns:
+            pd.DataFrame: Descriptor encoded dataframe.
+        """
         return pd.DataFrame(
             data=values.map(
                 {cat: value for cat, value in zip(self.categories, self.values)}
             ).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
         )
+
+    def from_descriptor_encoding(self, values: pd.DataFrame) -> pd.Series:
+        """Converts values back from descriptor encoding.
+
+        Args:
+            values (pd.DataFrame): Descriptor encoded dataframe.
+
+        Raises:
+            ValueError: If descriptor columns not found in the dataframe.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        cat_cols = [f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+            )
+        s = pd.DataFrame(
+            data=np.sqrt(
+                np.sum(
+                    (
+                        values[cat_cols].to_numpy()[:, np.newaxis, :]
+                        - self.to_df().to_numpy()
+                    )
+                    ** 2,
+                    axis=2,
+                )
+            ),
+            columns=self.categories,
+        ).idxmin(1)
+        s.name = self.key
+        return s
 
 
 class OutputFeature(Feature):

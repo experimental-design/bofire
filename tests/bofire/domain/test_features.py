@@ -757,6 +757,35 @@ def test_categorical_to_one_hot_encoding():
             columns=["c_B", "c_A", "c_C"],
         ),
     )
+    untransformed = c.from_onehot_encoding(t_samples)
+    assert np.all(samples == untransformed)
+
+
+def test_categorical_from_one_hot_encoding():
+    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    one_hot_values = pd.DataFrame(
+        columns=["c_B", "c_A", "c_C", "misc"],
+        data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
+    )
+    samples = c.from_onehot_encoding(one_hot_values)
+    assert np.all(samples == pd.Series(["B", "C"]))
+
+
+def test_categorical_from_one_hot_encoding_invalid():
+    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    one_hot_values = pd.DataFrame(
+        columns=["c_B", "c_A", "misc"],
+        data=[
+            [
+                0.9,
+                0.4,
+                0.2,
+            ],
+            [0.8, 0.7, 0.9],
+        ],
+    )
+    with pytest.raises(ValueError):
+        c.from_onehot_encoding(one_hot_values)
 
 
 def test_categorical_to_dummy_encoding():
@@ -770,6 +799,18 @@ def test_categorical_to_dummy_encoding():
             columns=["c_A", "c_C"],
         ),
     )
+    untransformed = c.from_dummy_encoding(t_samples)
+    assert np.all(samples == untransformed)
+
+
+def test_categorical_from_dummy_encoding():
+    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    one_hot_values = pd.DataFrame(
+        columns=["c_A", "c_C", "misc"],
+        data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
+    )
+    samples = c.from_dummy_encoding(one_hot_values)
+    assert np.all(samples == pd.Series(["A", "B"]))
 
 
 def test_categorical_to_label_encoding():
@@ -777,9 +818,11 @@ def test_categorical_to_label_encoding():
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_ordinal_encoding(samples)
     assert_series_equal(t_samples, pd.Series([1, 1, 2, 0], name="c"))
+    untransformed = c.from_ordinal_encoding(t_samples)
+    assert np.all(samples == untransformed)
 
 
-def test_categorical_descriptor_to_label_encoding():
+def test_categorical_descriptor_to_descriptor_encoding():
     c = CategoricalDescriptorInput(
         key="c",
         categories=["B", "A", "C"],
@@ -795,9 +838,27 @@ def test_categorical_descriptor_to_label_encoding():
             columns=["c_d1", "c_d2"],
         ),
     )
+    untransformed = c.from_descriptor_encoding(t_samples)
+    assert np.all(samples == untransformed)
 
 
-def test_categorical_descriptor_to_label_encoding_1d():
+def test_categorical_descriptor_from_descriptor_encoding():
+    c = CategoricalDescriptorInput(
+        key="c",
+        categories=["B", "A", "C"],
+        descriptors=["d1", "d2"],
+        values=[[1, 2], [3, 4], [5, 6]],
+    )
+    descriptor_values = pd.DataFrame(
+        columns=["c_d1", "c_d2", "misc"],
+        data=[[1.05, 2.5, 6], [4, 4.5, 9]],
+    )
+    samples = c.from_descriptor_encoding(descriptor_values)
+    print(samples)
+    assert np.all(samples == pd.Series(["B", "A"]))
+
+
+def test_categorical_descriptor_to_descriptor_encoding_1d():
     c = CategoricalDescriptorInput(
         key="c",
         categories=["B", "A", "C"],
@@ -813,6 +874,8 @@ def test_categorical_descriptor_to_label_encoding_1d():
             columns=["c_d1"],
         ),
     )
+    untransformed = c.from_descriptor_encoding(t_samples)
+    assert np.all(samples == untransformed)
 
 
 @pytest.mark.parametrize(
@@ -1103,11 +1166,11 @@ out = ContinuousOutput(**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC)
     [
         (
             [cont, cat_, cat, out],
-            [cont, cat, cat_, out],
+            [cont, cat_, cat, out],
         ),
         (
             [cont, cat_, cat, out, cat_, out],
-            [cont, cat, cat_, cat_, out, out],
+            [cont, cat_, cat_, cat, out, out],
         ),
         (
             [cont, out],
