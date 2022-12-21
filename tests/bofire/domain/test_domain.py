@@ -305,8 +305,8 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
                 ],
             ),
             [
-                [("f1", "c11"), ("f1", "c12")],
                 [("f2", "c21"), ("f2", "c22")],
+                [("f1", "c11"), ("f1", "c12")],
             ],
             CategoricalInput,
             None,
