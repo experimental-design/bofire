@@ -332,15 +332,15 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.add_constraint" class="md-nav__link">
-    add_constraint()
+  <a href="#bofire.domain.domain.Domain.inputs" class="md-nav__link">
+    inputs
   </a>
   
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.add_feature" class="md-nav__link">
-    add_feature()
+  <a href="#bofire.domain.domain.Domain.outputs" class="md-nav__link">
+    outputs
   </a>
   
 </li>
@@ -437,13 +437,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.remove_feature_by_key" class="md-nav__link">
-    remove_feature_by_key()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.domain.domain.Domain.to_config" class="md-nav__link">
     to_config()
   </a>
@@ -486,8 +479,8 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.validate_unique_output_feature_keys" class="md-nav__link">
-    validate_unique_output_feature_keys()
+  <a href="#bofire.domain.domain.Domain.validate_unique_feature_keys" class="md-nav__link">
+    validate_unique_feature_keys()
   </a>
   
 </li>
@@ -672,11 +665,22 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Domain</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
 
-    <span class="n">input_features</span><span class="p">:</span> <span class="n">InputFeatures</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">InputFeatures</span><span class="p">())</span>
-    <span class="n">output_features</span><span class="p">:</span> <span class="n">OutputFeatures</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">())</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Constraints</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Constraints</span><span class="p">())</span>
+    <span class="c1"># The types describe what we expect to be passed as arguments.</span>
+    <span class="c1"># They will be converted to InputFeatures and OutputFeatures, respectively.</span>
+    <span class="n">input_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">],</span> <span class="n">InputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">InputFeatures</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">output_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">],</span> <span class="n">OutputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">()</span>
+    <span class="p">)</span>
+
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Constraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Constraints</span><span class="p">()</span>
+    <span class="p">)</span>
+
     <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
     <span class="sd">&quot;&quot;&quot;Representation of the optimization problem/domain</span>
 
 <span class="sd">    Attributes:</span>
@@ -685,9 +689,23 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        constraints (List[Constraint], optional): List of constraints. Defaults to [].</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputFeatures</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns output features as OutputFeatures&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">OutputFeatures</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InputFeatures</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Returns input features as InputFeatures&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">InputFeatures</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">cnstrs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Constraints</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">Constraints</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
+
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;input_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_input_features_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">v</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
@@ -697,7 +715,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_output_features_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
@@ -714,18 +732,18 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_unique_output_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validates if provided output feature keys are unique</span>
+    <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputFeatures</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            v (List[OutputFeature]): List of all output features of the domain.</span>
-<span class="sd">            values (List[InputFeature]): Dict containing a list of input features as single entry.</span>
+<span class="sd">            v (OutputFeatures): List of all output features of the domain.</span>
+<span class="sd">            value (Dict[str, InputFeatures]): Dict containing a list of input features as single entry.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: Feature keys are not unique.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[OutputFeature]: Returns the list of output features when no error is thrown.</span>
+<span class="sd">            OutputFeatures: Keeps output features as given.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="s2">&quot;input_features&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
@@ -827,6 +845,9 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        Returns:</span>
 <span class="sd">            Dict: Serialized version of the domain as dictionary.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">)</span>
         <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
             <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
@@ -909,9 +930,9 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Feature]: List of features in the domain fitting to the passed requirements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span>
-        <span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span>
+        <span class="k">return</span> <span class="n">features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_feature_keys</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -947,68 +968,8 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        Returns:</span>
 <span class="sd">            Feature: The feature with the passed key</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">}[</span><span class="n">key</span><span class="p">]</span>
-
-    <span class="k">def</span> <span class="nf">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">:</span> <span class="n">Constraint</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Add a constraint to the optimzation domain</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            constraint (Constraint): object of class Constraint, which is added to the list</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">add_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature</span><span class="p">:</span> <span class="n">Feature</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;add a feature to list domain.features</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            feature (Feature): object of class Feature, which is added to the list</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: if the feature key is already in the domain</span>
-<span class="sd">            TypeError: if the feature type is neither Input nor Output feature</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Feature cannot be added as experiments/candidates are already set.&quot;</span>
-            <span class="p">)</span>
-        <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature with key </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2"> already in domain.&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot add feature of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">remove_feature_by_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;removes a feature from domain indicated by its key</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            key (str): feature key</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            KeyError: when the key is not found in the domain</span>
-<span class="sd">            ValueError: when more than one feature with key is found</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> cannot be removed as experiments/candidates are already set.&quot;</span>
-            <span class="p">)</span>
-        <span class="n">input_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span>
-        <span class="n">output_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">input_count</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">output_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no feature with key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> found&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">input_count</span> <span class="o">+</span> <span class="n">output_count</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;more than one feature with key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> found&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">input_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">=</span> <span class="n">InputFeatures</span><span class="p">(</span>
-                <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">!=</span> <span class="n">key</span><span class="p">]</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">output_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="o">=</span> <span class="n">OutputFeatures</span><span class="p">(</span>
-                <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">!=</span> <span class="n">key</span><span class="p">]</span>
-            <span class="p">)</span>
 
     <span class="c1"># getting list of fixed values</span>
     <span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -1019,14 +980,14 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">             unused_features_list is a list of lists containing features unused in each NChooseK combination.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
 
         <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="c1"># loops through each NChooseK constraint</span>
-        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
             <span class="n">used_features_list</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -1070,7 +1031,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">(</span>
                 <span class="p">[]</span>
             <span class="p">)</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
-            <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
                 <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
                 <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># count of features in combo that are in con.features</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">:</span>
@@ -1089,7 +1050,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
         <span class="c1"># features unused</span>
         <span class="n">features_in_cc</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
             <span class="n">features_in_cc</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
         <span class="n">features_in_cc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">features_in_cc</span><span class="p">))</span>
@@ -1398,12 +1359,14 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">            pd.DataFrame: dataframe with suggested experiments (candidates)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># check that each input feature has a col and is valid in itself</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
         <span class="c1"># check if all constraints are fulfilled</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
         <span class="c1"># for each continuous output feature with an attached objective object</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
             <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
                 <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
@@ -1442,6 +1405,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: List of columns in the candidate dataframe (input feature keys + input feature keys_pred, input feature keys_sd, input feature keys_des)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">InputFeature</span><span class="p">)</span>
             <span class="o">+</span> <span class="p">[</span>
@@ -1497,6 +1461,15 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
                 <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">,</span> <span class="n">experiments</span><span class="p">),</span> <span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span>
             <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_constraints_unvalidated</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Constraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hack for reduce_domain&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[])</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">):</span>
+            <span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -1555,6 +1528,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
 
 
+
   <div class="doc doc-object doc-attribute">
 
 
@@ -1595,59 +1569,23 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
 
 
+  <div class="doc doc-object doc-attribute">
 
 
 
+<h3 id="bofire.domain.domain.Domain.inputs" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">inputs</span><span class="p">:</span> <span class="n">InputFeatures</span></code>
 
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.add_constraint" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">)</span></code>
-
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
 
 </h3>
 
     <div class="doc doc-contents ">
 
-      <p>Add a constraint to the optimzation domain</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>constraint</code></td>
-        <td><code>Constraint</code></td>
-        <td><p>object of class Constraint, which is added to the list</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">add_constraint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">constraint</span><span class="p">:</span> <span class="n">Constraint</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Add a constraint to the optimzation domain</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        constraint (Constraint): object of class Constraint, which is added to the list</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">constraint</span><span class="p">)</span>
-</code></pre></div>
-        </details>
+      <p>Returns input features as InputFeatures</p>
     </div>
 
   </div>
@@ -1655,87 +1593,35 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
 
 
-  <div class="doc doc-object doc-method">
+
+
+  <div class="doc doc-object doc-attribute">
 
 
 
-<h3 id="bofire.domain.domain.Domain.add_feature" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">add_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature</span><span class="p">)</span></code>
+<h3 id="bofire.domain.domain.Domain.outputs" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">outputs</span><span class="p">:</span> <span class="n">OutputFeatures</span></code>
 
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-property"><code>property</code></small>
+      <small class="doc doc-property doc-property-readonly"><code>readonly</code></small>
+  </span>
 
 </h3>
 
     <div class="doc doc-contents ">
 
-      <p>add a feature to list domain.features</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>feature</code></td>
-        <td><code>Feature</code></td>
-        <td><p>object of class Feature, which is added to the list</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Exceptions:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ValueError</code></td>
-        <td><p>if the feature key is already in the domain</p></td>
-      </tr>
-      <tr>
-        <td><code>TypeError</code></td>
-        <td><p>if the feature type is neither Input nor Output feature</p></td>
-      </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">add_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">feature</span><span class="p">:</span> <span class="n">Feature</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;add a feature to list domain.features</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        feature (Feature): object of class Feature, which is added to the list</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: if the feature key is already in the domain</span>
-<span class="sd">        TypeError: if the feature type is neither Input nor Output feature</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Feature cannot be added as experiments/candidates are already set.&quot;</span>
-        <span class="p">)</span>
-    <span class="k">if</span> <span class="n">feature</span><span class="o">.</span><span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature with key </span><span class="si">{</span><span class="n">feature</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2"> already in domain.&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feature</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot add feature of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-        </details>
+      <p>Returns output features as OutputFeatures</p>
     </div>
 
   </div>
+
+
+
+
+
+
+
 
 
 
@@ -2205,6 +2091,7 @@ involved output features.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Feature: The feature with the passed key</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">{</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">}[</span><span class="n">key</span><span class="p">]</span>
 </code></pre></div>
         </details>
@@ -2430,9 +2317,9 @@ involved output features.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Feature]: List of features in the domain fitting to the passed requirements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">)</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-        <span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span>
-    <span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
+    <span class="n">features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span>
+    <span class="k">return</span> <span class="n">features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -2481,14 +2368,14 @@ involved output features.</p>
 <span class="sd">         unused_features_list is a list of lists containing features unused in each NChooseK combination.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
 
     <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="c1"># loops through each NChooseK constraint</span>
-    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
         <span class="n">used_features_list</span> <span class="o">=</span> <span class="p">[]</span>
 
@@ -2532,7 +2419,7 @@ involved output features.</p>
         <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">(</span>
             <span class="p">[]</span>
         <span class="p">)</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
-        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
             <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># count of features in combo that are in con.features</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">:</span>
@@ -2551,7 +2438,7 @@ involved output features.</p>
 
     <span class="c1"># features unused</span>
     <span class="n">features_in_cc</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
         <span class="n">features_in_cc</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">)</span>
     <span class="n">features_in_cc</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">features_in_cc</span><span class="p">))</span>
@@ -2859,97 +2746,6 @@ involved output features.</p>
 
 
 
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.remove_feature_by_key" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">remove_feature_by_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>removes a feature from domain indicated by its key</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>key</code></td>
-        <td><code>str</code></td>
-        <td><p>feature key</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Exceptions:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>KeyError</code></td>
-        <td><p>when the key is not found in the domain</p></td>
-      </tr>
-      <tr>
-        <td><code>ValueError</code></td>
-        <td><p>when more than one feature with key is found</p></td>
-      </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">remove_feature_by_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;removes a feature from domain indicated by its key</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        key (str): feature key</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        KeyError: when the key is not found in the domain</span>
-<span class="sd">        ValueError: when more than one feature with key is found</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> cannot be removed as experiments/candidates are already set.&quot;</span>
-        <span class="p">)</span>
-    <span class="n">input_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span>
-    <span class="n">output_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">==</span> <span class="n">key</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">input_count</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">output_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no feature with key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> found&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">input_count</span> <span class="o">+</span> <span class="n">output_count</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;more than one feature with key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> found&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">input_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span> <span class="o">=</span> <span class="n">InputFeatures</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">!=</span> <span class="n">key</span><span class="p">]</span>
-        <span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">output_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span> <span class="o">=</span> <span class="n">OutputFeatures</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">f</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">features</span> <span class="k">if</span> <span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="o">!=</span> <span class="n">key</span><span class="p">]</span>
-        <span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
 
 
   <div class="doc doc-object doc-method">
@@ -2989,6 +2785,9 @@ involved output features.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Dict: Serialized version of the domain as dictionary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">)</span>
     <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
         <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
@@ -3114,12 +2913,14 @@ involved output features.</p>
 <span class="sd">        pd.DataFrame: dataframe with suggested experiments (candidates)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># check that each input feature has a col and is valid in itself</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
     <span class="c1"># check if all constraints are fulfilled</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
     <span class="c1"># for each continuous output feature with an attached objective object</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
             <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
@@ -3644,8 +3445,8 @@ involved output features.</p>
 
 
 
-<h3 id="bofire.domain.domain.Domain.validate_unique_output_feature_keys" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_unique_output_feature_keys</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+<h3 id="bofire.domain.domain.Domain.validate_unique_feature_keys" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_unique_feature_keys</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
@@ -3655,7 +3456,7 @@ involved output features.</p>
 
     <div class="doc doc-contents ">
 
-      <p>Validates if provided output feature keys are unique</p>
+      <p>Validates if provided input and output feature keys are unique</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -3670,13 +3471,13 @@ involved output features.</p>
   <tbody>
       <tr>
         <td><code>v</code></td>
-        <td><code>List[OutputFeature]</code></td>
+        <td><code>OutputFeatures</code></td>
         <td><p>List of all output features of the domain.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
-        <td><code>values</code></td>
-        <td><code>List[InputFeature]</code></td>
+        <td><code>value</code></td>
+        <td><code>Dict[str, InputFeatures]</code></td>
         <td><p>Dict containing a list of input features as single entry.</p></td>
         <td><em>required</em></td>
       </tr>
@@ -3707,26 +3508,26 @@ involved output features.</p>
   </thead>
   <tbody>
     <tr>
-      <td><code>List[OutputFeature]</code></td>
-      <td><p>Returns the list of output features when no error is thrown.</p></td>
+      <td><code>OutputFeatures</code></td>
+      <td><p>Keeps output features as given.</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_unique_output_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Validates if provided output feature keys are unique</span>
+<span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputFeatures</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        v (List[OutputFeature]): List of all output features of the domain.</span>
-<span class="sd">        values (List[InputFeature]): Dict containing a list of input features as single entry.</span>
+<span class="sd">        v (OutputFeatures): List of all output features of the domain.</span>
+<span class="sd">        value (Dict[str, InputFeatures]): Dict containing a list of input features as single entry.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: Feature keys are not unique.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[OutputFeature]: Returns the list of output features when no error is thrown.</span>
+<span class="sd">        OutputFeatures: Keeps output features as given.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="s2">&quot;input_features&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">v</span>
@@ -3877,7 +3678,7 @@ DomainError            (<span title="Exception">Exception</span>)
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_subdomain</span><span class="p">(</span>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">feature_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
-<span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;removes all features not defined as argument creating a subdomain of the provided domain</span>
 
 <span class="sd">    Args:</span>
@@ -3895,33 +3696,31 @@ DomainError            (<span title="Exception">Exception</span>)
 <span class="sd">        Domain: A new domain containing only parts of the original domain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_keys</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;At least two features have to be provided.&quot;</span>
-    <span class="n">output_feature_keys</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">input_feature_keys</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">subdomain</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+    <span class="n">output_features</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">input_features</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">feature_keys</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not present in domain.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
-            <span class="n">input_feature_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">input_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">output_feature_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="p">(</span>
-        <span class="nb">len</span><span class="p">(</span><span class="n">output_feature_keys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
-    <span class="p">),</span> <span class="s2">&quot;At least one output feature has to be provided.&quot;</span>
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_feature_keys</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one input feature has to be provided.&quot;</span>
+            <span class="n">output_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one output feature has to be provided.&quot;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one input feature has to be provided.&quot;</span>
+    <span class="n">input_features</span> <span class="o">=</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">input_features</span><span class="p">)</span>
     <span class="c1"># loop over constraints and make sure that all features used in constraints are in the input_feature_keys</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
         <span class="c1"># TODO: fix type hint</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_feature_keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_features</span><span class="o">.</span><span class="n">get_keys</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Removed input feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is used in a constraint.&quot;</span>
                 <span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">set</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Feature</span><span class="p">))</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">feature_keys</span><span class="p">):</span>
-        <span class="n">subdomain</span><span class="o">.</span><span class="n">remove_feature_by_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+    <span class="n">subdomain</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
+    <span class="n">subdomain</span><span class="o">.</span><span class="n">input_features</span> <span class="o">=</span> <span class="n">input_features</span>
+    <span class="n">subdomain</span><span class="o">.</span><span class="n">output_features</span> <span class="o">=</span> <span class="n">output_features</span>
     <span class="k">return</span> <span class="n">subdomain</span>
 </code></pre></div>
         </details>
