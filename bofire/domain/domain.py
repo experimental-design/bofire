@@ -827,7 +827,7 @@ class Domain(BaseModel):
                 (self.experiments, experiments), ignore_index=True
             )
 
-    def set_constraints_unvalidated(
+    def _set_constraints_unvalidated(
         self, constraints: Union[Sequence[Constraint], Constraints]
     ):
         """Hack for reduce_domain"""

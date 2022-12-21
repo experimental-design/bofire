@@ -187,7 +187,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 raise Exception("There is no solution that fulfills the constraints.")
 
     if len(constraints) > 0:
-        _domain.set_constraints_unvalidated(_domain.cnstrs + constraints)
+        _domain._set_constraints_unvalidated(_domain.cnstrs + constraints)
 
     # assemble equalities
     _equalities = []
