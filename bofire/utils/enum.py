@@ -34,6 +34,7 @@ class CategoricalMethodEnum(Enum):
 
     EXHAUSTIVE = "EXHAUSTIVE"
     FREE = "FREE"
+    # PR = "PR" available soon
 
 
 class CategoricalEncodingEnum(Enum):
@@ -54,6 +55,7 @@ class DescriptorMethodEnum(Enum):
 
     EXHAUSTIVE = "EXHAUSTIVE"
     FREE = "FREE"
+    # PR = "PR" available soon
 
 
 class DescriptorEncodingEnum(Enum):

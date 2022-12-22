@@ -1352,6 +1352,7 @@ class InputFeatures(Features):
         ]
         return list(itertools.product(*list_of_lists))
 
+    # transformation related methods
     def _get_features2idx(
         self, specs: Dict[str, CategoricalEncodingEnum]
     ) -> Dict[str, Tuple[int]]:
@@ -1480,6 +1481,83 @@ class InputFeatures(Features):
         ):
             raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")
         return specs
+
+    def get_bounds(
+        self,
+        specs: Dict[str, CategoricalEncodingEnum],
+        experiments: Optional[pd.DataFrame] = None,
+    ) -> Tuple[List[float], List[float]]:
+        """Returns the boundaries of the optimization problem based on the transformations
+        defined in the  `specs` dictionary.
+
+        Args:
+            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+                input feature is transformed by which encoder.
+            experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
+                If provided the real feature bounds are returned based on both the opt.
+                feature bounds and the extreme points in the dataframe. Defaults to None,
+
+        Raises:
+            ValueError: If a feature type is not known.
+            ValueError: If no transformation is provided for a categorical feature.
+
+        Returns:
+            Tuple[List[float], List[float]]: list with lower bounds, list with upper bounds.
+        """
+        self._validate_transform_specs(specs=specs)
+
+        lower = []
+        upper = []
+
+        for feat in self.get():
+            if isinstance(feat, NumericalInput):
+                if experiments is None:
+                    lower.append(feat.lower_bound)  # type: ignore
+                    upper.append(feat.upper_bound)  # type: ignore
+                else:
+                    lb, ub = feat.get_real_feature_bounds(experiments[feat.key])  # type: ignore
+                    lower.append(lb)
+                    upper.append(ub)
+            elif isinstance(feat, CategoricalInput):
+                if (
+                    isinstance(feat, CategoricalDescriptorInput)
+                    and specs.get(feat.key) == CategoricalEncodingEnum.DESCRIPTOR
+                ):
+                    if experiments is None:
+                        df = feat.to_df().loc[feat.get_allowed_categories()]
+                        lower += df.min().values.tolist()  # type: ignore
+                        upper += df.max().values.tolist()  # type: ignore
+                    else:
+                        df = feat.get_real_descriptor_bounds(experiments[feat.key])  # type: ignore
+                        lower += df.loc["lower"].tolist()
+                        upper += df.loc["upper"].tolist()
+                # for ordinals we do not do any bound changes due to allowed categories as this is inheritly ill defined
+                elif specs.get(feat.key) == CategoricalEncodingEnum.ORDINAL:
+                    lower.append(0)
+                    upper.append(len(feat.categories) - 1)
+                elif specs.get(feat.key) == CategoricalEncodingEnum.ONE_HOT:
+                    if experiments is None:
+                        lower += [0.0 for _ in feat.categories]
+                        upper += [
+                            1.0 if feat.allowed[i] is True else 0.0  # type: ignore
+                            for i, _ in enumerate(feat.categories)
+                        ]
+                    else:
+                        lower += [0.0 for _ in feat.categories]
+                        upper += [1.0 for _ in feat.categories]
+                # for dummies we do not do any bound changes due to allowed categories as this is inheritly ill defined
+                elif specs.get(feat.key) == CategoricalEncodingEnum.DUMMY:
+                    for _ in range(len(feat.categories) - 1):
+                        lower.append(0.0)
+                        upper.append(1.0)
+                else:
+                    raise ValueError(
+                        f"No encoding provided for categorical feature {feat.key}."
+                    )
+            else:
+                raise ValueError("Feature type not known!")
+
+        return lower, upper
 
 
 class OutputFeatures(Features):

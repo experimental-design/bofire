@@ -4,7 +4,6 @@ from typing import Type
 
 import pandas as pd
 import pytest
-import torch
 from botorch.models import MixedSingleTaskGP, ModelListGP, SingleTaskGP
 
 from bofire.domain import Domain
@@ -27,7 +26,6 @@ from bofire.domain.util import KeyModel
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy, ModelSpec
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
 from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective
-from bofire.utils.torch_tools import tkwargs
 from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.domain.test_features import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
@@ -360,124 +358,6 @@ def test_base_create(domain: Domain):
 
     with pytest.raises(ValueError, match="number raw samples"):
         DummyStrategy(domain=domain, num_raw_samples=5)
-
-
-@pytest.mark.parametrize(
-    "domain, descriptor_encoding, categorical_encoding, expected_bounds",
-    [
-        (
-            domains[0],
-            "DESCRIPTOR",
-            "ONE_HOT",
-            torch.tensor([[3, 0, 0, 0, 1, 1], [5.3, 1, 1, 1, 5, 7]]).to(**tkwargs),
-        ),
-        (
-            domains[0],
-            "CATEGORICAL",
-            "ONE_HOT",
-            torch.tensor([[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 1, 1, 1, 1, 1]]).to(
-                **tkwargs
-            ),
-        ),
-        (
-            domains[0],
-            "DESCRIPTOR",
-            "ORDINAL",
-            torch.tensor([[3, 0, 1, 1], [5.3, 2, 5, 7]]).to(**tkwargs),
-        ),
-        (
-            domains[0],
-            "CATEGORICAL",
-            "ORDINAL",
-            torch.tensor([[3, 0, 0], [5.3, 2, 2]]).to(**tkwargs),
-        ),
-        (
-            domains[1],
-            "DESCRIPTOR",
-            "ONE_HOT",
-            torch.tensor(
-                [
-                    [3, 3, 0, 0, 0, 0, 0, 0, 1, 1, 1, 2],
-                    [5.3, 3, 1, 1, 1, 1, 1, 1, 5, 7, 1, 2],
-                ]
-            ).to(**tkwargs),
-        ),
-        (
-            domains[1],
-            "CATEGORICAL",
-            "ONE_HOT",
-            torch.tensor(
-                [
-                    [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                    [5.3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-                ]
-            ).to(**tkwargs),
-        ),
-        (
-            domains[1],
-            "DESCRIPTOR",
-            "ORDINAL",
-            torch.tensor([[3, 3, 0, 0, 1, 1, 1, 2], [5.3, 3, 2, 2, 5, 7, 1, 2]]).to(
-                **tkwargs
-            ),
-        ),
-        (
-            domains[1],
-            "CATEGORICAL",
-            "ORDINAL",
-            torch.tensor([[3, 3, 0, 0, 0, 0], [5.3, 3, 2, 2, 2, 2]]).to(**tkwargs),
-        ),
-    ],
-)
-def test_base_get_bounds(
-    domain, descriptor_encoding, categorical_encoding, expected_bounds
-):
-    strategy = DummyStrategy(
-        domain=domain,
-        descriptor_encoding=descriptor_encoding,
-        categorical_encoding=categorical_encoding,
-    )
-
-    bounds = strategy.get_bounds()
-
-    assert torch.allclose(
-        bounds, expected_bounds
-    )  # torch.equal asserts false due to deviation of 1e-7??
-
-
-def test_base_get_bounds_fit():
-    # at first the fix on the continuous ones is tested
-    domain = domains[3]
-    strategy = DummyStrategy(
-        domain=domain, descriptor_encoding="DESCRIPTOR", categorical_encoding="ONE_HOT"
-    )
-
-    strategy.domain.set_experiments(generate_experiments(domain, 100, tol=2.0))
-    opt_bounds = strategy.get_bounds(optimize=True)
-    fit_bounds = strategy.get_bounds(optimize=False)
-    for i, key in enumerate(domain.get_feature_keys(ContinuousInput)):
-        assert fit_bounds[0, i] < opt_bounds[0, i]
-        assert fit_bounds[1, i] > opt_bounds[1, i]
-        assert fit_bounds[0, i] == strategy.domain.experiments[key].min()
-        assert fit_bounds[1, i] == strategy.domain.experiments[key].max()
-    # next test the fix for the CategoricalDescriptor feature
-    domain = domains[1]
-    strategy = DummyStrategy(
-        domain=domain, descriptor_encoding="DESCRIPTOR", categorical_encoding="ONE_HOT"
-    )
-
-    strategy.domain.set_experiments(
-        generate_experiments(domain, 100, tol=2.0, force_all_categories=True)
-    )
-    opt_bounds = strategy.get_bounds(optimize=True)
-    fit_bounds = strategy.get_bounds(optimize=False)
-    assert opt_bounds[0, -2] == opt_bounds[1, -2] == 1
-    assert opt_bounds[0, -1] == opt_bounds[1, -1] == 2
-    assert fit_bounds[0, -2] == 1
-    assert fit_bounds[0, -1] == 1
-    assert fit_bounds[1, -2] == 5
-    assert fit_bounds[1, -1] == 7
-    domain.experiments = None
 
 
 @pytest.mark.parametrize(

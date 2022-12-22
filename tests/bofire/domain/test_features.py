@@ -1531,6 +1531,282 @@ def test_input_features_transform(specs):
     assert_frame_equal(samples, untransformed)
 
 
+if1 = ContinuousInput(
+    **{
+        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
+        "key": "if1",
+    }
+)
+if2 = ContinuousInput(
+    **{
+        **VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
+        "key": "if2",
+    }
+)
+
+if3 = CategoricalInput(
+    **{
+        **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
+        "key": "if3",
+    }
+)
+
+if4 = CategoricalInput(
+    **{
+        **VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
+        "key": "if4",
+    }
+)
+
+if5 = CategoricalDescriptorInput(
+    **{
+        **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
+        "key": "if5",
+    }
+)
+
+if6 = CategoricalDescriptorInput(
+    **{
+        **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
+        "key": "if6",
+    }
+)
+
+of1 = ContinuousOutput(
+    **{
+        **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
+        "key": "of1",
+    }
+)
+
+input_features1 = InputFeatures(features=[if1, if3, if5])
+
+input_features2 = InputFeatures(
+    features=[
+        if1,
+        if2,
+        if3,
+        if4,
+        if5,
+        if6,
+    ]
+)
+
+
+@pytest.mark.parametrize(
+    "input_features, specs, expected_bounds",
+    [
+        (
+            input_features1,
+            {
+                "if3": CategoricalEncodingEnum.ONE_HOT,
+                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            [[3, 1, 1, 0, 0, 0], [5.3, 5, 7, 1, 1, 1]],
+        ),
+        (
+            input_features1,
+            {
+                "if3": CategoricalEncodingEnum.DUMMY,
+                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            [[3, 1, 1, 0, 0], [5.3, 5, 7, 1, 1]],
+        ),
+        (
+            input_features1,
+            {
+                "if3": CategoricalEncodingEnum.DUMMY,
+                "if5": CategoricalEncodingEnum.DUMMY,
+            },
+            [[3, 0, 0, 0, 0], [5.3, 1, 1, 1, 1]],
+        ),
+        (
+            input_features1,
+            {
+                "if3": CategoricalEncodingEnum.ONE_HOT,
+                "if5": CategoricalEncodingEnum.ONE_HOT,
+            },
+            [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 1, 1, 1, 1, 1]],
+        ),
+        (
+            input_features1,
+            {
+                "if3": CategoricalEncodingEnum.ORDINAL,
+                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            [[3, 1, 1, 0], [5.3, 5, 7, 2]],
+        ),
+        (
+            input_features1,
+            {
+                "if3": CategoricalEncodingEnum.ORDINAL,
+                "if5": CategoricalEncodingEnum.ORDINAL,
+            },
+            [[3, 0, 0], [5.3, 2, 2]],
+        ),
+        # new domain
+        (
+            input_features2,
+            {
+                "if3": CategoricalEncodingEnum.ONE_HOT,
+                "if4": CategoricalEncodingEnum.ONE_HOT,
+                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+                "if6": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            [
+                [3, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0],
+                [
+                    5.3,
+                    3,
+                    5,
+                    7,
+                    1,
+                    2,
+                    1,
+                    1,
+                    1,
+                    1,
+                    0,
+                    0,
+                ],
+            ],
+        ),
+        (
+            input_features2,
+            {
+                "if3": CategoricalEncodingEnum.ONE_HOT,
+                "if4": CategoricalEncodingEnum.ONE_HOT,
+                "if5": CategoricalEncodingEnum.ONE_HOT,
+                "if6": CategoricalEncodingEnum.ONE_HOT,
+            },
+            [
+                [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                [5.3, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0],
+            ],
+        ),
+        (
+            input_features2,
+            {
+                "if3": CategoricalEncodingEnum.ORDINAL,
+                "if4": CategoricalEncodingEnum.ORDINAL,
+                "if5": CategoricalEncodingEnum.DESCRIPTOR,
+                "if6": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            [
+                [
+                    3,
+                    3,
+                    1,
+                    1,
+                    1,
+                    2,
+                    0,
+                    0,
+                ],
+                [5.3, 3, 5, 7, 1, 2, 2, 2],
+            ],
+        ),
+        (
+            input_features2,
+            {
+                "if3": CategoricalEncodingEnum.ORDINAL,
+                "if4": CategoricalEncodingEnum.ORDINAL,
+                "if5": CategoricalEncodingEnum.ORDINAL,
+                "if6": CategoricalEncodingEnum.ORDINAL,
+            },
+            [[3, 3, 0, 0, 0, 0], [5.3, 3, 2, 2, 2, 2]],
+        ),
+        (
+            input_features2,
+            {
+                "if3": CategoricalEncodingEnum.ORDINAL,
+                "if4": CategoricalEncodingEnum.ONE_HOT,
+                "if5": CategoricalEncodingEnum.ORDINAL,
+                "if6": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            [
+                [3, 3, 0, 1, 2, 0, 0, 0, 0],
+                [
+                    5.3,
+                    3,
+                    2,
+                    1,
+                    2,
+                    2,
+                    1,
+                    0,
+                    0,
+                ],
+            ],
+        ),
+    ],
+)
+def test_input_features_get_bounds(input_features, specs, expected_bounds):
+    lower, upper = input_features.get_bounds(specs=specs)
+    assert np.allclose(
+        expected_bounds[0], lower
+    )  # torch.equal asserts false due to deviation of 1e-7??
+    assert np.allclose(expected_bounds[1], upper)
+
+
+def test_input_features_get_bounds_fit():
+    # at first the fix on the continuous ones is tested
+    input_features = InputFeatures(features=[if1, if2])
+    experiments = input_features.sample(100)
+    experiments["if1"] += [random.uniform(-2, 2) for _ in range(100)]
+    experiments["if2"] += [random.uniform(-2, 2) for _ in range(100)]
+    opt_bounds = input_features.get_bounds(specs={})
+    fit_bounds = input_features.get_bounds(specs={}, experiments=experiments)
+    for i, key in enumerate(input_features.get_keys(ContinuousInput)):
+        assert fit_bounds[0][i] < opt_bounds[0][i]
+        assert fit_bounds[1][i] > opt_bounds[1][i]
+        assert fit_bounds[0][i] == experiments[key].min()
+        assert fit_bounds[1][i] == experiments[key].max()
+    # next test the fix for the CategoricalDescriptor feature
+    input_features = InputFeatures(
+        features=[
+            if1,
+            if2,
+            if3,
+            if4,
+            if5,
+            if6,
+        ]
+    )
+    experiments = input_features.sample(100)
+    experiments["if4"] = [random.choice(if4.categories) for _ in range(100)]
+    experiments["if6"] = [random.choice(if6.categories) for _ in range(100)]
+    opt_bounds = input_features.get_bounds(
+        specs={
+            "if3": CategoricalEncodingEnum.ONE_HOT,
+            "if4": CategoricalEncodingEnum.ONE_HOT,
+            "if5": CategoricalEncodingEnum.DESCRIPTOR,
+            "if6": CategoricalEncodingEnum.DESCRIPTOR,
+        }
+    )
+    fit_bounds = input_features.get_bounds(
+        {
+            "if3": CategoricalEncodingEnum.ONE_HOT,
+            "if4": CategoricalEncodingEnum.ONE_HOT,
+            "if5": CategoricalEncodingEnum.DESCRIPTOR,
+            "if6": CategoricalEncodingEnum.DESCRIPTOR,
+        },
+        experiments=experiments,
+    )
+    # check difference in descriptors
+    assert opt_bounds[0][-8] == opt_bounds[1][-8] == 1
+    assert opt_bounds[0][-7] == opt_bounds[1][-7] == 2
+    assert fit_bounds[0][-8] == 1
+    assert fit_bounds[0][-7] == 1
+    assert fit_bounds[1][-8] == 5
+    assert fit_bounds[1][-7] == 7
+    # check difference in onehots
+    assert opt_bounds[1][-1] == 0
+    assert opt_bounds[1][-2] == 0
+    assert fit_bounds[1][-1] == 1
+    assert fit_bounds[1][-2] == 1
+
+
 @pytest.mark.parametrize(
     "features, samples",
     [

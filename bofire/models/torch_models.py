@@ -34,7 +34,7 @@ from bofire.domain.features import (
 from bofire.domain.util import BaseModel
 from bofire.models.model import Model, TrainableModel
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
-from bofire.utils.torch_tools import OneHotToNumeric, get_bounds, tkwargs
+from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 
 
 def get_dim_subsets(d: int, active_dims: List[int], cat_dims: List[int]):
@@ -224,14 +224,21 @@ class BotorchModels(BaseModel):
             if isinstance(model, TrainableModel):
                 model.fit(experiments)
 
+    @property
+    def output_features(self) -> OutputFeatures:
+        return OutputFeatures(
+            features=list(
+                itertools.chain.from_iterable(
+                    [model.output_features.get() for model in self.models]  # type: ignore
+                )
+            )
+        )
+
     def _check_compability(
         self, input_features: InputFeatures, output_features: OutputFeatures
     ):
-        used_output_feature_keys = list(
-            itertools.chain.from_iterable(
-                [model.output_features.get_keys() for model in self.models]
-            )
-        )
+        # TODO: add sync option
+        used_output_feature_keys = self.output_features.get_keys()
         if sorted(used_output_feature_keys) != sorted(output_features.get_keys()):
             raise ValueError("Output features do not match.")
         used_feature_keys = []
@@ -259,6 +266,7 @@ class BotorchModels(BaseModel):
     def compatibilize(
         self, input_features: InputFeatures, output_features: OutputFeatures
     ) -> ModelList:
+        # TODO: add sync option
         # check if models are compatible to provided inputs and outputs
         # of the optimization domain
         self._check_compability(
@@ -299,7 +307,7 @@ class BotorchModels(BaseModel):
 
 
 class SingleTaskGPModel(BotorchModel, TrainableModel):
-    kernel: ContinuousKernel
+    kernel: ContinuousKernel = Matern(ard=True, nu=2.5)
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.SingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = (
@@ -337,16 +345,15 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         ord_dims, _, _ = get_dim_subsets(
             d=d, active_dims=list(range(d)), cat_dims=cat_dims
         )
-
         # first get the scaler
         # TODO use here the correct bounds
         if self.scaler == ScalerEnum.NORMALIZE:
+            lower, upper = self.input_features.get_bounds(
+                specs=self.input_preprocessing_specs
+            )
             scaler = Normalize(
                 d=d,
-                bounds=get_bounds(
-                    self.input_features,
-                    preprocessing_specs=self.input_preprocessing_specs,
-                ),
+                bounds=torch.tensor([lower, upper]).to(**tkwargs),
                 batch_shape=batch_shape,
             )
         elif self.scaler == ScalerEnum.STANDARDIZE:
@@ -378,10 +385,10 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
-    continuous_kernel: ContinuousKernel
-    categorical_kernel: CategoricalKernel
+    continuous_kernel: ContinuousKernel = Matern(ard=True, nu=2.5)
+    categorical_kernel: CategoricalKernel = HammondDistanceKernel(ard=True)
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
-    model: Optional[botorch.models.MixedSingleTaskGP]
+    model: Optional[botorch.models.MixedSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     # features2idx: Optional[Dict] = None
     # non_numerical_features: Optional[List] = None
@@ -422,12 +429,13 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
 
         # first get the scaler
         if self.scaler == ScalerEnum.NORMALIZE:
+            # TODO: take the real bounds here
+            lower, upper = self.input_features.get_bounds(
+                specs=self.input_preprocessing_specs
+            )
             scaler = Normalize(
                 d=d,
-                bounds=get_bounds(
-                    self.input_features,
-                    preprocessing_specs=self.input_preprocessing_specs,
-                ),
+                bounds=torch.tensor([lower, upper]).to(**tkwargs),
                 indices=ord_dims,
                 batch_shape=batch_shape,
             )

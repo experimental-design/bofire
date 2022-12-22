@@ -2,7 +2,6 @@ from collections import OrderedDict
 from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
-import pandas as pd
 import torch
 from botorch.models.transforms.input import InputTransform
 from torch import Tensor
@@ -14,77 +13,12 @@ from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    InputFeature,
-    InputFeatures,
-    NumericalInput,
-)
-from bofire.utils.enum import CategoricalEncodingEnum, DescriptorEncodingEnum
+from bofire.domain.features import InputFeature
 
 tkwargs = {
     "dtype": torch.double,
     "device": "cpu",
 }
-
-
-def get_bounds(
-    input_features: InputFeatures,
-    preprocessing_specs: Dict,
-    experiments: Optional[pd.DataFrame] = None,
-) -> Tensor:
-    """[summary]
-
-    Raises:
-        IOError: [description]
-
-    Returns:
-        [type]: [description]
-    """
-    lower = []
-    upper = []
-
-    for var in input_features.get(InputFeature):
-        if isinstance(var, NumericalInput):
-            if experiments is None:
-                lower.append(var.lower_bound)
-                upper.append(var.upper_bound)
-            else:
-                lb, ub = var.get_real_feature_bounds(experiments[var.key])  # type: ignore
-                lower.append(lb)
-                upper.append(ub)
-        elif isinstance(var, CategoricalInput):
-            if (
-                isinstance(var, CategoricalDescriptorInput)
-                and preprocessing_specs.get(var.key)
-                == DescriptorEncodingEnum.DESCRIPTOR
-            ):
-                if experiments is None:
-                    df = var.to_df().loc[var.get_allowed_categories()]
-                    lower += df.min().values.tolist()  # type: ignore
-                    upper += df.max().values.tolist()  # type: ignore
-                else:
-                    df = var.get_real_descriptor_bounds(experiments[var.key])  # type: ignore
-                    lower += df.loc["lower"].tolist()
-                    upper += df.loc["upper"].tolist()
-            elif preprocessing_specs.get(var.key) == CategoricalEncodingEnum.ORDINAL:
-                lower.append(0)
-                upper.append(len(var.categories) - 1)
-            elif preprocessing_specs.get(var.key) == CategoricalEncodingEnum.ONE_HOT:
-                for _ in var.categories:
-                    lower.append(0.0)
-                    upper.append(1.0)
-            elif preprocessing_specs.get(var.key) == CategoricalEncodingEnum.DUMMY:
-                for _ in range(len(var.categories) - 1):
-                    lower.append(0.0)
-                    upper.append(1.0)
-            else:
-                raise ValueError("Encoding not known.")
-        else:
-            raise ValueError("Feature type not known!")
-
-    return torch.tensor([lower, upper]).to(**tkwargs)
 
 
 def get_linear_constraints(
