@@ -13,7 +13,6 @@ from bofire.domain.constraints import (
 from bofire.domain.features import ContinuousInput, ContinuousOutput, Feature
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective, Objective
 from bofire.strategies.strategy import PredictiveStrategy, Strategy
-from bofire.utils.transformer import Transformer
 
 
 class DummyStrategy(Strategy):
@@ -75,8 +74,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     def _init_domain(
         self,
     ) -> None:
-        # self._is_fitted = False
-        self.transformer = Transformer(self)
+        pass
 
     def _tell(
         self,
@@ -111,6 +109,10 @@ class DummyPredictiveStrategy(PredictiveStrategy):
             candidates[f"{feat.key}_sd"] = np.nan
             candidates[f"{feat.key}_des"] = np.nan
         return candidates
+
+    @property
+    def input_preproccesing_specs(self):
+        return {}
 
     def has_sufficient_experiments(
         self,

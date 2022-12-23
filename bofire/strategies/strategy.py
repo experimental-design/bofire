@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Dict, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
 from bofire.domain.features import Feature, OutputFeature
 from bofire.domain.objectives import Objective
-from bofire.utils.transformer import Transformer
+from bofire.utils.enum import CategoricalEncodingEnum
 
 
 def validate_constraints(cls, domain: Domain):
@@ -345,13 +345,17 @@ class PredictiveStrategy(Strategy):
     """
 
     is_fitted: bool = False
-    transformer: Optional[Transformer] = None
 
     def __init__(self, **data: Any):
         super().__init__(**data)
         if self.domain.num_experiments > 0:
             self.fit()
             self._tell()
+
+    @property
+    @abstractmethod
+    def input_preproccesing_specs(self) -> Dict[str, CategoricalEncodingEnum]:
+        pass
 
     def tell(
         self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True
@@ -387,16 +391,18 @@ class PredictiveStrategy(Strategy):
         """
         if self.is_fitted is not True:
             raise ValueError("Model not yet fitted.")
-        assert self.transformer is not None
         # TODO: validate also here the experiments but only for the input_columns
-        transformed = self.transformer.transform(experiments)
+        # transformed = self.transformer.transform(experiments)
+        transformed = self.domain.inputs.transform(
+            experiments=experiments, specs=self.input_preproccesing_specs
+        )
         preds, stds = self._predict(transformed)
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)),
                 columns=[
-                    "%s_pred" % featkey
-                    for featkey in self.domain.outputs.get_by_objective(Objective)
+                    "%s_pred" % feat.key
+                    for feat in self.domain.outputs.get_by_objective(Objective)
                 ]
                 + [
                     "%s_sd" % featkey
@@ -407,8 +413,8 @@ class PredictiveStrategy(Strategy):
             predictions = pd.DataFrame(
                 data=preds,
                 columns=[
-                    "%s_pred" % featkey
-                    for featkey in self.domain.outputs.get_by_objective(Objective)
+                    "%s_pred" % feat.key
+                    for feat in self.domain.outputs.get_by_objective(Objective)
                 ],
             )
         return predictions
@@ -423,13 +429,12 @@ class PredictiveStrategy(Strategy):
         assert (
             self.experiments is not None and len(self.experiments) > 0
         ), "No fitting data available"
-        assert self.transformer is not None
         self.domain.validate_experiments(self.experiments, strict=True)
-        transformed = self.transformer.fit_transform(self.experiments)
-        self._fit(transformed)
+        # transformed = self.transformer.fit_transform(self.experiments)
+        self._fit(self.experiments)
         self.is_fitted = True
 
     @abstractmethod
-    def _fit(self, transformed: pd.DataFrame):
+    def _fit(self, experiments: pd.DataFrame):
         """Abstract method where the acutal prediction are occuring."""
         pass
