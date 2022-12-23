@@ -7,17 +7,6 @@ class SamplingMethodEnum(Enum):
     LHS = "LHS"
 
 
-class KernelEnum(Enum):
-    """Enumeration class of all supported kernels
-    Currently, RBF and matern kernel (1/2, 3/2 and 5/2) are implemented.
-    """
-
-    RBF = "RBF"
-    MATERN_25 = "MATERN_25"
-    MATERN_15 = "MATERN_15"
-    MATERN_05 = "MATERN_05"
-
-
 class ScalerEnum(Enum):
     """Enumeration class of supported scalers
     Currently, normalization and standardization are implemented.
