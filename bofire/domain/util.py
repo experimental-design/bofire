@@ -1,4 +1,4 @@
-import collections
+from collections.abc import Sequence as abcSequence
 from typing import Any, Callable, List, Sequence, Type, Union
 
 import pandas as pd
@@ -102,11 +102,11 @@ def filter_by_class(
     """
     if includes is None:
         includes = []
-    if not isinstance(includes, collections.Sequence):
+    if not isinstance(includes, abcSequence):
         includes = [includes]
     if excludes is None:
         excludes = []
-    if not isinstance(excludes, collections.Sequence):
+    if not isinstance(excludes, abcSequence):
         excludes = [excludes]
 
     if len(includes) == len(excludes) == 0:
