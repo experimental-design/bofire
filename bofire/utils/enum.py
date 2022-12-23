@@ -48,16 +48,6 @@ class CategoricalEncodingEnum(Enum):
     DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
-class DescriptorMethodEnum(Enum):
-    """Enumeration class of implemented methods how to handle discrete descriptors
-    Currently, exhaustive search and free relaxation are implemented.
-    """
-
-    EXHAUSTIVE = "EXHAUSTIVE"
-    FREE = "FREE"
-    # PR = "PR" available soon
-
-
 class DescriptorEncodingEnum(Enum):
     """Enumeration class how categorical features with descriptors should be encoded
     Categoricals with descriptors can be handled similar to categoricals, or the descriptors can be used.
