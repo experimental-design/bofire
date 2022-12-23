@@ -111,7 +111,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
         return candidates
 
     @property
-    def input_preproccesing_specs(self):
+    def input_preprocessing_specs(self):
         return {}
 
     def has_sufficient_experiments(

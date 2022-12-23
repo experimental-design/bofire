@@ -354,7 +354,7 @@ class PredictiveStrategy(Strategy):
 
     @property
     @abstractmethod
-    def input_preproccesing_specs(self) -> Dict[str, CategoricalEncodingEnum]:
+    def input_preprocessing_specs(self) -> Dict[str, CategoricalEncodingEnum]:
         pass
 
     def tell(
