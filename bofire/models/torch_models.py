@@ -122,7 +122,7 @@ class BotorchModel(Model):
 
     model: Optional[BotorchBaseModel]
 
-    @validator("input_preprocessing_specs")
+    @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
         input_features = values["input_features"]
         categorical_keys = input_features.get_keys(CategoricalInput, exact=True)

@@ -64,6 +64,90 @@ def test_continuous_kernel(
         assert kernel.nu == k.nu
 
 
+@pytest.mark.parametrize("modelclass", [(SingleTaskGPModel), (MixedSingleTaskGPModel)])
+def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(5)
+        ]
+        + [
+            CategoricalInput(key="x_cat", categories=["mama", "papa"]),
+            CategoricalDescriptorInput(
+                key="cat",
+                categories=["apple", "banana"],
+                descriptors=["length", "width"],
+                values=[[1, 2], [3, 4]],
+            ),
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    model = modelclass(
+        input_features=input_features,
+        output_features=output_features,
+    )
+    assert model.input_preprocessing_specs == {
+        "x_cat": CategoricalEncodingEnum.ONE_HOT,
+        "cat": CategoricalEncodingEnum.DESCRIPTOR,
+    }
+    # test that it can also handle incomplete specs
+    model = modelclass(
+        input_features=input_features,
+        output_features=output_features,
+        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+    )
+    assert model.input_preprocessing_specs == {
+        "x_cat": CategoricalEncodingEnum.ONE_HOT,
+        "cat": CategoricalEncodingEnum.DESCRIPTOR,
+    }
+
+
+@pytest.mark.parametrize(
+    "modelclass, input_preprocessing_specs",
+    [
+        (
+            SingleTaskGPModel,
+            {
+                "x_cat": CategoricalEncodingEnum.DUMMY,
+                "cat": CategoricalEncodingEnum.ORDINAL,
+            },
+        ),
+        (
+            MixedSingleTaskGPModel,
+            {
+                "x_cat": CategoricalEncodingEnum.ORDINAL,
+                "cat": CategoricalEncodingEnum.ONE_HOT,
+            },
+        ),
+    ],
+)
+def test_BotorchModel_validate_invalid_input_preprocessing_steps(
+    modelclass, input_preprocessing_specs
+):
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(5)
+        ]
+        + [
+            CategoricalInput(key="x_cat", categories=["mama", "papa"]),
+            CategoricalDescriptorInput(
+                key="cat",
+                categories=["apple", "banana"],
+                descriptors=["length", "width"],
+                values=[[1, 2], [3, 4]],
+            ),
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    with pytest.raises(ValueError):
+        modelclass(
+            input_features=input_features,
+            output_features=output_features,
+            input_preprocessing_specs=input_preprocessing_specs,
+        )
+
+
 @pytest.mark.parametrize(
     "kernel, scaler",
     [(RBF(ard=True), ScalerEnum.NORMALIZE), (RBF(ard=False), ScalerEnum.STANDARDIZE)],
