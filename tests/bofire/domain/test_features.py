@@ -1430,27 +1430,47 @@ def test_input_features_validate_transform_valid(specs):
 
 
 @pytest.mark.parametrize(
-    "specs, expected",
+    "specs, expected_features2idx, expected_features2names",
     [
         (
             {"x2": CategoricalEncodingEnum.ONE_HOT},
             {"x1": (0,), "x2": (2, 3, 4), "x3": (1,)},
+            {
+                "x1": ("x1",),
+                "x2": ("x2_apple", "x2_banana", "x2_orange"),
+                "x3": ("x3",),
+            },
         ),
         (
             {"x2": CategoricalEncodingEnum.DUMMY},
             {"x1": (0,), "x2": (2, 3), "x3": (1,)},
+            {"x1": ("x1",), "x2": ("x2_banana", "x2_orange"), "x3": ("x3",)},
         ),
         (
             {"x2": CategoricalEncodingEnum.ORDINAL},
             {"x1": (0,), "x2": (2,), "x3": (1,)},
+            {"x1": ("x1",), "x2": ("x2",), "x3": ("x3",)},
         ),
         (
             {"x3": CategoricalEncodingEnum.ONE_HOT},
             {"x1": (0,), "x2": (5,), "x3": (1, 2, 3, 4)},
+            {
+                "x1": ("x1",),
+                "x2": ("x2",),
+                "x3": ("x3_apple", "x3_banana", "x3_orange", "x3_cherry"),
+            },
         ),
         (
             {"x3": CategoricalEncodingEnum.DESCRIPTOR},
             {"x1": (0,), "x2": (3,), "x3": (1, 2)},
+            {
+                "x1": ("x1",),
+                "x2": ("x2",),
+                "x3": (
+                    "x3_d1",
+                    "x3_d2",
+                ),
+            },
         ),
         (
             {
@@ -1458,6 +1478,14 @@ def test_input_features_validate_transform_valid(specs):
                 "x3": CategoricalEncodingEnum.DESCRIPTOR,
             },
             {"x1": (0,), "x2": (3, 4, 5), "x3": (1, 2)},
+            {
+                "x1": ("x1",),
+                "x2": ("x2_apple", "x2_banana", "x2_orange"),
+                "x3": (
+                    "x3_d1",
+                    "x3_d2",
+                ),
+            },
         ),
         (
             {
@@ -1465,10 +1493,17 @@ def test_input_features_validate_transform_valid(specs):
                 "x3": CategoricalEncodingEnum.ONE_HOT,
             },
             {"x1": (0,), "x2": (5, 6, 7), "x3": (1, 2, 3, 4)},
+            {
+                "x1": ("x1",),
+                "x2": ("x2_apple", "x2_banana", "x2_orange"),
+                "x3": ("x3_apple", "x3_banana", "x3_orange", "x3_cherry"),
+            },
         ),
     ],
 )
-def test_input_features_get_features2idx(specs, expected):
+def test_input_features_get_transform_info(
+    specs, expected_features2idx, expected_features2names
+):
     inps = InputFeatures(
         features=[
             ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
@@ -1481,7 +1516,9 @@ def test_input_features_get_features2idx(specs, expected):
             ),
         ]
     )
-    assert inps._get_features2idx(specs) == expected
+    features2idx, features2names = inps._get_transform_info(specs)
+    assert features2idx == expected_features2idx
+    assert features2names == expected_features2names
 
 
 @pytest.mark.parametrize(

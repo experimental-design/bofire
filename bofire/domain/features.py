@@ -545,7 +545,7 @@ class CategoricalInput(InputFeature):
             raise ValueError("no category is allowed")
         return values
 
-    def is_fixed(self):
+    def is_fixed(self) -> bool:
         """Returns True if there is only one allowed category.
 
         Returns:
@@ -555,7 +555,7 @@ class CategoricalInput(InputFeature):
             return False
         return sum(self.allowed) == 1
 
-    def fixed_value(self):
+    def fixed_value(self) -> Union[str, None]:
         """Returns the categories to which the feature is fixed, None if the feature is not fixed
 
         Returns:
@@ -1353,11 +1353,12 @@ class InputFeatures(Features):
         return list(itertools.product(*list_of_lists))
 
     # transformation related methods
-    def _get_features2idx(
+    def _get_transform_info(
         self, specs: Dict[str, CategoricalEncodingEnum]
-    ) -> Dict[str, Tuple[int]]:
-        """Generates a dictionary which specifies which key is mapped to
-        which column indices when applying `transform`.
+    ) -> Tuple[Dict[str, Tuple[int]], Dict[str, Tuple[str]]]:
+        """Generates two dictionaries. The first one specifies which key is mapped to
+        which column indices when applying `transform`. The second one specifies
+        which key is mapped to which transformed keys.
 
         Args:
             specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
@@ -1365,33 +1366,50 @@ class InputFeatures(Features):
 
         Returns:
             Dict[str, Tuple[int]]: Dictionary mapping feature keys to column indices.
+            Dict[str, Tuple[str]]: Dictionary mapping feature keys to transformed feature
+                keys.
         """
         self._validate_transform_specs(specs)
         features2idx = {}
+        features2names = {}
         counter = 0
         for _, feat in enumerate(self.get()):
             if feat.key not in specs.keys():
                 features2idx[feat.key] = (counter,)
+                features2names[feat.key] = (feat.key,)
                 counter += 1
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                assert isinstance(feat, CategoricalInput)
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(feat.categories))) + counter).tolist()
+                )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{c}" for c in feat.categories]
                 )
                 counter += len(feat.categories)
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
                 features2idx[feat.key] = (counter,)
+                features2names[feat.key] = (feat.key,)
                 counter += 1
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                assert isinstance(feat, CategoricalInput)
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(feat.categories) - 1)) + counter).tolist()
                 )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{c}" for c in feat.categories[1:]]
+                )
                 counter += len(feat.categories) - 1
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                assert isinstance(feat, CategoricalDescriptorInput)
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(feat.descriptors))) + counter).tolist()
                 )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{d}" for d in feat.descriptors]
+                )
                 counter += len(feat.descriptors)
-        return features2idx
+        return features2idx, features2names
 
     def transform(
         self, experiments: pd.DataFrame, specs: Dict[str, CategoricalEncodingEnum]
@@ -1415,13 +1433,17 @@ class InputFeatures(Features):
             if feat.key not in specs.keys():
                 transformed.append(s)
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
-                transformed.append(feat.to_onehot_encoding(s))  # type: ignore
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_onehot_encoding(s))
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
-                transformed.append(feat.to_ordinal_encoding(s))  # type: ignore
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_ordinal_encoding(s))
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
-                transformed.append(feat.to_dummy_encoding(s))  # type: ignore
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_dummy_encoding(s))
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
-                transformed.append(feat.to_descriptor_encoding(s))  # type: ignore
+                assert isinstance(feat, CategoricalDescriptorInput)
+                transformed.append(feat.to_descriptor_encoding(s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -1446,12 +1468,16 @@ class InputFeatures(Features):
             if feat.key not in specs.keys():
                 transformed.append(experiments[feat.key])
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.from_onehot_encoding(experiments))
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.from_ordinal_encoding(experiments[feat.key]))
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.from_dummy_encoding(experiments))
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.from_descriptor_encoding(experiments))
         return pd.concat(transformed, axis=1)
 

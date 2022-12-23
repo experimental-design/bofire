@@ -272,7 +272,9 @@ class BotorchModels(BaseModel):
         self._check_compability(
             input_features=input_features, output_features=output_features
         )
-        features2idx = input_features._get_features2idx(self.input_preprocessing_specs)
+        features2idx, _ = input_features._get_transform_info(
+            self.input_preprocessing_specs
+        )
         botorch_models = []
         # we sort the models by sorting them with their occurence in output_features
         for output_feature_key in output_features.get_keys():
@@ -319,8 +321,8 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
 
     def _fit(self, X: np.ndarray, Y: np.ndarray):
         # get transform meta information
-        features2idx = self.input_features._get_features2idx(
-            specs=self.input_preprocessing_specs
+        features2idx, _ = self.input_features._get_transform_info(
+            self.input_preprocessing_specs
         )
         non_numerical_features = [
             key
@@ -396,8 +398,8 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
 
     def _fit(self, X: np.ndarray, Y: np.ndarray):
         # get transform meta information
-        features2idx = self.input_features._get_features2idx(
-            specs=self.input_preprocessing_specs
+        features2idx, _ = self.input_features._get_transform_info(
+            self.input_preprocessing_specs
         )
         non_numerical_features = [
             key
