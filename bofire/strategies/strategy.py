@@ -242,7 +242,7 @@ class Strategy(BaseModel):
                 ), "Number of requested candidates is larger than the pool from which they should be chosen."
             candidates = self._choose_from_pool(candidate_pool, candidate_count)
 
-        self.domain.validate_candidates(candidates=candidates)
+        self.domain.validate_candidates(candidates=candidates, only_inputs=True)
 
         if candidate_count is not None:
             if len(candidates) != candidate_count:
