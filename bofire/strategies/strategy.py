@@ -186,7 +186,7 @@ class Strategy(BaseModel):
         self._tell()
 
     def _tell(self) -> None:
-        """Optional method to allow for customized tell functions in addition to self.tell()"""
+        """Method to allow for customized tell functions in addition to self.tell()"""
         pass
 
     def ask(
