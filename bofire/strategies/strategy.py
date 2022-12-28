@@ -170,16 +170,12 @@ class Strategy(BaseModel):
         """
         return self.domain.candidates
 
-    def tell(
-        self,
-        experiments: pd.DataFrame,
-        replace: bool = False,
-    ):
+    def tell(self, experiments: pd.DataFrame, replace: bool = False) -> None:
         """This function passes new experimental data to the optimizer
 
         Args:
             experiments (pd.DataFrame): DataFrame with experimental data
-            replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
+            replace (bool, optional): Boolean to decide if the experimental data should replace the former DataFrame or if the new experiments should be attached. Defaults to False.
         """
         if len(experiments) == 0:
             return
@@ -189,11 +185,8 @@ class Strategy(BaseModel):
             self.domain.add_experiments(experiments)
         self._tell()
 
-    @abstractmethod
-    def _tell(
-        self,
-    ) -> None:
-        """Abstract method to allow for customized tell functions in addition to self.tell()"""
+    def _tell(self) -> None:
+        """Optional method to allow for customized tell functions in addition to self.tell()"""
         pass
 
     def ask(
@@ -253,17 +246,14 @@ class Strategy(BaseModel):
         return candidates
 
     @abstractmethod
-    def _ask(
-        self,
-        candidate_count: Optional[PositiveInt] = None,
-    ) -> pd.DataFrame:
-        """Abstract ask method to allow for customized ask functions in addition to self.ask().
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+        """Abstract method to implement how a strategy generates candidates.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to None.
 
         Returns:
-            pd.DataFrame: DataFrame with candidates (proposed experiments)
+            pd.DataFrame: DataFrame with candidates (proposed experiments).
         """
         pass
 
