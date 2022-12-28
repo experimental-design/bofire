@@ -65,7 +65,7 @@ class Constraint(BaseModel):
             "LinearInequalityConstraint": LinearInequalityConstraint,
             "NChooseKConstraint": NChooseKConstraint,
             "NonlinearEqualityConstraint": NonlinearEqualityConstraint,
-            "NonlinearInesqualityConstraint": NonlinearInequalityConstraint,
+            "NonlinearInequalityConstraint": NonlinearInequalityConstraint,
         }
         return mapper[config["type"]](**config)
 
