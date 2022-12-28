@@ -4,7 +4,7 @@ from typing import Any, Optional, Tuple, Type
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, validator
-from pydantic.types import NonNegativeInt
+from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
@@ -198,14 +198,14 @@ class Strategy(BaseModel):
 
     def ask(
         self,
-        candidate_count: Optional[NonNegativeInt] = None,
+        candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
         candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates
 
         Args:
-            candidate_count (NonNegativeInt, optional): Number of candidates to be generated. If not provided, the number
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number
                 of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
             candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided,
@@ -255,12 +255,12 @@ class Strategy(BaseModel):
     @abstractmethod
     def _ask(
         self,
-        candidate_count: Optional[NonNegativeInt] = None,
+        candidate_count: Optional[PositiveInt] = None,
     ) -> pd.DataFrame:
         """Abstract ask method to allow for customized ask functions in addition to self.ask().
 
         Args:
-            candidate_count (NonNegativeInt, optional): Number of candidates to be generated. Defaults to None.
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -271,13 +271,13 @@ class Strategy(BaseModel):
     def _choose_from_pool(
         self,
         candidate_pool: pd.DataFrame,
-        candidate_count: Optional[NonNegativeInt] = None,
+        candidate_count: Optional[PositiveInt] = None,
     ) -> pd.DataFrame:
         """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
 
         Args:
             candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[NonNegativeInt], optional): Number of candidates to choose. Defaults to None.
+            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
 
         Returns:
             pd.DataFrame: The chosen set of candidates.
