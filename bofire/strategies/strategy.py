@@ -145,11 +145,8 @@ class Strategy(BaseModel):
                 )
         return domain
 
-    @abstractmethod
-    def _init_domain(
-        self,
-    ) -> None:
-        """Abstract method to allow for customized functions in the constructor of Strategy.
+    def _init_domain(self) -> None:
+        """Optional method to allow for customized functions in the constructor of Strategy.
 
         Called at the end of `__init__`.
         """
