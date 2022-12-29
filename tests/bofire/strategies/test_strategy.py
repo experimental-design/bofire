@@ -1,4 +1,3 @@
-import random
 from typing import List
 
 import mock
@@ -267,7 +266,7 @@ def test_strategy_ask_invalid_candidates(
 
     def test_ask(self: Strategy, candidate_count: int):
         candidates = generate_candidates(self.domain, candidate_count)
-        candidates = candidates.drop(random.choice(candidates.columns), axis=1)
+        candidates = candidates.drop(candidates.columns[0], axis=1)
         return candidates
 
     with mock.patch.object(DummyStrategy, "_ask", new=test_ask):
