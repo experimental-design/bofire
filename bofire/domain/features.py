@@ -3,7 +3,7 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast, Literal
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -27,6 +27,8 @@ from bofire.utils.enum import SamplingMethodEnum
 
 class Feature(KeyModel):
     """The base class for all features."""
+    
+    type: str
 
     def __lt__(self, other) -> bool:
         """
@@ -90,6 +92,8 @@ class Feature(KeyModel):
 
 class InputFeature(Feature):
     """Base class for all input features."""
+    
+    type: Literal["InputFeature"] = "InputFeature"
 
     @abstractmethod
     def is_fixed() -> bool:
@@ -151,6 +155,8 @@ class InputFeature(Feature):
 
 class NumericalInputFeature(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
+    
+    type: Literal["NumericalInputFeature"] = "NumericalInputFeature"
 
     def to_unit_range(
         self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
@@ -284,7 +290,8 @@ class ContinuousInput(NumericalInputFeature):
         lower_bound (float): Lower bound of the feature in the optimization.
         upper_bound (float): Upper bound of the feature in the optimization.
     """
-
+    
+    type: Literal["ContinuousInput"] = "ContinuousInput"
     lower_bound: float
     upper_bound: float
 
@@ -367,6 +374,7 @@ class DiscreteInput(NumericalInputFeature):
         values(List[float]): the discretized allowed values during the optimization.
     """
 
+    type: Literal["DiscreteInput"] = "DiscreteInput"
     values: TDiscreteVals
 
     @validator("values")
@@ -441,6 +449,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         values (List[float]): Values of the descriptors.
     """
 
+    type: Literal["ContinuousDescriptorInput"] = "ContinuousDescriptorInput"
     descriptors: TDescriptors
     values: TDiscreteVals
 
@@ -498,6 +507,7 @@ class CategoricalInput(InputFeature):
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
     """
 
+    type: Literal["CategoricalInput"] = "CategoricalInput"
     categories: TCategoryVals
     allowed: TAllowedVals = None
 
@@ -679,6 +689,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         calues (List[List[float]]): List of lists representing the descriptor values.
     """
 
+    type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
     descriptors: TDescriptors
     values: TCategoricalDescriptorVals
 
@@ -806,6 +817,7 @@ class OutputFeature(Feature):
         key(str): Key of the Feature.
     """
 
+    type: Literal["OutputFeature"] = "OutputFeature"
     objective: Optional[Objective]
 
 
@@ -816,6 +828,7 @@ class ContinuousOutput(OutputFeature):
         objective (objective, optional): objective of the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.
     """
 
+    type: Literal["ContinuousOutput"] = "ContinuousOutput"
     objective: Optional[Objective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
@@ -1288,3 +1301,8 @@ class OutputFeatures(Features):
             ],
             axis=1,
         )
+
+# TODO: check lists of all features, possibly remove "intermediate" classes
+AnyFeature = Union[InputFeature, NumericalInputFeature, ContinuousInput, DiscreteInput, ContinuousDescriptorInput, CategoricalInput, CategoricalDescriptorInput, OutputFeature, ContinuousOutput]
+AnyInputFeature = Union[InputFeature, NumericalInputFeature, ContinuousInput, DiscreteInput, ContinuousDescriptorInput, CategoricalInput, CategoricalDescriptorInput]
+AnyOutputFeature = Union[OutputFeature, ContinuousOutput]
