@@ -1,7 +1,7 @@
 import collections.abc
 from abc import abstractmethod
 from itertools import chain
-from typing import Dict, List, Sequence, Tuple, Type, TypeVar, Union
+from typing import Dict, List, Sequence, Tuple, Type, TypeVar, Union, Literal
 
 import numpy as np
 import pandas as pd
@@ -14,6 +14,8 @@ from bofire.domain.util import BaseModel, filter_by_class
 
 class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
+    
+    type: str
 
     @abstractmethod
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
@@ -82,6 +84,8 @@ class LinearConstraint(Constraint):
         coefficients (list): list of coefficients (float) of the constraint.
         rhs (float): Right-hand side of the constraint
     """
+    
+    type: Literal["LinearConstraint"] = "LinearConstraint"
 
     features: TFeatureKeys
     coefficients: TCoefficients
@@ -140,6 +144,8 @@ class LinearEqualityConstraint(LinearConstraint):
         coefficients (list): list of coefficients (float) of the constraint.
         rhs (float): Right-hand side of the constraint
     """
+    
+    type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
 
     # def is_fulfilled(self, experiments: pd.DataFrame, complete: bool) -> bool:
     #     """Check if the linear equality constraint is fulfilled for all the rows of the provided dataframe.
@@ -179,6 +185,8 @@ class LinearInequalityConstraint(LinearConstraint):
         coefficients (list): list of coefficients (float) of the constraint.
         rhs (float): Right-hand side of the constraint
     """
+    
+    type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
 
     # def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
     #     """Check if the linear inequality constraint is fulfilled in each row of the provided dataframe.
@@ -257,6 +265,9 @@ class LinearInequalityConstraint(LinearConstraint):
 
 
 class NonlinearConstraint(Constraint):
+    # TODO: add docstring to NonLinearConstraint
+    
+    type: Literal["NonlinearConstraint"] = "NonlinearConstraint"
     expression: str
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
@@ -264,6 +275,9 @@ class NonlinearConstraint(Constraint):
 
 
 class NonlinearEqualityConstraint(NonlinearConstraint):
+    # TODO: add docstring to NonlinearEqualityConstraint
+    type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
+    
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
 
@@ -272,6 +286,9 @@ class NonlinearEqualityConstraint(NonlinearConstraint):
 
 
 class NonlinearInqualityConstraint(NonlinearConstraint):
+    # TODO: add docstring to NonlinearInqualityConstraint
+    type: Literal["NonlinearInqualityConstraint"] = "NonlinearInqualityConstraint"
+    
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         return self(experiments) <= 0
 
@@ -290,6 +307,7 @@ class NChooseKConstraint(Constraint):
             this flag decides if zero active features are also allowed.
     """
 
+    type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
     features: TFeatureKeys
     min_count: int
     max_count: int
@@ -460,3 +478,6 @@ class Constraints(BaseModel):
                 exact=exact,
             )
         )
+
+# TODO: check list of all constraints, possibly remove "intermediate" classes
+AnyConstraint = Union[LinearConstraint, LinearEqualityConstraint, LinearInequalityConstraint, NonlinearConstraint, NonlinearEqualityConstraint, NonlinearInqualityConstraint, NChooseKConstraint, Constraints]
