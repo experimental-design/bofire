@@ -42,4 +42,4 @@ class RandomStrategy(Strategy):
         return candidate_pool.sample(n=candidate_count)
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
-        return self.sampler.ask(candidate_count)
+        return self.sampler.ask(candidate_count)  # type: ignore
