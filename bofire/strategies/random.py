@@ -1,9 +1,16 @@
-from typing import Optional
+from typing import Optional, Type
 
 import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
 
+from bofire.domain.constraints import (
+    Constraint,
+    NChooseKConstraint,
+    NonlinearEqualityConstraint,
+)
+from bofire.domain.features import Feature
+from bofire.domain.objectives import Objective
 from bofire.samplers import PolytopeSampler, RejectionSampler, Sampler
 from bofire.strategies.strategy import Strategy
 
@@ -22,13 +29,18 @@ class RandomStrategy(Strategy):
         if self.sampler is None:
             raise Exception(errors)
 
-    def is_constraint_implemented(self) -> bool:
+    @classmethod
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+        if my_type in [NChooseKConstraint, NonlinearEqualityConstraint]:
+            return False
         return True
 
-    def is_feature_implemented(self) -> bool:
+    @classmethod
+    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         return True
 
-    def is_objective_implemented(self) -> bool:
+    @classmethod
+    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
         return True
 
     def has_sufficient_experiments(self) -> bool:
