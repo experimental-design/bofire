@@ -16,6 +16,12 @@ from bofire.strategies.strategy import Strategy
 
 
 class RandomStrategy(Strategy):
+    """Strategy for randomly selecting new candidates.
+
+    Provides a baseline strategy for benchmarks or for generating initial candidates.
+    Uses PolytopeSampler or RejectionSampler, depending on the constraints.
+    """
+
     sampler: Optional[Sampler] = None
 
     def _init_domain(self) -> None:
