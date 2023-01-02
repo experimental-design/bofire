@@ -375,6 +375,26 @@ def test_predictive_strategy_ask_valid(
         strategy.ask(candidate_count=1)
 
 
+def test_predictive_strategy_ask_invalid():
+    """Test that PretictiveStrategy also checks if candidates contain output columns."""
+    strategy = DummyPredictiveStrategy(
+        domain=Domain(
+            input_features=[if1, if2],
+            output_features=[of1, of2],
+            constraints=[],
+        )
+    )
+    strategy.tell(e3)
+
+    def test_ask(self: Strategy, candidate_count: int):
+        candidates = generate_candidates(self.domain, candidate_count)
+        return candidates.drop(columns=["of1_pred"])
+
+    with mock.patch.object(DummyPredictiveStrategy, "_ask", new=test_ask):
+        with pytest.raises(ValueError):
+            strategy.ask(candidate_count=2)
+
+
 @pytest.mark.parametrize(
     "domain, experiments",
     [

@@ -195,7 +195,7 @@ class Strategy(BaseModel):
         add_pending: bool = False,
         candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """Function to generate new candidates
+        """Function to generate new candidates.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number
@@ -203,7 +203,6 @@ class Strategy(BaseModel):
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
             candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided,
                 pool independent candidates are provided. Defaults to None.
-
 
         Raises:
             ValueError: if candidate count is smaller than 1
@@ -339,6 +338,30 @@ class PredictiveStrategy(Strategy):
         if self.domain.num_experiments > 0:
             self.fit()
             self._tell()
+
+    def ask(
+        self,
+        candidate_count: Optional[PositiveInt] = None,
+        add_pending: bool = False,
+        candidate_pool: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        """Function to generate new candidates.
+
+        Args:
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.
+            add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
+            candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided, pool independent candidates are provided. Defaults to None.
+
+        Returns:
+            pd.DataFrame: DataFrame with candidates (proposed experiments)
+        """
+        candidates = super().ask(
+            candidate_count=candidate_count,
+            add_pending=add_pending,
+            candidate_pool=candidate_pool,
+        )
+        self.domain.validate_candidates(candidates=candidates)
+        return candidates
 
     def tell(
         self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True
