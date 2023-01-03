@@ -3,17 +3,17 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast, Literal
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pydantic import Field, validate_arguments, validator
+from pydantic import Field, parse_obj_as, validate_arguments, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conint, conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.domain.objectives import MaximizeObjective, Objective
+from bofire.domain.objectives import AnyObjective, MaximizeObjective
 from bofire.domain.util import (
     BaseModel,
     KeyModel,
@@ -27,7 +27,7 @@ from bofire.utils.enum import SamplingMethodEnum
 
 class Feature(KeyModel):
     """The base class for all features."""
-    
+
     type: str
 
     def __lt__(self, other) -> bool:
@@ -49,50 +49,14 @@ class Feature(KeyModel):
         else:
             return order_self < order_other
 
-    def to_config(self) -> Dict:
-        """Generate serialized version of the feature.
-
-        Returns:
-            Dict: Serialized version of the feature as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            **self.dict(),
-        }
-
     @staticmethod
-    def from_config(config: Dict) -> "Feature":
-        """Generate objective out of serialized version.
-
-        Args:
-            config (Dict): Serialized version of a objective
-
-        Returns:
-            Objective: Instantiated objective of the type specified in the `config`.
-        """
-        input_mapper = {
-            "ContinuousInput": ContinuousInput,
-            "DiscreteInput": DiscreteInput,
-            "CategoricalInput": CategoricalInput,
-            "CategoricalDescriptorInput": CategoricalDescriptorInput,
-            "ContinuousDescriptorInput": ContinuousDescriptorInput,
-        }
-        output_mapper = {
-            "ContinuousOutput": ContinuousOutput,
-        }
-        if config["type"] in input_mapper.keys():
-            return input_mapper[config["type"]](**config)
-        else:
-            if "objective" in config.keys():
-                obj = Objective.from_config(config=config["objective"])
-            else:
-                obj = None
-            return output_mapper[config["type"]](key=config["key"], objective=obj)
+    def from_dict(dict_: dict):
+        return parse_obj_as(AnyFeature, dict_)
 
 
 class InputFeature(Feature):
     """Base class for all input features."""
-    
+
     type: Literal["InputFeature"] = "InputFeature"
 
     @abstractmethod
@@ -152,10 +116,14 @@ class InputFeature(Feature):
         """
         pass
 
+    @staticmethod
+    def from_dict(dict_: dict):
+        return parse_obj_as(AnyInputFeature, dict_)
+
 
 class NumericalInputFeature(InputFeature):
-    """Abstracht base class for all numerical (ordinal) input features."""
-    
+    """Abstract base class for all numerical (ordinal) input features."""
+
     type: Literal["NumericalInputFeature"] = "NumericalInputFeature"
 
     def to_unit_range(
@@ -290,12 +258,12 @@ class ContinuousInput(NumericalInputFeature):
         lower_bound (float): Lower bound of the feature in the optimization.
         upper_bound (float): Upper bound of the feature in the optimization.
     """
-    
+
     type: Literal["ContinuousInput"] = "ContinuousInput"
     lower_bound: float
     upper_bound: float
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
         """Validates that the lower bound is lower than the upper bound
 
@@ -465,7 +433,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         """
         return [name2key(name) for name in descriptors]
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def validate_list_lengths(cls, values):
         """compares the length of the defined descriptors list with the provided values
 
@@ -529,7 +497,7 @@ class CategoricalInput(InputFeature):
             raise ValueError("categories must be unique")
         return categories
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def init_allowed(cls, values):
         """validates the list of allowed/not allowed categories
 
@@ -818,7 +786,11 @@ class OutputFeature(Feature):
     """
 
     type: Literal["OutputFeature"] = "OutputFeature"
-    objective: Optional[Objective]
+    objective: Optional[AnyObjective]
+
+    @staticmethod
+    def from_dict(dict_: dict):
+        return parse_obj_as(AnyOutputFeature, dict_)
 
 
 class ContinuousOutput(OutputFeature):
@@ -829,23 +801,9 @@ class ContinuousOutput(OutputFeature):
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
-    objective: Optional[Objective] = Field(
+    objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
-
-    def to_config(self) -> Dict:
-        """Generate serialized version of the feature.
-
-        Returns:
-            Dict: Serialized version of the feature as dictionary.
-        """
-        config: Dict[str, Any] = {
-            "type": self.__class__.__name__,
-            "key": self.key,
-        }
-        if self.objective is not None:
-            config["objective"] = self.objective.to_config()
-        return config
 
     def plot(
         self,
@@ -929,7 +887,32 @@ def is_continuous(var: Feature) -> bool:
         return False
 
 
-FeatureSequence = Union[List[Feature], Tuple[Feature]]
+# TODO: check lists of all features, possibly remove abstract classes
+AnyFeature = Union[
+    # InputFeature,
+    # NumericalInputFeature,
+    DiscreteInput,
+    ContinuousInput,
+    ContinuousDescriptorInput,
+    CategoricalInput,
+    CategoricalDescriptorInput,
+    # OutputFeature,
+    ContinuousOutput,
+]
+AnyInputFeature = Union[
+    # InputFeature,
+    # NumericalInputFeature,
+    ContinuousInput,
+    DiscreteInput,
+    ContinuousDescriptorInput,
+    CategoricalInput,
+    CategoricalDescriptorInput,
+]
+AnyOutputFeature = ContinuousOutput
+# Union[OutputFeature, ContinuousOutput,]
+
+
+FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
 
 
 class Features(BaseModel):
@@ -941,48 +924,6 @@ class Features(BaseModel):
 
     features: FeatureSequence = Field(default_factory=lambda: [])
 
-    def to_config(self) -> Dict:
-        """Serialize the features container.
-
-        Returns:
-            Dict: serialized features container
-        """
-        return {
-            "type": "general",
-            "features": [feat.to_config() for feat in self.features],
-        }
-
-    @staticmethod
-    def from_config(config: Dict) -> "Features":
-        """Instantiates a `Feature` object from a dictionary created by the `to_config`method.
-
-        Args:
-            config (Dict): Serialized features dictionary
-
-        Returns:
-            Features: instantiated features object
-        """
-        if config["type"] == "inputs":
-            return InputFeatures(
-                features=[
-                    cast(InputFeature, Feature.from_config(feat))
-                    for feat in config["features"]
-                ]
-            )
-        if config["type"] == "outputs":
-            return OutputFeatures(
-                features=[
-                    cast(OutputFeature, Feature.from_config(feat))
-                    for feat in config["features"]
-                ]
-            )
-        if config["type"] == "general":
-            return Features(
-                features=[Feature.from_config(feat) for feat in config["features"]]
-            )
-        else:
-            raise ValueError(f"Unknown type {config['type']} provided.")
-
     def __iter__(self):
         return iter(self.features)
 
@@ -992,7 +933,7 @@ class Features(BaseModel):
     def __getitem__(self, i):
         return self.features[i]
 
-    def __add__(self, other: Union[Sequence[Feature], Features]):
+    def __add__(self, other: Union[Sequence[AnyFeature], Features]):
         if isinstance(other, Features):
             other_feature_seq = other.features
         else:
@@ -1021,7 +962,7 @@ class Features(BaseModel):
             )
         return Features(features=new_feature_seq)
 
-    def get_by_key(self, key: str) -> Feature:
+    def get_by_key(self, key: str) -> AnyFeature:
         """Get a feature by its key.
 
         Args:
@@ -1034,7 +975,7 @@ class Features(BaseModel):
 
     def get(
         self,
-        includes: Union[Type, List[Type]] = Feature,
+        includes: Union[Type, List[Type]] = AnyFeature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
     ) -> Features:
@@ -1062,7 +1003,7 @@ class Features(BaseModel):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type]] = Feature,
+        includes: Union[Type, List[Type]] = AnyFeature,
         excludes: Union[Type, List[Type]] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -1096,13 +1037,7 @@ class InputFeatures(Features):
         features (List(InputFeatures)): list of the features.
     """
 
-    features: Sequence[InputFeature] = Field(default_factory=lambda: [])
-
-    def to_config(self) -> Dict:
-        return {
-            "type": "inputs",
-            "features": [feat.to_config() for feat in self.features],
-        }
+    features: Sequence[AnyInputFeature] = Field(default_factory=lambda: [])
 
     def get_fixed(self) -> "InputFeatures":
         """Gets all features in `self` that are fixed and returns them as new `InputFeatures` object.
@@ -1217,25 +1152,12 @@ class OutputFeatures(Features):
         features (List(OutputFeatures)): list of the features.
     """
 
-    features: Sequence[OutputFeature] = Field(default_factory=lambda: [])
-
-    def to_config(self) -> Dict:
-        return {
-            "type": "outputs",
-            "features": [feat.to_config() for feat in self.features],
-        }
-
-    @validator("features", pre=True)
-    def validate_output_features(cls, v, values):
-        for feat in v:
-            if not isinstance(feat, OutputFeature):
-                raise ValueError
-        return v
+    features: Sequence[AnyOutputFeature] = Field(default_factory=lambda: [])
 
     def get_by_objective(
         self,
-        includes: Union[List[Type[Objective]], Type[Objective]] = Objective,
-        excludes: Union[List[Type[Objective]], Type[Objective], None] = None,
+        includes: Union[List[Type[AnyObjective]], Type[AnyObjective]] = AnyObjective,
+        excludes: Union[List[Type[AnyObjective]], Type[AnyObjective], None] = None,
         exact: bool = False,
     ) -> "OutputFeatures":
         """Get output features filtered by the type of the attached objective.
@@ -1247,7 +1169,7 @@ class OutputFeatures(Features):
             exact (bool, optional): Boolean to distinguish if only the exact classes listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
 
         Returns:
-            List[OutputFeature]: List of output features fitting to the passed requirements.
+            List[AnyOutputFeature]: List of output features fitting to the passed requirements.
         """
         if len(self.features) == 0:
             return OutputFeatures(features=[])
@@ -1267,8 +1189,8 @@ class OutputFeatures(Features):
 
     def get_keys_by_objective(
         self,
-        includes: Union[List[Type[Objective]], Type[Objective]] = Objective,
-        excludes: Union[List[Type[Objective]], Type[Objective], None] = None,
+        includes: Union[List[Type[AnyObjective]], Type[AnyObjective]] = AnyObjective,
+        excludes: Union[List[Type[AnyObjective]], Type[AnyObjective], None] = None,
         exact: bool = False,
     ) -> List[str]:
         """Get keys of output features filtered by the type of the attached objective.
@@ -1301,8 +1223,3 @@ class OutputFeatures(Features):
             ],
             axis=1,
         )
-
-# TODO: check lists of all features, possibly remove "intermediate" classes
-AnyFeature = Union[InputFeature, NumericalInputFeature, ContinuousInput, DiscreteInput, ContinuousDescriptorInput, CategoricalInput, CategoricalDescriptorInput, OutputFeature, ContinuousOutput]
-AnyInputFeature = Union[InputFeature, NumericalInputFeature, ContinuousInput, DiscreteInput, ContinuousDescriptorInput, CategoricalInput, CategoricalDescriptorInput]
-AnyOutputFeature = Union[OutputFeature, ContinuousOutput]

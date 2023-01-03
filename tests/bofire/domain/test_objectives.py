@@ -187,8 +187,7 @@ def test_valid_desirability_function_specs(cls, spec):
 )
 def test_desirability_function_serialize(cls, spec):
     res = cls(**spec)
-    config = res.to_config()
-    res2 = Objective.from_config(config)
+    res2 = Objective.from_dict(res.dict())
     assert res == res2
 
 

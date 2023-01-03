@@ -1,11 +1,11 @@
 import collections.abc
 from abc import abstractmethod
 from itertools import chain
-from typing import Dict, List, Sequence, Tuple, Type, TypeVar, Union, Literal
+from typing import List, Literal, Sequence, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, parse_obj_as, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
@@ -14,7 +14,7 @@ from bofire.domain.util import BaseModel, filter_by_class
 
 class Constraint(BaseModel):
     """Abstract base class to define constraints on the optimization space."""
-    
+
     type: str
 
     @abstractmethod
@@ -41,35 +41,9 @@ class Constraint(BaseModel):
         """
         pass
 
-    def to_config(self) -> Dict:
-        """Generate serialized version of the constraint.
-
-        Returns:
-            Dict: Serialized version of the constraint as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            **self.dict(),
-        }
-
     @staticmethod
-    def from_config(config: Dict) -> "Constraint":
-        """Generate constraint out of serialized version.
-
-        Args:
-            config (Dict): Serialized version of a constraint
-
-        Returns:
-            Constraint: Instaniated constraint of the type specified in the `config`.
-        """
-        mapper = {
-            "LinearEqualityConstraint": LinearEqualityConstraint,
-            "LinearInequalityConstraint": LinearInequalityConstraint,
-            "NChooseKConstraint": NChooseKConstraint,
-            "NonlinearEqualityConstraint": NonlinearEqualityConstraint,
-            "NonlinearInqualityConstraint": NonlinearInqualityConstraint,
-        }
-        return mapper[config["type"]](**config)
+    def from_dict(dict_: dict):
+        return parse_obj_as(AnyConstraint, dict_)
 
 
 TFeatureKeys = conlist(item_type=str, min_items=2)
@@ -84,7 +58,7 @@ class LinearConstraint(Constraint):
         coefficients (list): list of coefficients (float) of the constraint.
         rhs (float): Right-hand side of the constraint
     """
-    
+
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
     features: TFeatureKeys
@@ -98,7 +72,7 @@ class LinearConstraint(Constraint):
             raise ValueError("features must be unique")
         return features
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def validate_list_lengths(cls, values):
         """Validate that length of the feature and coefficient lists have the same length."""
         if len(values["features"]) != len(values["coefficients"]):
@@ -144,7 +118,7 @@ class LinearEqualityConstraint(LinearConstraint):
         coefficients (list): list of coefficients (float) of the constraint.
         rhs (float): Right-hand side of the constraint
     """
-    
+
     type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
 
     # def is_fulfilled(self, experiments: pd.DataFrame, complete: bool) -> bool:
@@ -185,7 +159,7 @@ class LinearInequalityConstraint(LinearConstraint):
         coefficients (list): list of coefficients (float) of the constraint.
         rhs (float): Right-hand side of the constraint
     """
-    
+
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
 
     # def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
@@ -221,9 +195,14 @@ class LinearInequalityConstraint(LinearConstraint):
         """
         return self.features, [-1.0 * c for c in self.coefficients], -1.0 * self.rhs
 
+    # TODO: from_greater_equal should take the object as input
     @classmethod
     def from_greater_equal(
-        cls, features: List[str], coefficients: List[float], rhs: float
+        cls,
+        features: List[str],
+        coefficients: List[float],
+        rhs: float,
+        **kwargs,
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x >= rhs`.
 
@@ -238,9 +217,14 @@ class LinearInequalityConstraint(LinearConstraint):
             rhs=-1.0 * rhs,
         )
 
+    # TODO: from_smaller_equal should take the object as input
     @classmethod
     def from_smaller_equal(
-        cls, features: List[str], coefficients: List[float], rhs: float
+        cls,
+        features: List[str],
+        coefficients: List[float],
+        rhs: float,
+        **kwargs,
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x <= rhs`.
 
@@ -266,7 +250,7 @@ class LinearInequalityConstraint(LinearConstraint):
 
 class NonlinearConstraint(Constraint):
     # TODO: add docstring to NonLinearConstraint
-    
+
     type: Literal["NonlinearConstraint"] = "NonlinearConstraint"
     expression: str
 
@@ -277,7 +261,7 @@ class NonlinearConstraint(Constraint):
 class NonlinearEqualityConstraint(NonlinearConstraint):
     # TODO: add docstring to NonlinearEqualityConstraint
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
-    
+
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
 
@@ -285,10 +269,10 @@ class NonlinearEqualityConstraint(NonlinearConstraint):
         return f"{self.expression}==0"
 
 
-class NonlinearInqualityConstraint(NonlinearConstraint):
-    # TODO: add docstring to NonlinearInqualityConstraint
-    type: Literal["NonlinearInqualityConstraint"] = "NonlinearInqualityConstraint"
-    
+class NonlinearInequalityConstraint(NonlinearConstraint):
+    # TODO: add docstring to NonlinearInequalityConstraint
+    type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
+
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
         return self(experiments) <= 0
 
@@ -320,7 +304,7 @@ class NChooseKConstraint(Constraint):
             raise ValueError("features must be unique")
         return features
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def validate_counts(cls, values):
         """Validates if the minimum and maximum of allowed features are smaller than the overall number of features."""
         features = values["features"]
@@ -383,31 +367,21 @@ class NChooseKConstraint(Constraint):
 TConstraint = TypeVar("TConstraint", bound=Constraint)
 
 
+# TODO: check list of all constraints, possibly remove abtract classes
+AnyConstraint = Union[
+    # LinearConstraint,
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    # NonlinearConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+    NChooseKConstraint,
+]
+
+
 class Constraints(BaseModel):
 
-    constraints: Sequence[Constraint] = Field(default_factory=lambda: [])
-
-    def to_config(self) -> List:
-        """Serializes a `Constraints` object.
-
-        Returns:
-            List: Constraints objects as serialized list.
-        """
-        return [constraint.to_config() for constraint in self.constraints]
-
-    @classmethod
-    def from_config(cls, config: List) -> "Constraints":
-        """Instantiates a `Constraints` object based on the serialized list.
-
-        Args:
-            config (List): Serialized `Constraints` object as list.
-
-        Returns:
-            Constraints: Initialized `Constraints` object.
-        """
-        return cls(
-            constraints=[Constraint.from_config(constraint) for constraint in config]
-        )
+    constraints: Sequence[AnyConstraint] = Field(default_factory=lambda: [])
 
     def __iter__(self):
         return iter(self.constraints)
@@ -478,6 +452,3 @@ class Constraints(BaseModel):
                 exact=exact,
             )
         )
-
-# TODO: check list of all constraints, possibly remove "intermediate" classes
-AnyConstraint = Union[LinearConstraint, LinearEqualityConstraint, LinearInequalityConstraint, NonlinearConstraint, NonlinearEqualityConstraint, NonlinearInqualityConstraint, NChooseKConstraint, Constraints]

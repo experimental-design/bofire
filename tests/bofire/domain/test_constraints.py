@@ -9,7 +9,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    NonlinearInqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeatures
 from bofire.utils.enum import SamplingMethodEnum
@@ -22,19 +22,45 @@ VALID_NCHOOSEKE_CONSTRAINT_SPEC = {
     "none_also_valid": False,
 }
 
-VALID_LINEAR_CONSTRAINT_SPEC = {
+VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC = {
+    "type": "LinearEqualityConstraint",
     "features": ["f1", "f2", "f3"],
     "coefficients": [1, 2, 3],
     "rhs": 1.5,
 }
 
-VALID_NONLINEAR_CONSTRAINT_SPEC = {"features": ["f1", "f2"], "expression": "f1*f2"}
+VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC = {
+    "type": "LinearInequalityConstraint",
+    "features": ["f1", "f2", "f3"],
+    "coefficients": [1, 2, 3],
+    "rhs": 1.5,
+}
 
-INVALID_NONLINEAR_CONSTRAINT_SPEC = {"expression": [5, 7, 8]}
+VALID_NONLINEAR_EQUALITY_CONSTRAINT_SPEC = {
+    "type": "NonlinearEqualityConstraint",
+    "features": ["f1", "f2"],
+    "expression": "f1*f2",
+}
 
-VALID_LINEAR_CONSTRAINT_SPECS = [
+VALID_NONLINEAR_INEQUALITY_CONSTRAINT_SPEC = {
+    "type": "NonlinearInequalityConstraint",
+    "features": ["f1", "f2"],
+    "expression": "f1*f2",
+}
+
+INVALID_NONLINEAR_EQUALITY_CONSTRAINT_SPEC = {
+    "type": "NonlinearEqualityConstraint",
+    "expression": [5, 7, 8],
+}
+
+INVALID_NONLINEAR_INEQUALITY_CONSTRAINT_SPEC = {
+    "type": "NonlinearInequalityConstraint",
+    "expression": [5, 7, 8],
+}
+
+VALID_LINEAR_EQUALITY_CONSTRAINT_SPECS = [
     {
-        **VALID_LINEAR_CONSTRAINT_SPEC,
+        **VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
         "features": features,
         "coefficients": coefficients,
     }
@@ -43,9 +69,36 @@ VALID_LINEAR_CONSTRAINT_SPECS = [
     ]
 ]
 
-INVALID_LINEAR_CONSTRAINT_SPECS = [
+VALID_LINEAR_INEQUALITY_CONSTRAINT_SPECS = [
     {
-        **VALID_LINEAR_CONSTRAINT_SPEC,
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
+        "features": features,
+        "coefficients": coefficients,
+    }
+    for features, coefficients in [
+        (["f1", "f2"], [-0.4, 1.4]),
+    ]
+]
+
+INVALID_LINEAR_EQUALITY_CONSTRAINT_SPECS = [
+    {
+        **VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
+        "features": features,
+        "coefficients": coefficients,
+    }
+    for features, coefficients in [
+        ([], []),
+        ([], [1]),
+        (["f1", "f2"], [-0.4]),
+        (["f1", "f2"], [-0.4, 1.4, 4.3]),
+        (["f1", "f1"], [1, 1]),
+        (["f1", "f1", "f2"], [1, 1, 1]),
+    ]
+]
+
+INVALID_LINEAR_INEQUALITY_CONSTRAINT_SPECS = [
+    {
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
         "features": features,
         "coefficients": coefficients,
     }
@@ -66,24 +119,26 @@ CONSTRAINT_SPECS = {
         "invalids": INVALID_SPECS + get_invalids(VALID_NCHOOSEKE_CONSTRAINT_SPEC),
     },
     LinearEqualityConstraint: {
-        "valids": [VALID_LINEAR_CONSTRAINT_SPEC] + VALID_LINEAR_CONSTRAINT_SPECS,
+        "valids": [VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC]
+        + VALID_LINEAR_EQUALITY_CONSTRAINT_SPECS,
         "invalids": INVALID_SPECS
-        + get_invalids(VALID_LINEAR_CONSTRAINT_SPEC)
-        + INVALID_LINEAR_CONSTRAINT_SPECS,
+        + get_invalids(VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC)
+        + INVALID_LINEAR_EQUALITY_CONSTRAINT_SPECS,
     },
     LinearInequalityConstraint: {
-        "valids": [VALID_LINEAR_CONSTRAINT_SPEC] + VALID_LINEAR_CONSTRAINT_SPECS,
+        "valids": [VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC]
+        + VALID_LINEAR_INEQUALITY_CONSTRAINT_SPECS,
         "invalids": INVALID_SPECS
-        + get_invalids(VALID_LINEAR_CONSTRAINT_SPEC)
-        + INVALID_LINEAR_CONSTRAINT_SPECS,
+        + get_invalids(VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC)
+        + INVALID_LINEAR_INEQUALITY_CONSTRAINT_SPECS,
     },
     NonlinearEqualityConstraint: {
-        "valids": [VALID_NONLINEAR_CONSTRAINT_SPEC],
-        "invalids": [INVALID_NONLINEAR_CONSTRAINT_SPEC],
+        "valids": [VALID_NONLINEAR_EQUALITY_CONSTRAINT_SPEC],
+        "invalids": [INVALID_NONLINEAR_EQUALITY_CONSTRAINT_SPEC],
     },
-    NonlinearInqualityConstraint: {
-        "valids": [VALID_NONLINEAR_CONSTRAINT_SPEC],
-        "invalids": [INVALID_NONLINEAR_CONSTRAINT_SPEC],
+    NonlinearInequalityConstraint: {
+        "valids": [VALID_NONLINEAR_INEQUALITY_CONSTRAINT_SPEC],
+        "invalids": [INVALID_NONLINEAR_INEQUALITY_CONSTRAINT_SPEC],
     },
 }
 
@@ -112,8 +167,7 @@ def test_valid_constraint_specs(cls, spec):
 )
 def test_constraint_serialize(cls, spec):
     res = cls(**spec)
-    config = res.to_config()
-    res2 = Constraint.from_config(config)
+    res2 = Constraint.from_dict(spec)
     assert res == res2
 
 
@@ -131,16 +185,20 @@ def test_invalid_constraint_specs(cls, spec):
 
 
 def test_from_greater_equal():
-    c = LinearInequalityConstraint.from_greater_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
-    assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"] * -1.0
+    c = LinearInequalityConstraint.from_greater_equal(
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+    )
+    assert c.rhs == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"] * -1.0
     assert c.coefficients == [
-        -1.0 * coef for coef in VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
+        -1.0 * coef for coef in VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"]
     ]
-    assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
+    assert c.features == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["features"]
 
 
 def test_as_greater_equal():
-    c = LinearInequalityConstraint.from_greater_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
+    c = LinearInequalityConstraint.from_greater_equal(
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+    )
     features, coefficients, rhs = c.as_greater_equal()
     assert c.rhs == rhs * -1.0
     assert coefficients == [-1.0 * coef for coef in c.coefficients]
@@ -148,14 +206,18 @@ def test_as_greater_equal():
 
 
 def test_from_smaller_equal():
-    c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
-    assert c.rhs == VALID_LINEAR_CONSTRAINT_SPEC["rhs"]
-    assert c.coefficients == VALID_LINEAR_CONSTRAINT_SPEC["coefficients"]
-    assert c.features == VALID_LINEAR_CONSTRAINT_SPEC["features"]
+    c = LinearInequalityConstraint.from_smaller_equal(
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+    )
+    assert c.rhs == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"]
+    assert c.coefficients == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"]
+    assert c.features == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["features"]
 
 
 def test_as_smaller_equal():
-    c = LinearInequalityConstraint.from_smaller_equal(**VALID_LINEAR_CONSTRAINT_SPEC)
+    c = LinearInequalityConstraint.from_smaller_equal(
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+    )
     features, coefficients, rhs = c.as_smaller_equal()
     assert c.rhs == rhs
     assert coefficients == c.coefficients
@@ -163,11 +225,11 @@ def test_as_smaller_equal():
 
 
 # test the Constraints Class
-c1 = LinearEqualityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)
-c2 = LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)
+c1 = LinearEqualityConstraint(**VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC)
+c2 = LinearInequalityConstraint(**VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC)
 c3 = NChooseKConstraint(**VALID_NCHOOSEKE_CONSTRAINT_SPEC)
-c4 = NonlinearEqualityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
-c5 = NonlinearInqualityConstraint(**VALID_NONLINEAR_CONSTRAINT_SPEC)
+c4 = NonlinearEqualityConstraint(**VALID_NONLINEAR_EQUALITY_CONSTRAINT_SPEC)
+c5 = NonlinearInequalityConstraint(**VALID_NONLINEAR_INEQUALITY_CONSTRAINT_SPEC)
 c6 = LinearInequalityConstraint.from_smaller_equal(
     features=["f1", "f2", "f3"], coefficients=[1, 1, 1], rhs=100.0
 )
@@ -185,8 +247,7 @@ constraints3 = Constraints(constraints=[c6])
 
 @pytest.mark.parametrize("constraints", [constraints, constraints2, constraints3])
 def test_constraints_serialize(constraints):
-    config = constraints.to_config()
-    nconstraints = Constraints.from_config(config=config)
+    nconstraints = Constraints(**constraints.dict())
     assert constraints == nconstraints
 
 
@@ -194,9 +255,9 @@ def test_constraints_serialize(constraints):
     "constraints",
     [
         (["s"]),
-        ([LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)], 5),
+        ([LinearInequalityConstraint(**VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC)], 5),
         (
-            [LinearInequalityConstraint(**VALID_LINEAR_CONSTRAINT_SPEC)],
+            [LinearInequalityConstraint(**VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC)],
             ContinuousOutput(key="s"),
         ),
     ],

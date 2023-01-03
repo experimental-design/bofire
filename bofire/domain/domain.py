@@ -1,6 +1,5 @@
 import collections.abc
 import itertools
-import typing
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 
@@ -203,48 +202,6 @@ class Domain(BaseModel):
                         continuous_input_features_dict[f].lower_bound == 0
                     ), f"lower bound of {f} must be 0 for NChooseK constraint."
         return v
-
-    def to_config(self) -> Dict:
-        """Serializables itself to a dictionary.
-
-        Returns:
-            Dict: Serialized version of the domain as dictionary.
-        """
-        assert isinstance(self.input_features, InputFeatures)
-        assert isinstance(self.output_features, OutputFeatures)
-        assert isinstance(self.constraints, Constraints)
-        config: Dict[str, Any] = {
-            "input_features": self.input_features.to_config(),
-            "output_features": self.output_features.to_config(),
-            "constraints": self.constraints.to_config(),
-        }
-        if self.experiments is not None and self.num_experiments > 0:
-            config["experiments"] = self.experiments.to_dict()
-        if self.candidates is not None and self.num_candidates > 0:
-            config["candidates"] = self.candidates.to_dict()
-        return config
-
-    @classmethod
-    def from_config(cls, config: Dict):
-        """Instantiates a `Domain` object from a dictionary created by the `to_config`method.
-
-        Args:
-            config (Dict): Serialized version of a domain as dictionary.
-        """
-        d = cls(
-            input_features=typing.cast(
-                InputFeatures, InputFeatures.from_config(config["input_features"])
-            ),
-            output_features=typing.cast(
-                OutputFeatures, OutputFeatures.from_config(config["output_features"])
-            ),
-            constraints=Constraints.from_config(config["constraints"]),
-        )
-        if "experiments" in config.keys():
-            d.set_experiments(experiments=config["experiments"])
-        if "candidates" in config.keys():
-            d.set_candidates(candidates=config["candidates"])
-        return d
 
     def get_feature_reps_df(self) -> pd.DataFrame:
         """Returns a pandas dataframe describing the features contained in the optimization domain."""
