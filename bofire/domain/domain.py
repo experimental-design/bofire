@@ -468,9 +468,7 @@ class Domain(BaseModel):
         """
         # prepare the parent frame
 
-        preprocessed = self.output_features.preprocess_experiments_any_valid_output(
-            experiments
-        )
+        preprocessed = self.outputs.preprocess_experiments_any_valid_output(experiments)
         assert preprocessed is not None
         experiments = preprocessed.copy()
         if "labcode" not in experiments.columns:
@@ -598,7 +596,7 @@ class Domain(BaseModel):
                 experiments.loc[experiments[feat].notna()].shape[0],
                 experiments.loc[experiments[feat].notna(), "valid_%s" % feat].sum(),
             ]
-        preprocessed = self.output_features.preprocess_experiments_all_valid_outputs(
+        preprocessed = self.outputs.preprocess_experiments_all_valid_outputs(
             experiments
         )
         assert preprocessed is not None
