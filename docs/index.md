@@ -1,6 +1,7 @@
 # Introduction
 
-BoFire is a framework to define and solve or black-box optimization problems. These problems can arise in a number of closely related fields including experimental design, multiobjective optimization and decision making, and Bayesian optimization.
+BoFire is a framework to define and solve black-box optimization problems. 
+These problems can arise in a number of closely related fields including experimental design, multiobjective optimization and active learning.
 
 BoFire problem specifications are json serializable for use in RESTful APIs and are to a large extent agnostic to the specific methods and frameworks in which the problems are solved.
 

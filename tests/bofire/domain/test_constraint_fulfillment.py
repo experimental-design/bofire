@@ -8,7 +8,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    NonlinearInqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 
 F = FEATURES = ["f" + str(i) for i in range(1, 11)]
@@ -43,7 +43,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:4], 1),
-            NonlinearInqualityConstraint(
+            NonlinearInequalityConstraint(
                 features=F[:4],
                 expression="f1 + f2 + f3 + f4 -5",
             ),
@@ -51,7 +51,7 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             get_row(F[:4], 1),
-            NonlinearInqualityConstraint(
+            NonlinearInequalityConstraint(
                 features=F[:4],
                 expression="f1 + f2 + f3 + f4 -2",
             ),
