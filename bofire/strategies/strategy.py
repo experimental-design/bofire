@@ -156,22 +156,22 @@ class Strategy(BaseModel):
         pass
 
     @property
-    def experiments(self) -> Optional[pd.DataFrame]:
+    def experiments(self) -> pd.DataFrame:
         """Property returning the experiments associated with the current strategy.
 
         Returns:
             pd.DataFrame: Experiments.
         """
-        return self.domain.experiments
+        return self.domain.experiments  # type: ignore
 
     @property
-    def pending_candidates(self) -> Optional[pd.DataFrame]:
+    def pending_candidates(self) -> pd.DataFrame:
         """Candidates considered as pending.
 
         Returns:
             pd.DataFrame: pending candidates.
         """
-        return self.domain.candidates
+        return self.domain.candidates  # type: ignore
 
     def tell(
         self,
@@ -394,7 +394,7 @@ class PredictiveStrategy(Strategy):
         # TODO: validate also here the experiments but only for the input_columns
         # transformed = self.transformer.transform(experiments)
         transformed = self.domain.inputs.transform(
-            experiments=experiments, specs=self.input_preproccesing_specs
+            experiments=experiments, specs=self.input_preprocessing_specs
         )
         preds, stds = self._predict(transformed)
         if stds is not None:

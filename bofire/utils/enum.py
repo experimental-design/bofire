@@ -37,21 +37,12 @@ class CategoricalEncodingEnum(Enum):
     DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
-class DescriptorEncodingEnum(Enum):
-    """Enumeration class how categorical features with descriptors should be encoded
-    Categoricals with descriptors can be handled similar to categoricals, or the descriptors can be used.
-    """
-
-    DESCRIPTOR = "DESCRIPTOR"
-    CATEGORICAL = "CATEGORICAL"
-
-
 class AcquisitionFunctionEnum(Enum):
     QNEI = "QNEI"
     QUCB = "QUCB"
     QEI = "QEI"
     QPI = "QPI"
-    QSR = "qSR"
+    QSR = "QSR"
 
 
 class OutputFilteringEnum(Enum):

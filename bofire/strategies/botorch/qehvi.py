@@ -34,7 +34,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
     objective: Optional[MCMultiOutputObjective]
 
     def _init_acqf(self) -> None:
-        df = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
 
@@ -129,7 +129,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 )
             ).tolist()
         # we have to push all results through the objective functions and then take the min values
-        df = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
         return (
@@ -185,7 +185,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
     def _init_acqf(self) -> None:
         # TODO move this into general helper function as done in OU
-        df = self.domain.output_features.preprocess_experiments_all_valid_outputs(
+        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
 
@@ -195,11 +195,9 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             inplace=False,
         )
         # now transform it
-        df_transform = self.transformer.transform(df)  # type: ignore
+        df_transform = self.domain.inputs.transform(df, self.input_preprocessing_specs)
         # now transform to torch
-        train_x = torch.from_numpy(df_transform[self.input_feature_keys].values).to(
-            **tkwargs
-        )
+        train_x = torch.from_numpy(df_transform.values).to(**tkwargs)
         assert self.model is not None
         # if the reference point is not defined it has to be calculated from data
         self.acqf = qNoisyExpectedHypervolumeImprovement(

@@ -33,10 +33,9 @@ from bofire.models.torch_models import (
 )
 from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two
-from bofire.utils.enum import (
+from bofire.utils.enum import (  # DescriptorMethodEnum,
     CategoricalEncodingEnum,
     CategoricalMethodEnum,
-    DescriptorMethodEnum,
 )
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
@@ -47,7 +46,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     num_sobol_samples: PositiveInt = 512
     num_restarts: PositiveInt = 8
     num_raw_samples: PositiveInt = 1024
-    descriptor_method: DescriptorMethodEnum = DescriptorMethodEnum.EXHAUSTIVE
+    descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     model_specs: Optional[BotorchModels] = None
 
@@ -81,13 +80,24 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             values["domain"],
             values["model_specs"],
         )
-        # we also have to checke here that the categorical method is compatiblle with the chosen models
+        # we also have to checke here that the categorical method is compatible with the chosen models
         if values["categorical_method"] == CategoricalMethodEnum.FREE:
             for m in values["model_specs"].models:
                 if isinstance(m, MixedSingleTaskGPModel):
                     raise ValueError(
                         "Categorical method FREE not compatible with a a MixedSingleTaskGPModel."
                     )
+        #  we also check that if a categorical with descriptor method is used as one hot encoded the same method is
+        # used for the descriptor as for the categoricals
+        for m in values["model_specs"].models:
+            keys = m.input_features.get_keys(CategoricalDescriptorInput)
+            for k in keys:
+                if m.input_preprocessing_specs[k] == CategoricalEncodingEnum.ONE_HOT:
+                    if values["categorical_method"] != values["descriptor_method"]:
+                        print(values["categorical_method"], values["descriptor_method"])
+                        raise ValueError(
+                            "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals."
+                        )
         return values
 
     @staticmethod
@@ -256,7 +266,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             or (num_categorical_combinations == 1)
             or (
                 (self.categorical_method == CategoricalMethodEnum.FREE)
-                and (self.descriptor_method == DescriptorMethodEnum.FREE)
+                and (self.descriptor_method == CategoricalMethodEnum.FREE)
             )
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
             candidates = optimize_acqf(
@@ -278,7 +288,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
         elif (
             (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
-            or (self.descriptor_method == DescriptorMethodEnum.EXHAUSTIVE)
+            or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
             # TODO: marry this withe groups of XY
             candidates = optimize_acqf_mixed(
@@ -293,7 +303,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 inequality_constraints=get_linear_constraints(
                     domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
                 ),
-                ed_features_list=self.get_categorical_combinations(),
+                fixed_features_list=self.get_categorical_combinations(),
             )
             # options={"seed":self.seed})
 
@@ -329,24 +339,12 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             for item in self._features2names[key]
         ]
 
-        # TODO: check here ones without any objective
         df_candidates = pd.DataFrame(
-            data=np.nan,
-            index=range(candidate_count),
-            columns=input_feature_keys
-            + [
-                i + "_pred"
-                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
-            ]
-            + [
-                i + "_sd"
-                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
-            ]
-            + [
-                i + "_des"
-                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
-            ]
-            # ["reward","acqf","strategy"]
+            data=candidates[0].detach().numpy(), columns=input_feature_keys
+        )
+
+        df_candidates = self.domain.inputs.inverse_transform(
+            df_candidates, self.input_preprocessing_specs
         )
 
         for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
@@ -354,11 +352,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             df_candidates[feat.key + "_sd"] = stds[:, i]
             df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
 
-        df_candidates[input_feature_keys] = candidates[0].detach().numpy()
-
-        return self.domain.inputs.inverse_transform(
-            df_candidates, specs=self.input_preprocessing_specs
-        )
+        return df_candidates
 
     def _tell(self) -> None:
         if self.has_sufficient_experiments():
@@ -427,7 +421,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         pd.Series([feat.fixed_value()])
                     )
                     for j, idx in enumerate(features2idx[feat.key]):
-                        fixed_features[idx] = transformed.values[0, j]
+                        fixed_features[idx] = transformed.values[0, j]  # type: ignore
         # in case the optimization method is free and not allowed categories are present
         # one has to fix also them, this is abit of double work as it should be also reflected
         # in the bounds but helps to make it safer
@@ -463,11 +457,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         include = CategoricalInput
         exclude = None
 
-        if (self.descriptor_method == DescriptorMethodEnum.FREE) and (
+        if (self.descriptor_method == CategoricalMethodEnum.FREE) and (
             self.categorical_method == CategoricalMethodEnum.FREE
         ):
             return [{}]
-        elif self.descriptor_method == DescriptorMethodEnum.FREE:
+        elif self.descriptor_method == CategoricalMethodEnum.FREE:
             exclude = CategoricalDescriptorInput
         elif self.categorical_method == CategoricalMethodEnum.FREE:
             include = CategoricalDescriptorInput
@@ -536,21 +530,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # CARTESIAN PRODUCTS: fixed values from categorical combinations X fixed values from nchoosek constraints
         fixed_values_full = []
 
-        if (
-            self.categorical_method == CategoricalMethodEnum.FREE
-            and self.descriptor_method == DescriptorMethodEnum.FREE
-        ):
-            ff1 = self.get_fixed_features()
+        for ff1 in self.get_categorical_combinations():
             for ff2 in self.get_nchoosek_combinations():
                 ff = ff1.copy()
                 ff.update(ff2)
                 fixed_values_full.append(ff)
-        else:
-            for ff1 in self.get_categorical_combinations():
-                for ff2 in self.get_nchoosek_combinations():
-                    ff = ff1.copy()
-                    ff.update(ff2)
-                    fixed_values_full.append(ff)
 
         return fixed_values_full
 

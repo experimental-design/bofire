@@ -13,14 +13,9 @@ from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
-from bofire.strategies.botorch.base import (
-    CategoricalEncodingEnum,
-    DescriptorEncodingEnum,
-    DescriptorMethodEnum,
-)
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
+from bofire.utils.enum import CategoricalMethodEnum
 from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
-from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 
 if1 = ContinuousInput(
@@ -59,9 +54,9 @@ VALID_BOTORCH_QEHVI_STRATEGY_SPEC = {
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
-    "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
-    "descriptor_method": random.choice(list(DescriptorMethodEnum)),
-    "categorical_encoding": random.choice(list(CategoricalEncodingEnum)),
+    # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
+    "descriptor_method": random.choice(list(CategoricalMethodEnum)),
+    # "categorical_encoding": random.choice(list(CategoricalEncodingEnum)),
     "categorical_method": "EXHAUSTIVE",
 }
 
@@ -69,17 +64,12 @@ BOTORCH_QEHVI_STRATEGY_SPECS = {
     "valids": [
         VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
         {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "seed": 1},
-        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
+        # {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
         {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "ref_point": {"of1": 1.0, "of2": 2}},
     ],
     "invalids": [
-        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "descriptor_encoding": None},
-        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "categorical_encoding": None},
-        {
-            **VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
-            "categorical_encoding": "ORDINAL",
-            "categorical_method": "FREE",
-        },
+        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "descriptor_method": None},
+        {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "categorical_method": None},
         {**VALID_BOTORCH_QEHVI_STRATEGY_SPEC, "seed": -1},
     ],
 }

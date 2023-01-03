@@ -18,15 +18,11 @@ from bofire.strategies.botorch.sobo import (
     qSR,
     qUCB,
 )
-from bofire.utils.enum import (
-    AcquisitionFunctionEnum,
-    CategoricalEncodingEnum,
-    DescriptorEncodingEnum,
-    DescriptorMethodEnum,
-)
+from bofire.utils.enum import AcquisitionFunctionEnum
 from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
-from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
+
+# from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[2],
@@ -34,9 +30,7 @@ VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
-    "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
-    "descriptor_method": random.choice(list(DescriptorMethodEnum)),
-    "categorical_encoding": random.choice(list(CategoricalEncodingEnum)),
+    "descriptor_method": "EXHAUSTIVE",
     "categorical_method": "EXHAUSTIVE",
 }
 
@@ -44,17 +38,12 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
     "valids": [
         VALID_BOTORCH_SOBO_STRATEGY_SPEC,
         {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "seed": 1},
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
+        # {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
     ],
     "invalids": [
         {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "acquisition_function": None},
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "descriptor_encoding": None},
-        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "categorical_encoding": None},
-        {
-            **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
-            "categorical_encoding": "ORDINAL",
-            "categorical_method": "FREE",
-        },
+        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "descriptor_method": None},
+        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "categorical_method": None},
         {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "seed": -1},
     ],
 }
@@ -76,11 +65,11 @@ def test_SOBO_not_fitted(domain, acqf):
     [
         (domains[0], acqf_inp[0], acqf_inp[1], num_test_candidates)
         for acqf_inp in [
-            ("qEI", qExpectedImprovement),
-            ("qNEI", qNoisyExpectedImprovement),
-            ("qPI", qProbabilityOfImprovement),
-            ("qUCB", qUpperConfidenceBound),
-            ("qSR", qSimpleRegret),
+            ("QEI", qExpectedImprovement),
+            ("QNEI", qNoisyExpectedImprovement),
+            ("QPI", qProbabilityOfImprovement),
+            ("QUCB", qUpperConfidenceBound),
+            ("QSR", qSimpleRegret),
             (qEI(), qExpectedImprovement),
             (qNEI(), qNoisyExpectedImprovement),
             (qPI(), qProbabilityOfImprovement),

@@ -45,7 +45,7 @@ class Model(BaseModel):
         )
 
     @abstractmethod
-    def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.array, np.array]:
+    def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         pass
 
 
@@ -57,33 +57,33 @@ class TrainableModel:
         # preprocess
         experiments = self._preprocess_experiments(experiments)
         # validate
-        X = self.input_features.validate_inputs(experiments)
-        Y = experiments[self.output_features.get_keys()].values
-        # transform
-        transformed_X = self.input_features.transform(
-            X, self.input_preprocessing_specs
-        ).values
+        experiments = self.input_features.validate_experiments(  # type: ignore
+            experiments, strict=False
+        )
+        X = experiments[self.input_features.get_keys()]  # type: ignore
+        # TODO: output feature validation
+        Y = experiments[self.output_features.get_keys()]  # type: ignore
         # fit
-        self._fit(X=transformed_X, Y=Y)
+        self._fit(X=X, Y=Y)  # type: ignore
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self._output_filtering is None:
             return experiments
         elif self._output_filtering == OutputFilteringEnum.ALL:
-            return self.output_features.preprocess_experiments_all_valid_outputs(
+            return self.output_features.preprocess_experiments_all_valid_outputs(  # type: ignore
                 experiments=experiments,
-                output_feature_keys=self.output_features.get_keys(),
+                output_feature_keys=self.output_features.get_keys(),  # type: ignore
             )
         elif self._output_filtering == OutputFilteringEnum.ANY:
-            return self.output_features.preprocess_experiments_any_valid_outputs(
+            return self.output_features.preprocess_experiments_any_valid_outputs(  # type: ignore
                 experiments=experiments,
-                output_feature_keys=self.output_features.get_keys(),
+                output_feature_keys=self.output_features.get_keys(),  # type: ignore
             )
         else:
             raise ValueError("Unknown output filtering option requested.")
 
     @abstractmethod
-    def _fit(self, X: np.ndarray, Y: np.ndarray):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         pass
 
     def cross_validate(self, experiments: pd.DataFrame):

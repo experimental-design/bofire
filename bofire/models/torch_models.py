@@ -87,7 +87,7 @@ class HammondDistanceKernel(CategoricalKernel):
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> GpytorchKernel:
-        return 5
+        raise NotImplementedError
 
 
 class RBF(ContinuousKernel):
@@ -275,6 +275,8 @@ class BotorchModels(BaseModel):
         features2idx, _ = input_features._get_transform_info(
             self.input_preprocessing_specs
         )
+        #
+        all_gp = True
         botorch_models = []
         # we sort the models by sorting them with their occurence in output_features
         for output_feature_key in output_features.get_keys():
@@ -296,15 +298,22 @@ class BotorchModels(BaseModel):
                 )
                 if (
                     hasattr(model.model, "input_transform")
-                    and model.model.input_transform is not None
+                    and model.model.input_transform is not None  # type: ignore
                 ):
-                    model.model.input_transform = ChainedInputTransform(
-                        tf1=features_filter, tf2=model.model.input_transform
+                    model.model.input_transform = ChainedInputTransform(  # type: ignore
+                        tf1=features_filter, tf2=model.model.input_transform  # type: ignore
                     )
                 else:
-                    model.model.input_transform = features_filter
+                    model.model.input_transform = features_filter  # type: ignore
 
                 botorch_models.append(model.model)
+                if isinstance(model.model, botorch.models.SingleTaskGP) is False:
+                    all_gp = False
+
+        if len(botorch_models) == 1:
+            return botorch_models[0]
+        if all_gp:
+            return botorch.models.ModelListGP(*botorch_models)
         return ModelList(*botorch_models)
 
 
@@ -319,7 +328,7 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
     # non_numerical_features: Optional[List] = None  # only relevant for training
     training_specs: Dict = {}  # only relevant for training
 
-    def _fit(self, X: np.ndarray, Y: np.ndarray):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         # get transform meta information
         features2idx, _ = self.input_features._get_transform_info(
             self.input_preprocessing_specs
@@ -329,9 +338,13 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
             for key, value in self.input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
         ]
+        # transform X
+        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
 
-        # transform from numpy to torch
-        tX, tY = torch.from_numpy(X).to(**tkwargs), torch.from_numpy(Y).to(**tkwargs)
+        # transform from pandas to torch
+        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
+            Y.values
+        ).to(**tkwargs)
 
         if tX.dim() == 2:
             batch_shape = torch.Size()
@@ -396,7 +409,7 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
     # non_numerical_features: Optional[List] = None
     training_specs: Dict = {}
 
-    def _fit(self, X: np.ndarray, Y: np.ndarray):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         # get transform meta information
         features2idx, _ = self.input_features._get_transform_info(
             self.input_preprocessing_specs
@@ -406,8 +419,13 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
             for key, value in self.input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
         ]
-        # transform from numpy to torch
-        tX, tY = torch.from_numpy(X).to(**tkwargs), torch.from_numpy(Y).to(**tkwargs)
+        # transform X
+        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+
+        # transform from pandas to torch
+        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
+            Y.values
+        ).to(**tkwargs)
 
         if tX.dim() == 2:
             batch_shape = torch.Size()
@@ -433,7 +451,7 @@ class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
         if self.scaler == ScalerEnum.NORMALIZE:
             # TODO: take the real bounds here
             lower, upper = self.input_features.get_bounds(
-                specs=self.input_preprocessing_specs
+                specs=self.input_preprocessing_specs, experiments=X
             )
             scaler = Normalize(
                 d=d,

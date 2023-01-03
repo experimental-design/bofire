@@ -1,5 +1,6 @@
 from typing import Type
 
+import torch
 from botorch.acquisition import get_acquisition_function
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
 
@@ -12,12 +13,14 @@ from bofire.strategies.botorch.utils.objectives import (
     MultiplicativeObjective,
 )
 from bofire.utils.enum import AcquisitionFunctionEnum
+from bofire.utils.torch_tools import tkwargs
 
 
 class AcquisitionFunction(BaseModel):
     @staticmethod
     @validate_arguments
     def from_enum(acquistion_function_enum: AcquisitionFunctionEnum):
+        print(acquistion_function_enum)
         if acquistion_function_enum == AcquisitionFunctionEnum.QEI:
             return qEI()
         if acquistion_function_enum == AcquisitionFunctionEnum.QNEI:
@@ -67,15 +70,14 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         assert self.is_fitted is True, "Model not trained."
 
         clean_experiments = (
-            self.domain.output_features.preprocess_experiments_all_valid_outputs(
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
                 self.experiments
             )
         )
-        transformed = self.transformer.transform(clean_experiments)  # type: ignore
-        X_train, _ = self.get_training_tensors(
-            transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
+        transformed = self.domain.inputs.transform(
+            clean_experiments, self.input_preprocessing_specs
         )
+        X_train = torch.from_numpy(transformed.values).to(**tkwargs)
 
         # TODO: refactor pending experiments
         X_pending = None
