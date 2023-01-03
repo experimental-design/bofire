@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional, Tuple, Type
 import numpy as np
 import pandas as pd
 from pydantic import BaseModel, validator
-from pydantic.types import NonNegativeInt
+from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
@@ -145,11 +145,8 @@ class Strategy(BaseModel):
                 )
         return domain
 
-    @abstractmethod
-    def _init_domain(
-        self,
-    ) -> None:
-        """Abstract method to allow for customized functions in the constructor of Strategy.
+    def _init_domain(self) -> None:
+        """Optional method to allow for customized functions in the constructor of Strategy.
 
         Called at the end of `__init__`.
         """
@@ -173,16 +170,12 @@ class Strategy(BaseModel):
         """
         return self.domain.candidates  # type: ignore
 
-    def tell(
-        self,
-        experiments: pd.DataFrame,
-        replace: bool = False,
-    ):
+    def tell(self, experiments: pd.DataFrame, replace: bool = False) -> None:
         """This function passes new experimental data to the optimizer
 
         Args:
             experiments (pd.DataFrame): DataFrame with experimental data
-            replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
+            replace (bool, optional): Boolean to decide if the experimental data should replace the former DataFrame or if the new experiments should be attached. Defaults to False.
         """
         if len(experiments) == 0:
             return
@@ -192,28 +185,24 @@ class Strategy(BaseModel):
             self.domain.add_experiments(experiments)
         self._tell()
 
-    @abstractmethod
-    def _tell(
-        self,
-    ) -> None:
-        """Abstract method to allow for customized tell functions in addition to self.tell()"""
+    def _tell(self) -> None:
+        """Method to allow for customized tell functions in addition to self.tell()"""
         pass
 
     def ask(
         self,
-        candidate_count: Optional[NonNegativeInt] = None,
+        candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
         candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
-        """Function to generate new candidates
+        """Function to generate new candidates.
 
         Args:
-            candidate_count (NonNegativeInt, optional): Number of candidates to be generated. If not provided, the number
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number
                 of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
             candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided,
                 pool independent candidates are provided. Defaults to None.
-
 
         Raises:
             ValueError: if candidate count is smaller than 1
@@ -242,7 +231,7 @@ class Strategy(BaseModel):
                 ), "Number of requested candidates is larger than the pool from which they should be chosen."
             candidates = self._choose_from_pool(candidate_pool, candidate_count)
 
-        self.domain.validate_candidates(candidates=candidates)
+        self.domain.validate_candidates(candidates=candidates, only_inputs=True)
 
         if candidate_count is not None:
             if len(candidates) != candidate_count:
@@ -256,17 +245,14 @@ class Strategy(BaseModel):
         return candidates
 
     @abstractmethod
-    def _ask(
-        self,
-        candidate_count: Optional[NonNegativeInt] = None,
-    ) -> pd.DataFrame:
-        """Abstract ask method to allow for customized ask functions in addition to self.ask().
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+        """Abstract method to implement how a strategy generates candidates.
 
         Args:
-            candidate_count (NonNegativeInt, optional): Number of candidates to be generated. Defaults to None.
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to None.
 
         Returns:
-            pd.DataFrame: DataFrame with candidates (proposed experiments)
+            pd.DataFrame: DataFrame with candidates (proposed experiments).
         """
         pass
 
@@ -274,13 +260,13 @@ class Strategy(BaseModel):
     def _choose_from_pool(
         self,
         candidate_pool: pd.DataFrame,
-        candidate_count: Optional[NonNegativeInt] = None,
+        candidate_count: Optional[PositiveInt] = None,
     ) -> pd.DataFrame:
         """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
 
         Args:
             candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[NonNegativeInt], optional): Number of candidates to choose. Defaults to None.
+            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
 
         Returns:
             pd.DataFrame: The chosen set of candidates.
@@ -356,6 +342,30 @@ class PredictiveStrategy(Strategy):
     @abstractmethod
     def input_preprocessing_specs(self) -> Dict[str, CategoricalEncodingEnum]:
         pass
+
+    def ask(
+        self,
+        candidate_count: Optional[PositiveInt] = None,
+        add_pending: bool = False,
+        candidate_pool: Optional[pd.DataFrame] = None,
+    ) -> pd.DataFrame:
+        """Function to generate new candidates.
+
+        Args:
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.
+            add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
+            candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided, pool independent candidates are provided. Defaults to None.
+
+        Returns:
+            pd.DataFrame: DataFrame with candidates (proposed experiments)
+        """
+        candidates = super().ask(
+            candidate_count=candidate_count,
+            add_pending=add_pending,
+            candidate_pool=candidate_pool,
+        )
+        self.domain.validate_candidates(candidates=candidates)
+        return candidates
 
     def tell(
         self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True

@@ -13,7 +13,7 @@ from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
-    NonlinearInqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.domain.features import (
     CategoricalDescriptorInput,
@@ -236,7 +236,7 @@ class RejectionSampler(Sampler):
     def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
         return my_type in [
             LinearInequalityConstraint,
-            NonlinearInqualityConstraint,
+            NonlinearInequalityConstraint,
             NChooseKConstraint,
         ]
 
