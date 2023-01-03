@@ -1310,6 +1310,7 @@ class InputFeatures(Features):
             samples[feat.key] = feat.fixed_value()  # type: ignore
         return self.validate_inputs(samples)[self.get_keys(InputFeature)]
 
+    # validate candidates, TODO rename and tidy up
     def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.
 
@@ -1327,6 +1328,15 @@ class InputFeatures(Features):
                 raise ValueError(f"no col for input feature `{feature.key}`")
             feature.validate_candidental(inputs[feature.key])  # type: ignore
         return inputs
+
+    def validate_experiments(
+        self, experiments: pd.DataFrame, strict=False
+    ) -> pd.DataFrame:
+        for feature in self:
+            if feature.key not in experiments:
+                raise ValueError(f"no col for input feature `{feature.key}`")
+            feature.validate_experimental(experiments[feature.key], strict=strict)  # type: ignore
+        return experiments
 
     def get_categorical_combinations(
         self,
