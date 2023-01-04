@@ -8,12 +8,14 @@ import pandas as pd
 from pydantic import Field, parse_obj_as, validator
 
 from bofire.domain.constraints import (
-    Constraint,
+    AnyConstraint,
     Constraints,
     LinearConstraint,
     NChooseKConstraint,
 )
 from bofire.domain.features import (
+    AnyInputFeature,
+    AnyOutputFeature,
     ContinuousInput,
     ContinuousOutput,
     Feature,
@@ -24,21 +26,21 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import Objective
-from bofire.domain.util import BaseModel, is_numeric
+from bofire.domain.util import BaseModel, is_numeric, isinstance_or_union
 
 
 class Domain(BaseModel):
 
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.
-    input_features: Union[Sequence[InputFeature], InputFeatures] = Field(
+    input_features: Union[Sequence[AnyInputFeature], InputFeatures] = Field(
         default_factory=lambda: InputFeatures()
     )
-    output_features: Union[Sequence[OutputFeature], OutputFeatures] = Field(
+    output_features: Union[Sequence[AnyOutputFeature], OutputFeatures] = Field(
         default_factory=lambda: OutputFeatures()
     )
 
-    constraints: Union[Sequence[Constraint], Constraints] = Field(
+    constraints: Union[Sequence[AnyConstraint], Constraints] = Field(
         default_factory=lambda: Constraints()
     )
 
@@ -72,7 +74,7 @@ class Domain(BaseModel):
         if isinstance(v, collections.abc.Sequence):
             v = InputFeatures(features=v)
             return v
-        if isinstance(v, InputFeature):
+        if isinstance_or_union(v, AnyInputFeature):
             return InputFeatures(features=[v])
         else:
             return v
@@ -81,7 +83,7 @@ class Domain(BaseModel):
     def validate_output_features_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             return OutputFeatures(features=v)
-        if isinstance(v, OutputFeature):
+        if isinstance_or_union(v, AnyOutputFeature):
             return OutputFeatures(features=[v])
         else:
             return v
@@ -90,7 +92,7 @@ class Domain(BaseModel):
     def validate_constraints_list(cls, v, values):
         if isinstance(v, list):
             return Constraints(constraints=v)
-        if isinstance(v, Constraint):
+        if isinstance_or_union(v, AnyConstraint):
             return Constraints(constraints=[v])
         else:
             return v
@@ -785,7 +787,7 @@ class Domain(BaseModel):
             )
 
     def _set_constraints_unvalidated(
-        self, constraints: Union[Sequence[Constraint], Constraints]
+        self, constraints: Union[Sequence[AnyConstraint], Constraints]
     ):
         """Hack for reduce_domain"""
         self.constraints = Constraints(constraints=[])

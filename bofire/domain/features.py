@@ -13,7 +13,7 @@ from pydantic.class_validators import root_validator
 from pydantic.types import conint, conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.domain.objectives import AnyObjective, MaximizeObjective
+from bofire.domain.objectives import AnyObjective, MaximizeObjective, Objective
 from bofire.domain.util import (
     BaseModel,
     KeyModel,
@@ -954,11 +954,11 @@ class Features(BaseModel):
 
         if is_infeats(self) and is_infeats(other):
             return InputFeatures(
-                features=cast(Tuple[InputFeature, ...], new_feature_seq)
+                features=cast(Tuple[AnyInputFeature, ...], new_feature_seq)
             )
         if is_outfeats(self) and is_outfeats(other):
             return OutputFeatures(
-                features=cast(Tuple[OutputFeature, ...], new_feature_seq)
+                features=cast(Tuple[AnyOutputFeature, ...], new_feature_seq)
             )
         return Features(features=new_feature_seq)
 
@@ -1156,7 +1156,9 @@ class OutputFeatures(Features):
 
     def get_by_objective(
         self,
-        includes: Union[List[Type[AnyObjective]], Type[AnyObjective]] = AnyObjective,
+        includes: Union[
+            List[Type[AnyObjective]], Type[AnyObjective], Type[Objective]
+        ] = Objective,
         excludes: Union[List[Type[AnyObjective]], Type[AnyObjective], None] = None,
         exact: bool = False,
     ) -> "OutputFeatures":
@@ -1189,7 +1191,9 @@ class OutputFeatures(Features):
 
     def get_keys_by_objective(
         self,
-        includes: Union[List[Type[AnyObjective]], Type[AnyObjective]] = AnyObjective,
+        includes: Union[
+            List[Type[AnyObjective]], Type[AnyObjective], Type[Objective]
+        ] = Objective,
         excludes: Union[List[Type[AnyObjective]], Type[AnyObjective], None] = None,
         exact: bool = False,
     ) -> List[str]:

@@ -391,7 +391,7 @@ class Constraints(BaseModel):
         return self.constraints[i]
 
     def __add__(
-        self, other: Union[Sequence[Constraint], "Constraints"]
+        self, other: Union[Sequence[AnyConstraint], "Constraints"]
     ) -> "Constraints":
         if isinstance(other, collections.abc.Sequence):
             other_constraints = other
