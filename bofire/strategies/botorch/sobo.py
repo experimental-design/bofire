@@ -2,6 +2,7 @@ from typing import Type
 
 import torch
 from botorch.acquisition import get_acquisition_function
+from botorch.models.gpytorch import GPyTorchModel
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
 
 from bofire.domain.constraints import Constraint
@@ -97,6 +98,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
             tau=self.acquisition_function.tau
             if isinstance(self.acquisition_function, qPI)
             else 1e-3,
+            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
         )
         return
 

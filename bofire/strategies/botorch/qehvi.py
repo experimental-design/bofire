@@ -10,6 +10,7 @@ from botorch.acquisition.multi_objective.objective import (
     MCMultiOutputObjective,
     WeightedMCMultiOutputObjective,
 )
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
@@ -207,6 +208,7 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             # sampler=self.sampler,
             prune_baseline=True,
             objective=self.objective,
+            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
         )
         # todo comment in after new botorch deployment
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
