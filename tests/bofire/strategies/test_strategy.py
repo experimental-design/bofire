@@ -1,4 +1,3 @@
-import random
 from typing import List
 
 import mock
@@ -268,7 +267,7 @@ def test_strategy_ask_invalid_candidates(
 
     def test_ask(self: Strategy, candidate_count: int):
         candidates = generate_candidates(self.domain, candidate_count)
-        candidates = candidates.drop(random.choice(candidates.columns), axis=1)
+        candidates = candidates.drop(candidates.columns[0], axis=1)
         return candidates
 
     with mock.patch.object(DummyStrategy, "_ask", new=test_ask):
@@ -375,6 +374,26 @@ def test_predictive_strategy_ask_valid(
 
     with mock.patch.object(DummyPredictiveStrategy, "_ask", new=test_ask):
         strategy.ask(candidate_count=1)
+
+
+def test_predictive_strategy_ask_invalid():
+    """Test that PretictiveStrategy also checks if candidates contain output columns."""
+    strategy = DummyPredictiveStrategy(
+        domain=Domain(
+            input_features=[if1, if2],
+            output_features=[of1, of2],
+            constraints=[],
+        )
+    )
+    strategy.tell(e3)
+
+    def test_ask(self: Strategy, candidate_count: int):
+        candidates = generate_candidates(self.domain, candidate_count)
+        return candidates.drop(columns=["of1_pred"])
+
+    with mock.patch.object(DummyPredictiveStrategy, "_ask", new=test_ask):
+        with pytest.raises(ValueError):
+            strategy.ask(candidate_count=2)
 
 
 @pytest.mark.parametrize(

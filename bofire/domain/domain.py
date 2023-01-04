@@ -693,7 +693,7 @@ class Domain(BaseModel):
                 # check that pred, sd, and des cols are specified and numerical
                 for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
                     if col not in candidates:
-                        raise ValueError("missing column {col}")
+                        raise ValueError(f"missing column {col}")
                     if (not is_numeric(candidates[col])) and (
                         not candidates[col].isnull().to_numpy().all()
                     ):
