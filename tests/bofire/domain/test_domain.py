@@ -392,7 +392,7 @@ domain2 = Domain(
 
 
 @pytest.mark.parametrize("domain", [domain, domain2])
-def test_domain_serialie(domain):
+def test_domain_serialize(domain):
     print("domain:", domain)
     import json
 
