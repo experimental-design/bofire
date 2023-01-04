@@ -186,7 +186,9 @@ def test_invalid_constraint_specs(cls, spec):
 
 def test_from_greater_equal():
     c = LinearInequalityConstraint.from_greater_equal(
-        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+        features=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["features"],
+        coefficients=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"],
+        rhs=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"],
     )
     assert c.rhs == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"] * -1.0
     assert c.coefficients == [
@@ -197,7 +199,9 @@ def test_from_greater_equal():
 
 def test_as_greater_equal():
     c = LinearInequalityConstraint.from_greater_equal(
-        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+        features=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["features"],
+        coefficients=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"],
+        rhs=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"],
     )
     features, coefficients, rhs = c.as_greater_equal()
     assert c.rhs == rhs * -1.0
@@ -207,7 +211,9 @@ def test_as_greater_equal():
 
 def test_from_smaller_equal():
     c = LinearInequalityConstraint.from_smaller_equal(
-        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+        features=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["features"],
+        coefficients=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"],
+        rhs=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"],
     )
     assert c.rhs == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"]
     assert c.coefficients == VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"]
@@ -216,7 +222,9 @@ def test_from_smaller_equal():
 
 def test_as_smaller_equal():
     c = LinearInequalityConstraint.from_smaller_equal(
-        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC
+        features=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["features"],
+        coefficients=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["coefficients"],
+        rhs=VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC["rhs"],
     )
     features, coefficients, rhs = c.as_smaller_equal()
     assert c.rhs == rhs

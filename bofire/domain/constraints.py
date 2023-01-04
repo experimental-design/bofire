@@ -202,7 +202,6 @@ class LinearInequalityConstraint(LinearConstraint):
         features: List[str],
         coefficients: List[float],
         rhs: float,
-        **kwargs,
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x >= rhs`.
 
@@ -224,7 +223,6 @@ class LinearInequalityConstraint(LinearConstraint):
         features: List[str],
         coefficients: List[float],
         rhs: float,
-        **kwargs,
     ):
         """Class method to construct linear inequality constraint of the form `coefficients * x <= rhs`.
 
