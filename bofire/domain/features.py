@@ -22,10 +22,12 @@ from bofire.domain.util import (
     is_numeric,
     name2key,
 )
-from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum
+from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum, ScalerEnum
 
 _CAT_SEP = "_"
 
+
+TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
 TInputTransformSpecs = Dict[str, CategoricalEncodingEnum]
 
 
@@ -152,6 +154,14 @@ class InputFeature(Feature):
         """
         pass
 
+    @abstractmethod
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        pass
+
 
 class NumericalInput(InputFeature):
     """Abstracht base class for all numerical (ordinal) input features."""
@@ -173,7 +183,9 @@ class NumericalInput(InputFeature):
             pd.Series: transformed values.
         """
         if use_real_bounds:
-            lower, upper = self.get_real_feature_bounds(values)
+            lower, upper = self.get_bounds(transform_type=None, values=values)
+            lower = lower[0]
+            upper = upper[0]
         else:
             lower, upper = self.lower_bound, self.upper_bound  # type: ignore
         if lower == upper:
@@ -240,7 +252,7 @@ class NumericalInput(InputFeature):
                 f"not all values of input feature `{self.key}` are numerical"
             )
         if strict:
-            lower, upper = self.get_real_feature_bounds(values)
+            lower, upper = self.get_bounds(transform_type=None, values=values)
             if lower == upper:
                 raise ValueError(
                     f"No variation present or planned for feature {self.key}. Remove it."
@@ -265,20 +277,17 @@ class NumericalInput(InputFeature):
             )
         return values
 
-    def get_real_feature_bounds(
-        self, values: Union[pd.Series, np.ndarray]
-    ) -> Tuple[float, float]:
-        """Method to extract the feature boundaries from the provided experimental data
-
-        Args:
-            values (pd.Series): Experimental data
-
-        Returns:
-            (float, float): Returns lower and upper bound based on the passed data
-        """
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert transform_type is None
+        if values is None:
+            return [self.lower_bound], [self.upper_bound]  # type: ignore
         lower = min(self.lower_bound, values.min())  # type: ignore
         upper = max(self.upper_bound, values.max())  # type: ignore
-        return lower, upper
+        return [lower], [upper]  # type: ignore
 
 
 class ContinuousInput(NumericalInput):
@@ -762,6 +771,38 @@ class CategoricalInput(InputFeature):
             name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
         )
 
+    def get_bounds(
+        self,
+        transform_type: TTransform,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert isinstance(transform_type, CategoricalEncodingEnum)
+        if transform_type == CategoricalEncodingEnum.ORDINAL:
+            return [0], [len(self.categories) - 1]
+        if transform_type == CategoricalEncodingEnum.ONE_HOT:
+            if values is None:
+                lower = [0.0 for _ in self.categories]
+                upper = [
+                    1.0 if self.allowed[i] is True else 0.0  # type: ignore
+                    for i, _ in enumerate(self.categories)
+                ]
+            else:
+                lower = [0.0 for _ in self.categories]
+                upper = [1.0 for _ in self.categories]
+            return lower, upper
+        if transform_type == CategoricalEncodingEnum.DUMMY:
+            lower = [0.0 for _ in range(len(self.categories) - 1)]
+            upper = [1.0 for _ in range(len(self.categories) - 1)]
+            return lower, upper
+        if transform_type == CategoricalEncodingEnum.DESCRIPTOR:
+            raise ValueError(
+                f"Invalid descriptor transform for categorical {self.key}."
+            )
+        else:
+            raise ValueError(
+                f"Invalid transform_type {transform_type} provided for categorical {self.key}."
+            )
+
     def __str__(self) -> str:
         """Returns the number of categories as str
 
@@ -843,21 +884,19 @@ class CategoricalDescriptorInput(CategoricalInput):
         data = {cat: values for cat, values in zip(self.categories, self.values)}
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
 
-    def get_real_descriptor_bounds(self, values) -> pd.DataFrame:
-        """Method to generate a dataFrame as tabular overview of lower and upper bounds of the descriptors (excluding non-allowed descriptors)
-
-        Args:
-            values (pd.Series): The categories present in the passed data for the considered feature
-
-        Returns:
-            pd.Series: Tabular overview of lower and upper bounds of the descriptors
-        """
-        df = self.to_df().loc[self.get_possible_categories(values)]
-        data = {
-            "lower": [min(df[desc].tolist()) for desc in self.descriptors],
-            "upper": [max(df[desc].tolist()) for desc in self.descriptors],
-        }
-        return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
+    def get_bounds(
+        self, transform_type: TTransform, values: Optional[pd.Series] = None
+    ) -> Tuple[List[float], List[float]]:
+        if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
+            return super().get_bounds(transform_type, values)
+        else:
+            if values is None:
+                df = self.to_df().loc[self.get_allowed_categories()]
+            else:
+                df = self.to_df().loc[self.get_possible_categories(values)]
+            lower = df.min().values.tolist()  # type: ignore
+            upper = df.max().values.tolist()  # type: ignore
+            return lower, upper
 
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
@@ -878,9 +917,11 @@ class CategoricalDescriptorInput(CategoricalInput):
         """
         values = super().validate_experimental(values, strict)
         if strict:
-            bounds = self.get_real_descriptor_bounds(values)
-            for desc in self.descriptors:
-                if bounds.loc["lower", desc] == bounds.loc["upper", desc]:
+            lower, upper = self.get_bounds(
+                transform_type=CategoricalEncodingEnum.DESCRIPTOR, values=values
+            )
+            for i, desc in enumerate(self.descriptors):
+                if lower[i] == upper[i]:
                     raise ValueError(
                         f"No variation present or planned for descriptor {desc} for feature {self.key}. Remove the descriptor."
                     )
@@ -1548,53 +1589,12 @@ class InputFeatures(Features):
         upper = []
 
         for feat in self.get():
-            if isinstance(feat, NumericalInput):
-                if experiments is None:
-                    lower.append(feat.lower_bound)  # type: ignore
-                    upper.append(feat.upper_bound)  # type: ignore
-                else:
-                    lb, ub = feat.get_real_feature_bounds(experiments[feat.key])  # type: ignore
-                    lower.append(lb)
-                    upper.append(ub)
-            elif isinstance(feat, CategoricalInput):
-                if (
-                    isinstance(feat, CategoricalDescriptorInput)
-                    and specs.get(feat.key) == CategoricalEncodingEnum.DESCRIPTOR
-                ):
-                    if experiments is None:
-                        df = feat.to_df().loc[feat.get_allowed_categories()]
-                        lower += df.min().values.tolist()  # type: ignore
-                        upper += df.max().values.tolist()  # type: ignore
-                    else:
-                        df = feat.get_real_descriptor_bounds(experiments[feat.key])  # type: ignore
-                        lower += df.loc["lower"].tolist()
-                        upper += df.loc["upper"].tolist()
-                # for ordinals we do not do any bound changes due to allowed categories as this is inheritly ill defined
-                elif specs.get(feat.key) == CategoricalEncodingEnum.ORDINAL:
-                    lower.append(0)
-                    upper.append(len(feat.categories) - 1)
-                elif specs.get(feat.key) == CategoricalEncodingEnum.ONE_HOT:
-                    if experiments is None:
-                        lower += [0.0 for _ in feat.categories]
-                        upper += [
-                            1.0 if feat.allowed[i] is True else 0.0  # type: ignore
-                            for i, _ in enumerate(feat.categories)
-                        ]
-                    else:
-                        lower += [0.0 for _ in feat.categories]
-                        upper += [1.0 for _ in feat.categories]
-                # for dummies we do not do any bound changes due to allowed categories as this is inheritly ill defined
-                elif specs.get(feat.key) == CategoricalEncodingEnum.DUMMY:
-                    for _ in range(len(feat.categories) - 1):
-                        lower.append(0.0)
-                        upper.append(1.0)
-                else:
-                    raise ValueError(
-                        f"No encoding provided for categorical feature {feat.key}."
-                    )
-            else:
-                raise ValueError("Feature type not known!")
-
+            l, u = feat.get_bounds(  # type: ignore
+                transform_type=specs.get(feat.key),
+                values=experiments[feat.key] if experiments is not None else None,
+            )
+            lower += l
+            upper += u
         return lower, upper
 
 

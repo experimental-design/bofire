@@ -352,10 +352,15 @@ def test_continuous_input_feature_is_fixed(input_feature, expected):
         (ContinuousInput(key="if2", lower_bound=1.0, upper_bound=1.0), (1, 1.0)),
     ],
 )
-def test_continuous_input_feature_get_real_feature_bounds(input_feature, expected):
+def test_continuous_input_feature_get_bounds(input_feature, expected):
     experiments = pd.DataFrame({"if1": [1.0, 2.0, 3.0], "if2": [1.0, 1.0, 1.0]})
-    lower, upper = input_feature.get_real_feature_bounds(experiments[input_feature.key])
-    assert (lower, upper) == expected
+    lower, upper = input_feature.get_bounds(values=experiments[input_feature.key])
+    assert (lower[0], upper[0]) == expected
+    lower, upper = input_feature.get_bounds()
+    assert (lower[0], upper[0]) == (
+        input_feature.lower_bound,
+        input_feature.upper_bound,
+    )
 
 
 @pytest.mark.parametrize(
@@ -574,12 +579,17 @@ def test_discrete_input_feature_bounds(input_feature, expected_lower, expected_u
         ),
     ],
 )
-def test_discrete_input_feature_get_real_feature_bounds(input_feature, expected):
+def test_discrete_input_feature_get_bounds(input_feature, expected):
     experiments = pd.DataFrame(
         {"if1": [1.0, 2.0, 3.0, 4.0], "if2": [1.0, 1.0, 1.0, 1.0]}
     )
-    lower, upper = input_feature.get_real_feature_bounds(experiments[input_feature.key])
-    assert (lower, upper) == expected
+    lower, upper = input_feature.get_bounds(values=experiments[input_feature.key])
+    assert (lower[0], upper[0]) == expected
+    lower, upper = input_feature.get_bounds()
+    assert (lower[0], upper[0]) == (
+        input_feature.lower_bound,
+        input_feature.upper_bound,
+    )
 
 
 @pytest.mark.parametrize(
@@ -823,6 +833,62 @@ def test_categorical_to_label_encoding():
     assert np.all(samples == untransformed)
 
 
+@pytest.mark.parametrize(
+    "feature, transform_type, values, expected",
+    [
+        (
+            CategoricalInput(key="c", categories=["B", "A", "C"]),
+            CategoricalEncodingEnum.ORDINAL,
+            None,
+            (0, 2),
+        ),
+        (
+            CategoricalInput(key="c", categories=["B", "A", "C"]),
+            CategoricalEncodingEnum.ONE_HOT,
+            None,
+            ([0, 0, 0], [1, 1, 1]),
+        ),
+        (
+            CategoricalInput(
+                key="c", categories=["B", "A", "C"], allowed=[True, False, True]
+            ),
+            CategoricalEncodingEnum.ONE_HOT,
+            pd.Series(["A", "B", "C"]),
+            ([0, 0, 0], [1, 1, 1]),
+        ),
+        (
+            CategoricalInput(
+                key="c", categories=["B", "A", "C"], allowed=[True, False, True]
+            ),
+            CategoricalEncodingEnum.ONE_HOT,
+            None,
+            ([0, 0, 0], [1, 0, 1]),
+        ),
+        (
+            CategoricalInput(key="c", categories=["B", "A", "C"]),
+            CategoricalEncodingEnum.DUMMY,
+            None,
+            ([0, 0], [1, 1]),
+        ),
+    ],
+)
+def test_categorical_get_bounds(feature, transform_type, values, expected):
+    lower, upper = feature.get_bounds(transform_type=transform_type, values=values)
+    assert np.allclose(lower, expected[0])
+    assert np.allclose(upper, expected[1])
+    # test the same for the categorical with descriptor
+    f = CategoricalDescriptorInput(
+        key="c",
+        categories=feature.categories,
+        allowed=feature.allowed,
+        descriptors=["alpha", "beta"],
+        values=[[1, 2], [3, 4], [5, 6]],
+    )
+    lower, upper = f.get_bounds(transform_type=transform_type, values=values)
+    assert np.allclose(lower, expected[0])
+    assert np.allclose(upper, expected[1])
+
+
 def test_categorical_descriptor_to_descriptor_encoding():
     c = CategoricalDescriptorInput(
         key="c",
@@ -890,11 +956,7 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
                 descriptors=["alpha", "beta"],
                 values=[[1, 2], [3, 4]],
             ),
-            pd.DataFrame.from_dict(
-                {"lower": [1, 2], "upper": [3, 4]},
-                orient="index",
-                columns=["alpha", "beta"],
-            ),
+            ([1, 2], [3, 4]),
         ),
         (
             CategoricalDescriptorInput(
@@ -904,11 +966,7 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
                 descriptors=["alpha", "beta"],
                 values=[[1, 2], [3, 4], [1, 5]],
             ),
-            pd.DataFrame.from_dict(
-                {"lower": [1, 2], "upper": [1, 5]},
-                orient="index",
-                columns=["alpha", "beta"],
-            ),
+            ([1, 2], [1, 5]),
         ),
         # (CategoricalInputFeature(key="if2", categories = ["a","b"], allowed = [True, True]), ["a","b"]),
         # (CategoricalInputFeature(key="if3", categories = ["a","b"], allowed = [True, False]), ["a"]),
@@ -918,14 +976,22 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
         # (ContinuousInputFeature(key="if2", lower_bound=1., upper_bound=1.), (1,1.)),
     ],
 )
-def test_categorical_descriptor_feature_get_real_descriptor_bounds(
-    input_feature, expected
-):
+def test_categorical_descriptor_feature_get_bounds(input_feature, expected):
     experiments = pd.DataFrame(
         {"if1": ["a", "b"], "if2": ["a", "c"], "if3": ["a", "a"], "if4": ["b", "b"]}
     )
-    df_bounds = input_feature.get_real_descriptor_bounds(experiments[input_feature.key])
-    assert_frame_equal(df_bounds, expected, check_like=True, check_dtype=False)
+    lower, upper = input_feature.get_bounds(
+        transform_type=CategoricalEncodingEnum.DESCRIPTOR,
+        values=experiments[input_feature.key],
+    )
+    assert np.allclose(lower, expected[0])
+    assert np.allclose(upper, expected[1])
+    lower, upper = input_feature.get_bounds(
+        transform_type=CategoricalEncodingEnum.DESCRIPTOR,
+        values=None,
+    )
+    assert np.allclose(lower, expected[0])
+    assert np.allclose(upper, expected[1])
 
 
 @pytest.mark.parametrize(
@@ -1780,6 +1846,8 @@ input_features2 = InputFeatures(
 )
 def test_input_features_get_bounds(input_features, specs, expected_bounds):
     lower, upper = input_features.get_bounds(specs=specs)
+    print(lower, upper)
+    print(expected_bounds)
     assert np.allclose(
         expected_bounds[0], lower
     )  # torch.equal asserts false due to deviation of 1e-7??
