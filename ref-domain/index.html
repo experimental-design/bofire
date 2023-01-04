@@ -10,8 +10,14 @@
       
         <link rel="canonical" href="https://experimental-design.github.io/bofire/ref-domain/">
       
+      
+        <link rel="prev" href="../install/">
+      
+      
+        <link rel="next" href="../ref-constraints/">
+      
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.2">
     
     
       
@@ -19,11 +25,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.975780f9.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.f56500e0.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
-        
       
       
 
@@ -56,7 +61,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="None" data-md-color-accent="None">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
     
@@ -367,13 +372,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.from_config" class="md-nav__link">
-    from_config()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.domain.domain.Domain.get_constraint_reps_df" class="md-nav__link">
     get_constraint_reps_df()
   </a>
@@ -432,13 +430,6 @@
           <li class="md-nav__item">
   <a href="#bofire.domain.domain.Domain.preprocess_experiments_one_valid_output" class="md-nav__link">
     preprocess_experiments_one_valid_output()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.domain.Domain.to_config" class="md-nav__link">
-    to_config()
   </a>
   
 </li>
@@ -617,10 +608,9 @@
                 
                   
 
-  <a href="https://github.com/experimental-design/bofire/edit/master/docs/ref-domain.md" title="Edit this page" class="md-content__button md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
-  </a>
+  
+  
+
 
 
 <h1 id="domain">Domain</h1>
@@ -667,21 +657,21 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="c1"># The types describe what we expect to be passed as arguments.</span>
     <span class="c1"># They will be converted to InputFeatures and OutputFeatures, respectively.</span>
-    <span class="n">input_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">],</span> <span class="n">InputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">input_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyInputFeature</span><span class="p">],</span> <span class="n">InputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">InputFeatures</span><span class="p">()</span>
     <span class="p">)</span>
-    <span class="n">output_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">OutputFeature</span><span class="p">],</span> <span class="n">OutputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">output_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyOutputFeature</span><span class="p">],</span> <span class="n">OutputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">()</span>
     <span class="p">)</span>
 
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Constraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Constraints</span><span class="p">()</span>
     <span class="p">)</span>
 
     <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">candidates</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="sd">&quot;&quot;&quot;Representation of the optimization problem/domain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Representation of the optimization problem/domain</span>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        input_features (List[InputFeature], optional): List of input features. Defaults to [].</span>
@@ -691,12 +681,12 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputFeatures</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns output features as OutputFeatures&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns output features as OutputFeatures&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">OutputFeatures</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">InputFeatures</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns input features as InputFeatures&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns input features as InputFeatures&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">cast</span><span class="p">(</span><span class="n">InputFeatures</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -708,7 +698,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">v</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">InputFeature</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyInputFeature</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">InputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
@@ -717,7 +707,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
     <span class="k">def</span> <span class="nf">validate_output_features_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">OutputFeature</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyOutputFeature</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">OutputFeatures</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
@@ -726,14 +716,14 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
     <span class="k">def</span> <span class="nf">validate_constraints_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">Constraint</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyConstraint</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputFeatures</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            v (OutputFeatures): List of all output features of the domain.</span>
@@ -755,7 +745,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
@@ -779,7 +769,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_linear_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
@@ -812,7 +802,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_lower_bounds_in_nchoosek_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate the lower bound as well if the chosen number of allowed features is continuous.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the lower bound as well if the chosen number of allowed features is continuous.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            v (List[Constraint]): List of all constraints defined for the domain</span>
@@ -839,50 +829,8 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
                     <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;lower bound of </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be 0 for NChooseK constraint.&quot;</span>
         <span class="k">return</span> <span class="n">v</span>
 
-    <span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Serializables itself to a dictionary.</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            Dict: Serialized version of the domain as dictionary.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">)</span>
-        <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
-            <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
-            <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
-        <span class="p">}</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_experiments</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_candidates</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">config</span><span class="p">[</span><span class="s2">&quot;candidates&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidates</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-        <span class="k">return</span> <span class="n">config</span>
-
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Instantiates a `Domain` object from a dictionary created by the `to_config`method.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            config (Dict): Serialized version of a domain as dictionary.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
-            <span class="n">input_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
-                <span class="n">InputFeatures</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">])</span>
-            <span class="p">),</span>
-            <span class="n">output_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
-                <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_features&quot;</span><span class="p">])</span>
-            <span class="p">),</span>
-            <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">]),</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="s2">&quot;experiments&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">set_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">])</span>
-        <span class="k">if</span> <span class="s2">&quot;candidates&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">d</span><span class="o">.</span><span class="n">set_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;candidates&quot;</span><span class="p">])</span>
-        <span class="k">return</span> <span class="n">d</span>
-
     <span class="k">def</span> <span class="nf">get_feature_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Returns a pandas dataframe describing the features contained in the optimization domain.&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a pandas dataframe describing the features contained in the optimization domain.&quot;&quot;&quot;</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Feature</span><span class="p">),</span>
             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span><span class="p">],</span>
@@ -896,7 +844,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="n">df</span>
 
     <span class="k">def</span> <span class="nf">get_constraint_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Provides a tabular overwiev of all constraints within the domain</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Provides a tabular overwiev of all constraints within the domain</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: DataFrame listing all constraints of the domain with a description</span>
@@ -919,7 +867,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Feature</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Feature</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Features</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;get features of the domain</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;get features of the domain</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.</span>
@@ -940,7 +888,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Method to get feature keys of the domain</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to get feature keys of the domain</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.</span>
@@ -960,7 +908,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">get_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;get a specific feature by its key</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;get a specific feature by its key</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key (str): Feature key</span>
@@ -973,7 +921,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="c1"># getting list of fixed values</span>
     <span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.</span>
@@ -1075,7 +1023,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="n">output_feature_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of the provided output feature are removed</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of the provided output feature are removed</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -1103,7 +1051,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">output_feature_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of all output feature are removed</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of all output feature are removed</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -1137,7 +1085,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
     <span class="k">def</span> <span class="nf">preprocess_experiments_any_valid_output</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Method to get a dataframe where at least one output feature has a valid entry</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to get a dataframe where at least one output feature has a valid entry</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -1169,7 +1117,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="n">clean_exp</span>
 
     <span class="k">def</span> <span class="nf">coerce_invalids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Coerces all invalid output measurements to np.nan</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Coerces all invalid output measurements to np.nan</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe containing experimental data</span>
@@ -1185,7 +1133,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
     <span class="k">def</span> <span class="nf">aggregate_by_duplicates</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">prec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;Aggregate the dataframe by duplicate experiments</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Aggregate the dataframe by duplicate experiments</span>
 
 <span class="sd">        Duplicates are identified based on the experiments with the same input features. Continuous input features</span>
 <span class="sd">        are rounded before identifying the duplicates. Aggregation is performed by taking the average of the</span>
@@ -1246,7 +1194,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;checks the experimental data on validity</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;checks the experimental data on validity</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -1315,7 +1263,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="n">experiments</span>
 
     <span class="k">def</span> <span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -1342,7 +1290,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
     <span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)</span>
@@ -1371,7 +1319,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
                 <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
                 <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
                     <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;missing column </span><span class="si">{col}</span><span class="s2">&quot;</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;missing column </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                     <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_numeric</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]))</span> <span class="ow">and</span> <span class="p">(</span>
                         <span class="ow">not</span> <span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                     <span class="p">):</span>
@@ -1388,7 +1336,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">experiment_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;the columns in the experimental dataframe</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;the columns in the experimental dataframe</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: List of columns in the experiment dataframe (output feature keys + valid_output feature keys)</span>
@@ -1400,7 +1348,7 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">candidate_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;the columns in the candidate dataframe</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;the columns in the candidate dataframe</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: List of columns in the candidate dataframe (input feature keys + input feature keys_pred, input feature keys_sd, input feature keys_des)</span>
@@ -1463,9 +1411,9 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_set_constraints_unvalidated</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">Constraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Hack for reduce_domain&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hack for reduce_domain&quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[])</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">):</span>
             <span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span>
@@ -1476,6 +1424,10 @@ Domain            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="mi">0</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_dict</span><span class="p">(</span><span class="n">dict_</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">parse_obj_as</span><span class="p">(</span><span class="n">Domain</span><span class="p">,</span> <span class="n">dict_</span><span class="p">)</span>
 </code></pre></div>
         </details>
 
@@ -1693,7 +1645,7 @@ involved output features.</p>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">aggregate_by_duplicates</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">prec</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Aggregate the dataframe by duplicate experiments</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate the dataframe by duplicate experiments</span>
 
 <span class="sd">    Duplicates are identified based on the experiments with the same input features. Continuous input features</span>
 <span class="sd">    are rounded before identifying the duplicates. Aggregation is performed by taking the average of the</span>
@@ -1807,7 +1759,7 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">coerce_invalids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Coerces all invalid output measurements to np.nan</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coerces all invalid output measurements to np.nan</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe containing experimental data</span>
@@ -1878,7 +1830,7 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a tabular overview of how many measurements and how many valid entries are included in the input data for each output feature</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -1907,72 +1859,6 @@ involved output features.</p>
 
   </div>
 
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.from_config" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Instantiates a <code>Domain</code> object from a dictionary created by the <code>to_config</code>method.</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>config</code></td>
-        <td><code>Dict</code></td>
-        <td><p>Serialized version of a domain as dictionary.</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Instantiates a `Domain` object from a dictionary created by the `to_config`method.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        config (Dict): Serialized version of a domain as dictionary.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span>
-        <span class="n">input_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
-            <span class="n">InputFeatures</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">])</span>
-        <span class="p">),</span>
-        <span class="n">output_features</span><span class="o">=</span><span class="n">typing</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
-            <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;output_features&quot;</span><span class="p">])</span>
-        <span class="p">),</span>
-        <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="o">.</span><span class="n">from_config</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;constraints&quot;</span><span class="p">]),</span>
-    <span class="p">)</span>
-    <span class="k">if</span> <span class="s2">&quot;experiments&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">d</span><span class="o">.</span><span class="n">set_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">])</span>
-    <span class="k">if</span> <span class="s2">&quot;candidates&quot;</span> <span class="ow">in</span> <span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-        <span class="n">d</span><span class="o">.</span><span class="n">set_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="o">=</span><span class="n">config</span><span class="p">[</span><span class="s2">&quot;candidates&quot;</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">d</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
@@ -2008,7 +1894,7 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_constraint_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Provides a tabular overwiev of all constraints within the domain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides a tabular overwiev of all constraints within the domain</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: DataFrame listing all constraints of the domain with a description</span>
@@ -2083,7 +1969,7 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_feature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;get a specific feature by its key</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;get a specific feature by its key</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        key (str): Feature key</span>
@@ -2169,7 +2055,7 @@ involved output features.</p>
     <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Method to get feature keys of the domain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get feature keys of the domain</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.</span>
@@ -2212,7 +2098,7 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_feature_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Returns a pandas dataframe describing the features contained in the optimization domain.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a pandas dataframe describing the features contained in the optimization domain.&quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
         <span class="n">index</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Feature</span><span class="p">),</span>
         <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Type&quot;</span><span class="p">,</span> <span class="s2">&quot;Description&quot;</span><span class="p">],</span>
@@ -2306,7 +2192,7 @@ involved output features.</p>
     <span class="n">excludes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Feature</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">Feature</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Features</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;get features of the domain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;get features of the domain</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.</span>
@@ -2361,7 +2247,7 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.</span>
@@ -2526,7 +2412,7 @@ involved output features.</p>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">output_feature_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of all output feature are removed</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of all output feature are removed</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -2617,7 +2503,7 @@ involved output features.</p>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">preprocess_experiments_any_valid_output</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Method to get a dataframe where at least one output feature has a valid entry</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a dataframe where at least one output feature has a valid entry</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -2716,7 +2602,7 @@ involved output features.</p>
     <span class="n">output_feature_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of the provided output feature are removed</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a dataframe where non-valid entries of the provided output feature are removed</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -2745,64 +2631,6 @@ involved output features.</p>
   </div>
 
 
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.domain.Domain.to_config" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Serializables itself to a dictionary.</p>
-
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>Dict</code></td>
-      <td><p>Serialized version of the domain as dictionary.</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_config</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Serializables itself to a dictionary.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Dict: Serialized version of the domain as dictionary.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="p">,</span> <span class="n">OutputFeatures</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">)</span>
-    <span class="n">config</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;input_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
-        <span class="s2">&quot;output_features&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_features</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
-        <span class="s2">&quot;constraints&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">to_config</span><span class="p">(),</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_experiments</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;experiments&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">experiments</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidates</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_candidates</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">config</span><span class="p">[</span><span class="s2">&quot;candidates&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">candidates</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
-    <span class="k">return</span> <span class="n">config</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
@@ -2896,7 +2724,7 @@ involved output features.</p>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)</span>
@@ -2925,7 +2753,7 @@ involved output features.</p>
             <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
             <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]:</span>
                 <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;missing column </span><span class="si">{col}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;missing column </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_numeric</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]))</span> <span class="ow">and</span> <span class="p">(</span>
                     <span class="ow">not</span> <span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
                 <span class="p">):</span>
@@ -3023,7 +2851,7 @@ involved output features.</p>
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
@@ -3155,7 +2983,7 @@ involved output features.</p>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;checks the experimental data on validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;checks the experimental data on validity</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe with experimental data</span>
@@ -3307,7 +3135,7 @@ involved output features.</p>
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">validate_linear_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
@@ -3406,7 +3234,7 @@ involved output features.</p>
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">validate_lower_bounds_in_nchoosek_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Validate the lower bound as well if the chosen number of allowed features is continuous.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the lower bound as well if the chosen number of allowed features is continuous.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        v (List[Constraint]): List of all constraints defined for the domain</span>
@@ -3517,7 +3345,7 @@ involved output features.</p>
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;output_features&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OutputFeatures</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        v (OutputFeatures): List of all output features of the domain.</span>
@@ -3574,7 +3402,7 @@ DomainError            (<span title="Exception">Exception</span>)
         <details class="quote">
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">DomainError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A class defining a specific domain error&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class defining a specific domain error&quot;&quot;&quot;</span>
 
     <span class="k">pass</span>
 </code></pre></div>
@@ -3679,7 +3507,7 @@ DomainError            (<span title="Exception">Exception</span>)
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">feature_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;removes all features not defined as argument creating a subdomain of the provided domain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;removes all features not defined as argument creating a subdomain of the provided domain</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): the original domain wherefrom a subdomain should be created</span>
@@ -3754,42 +3582,6 @@ DomainError            (<span title="Exception">Exception</span>)
       
         <footer class="md-footer">
   
-    
-    <nav class="md-footer__inner md-grid" aria-label="Footer" >
-      
-        
-        <a href="../install/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Install" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Install
-            </div>
-          </div>
-        </a>
-      
-      
-        
-        <a href="../ref-constraints/" class="md-footer__link md-footer__link--next" aria-label="Next: Constraints" rel="next">
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Next
-              </span>
-              Constraints
-            </div>
-          </div>
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11H4Z"/></svg>
-          </div>
-        </a>
-      
-    </nav>
-  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
@@ -3811,16 +3603,15 @@ DomainError            (<span title="Exception">Exception</span>)
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.12658920.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      <script src="../assets/javascripts/bundle.5cf534bf.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
-    
     
   </body>
 </html>

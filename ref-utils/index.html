@@ -10,8 +10,12 @@
       
         <link rel="canonical" href="https://experimental-design.github.io/bofire/ref-utils/">
       
+      
+        <link rel="prev" href="../ref-mappers/">
+      
+      
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-8.5.10">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.2">
     
     
       
@@ -19,11 +23,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.975780f9.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.f56500e0.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
-        
       
       
 
@@ -56,7 +59,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="None" data-md-color-accent="None">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
   
     
     
@@ -783,10 +786,9 @@
                 
                   
 
-  <a href="https://github.com/experimental-design/bofire/edit/master/docs/ref-utils.md" title="Edit this page" class="md-content__button md-icon">
-    
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25Z"/></svg>
-  </a>
+  
+  
+
 
 
 <h1 id="utils">Utils</h1>
@@ -855,7 +857,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <details class="quote">
           <summary>Source code in <code>bofire/utils/categoricalDescriptorEncoder.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalDescriptorEncoder</span><span class="p">(</span><span class="n">_BaseEncoder</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Encoder to translate categorical parameters into continuous descriptor values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -869,7 +871,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
         <span class="n">handle_unknown</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Encoder to translate categorical parameters into continuous descriptor values.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encoder to translate categorical parameters into continuous descriptor values.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            values (List[List[List[float]]]): Nested list of descriptor values. Must be of shape (n_features, n_categories_per_feature, n_descriptors).</span>
@@ -900,7 +902,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <span class="bp">self</span><span class="o">.</span><span class="n">handle_unknown</span> <span class="o">=</span> <span class="n">handle_unknown</span>
 
     <span class="k">def</span> <span class="nf">_validate_keywords</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Validate `handle_unknown` argument.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate `handle_unknown` argument.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: if `handle_unknown`not `error` or `ignore`.</span>
@@ -996,7 +998,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
             <span class="bp">self</span><span class="o">.</span><span class="n">descriptors_</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">des_list</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit Encoder to X.</span>
 
 <span class="sd">        Args:</span>
@@ -1011,7 +1013,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Fit categoricalDescriptorEncoder to X, then transform X.</span>
 <span class="sd">        Equivalent to fit(X).transform(X) but more convenient.</span>
 
@@ -1026,7 +1028,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Transform X using descriptors.</span>
 
 <span class="sd">        Args:</span>
@@ -1085,7 +1087,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
             <span class="c1"># return X_tr_sparse</span>
 
     <span class="k">def</span> <span class="nf">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convert the data back to the original representation.</span>
 
 <span class="sd">        Args:</span>
@@ -1138,7 +1140,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <span class="k">return</span> <span class="n">X_tr</span>
 
     <span class="k">def</span> <span class="nf">get_feature_names_out</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_features</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Get output feature names for transformation.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get output feature names for transformation.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input_features (array-like of str or None): default=None.</span>
@@ -1257,7 +1259,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
     <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">,</span>
     <span class="n">handle_unknown</span><span class="o">=</span><span class="s2">&quot;error&quot;</span><span class="p">,</span>
 <span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Encoder to translate categorical parameters into continuous descriptor values.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encoder to translate categorical parameters into continuous descriptor values.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        values (List[List[List[float]]]): Nested list of descriptor values. Must be of shape (n_features, n_categories_per_feature, n_descriptors).</span>
@@ -1351,7 +1353,7 @@ CategoricalDescriptorEncoder            (<span title="sklearn.preprocessing._enc
         <details class="quote">
           <summary>Source code in <code>bofire/utils/categoricalDescriptorEncoder.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fit Encoder to X.</span>
 
 <span class="sd">    Args:</span>
@@ -1430,7 +1432,7 @@ Equivalent to fit(X).transform(X) but more convenient.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/categoricalDescriptorEncoder.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Fit categoricalDescriptorEncoder to X, then transform X.</span>
 <span class="sd">    Equivalent to fit(X).transform(X) but more convenient.</span>
 
@@ -1508,7 +1510,7 @@ Input features.
         <details class="quote">
           <summary>Source code in <code>bofire/utils/categoricalDescriptorEncoder.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_feature_names_out</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_features</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get output feature names for transformation.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get output feature names for transformation.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        input_features (array-like of str or None): default=None.</span>
@@ -1591,7 +1593,7 @@ Input features.
         <details class="quote">
           <summary>Source code in <code>bofire/utils/categoricalDescriptorEncoder.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convert the data back to the original representation.</span>
 
 <span class="sd">    Args:</span>
@@ -1701,7 +1703,7 @@ Input features.
         <details class="quote">
           <summary>Source code in <code>bofire/utils/categoricalDescriptorEncoder.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Transform X using descriptors.</span>
 
 <span class="sd">    Args:</span>
@@ -1890,7 +1892,7 @@ Currently, one-hot and ordinal encoding are implemented.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/enum.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalEncodingEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumeration class of implemented categorical encodings</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration class of implemented categorical encodings</span>
 <span class="sd">    Currently, one-hot and ordinal encoding are implemented.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1944,7 +1946,7 @@ Currently, exhaustive search and free relaxation are implemented.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/enum.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalMethodEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumeration class of supported methods how to handle categorical features</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration class of supported methods how to handle categorical features</span>
 <span class="sd">    Currently, exhaustive search and free relaxation are implemented.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -1998,7 +2000,7 @@ Categoricals with descriptors can be handled similar to categoricals, or the des
         <details class="quote">
           <summary>Source code in <code>bofire/utils/enum.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">DescriptorEncodingEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumeration class how categorical features with descriptors should be encoded</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration class how categorical features with descriptors should be encoded</span>
 <span class="sd">    Categoricals with descriptors can be handled similar to categoricals, or the descriptors can be used.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -2052,7 +2054,7 @@ Currently, exhaustive search and free relaxation are implemented.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/enum.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">DescriptorMethodEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumeration class of implemented methods how to handle discrete descriptors</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration class of implemented methods how to handle discrete descriptors</span>
 <span class="sd">    Currently, exhaustive search and free relaxation are implemented.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -2106,7 +2108,7 @@ Currently, RBF and matern kernel (1/2, 3/2 and 5/2) are implemented.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/enum.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">KernelEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumeration class of all supported kernels</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration class of all supported kernels</span>
 <span class="sd">    Currently, RBF and matern kernel (1/2, 3/2 and 5/2) are implemented.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -2215,7 +2217,7 @@ Currently, normalization and standardization are implemented.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/enum.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ScalerEnum</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Enumeration class of supported scalers</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enumeration class of supported scalers</span>
 <span class="sd">    Currently, normalization and standardization are implemented.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -2304,10 +2306,10 @@ AffineTransform        </code>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">AffineTransform</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Class to switch back and forth from the reduced to the original domain.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class to switch back and forth from the reduced to the original domain.&quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equalities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]):</span>
-        <span class="sd">&quot;&quot;&quot;Initializes a `AffineTransformation` object.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initializes a `AffineTransformation` object.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            equalities (List[Tuple[str,List[str],List[float]]]): List of equalities. Every equality</span>
@@ -2318,7 +2320,7 @@ AffineTransform        </code>
         <span class="bp">self</span><span class="o">.</span><span class="n">equalities</span> <span class="o">=</span> <span class="n">equalities</span>
 
     <span class="k">def</span> <span class="nf">augment_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Restore the eliminated features in a dataframe</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Restore the eliminated features in a dataframe</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pd.DataFrame): Dataframe that should be restored.</span>
@@ -2336,7 +2338,7 @@ AffineTransform        </code>
         <span class="k">return</span> <span class="n">data</span>
 
     <span class="k">def</span> <span class="nf">drop_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Drop eliminated features from a dataframe.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Drop eliminated features from a dataframe.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            data (pd.DataFrame): Dataframe with features to be dropped.</span>
@@ -2408,7 +2410,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">equalities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]):</span>
-    <span class="sd">&quot;&quot;&quot;Initializes a `AffineTransformation` object.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initializes a `AffineTransformation` object.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        equalities (List[Tuple[str,List[str],List[float]]]): List of equalities. Every equality</span>
@@ -2476,7 +2478,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">augment_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Restore the eliminated features in a dataframe</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Restore the eliminated features in a dataframe</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data (pd.DataFrame): Dataframe that should be restored.</span>
@@ -2551,7 +2553,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">drop_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Drop eliminated features from a dataframe.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop eliminated features from a dataframe.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        data (pd.DataFrame): Dataframe with features to be dropped.</span>
@@ -2633,7 +2635,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">adjust_boundary</span><span class="p">(</span><span class="n">feature</span><span class="p">:</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">coef</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">rhs</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Adjusts the boundaries of a feature.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adjusts the boundaries of a feature.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        feature (ContinuousInputFeature): Feature to be adjusted.</span>
@@ -2706,7 +2708,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">check_domain_for_reduction</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Check if the reduction can be applied or if a trivial case is present.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Check if the reduction can be applied or if a trivial case is present.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): Domain to be checked.</span>
@@ -2763,7 +2765,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">check_existence_of_solution</span><span class="p">(</span><span class="n">A_aug</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Given an augmented coefficient matrix this function determines the existence (and uniqueness) of solution using the rank theorem.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given an augmented coefficient matrix this function determines the existence (and uniqueness) of solution using the rank theorem.&quot;&quot;&quot;</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">A_aug</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">b</span> <span class="o">=</span> <span class="n">A_aug</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">len_inputs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">A</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
@@ -2844,7 +2846,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">reduce_domain</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Domain</span><span class="p">,</span> <span class="n">AffineTransform</span><span class="p">]:</span>
-    <span class="sd">&quot;&quot;&quot;Reduce a domain with linear equality constraints to a subdomain where linear equality constraints are eliminated.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reduce a domain with linear equality constraints to a subdomain where linear equality constraints are eliminated.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): Domain to be reduced.</span>
@@ -2919,7 +2921,7 @@ are the corresponding coefficients.</p></td>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">all_inputs</span><span class="p">,</span> <span class="n">InputFeatures</span><span class="p">)</span>
     <span class="n">_domain</span><span class="o">.</span><span class="n">input_features</span> <span class="o">=</span> <span class="n">all_inputs</span>
 
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Constraint</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pivots</span><span class="p">:</span>
         <span class="c1"># reduce equation system of upper bounds</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -3064,7 +3066,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">remove_eliminated_inputs</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">AffineTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Eliminates remaining occurences of eliminated inputs in linear constraints.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eliminates remaining occurences of eliminated inputs in linear constraints.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): Domain in which the linear constraints should be purged.</span>
@@ -3132,7 +3134,9 @@ are the corresponding coefficients.</p></td>
                 <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">else</span><span class="p">:</span>
-                    <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                    <span class="n">feat</span><span class="p">:</span> <span class="n">ContinuousInput</span> <span class="o">=</span> <span class="n">ContinuousInput</span><span class="p">(</span>
+                        <span class="o">**</span><span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">dict</span><span class="p">()</span>
+                    <span class="p">)</span>
                     <span class="n">feat</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">feat</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
@@ -3229,7 +3233,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">rref</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
-    <span class="sd">&quot;&quot;&quot;Computes the reduced row echelon form of a Matrix</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the reduced row echelon form of a Matrix</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        A (ndarray): 2d array representing a matrix.</span>
@@ -3506,7 +3510,7 @@ PoolStudy            (<span title="pydantic.main.BaseModel">BaseModel</span>)
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">expected_random</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Expected value for number of random picks until finding the best one.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Expected value for number of random picks until finding the best one.</span>
 
 <span class="sd">        According to https://arxiv.org/abs/1404.1161 it is defined as</span>
 <span class="sd">        E(X) = (N+1)/(K+1) where N is the number of possible solutions and</span>
@@ -3731,7 +3735,7 @@ K the number of good solutions.</p>
     <span class="n">constraint</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">,</span> <span class="n">LinearInequalityConstraint</span><span class="p">],</span>
     <span class="n">unit_scaled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
-    <span class="sd">&quot;&quot;&quot;Converts linear constraints to the form required by BoTorch.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts linear constraints to the form required by BoTorch.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): Optimization problem definition.</span>
@@ -3854,7 +3858,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
     <span class="n">is_fitted</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">features2transformedFeatures</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{})</span>
     <span class="n">encoders</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">{})</span>
-    <span class="sd">&quot;&quot;&quot;Pre/post-processing of data for strategies</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre/post-processing of data for strategies</span>
 
 <span class="sd">    Parameters:</span>
 <span class="sd">        is_fitted: bool</span>
@@ -3871,7 +3875,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="n">scale_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">scale_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;Pre/post-processing of data for strategies</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Pre/post-processing of data for strategies</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            domain (Domain):</span>
@@ -3923,7 +3927,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">return</span>
 
     <span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Fit the encoders to provided input data</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fit the encoders to provided input data</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            input (pd.DataFrame): The data, the encoders are fitted to.</span>
@@ -4051,7 +4055,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;Transform data inputs and outputs for a strategy given already fitted encoders</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Transform data inputs and outputs for a strategy given already fitted encoders</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiment (pd.DataFrame): Input data to be transformed</span>
@@ -4189,7 +4193,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="n">transformed_experiment</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;A combination of self.fit and self.transform</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;A combination of self.fit and self.transform</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiment (pd.DataFrame): [description]</span>
@@ -4203,7 +4207,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="n">transformed_experiment</span>
 
     <span class="k">def</span> <span class="nf">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformed_candidate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;backtransformation of data using the fitted encoders</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;backtransformation of data using the fitted encoders</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            transformed_candidate (pd.DataFrame): input data to be backtransformed</span>
@@ -4325,7 +4329,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="n">var_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
         <span class="n">scaler_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ScalerEnum</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Transformer&quot;</span><span class="p">:</span>  <span class="c1"># TODO: switch to Self some time in the future which is available in Python 3.11</span>
-        <span class="sd">&quot;&quot;&quot;fitting the chosen scaler type to provided input data</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;fitting the chosen scaler type to provided input data</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key (str):</span>
@@ -4367,7 +4371,7 @@ Transformer            (<span title="pydantic.main.BaseModel">BaseModel</span>)
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">un_scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">candidate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;uses the fitted encoders to back-scale the input data to original scale</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;uses the fitted encoders to back-scale the input data to original scale</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            key (str):</span>
@@ -4477,7 +4481,7 @@ Defaults to None.</p></td>
     <span class="n">scale_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">scale_outputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;Pre/post-processing of data for strategies</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pre/post-processing of data for strategies</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain):</span>
@@ -4610,7 +4614,7 @@ Defaults to None.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/transformer.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Fit the encoders to provided input data</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fit the encoders to provided input data</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        input (pd.DataFrame): The data, the encoders are fitted to.</span>
@@ -4828,7 +4832,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
     <span class="n">var_max</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span>
     <span class="n">scaler_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ScalerEnum</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Transformer&quot;</span><span class="p">:</span>  <span class="c1"># TODO: switch to Self some time in the future which is available in Python 3.11</span>
-    <span class="sd">&quot;&quot;&quot;fitting the chosen scaler type to provided input data</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;fitting the chosen scaler type to provided input data</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        key (str):</span>
@@ -4927,7 +4931,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
         <details class="quote">
           <summary>Source code in <code>bofire/utils/transformer.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fit_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;A combination of self.fit and self.transform</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A combination of self.fit and self.transform</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiment (pd.DataFrame): [description]</span>
@@ -4999,7 +5003,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
         <details class="quote">
           <summary>Source code in <code>bofire/utils/transformer.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">inverse_transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transformed_candidate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;backtransformation of data using the fitted encoders</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;backtransformation of data using the fitted encoders</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        transformed_candidate (pd.DataFrame): input data to be backtransformed</span>
@@ -5155,7 +5159,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
         <details class="quote">
           <summary>Source code in <code>bofire/utils/transformer.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiment</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Transform data inputs and outputs for a strategy given already fitted encoders</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transform data inputs and outputs for a strategy given already fitted encoders</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiment (pd.DataFrame): Input data to be transformed</span>
@@ -5356,7 +5360,7 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
         <details class="quote">
           <summary>Source code in <code>bofire/utils/transformer.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">un_scale</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">candidate</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;uses the fitted encoders to back-scale the input data to original scale</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;uses the fitted encoders to back-scale the input data to original scale</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        key (str):</span>
@@ -5428,27 +5432,6 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
       
         <footer class="md-footer">
   
-    
-    <nav class="md-footer__inner md-grid" aria-label="Footer" >
-      
-        
-        <a href="../ref-mappers/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Mappers" rel="prev">
-          <div class="md-footer__button md-icon">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
-          </div>
-          <div class="md-footer__title">
-            <div class="md-ellipsis">
-              <span class="md-footer__direction">
-                Previous
-              </span>
-              Mappers
-            </div>
-          </div>
-        </a>
-      
-      
-    </nav>
-  
   <div class="md-footer-meta md-typeset">
     <div class="md-footer-meta__inner md-grid">
       <div class="md-copyright">
@@ -5470,16 +5453,15 @@ When not defined or nan, the maximum of the input data is used. Defaults to np.n
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.16e2a7d4.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version.title": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.12658920.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.5a2dcb6a.min.js"></script>
+      <script src="../assets/javascripts/bundle.5cf534bf.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
         <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
       
-    
     
   </body>
 </html>
