@@ -26,6 +26,8 @@ from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum
 
 _CAT_SEP = "_"
 
+TInputTransformSpecs = Dict[str, CategoricalEncodingEnum]
+
 
 class Feature(KeyModel):
     """The base class for all features."""
@@ -1364,14 +1366,14 @@ class InputFeatures(Features):
 
     # transformation related methods
     def _get_transform_info(
-        self, specs: Dict[str, CategoricalEncodingEnum]
+        self, specs: TInputTransformSpecs
     ) -> Tuple[Dict[str, Tuple[int]], Dict[str, Tuple[str]]]:
         """Generates two dictionaries. The first one specifies which key is mapped to
         which column indices when applying `transform`. The second one specifies
         which key is mapped to which transformed keys.
 
         Args:
-            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+            specs (TInputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
 
         Returns:
@@ -1422,7 +1424,7 @@ class InputFeatures(Features):
         return features2idx, features2names
 
     def transform(
-        self, experiments: pd.DataFrame, specs: Dict[str, CategoricalEncodingEnum]
+        self, experiments: pd.DataFrame, specs: TInputTransformSpecs
     ) -> pd.DataFrame:
         """Transform a dataframe back to the represenation specified in `specs`.
 
@@ -1430,7 +1432,7 @@ class InputFeatures(Features):
 
         Args:
             experiments (pd.DataFrame): Data dataframe to be transformed.
-            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+            specs (TInputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
 
         Returns:
@@ -1457,7 +1459,7 @@ class InputFeatures(Features):
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
-        self, experiments: pd.DataFrame, specs: Dict[str, CategoricalEncodingEnum]
+        self, experiments: pd.DataFrame, specs: TInputTransformSpecs
     ) -> pd.DataFrame:
         """Transform a dataframe back to the original representations.
 
@@ -1466,7 +1468,7 @@ class InputFeatures(Features):
 
         Args:
             experiments (pd.DataFrame): Transformed data dataframe.
-            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+            specs (TInputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
 
         Returns:
@@ -1491,11 +1493,11 @@ class InputFeatures(Features):
                 transformed.append(feat.from_descriptor_encoding(experiments))
         return pd.concat(transformed, axis=1)
 
-    def _validate_transform_specs(self, specs: Dict[str, CategoricalEncodingEnum]):
+    def _validate_transform_specs(self, specs: TInputTransformSpecs):
         """Checks the validity of the transform specs .
 
         Args:
-            specs (Dict[str, CategoricalEncodingEnum]): Transform specs to be validated.
+            specs (TInputTransformSpecs): Transform specs to be validated.
         """
         # first check that the keys in the specs dict are correct also correct feature keys
         if len(set(specs.keys()) - set(self.get_keys(CategoricalInput))) > 0:
@@ -1520,14 +1522,14 @@ class InputFeatures(Features):
 
     def get_bounds(
         self,
-        specs: Dict[str, CategoricalEncodingEnum],
+        specs: TInputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
 
         Args:
-            specs (Dict[str, CategoricalEncodingEnum]): Dictionary specifying which
+            specs (TInputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
             experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
                 If provided the real feature bounds are returned based on both the opt.

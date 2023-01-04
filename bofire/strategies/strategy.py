@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, Optional, Tuple, Type
+from typing import Any, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -8,9 +8,8 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import Feature, OutputFeature
+from bofire.domain.features import Feature, OutputFeature, TInputTransformSpecs
 from bofire.domain.objectives import Objective
-from bofire.utils.enum import CategoricalEncodingEnum
 
 
 def validate_constraints(cls, domain: Domain):
@@ -340,7 +339,7 @@ class PredictiveStrategy(Strategy):
 
     @property
     @abstractmethod
-    def input_preprocessing_specs(self) -> Dict[str, CategoricalEncodingEnum]:
+    def input_preprocessing_specs(self) -> TInputTransformSpecs:
         pass
 
     def ask(

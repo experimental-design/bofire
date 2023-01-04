@@ -30,6 +30,7 @@ from bofire.domain.features import (
     InputFeatures,
     NumericalInput,
     OutputFeatures,
+    TInputTransformSpecs,
 )
 from bofire.domain.util import BaseModel
 from bofire.models.model import Model, TrainableModel
@@ -212,7 +213,7 @@ class BotorchModels(BaseModel):
         return v
 
     @property
-    def input_preprocessing_specs(self) -> Dict:
+    def input_preprocessing_specs(self) -> TInputTransformSpecs:
         return {
             key: value
             for model in self.models

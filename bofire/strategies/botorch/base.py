@@ -25,6 +25,7 @@ from bofire.domain.features import (
     InputFeature,
     NumericalInput,
     OutputFeatures,
+    TInputTransformSpecs,
 )
 from bofire.models.torch_models import (
     BotorchModels,
@@ -148,7 +149,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         self.init_objective()
 
     @property
-    def input_preprocessing_specs(self) -> Dict[str, CategoricalEncodingEnum]:
+    def input_preprocessing_specs(self) -> TInputTransformSpecs:
         return self.model_specs.input_preprocessing_specs  # type: ignore
 
     @property

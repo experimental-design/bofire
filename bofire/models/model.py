@@ -1,11 +1,11 @@
 from abc import abstractmethod
-from typing import Dict, Tuple
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 
-from bofire.domain.features import InputFeatures, OutputFeatures
+from bofire.domain.features import InputFeatures, OutputFeatures, TInputTransformSpecs
 from bofire.domain.util import BaseModel
 from bofire.utils.enum import OutputFilteringEnum
 
@@ -14,7 +14,7 @@ class Model(BaseModel):
 
     input_features: InputFeatures
     output_features: OutputFeatures
-    input_preprocessing_specs: Dict = Field(default_factory=lambda: {})
+    input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=lambda: {})
 
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
