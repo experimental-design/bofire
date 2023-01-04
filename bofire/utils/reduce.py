@@ -6,6 +6,7 @@ import pandas as pd
 
 from bofire.domain import Domain
 from bofire.domain.constraints import (
+    AnyConstraint,
     Constraint,
     Constraints,
     LinearConstraint,
@@ -144,7 +145,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     assert isinstance(all_inputs, InputFeatures)
     _domain.input_features = all_inputs
 
-    constraints: List[Constraint] = []
+    constraints: List[AnyConstraint] = []
     for i in pivots:
         # reduce equation system of upper bounds
         ind = np.where(B[i, :-1] != 0)[0]
@@ -339,7 +340,9 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                 elif len(_features) == 0:
                     totally_removed = True
                 else:
-                    feat = domain.get_feature(_features[0])
+                    feat: ContinuousInput = ContinuousInput(
+                        **domain.get_feature(_features[0]).dict()
+                    )
                     feat.lower_bound = _coefficients[0]
                     feat.upper_bound = _coefficients[0]
                     totally_removed = True

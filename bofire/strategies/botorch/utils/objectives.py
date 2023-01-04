@@ -37,7 +37,13 @@ class AquisitionObjective(MCAcquisitionObjective):
         pass"""
 
     @abstractmethod
-    def reward_constant(self, x: Tensor, value: float, w: float) -> Tensor:
+    def reward_constant(
+        self,
+        x: Tensor,
+        value: float,
+        w: float,
+        **kwargs,
+    ) -> Tensor:
         pass
 
     @abstractmethod
@@ -48,6 +54,7 @@ class AquisitionObjective(MCAcquisitionObjective):
         target_value: float,
         tolerance: float,
         steepness: float,
+        **kwargs,
     ) -> Tensor:
         pass
 
@@ -59,6 +66,7 @@ class AquisitionObjective(MCAcquisitionObjective):
         target_value: float,
         tolerance: float,
         exponent: float,
+        **kwargs,
     ) -> Tensor:
         pass
 
@@ -128,7 +136,7 @@ class MultiplicativeObjective(AquisitionObjective):
     def reward(self, x, objective):
         return torch.sign(objective(x)) * torch.abs(objective(x)) ** objective.w, 0.0"""
 
-    def reward_target(self, x, w, target_value, tolerance, steepness):
+    def reward_target(self, x, w, target_value, tolerance, steepness, **kwargs):
         return (
             1.0
             / (1.0 + torch.exp(-1 * steepness * (x - (target_value - tolerance))))
@@ -139,7 +147,7 @@ class MultiplicativeObjective(AquisitionObjective):
             )
         ) ** w
 
-    def reward_close_to_target(self, x, w, target_value, tolerance, exponent):
+    def reward_close_to_target(self, x, w, target_value, tolerance, exponent, **kwargs):
         return (torch.abs(x - target_value) ** exponent - tolerance**exponent) ** w
 
     def reward_min(self, x, w, tp, steepness, **kwargs):
@@ -157,7 +165,7 @@ class MultiplicativeObjective(AquisitionObjective):
     def reward_delta_identity(self, x, w, ref_point, scale, **kwargs):
         return ((ref_point - x) * scale) ** w
 
-    def reward_constant(self, x, value, w):
+    def reward_constant(self, x, value, w, **kwargs):
         return (torch.ones(x.shape).to(**tkwargs) * value) ** w
 
     def forward(self, samples, X=None):
@@ -180,7 +188,7 @@ class AdditiveObjective(AquisitionObjective):
     def reward(self, x, objective):
         return objective(x) * objective.w, 0"""
 
-    def reward_target(self, x, w, target_value, tolerance, steepness):
+    def reward_target(self, x, w, target_value, tolerance, steepness, **kwargs):
         return (
             w
             * 1.0
@@ -192,7 +200,7 @@ class AdditiveObjective(AquisitionObjective):
             )
         )
 
-    def reward_close_to_target(self, x, w, target_value, tolerance, exponent):
+    def reward_close_to_target(self, x, w, target_value, tolerance, exponent, **kwargs):
         return (torch.abs(x - target_value) ** exponent - tolerance**exponent) * w
 
     def reward_min(self, x, w, tp, steepness, **kwargs):
@@ -210,7 +218,7 @@ class AdditiveObjective(AquisitionObjective):
     def reward_delta_identity(self, x, scale, w, ref_point, **kwargs):
         return ((ref_point - x) * scale) * w
 
-    def reward_constant(self, x, value, w):
+    def reward_constant(self, x, value, w, **kwargs):
         return torch.ones(x.shape).to(**tkwargs) * value * w
 
     def forward(self, samples, X=None):

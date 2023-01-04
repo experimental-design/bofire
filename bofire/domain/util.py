@@ -1,9 +1,15 @@
-import collections.abc
-from typing import Any, Callable, List, Sequence, Type, Union
+import collections.abc as collections
+from typing import Any, Callable, List, Sequence, Type, Union, get_args, get_origin
 
 import pandas as pd
 from pydantic import BaseModel as _BaseModel
 from pydantic import validator
+
+
+def isinstance_or_union(obj, of):
+    if get_origin(of) is Union:
+        of = get_args(of)
+    return isinstance(obj, of)
 
 
 def name2key(name):
@@ -102,11 +108,11 @@ def filter_by_class(
     """
     if includes is None:
         includes = []
-    if not isinstance(includes, collections.abc.Sequence):
+    if not isinstance(includes, collections.Sequence):
         includes = [includes]
     if excludes is None:
         excludes = []
-    if not isinstance(excludes, collections.abc.Sequence):
+    if not isinstance(excludes, collections.Sequence):
         excludes = [excludes]
 
     if len(includes) == len(excludes) == 0:
@@ -114,6 +120,21 @@ def filter_by_class(
 
     if len(includes) == 0:
         includes = [object]
+
+    includes_ = []
+    for incl in includes:
+        if get_origin(incl) is Union:
+            includes_ += get_args(incl)
+        else:
+            includes_.append(incl)
+    includes = includes_
+    excludes_ = []
+    for excl in excludes:
+        if get_origin(excl) is Union:
+            excludes_ += get_args(excl)
+        else:
+            excludes_.append(excl)
+    excludes = excludes_
 
     if len([x for x in includes if x in excludes]) > 0:
         raise ValueError("includes and excludes overlap")
