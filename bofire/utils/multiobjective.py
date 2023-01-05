@@ -41,7 +41,7 @@ def get_pareto_front(
     assert (
         len(output_feature_keys) >= 2
     ), "At least two output features have to be provided."
-    df = domain.preprocess_experiments_all_valid_outputs(
+    df = domain.outputs.preprocess_experiments_all_valid_outputs(
         experiments, output_feature_keys
     )
     ref_point_mask = get_ref_point_mask(domain, output_feature_keys)
@@ -81,7 +81,7 @@ def compute_hypervolume(
 def infer_ref_point(
     domain: Domain, experiments: pd.DataFrame, return_masked: bool = False
 ):
-    df = domain.preprocess_experiments_all_valid_outputs(experiments)
+    df = domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
     mask = get_ref_point_mask(domain)
     ref_point_array = (
         df[domain.outputs.get_keys_by_objective(excludes=None)].values * mask

@@ -9,10 +9,10 @@ from pydantic import Field, parse_obj_as, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
-from bofire.domain.util import BaseModel, filter_by_class
+from bofire.domain.util import PydanticBaseModel, filter_by_class
 
 
-class Constraint(BaseModel):
+class Constraint(PydanticBaseModel):
     """Abstract base class to define constraints on the optimization space."""
 
     type: str
@@ -377,7 +377,7 @@ AnyConstraint = Union[
 ]
 
 
-class Constraints(BaseModel):
+class Constraints(PydanticBaseModel):
 
     constraints: Sequence[AnyConstraint] = Field(default_factory=lambda: [])
 

@@ -23,11 +23,7 @@ from bofire.domain.objectives import (
     Objective,
 )
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
-from bofire.utils.enum import (
-    AcquisitionFunctionEnum,
-    CategoricalMethodEnum,
-    DescriptorMethodEnum,
-)
+from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
@@ -69,7 +65,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 "Only FREE optimization method for categoricals supported so far."
             )
         if (len(self.domain.get_features(CategoricalDescriptorInput)) > 0) and (
-            self.descriptor_method != DescriptorMethodEnum.FREE
+            self.descriptor_method != CategoricalMethodEnum.FREE
         ):
             raise ValueError(
                 "Only FREE optimization method for Categorical with Descriptor supported so far."
@@ -83,24 +79,24 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
         acqf_list = []
         with torch.no_grad():
-            clean_experiments = self.domain.preprocess_experiments_any_valid_output(
-                self.experiments
+            clean_experiments = self.domain.outputs.preprocess_experiments_any_valid_output(
+                self.experiments  # type: ignore
             )
-            transformed = self.transformer.transform(clean_experiments)  # type: ignore
-            train_x, _ = self.get_training_tensors(
-                transformed,
-                self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
+            transformed = self.domain.inputs.transform(
+                clean_experiments, self.input_preprocessing_specs
             )
+
+            train_x = torch.from_numpy(transformed.values).to(**tkwargs)
+
             pred = self.model.posterior(train_x).mean  # type: ignore
 
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
-            self.experiments
+        clean_experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments  # type: ignore
         )
-        transformed = self.transformer.transform(clean_experiments)  # type: ignore
-        observed_x, _ = self.get_training_tensors(
-            transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
+        transformed = self.domain.inputs.transform(
+            clean_experiments, self.input_preprocessing_specs
         )
+        observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
 
         for i in range(candidate_count):
             ref_point_mask = torch.from_numpy(
@@ -132,10 +128,11 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             acqf_list.append(acqf)
 
         # optimize
+        lower, upper = self.domain.inputs.get_bounds(self.input_preprocessing_specs)
 
         candidates = optimize_acqf_list(
             acq_function_list=acqf_list,
-            bounds=self.get_bounds(),
+            bounds=torch.tensor([lower, upper]).to(**tkwargs),
             num_restarts=self.num_restarts,
             raw_samples=self.num_raw_samples,
             equality_constraints=get_linear_constraints(
@@ -151,23 +148,18 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()  # type: ignore
         stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())  # type: ignore
 
+        input_feature_keys = [
+            item
+            for key in self.domain.inputs.get_keys()
+            for item in self._features2names[key]
+        ]
+
         df_candidates = pd.DataFrame(
-            data=np.nan,
-            index=range(candidate_count),
-            columns=self.input_feature_keys
-            + [
-                i + "_pred"
-                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
-            ]
-            + [
-                i + "_sd"
-                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
-            ]
-            + [
-                i + "_des"
-                for i in self.domain.outputs.get_keys_by_objective(excludes=None)
-            ]
-            # ["reward","acqf","strategy"]
+            data=candidates[0].detach().numpy(), columns=input_feature_keys
+        )
+
+        df_candidates = self.domain.inputs.inverse_transform(
+            df_candidates, self.input_preprocessing_specs
         )
 
         for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
@@ -175,9 +167,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             df_candidates[feat.key + "_sd"] = stds[:, i]
             df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
 
-        df_candidates[self.input_feature_keys] = candidates[0].detach().numpy()
-
-        return self.transformer.inverse_transform(df_candidates)  # type: ignore
+        return df_candidates
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

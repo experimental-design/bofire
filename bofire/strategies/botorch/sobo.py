@@ -1,6 +1,8 @@
 from typing import Type
 
+import torch
 from botorch.acquisition import get_acquisition_function
+from botorch.models.gpytorch import GPyTorchModel
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
 
 from bofire.domain.constraints import Constraint
@@ -12,12 +14,14 @@ from bofire.strategies.botorch.utils.objectives import (
     MultiplicativeObjective,
 )
 from bofire.utils.enum import AcquisitionFunctionEnum
+from bofire.utils.torch_tools import tkwargs
 
 
 class AcquisitionFunction(BaseModel):
     @staticmethod
     @validate_arguments
     def from_enum(acquistion_function_enum: AcquisitionFunctionEnum):
+        print(acquistion_function_enum)
         if acquistion_function_enum == AcquisitionFunctionEnum.QEI:
             return qEI()
         if acquistion_function_enum == AcquisitionFunctionEnum.QNEI:
@@ -66,14 +70,15 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     def _init_acqf(self) -> None:
         assert self.is_fitted is True, "Model not trained."
 
-        clean_experiments = self.domain.preprocess_experiments_all_valid_outputs(
-            self.experiments
+        clean_experiments = (
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                self.experiments
+            )
         )
-        transformed = self.transformer.transform(clean_experiments)  # type: ignore
-        X_train, _ = self.get_training_tensors(
-            transformed,
-            self.domain.output_features.get_keys_by_objective(excludes=None),  # type: ignore
+        transformed = self.domain.inputs.transform(
+            clean_experiments, self.input_preprocessing_specs
         )
+        X_train = torch.from_numpy(transformed.values).to(**tkwargs)
 
         # TODO: refactor pending experiments
         X_pending = None
@@ -93,6 +98,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
             tau=self.acquisition_function.tau
             if isinstance(self.acquisition_function, qPI)
             else 1e-3,
+            cache_root=True if isinstance(self.model, GPyTorchModel) else False,
         )
         return
 

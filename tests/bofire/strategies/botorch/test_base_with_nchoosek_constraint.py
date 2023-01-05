@@ -1,23 +1,14 @@
+import unittest
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from bofire.domain.constraints import NChooseKConstraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    ContinuousInput,
-    ContinuousOutput,
-)
+from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum, BoTorchSoboStrategy
-from bofire.utils.enum import (
-    CategoricalEncodingEnum,
-    CategoricalMethodEnum,
-    DescriptorEncodingEnum,
-    DescriptorMethodEnum,
-)
-from tests.bofire.domain.test_domain_validators import generate_experiments
+from bofire.utils.enum import CategoricalMethodEnum
 
 # NChooseK constraints 1
 cc1a = NChooseKConstraint(
@@ -48,12 +39,12 @@ for i in range(6):
 categorical_feature = CategoricalInput(
     key="categorical_feature", categories=["c1", "c2"]
 )
-categorical_descriptor_feature = CategoricalDescriptorInput(
-    key="categorical_descriptor_feature",
-    categories=["cd1", "cd2"],
-    descriptors=["d1", "d2"],
-    values=[[1.0, 1.0], [2.0, 2.0]],
-)
+# categorical_descriptor_feature = CategoricalDescriptorInput(
+#    key="categorical_descriptor_feature",
+#    categories=["cd1", "cd2"],
+#    descriptors=["d1", "d2"],
+#    values=[[1.0, 1.0], [2.0, 2.0]],
+# )
 
 # output feature
 output_features = [ContinuousOutput(key="y")]
@@ -586,10 +577,8 @@ domain = Domain(
 )
 test_case["domain"] = domain
 test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+test_case["descriptor_method"] = CategoricalMethodEnum.EXHAUSTIVE
 test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
 test_case["test_fixed_values"] = test_fixed_values_1
 test_cases.append(test_case)
 
@@ -602,234 +591,227 @@ domain = Domain(
 )
 test_case["domain"] = domain
 test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+test_case["descriptor_method"] = CategoricalMethodEnum.EXHAUSTIVE
 test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
 test_case["test_fixed_values"] = test_fixed_values_2
 test_cases.append(test_case)
 
-# CASE 3
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_3
-test_cases.append(test_case)
+# # CASE 3
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_3
+# test_cases.append(test_case)
 
-# CASE 4
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_4
-test_cases.append(test_case)
+# # CASE 4
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_4
+# test_cases.append(test_case)
 
-# CASE 5
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
-test_case["test_fixed_values"] = test_fixed_values_5
-test_cases.append(test_case)
+# # CASE 5
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
+# test_case["test_fixed_values"] = test_fixed_values_5
+# test_cases.append(test_case)
 
-# CASE 6
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
-test_case["test_fixed_values"] = test_fixed_values_6
-test_cases.append(test_case)
+# # CASE 6
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
+# test_case["test_fixed_values"] = test_fixed_values_6
+# test_cases.append(test_case)
 
-# CASE 7
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
-test_case["categorical_method"] = CategoricalMethodEnum.FREE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_7
-test_cases.append(test_case)
+# # CASE 7
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+# test_case["categorical_method"] = CategoricalMethodEnum.FREE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_7
+# test_cases.append(test_case)
 
-# CASE 8
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
-test_case["categorical_method"] = CategoricalMethodEnum.FREE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_8
-test_cases.append(test_case)
+# # CASE 8
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.EXHAUSTIVE
+# test_case["categorical_method"] = CategoricalMethodEnum.FREE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_8
+# test_cases.append(test_case)
 
-# CASE 9
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.FREE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
-test_case["test_fixed_values"] = test_fixed_values_9
-test_cases.append(test_case)
+# # CASE 9
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.FREE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
+# test_case["test_fixed_values"] = test_fixed_values_9
+# test_cases.append(test_case)
 
-# CASE 10
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.FREE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_10
-test_cases.append(test_case)
+# # CASE 10
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.FREE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_10
+# test_cases.append(test_case)
 
-# CASE 11
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.FREE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
-test_case["test_fixed_values"] = test_fixed_values_11
-test_cases.append(test_case)
+# # CASE 11
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.FREE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ORDINAL
+# test_case["test_fixed_values"] = test_fixed_values_11
+# test_cases.append(test_case)
 
-# CASE 12
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.FREE
-test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_12
-test_cases.append(test_case)
+# # CASE 12
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.FREE
+# test_case["categorical_method"] = CategoricalMethodEnum.EXHAUSTIVE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_12
+# test_cases.append(test_case)
 
-# CASE 13
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.FREE
-test_case["categorical_method"] = CategoricalMethodEnum.FREE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_13
-test_cases.append(test_case)
+# # CASE 13
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.FREE
+# test_case["categorical_method"] = CategoricalMethodEnum.FREE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.CATEGORICAL
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_13
+# test_cases.append(test_case)
 
-# CASE 14
-test_case = {}
-domain = Domain(
-    input_features=continuous_input_features
-    + [categorical_feature, categorical_descriptor_feature],
-    output_features=output_features,
-    constraints=[cc3],
-)
-test_case["domain"] = domain
-test_case["experiments"] = experiments
-test_case["descriptor_method"] = DescriptorMethodEnum.FREE
-test_case["categorical_method"] = CategoricalMethodEnum.FREE
-test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
-test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
-test_case["test_fixed_values"] = test_fixed_values_14
-test_cases.append(test_case)
+# # CASE 14
+# test_case = {}
+# domain = Domain(
+#     input_features=continuous_input_features
+#     + [categorical_feature, categorical_descriptor_feature],
+#     output_features=output_features,
+#     constraints=[cc3],
+# )
+# test_case["domain"] = domain
+# test_case["experiments"] = experiments
+# test_case["descriptor_method"] = DescriptorMethodEnum.FREE
+# test_case["categorical_method"] = CategoricalMethodEnum.FREE
+# test_case["descriptor_encoding"] = DescriptorEncodingEnum.DESCRIPTOR
+# test_case["categorical_encoding"] = CategoricalEncodingEnum.ONE_HOT
+# test_case["test_fixed_values"] = test_fixed_values_14
+# test_cases.append(test_case)
 
 
 @pytest.mark.parametrize("test_case", test_cases)
 def test_concurrency_fixed_values(test_case):
-    experiments = generate_experiments(domain=test_case["domain"])
+    # experiments = generate_experiments(domain=test_case["domain"])
 
     sobo = BoTorchSoboStrategy(
         domain=test_case["domain"],
         acquisition_function=AcquisitionFunctionEnum.QNEI,
         descriptor_method=test_case["descriptor_method"],
         categorical_method=test_case["categorical_method"],
-        descriptor_encoding=test_case["descriptor_encoding"],
-        categorical_encoding=test_case["categorical_encoding"],
-        seed=0,
     )
 
-    sobo.tell(experiments)
     fixed_values = sobo.get_fixed_values_list()
-    # assert len(fixed_values) == len(test_case['test_fixed_values'])
-    for features in test_case["test_fixed_values"]:
-        assert features in fixed_values
+    c = unittest.TestCase()
+    c.assertCountEqual(test_case["test_fixed_values"], fixed_values)

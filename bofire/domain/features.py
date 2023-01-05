@@ -15,14 +15,20 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.domain.objectives import AnyObjective, MaximizeObjective, Objective
 from bofire.domain.util import (
-    BaseModel,
     KeyModel,
+    PydanticBaseModel,
     filter_by_attribute,
     filter_by_class,
     is_numeric,
     name2key,
 )
-from bofire.utils.enum import SamplingMethodEnum
+from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum, ScalerEnum
+
+_CAT_SEP = "_"
+
+
+TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
+TInputTransformSpecs = Dict[str, CategoricalEncodingEnum]
 
 
 class Feature(KeyModel):
@@ -60,7 +66,7 @@ class InputFeature(Feature):
     type: Literal["InputFeature"] = "InputFeature"
 
     @abstractmethod
-    def is_fixed() -> bool:
+    def is_fixed(self) -> bool:
         """Indicates if a variable is set to a fixed value.
 
         Returns:
@@ -69,7 +75,9 @@ class InputFeature(Feature):
         pass
 
     @abstractmethod
-    def fixed_value() -> Union[None, str, float]:
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[None, List[str], List[float]]:
         """Method to return the fixed value in case of a fixed feature.
 
         Returns:
@@ -116,15 +124,33 @@ class InputFeature(Feature):
         """
         pass
 
+    @abstractmethod
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        """Returns the bounds of an input feature depending on the requested transform type.
+
+        Args:
+            transform_type (Optional[TTransform], optional): The requested transform type. Defaults to None.
+            values (Optional[pd.Series], optional): If values are provided the bounds are returned taking
+                the most extreme values for the feature into account. Defaults to None.
+
+        Returns:
+            Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
+        """
+        pass
+
+
+class NumericalInput(InputFeature):
+    """Abstract base class for all numerical (ordinal) input features."""
+
+    type: Literal["NumericalInput"] = "NumericalInput"
+
     @staticmethod
     def from_dict(dict_: dict):
         return parse_obj_as(AnyInputFeature, dict_)
-
-
-class NumericalInputFeature(InputFeature):
-    """Abstract base class for all numerical (ordinal) input features."""
-
-    type: Literal["NumericalInputFeature"] = "NumericalInputFeature"
 
     def to_unit_range(
         self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
@@ -143,7 +169,9 @@ class NumericalInputFeature(InputFeature):
             pd.Series: transformed values.
         """
         if use_real_bounds:
-            lower, upper = self.get_real_feature_bounds(values)
+            lower, upper = self.get_bounds(transform_type=None, values=values)
+            lower = lower[0]
+            upper = upper[0]
         else:
             lower, upper = self.lower_bound, self.upper_bound  # type: ignore
         if lower == upper:
@@ -179,14 +207,17 @@ class NumericalInputFeature(InputFeature):
         # TODO: the bounds are declared in the derived classes, hence the type checks fail here :(.
         return self.lower_bound == self.upper_bound  # type: ignore
 
-    def fixed_value(self):
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[None, List[float]]:
         """Method to get the value to which the feature is fixed
 
         Returns:
             Float: Return the feature value or None if the feature is not fixed.
         """
+        assert transform_type is None
         if self.is_fixed():
-            return self.lower_bound  # type: ignore
+            return [self.lower_bound]  # type: ignore
         else:
             return None
 
@@ -210,7 +241,7 @@ class NumericalInputFeature(InputFeature):
                 f"not all values of input feature `{self.key}` are numerical"
             )
         if strict:
-            lower, upper = self.get_real_feature_bounds(values)
+            lower, upper = self.get_bounds(transform_type=None, values=values)
             if lower == upper:
                 raise ValueError(
                     f"No variation present or planned for feature {self.key}. Remove it."
@@ -235,23 +266,20 @@ class NumericalInputFeature(InputFeature):
             )
         return values
 
-    def get_real_feature_bounds(
-        self, values: Union[pd.Series, np.ndarray]
-    ) -> Tuple[float, float]:
-        """Method to extract the feature boundaries from the provided experimental data
-
-        Args:
-            values (pd.Series): Experimental data
-
-        Returns:
-            (float, float): Returns lower and upper bound based on the passed data
-        """
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert transform_type is None
+        if values is None:
+            return [self.lower_bound], [self.upper_bound]  # type: ignore
         lower = min(self.lower_bound, values.min())  # type: ignore
         upper = max(self.upper_bound, values.max())  # type: ignore
-        return lower, upper
+        return [lower], [upper]  # type: ignore
 
 
-class ContinuousInput(NumericalInputFeature):
+class ContinuousInput(NumericalInput):
     """Base class for all continuous input features.
 
     Attributes:
@@ -334,7 +362,7 @@ class ContinuousInput(NumericalInputFeature):
 TDiscreteVals = conlist(item_type=float, min_items=1)
 
 
-class DiscreteInput(NumericalInputFeature):
+class DiscreteInput(NumericalInput):
     """Feature with discretized ordinal values allowed in the optimization.
 
     Attributes:
@@ -521,7 +549,7 @@ class CategoricalInput(InputFeature):
             raise ValueError("no category is allowed")
         return values
 
-    def is_fixed(self):
+    def is_fixed(self) -> bool:
         """Returns True if there is only one allowed category.
 
         Returns:
@@ -531,14 +559,28 @@ class CategoricalInput(InputFeature):
             return False
         return sum(self.allowed) == 1
 
-    def fixed_value(self):
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[List[str], List[float], None]:
         """Returns the categories to which the feature is fixed, None if the feature is not fixed
 
         Returns:
             List[str]: List of categories or None
         """
         if self.is_fixed():
-            return self.get_allowed_categories()[0]
+            val = self.get_allowed_categories()[0]
+            if transform_type is None:
+                return [val]
+            elif transform_type == CategoricalEncodingEnum.ONE_HOT:
+                return self.to_onehot_encoding(pd.Series([val])).values[0].tolist()
+            elif transform_type == CategoricalEncodingEnum.DUMMY:
+                return self.to_dummy_encoding(pd.Series([val])).values[0].tolist()
+            elif transform_type == CategoricalEncodingEnum.ORDINAL:
+                return self.to_ordinal_encoding(pd.Series([val])).tolist()
+            else:
+                raise ValueError(
+                    f"Unkwon transform type {transform_type} for categorical input {self.key}"
+                )
         else:
             return None
 
@@ -620,6 +662,109 @@ class CategoricalInput(InputFeature):
             list(set(list(set(values.tolist())) + self.get_allowed_categories()))
         )
 
+    def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
+        """Converts values to a one-hot encoding.
+
+        Args:
+            values (pd.Series): Series to be transformed.
+
+        Returns:
+            pd.DataFrame: One-hot transformed data frame.
+        """
+        return pd.DataFrame(
+            {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories},
+            dtype=float,
+        )
+
+    def from_onehot_encoding(self, values: pd.DataFrame) -> pd.Series:
+        """Converts values back from one-hot encoding.
+
+        Args:
+            values (pd.DataFrame): One-hot encoded values.
+
+        Raises:
+            ValueError: If one-hot columns not present in `values`.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+            )
+        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
+        s.name = self.key
+        return s
+
+    def to_dummy_encoding(self, values: pd.Series) -> pd.DataFrame:
+        """Converts values to a dummy-hot encoding, dropping the first categorical level.
+
+        Args:
+            values (pd.Series): Series to be transformed.
+
+        Returns:
+            pd.DataFrame: Dummy-hot transformed data frame.
+        """
+        return pd.DataFrame(
+            {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories[1:]},
+            dtype=float,
+        )
+
+    def from_dummy_encoding(self, values: pd.DataFrame) -> pd.Series:
+        """Convert points back from dummy encoding.
+
+        Args:
+            values (pd.DataFrame): Dummy-hot encoded values.
+
+        Raises:
+            ValueError: If one-hot columns not present in `values`.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols[1:]]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols[1:]}."
+            )
+        values = values.copy()
+        values[cat_cols[0]] = 1 - values[cat_cols[1:]].sum(axis=1)
+        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
+        s.name = self.key
+        return s
+
+    def to_ordinal_encoding(self, values: pd.Series) -> pd.Series:
+        """Converts values to an ordinal integer based encoding.
+
+        Args:
+            values (pd.Series): Series to be transformed.
+
+        Returns:
+            pd.Series: Ordinal encoded values.
+        """
+        enc = pd.Series(range(len(self.categories)), index=list(self.categories))
+        s = enc[values]
+        s.index = values.index
+        s.name = self.key
+        return s
+
+    def from_ordinal_encoding(self, values: pd.Series) -> pd.Series:
+        """Convertes values back from ordinal encoding.
+
+        Args:
+            values (pd.Series): Ordinal encoded series.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        enc = np.array(self.categories)
+        return pd.Series(enc[values], index=values.index, name=self.key)
+
     def sample(self, n: int) -> pd.Series:
         """Draw random samples from the feature.
 
@@ -632,6 +777,38 @@ class CategoricalInput(InputFeature):
         return pd.Series(
             name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
         )
+
+    def get_bounds(
+        self,
+        transform_type: TTransform,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert isinstance(transform_type, CategoricalEncodingEnum)
+        if transform_type == CategoricalEncodingEnum.ORDINAL:
+            return [0], [len(self.categories) - 1]
+        if transform_type == CategoricalEncodingEnum.ONE_HOT:
+            if values is None:
+                lower = [0.0 for _ in self.categories]
+                upper = [
+                    1.0 if self.allowed[i] is True else 0.0  # type: ignore
+                    for i, _ in enumerate(self.categories)
+                ]
+            else:
+                lower = [0.0 for _ in self.categories]
+                upper = [1.0 for _ in self.categories]
+            return lower, upper
+        if transform_type == CategoricalEncodingEnum.DUMMY:
+            lower = [0.0 for _ in range(len(self.categories) - 1)]
+            upper = [1.0 for _ in range(len(self.categories) - 1)]
+            return lower, upper
+        if transform_type == CategoricalEncodingEnum.DESCRIPTOR:
+            raise ValueError(
+                f"Invalid descriptor transform for categorical {self.key}."
+            )
+        else:
+            raise ValueError(
+                f"Invalid transform_type {transform_type} provided for categorical {self.key}."
+            )
 
     def __str__(self) -> str:
         """Returns the number of categories as str
@@ -654,7 +831,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         categories (List[str]): Names of the categories.
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
         descriptors (List[str]): List of strings representing the names of the descriptors.
-        calues (List[List[float]]): List of lists representing the descriptor values.
+        values (List[List[float]]): List of lists representing the descriptor values.
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
@@ -715,21 +892,33 @@ class CategoricalDescriptorInput(CategoricalInput):
         data = {cat: values for cat, values in zip(self.categories, self.values)}
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
 
-    def get_real_descriptor_bounds(self, values) -> pd.DataFrame:
-        """Method to generate a dataFrame as tabular overview of lower and upper bounds of the descriptors (excluding non-allowed descriptors)
-
-        Args:
-            values (pd.Series): The categories present in the passed data for the considered feature
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[List[str], List[float], None]:
+        """Returns the categories to which the feature is fixed, None if the feature is not fixed
 
         Returns:
-            pd.Series: Tabular overview of lower and upper bounds of the descriptors
+            List[str]: List of categories or None
         """
-        df = self.to_df().loc[self.get_possible_categories(values)]
-        data = {
-            "lower": [min(df[desc].tolist()) for desc in self.descriptors],
-            "upper": [max(df[desc].tolist()) for desc in self.descriptors],
-        }
-        return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
+        if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
+            return super().fixed_value(transform_type)
+        else:
+            val = self.get_allowed_categories()[0]
+            return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
+
+    def get_bounds(
+        self, transform_type: TTransform, values: Optional[pd.Series] = None
+    ) -> Tuple[List[float], List[float]]:
+        if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
+            return super().get_bounds(transform_type, values)
+        else:
+            if values is None:
+                df = self.to_df().loc[self.get_allowed_categories()]
+            else:
+                df = self.to_df().loc[self.get_possible_categories(values)]
+            lower = df.min().values.tolist()  # type: ignore
+            upper = df.max().values.tolist()  # type: ignore
+            return lower, upper
 
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
@@ -750,9 +939,11 @@ class CategoricalDescriptorInput(CategoricalInput):
         """
         values = super().validate_experimental(values, strict)
         if strict:
-            bounds = self.get_real_descriptor_bounds(values)
-            for desc in self.descriptors:
-                if bounds.loc["lower", desc] == bounds.loc["upper", desc]:
+            lower, upper = self.get_bounds(
+                transform_type=CategoricalEncodingEnum.DESCRIPTOR, values=values
+            )
+            for i, desc in enumerate(self.descriptors):
+                if lower[i] == upper[i]:
                     raise ValueError(
                         f"No variation present or planned for descriptor {desc} for feature {self.key}. Remove the descriptor."
                     )
@@ -776,6 +967,57 @@ class CategoricalDescriptorInput(CategoricalInput):
             descriptors=list(df.columns),
             values=df.values.tolist(),
         )
+
+    def to_descriptor_encoding(self, values: pd.Series) -> pd.DataFrame:
+        """Converts values to descriptor encoding.
+
+        Args:
+            values (pd.Series): Values to transform.
+
+        Returns:
+            pd.DataFrame: Descriptor encoded dataframe.
+        """
+        return pd.DataFrame(
+            data=values.map(
+                {cat: value for cat, value in zip(self.categories, self.values)}
+            ).values.tolist(),  # type: ignore
+            columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
+        )
+
+    def from_descriptor_encoding(self, values: pd.DataFrame) -> pd.Series:
+        """Converts values back from descriptor encoding.
+
+        Args:
+            values (pd.DataFrame): Descriptor encoded dataframe.
+
+        Raises:
+            ValueError: If descriptor columns not found in the dataframe.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+        cat_cols = [f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+            )
+        s = pd.DataFrame(
+            data=np.sqrt(
+                np.sum(
+                    (
+                        values[cat_cols].to_numpy()[:, np.newaxis, :]
+                        - self.to_df().to_numpy()
+                    )
+                    ** 2,
+                    axis=2,
+                )
+            ),
+            columns=self.categories,
+        ).idxmin(1)
+        s.name = self.key
+        return s
 
 
 class OutputFeature(Feature):
@@ -864,8 +1106,8 @@ FEATURE_ORDER = {
     ContinuousInput: 1,
     ContinuousDescriptorInput: 2,
     DiscreteInput: 3,
-    CategoricalInput: 4,
-    CategoricalDescriptorInput: 5,
+    CategoricalDescriptorInput: 4,
+    CategoricalInput: 5,
     ContinuousOutput: 6,
 }
 
@@ -915,7 +1157,7 @@ AnyOutputFeature = ContinuousOutput
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
 
 
-class Features(BaseModel):
+class Features(PydanticBaseModel):
     """Container of features, both input and output features are allowed.
 
     Attributes:
@@ -1099,9 +1341,10 @@ class InputFeatures(Features):
             res.append(pd.Series(x, name=feat.key))
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()  # type: ignore
+            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
         return self.validate_inputs(samples)[self.get_keys(InputFeature)]
 
+    # validate candidates, TODO rename and tidy up
     def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.
 
@@ -1119,6 +1362,15 @@ class InputFeatures(Features):
                 raise ValueError(f"no col for input feature `{feature.key}`")
             feature.validate_candidental(inputs[feature.key])  # type: ignore
         return inputs
+
+    def validate_experiments(
+        self, experiments: pd.DataFrame, strict=False
+    ) -> pd.DataFrame:
+        for feature in self:
+            if feature.key not in experiments:
+                raise ValueError(f"no col for input feature `{feature.key}`")
+            feature.validate_experimental(experiments[feature.key], strict=strict)  # type: ignore
+        return experiments
 
     def get_categorical_combinations(
         self,
@@ -1143,6 +1395,198 @@ class InputFeatures(Features):
             [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
         ]
         return list(itertools.product(*list_of_lists))
+
+    # transformation related methods
+    def _get_transform_info(
+        self, specs: TInputTransformSpecs
+    ) -> Tuple[Dict[str, Tuple[int]], Dict[str, Tuple[str]]]:
+        """Generates two dictionaries. The first one specifies which key is mapped to
+        which column indices when applying `transform`. The second one specifies
+        which key is mapped to which transformed keys.
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            Dict[str, Tuple[int]]: Dictionary mapping feature keys to column indices.
+            Dict[str, Tuple[str]]: Dictionary mapping feature keys to transformed feature
+                keys.
+        """
+        self._validate_transform_specs(specs)
+        features2idx = {}
+        features2names = {}
+        counter = 0
+        for _, feat in enumerate(self.get()):
+            if feat.key not in specs.keys():
+                features2idx[feat.key] = (counter,)
+                features2names[feat.key] = (feat.key,)
+                counter += 1
+            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                assert isinstance(feat, CategoricalInput)
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(feat.categories))) + counter).tolist()
+                )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{c}" for c in feat.categories]
+                )
+                counter += len(feat.categories)
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                features2idx[feat.key] = (counter,)
+                features2names[feat.key] = (feat.key,)
+                counter += 1
+            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                assert isinstance(feat, CategoricalInput)
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(feat.categories) - 1)) + counter).tolist()
+                )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{c}" for c in feat.categories[1:]]
+                )
+                counter += len(feat.categories) - 1
+            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                assert isinstance(feat, CategoricalDescriptorInput)
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(feat.descriptors))) + counter).tolist()
+                )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{d}" for d in feat.descriptors]
+                )
+                counter += len(feat.descriptors)
+        return features2idx, features2names
+
+    def transform(
+        self, experiments: pd.DataFrame, specs: TInputTransformSpecs
+    ) -> pd.DataFrame:
+        """Transform a dataframe to the represenation specified in `specs`.
+
+        Currently only input categoricals are supported.
+
+        Args:
+            experiments (pd.DataFrame): Data dataframe to be transformed.
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            pd.DataFrame: Transformed dataframe. Only input features are included.
+        """
+        specs = self._validate_transform_specs(specs)
+        transformed = []
+        for feat in self.get():
+            s = experiments[feat.key]
+            if feat.key not in specs.keys():
+                transformed.append(s)
+            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_onehot_encoding(s))
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_ordinal_encoding(s))
+            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.to_dummy_encoding(s))
+            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                assert isinstance(feat, CategoricalDescriptorInput)
+                transformed.append(feat.to_descriptor_encoding(s))
+        return pd.concat(transformed, axis=1)
+
+    def inverse_transform(
+        self, experiments: pd.DataFrame, specs: TInputTransformSpecs
+    ) -> pd.DataFrame:
+        """Transform a dataframe back to the original representations.
+
+        The original applied transformation has to be provided via the specs dictionary.
+        Currently only input categoricals are supported.
+
+        Args:
+            experiments (pd.DataFrame): Transformed data dataframe.
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            pd.DataFrame: Back transformed dataframe. Only input features are included.
+        """
+        self._validate_transform_specs(specs=specs)
+        transformed = []
+        for feat in self.get():
+            if feat.key not in specs.keys():
+                transformed.append(experiments[feat.key])
+            elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.from_onehot_encoding(experiments))
+            elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.from_ordinal_encoding(experiments[feat.key]))
+            elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
+                assert isinstance(feat, CategoricalInput)
+                transformed.append(feat.from_dummy_encoding(experiments))
+            elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
+                assert isinstance(feat, CategoricalDescriptorInput)
+                transformed.append(feat.from_descriptor_encoding(experiments))
+        return pd.concat(transformed, axis=1)
+
+    def _validate_transform_specs(self, specs: TInputTransformSpecs):
+        """Checks the validity of the transform specs .
+
+        Args:
+            specs (TInputTransformSpecs): Transform specs to be validated.
+        """
+        # first check that the keys in the specs dict are correct also correct feature keys
+        if len(set(specs.keys()) - set(self.get_keys(CategoricalInput))) > 0:
+            raise ValueError("Unknown features specified in transform specs.")
+        # next check that all values are of type CategoricalEncodingEnum
+        if not (
+            all([isinstance(enc, CategoricalEncodingEnum) for enc in specs.values()])
+        ):
+            raise ValueError("Unknown transform specified.")
+        # next check that only Categoricalwithdescriptor have the value DESCRIPTOR
+        descriptor_keys = [
+            key
+            for key, value in specs.items()
+            if value == CategoricalEncodingEnum.DESCRIPTOR
+        ]
+        if (
+            len(set(descriptor_keys) - set(self.get_keys(CategoricalDescriptorInput)))
+            > 0
+        ):
+            raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")
+        return specs
+
+    def get_bounds(
+        self,
+        specs: TInputTransformSpecs,
+        experiments: Optional[pd.DataFrame] = None,
+    ) -> Tuple[List[float], List[float]]:
+        """Returns the boundaries of the optimization problem based on the transformations
+        defined in the  `specs` dictionary.
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+            experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
+                If provided the real feature bounds are returned based on both the opt.
+                feature bounds and the extreme points in the dataframe. Defaults to None,
+
+        Raises:
+            ValueError: If a feature type is not known.
+            ValueError: If no transformation is provided for a categorical feature.
+
+        Returns:
+            Tuple[List[float], List[float]]: list with lower bounds, list with upper bounds.
+        """
+        self._validate_transform_specs(specs=specs)
+
+        lower = []
+        upper = []
+
+        for feat in self.get():
+            l, u = feat.get_bounds(  # type: ignore
+                transform_type=specs.get(feat.key),  # type: ignore
+                values=experiments[feat.key] if experiments is not None else None,
+            )
+            lower += l
+            upper += u
+        return lower, upper
 
 
 class OutputFeatures(Features):
@@ -1227,3 +1671,77 @@ class OutputFeatures(Features):
             ],
             axis=1,
         )
+
+    def preprocess_experiments_one_valid_output(
+        self,
+        output_feature_key: str,
+        experiments: pd.DataFrame,
+    ) -> pd.DataFrame:
+        """Method to get a dataframe where non-valid entries of the provided output feature are removed
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data
+            output_feature_key (str): The feature based on which non-valid entries rows are removed
+
+        Returns:
+            pd.DataFrame: Dataframe with all experiments where only valid entries of the specific feature are included
+        """
+        clean_exp = experiments.loc[
+            (experiments["valid_%s" % output_feature_key] == 1)
+            & (experiments[output_feature_key].notna())
+        ]
+
+        return clean_exp
+
+    def preprocess_experiments_all_valid_outputs(
+        self,
+        experiments: pd.DataFrame,
+        output_feature_keys: Optional[List] = None,
+    ) -> pd.DataFrame:
+        """Method to get a dataframe where non-valid entries of all output feature are removed
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data
+            output_feature_keys (Optional[List], optional): List of output feature keys which should be considered for removal of invalid values. Defaults to None.
+
+        Returns:
+            pd.DataFrame: Dataframe with all experiments where only valid entries of the selected features are included
+        """
+        if (output_feature_keys is None) or (len(output_feature_keys) == 0):
+            output_feature_keys = self.get_keys(OutputFeature)
+
+        clean_exp = experiments.query(
+            " & ".join(["(`valid_%s` > 0)" % key for key in output_feature_keys])
+        )
+        clean_exp = clean_exp.dropna(subset=output_feature_keys)
+
+        return clean_exp
+
+    def preprocess_experiments_any_valid_output(
+        self, experiments: pd.DataFrame
+    ) -> pd.DataFrame:
+        """Method to get a dataframe where at least one output feature has a valid entry
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experimental data
+
+        Returns:
+            pd.DataFrame: Dataframe with all experiments where at least one output feature has a valid entry
+        """
+
+        output_feature_keys = self.get_keys(OutputFeature)
+
+        # clean_exp = experiments.query(" or ".join(["(valid_%s > 0)" % key for key in output_feature_keys]))
+        # clean_exp = clean_exp.query(" or ".join(["%s.notna()" % key for key in output_feature_keys]))
+
+        assert experiments is not None
+        clean_exp = experiments.query(
+            " or ".join(
+                [
+                    "((`valid_%s` >0) & `%s`.notna())" % (key, key)
+                    for key in output_feature_keys
+                ]
+            )
+        )
+
+        return clean_exp

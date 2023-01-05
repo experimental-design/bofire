@@ -7,17 +7,6 @@ class SamplingMethodEnum(Enum):
     LHS = "LHS"
 
 
-class KernelEnum(Enum):
-    """Enumeration class of all supported kernels
-    Currently, RBF and matern kernel (1/2, 3/2 and 5/2) are implemented.
-    """
-
-    RBF = "RBF"
-    MATERN_25 = "MATERN_25"
-    MATERN_15 = "MATERN_15"
-    MATERN_05 = "MATERN_05"
-
-
 class ScalerEnum(Enum):
     """Enumeration class of supported scalers
     Currently, normalization and standardization are implemented.
@@ -34,6 +23,7 @@ class CategoricalMethodEnum(Enum):
 
     EXHAUSTIVE = "EXHAUSTIVE"
     FREE = "FREE"
+    # PR = "PR" available soon
 
 
 class CategoricalEncodingEnum(Enum):
@@ -43,31 +33,18 @@ class CategoricalEncodingEnum(Enum):
 
     ONE_HOT = "ONE_HOT"
     ORDINAL = "ORDINAL"
-
-
-class DescriptorMethodEnum(Enum):
-    """Enumeration class of implemented methods how to handle discrete descriptors
-    Currently, exhaustive search and free relaxation are implemented.
-    """
-
-    EXHAUSTIVE = "EXHAUSTIVE"
-    FREE = "FREE"
-
-
-class DescriptorEncodingEnum(Enum):
-    """Enumeration class how categorical features with descriptors should be encoded
-    Categoricals with descriptors can be handled similar to categoricals, or the descriptors can be used.
-    """
-
-    DESCRIPTOR = "DESCRIPTOR"
-    CATEGORICAL = "CATEGORICAL"
+    DUMMY = "DUMMY"
+    DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
 class AcquisitionFunctionEnum(Enum):
-    QNEI = "qNEI"
-    QUCB = "qUCB"
-    QEI = "qEI"
-    QPI = "qPI"
-    QSR = "qSR"
-    # QEHVI = "qEHVI"
-    # QNEHVI = "qNEHVI"
+    QNEI = "QNEI"
+    QUCB = "QUCB"
+    QEI = "QEI"
+    QPI = "QPI"
+    QSR = "QSR"
+
+
+class OutputFilteringEnum(Enum):
+    ALL = "ALL"
+    ANY = "ANY"

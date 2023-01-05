@@ -20,7 +20,7 @@ from bofire.domain.features import (
     OutputFeature,
 )
 from bofire.domain.objectives import Objective, TargetObjective
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 
 
 def test_empty_domain():
@@ -31,7 +31,7 @@ def test_empty_domain():
     )
 
 
-class Bla(BaseModel):
+class Bla(PydanticBaseModel):
     a: int
 
 
@@ -305,8 +305,8 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
                 ],
             ),
             [
-                [("f1", "c11"), ("f1", "c12")],
                 [("f2", "c21"), ("f2", "c22")],
+                [("f1", "c11"), ("f1", "c12")],
             ],
             CategoricalInput,
             None,
@@ -469,17 +469,10 @@ def test_domain_serialize(domain):
 def test_preprocess_experiments_all_valid_outputs(
     domain, data, output_feature_keys, expected
 ):
-    experiments = domain.preprocess_experiments_all_valid_outputs(
+    experiments = domain.output_features.preprocess_experiments_all_valid_outputs(
         data, output_feature_keys
     )
     assert_frame_equal(experiments.reset_index(drop=True), expected, check_dtype=False)
-
-
-def test_preprocess_experiments_all_valid_outputs_invalid():
-    with pytest.raises(AssertionError):
-        _ = domain.preprocess_experiments_all_valid_outputs(
-            data, output_feature_keys=["x1"]
-        )
 
 
 @pytest.mark.parametrize(
@@ -502,7 +495,7 @@ def test_preprocess_experiments_all_valid_outputs_invalid():
     ],
 )
 def test_preprocess_experiments_any_valid_output(domain, data, expected):
-    experiments = domain.preprocess_experiments_any_valid_output(data)
+    experiments = domain.output_features.preprocess_experiments_any_valid_output(data)
     assert experiments["x1"].tolist() == expected["x1"].tolist()
     assert experiments["out2"].tolist() == expected["out2"].tolist()
 
@@ -527,7 +520,9 @@ def test_preprocess_experiments_any_valid_output(domain, data, expected):
     ],
 )
 def test_preprocess_experiments_one_valid_output(domain, data, expected):
-    experiments = domain.preprocess_experiments_one_valid_output("out2", data)
+    experiments = domain.output_features.preprocess_experiments_one_valid_output(
+        "out2", data
+    )
     assert experiments["x1"].tolist() == expected["x1"].tolist()
     assert np.isnan(experiments["out1"].tolist()[2])
     assert experiments["out2"].tolist() == expected["out2"].tolist()

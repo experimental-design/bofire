@@ -10,7 +10,7 @@ from pydantic.class_validators import root_validator
 from pydantic.types import confloat
 from torch import Tensor
 
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 
 # for the return functions we do not distinguish between multiplicative/ additive (i.e. *weight or **weight),
 # since when a objective is called directly, we only have one objective
@@ -36,7 +36,7 @@ class BotorchConstrainedObjective:
         pass
 
 
-class Objective(BaseModel):
+class Objective(PydanticBaseModel):
     """The base class for all objectives"""
 
     type: str

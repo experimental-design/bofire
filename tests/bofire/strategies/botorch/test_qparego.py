@@ -3,42 +3,66 @@ import random
 import pytest
 
 from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.domain.features import OutputFeatures
+from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
 from bofire.samplers import PolytopeSampler
-from bofire.strategies.botorch.base import DescriptorEncodingEnum
 from bofire.strategies.botorch.qparego import (
     AcquisitionFunctionEnum,
     BoTorchQparegoStrategy,
 )
 from tests.bofire.strategies.botorch.test_base import domains
-from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[2],
+    "model_specs": BotorchModels(
+        models=[
+            SingleTaskGPModel(
+                input_features=domains[2].input_features,
+                output_features=OutputFeatures(
+                    features=[domains[2].output_features.get_by_key("of1")]
+                ),
+            ),
+            SingleTaskGPModel(
+                input_features=domains[2].input_features,
+                output_features=OutputFeatures(
+                    features=[domains[2].output_features.get_by_key("of2")]
+                ),
+            ),
+        ]
+    ),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
-    "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
+    # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": "FREE",
-    "categorical_encoding": "ONE_HOT",
+    # "categorical_encoding": "ONE_HOT",
     "base_acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
     "categorical_method": "FREE",
 }
+
+# BotorchModels(
+#                models=[
+#                    SingleTaskGPModel(
+#                        input_features=domains[1].input_features,
+#                        output_features=domains[1].output_features,
+#                        input_preprocessing_specs={
+#                            "if5": CategoricalEncodingEnum.ONE_HOT,
+#                            "if6": CategoricalEncodingEnum.ONE_HOT,
+#                        },
+#                    )
+#                ]
+#            ),
 
 BOTORCH_QPAREGO_STRATEGY_SPECS = {
     "valids": [
         VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": 1},
-        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
+        # {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
     ],
     "invalids": [
-        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "descriptor_encoding": None},
-        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "categorical_encoding": None},
-        {
-            **VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
-            "categorical_encoding": "ORDINAL",
-            "categorical_method": "FREE",
-        },
+        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "descriptor_method": None},
+        {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "categorical_method": None},
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": -1},
     ],
 }

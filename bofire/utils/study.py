@@ -162,7 +162,7 @@ class PoolStudy(BaseModel):
         # # we pick only those experiments where at least one output is valid
         cleaned = (
             values["domain"]
-            .preprocess_experiments_any_valid_output(experiments)
+            .output_features.preprocess_experiments_any_valid_output(experiments)
             .copy()
             .reset_index(drop=True)
         )
