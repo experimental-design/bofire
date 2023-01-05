@@ -47,7 +47,7 @@ def get_linear_constraints(
             idx = domain.get_feature_keys(InputFeature).index(featkey)
             feat = domain.get_feature(featkey)
             if feat.is_fixed():  # type: ignore
-                rhs -= feat.fixed_value() * c.coefficients[i]  # type: ignore
+                rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
             else:
                 lower.append(feat.lower_bound)  # type: ignore
                 upper.append(feat.upper_bound)  # type: ignore

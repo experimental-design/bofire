@@ -66,7 +66,7 @@ class InputFeature(Feature):
     type: Literal["InputFeature"] = "InputFeature"
 
     @abstractmethod
-    def is_fixed() -> bool:
+    def is_fixed(self) -> bool:
         """Indicates if a variable is set to a fixed value.
 
         Returns:
@@ -75,7 +75,9 @@ class InputFeature(Feature):
         pass
 
     @abstractmethod
-    def fixed_value() -> Union[None, str, float]:
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[None, List[str], List[float]]:
         """Method to return the fixed value in case of a fixed feature.
 
         Returns:
@@ -128,6 +130,16 @@ class InputFeature(Feature):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
+        """Returns the bounds of an input feature depending on the requested transform type.
+
+        Args:
+            transform_type (Optional[TTransform], optional): The requested transform type. Defaults to None.
+            values (Optional[pd.Series], optional): If values are provided the bounds are returned taking
+                the most extreme values for the feature into account. Defaults to None.
+
+        Returns:
+            Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
+        """
         pass
 
 
@@ -195,14 +207,17 @@ class NumericalInput(InputFeature):
         # TODO: the bounds are declared in the derived classes, hence the type checks fail here :(.
         return self.lower_bound == self.upper_bound  # type: ignore
 
-    def fixed_value(self):
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[None, List[float]]:
         """Method to get the value to which the feature is fixed
 
         Returns:
             Float: Return the feature value or None if the feature is not fixed.
         """
+        assert transform_type is None
         if self.is_fixed():
-            return self.lower_bound  # type: ignore
+            return [self.lower_bound]  # type: ignore
         else:
             return None
 
@@ -544,14 +559,28 @@ class CategoricalInput(InputFeature):
             return False
         return sum(self.allowed) == 1
 
-    def fixed_value(self) -> Union[str, None]:
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[List[str], List[float], None]:
         """Returns the categories to which the feature is fixed, None if the feature is not fixed
 
         Returns:
             List[str]: List of categories or None
         """
         if self.is_fixed():
-            return self.get_allowed_categories()[0]
+            val = self.get_allowed_categories()[0]
+            if transform_type is None:
+                return [val]
+            elif transform_type == CategoricalEncodingEnum.ONE_HOT:
+                return self.to_onehot_encoding(pd.Series([val])).values[0].tolist()
+            elif transform_type == CategoricalEncodingEnum.DUMMY:
+                return self.to_dummy_encoding(pd.Series([val])).values[0].tolist()
+            elif transform_type == CategoricalEncodingEnum.ORDINAL:
+                return self.to_ordinal_encoding(pd.Series([val])).tolist()
+            else:
+                raise ValueError(
+                    f"Unkwon transform type {transform_type} for categorical input {self.key}"
+                )
         else:
             return None
 
@@ -862,6 +891,20 @@ class CategoricalDescriptorInput(CategoricalInput):
         """
         data = {cat: values for cat, values in zip(self.categories, self.values)}
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
+
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[List[str], List[float], None]:
+        """Returns the categories to which the feature is fixed, None if the feature is not fixed
+
+        Returns:
+            List[str]: List of categories or None
+        """
+        if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
+            return super().fixed_value(transform_type)
+        else:
+            val = self.get_allowed_categories()[0]
+            return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
     def get_bounds(
         self, transform_type: TTransform, values: Optional[pd.Series] = None
@@ -1298,7 +1341,7 @@ class InputFeatures(Features):
             res.append(pd.Series(x, name=feat.key))
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
-            samples[feat.key] = feat.fixed_value()  # type: ignore
+            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
         return self.validate_inputs(samples)[self.get_keys(InputFeature)]
 
     # validate candidates, TODO rename and tidy up

@@ -315,11 +315,11 @@ def test_invalid_feature_specs(cls, spec):
 
 
 @pytest.mark.parametrize(
-    "input_feature, expected",
+    "input_feature, expected, expected_value",
     [
-        (ContinuousInput(key="k", lower_bound=1, upper_bound=1), True),
-        (ContinuousInput(key="k", lower_bound=1, upper_bound=2), False),
-        (ContinuousInput(key="k", lower_bound=2, upper_bound=3), False),
+        (ContinuousInput(key="k", lower_bound=1, upper_bound=1), True, [1]),
+        (ContinuousInput(key="k", lower_bound=1, upper_bound=2), False, None),
+        (ContinuousInput(key="k", lower_bound=2, upper_bound=3), False, None),
         (
             ContinuousDescriptorInput(
                 key="k",
@@ -329,6 +329,7 @@ def test_invalid_feature_specs(cls, spec):
                 values=[1, 2],
             ),
             True,
+            [1],
         ),
         (
             ContinuousDescriptorInput(
@@ -339,6 +340,7 @@ def test_invalid_feature_specs(cls, spec):
                 values=[1, 2],
             ),
             False,
+            None,
         ),
         (
             ContinuousDescriptorInput(
@@ -349,11 +351,13 @@ def test_invalid_feature_specs(cls, spec):
                 values=[1, 2],
             ),
             False,
+            None,
         ),
     ],
 )
-def test_continuous_input_feature_is_fixed(input_feature, expected):
+def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
+    assert input_feature.fixed_value() == expected_value
 
 
 @pytest.mark.parametrize(
@@ -548,14 +552,15 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 
 
 @pytest.mark.parametrize(
-    "input_feature, expected",
+    "input_feature, expected, expected_value",
     [
-        (DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC), True),
-        (DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC), False),
+        (DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC), True, [2.0]),
+        (DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC), False, None),
     ],
 )
-def test_discrete_input_feature_is_fixed(input_feature, expected):
+def test_discrete_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
+    assert input_feature.fixed_value() == expected_value
 
 
 @pytest.mark.parametrize(
@@ -1104,25 +1109,64 @@ def test_categorical_descriptor_input_feature_validate_invalid(
 
 
 @pytest.mark.parametrize(
-    "input_feature, expected",
+    "input_feature, expected, expected_value, transform_type",
     [
         (
             CategoricalInput(key="k", categories=categories, allowed=allowed),
             expected,
+            expected_value,
+            transform_type,
         )
-        for categories, allowed, expected in [
-            # ([], None, False),
-            # (["1"], None, True),
-            # (["1"], [True], True),
-            (["1", "2"], None, False),
-            (["1", "2", "3", "4"], [True, False, False, False], True),
-            (["1", "2", "3", "4"], [True, True, False, True], False),
+        for categories, allowed, expected, expected_value, transform_type in [
+            (["1", "2"], None, False, None, None),
+            (["1", "2", "3", "4"], [True, False, False, False], True, ["1"], None),
+            (["1", "2", "3", "4"], [True, True, False, True], False, None, None),
+            (
+                ["1", "2", "3", "4"],
+                [True, False, False, False],
+                True,
+                [0],
+                CategoricalEncodingEnum.ORDINAL,
+            ),
+            (
+                ["1", "2", "3", "4"],
+                [True, False, False, False],
+                True,
+                [1, 0, 0, 0],
+                CategoricalEncodingEnum.ONE_HOT,
+            ),
+            (
+                ["1", "2", "3", "4"],
+                [True, False, False, False],
+                True,
+                [0, 0, 0],
+                CategoricalEncodingEnum.DUMMY,
+            ),
+        ]
+    ]
+    + [
+        (
+            CategoricalDescriptorInput(
+                key="k",
+                categories=["1", "2", "3"],
+                allowed=[True, False, False],
+                descriptors=["alpha", "beta"],
+                values=[[1, 2], [3, 4], [5, 6]],
+            ),
+            expected,
+            expected_value,
+            transform_type,
+        )
+        for expected, expected_value, transform_type in [
+            (True, [1, 2], CategoricalEncodingEnum.DESCRIPTOR)
         ]
     ],
 )
-def test_categorical_input_feature_is_fixed(input_feature, expected):
-    print(expected, input_feature)
+def test_categorical_input_feature_is_fixed(
+    input_feature, expected, expected_value, transform_type
+):
     assert input_feature.is_fixed() == expected
+    assert input_feature.fixed_value(transform_type) == expected_value
 
 
 @pytest.mark.parametrize(

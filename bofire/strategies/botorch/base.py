@@ -23,7 +23,6 @@ from bofire.domain.features import (
     CategoricalDescriptorInput,
     CategoricalInput,
     InputFeature,
-    NumericalInput,
     OutputFeatures,
     TInputTransformSpecs,
 )
@@ -396,33 +395,10 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
         for _, feat in enumerate(self.domain.get_features(InputFeature)):
             if feat.fixed_value() is not None:  # type: ignore
-                if isinstance(feat, NumericalInput):
-                    # we use the scaler in botorch and thus, we have no scaler stored in transfrom.encoders by convention
-                    # if var.key in self.transform.encoders.keys():
-                    #     fixed_features[self.transform.features2idx[var.key][0]]= self.transform.encoders[var.key].transform(var.fixed_value())
-                    # else:
-                    fixed_features[features2idx[feat.key][0]] = feat.fixed_value()
+                fixed_values = feat.fixed_value(transform_type=self.input_preprocessing_specs.get(feat.key))  # type: ignore
+                for j, idx in enumerate(features2idx[feat.key]):
+                    fixed_features[idx] = fixed_values[j]  # type: ignore
 
-                elif (
-                    isinstance(feat, CategoricalDescriptorInput)
-                    and self.input_preprocessing_specs[feat.key]
-                    == CategoricalEncodingEnum.DESCRIPTOR
-                ):
-                    for j, idx in enumerate(features2idx[feat.key]):
-                        category_index = feat.categories.index(feat.fixed_value())  # type: ignore
-                        fixed_features[idx] = feat.values[category_index][j]
-
-                elif isinstance(feat, CategoricalInput):
-                    # in this case it has to be one hot
-                    assert (
-                        self.input_preprocessing_specs[feat.key]
-                        == CategoricalEncodingEnum.ONE_HOT
-                    )
-                    transformed = feat.to_onehot_encoding(
-                        pd.Series([feat.fixed_value()])
-                    )
-                    for j, idx in enumerate(features2idx[feat.key]):
-                        fixed_features[idx] = transformed.values[0, j]  # type: ignore
         # in case the optimization method is free and not allowed categories are present
         # one has to fix also them, this is abit of double work as it should be also reflected
         # in the bounds but helps to make it safer

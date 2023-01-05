@@ -181,7 +181,7 @@ class PolytopeSampler(Sampler):
 
         # setup the fixed continuous ones
         for feat in self.domain.inputs.get_fixed():
-            samples[feat.key] = feat.fixed_value()  # type: ignore
+            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
 
         return samples
 
