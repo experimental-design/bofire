@@ -112,8 +112,8 @@ class Ackley(Benchmark):
 
         z = x + c + d
 
-        term1 = -a * np.exp(-b * ((1 / n) * np.sum(x**2, axis=0)) ** 0.5)
-        term2 = -np.exp((1 / n) * np.sum(np.cos(c * x), axis=0))
+        term1 = -a * np.exp(-b * ((1 / n) * np.sum(z**2, axis=0)) ** 0.5)
+        term2 = -np.exp((1 / n) * np.sum(np.cos(c * z), axis=0))
         term3 = a + np.exp(1)
         y = term1 + term2 + term3
 
