@@ -131,13 +131,6 @@ class InputFeature(Feature):
         pass
 
 
-# class NumericalInput(InputFeature):
-#    """Abstracht base class for all numerical (ordinal) input features."""
-#    @staticmethod
-#    def from_dict(dict_: dict):
-#        return parse_obj_as(AnyInputFeature, dict_)
-
-
 class NumericalInput(InputFeature):
     """Abstract base class for all numerical (ordinal) input features."""
 
