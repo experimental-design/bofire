@@ -1415,7 +1415,7 @@ class InputFeatures(Features):
     def transform(
         self, experiments: pd.DataFrame, specs: TInputTransformSpecs
     ) -> pd.DataFrame:
-        """Transform a dataframe back to the represenation specified in `specs`.
+        """Transform a dataframe to the represenation specified in `specs`.
 
         Currently only input categoricals are supported.
 
