@@ -719,7 +719,7 @@
 
 <h2 id="bofire.domain.constraints.Constraint" class="doc doc-heading">
         <code>
-Constraint            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
+Constraint            (<span title="bofire.domain.util.PydanticBaseModel">PydanticBaseModel</span>)
         </code>
 
 
@@ -735,7 +735,7 @@ Constraint            (<span title="bofire.domain.util.BaseModel">BaseModel</spa
 
         <details class="quote">
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraint</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraint</span><span class="p">(</span><span class="n">PydanticBaseModel</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class to define constraints on the optimization space.&quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
@@ -943,7 +943,7 @@ Constraint            (<span title="bofire.domain.util.BaseModel">BaseModel</spa
 
 <h2 id="bofire.domain.constraints.Constraints" class="doc doc-heading">
         <code>
-Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</span>)
+Constraints            (<span title="bofire.domain.util.PydanticBaseModel">PydanticBaseModel</span>)
         </code>
 
 
@@ -958,7 +958,7 @@ Constraints            (<span title="bofire.domain.util.BaseModel">BaseModel</sp
 
         <details class="quote">
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">PydanticBaseModel</span><span class="p">):</span>
 
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
