@@ -392,9 +392,12 @@ domain2 = Domain(
 
 
 @pytest.mark.parametrize("domain", [domain, domain2])
-def test_domain_serialie(domain):
-    config = domain.to_config()
-    ndomain = Domain.from_config(config=config)
+def test_domain_serialize(domain):
+    print("domain:", domain)
+    import json
+
+    print("dict:", json.dumps(domain.dict(), indent=4))
+    ndomain = Domain(**domain.dict())
     assert ndomain == domain
 
 

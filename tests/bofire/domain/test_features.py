@@ -32,22 +32,33 @@ from tests.bofire.domain.utils import get_invalids
 objective = MinimizeObjective(w=1)
 
 VALID_CONTINUOUS_INPUT_FEATURE_SPEC = {
+    "type": "ContinuousInput",
     "key": str(uuid.uuid4()),
     "lower_bound": 3,
     "upper_bound": 5.3,
 }
 
 VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC = {
+    "type": "ContinuousInput",
     "key": str(uuid.uuid4()),
     "lower_bound": 3.0,
     "upper_bound": 3.0,
 }
 
-VALID_DISCRETE_INPUT_FEATURE_SPEC = {"key": str(uuid.uuid4()), "values": [1.0, 2.0]}
+VALID_DISCRETE_INPUT_FEATURE_SPEC = {
+    "type": "DiscreteInput",
+    "key": str(uuid.uuid4()),
+    "values": [1.0, 2.0],
+}
 
-VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC = {"key": str(uuid.uuid4()), "values": [2.0]}
+VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC = {
+    "type": "DiscreteInput",
+    "key": str(uuid.uuid4()),
+    "values": [2.0],
+}
 
 VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC = {
+    "type": "ContinuousDescriptorInput",
     "key": str(uuid.uuid4()),
     "lower_bound": 3,
     "upper_bound": 5.3,
@@ -56,12 +67,14 @@ VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC = {
 }
 
 VALID_CATEGORICAL_INPUT_FEATURE_SPEC = {
+    "type": "CategoricalInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     # "allowed": [True, True, False],
 }
 
 VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
+    "type": "CategoricalDescriptorInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     # "allowed": [True, True, False],
@@ -75,6 +88,7 @@ VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
 
 
 VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
+    "type": "CategoricalDescriptorInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     "allowed": [False, True, True],
@@ -87,12 +101,14 @@ VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
 }
 
 VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC = {
+    "type": "CategoricalInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     "allowed": [True, False, False],
 }
 
 VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
+    "type": "CategoricalDescriptorInput",
     "key": str(uuid.uuid4()),
     "categories": ["c1", "c2", "c3"],
     "allowed": [True, False, False],
@@ -105,6 +121,7 @@ VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC = {
 }
 
 VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC = {
+    "type": "ContinuousOutput",
     "key": str(uuid.uuid4()),
 }
 
@@ -280,8 +297,7 @@ def test_sample(cls, spec):
 )
 def test_feature_serialize(cls, spec):
     res = cls(**spec)
-    config = res.to_config()
-    res2 = Feature.from_config(config)
+    res2 = Feature.from_dict(res.dict())
     assert res == res2
 
 
@@ -1279,9 +1295,8 @@ features = Features(features=[if1, if2, of1, of2])
 
 
 @pytest.mark.parametrize("features", [input_features, output_features, features])
-def test_features_serialie(features):
-    config = features.to_config()
-    nfeatures = Features.from_config(config=config)
+def test_features_serialize(features):
+    nfeatures = Features(**features.dict())
     assert nfeatures == features
 
 
@@ -1433,7 +1448,7 @@ def test_input_features_get_free(features, expected):
         for method in ["UNIFORM", "SOBOL", "LHS"]
     ],
 )
-def test_input_features_sample(features, num_samples, method):
+def test_input_features_sample(features: InputFeatures, num_samples, method):
     samples = features.sample(num_samples, method=method)
     assert samples.shape == (num_samples, len(features))
     assert list(samples.columns) == features.get_keys()

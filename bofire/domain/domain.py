@@ -1,20 +1,21 @@
 import collections.abc
 import itertools
-import typing
 from copy import deepcopy
 from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, parse_obj_as, validator
 
 from bofire.domain.constraints import (
-    Constraint,
+    AnyConstraint,
     Constraints,
     LinearConstraint,
     NChooseKConstraint,
 )
 from bofire.domain.features import (
+    AnyInputFeature,
+    AnyOutputFeature,
     ContinuousInput,
     ContinuousOutput,
     Feature,
@@ -25,21 +26,21 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import Objective
-from bofire.domain.util import BaseModel, is_numeric
+from bofire.domain.util import BaseModel, is_numeric, isinstance_or_union
 
 
 class Domain(BaseModel):
 
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.
-    input_features: Union[Sequence[InputFeature], InputFeatures] = Field(
+    input_features: Union[Sequence[AnyInputFeature], InputFeatures] = Field(
         default_factory=lambda: InputFeatures()
     )
-    output_features: Union[Sequence[OutputFeature], OutputFeatures] = Field(
+    output_features: Union[Sequence[AnyOutputFeature], OutputFeatures] = Field(
         default_factory=lambda: OutputFeatures()
     )
 
-    constraints: Union[Sequence[Constraint], Constraints] = Field(
+    constraints: Union[Sequence[AnyConstraint], Constraints] = Field(
         default_factory=lambda: Constraints()
     )
 
@@ -73,7 +74,7 @@ class Domain(BaseModel):
         if isinstance(v, collections.abc.Sequence):
             v = InputFeatures(features=v)
             return v
-        if isinstance(v, InputFeature):
+        if isinstance_or_union(v, AnyInputFeature):
             return InputFeatures(features=[v])
         else:
             return v
@@ -82,7 +83,7 @@ class Domain(BaseModel):
     def validate_output_features_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             return OutputFeatures(features=v)
-        if isinstance(v, OutputFeature):
+        if isinstance_or_union(v, AnyOutputFeature):
             return OutputFeatures(features=[v])
         else:
             return v
@@ -91,7 +92,7 @@ class Domain(BaseModel):
     def validate_constraints_list(cls, v, values):
         if isinstance(v, list):
             return Constraints(constraints=v)
-        if isinstance(v, Constraint):
+        if isinstance_or_union(v, AnyConstraint):
             return Constraints(constraints=[v])
         else:
             return v
@@ -203,48 +204,6 @@ class Domain(BaseModel):
                         continuous_input_features_dict[f].lower_bound == 0
                     ), f"lower bound of {f} must be 0 for NChooseK constraint."
         return v
-
-    def to_config(self) -> Dict:
-        """Serializables itself to a dictionary.
-
-        Returns:
-            Dict: Serialized version of the domain as dictionary.
-        """
-        assert isinstance(self.input_features, InputFeatures)
-        assert isinstance(self.output_features, OutputFeatures)
-        assert isinstance(self.constraints, Constraints)
-        config: Dict[str, Any] = {
-            "input_features": self.input_features.to_config(),
-            "output_features": self.output_features.to_config(),
-            "constraints": self.constraints.to_config(),
-        }
-        if self.experiments is not None and self.num_experiments > 0:
-            config["experiments"] = self.experiments.to_dict()
-        if self.candidates is not None and self.num_candidates > 0:
-            config["candidates"] = self.candidates.to_dict()
-        return config
-
-    @classmethod
-    def from_config(cls, config: Dict):
-        """Instantiates a `Domain` object from a dictionary created by the `to_config`method.
-
-        Args:
-            config (Dict): Serialized version of a domain as dictionary.
-        """
-        d = cls(
-            input_features=typing.cast(
-                InputFeatures, InputFeatures.from_config(config["input_features"])
-            ),
-            output_features=typing.cast(
-                OutputFeatures, OutputFeatures.from_config(config["output_features"])
-            ),
-            constraints=Constraints.from_config(config["constraints"]),
-        )
-        if "experiments" in config.keys():
-            d.set_experiments(experiments=config["experiments"])
-        if "candidates" in config.keys():
-            d.set_candidates(candidates=config["candidates"])
-        return d
 
     def get_feature_reps_df(self) -> pd.DataFrame:
         """Returns a pandas dataframe describing the features contained in the optimization domain."""
@@ -732,7 +691,7 @@ class Domain(BaseModel):
             )
 
     def _set_constraints_unvalidated(
-        self, constraints: Union[Sequence[Constraint], Constraints]
+        self, constraints: Union[Sequence[AnyConstraint], Constraints]
     ):
         """Hack for reduce_domain"""
         self.constraints = Constraints(constraints=[])
@@ -745,6 +704,10 @@ class Domain(BaseModel):
         if self.experiments is None:
             return 0
         return len(self.experiments)
+
+    @staticmethod
+    def from_dict(dict_: dict):
+        return parse_obj_as(Domain, dict_)
 
 
 def get_subdomain(

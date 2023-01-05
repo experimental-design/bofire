@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, Dict, List, Union
+from typing import Callable, List, Literal, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import parse_obj_as
 from pydantic.class_validators import root_validator
 from pydantic.types import confloat
 from torch import Tensor
@@ -38,6 +39,8 @@ class BotorchConstrainedObjective:
 class Objective(BaseModel):
     """The base class for all objectives"""
 
+    type: str
+
     @abstractmethod
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """Abstract method to define the call function for the class Objective
@@ -60,38 +63,9 @@ class Objective(BaseModel):
         """
         return ax
 
-    def to_config(self) -> Dict:
-        """Generate serialized version of the objective.
-
-        Returns:
-            Dict: Serialized version of the objective as dictionary.
-        """
-        return {
-            "type": self.__class__.__name__,
-            **self.dict(),
-        }
-
     @staticmethod
-    def from_config(config: Dict) -> "Objective":
-        """Generate objective out of serialized version.
-
-        Args:
-            config (Dict): Serialized version of an objective.
-
-        Returns:
-            Objective: Instaniated objective of the type specified in the `config`.
-        """
-        mapper = {
-            "MaximizeObjective": MaximizeObjective,
-            "MinimizeObjective": MinimizeObjective,
-            "DeltaObjective": DeltaObjective,
-            "MaximizeSigmoidObjective": MaximizeSigmoidObjective,
-            "MinimizeSigmoidObjective": MinimizeSigmoidObjective,
-            "ConstantObjective": ConstantObjective,
-            "TargetObjective": TargetObjective,
-            "CloseToTargetObjective": CloseToTargetObjective,
-        }
-        return mapper[config["type"]](**config)
+    def from_dict(dict_: dict):
+        return parse_obj_as(AnyObjective, dict_)
 
 
 class IdentityObjective(Objective):
@@ -104,11 +78,12 @@ class IdentityObjective(Objective):
         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
+    type: Literal["IdentityObjective"] = "IdentityObjective"
     w: TWeight
     lower_bound: float = 0
     upper_bound: float = 1
 
-    @root_validator(pre=False)
+    @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
         """Validation function to ensure that lower bound is always greater the upper bound
 
@@ -148,7 +123,7 @@ class MaximizeObjective(IdentityObjective):
         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
 
-    pass
+    type: Literal["MaximizeObjective"] = "MaximizeObjective"
 
 
 class MinimizeObjective(IdentityObjective):
@@ -159,6 +134,8 @@ class MinimizeObjective(IdentityObjective):
         lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
     """
+
+    type: Literal["MinimizeObjective"] = "MinimizeObjective"
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
@@ -181,6 +158,7 @@ class DeltaObjective(IdentityObjective):
         scale (float, optional): Scaling factor for the difference. Defaults to one.
     """
 
+    type: Literal["DeltaObjective"] = "DeltaObjective"
     ref_point: float
     scale: float = 1
 
@@ -205,6 +183,7 @@ class SigmoidObjective(Objective, BotorchConstrainedObjective):
         tp (float): Turning point of the sigmoid function.
     """
 
+    type: Literal["SigmoidObjective"] = "SigmoidObjective"
     steepness: TGt0
     tp: float
     w: TWeight
@@ -219,6 +198,8 @@ class MaximizeSigmoidObjective(SigmoidObjective):
         tp (float): Turning point of the sigmoid function.
 
     """
+
+    type: Literal["MaximizeSigmoidObjective"] = "MaximizeSigmoidObjective"
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
@@ -252,6 +233,8 @@ class MinimizeSigmoidObjective(SigmoidObjective):
         tp (float): Turning point of the sigmoid function.
     """
 
+    type: Literal["MinimizeSigmoidObjective"] = "MinimizeSigmoidObjective"
+
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
@@ -283,6 +266,7 @@ class ConstantObjective(Objective):
         value (float): constant return value
     """
 
+    type: Literal["ConstantObjective"] = "ConstantObjective"
     w: TWeight
     value: float
 
@@ -299,6 +283,9 @@ class ConstantObjective(Objective):
 
 
 class AbstractTargetObjective(Objective):
+    # TODO: add docstring to AbstractTargetObjective
+
+    type: Literal["AbstractTargetObjective"] = "AbstractTargetObjective"
     w: TWeight
     target_value: float
     tolerance: TGe0
@@ -323,6 +310,9 @@ class AbstractTargetObjective(Objective):
 
 
 class CloseToTargetObjective(AbstractTargetObjective):
+    # TODO: add docstring to CloseToTargetObjective
+
+    type: Literal["CloseToTargetObjective"] = "CloseToTargetObjective"
     exponent: float
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
@@ -343,6 +333,7 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
 
     """
 
+    type: Literal["TargetObjective"] = "TargetObjective"
     steepness: TGt0
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
@@ -389,3 +380,19 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
             lambda Z: (Z[..., idx] - (self.target_value - self.tolerance)) * -1.0,
             lambda Z: (Z[..., idx] - (self.target_value + self.tolerance)),
         ]
+
+
+# TODO: check list of all objectives, possibly remove abstract classes
+AnyObjective = Union[
+    IdentityObjective,
+    MaximizeObjective,
+    MinimizeObjective,
+    DeltaObjective,
+    SigmoidObjective,
+    MaximizeSigmoidObjective,
+    MinimizeSigmoidObjective,
+    ConstantObjective,
+    AbstractTargetObjective,
+    CloseToTargetObjective,
+    TargetObjective,
+]

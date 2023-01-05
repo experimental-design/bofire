@@ -16,7 +16,8 @@ from bofire.domain.features import CategoricalInput, ContinuousInput, Continuous
 from bofire.domain.objectives import TargetObjective
 from bofire.strategies.strategy import Strategy
 from tests.bofire.domain.test_constraints import (
-    VALID_LINEAR_CONSTRAINT_SPEC,
+    VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
+    VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
     VALID_NCHOOSEKE_CONSTRAINT_SPEC,
 )
 from tests.bofire.domain.test_domain_validators import (
@@ -64,14 +65,14 @@ of4 = ContinuousOutput(
 
 c1 = LinearEqualityConstraint(
     **{
-        **VALID_LINEAR_CONSTRAINT_SPEC,
+        **VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
         "features": ["if1", "if2"],
         "coefficients": [1, 1],
     }
 )
 c2 = LinearInequalityConstraint(
     **{
-        **VALID_LINEAR_CONSTRAINT_SPEC,
+        **VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
         "features": ["if1", "if2"],
         "coefficients": [1, 1],
     }
