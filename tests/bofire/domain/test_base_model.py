@@ -4,10 +4,10 @@ import uuid
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 
 
-class Bla(BaseModel):
+class Bla(PydanticBaseModel):
     a: int = 1
 
 

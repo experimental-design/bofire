@@ -6,11 +6,11 @@ import pandas as pd
 from pydantic import Field, validator
 
 from bofire.domain.features import InputFeatures, OutputFeatures, TInputTransformSpecs
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 from bofire.utils.enum import OutputFilteringEnum
 
 
-class Model(BaseModel):
+class Model(PydanticBaseModel):
 
     input_features: InputFeatures
     output_features: OutputFeatures

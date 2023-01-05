@@ -26,10 +26,10 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import Objective
-from bofire.domain.util import BaseModel, is_numeric, isinstance_or_union
+from bofire.domain.util import PydanticBaseModel, is_numeric, isinstance_or_union
 
 
-class Domain(BaseModel):
+class Domain(PydanticBaseModel):
 
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.

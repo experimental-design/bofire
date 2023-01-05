@@ -15,8 +15,8 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.domain.objectives import AnyObjective, MaximizeObjective, Objective
 from bofire.domain.util import (
-    BaseModel,
     KeyModel,
+    PydanticBaseModel,
     filter_by_attribute,
     filter_by_class,
     is_numeric,
@@ -1157,7 +1157,7 @@ AnyOutputFeature = ContinuousOutput
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
 
 
-class Features(BaseModel):
+class Features(PydanticBaseModel):
     """Container of features, both input and output features are allowed.
 
     Attributes:

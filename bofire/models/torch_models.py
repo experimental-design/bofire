@@ -32,7 +32,7 @@ from bofire.domain.features import (
     OutputFeatures,
     TInputTransformSpecs,
 )
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
@@ -66,7 +66,7 @@ def get_dim_subsets(d: int, active_dims: List[int], cat_dims: List[int]):
     return ord_dims, ord_active_dims, cat_active_dims
 
 
-class BaseKernel(BaseModel):
+class BaseKernel(PydanticBaseModel):
     @abstractmethod
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
@@ -167,7 +167,7 @@ class BotorchModel(Model):
         return preds, stds
 
 
-class BotorchModels(BaseModel):
+class BotorchModels(PydanticBaseModel):
 
     models: List[BotorchModel]
 

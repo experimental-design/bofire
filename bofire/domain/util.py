@@ -27,14 +27,14 @@ def name2key(name):
 
 
 # config details: https://pydantic-docs.helpmanual.io/usage/model_config/
-class BaseModel(_BaseModel):
+class PydanticBaseModel(_BaseModel):
     class Config:
         validate_assignment = True
         arbitrary_types_allowed = True
         copy_on_model_validation = "none"
 
 
-class KeyModel(BaseModel):
+class KeyModel(PydanticBaseModel):
     key: str
 
     @validator("key")

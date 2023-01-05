@@ -24,7 +24,7 @@ from bofire.domain.features import (
     Feature,
     Tnum_samples,
 )
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 from bofire.strategies.strategy import (
     validate_constraints,
     validate_features,
@@ -47,7 +47,7 @@ def apply_nchoosek(samples: pd.DataFrame, constraint: NChooseKConstraint):
         samples.loc[i, s] = 0
 
 
-class Sampler(BaseModel):
+class Sampler(PydanticBaseModel):
     """Base class for sampling methods in BoFire for sampling from constrained input spaces.
 
     Attributes

@@ -20,7 +20,7 @@ from bofire.domain.features import (
     OutputFeature,
 )
 from bofire.domain.objectives import Objective, TargetObjective
-from bofire.domain.util import BaseModel
+from bofire.domain.util import PydanticBaseModel
 
 
 def test_empty_domain():
@@ -31,7 +31,7 @@ def test_empty_domain():
     )
 
 
-class Bla(BaseModel):
+class Bla(PydanticBaseModel):
     a: int
 
 
