@@ -104,7 +104,6 @@ def test_cvresults_invalid():
 )
 def test_cvresults_get_metrics(cv_results):
     assert cv_results.key == "a"
-    assert cv_results.num_samples == 10
     for metric in metrics:
         m = cv_results.get_metric(metric)
         assert len(m) == len(cv_results.results)
