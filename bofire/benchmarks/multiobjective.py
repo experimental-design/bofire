@@ -1,11 +1,6 @@
-
 from typing import Optional
 
 import pandas as pd
-from pydantic import validator
-from pydantic.types import PositiveInt
-from scipy.integrate import solve_ivp
-from scipy.special import gamma
 
 from bofire.utils.multiobjective import compute_hypervolume, get_pareto_front
 from bofire.utils.study import Study
@@ -27,4 +22,3 @@ class MultiObjective(Study):
             len(self.domain.output_features.get_by_objective(excludes=None)) < 2  # type: ignore
         ):  # TODO: update, when more features without DesFunc are implemented!
             raise ValueError("received singelobjective domain.")
-

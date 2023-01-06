@@ -1,22 +1,8 @@
 from typing import Optional
 
-# import numpy as np
 import pandas as pd
 
-# from bofire.domain import Domain
-# from bofire.domain.features import (
-#     CategoricalDescriptorInput,
-#     CategoricalInput,
-#     ContinuousInput,
-#     ContinuousOutput,
-#     InputFeatures,
-#     OutputFeatures,
-# )
-# from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.utils.study import Study
-
-# from pydantic.types import PositiveInt
-
 
 
 class SingleObjective(Study):
@@ -35,4 +21,3 @@ class SingleObjective(Study):
         ofeat = self.domain.output_features.get_by_objective(excludes=None)[0]  # type: ignore
         desirability = ofeat.desirability_function(experiments[ofeat.key])  # type: ignore
         return experiments.at[desirability.argmax(), ofeat.key]  # type: ignore
-

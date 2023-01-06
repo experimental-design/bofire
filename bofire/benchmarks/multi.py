@@ -18,8 +18,6 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
-from bofire.utils.multiobjective import compute_hypervolume, get_pareto_front
-from bofire.utils.study import Study
 
 
 class DTLZ2(Benchmark):

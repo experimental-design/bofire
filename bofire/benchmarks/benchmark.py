@@ -47,7 +47,7 @@ class Benchmark:
 
     @property
     def domain(self) -> Domain:
-        return self._domain # type: ignore
+        return self._domain  # type: ignore
 
 
 class StrategyFactory(Protocol):
