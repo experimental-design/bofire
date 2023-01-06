@@ -5,5 +5,5 @@ scikit-learn
 matplotlib
 pytest
 torch
-botorch @ git+https://github.com/pytorch/botorch@main#egg=botorch
+botorch>=0.8.1
 multiprocess
