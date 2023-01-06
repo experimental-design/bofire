@@ -48,3 +48,12 @@ class AcquisitionFunctionEnum(Enum):
 class OutputFilteringEnum(Enum):
     ALL = "ALL"
     ANY = "ANY"
+
+
+class RegressionMetricsEnum(Enum):
+    """Enumeration class for regression metrics."""
+
+    R2 = "R2"
+    MAE = "MAE"
+    MSD = "MSD"
+    MAPE = "MAPE"
