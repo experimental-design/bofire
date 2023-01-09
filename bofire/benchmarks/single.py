@@ -94,7 +94,7 @@ class Ackley(Benchmark):
             output_features=OutputFeatures(features=[output_feature]),
         )
 
-    def f(self, X, **kwargs):
+    def _f(self, X, **kwargs):
         a = 20
         b = 0.2
         c = np.pi * 2
@@ -117,12 +117,13 @@ class Ackley(Benchmark):
         term3 = a + np.exp(1)
         y = term1 + term2 + term3
 
-        X["y"] = y
-        X["valid_y"] = 1
+        Y = pd.DataFrame()
+        Y["y"] = y
+        Y["valid_y"] = 1
 
         # save evaluated points for plotting
         self.evaluated_points.append(x.tolist())
-        return X[self.domain.experiment_column_names].copy()  # type: ignore
+        return Y
 
     def get_optima(self) -> pd.DataFrame:
         x = np.zeros((1, self.dim))
@@ -168,10 +169,12 @@ class Himmelblau(Benchmark):
             output_features=OutputFeatures(features=[output_feature]),
         )
 
-    def f(self, X: pd.DataFrame, **kwargs):
+    def _f(self, X: pd.DataFrame, **kwargs):
+        Y = pd.DataFrame()
         X.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
-        X["valid_y"] = 1
-        return X[self.domain.experiment_column_names].copy()  # type: ignore
+        Y["y"] = X["y"]
+        Y["valid_y"] = 1
+        return Y
 
     def get_optima(self) -> pd.DataFrame:
         x = np.array(

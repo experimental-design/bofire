@@ -73,7 +73,7 @@ class DTLZ2(Benchmark):
         )
         return hypercube_vol - pos_hypersphere_vol
 
-    def f(self, candidates):
+    def _f(self, candidates):
         X = candidates[self.domain.get_feature_keys(InputFeature)].values  # type: ignore
         X_m = X[..., -self.k :]  # type: ignore
         g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
@@ -87,10 +87,12 @@ class DTLZ2(Benchmark):
             if i > 0:
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
-        candidates[
+
+        Y = pd.DataFrame()
+        Y[
             self.domain.output_features.get_keys_by_objective(excludes=None)  # type: ignore
         ] = np.stack(fs, axis=-1)
-        candidates[
+        Y[
             [
                 "valid_%s" % feat
                 for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
@@ -98,7 +100,7 @@ class DTLZ2(Benchmark):
                 )
             ]
         ] = 1
-        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
+        return Y
 
 
 class SnarBenchmark(Benchmark):
@@ -143,7 +145,7 @@ class SnarBenchmark(Benchmark):
     def best_possible_hypervolume(self):
         return 10000.0
 
-    def f(self, candidates):
+    def _f(self, candidates):
         stys = []
         e_factors = []
         for i, candidate in candidates.iterrows():
@@ -157,9 +159,11 @@ class SnarBenchmark(Benchmark):
             # candidates["sty"] = y
             # candidates["e_factor"] = e_factor
 
-        candidates["sty"] = stys
-        candidates["e_factor"] = e_factors
-        candidates[
+        # return only y values instead of appending them to input dataframe
+        Y = pd.DataFrame()
+        Y["sty"] = stys
+        Y["e_factor"] = e_factors
+        Y[
             [
                 "valid_%s" % feat
                 for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
@@ -167,7 +171,7 @@ class SnarBenchmark(Benchmark):
                 )
             ]
         ] = 1
-        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
+        return Y
 
     def _integrate_equations(self, tau, equiv_pldn, conc_dfnb, temperature, **kwargs):
         # Initial Concentrations in mM
@@ -268,12 +272,14 @@ class ZDT1(Benchmark):
         outputs = OutputFeatures(features=output_features)
         self._domain = Domain(input_features=inputs, output_features=outputs)
 
-    def f(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         x = X[self._domain.inputs.get_keys()[1:]].to_numpy()
         g = 1 + 9 / (self.n_inputs - 1) * np.sum(x, axis=1)
         y1 = X["x1"].to_numpy()
         y2 = g * (1 - (y1 / g) ** 0.5)
-        return pd.DataFrame({"y1": y1, "y2": y2}, index=X.index)
+        return pd.DataFrame(
+            {"y1": y1, "y2": y2, "valid_y1": 1, "valid_y2": 1}, index=X.index
+        )
 
     def get_optima(self, points=100):
         x = np.linspace(0, 1, points)

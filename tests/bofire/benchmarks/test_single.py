@@ -24,7 +24,8 @@ def test_single_objective_benchmarks(cls_benchmark, kwargs):
     # Calculating corresponding y values
     Y = benchmark_function.f(X_samples)
     # Check, whether shape of output dataframe matches the expected shape.
-    assert Y.shape == (n_samples, len(benchmark_function.domain.inputs) + 2,), (
+    expected_output_variables = len(benchmark_function.domain.output_features) * 2
+    assert Y.shape == (n_samples, expected_output_variables), (
         "The shape of the output dataframe of "
         + benchmark_function_name
         + " does not match the expected shape."
@@ -46,6 +47,3 @@ def test_single_objective_benchmarks(cls_benchmark, kwargs):
         + benchmark_function_name
         + " does not match calculated optimum value or is out of the tolerance radius."
     )
-
-
-# test_single_objective_problems(Ackley, {"categorical":True})

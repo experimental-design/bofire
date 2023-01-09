@@ -40,6 +40,10 @@ def best_multiplicative(domain: Domain):
 class Benchmark:
     @abstractmethod
     def f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        Y = self._f(candidates)
+        return Y
+
+    def _f(self, candidates: pd.DataFrame):
         pass
 
     def get_optima(self) -> pd.DataFrame:
