@@ -108,7 +108,7 @@ class SnarBenchmark(Benchmark):
         """Initializes multiobjective test function object of type SnarBenchmark.
 
         Args:
-            C_i (Optional[np.ndarray]): _description_
+            C_i (Optional[np.ndarray]): input concentrations
         """
         self.C_i = C_i
 
