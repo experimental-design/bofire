@@ -13,7 +13,7 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
-from bofire.domain.objectives import MaximizeObjective
+from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.utils.study import Study
 
 
@@ -33,6 +33,37 @@ class SingleObjective(Study):
         ofeat = self.domain.output_features.get_by_objective(excludes=None)[0]  # type: ignore
         desirability = ofeat.desirability_function(experiments[ofeat.key])  # type: ignore
         return experiments.at[desirability.argmax(), ofeat.key]  # type: ignore
+
+
+class Himmelblau(SingleObjective):
+
+    use_constraints: bool = False
+    best_possible_f: float = 0.0
+
+    def setup_domain(self):
+        input_feature_list = []
+
+        input_feature_list.append(
+            ContinuousInput(key="x_1", lower_bound=-4.0, upper_bound=4.0)
+        )
+        input_feature_list.append(
+            ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=6.0)
+        )  # ToDo, check for correct bounds
+
+        desirability_function = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
+
+        if self.use_constraints:
+            raise ValueError("Not implemented yet!")
+        return Domain(
+            input_features=InputFeatures(features=input_feature_list),
+            output_features=OutputFeatures(features=[output_feature]),
+        )
+
+    def run_candidate_experiments(self, candidates: pd.DataFrame, **kwargs):
+        candidates.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+        candidates["valid_y"] = 1
+        return candidates[self.domain.experiment_column_names].copy()  # type: ignore
 
 
 class Ackley(SingleObjective):
