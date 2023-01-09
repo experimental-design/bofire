@@ -88,7 +88,7 @@ class DTLZ2(Benchmark):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
 
-        col_names = self.domain.output_features.get_keys_by_objective(excludes=None)
+        col_names = self.domain.output_features.get_keys_by_objective(excludes=None)  # type: ignore
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
