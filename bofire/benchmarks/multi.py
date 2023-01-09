@@ -88,10 +88,9 @@ class DTLZ2(Benchmark):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
 
-        Y = pd.DataFrame()
-        Y[
-            self.domain.output_features.get_keys_by_objective(excludes=None)  # type: ignore
-        ] = np.stack(fs, axis=-1)
+        col_names = self.domain.output_features.get_keys_by_objective(excludes=None)
+        y_values = np.stack(fs, axis=-1)
+        Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
             [
                 "valid_%s" % feat
@@ -160,9 +159,7 @@ class SnarBenchmark(Benchmark):
             # candidates["e_factor"] = e_factor
 
         # return only y values instead of appending them to input dataframe
-        Y = pd.DataFrame()
-        Y["sty"] = stys
-        Y["e_factor"] = e_factors
+        Y = pd.DataFrame({"sty": stys, "e_factor": e_factors})
         Y[
             [
                 "valid_%s" % feat

@@ -37,3 +37,6 @@ def test_multi_objective_benchmarks(cls_benchmark, kwargs):
     # X_samples = benchmark_function.domain.inputs.sample(n=n_samples)
     # optima = benchmark_function.get_optima(points=n_samples)
     # Y = benchmark_function.f(X_samples)
+
+
+# test_multi_objective_benchmarks(DTLZ2, {"dim": 3, "k":1})

@@ -116,11 +116,7 @@ class Ackley(Benchmark):
         term2 = -np.exp((1 / n) * np.sum(np.cos(c * z), axis=0))
         term3 = a + np.exp(1)
         y = term1 + term2 + term3
-
-        Y = pd.DataFrame()
-        Y["y"] = y
-        Y["valid_y"] = 1
-
+        Y = pd.DataFrame({"y": y, "valid_y": 1})
         # save evaluated points for plotting
         self.evaluated_points.append(x.tolist())
         return Y
@@ -170,10 +166,8 @@ class Himmelblau(Benchmark):
         )
 
     def _f(self, X: pd.DataFrame, **kwargs):
-        Y = pd.DataFrame()
         X.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
-        Y["y"] = X["y"]
-        Y["valid_y"] = 1
+        Y = pd.DataFrame({"y": X["y"], "valid_y": 1})
         return Y
 
     def get_optima(self) -> pd.DataFrame:
