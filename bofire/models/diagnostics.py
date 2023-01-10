@@ -181,7 +181,7 @@ metrics = {
 }
 
 
-class CVResult(PydanticBaseModel):
+class CvResult(PydanticBaseModel):
     """Container representing the results of one CV fold.
 
     Attributes:
@@ -251,14 +251,14 @@ class CVResult(PydanticBaseModel):
         return metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
 
-class CVResults(PydanticBaseModel):
+class CvResults(PydanticBaseModel):
     """Container holding all cv folds of a cross-validation run.
 
     Attributes:
-        results (Sequence[CVResult]: Sequence of `CVResult` objects.
+        results (Sequence[CvResult]: Sequence of `CvResult` objects.
     """
 
-    results: Sequence[CVResult]
+    results: Sequence[CvResult]
 
     @validator("results")
     def validate_results(cls, v, values):
@@ -267,13 +267,13 @@ class CVResults(PydanticBaseModel):
         key = v[0].key
         for i in v:
             if i.key != key:
-                raise ValueError("`CVResult` objects do not match.")
+                raise ValueError("`CvResult` objects do not match.")
         has_sd = v[0].standard_deviation is not None
         for i in v:
             has_sd_i = i.standard_deviation is not None
             if has_sd != has_sd_i:
                 raise ValueError(
-                    "Either all or none`CVResult` objects contain a standard deviation."
+                    "Either all or none`CvResult` objects contain a standard deviation."
                 )
         return v
 
@@ -283,7 +283,7 @@ class CVResults(PydanticBaseModel):
     def __iter__(self):
         return iter(self.results)
 
-    def __getitem__(self, i) -> CVResult:
+    def __getitem__(self, i) -> CvResult:
         return self.results[i]
 
     @property
@@ -305,10 +305,10 @@ class CVResults(PydanticBaseModel):
         return (np.array([r.num_samples for r in self.results]) == 1).all()
 
     def _combine_folds(self) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
-        """Combines the `CVResult` splits into one flat array for predicted, observed and standard_deviation.
+        """Combines the `CvResult` splits into one flat array for predicted, observed and standard_deviation.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]: One flat array for CVResult property.
+            Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]: One flat array for CvResult property.
         """
         observed = np.array([i for cv in self.results for i in cv.observed.values])
         predicted = np.array([i for cv in self.results for i in cv.predicted.values])

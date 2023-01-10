@@ -8,7 +8,7 @@ from sklearn.model_selection import KFold
 
 from bofire.domain.features import InputFeatures, OutputFeatures, TInputTransformSpecs
 from bofire.domain.util import PydanticBaseModel
-from bofire.models.diagnostics import CVResult, CVResults
+from bofire.models.diagnostics import CvResult, CvResults
 from bofire.utils.enum import OutputFilteringEnum
 
 
@@ -90,7 +90,7 @@ class TrainableModel:
 
     def cross_validate(
         self, experiments: pd.DataFrame, folds: int = -1
-    ) -> Tuple[CVResults, CVResults]:
+    ) -> Tuple[CvResults, CvResults]:
         """Perform a cross validation for the provided training data.
 
         Args:
@@ -98,8 +98,8 @@ class TrainableModel:
             folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
 
         Returns:
-            Tuple[CVResults, CVResults]: First CVResults object reflects the training data,
-                second CVResults object the test data
+            Tuple[CvResults, CvResults]: First CvResults object reflects the training data,
+                second CvResults object the test data
         """
         if len(self.output_features) > 1:  # type: ignore
             raise NotImplementedError(
@@ -136,7 +136,7 @@ class TrainableModel:
             y_train_pred = self.predict(X_train)  # type: ignore
             # now store the results
             train_results.append(
-                CVResult(  # type: ignore
+                CvResult(  # type: ignore
                     key=key,
                     observed=y_train[key],
                     predicted=y_train_pred[key + "_pred"],
@@ -144,11 +144,11 @@ class TrainableModel:
                 )
             )
             test_results.append(
-                CVResult(  # type: ignore
+                CvResult(  # type: ignore
                     key=key,
                     observed=y_test[key],
                     predicted=y_test_pred[key + "_pred"],
                     standard_deviation=y_test_pred[key + "_sd"],
                 )
             )
-        return CVResults(results=train_results), CVResults(results=test_results)
+        return CvResults(results=train_results), CvResults(results=test_results)

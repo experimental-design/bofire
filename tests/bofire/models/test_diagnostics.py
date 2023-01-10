@@ -10,8 +10,8 @@ from sklearn.metrics import (
 
 from bofire.domain.features import CategoricalInput, ContinuousInput
 from bofire.models.diagnostics import (
-    CVResult,
-    CVResults,
+    CvResult,
+    CvResults,
     _mean_absolute_error,
     _mean_absolute_percentage_error,
     _mean_squared_error,
@@ -27,7 +27,7 @@ def generate_cvresult(key, num_samples):
     feature = ContinuousInput(key=key, lower_bound=10, upper_bound=20)
     observed = feature.sample(num_samples)
     predicted = observed + np.random.normal(0, 1, size=num_samples)
-    return CVResult(key=key, observed=observed, predicted=predicted)
+    return CvResult(key=key, observed=observed, predicted=predicted)
 
 
 @pytest.mark.parametrize(
@@ -72,19 +72,19 @@ def test_cvresult_not_numeric():
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
     feature2 = CategoricalInput(key="a", categories=["a", "b"])
     with pytest.raises(ValueError):
-        CVResult(
+        CvResult(
             key=feature.key,
             observed=feature2.sample(num_samples),
             predicted=feature.sample(num_samples),
         )
     with pytest.raises(ValueError):
-        CVResult(
+        CvResult(
             key=feature.key,
             observed=feature.sample(num_samples),
             predicted=feature2.sample(num_samples),
         )
     with pytest.raises(ValueError):
-        CVResult(
+        CvResult(
             key=feature.key,
             observed=feature.sample(num_samples),
             predicted=feature.sample(num_samples),
@@ -95,13 +95,13 @@ def test_cvresult_not_numeric():
 def test_cvresult_shape_mismatch():
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
     with pytest.raises(ValueError):
-        CVResult(
+        CvResult(
             key=feature.key,
             observed=feature.sample(5),
             predicted=feature.sample(6),
         )
     with pytest.raises(ValueError):
-        CVResult(
+        CvResult(
             key=feature.key,
             observed=feature.sample(5),
             predicted=feature.sample(5),
@@ -114,7 +114,7 @@ def test_cvresult_get_metric():
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
     observed = feature.sample(n=num_samples)
     predicted = observed + np.random.normal(loc=0, scale=1, size=num_samples)
-    cv = CVResult(key=feature.key, observed=observed, predicted=predicted)
+    cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
     assert cv.num_samples == 10
     for metric in metrics.keys():
         cv.get_metric(metric)
@@ -125,7 +125,7 @@ def test_cvresult_get_metric_invalid():
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
     observed = feature.sample(n=num_samples)
     predicted = observed + np.random.normal(loc=0, scale=1, size=num_samples)
-    cv = CVResult(key=feature.key, observed=observed, predicted=predicted)
+    cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
     for metric in metrics.keys():
         with pytest.raises(ValueError):
             cv.get_metric(metric)
@@ -134,31 +134,31 @@ def test_cvresult_get_metric_invalid():
 def test_cvresults_invalid():
     # test for empty results
     with pytest.raises(ValueError):
-        CVResults(results=[])
+        CvResults(results=[])
     # test for wrong keys
     num_samples = 10
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
     observed = feature.sample(n=num_samples)
     predicted = observed + np.random.normal(loc=0, scale=1, size=num_samples)
-    cv1 = CVResult(key=feature.key, observed=observed, predicted=predicted)
-    cv2 = CVResult(key="b", observed=observed, predicted=predicted)
+    cv1 = CvResult(key=feature.key, observed=observed, predicted=predicted)
+    cv2 = CvResult(key="b", observed=observed, predicted=predicted)
     with pytest.raises(ValueError):
-        CVResults(results=[cv1, cv2])
-    cv1 = CVResult(key=feature.key, observed=observed, predicted=predicted)
-    cv2 = CVResult(
+        CvResults(results=[cv1, cv2])
+    cv1 = CvResult(key=feature.key, observed=observed, predicted=predicted)
+    cv2 = CvResult(
         key="b", observed=observed, predicted=predicted, standard_deviation=observed
     )
     with pytest.raises(ValueError):
-        CVResults(results=[cv1, cv2])
+        CvResults(results=[cv1, cv2])
 
 
 @pytest.mark.parametrize(
     "cv_results",
     [
-        CVResults(
+        CvResults(
             results=[generate_cvresult(key="a", num_samples=10) for _ in range(10)]
         ),
-        CVResults(
+        CvResults(
             results=[generate_cvresult(key="a", num_samples=10) for _ in range(5)]
         ),
     ],
@@ -181,7 +181,7 @@ def test_cvresults_get_metrics(cv_results):
 
 
 def test_cvresults_get_metric_combine_folds():
-    cv_results = CVResults(
+    cv_results = CvResults(
         results=[generate_cvresult(key="a", num_samples=10) for _ in range(10)]
     )
     assert np.allclose(
@@ -191,7 +191,7 @@ def test_cvresults_get_metric_combine_folds():
 
 
 def test_cvresults_combine_folds():
-    cv_results = CVResults(
+    cv_results = CvResults(
         results=[
             generate_cvresult(key="a", num_samples=5),
             generate_cvresult(key="a", num_samples=6),
@@ -205,10 +205,10 @@ def test_cvresults_combine_folds():
 @pytest.mark.parametrize(
     "cv_results",
     [
-        CVResults(
+        CvResults(
             results=[generate_cvresult(key="a", num_samples=1) for _ in range(10)]
         ),
-        CVResults(
+        CvResults(
             results=[generate_cvresult(key="a", num_samples=1) for _ in range(5)]
         ),
     ],
@@ -228,19 +228,19 @@ def test_cvresults_get_metrics_loo(cv_results):
     "cv_results, expected",
     [
         (
-            CVResults(
+            CvResults(
                 results=[generate_cvresult(key="a", num_samples=1) for _ in range(5)]
             ),
             True,
         ),
         (
-            CVResults(
+            CvResults(
                 results=[generate_cvresult(key="a", num_samples=5) for _ in range(5)]
             ),
             False,
         ),
         (
-            CVResults(
+            CvResults(
                 results=[
                     generate_cvresult(key="a", num_samples=5),
                     generate_cvresult(key="a", num_samples=1),
