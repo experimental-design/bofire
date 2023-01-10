@@ -140,7 +140,7 @@ class TrainableModel:
                     key=key,
                     observed=y_train[key],
                     predicted=y_train_pred[key + "_pred"],
-                    uncertainty=y_train_pred[key + "_sd"],
+                    standard_deviation=y_train_pred[key + "_sd"],
                 )
             )
             test_results.append(
@@ -148,7 +148,7 @@ class TrainableModel:
                     key=key,
                     observed=y_test[key],
                     predicted=y_test_pred[key + "_pred"],
-                    uncertainty=y_test_pred[key + "_sd"],
+                    standard_deviation=y_test_pred[key + "_sd"],
                 )
             )
         return CVResults(results=train_results), CVResults(results=test_results)

@@ -1,8 +1,9 @@
-from typing import Optional, Sequence
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import root_validator, validator
+from scipy.stats import fisher_exact, pearsonr, spearmanr
 from sklearn.metrics import (
     mean_absolute_error,
     mean_absolute_percentage_error,
@@ -13,11 +14,170 @@ from sklearn.metrics import (
 from bofire.domain.util import PydanticBaseModel, is_numeric
 from bofire.utils.enum import RegressionMetricsEnum
 
+
+def _mean_absolute_error(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the mean absolute error.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: mean absolute error
+    """
+    return mean_absolute_error(observed, predicted)
+
+
+def _mean_squared_error(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the mean squared error.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: mean squared error
+    """
+    return mean_squared_error(observed, predicted)
+
+
+def _mean_absolute_percentage_error(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the mean percentage error.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: mean percentage error
+    """
+    return mean_absolute_percentage_error(observed, predicted)
+
+
+def _r2_score(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the R2 score.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: R2 score.
+    """
+    return float(r2_score(observed, predicted))
+
+
+def _pearson(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the Pearson correlation coefficient.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: Pearson correlation coefficient.
+    """
+    with np.errstate(invalid="ignore"):
+        rho, _ = pearsonr(predicted, observed)
+    return float(rho)
+
+
+def _spearman(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the Spearman correlation coefficient.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: Spearman correlation coefficient.
+    """
+    with np.errstate(invalid="ignore"):
+        rho, _ = spearmanr(predicted, observed)
+    return float(rho)
+
+
+def _fisher_exact_test_p(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Test if the model is able to distuinguish the bottom half of the observations from the top half.
+
+    For this purpose Fisher's excat test is used together with the observations and predictions. The
+    p value is returned. A low p value indicates that the model has some ability to distuiguish high from
+    low values. A high p value indcates that the model cannot identify the difference or that the
+    observations are too noisy to be able to tell.
+
+    This implementation is taken from Ax: https://github.com/facebook/Ax/blob/main/ax/modelbridge/cross_validation.py
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: p value of the test.
+    """
+    n_half = len(observed) // 2
+    top_obs = observed.argsort(axis=0)[-n_half:]
+    top_est = predicted.argsort(axis=0)[-n_half:]
+    # Construct contingency table
+    tp = len(set(top_est).intersection(top_obs))
+    fp = n_half - tp
+    fn = n_half - tp
+    tn = (len(observed) - n_half) - (n_half - tp)
+    table = np.array([[tp, fp], [fn, tn]])
+    # Compute the test statistic
+    _, p = fisher_exact(table, alternative="greater")
+    return float(p)
+
+
 metrics = {
-    RegressionMetricsEnum.MAE: mean_absolute_error,
-    RegressionMetricsEnum.MSD: mean_squared_error,
-    RegressionMetricsEnum.R2: r2_score,
-    RegressionMetricsEnum.MAPE: mean_absolute_percentage_error,
+    RegressionMetricsEnum.MAE: _mean_absolute_error,
+    RegressionMetricsEnum.MSD: _mean_squared_error,
+    RegressionMetricsEnum.R2: _r2_score,
+    RegressionMetricsEnum.MAPE: _mean_absolute_percentage_error,
+    RegressionMetricsEnum.PEARSON: _pearson,
+    RegressionMetricsEnum.SPEARMAN: _spearman,
+    RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
 }
 
 
@@ -28,14 +188,14 @@ class CVResult(PydanticBaseModel):
         key (str): Key of the validated output feature.
         observed (pd.Series): Series holding the observed values
         predicted (pd.Series): Series holding the predicted values
-        uncertainty (pd.Series, optional): Series holding the uncertainty associated with
+        standard_deviation (pd.Series, optional): Series holding the standard deviation associated with
             the prediction. Defaults to None.
     """
 
     key: str
     observed: pd.Series
     predicted: pd.Series
-    uncertainty: Optional[pd.Series] = None
+    standard_deviation: Optional[pd.Series] = None
 
     @root_validator(pre=True)
     def validate_shapes(cls, values):
@@ -43,10 +203,10 @@ class CVResult(PydanticBaseModel):
             raise ValueError(
                 f"Predicted values has length {len(values['predicted'])} whereas observed has length {len(values['observed'])}"
             )
-        if "uncertainty" in values:
-            if not len(values["predicted"]) == len(values["uncertainty"]):
+        if "standard_deviation" in values:
+            if not len(values["predicted"]) == len(values["standard_deviation"]):
                 raise ValueError(
-                    f"Predicted values has length {len(values['predicted'])} whereas uncertainty has length {len(values['uncertainty'])}"
+                    f"Predicted values has length {len(values['standard_deviation'])} whereas standard_deviation has length {len(values['standard_deviation'])}"
                 )
         return values
 
@@ -59,13 +219,13 @@ class CVResult(PydanticBaseModel):
     @validator("predicted")
     def validate_predicted(cls, v, values):
         if not is_numeric(v):
-            raise ValueError("Not all values of observed are numerical")
+            raise ValueError("Not all values of predicted are numerical")
         return v
 
-    @validator("uncertainty")
-    def validate_uncertainty(cls, v, values):
+    @validator("standard_deviation")
+    def validate_standard_deviation(cls, v, values):
         if not is_numeric(v):
-            raise ValueError("Not all values of observed are numerical")
+            raise ValueError("Not all values of standard_deviation are numerical")
         return v
 
     @property
@@ -88,7 +248,7 @@ class CVResult(PydanticBaseModel):
         """
         if self.num_samples == 1:
             raise ValueError("Metric cannot be calculated for only one sample.")
-        return metrics[metric](self.observed.values, self.predicted.values)
+        return metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
 
 class CVResults(PydanticBaseModel):
@@ -108,6 +268,13 @@ class CVResults(PydanticBaseModel):
         for i in v:
             if i.key != key:
                 raise ValueError("`CVResult` objects do not match.")
+        has_sd = v[0].standard_deviation is not None
+        for i in v:
+            has_sd_i = i.standard_deviation is not None
+            if has_sd != has_sd_i:
+                raise ValueError(
+                    "Either all or none`CVResult` objects contain a standard deviation."
+                )
         return v
 
     def __len__(self) -> int:
@@ -137,25 +304,36 @@ class CVResults(PydanticBaseModel):
         """
         return (np.array([r.num_samples for r in self.results]) == 1).all()
 
-    def get_metric(self, metric: RegressionMetricsEnum) -> pd.Series:
+    def _combine_folds(self) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
+        """Combines the `CVResult` splits into one flat array for predicted, observed and standard_deviation.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]: One flat array for CVResult property.
+        """
+        observed = np.array([i for cv in self.results for i in cv.observed.values])
+        predicted = np.array([i for cv in self.results for i in cv.predicted.values])
+        if self.results[0].standard_deviation is not None:
+            sd = np.array([i for cv in self.results for i in cv.standard_deviation.values])  # type: ignore
+        else:
+            sd = None
+        return observed, predicted, sd
+
+    def get_metric(
+        self, metric: RegressionMetricsEnum, combine_folds: bool = True
+    ) -> pd.Series:
         """Calculates a metric for every fold and returns them as pd.Series.
 
         Args:
             metric (RegressionMetricsEnum): Metrics to calculate.
+            combine_folds (bool, optional): If True the data in the split is combined before
+                the metric is calculated. In this case only a single number is returned. If False
+                the metric is calculated per fold. Defaults to True.
 
         Returns:
             pd.Series: Object containing the metric value for every fold.
         """
-        if self.is_loo:
-            return pd.Series(
-                [
-                    metrics[metric](
-                        [cv.observed.values[0] for cv in self.results],
-                        [cv.predicted.values[0] for cv in self.results],
-                    )
-                ],
-                name=metric.name,
-            )
+        if self.is_loo or combine_folds:
+            return pd.Series(metrics[metric](*self._combine_folds()), name=metric.name)
         return pd.Series(
             [cv.get_metric(metric) for cv in self.results], name=metric.name
         )
@@ -167,14 +345,21 @@ class CVResults(PydanticBaseModel):
             RegressionMetricsEnum.MSD,
             RegressionMetricsEnum.R2,
             RegressionMetricsEnum.MAPE,
+            RegressionMetricsEnum.PEARSON,
+            RegressionMetricsEnum.SPEARMAN,
+            RegressionMetricsEnum.FISHER,
         ],
+        combine_folds: bool = True,
     ) -> pd.DataFrame:
         """Calculates all metrics provided as list for every fold and returns all as pd.DataFrame.
 
         Args:
             metrics (Sequence[RegressionMetricsEnum], optional): Metrics to calculate. Defaults to R2, MAE, MSD, R2, MAPE.
+            combine_folds (bool, optional): If True the data in the split is combined before
+                the metric is calculated. In this case only a single number per metric is returned. If False
+                the metric is calculated per fold. Defaults to True.
 
         Returns:
             pd.DataFrame: Dataframe containing the metric values for all folds.
         """
-        return pd.concat([self.get_metric(m) for m in metrics], axis=1)
+        return pd.concat([self.get_metric(m, combine_folds) for m in metrics], axis=1)

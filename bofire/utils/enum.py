@@ -57,3 +57,6 @@ class RegressionMetricsEnum(Enum):
     MAE = "MAE"
     MSD = "MSD"
     MAPE = "MAPE"
+    PEARSON = "PEARSON"
+    SPEARMAN = "SPEARMAN"
+    FISHER = "FISHER"
