@@ -138,7 +138,7 @@ def test_qehvi_get_adjusted_refpoint(domain, ref_point, experiments, expected):
         ]
     ],
 )
-def test_qehvi_is_constraint_implemented_validd(domain, strategy, typeConstraint):
+def test_qehvi_is_constraint_implemented_valid(domain, strategy, typeConstraint):
     strategy = strategy(domain=domain)
     assert strategy.is_constraint_implemented(typeConstraint) == True
 
