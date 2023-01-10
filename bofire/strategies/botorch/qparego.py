@@ -130,7 +130,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         # optimize
         lower, upper = self.domain.inputs.get_bounds(self.input_preprocessing_specs)
 
-        candidates = optimize_acqf_list(
+        candidates, _ = optimize_acqf_list(
             acq_function_list=acqf_list,
             bounds=torch.tensor([lower, upper]).to(**tkwargs),
             num_restarts=self.num_restarts,
@@ -145,8 +145,8 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             options={"batch_limit": 5, "maxiter": 200},
         )
 
-        preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()  # type: ignore
-        stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())  # type: ignore
+        preds = self.model.posterior(X=candidates).mean.detach().numpy()  # type: ignore
+        stds = np.sqrt(self.model.posterior(X=candidates).variance.detach().numpy())  # type: ignore
 
         input_feature_keys = [
             item

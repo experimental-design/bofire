@@ -2,6 +2,7 @@ import random
 
 import numpy as np
 import pytest
+import torch
 from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
@@ -15,6 +16,7 @@ from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.utils.enum import CategoricalMethodEnum
+from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 
@@ -54,9 +56,7 @@ VALID_BOTORCH_QEHVI_STRATEGY_SPEC = {
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
-    # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": random.choice(list(CategoricalMethodEnum)),
-    # "categorical_encoding": random.choice(list(CategoricalEncodingEnum)),
     "categorical_method": "EXHAUSTIVE",
 }
 
@@ -135,3 +135,38 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     # test acqf calc
     acqf_vals = my_strategy._choose_from_pool(experiments_test, num_test_candidates)
     assert acqf_vals.shape[0] == num_test_candidates
+
+
+@pytest.mark.parametrize(
+    "strategy, num_experiments, num_candidates",
+    [
+        (strategy, num_experiments, num_candidates)
+        for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
+        for num_experiments in range(8, 10)
+        for num_candidates in range(1, 3)
+    ],
+)
+def test_get_acqf_input(strategy, num_experiments, num_candidates):
+
+    strategy = strategy(**VALID_BOTORCH_QEHVI_STRATEGY_SPEC)
+
+    experiments = generate_experiments(strategy.domain, num_experiments)
+    strategy.tell(experiments)
+    strategy.ask(candidate_count=num_candidates, add_pending=True)
+
+    X_train, X_pending = strategy.get_acqf_input_tensors()
+
+    _, names = strategy.domain.input_features._get_transform_info(
+        specs=strategy.model_specs.input_preprocessing_specs
+    )
+
+    assert torch.is_tensor(X_train)
+    assert torch.is_tensor(X_pending)
+    assert X_train.shape == (
+        num_experiments,
+        len(names),
+    )
+    assert X_pending.shape == (
+        num_candidates,
+        len(names),
+    )

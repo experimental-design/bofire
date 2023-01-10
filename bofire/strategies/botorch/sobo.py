@@ -70,18 +70,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     def _init_acqf(self) -> None:
         assert self.is_fitted is True, "Model not trained."
 
-        clean_experiments = (
-            self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments
-            )
-        )
-        transformed = self.domain.inputs.transform(
-            clean_experiments, self.input_preprocessing_specs
-        )
-        X_train = torch.from_numpy(transformed.values).to(**tkwargs)
-
-        # TODO: refactor pending experiments
-        X_pending = None
+        X_train, X_pending = self.get_acqf_input_tensors()
 
         self.acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,

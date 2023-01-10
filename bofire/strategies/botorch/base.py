@@ -54,7 +54,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     objective: Optional[MCAcquisitionObjective] = None
     acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
-    is_fitted: bool = False
     # use_combined_bounds: bool = True  # parameter to switch to legacy behavior
 
     @validator("num_sobol_samples")
@@ -527,3 +526,31 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         if self.experiments.shape[0] > degrees_of_freedom + 1:
             return True
         return False
+
+    def get_acqf_input_tensors(self):
+
+        experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
+
+        # TODO: should this be selectable?
+        clean_experiments = experiments.drop_duplicates(
+            subset=[var.key for var in self.domain.get_features(InputFeature)],
+            keep="first",
+            inplace=False,
+        )
+
+        transformed = self.domain.inputs.transform(
+            clean_experiments, self.input_preprocessing_specs
+        )
+        X_train = torch.from_numpy(transformed.values).to(**tkwargs)
+
+        if self.domain.candidates is not None:
+            transformed_candidates = self.domain.inputs.transform(
+                self.domain.candidates, self.input_preprocessing_specs
+            )
+            X_pending = torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+        else:
+            X_pending = None
+
+        return X_train, X_pending

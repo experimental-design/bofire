@@ -1,6 +1,7 @@
 import random
 
 import pytest
+import torch
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.domain.features import OutputFeatures
@@ -10,6 +11,7 @@ from bofire.strategies.botorch.qparego import (
     AcquisitionFunctionEnum,
     BoTorchQparegoStrategy,
 )
+from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
@@ -37,7 +39,7 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": "FREE",
     # "categorical_encoding": "ONE_HOT",
-    "base_acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
+    "acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
     "categorical_method": "FREE",
 }
 
@@ -81,23 +83,57 @@ def test_invalid_qparego_init_domain(domain):
 
 
 @pytest.mark.parametrize(
-    "num_test_candidates, base_acquisition_function",
+    "num_test_candidates, acquisition_function",
     [
-        (num_test_candidates, base_acquisition_function)
+        (num_test_candidates, acquisition_function)
         for num_test_candidates in range(1, 3)
-        for base_acquisition_function in list(AcquisitionFunctionEnum)
+        for acquisition_function in list(AcquisitionFunctionEnum)
     ],
 )
-def test_qparego(num_test_candidates, base_acquisition_function):
+def test_qparego(num_test_candidates, acquisition_function):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.run_candidate_experiments(random_strategy._sample(n=10))
     # init strategy
     my_strategy = BoTorchQparegoStrategy(
-        domain=benchmark.domain, base_acquisition_function=base_acquisition_function
+        domain=benchmark.domain, acquisition_function=acquisition_function
     )
     my_strategy.tell(experiments)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates
+
+
+@pytest.mark.parametrize(
+    "num_experiments, num_candidates",
+    [
+        (num_experiments, num_candidates)
+        for num_experiments in range(8, 10)
+        for num_candidates in range(1, 3)
+    ],
+)
+def test_get_acqf_input(num_experiments, num_candidates):
+
+    strategy = BoTorchQparegoStrategy(**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC)
+
+    experiments = generate_experiments(strategy.domain, num_experiments)
+    strategy.tell(experiments)
+    strategy.ask(candidate_count=num_candidates, add_pending=True)
+
+    X_train, X_pending = strategy.get_acqf_input_tensors()
+
+    _, names = strategy.domain.input_features._get_transform_info(
+        specs=strategy.model_specs.input_preprocessing_specs
+    )
+
+    assert torch.is_tensor(X_train)
+    assert torch.is_tensor(X_pending)
+    assert X_train.shape == (
+        num_experiments,
+        len(names),
+    )
+    assert X_pending.shape == (
+        num_candidates,
+        len(names),
+    )

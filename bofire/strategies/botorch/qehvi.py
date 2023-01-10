@@ -58,6 +58,9 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             # use observations that are better than the specified reference point and feasible
             Y=torch.from_numpy(train_obj[better_than_ref]),
         )
+
+        _, X_pending = self.get_acqf_input_tensors()
+
         assert self.model is not None
         # setup the acqf
         self.acqf = qExpectedHypervolumeImprovement(
@@ -67,6 +70,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             # sampler=self.sampler,
             # define an objective that specifies which outcomes are the objectives
             objective=self.objective,
+            X_pending=X_pending,
             # TODO: implement constraints
             # specify that the constraint is on the last outcome
             # constraints=[lambda Z: Z[..., -1]],
@@ -185,30 +189,20 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
     def _init_acqf(self) -> None:
-        # TODO move this into general helper function as done in OU
-        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments
-        )
 
-        df = df.drop_duplicates(
-            subset=[var.key for var in self.domain.get_features(InputFeature)],
-            keep="first",
-            inplace=False,
-        )
-        # now transform it
-        df_transform = self.domain.inputs.transform(df, self.input_preprocessing_specs)
-        # now transform to torch
-        train_x = torch.from_numpy(df_transform.values).to(**tkwargs)
+        X_train, X_pending = self.get_acqf_input_tensors()
+
         assert self.model is not None
         # if the reference point is not defined it has to be calculated from data
         self.acqf = qNoisyExpectedHypervolumeImprovement(
             model=self.model,
             ref_point=self.get_adjusted_refpoint(),
-            X_baseline=train_x,
+            X_baseline=X_train,
             # sampler=self.sampler,
             prune_baseline=True,
             objective=self.objective,
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            X_pending=X_pending,
         )
         # todo comment in after new botorch deployment
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])

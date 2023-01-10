@@ -2,6 +2,7 @@ import math
 import random
 
 import pytest
+import torch
 from botorch.acquisition.monte_carlo import (
     qExpectedImprovement,
     qNoisyExpectedImprovement,
@@ -100,3 +101,28 @@ def test_SOBO_init_qUCB():
     strategy.tell(experiments)
     assert strategy.acqf.beta_prime == math.sqrt(beta * math.pi / 2)
     domains[0].experiments = None
+
+
+@pytest.mark.parametrize(
+    "domain, acqf, num_experiments, num_candidates",
+    [
+        (domains[0], acqf, num_experiments, num_candidates)
+        for acqf in ["QEI", "QNEI", "QPI", "QUCB", "QSR"]
+        for num_experiments in range(8, 10)
+        for num_candidates in range(1, 3)
+    ],
+)
+def test_get_acqf_input(domain, acqf, num_experiments, num_candidates):
+
+    strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
+
+    experiments = generate_experiments(domain, num_experiments)
+    strategy.tell(experiments)
+    strategy.ask(candidate_count=num_candidates, add_pending=True)
+
+    X_train, X_pending = strategy.get_acqf_input_tensors()
+
+    assert torch.is_tensor(X_train)
+    assert torch.is_tensor(X_pending)
+    assert X_train.shape == (num_experiments, len(domain.input_features.get_keys()))
+    assert X_pending.shape == (num_candidates, len(domain.input_features.get_keys()))

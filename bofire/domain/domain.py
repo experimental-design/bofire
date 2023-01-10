@@ -665,8 +665,8 @@ class Domain(PydanticBaseModel):
         if candidates is None:
             self.candidates = candidates
         else:
-            self._candidates = pd.concat(
-                (self._candidates, candidates), ignore_index=True
+            self.candidates = pd.concat(
+                (self.candidates, candidates), ignore_index=True
             )
 
     @property
