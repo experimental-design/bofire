@@ -4,9 +4,11 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 from pydantic import Field, validator
+from sklearn.model_selection import KFold
 
 from bofire.domain.features import InputFeatures, OutputFeatures, TInputTransformSpecs
 from bofire.domain.util import PydanticBaseModel
+from bofire.models.diagnostics import CvResult, CvResults
 from bofire.utils.enum import OutputFilteringEnum
 
 
@@ -32,7 +34,7 @@ class Model(PydanticBaseModel):
 
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         # validate
-        X = self.input_features.validate_inputs(X)
+        X = self.input_features.validate_experiments(X, strict=False)
         # transform
         Xt = self.input_features.transform(X, self.input_preprocessing_specs)
         # predict
@@ -86,5 +88,67 @@ class TrainableModel:
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         pass
 
-    def cross_validate(self, experiments: pd.DataFrame):
-        return
+    def cross_validate(
+        self, experiments: pd.DataFrame, folds: int = -1
+    ) -> Tuple[CvResults, CvResults]:
+        """Perform a cross validation for the provided training data.
+
+        Args:
+            experiments (pd.DataFrame): Data on which the cross validation should be performed.
+            folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
+
+        Returns:
+            Tuple[CvResults, CvResults]: First CvResults object reflects the training data,
+                second CvResults object the test data
+        """
+        if len(self.output_features) > 1:  # type: ignore
+            raise NotImplementedError(
+                "Cross validation not implemented for multi-output models"
+            )
+        n = len(experiments)
+        if folds > n:
+            raise ValueError(
+                f"Training data only has {n} experiments, which is less than folds"
+            )
+        elif n == 0:
+            raise ValueError("Experiments is empty.")
+        elif folds < 2 and folds != -1:
+            raise ValueError("Folds must be -1 for LOO, or > 1.")
+        elif folds == -1:
+            folds = n
+        # instantiate kfold object
+        cv = KFold(n_splits=folds, shuffle=True)
+        key = self.output_features.get_keys()[0]  # type: ignore
+        # first filter the experiments based on the model setting
+        experiments = self._preprocess_experiments(experiments)
+        train_results = []
+        test_results = []
+        # now get the indices for the split
+        for train_index, test_index in cv.split(experiments):
+            X_train = experiments.loc[train_index, self.input_features.get_keys()]  # type: ignore
+            X_test = experiments.loc[test_index, self.input_features.get_keys()]  # type: ignore
+            y_train = experiments.loc[train_index, self.output_features.get_keys()]  # type: ignore
+            y_test = experiments.loc[test_index, self.output_features.get_keys()]  # type: ignore
+            # now fit the model
+            self._fit(X_train, y_train)
+            # now do the scoring
+            y_test_pred = self.predict(X_test)  # type: ignore
+            y_train_pred = self.predict(X_train)  # type: ignore
+            # now store the results
+            train_results.append(
+                CvResult(  # type: ignore
+                    key=key,
+                    observed=y_train[key],
+                    predicted=y_train_pred[key + "_pred"],
+                    standard_deviation=y_train_pred[key + "_sd"],
+                )
+            )
+            test_results.append(
+                CvResult(  # type: ignore
+                    key=key,
+                    observed=y_test[key],
+                    predicted=y_test_pred[key + "_pred"],
+                    standard_deviation=y_test_pred[key + "_sd"],
+                )
+            )
+        return CvResults(results=train_results), CvResults(results=test_results)
