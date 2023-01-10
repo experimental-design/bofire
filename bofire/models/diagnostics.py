@@ -229,7 +229,7 @@ class CvResult(PydanticBaseModel):
         return v
 
     @property
-    def num_samples(self) -> int:
+    def n_samples(self) -> int:
         """Returns the number of samples in the fold.
 
         Returns:
@@ -246,7 +246,7 @@ class CvResult(PydanticBaseModel):
         Returns:
             float: Metric value.
         """
-        if self.num_samples == 1:
+        if self.n_samples == 1:
             raise ValueError("Metric cannot be calculated for only one sample.")
         return metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
@@ -302,7 +302,7 @@ class CvResults(PydanticBaseModel):
         Returns:
             bool: True if LOO-CV else False.
         """
-        return (np.array([r.num_samples for r in self.results]) == 1).all()
+        return (np.array([r.n_samples for r in self.results]) == 1).all()
 
     def _combine_folds(self) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
         """Combines the `CvResult` splits into one flat array for predicted, observed and standard_deviation.

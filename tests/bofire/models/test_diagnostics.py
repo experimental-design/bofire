@@ -23,10 +23,10 @@ from bofire.models.diagnostics import (
 from bofire.utils.enum import RegressionMetricsEnum
 
 
-def generate_cvresult(key, num_samples):
+def generate_cvresult(key, n_samples):
     feature = ContinuousInput(key=key, lower_bound=10, upper_bound=20)
-    observed = feature.sample(num_samples)
-    predicted = observed + np.random.normal(0, 1, size=num_samples)
+    observed = feature.sample(n_samples)
+    predicted = observed + np.random.normal(0, 1, size=n_samples)
     return CvResult(key=key, observed=observed, predicted=predicted)
 
 
@@ -40,11 +40,11 @@ def generate_cvresult(key, num_samples):
     ],
 )
 def test_sklearn_metrics(bofire, sklearn):
-    num_samples = 20
+    n_samples = 20
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
-    observed = feature.sample(num_samples).values
-    predicted = observed + np.random.normal(0, 1, size=num_samples)
-    sd = np.random.normal(0, 1, size=num_samples)
+    observed = feature.sample(n_samples).values
+    predicted = observed + np.random.normal(0, 1, size=n_samples)
+    sd = np.random.normal(0, 1, size=n_samples)
     assert bofire(observed, predicted, sd) == sklearn(observed, predicted)
     assert bofire(observed, predicted) == sklearn(observed, predicted)
 
@@ -57,38 +57,38 @@ def test_sklearn_metrics(bofire, sklearn):
     ],
 )
 def test_scipy_metrics(bofire, scipy):
-    num_samples = 20
+    n_samples = 20
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
-    observed = feature.sample(num_samples).values
-    predicted = observed + np.random.normal(0, 1, size=num_samples)
-    sd = np.random.normal(0, 1, size=num_samples)
+    observed = feature.sample(n_samples).values
+    predicted = observed + np.random.normal(0, 1, size=n_samples)
+    sd = np.random.normal(0, 1, size=n_samples)
     s, _ = scipy(predicted, observed)
     assert bofire(observed, predicted, sd) == s
     assert bofire(observed, predicted) == s
 
 
 def test_cvresult_not_numeric():
-    num_samples = 10
+    n_samples = 10
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
     feature2 = CategoricalInput(key="a", categories=["a", "b"])
     with pytest.raises(ValueError):
         CvResult(
             key=feature.key,
-            observed=feature2.sample(num_samples),
-            predicted=feature.sample(num_samples),
+            observed=feature2.sample(n_samples),
+            predicted=feature.sample(n_samples),
         )
     with pytest.raises(ValueError):
         CvResult(
             key=feature.key,
-            observed=feature.sample(num_samples),
-            predicted=feature2.sample(num_samples),
+            observed=feature.sample(n_samples),
+            predicted=feature2.sample(n_samples),
         )
     with pytest.raises(ValueError):
         CvResult(
             key=feature.key,
-            observed=feature.sample(num_samples),
-            predicted=feature.sample(num_samples),
-            standard_deviation=feature2.sample(num_samples),
+            observed=feature.sample(n_samples),
+            predicted=feature.sample(n_samples),
+            standard_deviation=feature2.sample(n_samples),
         )
 
 
@@ -110,21 +110,21 @@ def test_cvresult_shape_mismatch():
 
 
 def test_cvresult_get_metric():
-    num_samples = 10
+    n_samples = 10
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
-    observed = feature.sample(n=num_samples)
-    predicted = observed + np.random.normal(loc=0, scale=1, size=num_samples)
+    observed = feature.sample(n=n_samples)
+    predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
-    assert cv.num_samples == 10
+    assert cv.n_samples == 10
     for metric in metrics.keys():
         cv.get_metric(metric)
 
 
 def test_cvresult_get_metric_invalid():
-    num_samples = 1
+    n_samples = 1
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
-    observed = feature.sample(n=num_samples)
-    predicted = observed + np.random.normal(loc=0, scale=1, size=num_samples)
+    observed = feature.sample(n=n_samples)
+    predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
     for metric in metrics.keys():
         with pytest.raises(ValueError):
@@ -136,10 +136,10 @@ def test_cvresults_invalid():
     with pytest.raises(ValueError):
         CvResults(results=[])
     # test for wrong keys
-    num_samples = 10
+    n_samples = 10
     feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
-    observed = feature.sample(n=num_samples)
-    predicted = observed + np.random.normal(loc=0, scale=1, size=num_samples)
+    observed = feature.sample(n=n_samples)
+    predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv1 = CvResult(key=feature.key, observed=observed, predicted=predicted)
     cv2 = CvResult(key="b", observed=observed, predicted=predicted)
     with pytest.raises(ValueError):
@@ -156,11 +156,9 @@ def test_cvresults_invalid():
     "cv_results",
     [
         CvResults(
-            results=[generate_cvresult(key="a", num_samples=10) for _ in range(10)]
+            results=[generate_cvresult(key="a", n_samples=10) for _ in range(10)]
         ),
-        CvResults(
-            results=[generate_cvresult(key="a", num_samples=10) for _ in range(5)]
-        ),
+        CvResults(results=[generate_cvresult(key="a", n_samples=10) for _ in range(5)]),
     ],
 )
 def test_cvresults_get_metrics(cv_results):
@@ -182,7 +180,7 @@ def test_cvresults_get_metrics(cv_results):
 
 def test_cvresults_get_metric_combine_folds():
     cv_results = CvResults(
-        results=[generate_cvresult(key="a", num_samples=10) for _ in range(10)]
+        results=[generate_cvresult(key="a", n_samples=10) for _ in range(10)]
     )
     assert np.allclose(
         cv_results.get_metric(RegressionMetricsEnum.MAE, combine_folds=True).values[0],
@@ -193,8 +191,8 @@ def test_cvresults_get_metric_combine_folds():
 def test_cvresults_combine_folds():
     cv_results = CvResults(
         results=[
-            generate_cvresult(key="a", num_samples=5),
-            generate_cvresult(key="a", num_samples=6),
+            generate_cvresult(key="a", n_samples=5),
+            generate_cvresult(key="a", n_samples=6),
         ]
     )
     observed, predicted, _ = cv_results._combine_folds()
@@ -205,12 +203,8 @@ def test_cvresults_combine_folds():
 @pytest.mark.parametrize(
     "cv_results",
     [
-        CvResults(
-            results=[generate_cvresult(key="a", num_samples=1) for _ in range(10)]
-        ),
-        CvResults(
-            results=[generate_cvresult(key="a", num_samples=1) for _ in range(5)]
-        ),
+        CvResults(results=[generate_cvresult(key="a", n_samples=1) for _ in range(10)]),
+        CvResults(results=[generate_cvresult(key="a", n_samples=1) for _ in range(5)]),
     ],
 )
 def test_cvresults_get_metrics_loo(cv_results):
@@ -229,21 +223,21 @@ def test_cvresults_get_metrics_loo(cv_results):
     [
         (
             CvResults(
-                results=[generate_cvresult(key="a", num_samples=1) for _ in range(5)]
+                results=[generate_cvresult(key="a", n_samples=1) for _ in range(5)]
             ),
             True,
         ),
         (
             CvResults(
-                results=[generate_cvresult(key="a", num_samples=5) for _ in range(5)]
+                results=[generate_cvresult(key="a", n_samples=5) for _ in range(5)]
             ),
             False,
         ),
         (
             CvResults(
                 results=[
-                    generate_cvresult(key="a", num_samples=5),
-                    generate_cvresult(key="a", num_samples=1),
+                    generate_cvresult(key="a", n_samples=5),
+                    generate_cvresult(key="a", n_samples=1),
                 ]
             ),
             False,
