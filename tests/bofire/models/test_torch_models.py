@@ -181,6 +181,48 @@ def test_SingleTaskGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, InputStandardize)
 
 
+@pytest.mark.parametrize("folds", [5, 3, 10, -1])
+def test_model_cross_validate(folds):
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    experiments = input_features.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    model = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+    )
+    train_cv, test_cv = model.cross_validate(experiments, folds=folds)
+    efolds = folds if folds != -1 else 10
+    assert len(train_cv.results) == efolds
+    assert len(test_cv.results) == efolds
+
+
+@pytest.mark.parametrize("folds", [-2, 0, 1, 11])
+def test_model_cross_validate_invalid(folds):
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    experiments = input_features.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    model = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+    )
+    with pytest.raises(ValueError):
+        model.cross_validate(experiments, folds=folds)
+
+
 @pytest.mark.parametrize(
     "kernel, scaler",
     [(RBF(ard=True), ScalerEnum.NORMALIZE), (RBF(ard=False), ScalerEnum.STANDARDIZE)],
