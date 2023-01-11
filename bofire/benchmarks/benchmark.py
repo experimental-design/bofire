@@ -38,17 +38,20 @@ def best_multiplicative(domain: Domain):
 
 
 class Benchmark:
-    @property
-    @abstractmethod
-    def domain(self) -> Domain:
-        pass
+    def f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        Y = self._f(candidates)
+        return Y
 
     @abstractmethod
-    def f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         pass
 
     def get_optima(self) -> pd.DataFrame:
         raise NotImplementedError()
+
+    @property
+    def domain(self) -> Domain:
+        return self._domain  # type: ignore
 
 
 class StrategyFactory(Protocol):

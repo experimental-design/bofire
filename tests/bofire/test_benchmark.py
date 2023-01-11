@@ -1,7 +1,7 @@
 import pandas as pd
 
 import bofire.benchmarks.benchmark as benchmark
-from bofire.benchmarks.zdt import ZDT1
+from bofire.benchmarks.multi import ZDT1
 from bofire.domain.domain import Domain
 from bofire.samplers import RejectionSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
