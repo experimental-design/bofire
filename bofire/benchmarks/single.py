@@ -48,6 +48,18 @@ class Ackley(Benchmark):
         best_possible_f: float = 0.0,
         evaluated_points=[],
     ):
+        """Initializes benchmark function of type Ackley.
+
+        Args:
+            num_categories (PositiveInt, optional): Number of categories. Defaults to 3.
+            categorical (bool, optional): Use categorical inputs. Defaults to False.
+            descriptor (bool, optional): Use descriptive inputs. Defaults to False.
+            dim (PositiveInt, optional): Dimension. Defaults to 2.
+            lower (float, optional): Upper boundary. Defaults to -32.768.
+            upper (float, optional): Lower boundary. Defaults to 32.768.
+            best_possible_f (float, optional): Best possible function value. Defaults to 0.0.
+            evaluated_points (list, optional): Evaluated points. Defaults to [].
+        """
 
         self.num_categories = num_categories
         self.categorical = categorical
@@ -94,7 +106,15 @@ class Ackley(Benchmark):
             output_features=OutputFeatures(features=[output_feature]),
         )
 
-    def _f(self, X, **kwargs):
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Evaluates benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+        """
         a = 20
         b = 0.2
         c = np.pi * 2
@@ -122,6 +142,11 @@ class Ackley(Benchmark):
         return Y
 
     def get_optima(self) -> pd.DataFrame:
+        """Returns positions of optima of the benchmark function.
+
+        Returns:
+            pd.DataFrame: x values of optima. Colums are x_1, x_2, y and valid_y
+        """
         x = np.zeros((1, self.dim))
         y = 0
         return pd.DataFrame(
@@ -165,12 +190,25 @@ class Himmelblau(Benchmark):
             output_features=OutputFeatures(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs):
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Evaluates benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+        """
         X.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
         Y = pd.DataFrame({"y": X["y"], "valid_y": 1})
         return Y
 
     def get_optima(self) -> pd.DataFrame:
+        """Returns positions of optima of the benchmark function.
+
+        Returns:
+            pd.DataFrame: x values of optima. Colums are x_1 and x_2
+        """
         x = np.array(
             [
                 [3.0, 2.0],

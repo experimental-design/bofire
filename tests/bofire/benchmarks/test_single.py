@@ -15,6 +15,12 @@ from bofire.benchmarks.single import Ackley, Himmelblau
     ],
 )
 def test_single_objective_benchmarks(cls_benchmark, kwargs):
+    """Test function for single objective benchmark functions.
+
+    Args:
+        cls_benchmark (Benchmark function class): Benchmark function that is supposed to be tested.
+        kwargs ({"dim": , "k":}): Optinal arguments for benchmark functions that require additional arguments. Ackley can handle categerical and descriptive inputs.
+    """
     benchmark_function = cls_benchmark(**kwargs)
     benchmark_function_name = benchmark_function.__class__.__name__
 

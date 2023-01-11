@@ -28,6 +28,13 @@ class DTLZ2(Benchmark):
     def __init__(
         self, dim: PositiveInt, k: Optional[int], num_objectives: PositiveInt = 2
     ):
+        """Initiallizes object of Type DTLZ2 which is a benchmark function.
+
+        Args:
+            dim (PositiveInt): Dimension of input vector
+            k (Optional[int]): _description_
+            num_objectives (PositiveInt, optional): Dimension of output vector. Defaults to 2.
+        """
         self.num_objectives = num_objectives
         self.dim = dim
         self.k = k
@@ -73,7 +80,15 @@ class DTLZ2(Benchmark):
         )
         return hypercube_vol - pos_hypersphere_vol
 
-    def _f(self, candidates):
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Function evaluation of DTLZ2.
+
+        Args:
+            candidates (pd.DataFrame): Input vector for x-values. Columns go from x0 to xdim.
+
+        Returns:
+            pd.DataFrame: Function values in output vector. Columns are f0 and f1.
+        """
         X = candidates[self.domain.get_feature_keys(InputFeature)].values  # type: ignore
         X_m = X[..., -self.k :]  # type: ignore
         g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
@@ -103,13 +118,15 @@ class DTLZ2(Benchmark):
 
 
 class SnarBenchmark(Benchmark):
-    """Nucleophilic substitution problem as a multiobjective test function for optimization algorithms."""
+    """Nucleophilic aromatic substitution problem as a multiobjective test function for optimization algorithms.
+    Solving of a differential equation system with varying intitial values.
+    """
 
     def __init__(self, C_i: Optional[np.ndarray] = np.ndarray((1, 1))):
         """Initializes multiobjective test function object of type SnarBenchmark.
 
         Args:
-            C_i (Optional[np.ndarray]): input concentrations
+            C_i (Optional[np.ndarray]): Input concentrations. Defaults to [1, 1]
         """
         self.C_i = C_i
 
@@ -144,7 +161,15 @@ class SnarBenchmark(Benchmark):
     def best_possible_hypervolume(self):
         return 10000.0
 
-    def _f(self, candidates):
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Function evaluation. Returns output vector.
+
+        Args:
+            candidates (pd.DataFrame): Input vector. Columns: tau, equiv_pldn, conc_dfnb, temperature
+
+        Returns:
+            pd.DataFrame: Output vector. Columns: sty, e_factor
+        """
         stys = []
         e_factors = []
         for i, candidate in candidates.iterrows():
@@ -270,6 +295,14 @@ class ZDT1(Benchmark):
         self._domain = Domain(input_features=inputs, output_features=outputs)
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
+        """Function evaluation.
+
+        Args:
+            X (pd.DataFrame): Input values
+
+        Returns:
+            pd.DataFrame: Function values. Columns are y1, y2, valid_y1 and valid_y2.
+        """
         x = X[self._domain.inputs.get_keys()[1:]].to_numpy()
         g = 1 + 9 / (self.n_inputs - 1) * np.sum(x, axis=1)
         y1 = X["x1"].to_numpy()
@@ -278,7 +311,15 @@ class ZDT1(Benchmark):
             {"y1": y1, "y2": y2, "valid_y1": 1, "valid_y2": 1}, index=X.index
         )
 
-    def get_optima(self, points=100):
+    def get_optima(self, points=100) -> pd.DataFrame:
+        """Pareto front of the output variables.
+
+        Args:
+            points (int, optional): Number of points of the pareto front. Defaults to 100.
+
+        Returns:
+            pd.DataFrame: 2D pareto front with x and y values.
+        """
         x = np.linspace(0, 1, points)
         y = np.stack([x, 1 - np.sqrt(x)], axis=1)
         return pd.DataFrame(y, columns=self.domain.outputs.get_keys())
