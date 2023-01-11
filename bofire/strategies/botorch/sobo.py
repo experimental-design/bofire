@@ -1,6 +1,5 @@
 from typing import Type
 
-import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.models.gpytorch import GPyTorchModel
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
@@ -14,7 +13,6 @@ from bofire.strategies.botorch.utils.objectives import (
     MultiplicativeObjective,
 )
 from bofire.utils.enum import AcquisitionFunctionEnum
-from bofire.utils.torch_tools import tkwargs
 
 
 class AcquisitionFunction(BaseModel):

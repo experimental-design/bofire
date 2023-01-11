@@ -16,7 +16,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 )
 
 from bofire.domain.constraints import Constraint, NChooseKConstraint
-from bofire.domain.features import Feature, InputFeature
+from bofire.domain.features import Feature
 from bofire.domain.objectives import (
     IdentityObjective,
     MaximizeObjective,

@@ -5,14 +5,10 @@ import torch
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.domain.features import OutputFeatures
-from bofire.models.torch_models import (
-    BotorchModels,
-    MixedSingleTaskGPModel,
-    SingleTaskGPModel,
-)
+from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
-from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
+from bofire.utils.enum import AcquisitionFunctionEnum
 from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
