@@ -117,6 +117,11 @@ def test_get_acqf_input(domain, acqf, num_experiments, num_candidates):
     strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
 
     experiments = generate_experiments(domain, num_experiments)
+
+    # just to ensure there are no former experiments/ candidates already stored in the domain
+    strategy.domain.experiments = None
+    strategy.domain.candidates = None
+
     strategy.tell(experiments)
     strategy.ask(candidate_count=num_candidates, add_pending=True)
 

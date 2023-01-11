@@ -5,30 +5,32 @@ import torch
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.domain.features import OutputFeatures
-from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
-from bofire.samplers import PolytopeSampler
-from bofire.strategies.botorch.qparego import (
-    AcquisitionFunctionEnum,
-    BoTorchQparegoStrategy,
+from bofire.models.torch_models import (
+    BotorchModels,
+    MixedSingleTaskGPModel,
+    SingleTaskGPModel,
 )
+from bofire.samplers import PolytopeSampler
+from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
+from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
 from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
-    "domain": domains[2],
+    "domain": domains[6],
     "model_specs": BotorchModels(
         models=[
             SingleTaskGPModel(
-                input_features=domains[2].input_features,
+                input_features=domains[6].input_features,
                 output_features=OutputFeatures(
-                    features=[domains[2].output_features.get_by_key("of1")]
+                    features=[domains[6].output_features.get_by_key("of1")]
                 ),
             ),
             SingleTaskGPModel(
-                input_features=domains[2].input_features,
+                input_features=domains[6].input_features,
                 output_features=OutputFeatures(
-                    features=[domains[2].output_features.get_by_key("of2")]
+                    features=[domains[6].output_features.get_by_key("of2")]
                 ),
             ),
         ]
@@ -59,6 +61,28 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
 BOTORCH_QPAREGO_STRATEGY_SPECS = {
     "valids": [
         VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
+        # {
+        #     **VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
+        #     "domain": domains[2],
+        #     "model_specs": BotorchModels(
+        #         models=[
+        #             MixedSingleTaskGPModel(
+        #                 input_features=domains[6].input_features,
+        #                 output_features=OutputFeatures(
+        #                     features=[domains[6].output_features.get_by_key("of1")]
+        #                 ),
+        #             ),
+        #             MixedSingleTaskGPModel(
+        #                 input_features=domains[6].input_features,
+        #                 output_features=OutputFeatures(
+        #                     features=[domains[6].output_features.get_by_key("of2")]
+        #                 ),
+        #             ),
+        #         ]
+        #     ),
+        #     "descriptor_method": random.choice(list(CategoricalMethodEnum)),
+        #     "categorical_method": random.choice(list(CategoricalMethodEnum)),
+        # },
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": 1},
         # {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
     ],
@@ -106,18 +130,31 @@ def test_qparego(num_test_candidates, acquisition_function):
 
 
 @pytest.mark.parametrize(
-    "num_experiments, num_candidates",
+    "domain, specs, num_experiments, num_candidates",
     [
-        (num_experiments, num_candidates)
+        (
+            domain,
+            random.choice(BOTORCH_QPAREGO_STRATEGY_SPECS["valids"]),
+            num_experiments,
+            num_candidates,
+        )
+        for domain in [domains[6]]  # , domains[2]]
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
     ],
 )
-def test_get_acqf_input(num_experiments, num_candidates):
+def test_get_acqf_input(domain, specs, num_experiments, num_candidates):
 
-    strategy = BoTorchQparegoStrategy(**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC)
+    strategy = BoTorchQparegoStrategy(
+        domain=domain, **{key: value for key, value in specs.items() if key != "domain"}
+    )
+
+    # just to ensure there are no former experiments/ candidates already stored in the domain
+    strategy.domain.experiments = None
+    strategy.domain.candidates = None
 
     experiments = generate_experiments(strategy.domain, num_experiments)
+    experiments["if2"][0] = 1
     strategy.tell(experiments)
     strategy.ask(candidate_count=num_candidates, add_pending=True)
 

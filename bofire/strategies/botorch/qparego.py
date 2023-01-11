@@ -155,7 +155,8 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         ]
 
         df_candidates = pd.DataFrame(
-            data=candidates[0].detach().numpy(), columns=input_feature_keys
+            data=candidates.detach().numpy(),
+            columns=input_feature_keys,
         )
 
         df_candidates = self.domain.inputs.inverse_transform(

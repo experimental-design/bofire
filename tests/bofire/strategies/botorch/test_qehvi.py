@@ -151,6 +151,11 @@ def test_get_acqf_input(strategy, num_experiments, num_candidates):
     strategy = strategy(**VALID_BOTORCH_QEHVI_STRATEGY_SPEC)
 
     experiments = generate_experiments(strategy.domain, num_experiments)
+
+    # just to ensure there are no former experiments/ candidates already stored in the domain
+    strategy.domain.experiments = None
+    strategy.domain.candidates = None
+
     strategy.tell(experiments)
     strategy.ask(candidate_count=num_candidates, add_pending=True)
 
