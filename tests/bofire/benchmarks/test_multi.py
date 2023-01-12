@@ -5,7 +5,7 @@ from bofire.benchmarks.multi import DTLZ2, ZDT1, SnarBenchmark
 
 @pytest.mark.parametrize(
     "cls_benchmark, kwargs",
-    [(DTLZ2, {"dim": 5, "k": 1}), (SnarBenchmark, {}), (ZDT1, {})],
+    [(DTLZ2, {"dim": 5}), (SnarBenchmark, {}), (ZDT1, {})],
 )
 def test_multi_objective_benchmarks(cls_benchmark, kwargs):
     """Test function for multi objective benchmark functions.
