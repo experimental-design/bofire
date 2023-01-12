@@ -38,8 +38,11 @@ def best_multiplicative(domain: Domain):
 
 
 class Benchmark:
-    def f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+    def f(self, candidates: pd.DataFrame, return_complete=False) -> pd.DataFrame:
         Y = self._f(candidates)
+
+        if return_complete:
+            return pd.concat([candidates, Y], axis=1)
         return Y
 
     @abstractmethod
