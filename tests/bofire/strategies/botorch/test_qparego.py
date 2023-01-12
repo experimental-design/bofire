@@ -2,7 +2,7 @@ import random
 
 import pytest
 
-from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.benchmarks.multi import DTLZ2
 from bofire.domain.features import OutputFeatures
 from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
 from bofire.samplers import PolytopeSampler
@@ -81,21 +81,21 @@ def test_invalid_qparego_init_domain(domain):
 
 
 @pytest.mark.parametrize(
-    "num_test_candidates, base_acquisition_function",
+    "num_test_candidates, acquisition_function",
     [
-        (num_test_candidates, base_acquisition_function)
+        (num_test_candidates, acquisition_function)
         for num_test_candidates in range(1, 3)
-        for base_acquisition_function in list(AcquisitionFunctionEnum)
+        for acquisition_function in list(AcquisitionFunctionEnum)
     ],
 )
-def test_qparego(num_test_candidates, base_acquisition_function):
+def test_qparego(num_test_candidates, acquisition_function):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(random_strategy._sample(n=10))
+    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
     # init strategy
     my_strategy = BoTorchQparegoStrategy(
-        domain=benchmark.domain, base_acquisition_function=base_acquisition_function
+        domain=benchmark.domain, acquisition_function=acquisition_function
     )
     my_strategy.tell(experiments)
     # ask
