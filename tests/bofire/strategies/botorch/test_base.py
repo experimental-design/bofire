@@ -202,6 +202,11 @@ domains = [
         input_features=[if1, if2, if8],
         output_features=[of1],
         constraints=[],
+    ),
+    Domain(
+        input_features=[if1, if2],  # only continuous features
+        output_features=[of1, of2],
+        constraints=[],
     )
     # Domain(
     #     input_features=[if1, if7], # unknown dummy feature
