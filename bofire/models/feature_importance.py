@@ -11,7 +11,7 @@ from bofire.utils.enum import RegressionMetricsEnum
 def permutation_importance(
     model: Model, X: pd.DataFrame, y: pd.DataFrame, n_repeats: int = 5, seed: int = 42
 ) -> Dict[str, pd.DataFrame]:
-    """Computus permutation feature importance for a model.
+    """Computes permutation feature importance for a model.
 
     Args:
         model (Model): Model for which the feature importances should be estimated.
@@ -22,7 +22,7 @@ def permutation_importance(
 
     Returns:
         Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
-            with the feature keys as columns and the mean and std as indices.
+            with the feature keys as columns and the mean and std of the respective permutation importances as indices.
     """
     assert len(model.output_features) == 1
     assert n_repeats > 1
