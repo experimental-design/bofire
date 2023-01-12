@@ -22,7 +22,7 @@ def permutation_importance(
 
     Returns:
         Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
-            with the feature keys as columns and the mean and std of the respective permutation importances as indices.
+            with the feature keys as columns and the mean and std of the respective permutation importances as rows.
     """
     assert len(model.output_features) == 1
     assert n_repeats > 1
@@ -79,6 +79,21 @@ def permutation_importance_hook(
     n_repeats: int = 5,
     seed: int = 42,
 ):
+    """Hook that can be used within `model.cross_validate` to compute a cross validated permutation feature importance.
+
+    Args:
+        model (Model): Predictive BoFire model.
+        X_train (pd.DataFrame):
+        y_train (pd.DataFrame): _description_
+        X_test (pd.DataFrame): _description_
+        y_test (pd.DataFrame): _description_
+        use_test (bool, optional): _description_. Defaults to True.
+        n_repeats (int, optional): _description_. Defaults to 5.
+        seed (int, optional): _description_. Defaults to 42.
+
+    Returns:
+        _type_: _description_
+    """
     if use_test:
         X = X_test
         y = y_test
