@@ -4,37 +4,40 @@ import pytest
 
 from bofire.benchmarks.multiobjective import DTLZ2
 from bofire.domain.features import OutputFeatures
-from bofire.models.torch_models import (
-    BotorchModels,
-    MixedSingleTaskGPModel,
-    SingleTaskGPModel,
-)
+from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
 from bofire.samplers import PolytopeSampler
-from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
-from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
+from bofire.strategies.botorch.qparego import (
+    AcquisitionFunctionEnum,
+    BoTorchQparegoStrategy,
+)
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
-    "domain": domains[6],
+    "domain": domains[2],
     "model_specs": BotorchModels(
         models=[
             SingleTaskGPModel(
-                input_features=domains[6].input_features,
+                input_features=domains[2].input_features,
                 output_features=OutputFeatures(
-                    features=[domains[6].output_features.get_by_key("of1")]
+                    features=[domains[2].output_features.get_by_key("of1")]
                 ),
             ),
             SingleTaskGPModel(
-                input_features=domains[6].input_features,
+                input_features=domains[2].input_features,
                 output_features=OutputFeatures(
-                    features=[domains[6].output_features.get_by_key("of2")]
+                    features=[domains[2].output_features.get_by_key("of2")]
                 ),
             ),
         ]
     ),
+    # "num_sobol_samples": 1024,
+    # "num_restarts": 8,
+    # "num_raw_samples": 1024,
+    # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": "FREE",
-    "acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
+    # "categorical_encoding": "ONE_HOT",
+    "base_acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
     "categorical_method": "FREE",
 }
 
@@ -54,28 +57,6 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
 BOTORCH_QPAREGO_STRATEGY_SPECS = {
     "valids": [
         VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
-        {
-            **VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
-            "domain": domains[2],
-            "model_specs": BotorchModels(
-                models=[
-                    MixedSingleTaskGPModel(
-                        input_features=domains[6].input_features,
-                        output_features=OutputFeatures(
-                            features=[domains[6].output_features.get_by_key("of1")]
-                        ),
-                    ),
-                    MixedSingleTaskGPModel(
-                        input_features=domains[6].input_features,
-                        output_features=OutputFeatures(
-                            features=[domains[6].output_features.get_by_key("of2")]
-                        ),
-                    ),
-                ]
-            ),
-            "descriptor_method": random.choice(list(CategoricalMethodEnum)),
-            "categorical_method": random.choice(list(CategoricalMethodEnum)),
-        },
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": 1},
         # {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
     ],
@@ -100,21 +81,21 @@ def test_invalid_qparego_init_domain(domain):
 
 
 @pytest.mark.parametrize(
-    "num_test_candidates, acquisition_function",
+    "num_test_candidates, base_acquisition_function",
     [
-        (num_test_candidates, acquisition_function)
+        (num_test_candidates, base_acquisition_function)
         for num_test_candidates in range(1, 3)
-        for acquisition_function in list(AcquisitionFunctionEnum)
+        for base_acquisition_function in list(AcquisitionFunctionEnum)
     ],
 )
-def test_qparego(num_test_candidates, acquisition_function):
+def test_qparego(num_test_candidates, base_acquisition_function):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.run_candidate_experiments(random_strategy._sample(n=10))
     # init strategy
     my_strategy = BoTorchQparegoStrategy(
-        domain=benchmark.domain, acquisition_function=acquisition_function
+        domain=benchmark.domain, base_acquisition_function=base_acquisition_function
     )
     my_strategy.tell(experiments)
     # ask
