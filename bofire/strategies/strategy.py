@@ -377,6 +377,7 @@ class PredictiveStrategy(Strategy):
             retrain (bool, optional): If True, model(s) are retrained when new experimental data is passed to the optimizer. Defaults to True.
         """
         # maybe unite the preprocessor here with the one of the parent tell
+        # TODO: add self.domain.validate_experiments(self.experiments, strict=True) here to ensure variance in each feature?
         if len(experiments) == 0:
             return
         if replace:

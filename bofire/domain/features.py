@@ -324,7 +324,7 @@ class ContinuousInput(NumericalInput):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
-        noise = 10e-8
+        noise = 10e-6
         super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
@@ -787,15 +787,8 @@ class CategoricalInput(InputFeature):
         if transform_type == CategoricalEncodingEnum.ORDINAL:
             return [0], [len(self.categories) - 1]
         if transform_type == CategoricalEncodingEnum.ONE_HOT:
-            if values is None:
-                lower = [0.0 for _ in self.categories]
-                upper = [
-                    1.0 if self.allowed[i] is True else 0.0  # type: ignore
-                    for i, _ in enumerate(self.categories)
-                ]
-            else:
-                lower = [0.0 for _ in self.categories]
-                upper = [1.0 for _ in self.categories]
+            lower = [0.0 for _ in self.categories]
+            upper = [1.0 for _ in self.categories]
             return lower, upper
         if transform_type == CategoricalEncodingEnum.DUMMY:
             lower = [0.0 for _ in range(len(self.categories) - 1)]
@@ -912,10 +905,11 @@ class CategoricalDescriptorInput(CategoricalInput):
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
         else:
-            if values is None:
-                df = self.to_df().loc[self.get_allowed_categories()]
-            else:
-                df = self.to_df().loc[self.get_possible_categories(values)]
+            df = self.to_df()
+            # if values is None:
+            #     df = self.to_df().loc[self.categories]
+            # else:
+            #     df = self.to_df().loc[self.get_possible_categories(values)]
             lower = df.min().values.tolist()  # type: ignore
             upper = df.max().values.tolist()  # type: ignore
             return lower, upper
