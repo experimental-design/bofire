@@ -883,7 +883,7 @@ def test_categorical_to_label_encoding():
             ),
             CategoricalEncodingEnum.ONE_HOT,
             None,
-            ([0, 0, 0], [1, 0, 1]),
+            ([0, 0, 0], [1, 1, 1]),
         ),
         (
             CategoricalInput(key="c", categories=["B", "A", "C"]),
@@ -987,7 +987,7 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
                 descriptors=["alpha", "beta"],
                 values=[[1, 2], [3, 4], [1, 5]],
             ),
-            ([1, 2], [1, 5]),
+            ([1, 2], [3, 5]),
         ),
         # (CategoricalInputFeature(key="if2", categories = ["a","b"], allowed = [True, True]), ["a","b"]),
         # (CategoricalInputFeature(key="if3", categories = ["a","b"], allowed = [True, False]), ["a"]),
@@ -1816,20 +1816,20 @@ input_features2 = InputFeatures(
                 "if6": CategoricalEncodingEnum.DESCRIPTOR,
             },
             [
-                [3, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0],
+                [3, 3, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
                 [
                     5.3,
                     3,
                     5,
                     7,
-                    1,
-                    2,
-                    1,
-                    1,
+                    5,
+                    7,
                     1,
                     1,
-                    0,
-                    0,
+                    1,
+                    1,
+                    1,
+                    1,
                 ],
             ],
         ),
@@ -1843,7 +1843,7 @@ input_features2 = InputFeatures(
             },
             [
                 [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [5.3, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0],
+                [5.3, 3, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
             ],
         ),
         (
@@ -1861,11 +1861,11 @@ input_features2 = InputFeatures(
                     1,
                     1,
                     1,
-                    2,
+                    1,
                     0,
                     0,
                 ],
-                [5.3, 3, 5, 7, 1, 2, 2, 2],
+                [5.3, 3, 5, 7, 5, 7, 2, 2],
             ],
         ),
         (
@@ -1887,17 +1887,17 @@ input_features2 = InputFeatures(
                 "if6": CategoricalEncodingEnum.DESCRIPTOR,
             },
             [
-                [3, 3, 0, 1, 2, 0, 0, 0, 0],
+                [3, 3, 0, 1, 1, 0, 0, 0, 0],
                 [
                     5.3,
                     3,
                     2,
-                    1,
+                    5,
+                    7,
                     2,
-                    2,
                     1,
-                    0,
-                    0,
+                    1,
+                    1,
                 ],
             ],
         ),
@@ -1958,15 +1958,17 @@ def test_input_features_get_bounds_fit():
         experiments=experiments,
     )
     # check difference in descriptors
-    assert opt_bounds[0][-8] == opt_bounds[1][-8] == 1
-    assert opt_bounds[0][-7] == opt_bounds[1][-7] == 2
+    assert opt_bounds[0][-8] == 1
+    assert opt_bounds[1][-8] == 5
+    assert opt_bounds[0][-7] == 1
+    assert opt_bounds[1][-7] == 7
     assert fit_bounds[0][-8] == 1
     assert fit_bounds[0][-7] == 1
     assert fit_bounds[1][-8] == 5
     assert fit_bounds[1][-7] == 7
     # check difference in onehots
-    assert opt_bounds[1][-1] == 0
-    assert opt_bounds[1][-2] == 0
+    assert opt_bounds[1][-1] == 1
+    assert opt_bounds[1][-2] == 1
     assert fit_bounds[1][-1] == 1
     assert fit_bounds[1][-2] == 1
 

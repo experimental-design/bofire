@@ -1,4 +1,5 @@
 import random
+from itertools import chain
 
 import pytest
 import torch
@@ -164,9 +165,9 @@ def test_get_acqf_input(domain, specs, num_experiments, num_candidates):
     assert torch.is_tensor(X_pending)
     assert X_train.shape == (
         num_experiments,
-        len(names),
+        len(set(chain(*names.values()))),
     )
     assert X_pending.shape == (
         num_candidates,
-        len(names),
+        len(set(chain(*names.values()))),
     )
