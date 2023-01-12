@@ -130,7 +130,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         # optimize
         lower, upper = self.domain.inputs.get_bounds(self.input_preprocessing_specs)
 
-        """candidates = optimize_acqf_list(
+        candidates = optimize_acqf_list(
             acq_function_list=acqf_list,
             bounds=torch.tensor([lower, upper]).to(**tkwargs),
             num_restarts=self.num_restarts,
@@ -141,52 +141,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             inequality_constraints=get_linear_constraints(
                 domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
             ),
-            # fixed_features=self.get_fixed_features(),
-            fixed_features_list=self.get_fixed_features(),
-            options={"batch_limit": 5, "maxiter": 200},
-        )"""
-        num_categorical_features = len(self.domain.get_features(CategoricalInput))
-        num_categorical_combinations = len(
-            self.domain.inputs.get_categorical_combinations()
-        )
-
-        # TODO: make it pretty and not so complicated long
-        if (
-            (num_categorical_features == 0)
-            or (num_categorical_combinations == 1)
-            or (
-                (self.categorical_method == CategoricalMethodEnum.FREE)
-                and (self.descriptor_method == CategoricalMethodEnum.FREE)
-            )
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            fixed_features = (self.get_fixed_features(),)
-
-        elif (
-            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
-            or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-
-            fixed_features_list = self.get_categorical_combinations()
-
-        elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
-            fixed_features_list = self.get_fixed_values_list()
-        else:
-            raise IOError()
-
-        candidates = optimize_acqf_list(
-            acq_function=self.acqf,
-            bounds=torch.tensor([lower, upper]).to(**tkwargs),
-            q=candidate_count,
-            num_restarts=self.num_restarts,
-            raw_samples=self.num_raw_samples,
-            equality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-            ),
-            inequality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-            ),
-            fixed_features=fixed_features,
-            fixed_features_list=fixed_features_list,
+            fixed_features=self.get_fixed_features(),
             options={"batch_limit": 5, "maxiter": 200},
         )
 
