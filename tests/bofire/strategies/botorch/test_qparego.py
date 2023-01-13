@@ -73,8 +73,8 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
                     ),
                 ]
             ),
-            "descriptor_method": random.choice(list(CategoricalMethodEnum)),
-            "categorical_method": random.choice(list(CategoricalMethodEnum)),
+            "descriptor_method": "EXHAUSTIVE",
+            "categorical_method": "EXHAUSTIVE",
         },
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": 1},
         # {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
