@@ -26,6 +26,7 @@ def permutation_importance(
     """
     assert len(model.output_features) == 1
     assert n_repeats > 1
+    assert seed > 0
     output_key = model.output_features[0].key
     rng = np.random.default_rng(seed)
     prelim_results = {
@@ -78,21 +79,23 @@ def permutation_importance_hook(
     use_test: bool = True,
     n_repeats: int = 5,
     seed: int = 42,
-):
+) -> Dict[str, pd.DataFrame]:
     """Hook that can be used within `model.cross_validate` to compute a cross validated permutation feature importance.
 
     Args:
         model (Model): Predictive BoFire model.
-        X_train (pd.DataFrame):
-        y_train (pd.DataFrame): _description_
-        X_test (pd.DataFrame): _description_
-        y_test (pd.DataFrame): _description_
-        use_test (bool, optional): _description_. Defaults to True.
-        n_repeats (int, optional): _description_. Defaults to 5.
-        seed (int, optional): _description_. Defaults to 42.
+        X_train (pd.DataFrame): Current train fold. X values.
+        y_train (pd.DataFrame): Current train fold. y values.
+        X_test (pd.DataFrame): Current test fold. X values.
+        y_test (pd.DataFrame): Current test fold. y values.
+        use_test (bool, optional): If True test fold is used to calculate feature importance else train fold is used.
+            Defaults to True.
+        n_repeats (int, optional): Number of repeats per feature. Defaults to 5.
+        seed (int, optional): Seed for the random number generator. Defaults to 42.
 
     Returns:
-        _type_: _description_
+        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
+            with the feature keys as columns and the mean and std of the respective permutation importances as rows.
     """
     if use_test:
         X = X_test
@@ -104,8 +107,20 @@ def permutation_importance_hook(
 
 
 def combine_permutation_importances(
-    importances: List[Dict[str, pd.DataFrame]], metric: RegressionMetricsEnum
+    importances: List[Dict[str, pd.DataFrame]],
+    metric: RegressionMetricsEnum = RegressionMetricsEnum.R2,
 ) -> pd.DataFrame:
+    """Combines feature importances of a set of folds into one data frame for a requested metric.
+
+    Args:
+        importances (List[Dict[str, pd.DataFrame]]): List of permutation importance dictionaries, one per fold.
+        metric (RegressionMetricsEnum, optional): Metric for which the data should be combined.
+            Defaults to RegressionMetricsEnum.R2
+
+    Returns:
+        pd.DataFrame: Dataframe holding the mean permutation importance per fold and feature. Can be further processed by
+            `describe`.
+    """
     feature_keys = list(importances[0]["MAE"].columns)
     return pd.DataFrame(
         data={
