@@ -113,6 +113,7 @@ def test_SOBO_init_qUCB():
         for num_candidates in range(1, 3)
     ],
 )
+@pytest.mark.slow
 def test_get_acqf_input(domain, acqf, num_experiments, num_candidates):
 
     strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)

@@ -140,6 +140,7 @@ def test_qparego(num_test_candidates, acquisition_function):
         for num_candidates in range(1, 3)
     ],
 )
+@pytest.mark.slow
 def test_get_acqf_input(domain, specs, num_experiments, num_candidates):
 
     strategy = BoTorchQparegoStrategy(

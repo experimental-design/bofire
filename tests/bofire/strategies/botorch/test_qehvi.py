@@ -147,6 +147,7 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
         for num_candidates in range(1, 3)
     ],
 )
+@pytest.mark.slow
 def test_get_acqf_input(strategy, num_experiments, num_candidates):
 
     strategy = strategy(**VALID_BOTORCH_QEHVI_STRATEGY_SPEC)
