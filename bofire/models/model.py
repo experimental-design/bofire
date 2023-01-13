@@ -92,6 +92,7 @@ class TrainableModel:
         self,
         experiments: pd.DataFrame,
         folds: int = -1,
+        include_X: bool = False,
         hooks: Dict[
             str,
             Callable[
@@ -112,6 +113,8 @@ class TrainableModel:
         Args:
             experiments (pd.DataFrame): Data on which the cross validation should be performed.
             folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
+            include_X (bool, optional): If true the X values of the fold are written to respective CvResult objects for
+                later analysis. Defaults ot False.
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.
@@ -165,6 +168,7 @@ class TrainableModel:
                     observed=y_train[key],
                     predicted=y_train_pred[key + "_pred"],
                     standard_deviation=y_train_pred[key + "_sd"],
+                    X=X_train if include_X else None,
                 )
             )
             test_results.append(
@@ -173,6 +177,7 @@ class TrainableModel:
                     observed=y_test[key],
                     predicted=y_test_pred[key + "_pred"],
                     standard_deviation=y_test_pred[key + "_sd"],
+                    X=X_test if include_X else None,
                 )
             )
             # now call the hooks if available

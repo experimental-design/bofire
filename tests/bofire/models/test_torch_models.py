@@ -203,6 +203,33 @@ def test_model_cross_validate(folds):
     assert len(test_cv.results) == efolds
 
 
+@pytest.mark.parametrize("include_X", [True, False])
+def test_model_cross_validate_include_X(include_X):
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    experiments = input_features.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    model = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+    )
+    train_cv, test_cv, _ = model.cross_validate(
+        experiments, folds=5, include_X=include_X
+    )
+    if include_X:
+        assert train_cv.results[0].X.shape == (8, 2)
+        assert test_cv.results[0].X.shape == (2, 2)
+    if include_X is False:
+        assert train_cv.results[0].X is None
+        assert test_cv.results[0].X is None
+
+
 def test_model_cross_validate_hooks():
     def hook1(model, X_train, y_train, X_test, y_test):
         assert isinstance(model, SingleTaskGPModel)
