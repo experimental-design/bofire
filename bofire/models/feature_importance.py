@@ -24,9 +24,9 @@ def permutation_importance(
         Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
             with the feature keys as columns and the mean and std of the respective permutation importances as rows.
     """
-    assert len(model.output_features) == 1
-    assert n_repeats > 1
-    assert seed > 0
+    assert len(model.output_features) == 1, "Only single output model supported so far."
+    assert n_repeats > 1, "Number of repeats has to be larger than 1."
+    assert seed > 0, "Seed has to be larger than zero."
     output_key = model.output_features[0].key
     rng = np.random.default_rng(seed)
     prelim_results = {
