@@ -60,15 +60,15 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
             "model_specs": BotorchModels(
                 models=[
                     MixedSingleTaskGPModel(
-                        input_features=domains[6].input_features,
+                        input_features=domains[2].input_features,
                         output_features=OutputFeatures(
-                            features=[domains[6].output_features.get_by_key("of1")]
+                            features=[domains[2].output_features.get_by_key("of1")]
                         ),
                     ),
                     MixedSingleTaskGPModel(
-                        input_features=domains[6].input_features,
+                        input_features=domains[2].input_features,
                         output_features=OutputFeatures(
-                            features=[domains[6].output_features.get_by_key("of2")]
+                            features=[domains[2].output_features.get_by_key("of2")]
                         ),
                     ),
                 ]
