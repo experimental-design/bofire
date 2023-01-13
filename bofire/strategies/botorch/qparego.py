@@ -15,7 +15,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput, Feature
+from bofire.domain.features import CategoricalInput, Feature
 from bofire.domain.objectives import (
     IdentityObjective,
     MaximizeObjective,
@@ -29,8 +29,6 @@ from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
-# currently it works only with categorical and desriptor method free, botorch feature to implement acqf_list_mixed needs to be
-# implemented first https://github.com/pytorch/botorch/issues/1272
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
