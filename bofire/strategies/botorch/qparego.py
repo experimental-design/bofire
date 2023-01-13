@@ -144,7 +144,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 and (self.descriptor_method == CategoricalMethodEnum.FREE)
             )
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            fixed_features = (self.get_fixed_features(),)
+            fixed_features = self.get_fixed_features()
 
         elif (
             (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
