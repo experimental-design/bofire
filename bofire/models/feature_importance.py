@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, Sequence
 
 import numpy as np
 import pandas as pd
@@ -107,7 +107,7 @@ def permutation_importance_hook(
 
 
 def combine_permutation_importances(
-    importances: List[Dict[str, pd.DataFrame]],
+    importances: Sequence[Dict[str, pd.DataFrame]],
     metric: RegressionMetricsEnum = RegressionMetricsEnum.R2,
 ) -> pd.DataFrame:
     """Combines feature importances of a set of folds into one data frame for a requested metric.
@@ -121,7 +121,7 @@ def combine_permutation_importances(
         pd.DataFrame: Dataframe holding the mean permutation importance per fold and feature. Can be further processed by
             `describe`.
     """
-    feature_keys = list(importances[0]["MAE"].columns)
+    feature_keys = importances[0]["MAE"].columns
     return pd.DataFrame(
         data={
             key: [fold[metric.name].loc["mean", key] for fold in importances]
