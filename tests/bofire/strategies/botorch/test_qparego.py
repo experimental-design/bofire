@@ -11,7 +11,6 @@ from bofire.models.torch_models import (
 )
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
-from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
