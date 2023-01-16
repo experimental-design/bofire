@@ -20,7 +20,7 @@ def test_multi_objective_benchmarks(cls_benchmark, kwargs):
     # Check for correct output dimensions
     n_samples = 1000
     X_samples = benchmark_function.domain.inputs.sample(n=n_samples)
-    Y = benchmark_function.f(X_samples)
+    Y = benchmark_function.f(X_samples, return_complete=False)
 
     # Define expected number of output variables
     expected_output_variables = len(benchmark_function.domain.output_features) * 2

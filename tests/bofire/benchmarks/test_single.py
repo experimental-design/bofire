@@ -28,7 +28,7 @@ def test_single_objective_benchmarks(cls_benchmark, kwargs):
     n_samples = 1000
     X_samples = benchmark_function.domain.inputs.sample(n=n_samples)
     # Calculating corresponding y values
-    Y = benchmark_function.f(X_samples)
+    Y = benchmark_function.f(X_samples, return_complete=False)
     # Check, whether shape of output dataframe matches the expected shape.
     expected_output_variables = len(benchmark_function.domain.output_features) * 2
     assert Y.shape == (n_samples, expected_output_variables), (
