@@ -11,7 +11,7 @@ from botorch.models.transforms.input import (
     Normalize,
 )
 from botorch.models.transforms.outcome import Standardize
-from gpytorch.kernels import MaternKernel, RBFKernel
+from gpytorch.kernels import LinearKernel, MaternKernel, RBFKernel
 from torch import Tensor
 
 from bofire.domain.features import (
@@ -28,6 +28,7 @@ from bofire.models.torch_models import (
     ContinuousKernel,
     EmpiricalModel,
     HammondDistanceKernel,
+    Linear,
     Matern,
     MixedSingleTaskGPModel,
     SingleTaskGPModel,
@@ -45,6 +46,7 @@ from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
         (Matern(ard=True), 10, list(range(5)), MaternKernel),
         (Matern(ard=False, nu=2.5), 10, list(range(5)), MaternKernel),
         (Matern(ard=True, nu=1.5), 10, list(range(5)), MaternKernel),
+        (Linear(), 10, list(range(5)), LinearKernel),
     ],
 )
 def test_continuous_kernel(
@@ -54,6 +56,9 @@ def test_continuous_kernel(
         batch_shape=torch.Size(), ard_num_dims=ard_num_dims, active_dims=active_dims
     )
     assert isinstance(k, expected_kernel)
+    if isinstance(kernel, Linear):
+        return
+
     if kernel.ard is False:
         assert k.ard_num_dims is None
     else:
