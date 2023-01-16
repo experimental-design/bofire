@@ -25,19 +25,15 @@ class DTLZ2(Benchmark):
     Info about the function: https://pymoo.org/problems/many/dtlz.html
     """
 
-    def __init__(
-        self, dim: PositiveInt, k: Optional[int], num_objectives: PositiveInt = 2
-    ):
+    def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2):
         """Initiallizes object of Type DTLZ2 which is a benchmark function.
 
         Args:
             dim (PositiveInt): Dimension of input vector
-            k (Optional[int]): _description_
             num_objectives (PositiveInt, optional): Dimension of output vector. Defaults to 2.
         """
         self.num_objectives = num_objectives
         self.dim = dim
-        self.k = k
 
         input_features = []
         for i in range(self.dim):

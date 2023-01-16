@@ -10,7 +10,7 @@ from botorch.acquisition.multi_objective import (
 )
 from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputObjective
 
-from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.benchmarks.multi import DTLZ2
 from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
@@ -116,9 +116,9 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(random_strategy._sample(n=10))
-    experiments_test = benchmark.run_candidate_experiments(
-        random_strategy._sample(n=num_test_candidates)
+    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    experiments_test = benchmark.f(
+        random_strategy._sample(n=num_test_candidates), return_complete=True
     )
     # init strategy
     my_strategy = strategy(

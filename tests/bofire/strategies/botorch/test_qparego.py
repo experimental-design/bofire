@@ -4,7 +4,7 @@ from itertools import chain
 import pytest
 import torch
 
-from bofire.benchmarks.multiobjective import DTLZ2
+from bofire.benchmarks.multi import DTLZ2
 from bofire.domain.features import OutputFeatures
 from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
 from bofire.samplers import PolytopeSampler
@@ -115,7 +115,7 @@ def test_qparego(num_test_candidates, acquisition_function):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(random_strategy._sample(n=10))
+    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
     # init strategy
     my_strategy = BoTorchQparegoStrategy(
         domain=benchmark.domain, acquisition_function=acquisition_function

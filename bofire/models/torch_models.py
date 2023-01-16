@@ -18,7 +18,7 @@ from botorch.models.transforms.input import (
 )
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.kernels import Kernel as GpytorchKernel
-from gpytorch.kernels import MaternKernel, RBFKernel
+from gpytorch.kernels import LinearKernel, MaternKernel, RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors.torch_priors import GammaPrior
@@ -119,6 +119,13 @@ class Matern(ContinuousKernel):
         )
 
 
+class Linear(ContinuousKernel):
+    def to_gpytorch(
+        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
+    ) -> GpytorchKernel:
+        return LinearKernel(batch_shape=batch_shape)
+
+
 class BotorchModel(Model):
 
     model: Optional[BotorchBaseModel]
@@ -162,8 +169,8 @@ class BotorchModel(Model):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            preds = self.model.posterior(X=X).mean.cpu().detach().numpy()  # type: ignore
-            stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())  # type: ignore
+            preds = self.model.posterior(X=X, observation_noise=True).mean.cpu().detach().numpy()  # type: ignore
+            stds = np.sqrt(self.model.posterior(X=X, observation_noise=True).variance.cpu().detach().numpy())  # type: ignore
         return preds, stds
 
 
