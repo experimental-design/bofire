@@ -17,7 +17,6 @@ from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.utils.enum import CategoricalMethodEnum
-from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
 from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
 
@@ -152,7 +151,12 @@ def test_get_acqf_input(strategy, num_experiments, num_candidates):
 
     strategy = strategy(**VALID_BOTORCH_QEHVI_STRATEGY_SPEC)
 
-    experiments = generate_experiments(strategy.domain, num_experiments)
+    # generate data
+    benchmark = DTLZ2(dim=6)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(
+        random_strategy._sample(n=num_experiments), return_complete=True
+    )
 
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None

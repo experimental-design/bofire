@@ -12,6 +12,8 @@ from botorch.acquisition.monte_carlo import (
     qUpperConfidenceBound,
 )
 
+from bofire.benchmarks.multi import DTLZ2
+from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.sobo import (
     BoTorchSoboStrategy,
     qEI,
@@ -21,7 +23,6 @@ from bofire.strategies.botorch.sobo import (
     qUCB,
 )
 from bofire.utils.enum import AcquisitionFunctionEnum
-from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -83,8 +84,14 @@ def test_SOBO_not_fitted(domain, acqf):
 )
 def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
     strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
-    experiments = generate_experiments(domain, 20)
-    experiments_test = generate_experiments(domain, num_test_candidates)
+
+    # generate data
+    benchmark = DTLZ2(dim=6)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(random_strategy._sample(n=20), return_complete=True)
+    experiments_test = benchmark.f(
+        random_strategy._sample(n=num_test_candidates), return_complete=True
+    )
 
     strategy.tell(experiments)
     assert isinstance(strategy.acqf, expected)
@@ -98,7 +105,12 @@ def test_SOBO_init_qUCB():
     beta = 0.5
     acqf = qUCB(beta=beta)
     strategy = BoTorchSoboStrategy(domain=domains[0], acquisition_function=acqf)
-    experiments = generate_experiments(domains[0], 20)
+
+    # generate data
+    benchmark = DTLZ2(dim=6)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(random_strategy._sample(n=20), return_complete=True)
+
     strategy.tell(experiments)
     assert strategy.acqf.beta_prime == math.sqrt(beta * math.pi / 2)
     domains[0].experiments = None
@@ -118,7 +130,12 @@ def test_get_acqf_input(domain, acqf, num_experiments, num_candidates):
 
     strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
 
-    experiments = generate_experiments(domain, num_experiments)
+    # generate data
+    benchmark = DTLZ2(dim=6)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(
+        random_strategy._sample(n=num_experiments), return_complete=True
+    )
 
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None

@@ -10,7 +10,6 @@ from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
 from bofire.utils.enum import AcquisitionFunctionEnum
-from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
@@ -147,12 +146,17 @@ def test_get_acqf_input(domain, specs, num_experiments, num_candidates):
         domain=domain, **{key: value for key, value in specs.items() if key != "domain"}
     )
 
+    # generate data
+    benchmark = DTLZ2(dim=6)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(
+        random_strategy._sample(n=num_experiments), return_complete=True
+    )
+
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None
     strategy.domain.candidates = None
 
-    experiments = generate_experiments(strategy.domain, num_experiments)
-    experiments["if2"][0] = 1
     strategy.tell(experiments)
     strategy.ask(candidate_count=num_candidates, add_pending=True)
 
