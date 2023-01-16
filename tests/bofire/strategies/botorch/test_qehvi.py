@@ -138,7 +138,7 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
 
 
 @pytest.mark.parametrize(
-    "strategy, num_experiments, num_candidates",
+    "strategy, specs, num_experiments, num_candidates",
     [
         (strategy, specs, num_experiments, num_candidates)
         for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
