@@ -44,7 +44,14 @@ class Benchmark:
         Y = self._f(candidates)
 
         if return_complete:
-            return pd.concat([candidates, Y], axis=1)
+            if len(set(candidates.columns).intersection(set(Y.columns))) == 0:
+                return pd.concat([candidates, Y], axis=1)
+            else:
+                return pd.merge(
+                    candidates,
+                    Y,
+                    on=list(set(candidates.columns).intersection(set(Y.columns))),
+                )
         return Y
 
     @abstractmethod

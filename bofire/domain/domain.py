@@ -627,7 +627,9 @@ class Domain(PydanticBaseModel):
         ]
 
     @property
-    def candidate_column_names(self):
+    def candidate_column_names(
+        self,
+    ):  # TODO: outdated? Doesn't fit to the generated candidates anymore
         """the columns in the candidate dataframe
 
         Returns:
