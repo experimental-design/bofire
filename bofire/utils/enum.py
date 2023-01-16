@@ -60,3 +60,10 @@ class RegressionMetricsEnum(Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+
+
+class InputEngineeringEnum(Enum):
+    SUM = "SUM"
+    MEAN = "MEAN"
+    MAX = "MAX"
+    MIN = "MIN"

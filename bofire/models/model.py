@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,7 +9,9 @@ from sklearn.model_selection import KFold
 from bofire.domain.features import InputFeatures, OutputFeatures, TInputTransformSpecs
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.diagnostics import CvResult, CvResults
-from bofire.utils.enum import OutputFilteringEnum
+from bofire.utils.enum import InputEngineeringEnum, OutputFilteringEnum
+
+TInputEngineeringSpecs = Dict[InputEngineeringEnum, List[str]]
 
 
 class Model(PydanticBaseModel):
@@ -17,6 +19,7 @@ class Model(PydanticBaseModel):
     input_features: InputFeatures
     output_features: OutputFeatures
     input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=lambda: {})
+    input_engineering_specs: TInputEngineeringSpecs = Field(default_factory=lambda: {})
 
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
@@ -24,6 +27,14 @@ class Model(PydanticBaseModel):
         if len(values["input_features"]) == 0:
             raise ValueError("At least one input feature has to be provided.")
         v = values["input_features"]._validate_transform_specs(v)
+        return v
+
+    @validator("input_engineering_specs", always=True)
+    def validate_input_engineering_specs(cls, v, values):
+        for feature_lists in values["input_engineering_specs"].values():
+            for list in feature_lists:
+                if len(list) < 2:
+                    raise ValueError("At least two input features have to be provided.")
         return v
 
     @validator("output_features")
@@ -52,7 +63,6 @@ class Model(PydanticBaseModel):
 
 
 class TrainableModel:
-
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
 
     def fit(self, experiments: pd.DataFrame):

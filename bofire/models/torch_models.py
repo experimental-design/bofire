@@ -1,5 +1,6 @@
 import itertools
 from abc import abstractmethod
+from itertools import chain
 from typing import Dict, List, Optional
 
 import botorch
@@ -11,6 +12,7 @@ from botorch.models import ModelList
 from botorch.models.deterministic import DeterministicModel
 from botorch.models.model import Model as BotorchBaseModel
 from botorch.models.transforms.input import (
+    AppendFeatures,
     ChainedInputTransform,
     FilterFeatures,
     InputStandardize,
@@ -34,7 +36,12 @@ from bofire.domain.features import (
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
-from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
+from bofire.utils.enum import (
+    CategoricalEncodingEnum,
+    InputEngineeringEnum,
+    OutputFilteringEnum,
+    ScalerEnum,
+)
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 
 
@@ -132,7 +139,9 @@ class BotorchModel(Model):
         )
         for key in categorical_keys:
             if (
-                v.get(key, CategoricalEncodingEnum.ONE_HOT)
+                v.get(
+                    key, CategoricalEncodingEnum.ONE_HOT
+                )  # TODO: Why not Dummy etc allowed?
                 != CategoricalEncodingEnum.ONE_HOT
             ):
                 raise ValueError(
@@ -156,6 +165,38 @@ class BotorchModel(Model):
                 raise ValueError(
                     "Botorch based models have to use internal transforms to preprocess numerical features."
                 )
+        return v
+
+    @validator("input_engineering_specs", always=True)
+    def validate_input_engineering_specs(cls, v, values):
+        input_features = values["input_features"]
+        categorical_keys = input_features.get_keys(CategoricalInput, exact=True)
+        descriptor_keys = input_features.get_keys(
+            CategoricalDescriptorInput, exact=True
+        )
+        length_categorical_encoded = len(categorical_keys)
+        critical_keys = categorical_keys
+
+        for key in descriptor_keys:
+            if (
+                values["input_preprocessing_specs"][key]
+                != CategoricalEncodingEnum.DESCRIPTOR
+            ):
+                length_categorical_encoded += 1
+                critical_keys.append(key)
+        if (
+            length_categorical_encoded > 0
+            and len(
+                set(chain(*cls.input_engineering_specs.values())).intersection(
+                    critical_keys
+                )
+            )
+            > 0
+        ):
+            raise ValueError(
+                "Feature engineering is not supported for categoricals so far"
+            )
+
         return v
 
     def _predict(self, transformed_X: pd.DataFrame):
@@ -381,6 +422,24 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         else:
             raise ValueError("Scaler enum not known.")
 
+        # f: A callable mapping a `batch_shape x q x d`-dim input tensor `X`
+        #        to a `batch_shape x q x n_f x d_f`-dimensional output tensor.
+        #        Default: None.
+        for function_str, feat_list in self.input_engineering_specs.items():
+            if function_str == InputEngineeringEnum.MEAN:
+                tf = torch.mean()
+            elif function_str == InputEngineeringEnum.MAX:
+                tf = torch.max()
+            elif function_str == InputEngineeringEnum.MIN:
+                tf = torch.min()
+            elif function_str == InputEngineeringEnum.SUM:
+                tf = torch.sum()
+            append_features = AppendFeatures(
+                f=tf, indices=features2idx[feat_list], transform_on_train=True
+            )
+
+        input_transform = ChainedInputTransform(tf1=append_features, tf2=scaler)
+
         self.model = botorch.models.SingleTaskGP(  # type: ignore
             train_X=tX,
             train_Y=tY,
@@ -393,7 +452,7 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
                 outputscale_prior=GammaPrior(2.0, 0.15),
             ),
             outcome_transform=Standardize(m=tY.shape[-1]),
-            input_transform=scaler,
+            input_transform=input_transform,
         )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
