@@ -104,31 +104,29 @@ def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
 def test_SOBO_init_qUCB():
     beta = 0.5
     acqf = qUCB(beta=beta)
-    strategy = BoTorchSoboStrategy(domain=domains[0], acquisition_function=acqf)
 
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.f(random_strategy._sample(n=20), return_complete=True)
 
+    strategy = BoTorchSoboStrategy(domain=benchmark.domain, acquisition_function=acqf)
     strategy.tell(experiments)
     assert strategy.acqf.beta_prime == math.sqrt(beta * math.pi / 2)
     domains[0].experiments = None
 
 
 @pytest.mark.parametrize(
-    "domain, acqf, num_experiments, num_candidates",
+    "acqf, num_experiments, num_candidates",
     [
-        (domains[0], acqf, num_experiments, num_candidates)
+        (acqf, num_experiments, num_candidates)
         for acqf in ["QEI", "QNEI", "QPI", "QUCB", "QSR"]
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
     ],
 )
 @pytest.mark.slow
-def test_get_acqf_input(domain, acqf, num_experiments, num_candidates):
-
-    strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
+def test_get_acqf_input(acqf, num_experiments, num_candidates):
 
     # generate data
     benchmark = DTLZ2(dim=6)
@@ -136,6 +134,8 @@ def test_get_acqf_input(domain, acqf, num_experiments, num_candidates):
     experiments = benchmark.f(
         random_strategy._sample(n=num_experiments), return_complete=True
     )
+
+    strategy = BoTorchSoboStrategy(domain=benchmark.domain, acquisition_function=acqf)
 
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None

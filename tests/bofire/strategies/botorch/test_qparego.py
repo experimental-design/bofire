@@ -126,25 +126,19 @@ def test_qparego(num_test_candidates, acquisition_function):
 
 
 @pytest.mark.parametrize(
-    "domain, specs, num_experiments, num_candidates",
+    "specs, num_experiments, num_candidates",
     [
         (
-            domain,
             random.choice(BOTORCH_QPAREGO_STRATEGY_SPECS["valids"]),
             num_experiments,
             num_candidates,
         )
-        for domain in [domains[6]]  # , domains[2]]
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
     ],
 )
 @pytest.mark.slow
-def test_get_acqf_input(domain, specs, num_experiments, num_candidates):
-
-    strategy = BoTorchQparegoStrategy(
-        domain=domain, **{key: value for key, value in specs.items() if key != "domain"}
-    )
+def test_get_acqf_input(specs, num_experiments, num_candidates):
 
     # generate data
     benchmark = DTLZ2(dim=6)
@@ -153,6 +147,10 @@ def test_get_acqf_input(domain, specs, num_experiments, num_candidates):
         random_strategy._sample(n=num_experiments), return_complete=True
     )
 
+    strategy = BoTorchQparegoStrategy(
+        domain=benchmark.domain,
+        **{key: value for key, value in specs.items() if key != "domain"}
+    )
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None
     strategy.domain.candidates = None

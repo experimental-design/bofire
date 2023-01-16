@@ -140,22 +140,26 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
 @pytest.mark.parametrize(
     "strategy, num_experiments, num_candidates",
     [
-        (strategy, num_experiments, num_candidates)
+        (strategy, specs, num_experiments, num_candidates)
         for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
+        for specs in BOTORCH_QEHVI_STRATEGY_SPECS["valids"]
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
     ],
 )
 @pytest.mark.slow
-def test_get_acqf_input(strategy, num_experiments, num_candidates):
-
-    strategy = strategy(**VALID_BOTORCH_QEHVI_STRATEGY_SPEC)
+def test_get_acqf_input(strategy, specs, num_experiments, num_candidates):
 
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.f(
         random_strategy._sample(n=num_experiments), return_complete=True
+    )
+
+    strategy = strategy(
+        domain=benchmark.domain,
+        **{key: value for key, value in specs.items() if key != "domain"}
     )
 
     # just to ensure there are no former experiments/ candidates already stored in the domain
