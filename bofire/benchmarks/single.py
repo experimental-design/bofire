@@ -199,8 +199,10 @@ class Himmelblau(Benchmark):
         Returns:
             pd.DataFrame: y values of the function. Columns are y and valid_y.
         """
-        X.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
-        Y = pd.DataFrame({"y": X["y"], "valid_y": 1})
+        X_temp = X.eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=False
+        )
+        Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
         return Y
 
     def get_optima(self) -> pd.DataFrame:
