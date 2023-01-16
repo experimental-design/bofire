@@ -64,9 +64,9 @@ def test_SOBO_not_fitted(domain, acqf):
 
 
 @pytest.mark.parametrize(
-    "domain, acqf, expected, num_test_candidates",
+    "acqf, expected, num_test_candidates",
     [
-        (domains[0], acqf_inp[0], acqf_inp[1], num_test_candidates)
+        (acqf_inp[0], acqf_inp[1], num_test_candidates)
         for acqf_inp in [
             ("QEI", qExpectedImprovement),
             ("QNEI", qNoisyExpectedImprovement),
@@ -82,8 +82,7 @@ def test_SOBO_not_fitted(domain, acqf):
         for num_test_candidates in range(1, 3)
     ],
 )
-def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
-    strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
+def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
 
     # generate data
     benchmark = DTLZ2(dim=6)
@@ -93,12 +92,13 @@ def test_SOBO_init_acqf(domain, acqf, expected, num_test_candidates):
         random_strategy._sample(n=num_test_candidates), return_complete=True
     )
 
+    strategy = BoTorchSoboStrategy(domain=benchmark.domain, acquisition_function=acqf)
+
     strategy.tell(experiments)
     assert isinstance(strategy.acqf, expected)
     # test acqf calc
     acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
     assert acqf_vals.shape[0] == num_test_candidates
-    domain.experiments = None
 
 
 def test_SOBO_init_qUCB():
