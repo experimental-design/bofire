@@ -167,7 +167,7 @@ class BotorchModel(Model):
                 )
         return v
 
-    @validator("input_engineering_specs", always=True)
+    @validator("input_engineering_specs")  # , always=True)
     def validate_input_engineering_specs(cls, v, values):
         input_features = values["input_features"]
         categorical_keys = input_features.get_keys(CategoricalInput, exact=True)
@@ -186,12 +186,7 @@ class BotorchModel(Model):
                 critical_keys.append(key)
         if (
             length_categorical_encoded > 0
-            and len(
-                set(chain(*cls.input_engineering_specs.values())).intersection(
-                    critical_keys
-                )
-            )
-            > 0
+            and len(set(chain(*v.values())).intersection(critical_keys)) > 0
         ):
             raise ValueError(
                 "Feature engineering is not supported for categoricals so far"
