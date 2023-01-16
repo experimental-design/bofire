@@ -11,6 +11,7 @@ from bofire.models.torch_models import (
 )
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
+from bofire.utils.enum import AcquisitionFunctionEnum
 from tests.bofire.strategies.botorch.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
@@ -115,6 +116,26 @@ def test_qparego(num_test_candidates, acquisition_function):
     my_strategy = BoTorchQparegoStrategy(
         domain=benchmark.domain, acquisition_function=acquisition_function
     )
+    my_strategy.tell(experiments)
+    # ask
+    candidates = my_strategy.ask(num_test_candidates)
+    assert len(candidates) == num_test_candidates
+
+
+@pytest.mark.parametrize(
+    "specs, num_test_candidates",
+    [
+        (specs, num_test_candidates)
+        for specs in BOTORCH_QPAREGO_STRATEGY_SPECS["valids"]
+        for num_test_candidates in range(1, 3)
+    ],
+)
+def test_qparego_mixed_input(specs, num_test_candidates):
+
+    my_strategy = BoTorchQparegoStrategy(**specs)
+    random_strategy = PolytopeSampler(domain=my_strategy.domain)
+    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+
     my_strategy.tell(experiments)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
