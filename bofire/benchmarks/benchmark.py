@@ -70,7 +70,6 @@ def _single_run(
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
     n_candidates_per_proposals: int,
 ) -> Tuple[Benchmark, pd.Series]:
-
     def autosafe_results(benchmark, metric_values: pd.Series):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
         Autosave should operate every 5 iterations.
@@ -81,15 +80,21 @@ def _single_run(
         """
 
         benchmark_name = benchmark.__class__.__name__
-        filename = "autosaves/" + "_" + str(benchmark_name) + "_run" + str(run_idx+1) + ".json"
+        filename = (
+            "autosaves/"
+            + "_"
+            + str(benchmark_name)
+            + "_run"
+            + str(run_idx + 1)
+            + ".json"
+        )
 
         exp_dataframe = benchmark.domain.experiments
-        # exp_data["hypervolume"] = metric_values
+        exp_dataframe["hypervolume"] = metric_values
         parsed = exp_dataframe.to_json(orient="split")
 
         with open(filename, "w") as file:
             json.dump(parsed, file)
-
 
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
@@ -109,9 +114,10 @@ def _single_run(
         pbar.set_description(
             f"run {run_idx:02d} with current best {metric_values[i_bar]:0.3f}"
         )
-        if it%10 == 0 and it>0:
-            autosafe_results(benchmark=benchmark, metric_values=pd.Series(metric_values))
-
+        if it % 10 == 0 and it > 0:
+            autosafe_results(
+                benchmark=benchmark, metric_values=pd.Series(metric_values)
+            )
     return benchmark, pd.Series(metric_values)
 
 
