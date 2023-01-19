@@ -1,7 +1,6 @@
 import json
 from abc import abstractmethod
 from copy import deepcopy
-from datetime import datetime
 from typing import Callable, List, Optional, Protocol, Tuple
 
 import numpy as np
@@ -72,7 +71,7 @@ def _single_run(
 ) -> Tuple[Benchmark, pd.Series]:
     def autosafe_results(benchmark, metric_values: pd.Series):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
-        Autosave should operate every 5 iterations.
+        Autosave should operate every 10 iterations.
 
         Args:
             benchmark:

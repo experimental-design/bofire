@@ -85,7 +85,7 @@ class Aspen_benchmark(Benchmark):
             aspen = win32.Dispatch("Apwn.Document")
             aspen.InitFromFile2(os.path.abspath(self.filename))
             self.aspen_is_running = True
-        except:
+        except OSError:
             log_string = "Unable to start Aspen plus."
             logger.exception(log_string)
             raise SystemExit(log_string)
@@ -117,7 +117,7 @@ class Aspen_benchmark(Benchmark):
             for key, path in zip(self.keys[0], self.paths[0]):
                 try:
                     aspen.Tree.FindNode(path.get(key)).Value = row[key]
-                except:
+                except ConnectionAbortedError:
                     logger.exception("Not able to write " + key + " into Aspen.")
 
             # Reset Aspen simulation
@@ -161,7 +161,7 @@ class Aspen_benchmark(Benchmark):
                         else:
                             logger.warning("Unknown simulation status: " + str(status))
 
-                except:
+                except ConnectionAbortedError:
                     logger.exception("Not able to retrieve " + key + " from Aspen.")
 
         logger.info("Simluation completed. Results:")
@@ -171,8 +171,7 @@ class Aspen_benchmark(Benchmark):
     def __del__(self):
         # Can cause trouble. The qehvi takes time to generate the next input, meanwhile the python cleaner can close the class.
         """Deinitializes class and closes Aspen plus."""
-        try:
+        if self.aspen_is_running:
             aspen.Close()
             logger.info("Aspen closed.")
-        except:
-            pass
+            
