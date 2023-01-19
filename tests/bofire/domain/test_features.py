@@ -1687,7 +1687,8 @@ def test_input_features_transform(specs):
             ),
         ]
     )
-    samples = inps.sample(n=10)
+    samples = inps.sample(n=100)
+    samples = samples.sample(40)
     transformed = inps.transform(experiments=samples, specs=specs)
     untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
     assert_frame_equal(samples, untransformed)

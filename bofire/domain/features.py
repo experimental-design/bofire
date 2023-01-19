@@ -674,6 +674,7 @@ class CategoricalInput(InputFeature):
         return pd.DataFrame(
             {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories},
             dtype=float,
+            index=values.index,
         )
 
     def from_onehot_encoding(self, values: pd.DataFrame) -> pd.Series:
@@ -711,6 +712,7 @@ class CategoricalInput(InputFeature):
         return pd.DataFrame(
             {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories[1:]},
             dtype=float,
+            index=values.index,
         )
 
     def from_dummy_encoding(self, values: pd.DataFrame) -> pd.Series:
@@ -982,6 +984,7 @@ class CategoricalDescriptorInput(CategoricalInput):
                 {cat: value for cat, value in zip(self.categories, self.values)}
             ).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
+            index=values.index,
         )
 
     def from_descriptor_encoding(self, values: pd.DataFrame) -> pd.Series:
@@ -1015,6 +1018,7 @@ class CategoricalDescriptorInput(CategoricalInput):
                 )
             ),
             columns=self.categories,
+            index=values.index,
         ).idxmin(1)
         s.name = self.key
         return s
