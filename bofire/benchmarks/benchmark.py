@@ -1,4 +1,5 @@
 import json
+import os
 from abc import abstractmethod
 from copy import deepcopy
 from typing import Callable, List, Optional, Protocol, Tuple
@@ -12,6 +13,9 @@ from bofire.domain.domain import Domain
 from bofire.domain.features import OutputFeature
 from bofire.domain.objectives import Objective
 from bofire.strategies.strategy import Strategy
+
+if not os.path.exists("bofire_autosaves"):
+    os.makedirs("bofire_autosaves")
 
 
 # TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
@@ -80,8 +84,7 @@ def _single_run(
 
         benchmark_name = benchmark.__class__.__name__
         filename = (
-            "autosaves/"
-            + "_"
+            "bofire_autosaves/"
             + str(benchmark_name)
             + "_run"
             + str(run_idx + 1)

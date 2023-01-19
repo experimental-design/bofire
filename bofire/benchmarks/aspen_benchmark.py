@@ -11,6 +11,8 @@ from bofire.domain import Domain
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
+if not os.path.exists("bofire_logs"):
+    os.makedirs("bofire_logs")
 file_handler = logging.FileHandler("bofire_logs/aspen_benchmark.log")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -174,4 +176,3 @@ class Aspen_benchmark(Benchmark):
         if self.aspen_is_running:
             aspen.Close()
             logger.info("Aspen closed.")
-            
