@@ -209,6 +209,44 @@ def test_model_cross_validate(folds):
     assert len(test_cv.results) == efolds
 
 
+def test_model_cross_validate_descriptor():
+    folds = 5
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+        + [
+            CategoricalDescriptorInput(
+                key="x_3",
+                categories=["a", "b", "c"],
+                descriptors=["alpha"],
+                values=[[1], [2], [3]],
+            )
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    experiments = input_features.sample(n=100)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.loc[experiments.x_2 == "b", "y"] += 5
+    experiments.loc[experiments.x_2 == "c", "y"] += 10
+    experiments["valid_y"] = 1
+    experiments = experiments.sample(10)
+    for encoding in [
+        CategoricalEncodingEnum.ONE_HOT,
+        CategoricalEncodingEnum.DESCRIPTOR,
+    ]:
+        model = SingleTaskGPModel(
+            input_features=input_features,
+            output_features=output_features,
+            input_preprocessing_specs={"x_3": encoding},
+        )
+        train_cv, test_cv, _ = model.cross_validate(experiments, folds=folds)
+        efolds = folds if folds != -1 else 10
+        assert len(train_cv.results) == efolds
+        assert len(test_cv.results) == efolds
+
+
 @pytest.mark.parametrize("include_X", [True, False])
 def test_model_cross_validate_include_X(include_X):
     input_features = InputFeatures(
