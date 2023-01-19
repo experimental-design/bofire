@@ -1569,10 +1569,12 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
         <span class="k">if</span> <span class="n">transform_type</span> <span class="o">!=</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="p">:</span>
             <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># in case that values is None, we return the optimization bounds</span>
+            <span class="c1"># else we return the complete bounds</span>
             <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_possible_categories</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
+                <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span>
             <span class="n">lower</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
             <span class="n">upper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
             <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
@@ -2001,10 +2003,12 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
     <span class="k">if</span> <span class="n">transform_type</span> <span class="o">!=</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># in case that values is None, we return the optimization bounds</span>
+        <span class="c1"># else we return the complete bounds</span>
         <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_possible_categories</span><span class="p">(</span><span class="n">values</span><span class="p">)]</span>
+            <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span>
         <span class="n">lower</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
         <span class="n">upper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
         <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
@@ -2806,6 +2810,9 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
         <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
             <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">:</span>
+            <span class="c1"># in the case that values are None, we return the bounds</span>
+            <span class="c1"># based on the optimization bounds, else we return the true</span>
+            <span class="c1"># bounds as this is for model fitting.</span>
             <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
                 <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span>
@@ -3342,6 +3349,9 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
     <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
     <span class="k">if</span> <span class="n">transform_type</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">:</span>
+        <span class="c1"># in the case that values are None, we return the bounds</span>
+        <span class="c1"># based on the optimization bounds, else we return the true</span>
+        <span class="c1"># bounds as this is for model fitting.</span>
         <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">lower</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
             <span class="n">upper</span> <span class="o">=</span> <span class="p">[</span>
@@ -4668,7 +4678,7 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.Series: The passed dataFrame with candidates</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-8</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-6</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
         <span class="k">if</span> <span class="p">(</span><span class="n">values</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">-</span> <span class="n">noise</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -4927,7 +4937,7 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.Series: The passed dataFrame with candidates</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-8</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-6</span>
     <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">values</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">-</span> <span class="n">noise</span><span class="p">)</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
