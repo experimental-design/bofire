@@ -401,6 +401,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # in case the optimization method is free and not allowed categories are present
         # one has to fix also them, this is abit of double work as it should be also reflected
         # in the bounds but helps to make it safer
+        # TODO: this has to be done also for the descriptors
         if (
             self.categorical_method == CategoricalMethodEnum.FREE
             and CategoricalEncodingEnum.ONE_HOT
