@@ -123,7 +123,7 @@ class Linear(ContinuousKernel):
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> GpytorchKernel:
-        return LinearKernel(batch_shape=batch_shape)
+        return LinearKernel(batch_shape=batch_shape, active_dims=active_dims)
 
 
 class BotorchModel(Model):
