@@ -195,9 +195,10 @@ def test_model_cross_validate(folds):
         ]
     )
     output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    experiments = input_features.sample(n=100)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
+    experiments = experiments.sample(10)
     model = SingleTaskGPModel(
         input_features=input_features,
         output_features=output_features,
