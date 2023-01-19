@@ -1,0 +1,366 @@
+{
+  "domain"           : [
+    {
+      "type"        : "CategoricalVariable",
+      "is_objective": false,
+      "name"        : "catalyst",
+      "description" : "Catalyst type",
+      "units"       : null,
+      "levels"      : [
+        "tBuXPhos",
+        "tBuBrettPhos",
+        "AlPhos"
+      ],
+      "ds"          : {
+        "index"  : [
+          "tBuXPhos",
+          "tBuBrettPhos",
+          "AlPhos"
+        ],
+        "columns": [
+          [
+            "area_cat",
+            "DATA"
+          ],
+          [
+            "M2_cat",
+            "DATA"
+          ]
+        ],
+        "data"   : [
+          [
+            460.7543,
+            67.2057
+          ],
+          [
+            518.8408,
+            89.8738
+          ],
+          [
+            819.933,
+            129.0808
+          ]
+        ]
+      }
+    },
+    {
+      "type"        : "CategoricalVariable",
+      "is_objective": false,
+      "name"        : "base",
+      "description" : "Base",
+      "units"       : null,
+      "levels"      : [
+        "DBU",
+        "BTMG",
+        "TMG",
+        "TEA"
+      ],
+      "ds"          : {
+        "index"  : [
+          "TEA",
+          "TMG",
+          "BTMG",
+          "DBU"
+        ],
+        "columns": [
+          [
+            "area",
+            "DATA"
+          ],
+          [
+            "M2",
+            "DATA"
+          ]
+        ],
+        "data"   : [
+          [
+            162.2992,
+            25.8165
+          ],
+          [
+            165.5447,
+            81.4847
+          ],
+          [
+            227.3523,
+            30.554
+          ],
+          [
+            192.4693,
+            59.8367
+          ]
+        ]
+      }
+    },
+    {
+      "type"        : "ContinuousVariable",
+      "is_objective": false,
+      "name"        : "base_equivalents",
+      "description" : "Base equivalents",
+      "units"       : null,
+      "bounds"      : [
+        1.0,
+        2.5
+      ]
+    },
+    {
+      "type"        : "ContinuousVariable",
+      "is_objective": false,
+      "name"        : "temperature",
+      "description" : "Temperature in degrees Celsius (\u00baC)",
+      "units"       : null,
+      "bounds"      : [
+        30.0,
+        100.0
+      ]
+    },
+    {
+      "type"        : "ContinuousVariable",
+      "is_objective": false,
+      "name"        : "t_res",
+      "description" : "residence time in seconds (s)",
+      "units"       : null,
+      "bounds"      : [
+        60.0,
+        1800.0
+      ]
+    },
+    {
+      "type"        : "ContinuousVariable",
+      "is_objective": true,
+      "name"        : "yld",
+      "description" : "Yield",
+      "units"       : null,
+      "bounds"      : [
+        0.0,
+        1.0
+      ]
+    }
+  ],
+  "name"             : "ExperimentalEmulator",
+  "data"             : {
+    "index"  : [],
+    "columns": [
+      [
+        "catalyst",
+        "DATA"
+      ],
+      [
+        "base",
+        "DATA"
+      ],
+      [
+        "base_equivalents",
+        "DATA"
+      ],
+      [
+        "temperature",
+        "DATA"
+      ],
+      [
+        "t_res",
+        "DATA"
+      ],
+      [
+        "yld",
+        "DATA"
+      ],
+      [
+        "computation_t",
+        "METADATA"
+      ],
+      [
+        "experiment_t",
+        "METADATA"
+      ],
+      [
+        "strategy",
+        "METADATA"
+      ]
+    ],
+    "data"   : []
+  },
+  "experiment_params": {
+    "model_name"           : "baumgartner_aniline_cn_crosscoupling",
+    "regressor_name"       : "ANNRegressor",
+    "n_features"           : 10,
+    "n_examples"           : 96,
+    "descriptors_features" : [],
+    "output_variable_names": [
+      "yld"
+    ],
+    "predictors"           : [
+      {
+        "input_preprocessor" : {
+          "num": {
+            "mean_"          : [
+              1.6559957171333333,
+              69.63333333333334,
+              675.2387380961666
+            ],
+            "var_"           : [
+              0.24093575016750415,
+              906.7308888888889,
+              253625.04696145264
+            ],
+            "scale_"         : [
+              0.4908520654611776,
+              30.11197251740392,
+              503.6120004144586
+            ],
+            "n_samples_seen_": 60
+          }
+        },
+        "output_preprocessor": {
+          "mean_"          : [
+            0.5805532822851092
+          ],
+          "var_"           : [
+            0.1785550681951766
+          ],
+          "scale_"         : [
+            0.42255776906261777
+          ],
+          "n_samples_seen_": 60
+        }
+      },
+      {
+        "input_preprocessor" : {
+          "num": {
+            "mean_"          : [
+              1.683371605967213,
+              74.62295081967213,
+              715.8182047760656
+            ],
+            "var_"           : [
+              0.24120375329778332,
+              866.5532437516797,
+              223573.2988868711
+            ],
+            "scale_"         : [
+              0.49112498745002103,
+              29.43727643230059,
+              472.83538243967223
+            ],
+            "n_samples_seen_": 61
+          }
+        },
+        "output_preprocessor": {
+          "mean_"          : [
+            0.6254036210660563
+          ],
+          "var_"           : [
+            0.16832977557768586
+          ],
+          "scale_"         : [
+            0.4102801184284779
+          ],
+          "n_samples_seen_": 61
+        }
+      },
+      {
+        "input_preprocessor" : {
+          "num": {
+            "mean_"          : [
+              1.6615540930327868,
+              69.30163934426228,
+              681.7872910763934
+            ],
+            "var_"           : [
+              0.24927125858022928,
+              924.5657350174685,
+              269346.5438305566
+            ],
+            "scale_"         : [
+              0.49927072674074263,
+              30.40667254103067,
+              518.9860728676219
+            ],
+            "n_samples_seen_": 61
+          }
+        },
+        "output_preprocessor": {
+          "mean_"          : [
+            0.5703947171110844
+          ],
+          "var_"           : [
+            0.18538124205880477
+          ],
+          "scale_"         : [
+            0.43055922015305254
+          ],
+          "n_samples_seen_": 61
+        }
+      },
+      {
+        "input_preprocessor" : {
+          "num": {
+            "mean_"          : [
+              1.628605248,
+              72.78196721311477,
+              735.1206038822951
+            ],
+            "var_"           : [
+              0.24907596673949953,
+              907.5027895726955,
+              244282.01121683227
+            ],
+            "scale_"         : [
+              0.4990751113204299,
+              30.124786963108892,
+              494.24893648528194
+            ],
+            "n_samples_seen_": 61
+          }
+        },
+        "output_preprocessor": {
+          "mean_"          : [
+            0.6131021287750269
+          ],
+          "var_"           : [
+            0.17856050759065348
+          ],
+          "scale_"         : [
+            0.4225642052879698
+          ],
+          "n_samples_seen_": 61
+        }
+      },
+      {
+        "input_preprocessor" : {
+          "num": {
+            "mean_"          : [
+              1.6073154240819671,
+              73.0311475409836,
+              743.0736161352461
+            ],
+            "var_"           : [
+              0.2525966705755136,
+              848.4237839290512,
+              251362.03663802444
+            ],
+            "scale_"         : [
+              0.5025899626688873,
+              29.12771504819853,
+              501.3601865306263
+            ],
+            "n_samples_seen_": 61
+          }
+        },
+        "output_preprocessor": {
+          "mean_"          : [
+            0.564398883872467
+          ],
+          "var_"           : [
+            0.18049929808199283
+          ],
+          "scale_"         : [
+            0.4248520896523787
+          ],
+          "n_samples_seen_": 61
+        }
+      }
+    ]
+  },
+  "extras"           : []
+}

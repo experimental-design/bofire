@@ -1,4 +1,6 @@
+import json
 import math
+import pathlib
 from typing import Optional
 
 import numpy as np
@@ -11,6 +13,8 @@ from scipy.special import gamma
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
 from bofire.domain.features import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     InputFeature,
@@ -18,6 +22,7 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.utils.enum import CategoricalEncodingEnum
 
 
 class DTLZ2(Benchmark):
@@ -319,3 +324,266 @@ class ZDT1(Benchmark):
         x = np.linspace(0, 1, points)
         y = np.stack([x, 1 - np.sqrt(x)], axis=1)
         return pd.DataFrame(y, columns=self.domain.outputs.get_keys())
+
+
+class CrossCoupling(Benchmark):
+    """Baumgartner Cross Coupling adapted from Summit (https://github.com/sustainable-processes/summit)
+
+    Virtual experiments representing the Aniline Cross-Coupling reaction
+    similar to Baumgartner et al. (2019). Experimental outcomes are based on an
+    emulator that is trained on the experimental data published by Baumgartner et al.
+    This is a five dimensional optimisation of temperature, residence time, base equivalents,
+    catalyst and base.
+    The categorical variables (catalyst and base) contain descriptors
+    calculated using COSMO-RS. Specifically, the descriptors are the first two sigma moments.
+    To use the pretrained version, call get_pretrained_baumgartner_cc_emulator
+    Parameters
+    ----------
+    include_cost : bool, optional
+        Include minimization of cost as an extra objective. Cost is calculated
+        as a deterministic function of the inputs (i.e., no model is trained).
+        Defaults to False.
+    use_descriptors : bool, optional
+        Use descriptors for the catalyst and base instead of one-hot encoding (defaults to False). T
+        The descriptors been pre-calculated using COSMO-RS. To only use descriptors with
+        a single feature, pass descriptors_features a list where
+        the only item is the name of the desired categorical variable.
+    Examples
+    --------
+    >>> bemul = CrossCoupling()
+    Notes
+    -----
+    This benchmark is based on data from [Baumgartner]_ et al.
+    References
+    ----------
+    .. [Baumgartner] L. M. Baumgartner et al., Org. Process Res. Dev., 2019, 23, 1594–1601
+       DOI: `10.1021/acs.oprd.9b00236 <https://`doi.org/10.1021/acs.oprd.9b00236>`_
+    """
+
+    def __init__(
+        self,
+        descriptor_encoding: CategoricalEncodingEnum = CategoricalEncodingEnum.DESCRIPTOR,
+        **kwargs,
+    ):
+
+        # "residence time in minutes"
+        input_features = [
+            CategoricalDescriptorInput(
+                key="catalyst",
+                categories=["tBuXPhos", "tBuBrettPhos", "AlPhos"],
+                descriptors=[
+                    [
+                        460.7543,
+                        67.2057,
+                    ],  # 30.8413, 2.3043, 0], #, 424.64, 421.25040226], "area_cat", "M2_cat", 'M3_cat', 'Macc3_cat', 'Mdon3_cat'] #,'mol_weight', 'sol']
+                    [
+                        518.8408,
+                        89.8738,
+                    ],  # 39.4424, 2.5548, 0], #, 487.7, 781.11247064],
+                    [
+                        819.933,
+                        129.0808,
+                    ],  # 83.2017, 4.2959, 0], #, 815.06, 880.74916884],
+                ],
+            ),
+            CategoricalDescriptorInput(
+                key="base",
+                categories=["TEA", "TMG", "BTMG", "DBU"],
+                descriptors=[
+                    # "area", "M2", 'M3', 'Macc3', 'Mdon3', 'mol_weight', 'sol'
+                    [162.2992, 25.8165],  # 40.9469, 3.0278, 0], #101.19, 642.2973283],
+                    [
+                        165.5447,
+                        81.4847,
+                    ],  # 107.0287, 10.215, 0.0169], # 115.18, 534.01544123],
+                    [
+                        227.3523,
+                        30.554,
+                    ],  # 14.3676, 1.1196, 0.0127], # 171.28, 839.81215],
+                    [192.4693, 59.8367],  # 82.0661, 7.42, 0], # 152.24, 1055.82799],
+                ],
+            ),
+            # "base equivalents"
+            ContinuousInput(key="base_eq", lower_bound=1.0, upper_bound=2.5),
+            # "Reactor temperature in degrees celsius"
+            ContinuousInput(key="temperature", lower_bound=30, upper_bound=100.0),
+            # "residence time in seconds (s)"
+            ContinuousInput(key="t_res", lower_bound=60, upper_bound=1800.0),
+        ]
+
+        self.input_preprocessing_specs = {
+            "catalyst": descriptor_encoding,
+            "base": descriptor_encoding,
+        }
+
+        # Objectives: yield and cost
+        output_features = [
+            ContinuousOutput(
+                key="yield", bounds=[0.0, 1.0], objective=MaximizeObjective(w=1.0)
+            ),
+            ContinuousOutput(
+                key="cost", objective=MinimizeObjective(w=1.0), bounds=[0.0, 1.0]
+            ),
+        ]
+        self.ref_point = {"yield": 0.0, "cost": 1.0}
+
+        self._domain = Domain(
+            input_features=InputFeatures(features=input_features),
+            output_features=OutputFeatures(features=output_features),
+        )
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Function evaluation. Returns output vector.
+
+        Args:
+            candidates (pd.DataFrame): Input vector. Columns: catalyst, base, base_eq, temperature, t_res
+
+        Returns:
+            pd.DataFrame: Output vector. Columns: yield, cost, valid_yield, valid_cost
+        """
+        Y = pd.DataFrame()
+        for _, candidate in candidates.iterrows():
+            # TODO hier Modell aufrufen!
+            cost_i = self._calculate_costs(candidate)
+            yield_i = self._integrate_equations(candidate)
+
+            pd.concat(
+                [Y, pd.DataFrame(data=[yield_i, cost_i], columns=["yield", "cost"])],
+                axis=0,
+            )
+
+        Y[
+            [
+                "valid_%s" % feat
+                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
+                    excludes=None
+                )
+            ]
+        ] = 1
+        return Y
+
+    @classmethod
+    def load(cls, save_dir, **kwargs):
+        """Load all the essential parameters of the BaumgartnerCrossCouplingEmulator
+        from disc
+        Parameters
+        ----------
+        save_dir : str or pathlib.Path
+            The directory from which to load emulator files.
+        include_cost : bool, optional
+            Include minimization of cost as an extra objective. Cost is calculated
+            as a deterministic function of the inputs (i.e., no model is trained).
+            Defaults to False.
+        use_descriptors : bool, optional
+            Use descriptors for the catalyst and base instead of one-hot encoding (defaults to False). T
+            The descriptors been pre-calculated using COSMO-RS. To only use descriptors with
+            a single feature, pass descriptors_features a list where
+            the only item is the name of the desired categorical variable.
+        """
+        if self.descriptor_encoding == CategoricalEncodingEnum.DESCRIPTOR:
+            model_name = "baumgartner_aniline_cn_crosscoupling_descriptors"
+        else:
+            model_name = "baumgartner_aniline_cn_crosscoupling"
+        save_dir = pathlib.Path(save_dir)
+        with open(save_dir / f"{model_name}.json", "r") as f:
+            d = json.load(f)
+        d["experiment_params"]["include_cost"] = include_cost
+        exp = ExperimentalEmulator.from_dict(d, **kwargs)
+        exp.load_regressor(save_dir)
+        return exp
+
+    @classmethod
+    def _calculate_costs(cls, conditions):
+        catalyst = conditions["catalyst"].values
+        base = conditions["base"].values
+        base_equiv = conditions["base_equivalents"].values
+
+        # Calculate amounts
+        droplet_vol = 40 * 1e-3  # mL
+        mmol_triflate = 0.91 * droplet_vol
+        mmol_anniline = 1.6 * mmol_triflate
+        catalyst_equiv = {
+            "tBuXPhos": 0.0095,
+            "tBuBrettPhos": 0.0094,
+            "AlPhos": 0.0094,
+        }
+        mmol_catalyst = [catalyst_equiv[c] * mmol_triflate for c in catalyst]
+        mmol_base = base_equiv * mmol_triflate
+
+        # Calculate costs
+        cost_triflate = mmol_triflate * 5.91  # triflate is $5.91/mmol
+        cost_anniline = mmol_anniline * 0.01  # anniline is $0.01/mmol
+        cost_catalyst = np.array(
+            [cls._get_catalyst_cost(c, m) for c, m in zip(catalyst, mmol_catalyst)]
+        )
+        cost_base = np.array(
+            [cls._get_base_cost(b, m) for b, m in zip(base, mmol_base)]
+        )
+        tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
+        if len(tot_cost) == 1:
+            tot_cost = tot_cost[0]
+        return tot_cost
+
+    @staticmethod
+    def _get_catalyst_cost(catalyst, catalyst_mmol):
+        catalyst_prices = {
+            "tBuXPhos": 94.08,
+            "tBuBrettPhos": 182.85,
+            "AlPhos": 594.18,
+        }
+        return float(catalyst_prices[catalyst] * catalyst_mmol)
+
+    @staticmethod
+    def _get_base_cost(base, mmol_base):
+        # prices in $/mmol
+        base_prices = {
+            "DBU": 0.03,
+            "BTMG": 1.2,
+            "TMG": 0.001,
+            "TEA": 0.01,
+        }
+        return float(base_prices[base] * mmol_base)
+
+
+def get_pretrained_baumgartner_cc_emulator(include_cost=False, use_descriptors=False):
+    """Get a pretrained BaumgartnerCrossCouplingEmulator
+    Parameters
+    ----------
+    include_cost : bool, optional
+        Include minimization of cost as an extra objective. Cost is calculated
+        as a deterministic function of the inputs (i.e., no model is trained).
+        Defaults to False.
+    use_descriptors : bool, optional
+        Use descriptors for the catalyst and base instead of one-hot encoding (defaults to False). T
+        The descriptors been pre-calculated using COSMO-RS. To only use descriptors with
+        a single feature, pass descriptors_features a list where
+        the only item is the name of the desired categorical variable.
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> from summit.benchmarks import get_pretrained_baumgartner_cc_emulator
+    >>> from summit.utils.dataset import DataSet
+    >>> import pandas as pd
+    >>> b = get_pretrained_baumgartner_cc_emulator(include_cost=True, use_descriptors=False)
+    >>> fig, ax = b.parity_plot(include_test=True)
+    >>> plt.show()
+    >>> columns = [v.name for v in b.domain.variables]
+    >>> values = { "catalyst": ["tBuXPhos"], "base": ["DBU"], "t_res": [328.717801570892],"temperature": [30],"base_equivalents": [2.18301549894049]}
+    >>> conditions = pd.DataFrame(values)
+    >>> conditions = DataSet.from_df(conditions)
+    >>> results = b.run_experiments(conditions, return_std=True)
+    """
+    model_name = "baumgartner_aniline_cn_crosscoupling"
+    data_path = get_data_path()
+    ds = DataSet.read_csv(data_path / f"{model_name}.csv")
+    model_name += "_descriptors" if use_descriptors else ""
+    model_path = get_model_path() / model_name
+    if not model_path.exists():
+        raise NotADirectoryError("Could not initialize from expected path.")
+    exp = BaumgartnerCrossCouplingEmulator.load(
+        model_path,
+        dataset=ds,
+        include_cost=include_cost,
+        use_descriptors=use_descriptors,
+    )
+    return exp
