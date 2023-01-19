@@ -380,6 +380,17 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     ) -> None:
         pass
 
+    # TODO: maybe replace the one below witht this one.
+    # def get_fixed_features(self):
+    #     lower, upper = self.domain.inputs.get_bounds(
+    #         specs=self.input_preprocessing_specs
+    #     )
+    #     fixed_features = {}
+    #     for i in range(len(lower)):
+    #         if lower[i] == upper[i]:
+    #             fixed_features[i] = lower[i]
+    #     return fixed_features
+
     def get_fixed_features(self):
         """provides the values of all fixed features
 
@@ -422,6 +433,25 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         for j, idx in enumerate(features2idx[feat.key]):
                             if transformed.values[0, j] == 1.0:
                                 fixed_features[idx] = 0
+        # for the descriptor ones
+        if (
+            self.descriptor_method == CategoricalMethodEnum.FREE
+            and CategoricalEncodingEnum.DESCRIPTOR
+            in list(self.input_preprocessing_specs.values())
+        ):
+            # for feat in self.get_true_categorical_features():
+            for feat in [
+                self.domain.inputs.get_by_key(featkey)
+                for featkey in self.domain.inputs.get_keys(CategoricalDescriptorInput)
+                if self.input_preprocessing_specs[featkey]
+                == CategoricalEncodingEnum.DESCRIPTOR
+            ]:
+                assert isinstance(feat, CategoricalDescriptorInput)
+                if feat.is_fixed() is False:
+                    lower, upper = feat.get_bounds(CategoricalEncodingEnum.DESCRIPTOR)
+                    for j, idx in enumerate(features2idx[feat.key]):
+                        if lower[j] == upper[j]:
+                            fixed_features[idx] = lower[j]
         return fixed_features
 
     def get_categorical_combinations(self):
