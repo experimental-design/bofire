@@ -372,8 +372,9 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         # TODO use here the correct bounds
         if self.scaler == ScalerEnum.NORMALIZE:
             lower, upper = self.input_features.get_bounds(
-                specs=self.input_preprocessing_specs
+                specs=self.input_preprocessing_specs, experiments=X
             )
+
             scaler = Normalize(
                 d=d,
                 bounds=torch.tensor([lower, upper]).to(**tkwargs),
