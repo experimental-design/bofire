@@ -81,19 +81,13 @@ def _single_run(
             benchmark:
             metric values
         """
-
         benchmark_name = benchmark.__class__.__name__
         filename = (
-            "bofire_autosaves/"
-            + str(benchmark_name)
-            + "_run"
-            + str(run_idx + 1)
-            + ".json"
+            "bofire_autosaves/" + str(benchmark_name) + "_run" + str(run_idx) + ".json"
         )
-
-        exp_dataframe = benchmark.domain.experiments
-        exp_dataframe["hypervolume"] = metric_values
-        parsed = exp_dataframe.to_json(orient="split")
+        hyper_vol = pd.DataFrame(data=metric_values, columns=["hypervolume"])
+        df_to_save = pd.concat([benchmark.domain.experiments, hyper_vol], axis=1)
+        parsed = df_to_save.to_json(orient="split")
 
         with open(filename, "w") as file:
             json.dump(parsed, file)
