@@ -10,18 +10,41 @@ from pydantic.types import PositiveFloat
 
 
 class Prior(BaseModel):
+    """Abstract Prior class."""
 
     type: str
 
     @abstractmethod
     def to_gpytorch(self) -> gpytorch.priors.Prior:
+        """Transform prior to a gpytorch prior.
+
+        Returns:
+            gpytorch.priors.Prior: Equivalent gpytorch prior object.
+        """
         pass
 
     @staticmethod
     def from_dict(dict_: dict):
+        """Parse object from dictionary.
+
+        Args:
+            dict_ (dict): Dictionary serialized prior class.
+
+        Returns:
+            AnyPrior: Instantiated prior class.
+        """
         return parse_obj_as(AnyPrior, dict_)
 
     def plot_pdf(self, lower: float, upper: float):
+        """Plot the probability density function of the prior with matplotlib.
+
+        Args:
+            lower (float): lower bound for computing the prior pdf.
+            upper (float): upper bound for computing the prior pdf.
+
+        Returns:
+            fig, ax objects of the plot.
+        """
         x = np.linspace(lower, upper, 1000)
         fig, ax = plt.subplots()
         ax.plot(
@@ -33,6 +56,12 @@ class Prior(BaseModel):
 
 
 class GammaPrior(Prior):
+    """Gamma prior based on the gamma distribution
+
+    Attributes:
+        concentration(PostiveFloat): concentration of the gamma distribution
+        rate(PositiveFloat): rate of the gamma prior.
+    """
 
     type: Literal["GammaPrior"] = "GammaPrior"
     concentration: PositiveFloat
@@ -45,6 +74,12 @@ class GammaPrior(Prior):
 
 
 class NormalPrior(Prior):
+    """Normal prior based on the normal distribution
+
+    Attributes:
+        loc(float): mean/center of the normal distribution
+        scale(PositiveFloat): width of the normal distribution
+    """
 
     type: Literal["NormalPrior"] = "NormalPrior"
     loc: float
@@ -59,8 +94,8 @@ AnyPrior = Union[GammaPrior, NormalPrior]
 # default priors of interest
 # botorch defaults
 botorch_lengthcale_prior = GammaPrior(concentration=3.0, rate=6.0)
-# botorch_noise_prior = GammaPrior(concentration=, rate=)
-# botorch_scale_prior = GammaPrior(concentration=, rate=)
+botorch_noise_prior = GammaPrior(concentration=1.1, rate=0.05)
+botorch_scale_prior = GammaPrior(concentration=2.0, rate=0.15)
 
 # mbo priors
 # By default BoTorch places a highly informative prior on the kernel lengthscales,
