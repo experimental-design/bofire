@@ -2768,7 +2768,9 @@ NonlinearInequalityConstraint            (<span title="bofire.domain.constraints
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;NonlinearInequalityConstraint&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;NonlinearInequalityConstraint&quot;</span>
 
     <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="c1"># we allow here for numerical noise</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-6</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">noise</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">expression</span><span class="si">}</span><span class="s2">&lt;=0&quot;</span>
@@ -2869,7 +2871,9 @@ NonlinearInequalityConstraint            (<span title="bofire.domain.constraints
         <details class="quote">
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="c1"># we allow here for numerical noise</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-6</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">noise</span>
 </code></pre></div>
         </details>
     </div>
