@@ -1,3 +1,4 @@
+import gpytorch.priors
 import numpy as np
 import pandas as pd
 import pytest
@@ -22,6 +23,7 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
+from bofire.models.priors import GammaPrior
 from bofire.models.torch_models import (
     RBF,
     BotorchModels,
@@ -40,8 +42,27 @@ from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 @pytest.mark.parametrize(
     "kernel, ard_num_dims, active_dims, expected_kernel",
     [
-        (RBF(ard=False), 10, list(range(5)), RBFKernel),
+        (
+            RBF(ard=False, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)),
+            10,
+            list(range(5)),
+            RBFKernel,
+        ),
+        (
+            RBF(ard=False),
+            10,
+            list(range(5)),
+            RBFKernel,
+        ),
         (RBF(ard=True), 10, list(range(5)), RBFKernel),
+        (
+            Matern(
+                ard=False, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)
+            ),
+            10,
+            list(range(5)),
+            MaternKernel,
+        ),
         (Matern(ard=False), 10, list(range(5)), MaternKernel),
         (Matern(ard=True), 10, list(range(5)), MaternKernel),
         (Matern(ard=False, nu=2.5), 10, list(range(5)), MaternKernel),
@@ -58,6 +79,11 @@ def test_continuous_kernel(
     assert isinstance(k, expected_kernel)
     if isinstance(kernel, Linear):
         return
+    if kernel.lengthscale_prior is not None:
+        assert hasattr(k, "lengthscale_prior")
+        assert isinstance(k.lengthscale_prior, gpytorch.priors.GammaPrior)
+    else:
+        assert hasattr(k, "lengthscale_prior") is False
 
     if kernel.ard is False:
         assert k.ard_num_dims is None
