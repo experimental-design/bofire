@@ -272,7 +272,9 @@ class NonlinearInequalityConstraint(NonlinearConstraint):
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
 
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
-        return self(experiments) <= 0
+        # we allow here for numerical noise
+        noise = 10e-6
+        return self(experiments) <= 0 + noise
 
     def __str__(self):
         return f"{self.expression}<=0"
