@@ -54,7 +54,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     objective: Optional[MCAcquisitionObjective] = None
     acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
-    is_fitted: bool = False
     # use_combined_bounds: bool = True  # parameter to switch to legacy behavior
 
     @validator("num_sobol_samples")
@@ -381,6 +380,17 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     ) -> None:
         pass
 
+    # TODO: maybe replace the one below witht this one.
+    # def get_fixed_features(self):
+    #     lower, upper = self.domain.inputs.get_bounds(
+    #         specs=self.input_preprocessing_specs
+    #     )
+    #     fixed_features = {}
+    #     for i in range(len(lower)):
+    #         if lower[i] == upper[i]:
+    #             fixed_features[i] = lower[i]
+    #     return fixed_features
+
     def get_fixed_features(self):
         """provides the values of all fixed features
 
@@ -402,6 +412,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # in case the optimization method is free and not allowed categories are present
         # one has to fix also them, this is abit of double work as it should be also reflected
         # in the bounds but helps to make it safer
+        # TODO: this has to be done also for the descriptors
         if (
             self.categorical_method == CategoricalMethodEnum.FREE
             and CategoricalEncodingEnum.ONE_HOT
@@ -422,6 +433,25 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         for j, idx in enumerate(features2idx[feat.key]):
                             if transformed.values[0, j] == 1.0:
                                 fixed_features[idx] = 0
+        # for the descriptor ones
+        if (
+            self.descriptor_method == CategoricalMethodEnum.FREE
+            and CategoricalEncodingEnum.DESCRIPTOR
+            in list(self.input_preprocessing_specs.values())
+        ):
+            # for feat in self.get_true_categorical_features():
+            for feat in [
+                self.domain.inputs.get_by_key(featkey)
+                for featkey in self.domain.inputs.get_keys(CategoricalDescriptorInput)
+                if self.input_preprocessing_specs[featkey]
+                == CategoricalEncodingEnum.DESCRIPTOR
+            ]:
+                assert isinstance(feat, CategoricalDescriptorInput)
+                if feat.is_fixed() is False:
+                    lower, upper = feat.get_bounds(CategoricalEncodingEnum.DESCRIPTOR)
+                    for j, idx in enumerate(features2idx[feat.key]):
+                        if lower[j] == upper[j]:
+                            fixed_features[idx] = lower[j]
         return fixed_features
 
     def get_categorical_combinations(self):
@@ -527,3 +557,31 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         if self.experiments.shape[0] > degrees_of_freedom + 1:
             return True
         return False
+
+    def get_acqf_input_tensors(self):
+
+        experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            self.experiments
+        )
+
+        # TODO: should this be selectable?
+        clean_experiments = experiments.drop_duplicates(
+            subset=[var.key for var in self.domain.get_features(InputFeature)],
+            keep="first",
+            inplace=False,
+        )
+
+        transformed = self.domain.inputs.transform(
+            clean_experiments, self.input_preprocessing_specs
+        )
+        X_train = torch.from_numpy(transformed.values).to(**tkwargs)
+
+        if self.domain.candidates is not None:
+            transformed_candidates = self.domain.inputs.transform(
+                self.domain.candidates, self.input_preprocessing_specs
+            )
+            X_pending = torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+        else:
+            X_pending = None
+
+        return X_train, X_pending

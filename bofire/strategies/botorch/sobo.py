@@ -1,6 +1,5 @@
 from typing import Type
 
-import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.models.gpytorch import GPyTorchModel
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
@@ -14,7 +13,6 @@ from bofire.strategies.botorch.utils.objectives import (
     MultiplicativeObjective,
 )
 from bofire.utils.enum import AcquisitionFunctionEnum
-from bofire.utils.torch_tools import tkwargs
 
 
 class AcquisitionFunction(BaseModel):
@@ -70,18 +68,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     def _init_acqf(self) -> None:
         assert self.is_fitted is True, "Model not trained."
 
-        clean_experiments = (
-            self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments
-            )
-        )
-        transformed = self.domain.inputs.transform(
-            clean_experiments, self.input_preprocessing_specs
-        )
-        X_train = torch.from_numpy(transformed.values).to(**tkwargs)
-
-        # TODO: refactor pending experiments
-        X_pending = None
+        X_train, X_pending = self.get_acqf_input_tensors()
 
         self.acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,

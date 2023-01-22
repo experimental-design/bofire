@@ -7,3 +7,4 @@ pytest
 torch
 botorch>=0.8.1
 multiprocess
+plotly
