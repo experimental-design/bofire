@@ -18,10 +18,9 @@ from botorch.models.transforms.input import (
 )
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.kernels import Kernel as GpytorchKernel
-from gpytorch.kernels import MaternKernel, RBFKernel
+from gpytorch.kernels import LinearKernel, MaternKernel, RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from gpytorch.priors.torch_priors import GammaPrior
 from pydantic import validator
 
 from bofire.domain.features import (
@@ -34,6 +33,7 @@ from bofire.domain.features import (
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
+from bofire.models.priors import GammaPrior, Prior
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 
@@ -93,6 +93,7 @@ class HammondDistanceKernel(CategoricalKernel):
 
 class RBF(ContinuousKernel):
     ard: bool = True
+    lengthscale_prior: Optional[Prior] = None
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
@@ -101,12 +102,16 @@ class RBF(ContinuousKernel):
             batch_shape=batch_shape,
             ard_num_dims=len(active_dims) if self.ard else None,
             active_dims=active_dims,  # type: ignore
+            lengthscale_prior=self.lengthscale_prior.to_gpytorch()
+            if self.lengthscale_prior is not None
+            else None,
         )
 
 
 class Matern(ContinuousKernel):
     ard: bool = True
     nu: float = 2.5
+    lengthscale_prior: Optional[Prior] = None
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
@@ -116,7 +121,17 @@ class Matern(ContinuousKernel):
             ard_num_dims=len(active_dims) if self.ard else None,
             active_dims=active_dims,
             nu=self.nu,
+            lengthscale_prior=self.lengthscale_prior.to_gpytorch()
+            if self.lengthscale_prior is not None
+            else None,
         )
+
+
+class Linear(ContinuousKernel):
+    def to_gpytorch(
+        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
+    ) -> GpytorchKernel:
+        return LinearKernel(batch_shape=batch_shape, active_dims=active_dims)
 
 
 class BotorchModel(Model):
@@ -162,8 +177,8 @@ class BotorchModel(Model):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            preds = self.model.posterior(X=X).mean.cpu().detach().numpy()  # type: ignore
-            stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())  # type: ignore
+            preds = self.model.posterior(X=X, observation_noise=True).mean.cpu().detach().numpy()  # type: ignore
+            stds = np.sqrt(self.model.posterior(X=X, observation_noise=True).variance.cpu().detach().numpy())  # type: ignore
         return preds, stds
 
 
@@ -365,8 +380,9 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         # TODO use here the correct bounds
         if self.scaler == ScalerEnum.NORMALIZE:
             lower, upper = self.input_features.get_bounds(
-                specs=self.input_preprocessing_specs
+                specs=self.input_preprocessing_specs, experiments=X
             )
+
             scaler = Normalize(
                 d=d,
                 bounds=torch.tensor([lower, upper]).to(**tkwargs),
@@ -390,7 +406,9 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
                     active_dims=list(range(d)),
                     ard_num_dims=1,
                 ),
-                outputscale_prior=GammaPrior(2.0, 0.15),
+                outputscale_prior=GammaPrior(
+                    concentration=2.0, rate=0.15
+                ).to_gpytorch(),
             ),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=scaler,

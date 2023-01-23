@@ -1,4 +1,4 @@
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -196,6 +196,8 @@ class CvResult(PydanticBaseModel):
     observed: pd.Series
     predicted: pd.Series
     standard_deviation: Optional[pd.Series] = None
+    labcodes: Optional[pd.Series] = None
+    X: Optional[pd.DataFrame] = None
 
     @root_validator(pre=True)
     def validate_shapes(cls, values):
@@ -203,10 +205,20 @@ class CvResult(PydanticBaseModel):
             raise ValueError(
                 f"Predicted values has length {len(values['predicted'])} whereas observed has length {len(values['observed'])}"
             )
-        if "standard_deviation" in values:
+        if "standard_deviation" in values and values["standard_deviation"] is not None:
             if not len(values["predicted"]) == len(values["standard_deviation"]):
                 raise ValueError(
-                    f"Predicted values has length {len(values['standard_deviation'])} whereas standard_deviation has length {len(values['standard_deviation'])}"
+                    f"Predicted values has length {len(values['predicted'])} whereas standard_deviation has length {len(values['standard_deviation'])}"
+                )
+        if "labcodes" in values and values["labcodes"] is not None:
+            if not len(values["predicted"]) == len(values["labcodes"]):
+                raise ValueError(
+                    f"Predicted values has length {len(values['predicted'])} whereas labcodes has length {len(values['labcodes'])}"
+                )
+        if "X" in values and values["X"] is not None:
+            if not len(values["predicted"]) == len(values["X"]):
+                raise ValueError(
+                    f"Predicted values has length {len(values['predicted'])} whereas X has length {len(values['X'])}"
                 )
         return values
 
@@ -224,8 +236,9 @@ class CvResult(PydanticBaseModel):
 
     @validator("standard_deviation")
     def validate_standard_deviation(cls, v, values):
-        if not is_numeric(v):
-            raise ValueError("Not all values of standard_deviation are numerical")
+        if v is not None:
+            if not is_numeric(v):
+                raise ValueError("Not all values of standard_deviation are numerical")
         return v
 
     @property
@@ -268,13 +281,20 @@ class CvResults(PydanticBaseModel):
         for i in v:
             if i.key != key:
                 raise ValueError("`CvResult` objects do not match.")
-        has_sd = v[0].standard_deviation is not None
-        for i in v:
-            has_sd_i = i.standard_deviation is not None
-            if has_sd != has_sd_i:
-                raise ValueError(
-                    "Either all or none`CvResult` objects contain a standard deviation."
-                )
+        for field in ["standard_deviation", "labcodes", "X"]:
+            has_field = getattr(v[0], field) is not None
+            for i in v:
+                has_i = getattr(i, field) is not None
+                if has_field != has_i:
+                    raise ValueError(
+                        f"Either all or none `CvResult` objects contain {field}."
+                    )
+        # check columns of X
+        if v[0].X is not None:
+            cols = sorted(list(v[0].X.columns))
+            for i in v:
+                if sorted(list(i.X.columns)) != cols:
+                    raise ValueError("Columns of X do not match.")
         return v
 
     def __len__(self) -> int:
@@ -304,19 +324,34 @@ class CvResults(PydanticBaseModel):
         """
         return (np.array([r.n_samples for r in self.results]) == 1).all()
 
-    def _combine_folds(self) -> Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]:
+    def _combine_folds(self) -> CvResult:
         """Combines the `CvResult` splits into one flat array for predicted, observed and standard_deviation.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]: One flat array for CvResult property.
+            Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]: One pd.Series for CvResult property.
         """
-        observed = np.array([i for cv in self.results for i in cv.observed.values])
-        predicted = np.array([i for cv in self.results for i in cv.predicted.values])
+        observed = pd.concat([cv.observed for cv in self.results], ignore_index=True)
+        predicted = pd.concat([cv.predicted for cv in self.results], ignore_index=True)
         if self.results[0].standard_deviation is not None:
-            sd = np.array([i for cv in self.results for i in cv.standard_deviation.values])  # type: ignore
+            sd = pd.concat([cv.standard_deviation for cv in self.results], ignore_index=True)  # type: ignore
         else:
             sd = None
-        return observed, predicted, sd
+        if self.results[0].labcodes is not None:
+            labcodes = pd.concat([cv.labcodes for cv in self.results], ignore_index=True)  # type: ignore
+        else:
+            labcodes = None
+        if self.results[0].X is not None:
+            X = pd.concat([cv.X for cv in self.results], ignore_index=True)  # type: ignore
+        else:
+            X = None
+        return CvResult(
+            key=self.results[0].key,
+            observed=observed,
+            predicted=predicted,
+            standard_deviation=sd,
+            labcodes=labcodes,
+            X=X,
+        )
 
     def get_metric(
         self, metric: RegressionMetricsEnum, combine_folds: bool = True
@@ -333,7 +368,9 @@ class CvResults(PydanticBaseModel):
             pd.Series: Object containing the metric value for every fold.
         """
         if self.is_loo or combine_folds:
-            return pd.Series(metrics[metric](*self._combine_folds()), name=metric.name)
+            return pd.Series(
+                self._combine_folds().get_metric(metric=metric), name=metric.name
+            )
         return pd.Series(
             [cv.get_metric(metric) for cv in self.results], name=metric.name
         )

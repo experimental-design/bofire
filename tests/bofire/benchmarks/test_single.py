@@ -5,16 +5,18 @@ from bofire.benchmarks.single import Ackley, Himmelblau
 
 
 @pytest.mark.parametrize(
-    "cls_benchmark, kwargs",
+    "cls_benchmark, return_complete, kwargs",
     [
-        (Himmelblau, {}),
-        (Ackley, {}),
+        (Himmelblau, False, {}),
+        (Ackley, False, {}),
+        (Himmelblau, True, {}),
+        (Ackley, True, {}),
         # TO DO: Implement feature that tests Ackley for categorical and descriptive inputs.
         # (Ackley, {"categorical": True}),
         # (Ackley, {"descriptor": True}),
     ],
 )
-def test_single_objective_benchmarks(cls_benchmark, kwargs):
+def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
     """Test function for single objective benchmark functions.
 
     Args:
@@ -28,14 +30,25 @@ def test_single_objective_benchmarks(cls_benchmark, kwargs):
     n_samples = 1000
     X_samples = benchmark_function.domain.inputs.sample(n=n_samples)
     # Calculating corresponding y values
-    Y = benchmark_function.f(X_samples)
+    Y = benchmark_function.f(X_samples, return_complete=return_complete)
     # Check, whether shape of output dataframe matches the expected shape.
     expected_output_variables = len(benchmark_function.domain.output_features) * 2
-    assert Y.shape == (n_samples, expected_output_variables), (
-        "The shape of the output dataframe of "
-        + benchmark_function_name
-        + " does not match the expected shape."
-    )
+
+    if return_complete:
+        assert Y.shape == (
+            n_samples,
+            len(benchmark_function.domain.experiment_column_names),
+        ), (
+            "The shape of the output dataframe of "
+            + benchmark_function_name
+            + " does not match the expected shape."
+        )
+    else:
+        assert Y.shape == (n_samples, expected_output_variables), (
+            "The shape of the output dataframe of "
+            + benchmark_function_name
+            + " does not match the expected shape."
+        )
 
     # Check for correct optima
     # Retrieve optima from benchmark function
@@ -45,7 +58,7 @@ def test_single_objective_benchmarks(cls_benchmark, kwargs):
     y_keys = benchmark_function.domain.outputs.get_keys()
     px = optima[x_keys]
     py = optima[y_keys]
-    Y = benchmark_function.f(px)
+    Y = benchmark_function.f(px, return_complete=return_complete)
     y = Y[y_keys]
     # Check whether the optimum y value at position px equals the expected value at px with tolerance 'atol'.
     assert np.allclose(y, py, atol=1e-04), (

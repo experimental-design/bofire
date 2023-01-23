@@ -3,8 +3,8 @@ import random
 import pandas as pd
 import pytest
 
-from bofire.benchmarks.multiobjective import DTLZ2
-from bofire.benchmarks.singleobjective import Ackley
+from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.single import Ackley
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.strategies.botorch.sobo import BoTorchSoboMultiplicativeStrategy
@@ -40,7 +40,7 @@ def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_coun
     # generate data
     benchmark = Ackley(categorical=categorical, descriptor=descriptor)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(random_strategy.ask(n=10))
+    experiments = benchmark.f(random_strategy.ask(n=10), return_complete=True)
 
     # set up of the strategy
     strategy = cls(**{**spec, "domain": benchmark.domain})
@@ -73,7 +73,7 @@ def test_ask_multi_objective(cls, spec, use_ref_point, candidate_count):
         dim=6
     )  # TODO: expand benchmark also towards categorical features?
     random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.run_candidate_experiments(random_strategy.ask(n=10))
+    experiments = benchmark.f(random_strategy.ask(n=10), return_complete=True)
 
     # set up of the strategy
     strategy = cls(
