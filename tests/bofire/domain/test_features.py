@@ -1,3 +1,4 @@
+import json
 import random
 import uuid
 
@@ -297,7 +298,7 @@ def test_sample(cls, spec):
 )
 def test_feature_serialize(cls, spec):
     res = cls(**spec)
-    res2 = Feature.from_dict(res.dict())
+    res2 = Feature.from_dict(json.loads(res.json()))
     assert res == res2
 
 
@@ -1344,7 +1345,7 @@ features = Features(features=[if1, if2, of1, of2])
 
 @pytest.mark.parametrize("features", [input_features, output_features, features])
 def test_features_serialize(features):
-    nfeatures = Features(**features.dict())
+    nfeatures = Features(**json.loads(features.json()))
     assert nfeatures == features
 
 

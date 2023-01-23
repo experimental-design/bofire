@@ -397,7 +397,7 @@ def test_domain_serialize(domain):
     import json
 
     print("dict:", json.dumps(domain.dict(), indent=4))
-    ndomain = Domain(**domain.dict())
+    ndomain = Domain(**json.loads(domain.json()))
     assert ndomain == domain
 
 

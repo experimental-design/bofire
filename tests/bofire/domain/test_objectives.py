@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 import torch
@@ -206,7 +208,7 @@ def test_valid_desirability_function_specs(cls, spec):
 )
 def test_desirability_function_serialize(cls, spec):
     res = cls(**spec)
-    res2 = Objective.from_dict(res.dict())
+    res2 = Objective.from_dict(json.loads(res.json()))
     assert res == res2
 
 

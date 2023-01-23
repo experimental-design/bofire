@@ -1,3 +1,5 @@
+import json
+
 import pytest
 from pydantic.error_wrappers import ValidationError
 
@@ -255,7 +257,7 @@ constraints3 = Constraints(constraints=[c6])
 
 @pytest.mark.parametrize("constraints", [constraints, constraints2, constraints3])
 def test_constraints_serialize(constraints):
-    nconstraints = Constraints(**constraints.dict())
+    nconstraints = Constraints(**json.loads(constraints.json()))
     assert constraints == nconstraints
 
 
