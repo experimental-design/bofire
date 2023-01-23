@@ -372,10 +372,14 @@ class CrossCoupling(Benchmark):
                 key="catalyst",
                 categories=["tBuXPhos", "tBuBrettPhos", "AlPhos"],
                 descriptors=[
+                    "area_cat",
+                    "M2_cat",
+                ],  # , 'M3_cat', 'Macc3_cat', 'Mdon3_cat'] #,'mol_weight', 'sol']
+                values=[
                     [
                         460.7543,
                         67.2057,
-                    ],  # 30.8413, 2.3043, 0], #, 424.64, 421.25040226], "area_cat", "M2_cat", 'M3_cat', 'Macc3_cat', 'Mdon3_cat'] #,'mol_weight', 'sol']
+                    ],  # 30.8413, 2.3043, 0], #, 424.64, 421.25040226],
                     [
                         518.8408,
                         89.8738,
@@ -390,7 +394,10 @@ class CrossCoupling(Benchmark):
                 key="base",
                 categories=["TEA", "TMG", "BTMG", "DBU"],
                 descriptors=[
-                    # "area", "M2", 'M3', 'Macc3', 'Mdon3', 'mol_weight', 'sol'
+                    "area",
+                    "M2",
+                ],  # , 'M3', 'Macc3', 'Mdon3', 'mol_weight', 'sol'
+                values=[
                     [162.2992, 25.8165],  # 40.9469, 3.0278, 0], #101.19, 642.2973283],
                     [
                         165.5447,
@@ -480,7 +487,7 @@ class CrossCoupling(Benchmark):
             a single feature, pass descriptors_features a list where
             the only item is the name of the desired categorical variable.
         """
-        if self.descriptor_encoding == CategoricalEncodingEnum.DESCRIPTOR:
+        if cls.descriptor_encoding == CategoricalEncodingEnum.DESCRIPTOR:
             model_name = "baumgartner_aniline_cn_crosscoupling_descriptors"
         else:
             model_name = "baumgartner_aniline_cn_crosscoupling"
