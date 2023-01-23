@@ -110,7 +110,7 @@ def _single_run(
         pbar.set_description(
             f"run {run_idx:02d} with current best {metric_values[i_bar]:0.3f}"
         )
-        if it % 10 == 0 and it > 0:
+        if (it + 1) % 5 == 0 and it > 0:
             autosafe_results(
                 benchmark=benchmark, metric_values=pd.Series(metric_values)
             )

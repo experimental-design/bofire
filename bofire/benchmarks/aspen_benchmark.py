@@ -170,9 +170,11 @@ class Aspen_benchmark(Benchmark):
         logger.info(Y)
         return Y
 
-    def __del__(self):
-        # Can cause trouble. The qehvi takes time to generate the next input, meanwhile the python cleaner can close the class.
-        """Deinitializes class and closes Aspen plus."""
-        if self.aspen_is_running:
-            aspen.Close()
-            logger.info("Aspen closed.")
+    # def __del__(self):
+    #     # Can cause trouble. The qehvi takes time to generate the next input, meanwhile the python cleaner can close the class.
+    #     """Deinitializes class and closes Aspen plus."""
+    #     try:
+    #         logger.info("Closing Aspen.")
+    #         aspen.Close()
+    #     finally:
+    #         pass
