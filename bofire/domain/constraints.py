@@ -162,22 +162,9 @@ class LinearInequalityConstraint(LinearConstraint):
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
 
-    # def is_fulfilled(self, df_data: pd.DataFrame) -> bool:
-    #     """Check if the linear inequality constraint is fulfilled in each row of the provided dataframe.
-
-    #     Args:
-    #         df_data (pd.DataFrame): Dataframe to evaluate constraint on.
-
-    #     Returns:
-    #         bool: True if fulfilled else False.
-    #     """
-
-    #     noise = 10e-10
-    #     return (self.lhs(df_data) >= self.rhs - noise).all()
-
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
-        # noise = 10e-10 discuss with Behrang
-        return self(experiments) <= 0
+        noise = 10e-6
+        return self(experiments) <= 0 + noise
 
     def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
         """Return attributes in the smaller equal convention
