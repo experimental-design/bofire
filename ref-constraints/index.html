@@ -1796,22 +1796,9 @@ use the classmethod <code>from_greater_equal</code>.</p>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;LinearInequalityConstraint&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;LinearInequalityConstraint&quot;</span>
 
-    <span class="c1"># def is_fulfilled(self, df_data: pd.DataFrame) -&gt; bool:</span>
-    <span class="c1">#     &quot;&quot;&quot;Check if the linear inequality constraint is fulfilled in each row of the provided dataframe.</span>
-
-    <span class="c1">#     Args:</span>
-    <span class="c1">#         df_data (pd.DataFrame): Dataframe to evaluate constraint on.</span>
-
-    <span class="c1">#     Returns:</span>
-    <span class="c1">#         bool: True if fulfilled else False.</span>
-    <span class="c1">#     &quot;&quot;&quot;</span>
-
-    <span class="c1">#     noise = 10e-10</span>
-    <span class="c1">#     return (self.lhs(df_data) &gt;= self.rhs - noise).all()</span>
-
     <span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-        <span class="c1"># noise = 10e-10 discuss with Behrang</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-6</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">noise</span>
 
     <span class="k">def</span> <span class="nf">as_smaller_equal</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Return attributes in the smaller equal convention</span>
@@ -2193,8 +2180,8 @@ use the classmethod <code>from_greater_equal</code>.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/constraints.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fulfilled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-    <span class="c1"># noise = 10e-10 discuss with Behrang</span>
-    <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="mf">10e-6</span>
+    <span class="k">return</span> <span class="bp">self</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="o">+</span> <span class="n">noise</span>
 </code></pre></div>
         </details>
     </div>
