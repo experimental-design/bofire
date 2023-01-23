@@ -202,6 +202,11 @@ domains = [
         input_features=[if1, if2, if8],
         output_features=[of1],
         constraints=[],
+    ),
+    Domain(
+        input_features=[if1, if2],  # only continuous features
+        output_features=[of1, of2],
+        constraints=[],
     )
     # Domain(
     #     input_features=[if1, if7], # unknown dummy feature
@@ -377,6 +382,7 @@ def test_base_invalid_descriptor_method():
             {1: 3.0, 2: 0},
         ),
         (domains[5], None, "FREE", "EXHAUSTIVE", {1: 3.0}),
+        (domains[5], None, "FREE", "FREE", {1: 3.0, 2: 3.0}),
     ],
 )
 def test_base_get_fixed_features(
