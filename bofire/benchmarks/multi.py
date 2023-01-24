@@ -465,7 +465,7 @@ class CrossCoupling(Benchmark):
         ] = 1
         return Y
 
-    def _calculate_costs(cls, conditions):
+    def _calculate_costs(self, conditions):
         """Function to calculate the overall costs of a recipe
 
         Args:
@@ -494,17 +494,17 @@ class CrossCoupling(Benchmark):
         cost_triflate = mmol_triflate * 5.91  # triflate is $5.91/mmol
         cost_anniline = mmol_anniline * 0.01  # anniline is $0.01/mmol
         cost_catalyst = np.array(
-            [cls._get_catalyst_cost(c, m) for c, m in zip(catalyst, mmol_catalyst)]
+            [self._get_catalyst_cost(c, m) for c, m in zip(catalyst, mmol_catalyst)]
         )
         cost_base = np.array(
-            [cls._get_base_cost(b, m) for b, m in zip(base, mmol_base)]
+            [self._get_base_cost(b, m) for b, m in zip(base, mmol_base)]
         )
         tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
         if len(tot_cost) == 1:
             tot_cost = tot_cost[0]
         return tot_cost
 
-    def _get_catalyst_cost(catalyst, catalyst_mmol):
+    def _get_catalyst_cost(self, catalyst, catalyst_mmol):
         """Function to calculate the catalyst costs
 
         Args:
@@ -521,7 +521,7 @@ class CrossCoupling(Benchmark):
         }
         return float(catalyst_prices[catalyst] * catalyst_mmol)
 
-    def _get_base_cost(base, mmol_base):
+    def _get_base_cost(self, base, mmol_base):
         """Function to calculate the base costs
 
         Args:
