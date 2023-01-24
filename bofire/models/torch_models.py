@@ -415,7 +415,7 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):

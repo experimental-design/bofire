@@ -354,11 +354,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return df_candidates
 
     def _tell(self) -> None:
-        if self.has_sufficient_experiments():
-            # todo move this up to predictive strategy
-            self.fit()
-            self.init_acqf()
-        return
+        self.init_acqf()
 
     def init_acqf(self) -> None:
         self._init_acqf()
