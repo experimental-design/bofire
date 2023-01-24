@@ -13,12 +13,7 @@ from bofire.utils.enum import CategoricalEncodingEnum
         (
             CrossCoupling,
             True,
-            {"descriptor_encoding": CategoricalEncodingEnum.DESCRIPTOR},
-        ),
-        (
-            CrossCoupling,
-            True,
-            {"descriptor_encoding": CategoricalEncodingEnum.ONE_HOT},
+            {},
         ),
         (DTLZ2, False, {"dim": 5}),
         (SnarBenchmark, False, {}),
@@ -26,12 +21,7 @@ from bofire.utils.enum import CategoricalEncodingEnum
         (
             CrossCoupling,
             False,
-            {"descriptor_encoding": CategoricalEncodingEnum.DESCRIPTOR},
-        ),
-        (
-            CrossCoupling,
-            False,
-            {"descriptor_encoding": CategoricalEncodingEnum.ONE_HOT},
+            {},
         ),
     ],
 )

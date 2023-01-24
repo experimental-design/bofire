@@ -326,42 +326,22 @@ class ZDT1(Benchmark):
 
 
 class CrossCoupling(Benchmark):
-    """Baumgartner Cross Coupling adapted from Summit (https://github.com/sustainable-processes/summit)
+    """Cross Coupling adapted from Summit (https://github.com/sustainable-processes/summit)
 
     Virtual experiments representing the Aniline Cross-Coupling reaction
-    similar to Baumgartner et al. (2019). Experimental outcomes are based on an
-    emulator that is trained on the experimental data published by Baumgartner et al.
+    similar to Baumgartner et al. (2019) <https://`doi.org/10.1021/acs.oprd.9b00236>.
+    Experimental outcomes are based on a SingleTaskGP fitted on the experimental data published by Baumgartner et al.
     This is a five dimensional optimisation of temperature, residence time, base equivalents,
     catalyst and base.
     The categorical variables (catalyst and base) contain descriptors
     calculated using COSMO-RS. Specifically, the descriptors are the first two sigma moments.
-    To use the pretrained version, call get_pretrained_baumgartner_cc_emulator
-    Parameters
-    ----------
-    include_cost : bool, optional
-        Include minimization of cost as an extra objective. Cost is calculated
-        as a deterministic function of the inputs (i.e., no model is trained).
-        Defaults to False.
-    use_descriptors : bool, optional
-        Use descriptors for the catalyst and base instead of one-hot encoding (defaults to False). T
-        The descriptors been pre-calculated using COSMO-RS. To only use descriptors with
-        a single feature, pass descriptors_features a list where
-        the only item is the name of the desired categorical variable.
-    Examples
-    --------
-    >>> bemul = CrossCoupling()
-    Notes
-    -----
-    This benchmark is based on data from [Baumgartner]_ et al.
-    References
-    ----------
-    .. [Baumgartner] L. M. Baumgartner et al., Org. Process Res. Dev., 2019, 23, 1594–1601
-       DOI: `10.1021/acs.oprd.9b00236 <https://`doi.org/10.1021/acs.oprd.9b00236>`_
+
+    Args:
+        Benchmark (Benchmark): Benchmark base class
     """
 
     def __init__(
         self,
-        descriptor_encoding: CategoricalEncodingEnum = CategoricalEncodingEnum.DESCRIPTOR,
         **kwargs,
     ):
 
@@ -417,9 +397,9 @@ class CrossCoupling(Benchmark):
             ContinuousInput(key="t_res", lower_bound=60, upper_bound=1800.0),
         ]
 
-        self.input_preprocessing_specs = {
-            "catalyst": descriptor_encoding,
-            "base": descriptor_encoding,
+        input_preprocessing_specs = {
+            "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
+            "base": CategoricalEncodingEnum.DESCRIPTOR,
         }
 
         # Objectives: yield and cost
@@ -453,7 +433,7 @@ class CrossCoupling(Benchmark):
         ground_truth_yield = SingleTaskGPModel(
             input_features=InputFeatures(features=input_features),
             output_features=OutputFeatures(features=[output_features[0]]),
-            input_preprocessing_specs=self.input_preprocessing_specs,
+            input_preprocessing_specs=input_preprocessing_specs,
         )
 
         ground_truth_yield.fit(experiments=data)
@@ -485,8 +465,15 @@ class CrossCoupling(Benchmark):
         ] = 1
         return Y
 
-    @classmethod
     def _calculate_costs(cls, conditions):
+        """Function to calculate the overall costs of a recipe
+
+        Args:
+            conditions (pd.DataFrame): The suggested candidate experiments
+
+        Returns:
+            np.array: Vector with costs of suggested candidates
+        """
         catalyst = conditions["catalyst"].values
         base = conditions["base"].values
         base_equiv = conditions["base_eq"].values
@@ -517,8 +504,16 @@ class CrossCoupling(Benchmark):
             tot_cost = tot_cost[0]
         return tot_cost
 
-    @staticmethod
     def _get_catalyst_cost(catalyst, catalyst_mmol):
+        """Function to calculate the catalyst costs
+
+        Args:
+            catalyst (str): Catalyst name
+            catalyst_mmol (float): Amount of catalyst used
+
+        Returns:
+            float: Catalyst costs
+        """
         catalyst_prices = {
             "tBuXPhos": 94.08,
             "tBuBrettPhos": 182.85,
@@ -526,8 +521,16 @@ class CrossCoupling(Benchmark):
         }
         return float(catalyst_prices[catalyst] * catalyst_mmol)
 
-    @staticmethod
     def _get_base_cost(base, mmol_base):
+        """Function to calculate the base costs
+
+        Args:
+            base (str): Base name
+            mmol_base (float): Amount of base used
+
+        Returns:
+            float: Base costs
+        """
         # prices in $/mmol
         base_prices = {
             "DBU": 0.03,
