@@ -182,6 +182,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        if my_type not in [MaximizeObjective, MinimizeObjective]:
-            return False
+        # if my_type not in [MaximizeObjective, MinimizeObjective]:
+        #     return False
         return True
