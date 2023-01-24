@@ -1,5 +1,5 @@
-import json
 import math
+import os
 import pathlib
 from typing import Optional
 
@@ -22,6 +22,7 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.models.torch_models import SingleTaskGPModel
 from bofire.utils.enum import CategoricalEncodingEnum
 
 
@@ -439,6 +440,25 @@ class CrossCoupling(Benchmark):
             output_features=OutputFeatures(features=output_features),
         )
 
+        data = pd.read_csv(
+            os.path.dirname(os.path.abspath(__file__))
+            + "/data/aniline_cn_crosscoupling.csv",
+            index_col=0,
+            skiprows=[1],
+        )
+
+        data = data.rename(columns={"base_equivalents": "base_eq", "yld": "yield"})
+        data["valid_yield"] = 1
+
+        ground_truth_yield = SingleTaskGPModel(
+            input_features=InputFeatures(features=input_features),
+            output_features=OutputFeatures(features=[output_features[0]]),
+            input_preprocessing_specs=self.input_preprocessing_specs,
+        )
+
+        ground_truth_yield.fit(experiments=data)
+        self.ground_truth_yield = ground_truth_yield
+
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation. Returns output vector.
 
@@ -448,16 +468,12 @@ class CrossCoupling(Benchmark):
         Returns:
             pd.DataFrame: Output vector. Columns: yield, cost, valid_yield, valid_cost
         """
-        Y = pd.DataFrame()
-        for _, candidate in candidates.iterrows():
-            # TODO hier Modell aufrufen!
-            cost_i = self._calculate_costs(candidate)
-            yield_i = self._integrate_equations(candidate)
 
-            pd.concat(
-                [Y, pd.DataFrame(data=[yield_i, cost_i], columns=["yield", "cost"])],
-                axis=0,
-            )
+        costs = self._calculate_costs(candidates)
+        yields = self.ground_truth_yield.predict(candidates)
+
+        Y = pd.concat([yields["yield_pred"], pd.Series(costs, name="cost")], axis=1)
+        Y.rename(columns={"yield_pred": "yield"}, inplace=True)
 
         Y[
             [
@@ -470,40 +486,10 @@ class CrossCoupling(Benchmark):
         return Y
 
     @classmethod
-    def load(cls, save_dir, **kwargs):
-        """Load all the essential parameters of the BaumgartnerCrossCouplingEmulator
-        from disc
-        Parameters
-        ----------
-        save_dir : str or pathlib.Path
-            The directory from which to load emulator files.
-        include_cost : bool, optional
-            Include minimization of cost as an extra objective. Cost is calculated
-            as a deterministic function of the inputs (i.e., no model is trained).
-            Defaults to False.
-        use_descriptors : bool, optional
-            Use descriptors for the catalyst and base instead of one-hot encoding (defaults to False). T
-            The descriptors been pre-calculated using COSMO-RS. To only use descriptors with
-            a single feature, pass descriptors_features a list where
-            the only item is the name of the desired categorical variable.
-        """
-        if cls.descriptor_encoding == CategoricalEncodingEnum.DESCRIPTOR:
-            model_name = "baumgartner_aniline_cn_crosscoupling_descriptors"
-        else:
-            model_name = "baumgartner_aniline_cn_crosscoupling"
-        save_dir = pathlib.Path(save_dir)
-        with open(save_dir / f"{model_name}.json", "r") as f:
-            d = json.load(f)
-        d["experiment_params"]["include_cost"] = include_cost
-        exp = ExperimentalEmulator.from_dict(d, **kwargs)
-        exp.load_regressor(save_dir)
-        return exp
-
-    @classmethod
     def _calculate_costs(cls, conditions):
         catalyst = conditions["catalyst"].values
         base = conditions["base"].values
-        base_equiv = conditions["base_equivalents"].values
+        base_equiv = conditions["base_eq"].values
 
         # Calculate amounts
         droplet_vol = 40 * 1e-3  # mL
@@ -550,47 +536,3 @@ class CrossCoupling(Benchmark):
             "TEA": 0.01,
         }
         return float(base_prices[base] * mmol_base)
-
-
-def get_pretrained_baumgartner_cc_emulator(include_cost=False, use_descriptors=False):
-    """Get a pretrained BaumgartnerCrossCouplingEmulator
-    Parameters
-    ----------
-    include_cost : bool, optional
-        Include minimization of cost as an extra objective. Cost is calculated
-        as a deterministic function of the inputs (i.e., no model is trained).
-        Defaults to False.
-    use_descriptors : bool, optional
-        Use descriptors for the catalyst and base instead of one-hot encoding (defaults to False). T
-        The descriptors been pre-calculated using COSMO-RS. To only use descriptors with
-        a single feature, pass descriptors_features a list where
-        the only item is the name of the desired categorical variable.
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> from summit.benchmarks import get_pretrained_baumgartner_cc_emulator
-    >>> from summit.utils.dataset import DataSet
-    >>> import pandas as pd
-    >>> b = get_pretrained_baumgartner_cc_emulator(include_cost=True, use_descriptors=False)
-    >>> fig, ax = b.parity_plot(include_test=True)
-    >>> plt.show()
-    >>> columns = [v.name for v in b.domain.variables]
-    >>> values = { "catalyst": ["tBuXPhos"], "base": ["DBU"], "t_res": [328.717801570892],"temperature": [30],"base_equivalents": [2.18301549894049]}
-    >>> conditions = pd.DataFrame(values)
-    >>> conditions = DataSet.from_df(conditions)
-    >>> results = b.run_experiments(conditions, return_std=True)
-    """
-    model_name = "baumgartner_aniline_cn_crosscoupling"
-    data_path = get_data_path()
-    ds = DataSet.read_csv(data_path / f"{model_name}.csv")
-    model_name += "_descriptors" if use_descriptors else ""
-    model_path = get_model_path() / model_name
-    if not model_path.exists():
-        raise NotADirectoryError("Could not initialize from expected path.")
-    exp = BaumgartnerCrossCouplingEmulator.load(
-        model_path,
-        dataset=ds,
-        include_cost=include_cost,
-        use_descriptors=use_descriptors,
-    )
-    return exp

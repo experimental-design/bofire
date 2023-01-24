@@ -1,6 +1,7 @@
 import pytest
 
-from bofire.benchmarks.multi import DTLZ2, ZDT1, SnarBenchmark
+from bofire.benchmarks.multi import DTLZ2, ZDT1, CrossCoupling, SnarBenchmark
+from bofire.utils.enum import CategoricalEncodingEnum
 
 
 @pytest.mark.parametrize(
@@ -9,9 +10,29 @@ from bofire.benchmarks.multi import DTLZ2, ZDT1, SnarBenchmark
         (DTLZ2, True, {"dim": 5}),
         (SnarBenchmark, True, {}),
         (ZDT1, True, {}),
+        (
+            CrossCoupling,
+            True,
+            {"descriptor_encoding": CategoricalEncodingEnum.DESCRIPTOR},
+        ),
+        (
+            CrossCoupling,
+            True,
+            {"descriptor_encoding": CategoricalEncodingEnum.ONE_HOT},
+        ),
         (DTLZ2, False, {"dim": 5}),
         (SnarBenchmark, False, {}),
         (ZDT1, False, {}),
+        (
+            CrossCoupling,
+            False,
+            {"descriptor_encoding": CategoricalEncodingEnum.DESCRIPTOR},
+        ),
+        (
+            CrossCoupling,
+            False,
+            {"descriptor_encoding": CategoricalEncodingEnum.ONE_HOT},
+        ),
     ],
 )
 def test_multi_objective_benchmarks(cls_benchmark, return_complete, kwargs):
