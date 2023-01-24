@@ -1,7 +1,6 @@
 import pytest
 
 from bofire.benchmarks.multi import DTLZ2, ZDT1, CrossCoupling, SnarBenchmark
-from bofire.utils.enum import CategoricalEncodingEnum
 
 
 @pytest.mark.parametrize(
