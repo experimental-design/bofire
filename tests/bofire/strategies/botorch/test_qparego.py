@@ -1,8 +1,10 @@
 import random
+from itertools import chain
 
 import pytest
+import torch
 
-from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.multi import DTLZ2, CrossCoupling
 from bofire.domain.features import OutputFeatures
 from bofire.models.torch_models import (
     BotorchModels,
@@ -17,15 +19,18 @@ from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[6],
+    "domain": domains[6],
     "model_specs": BotorchModels(
         models=[
             SingleTaskGPModel(
+                input_features=domains[6].input_features,
                 input_features=domains[6].input_features,
                 output_features=OutputFeatures(
                     features=[domains[6].output_features.get_by_key("of1")]
                 ),
             ),
             SingleTaskGPModel(
+                input_features=domains[6].input_features,
                 input_features=domains[6].input_features,
                 output_features=OutputFeatures(
                     features=[domains[6].output_features.get_by_key("of2")]
@@ -123,20 +128,55 @@ def test_qparego(num_test_candidates, acquisition_function):
 
 
 @pytest.mark.parametrize(
-    "specs, num_test_candidates",
+    "specs, benchmark, num_experiments, num_candidates",
     [
-        (specs, num_test_candidates)
-        for specs in BOTORCH_QPAREGO_STRATEGY_SPECS["valids"]
-        for num_test_candidates in range(1, 3)
+        (
+            BOTORCH_QPAREGO_STRATEGY_SPECS["valids"][0],
+            DTLZ2(dim=6),
+            random.randint(8, 10),
+            random.randint(1, 3),
+        ),
+        (
+            BOTORCH_QPAREGO_STRATEGY_SPECS["valids"][1],
+            CrossCoupling(),
+            random.randint(8, 10),
+            random.randint(1, 3),
+        ),
     ],
 )
-def test_qparego_mixed_input(specs, num_test_candidates):
+@pytest.mark.slow
+def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
 
-    my_strategy = BoTorchQparegoStrategy(**specs)
-    random_strategy = PolytopeSampler(domain=my_strategy.domain)
-    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    # generate data
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(
+        random_strategy._sample(n=num_experiments), return_complete=True
+    )
 
-    my_strategy.tell(experiments)
-    # ask
-    candidates = my_strategy.ask(num_test_candidates)
-    assert len(candidates) == num_test_candidates
+    strategy = BoTorchQparegoStrategy(
+        domain=benchmark.domain,
+        **{key: value for key, value in specs.items() if key != "domain"}
+    )
+    # just to ensure there are no former experiments/ candidates already stored in the domain
+    strategy.domain.experiments = None
+    strategy.domain.candidates = None
+
+    strategy.tell(experiments)
+    strategy.ask(candidate_count=num_candidates, add_pending=True)
+
+    X_train, X_pending = strategy.get_acqf_input_tensors()
+
+    _, names = strategy.domain.input_features._get_transform_info(
+        specs=strategy.model_specs.input_preprocessing_specs
+    )
+
+    assert torch.is_tensor(X_train)
+    assert torch.is_tensor(X_pending)
+    assert X_train.shape == (
+        num_experiments,
+        len(set(chain(*names.values()))),
+    )
+    assert X_pending.shape == (
+        num_candidates,
+        len(set(chain(*names.values()))),
+    )

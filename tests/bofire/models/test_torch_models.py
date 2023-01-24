@@ -1,3 +1,4 @@
+import gpytorch.priors
 import numpy as np
 import pandas as pd
 import pytest
@@ -22,6 +23,7 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
+from bofire.models.priors import GammaPrior
 from bofire.models.torch_models import (
     RBF,
     BotorchModels,
@@ -40,8 +42,27 @@ from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 @pytest.mark.parametrize(
     "kernel, ard_num_dims, active_dims, expected_kernel",
     [
-        (RBF(ard=False), 10, list(range(5)), RBFKernel),
+        (
+            RBF(ard=False, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)),
+            10,
+            list(range(5)),
+            RBFKernel,
+        ),
+        (
+            RBF(ard=False),
+            10,
+            list(range(5)),
+            RBFKernel,
+        ),
         (RBF(ard=True), 10, list(range(5)), RBFKernel),
+        (
+            Matern(
+                ard=False, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)
+            ),
+            10,
+            list(range(5)),
+            MaternKernel,
+        ),
         (Matern(ard=False), 10, list(range(5)), MaternKernel),
         (Matern(ard=True), 10, list(range(5)), MaternKernel),
         (Matern(ard=False, nu=2.5), 10, list(range(5)), MaternKernel),
@@ -58,6 +79,11 @@ def test_continuous_kernel(
     assert isinstance(k, expected_kernel)
     if isinstance(kernel, Linear):
         return
+    if kernel.lengthscale_prior is not None:
+        assert hasattr(k, "lengthscale_prior")
+        assert isinstance(k.lengthscale_prior, gpytorch.priors.GammaPrior)
+    else:
+        assert hasattr(k, "lengthscale_prior") is False
 
     if kernel.ard is False:
         assert k.ard_num_dims is None
@@ -195,9 +221,10 @@ def test_model_cross_validate(folds):
         ]
     )
     output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    experiments = input_features.sample(n=100)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
+    experiments = experiments.sample(10)
     model = SingleTaskGPModel(
         input_features=input_features,
         output_features=output_features,
@@ -206,6 +233,44 @@ def test_model_cross_validate(folds):
     efolds = folds if folds != -1 else 10
     assert len(train_cv.results) == efolds
     assert len(test_cv.results) == efolds
+
+
+def test_model_cross_validate_descriptor():
+    folds = 5
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+        + [
+            CategoricalDescriptorInput(
+                key="x_3",
+                categories=["a", "b", "c"],
+                descriptors=["alpha"],
+                values=[[1], [2], [3]],
+            )
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    experiments = input_features.sample(n=100)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments.loc[experiments.x_2 == "b", "y"] += 5
+    experiments.loc[experiments.x_2 == "c", "y"] += 10
+    experiments["valid_y"] = 1
+    experiments = experiments.sample(10)
+    for encoding in [
+        CategoricalEncodingEnum.ONE_HOT,
+        CategoricalEncodingEnum.DESCRIPTOR,
+    ]:
+        model = SingleTaskGPModel(
+            input_features=input_features,
+            output_features=output_features,
+            input_preprocessing_specs={"x_3": encoding},
+        )
+        train_cv, test_cv, _ = model.cross_validate(experiments, folds=folds)
+        efolds = folds if folds != -1 else 10
+        assert len(train_cv.results) == efolds
+        assert len(test_cv.results) == efolds
 
 
 @pytest.mark.parametrize("include_X", [True, False])

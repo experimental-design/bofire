@@ -1,7 +1,9 @@
 import random
+from itertools import chain
 
 import numpy as np
 import pytest
+import torch
 from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
@@ -54,9 +56,7 @@ VALID_BOTORCH_QEHVI_STRATEGY_SPEC = {
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
-    # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": random.choice(list(CategoricalMethodEnum)),
-    # "categorical_encoding": random.choice(list(CategoricalEncodingEnum)),
     "categorical_method": "EXHAUSTIVE",
 }
 
@@ -135,3 +135,53 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     # test acqf calc
     acqf_vals = my_strategy._choose_from_pool(experiments_test, num_test_candidates)
     assert acqf_vals.shape[0] == num_test_candidates
+
+
+@pytest.mark.parametrize(
+    "strategy, specs, num_experiments, num_candidates",
+    [
+        (strategy, specs, num_experiments, num_candidates)
+        for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
+        for specs in BOTORCH_QEHVI_STRATEGY_SPECS["valids"]
+        for num_experiments in range(8, 10)
+        for num_candidates in range(1, 3)
+    ],
+)
+@pytest.mark.slow
+def test_get_acqf_input(strategy, specs, num_experiments, num_candidates):
+
+    # generate data
+    benchmark = DTLZ2(dim=6)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(
+        random_strategy._sample(n=num_experiments), return_complete=True
+    )
+
+    strategy = strategy(
+        domain=benchmark.domain,
+        **{key: value for key, value in specs.items() if key != "domain"}
+    )
+
+    # just to ensure there are no former experiments/ candidates already stored in the domain
+    strategy.domain.experiments = None
+    strategy.domain.candidates = None
+
+    strategy.tell(experiments)
+    strategy.ask(candidate_count=num_candidates, add_pending=True)
+
+    X_train, X_pending = strategy.get_acqf_input_tensors()
+
+    _, names = strategy.domain.input_features._get_transform_info(
+        specs=strategy.model_specs.input_preprocessing_specs
+    )
+
+    assert torch.is_tensor(X_train)
+    assert torch.is_tensor(X_pending)
+    assert X_train.shape == (
+        num_experiments,
+        len(set(chain(*names.values()))),
+    )
+    assert X_pending.shape == (
+        num_candidates,
+        len(set(chain(*names.values()))),
+    )

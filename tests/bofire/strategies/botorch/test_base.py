@@ -382,6 +382,7 @@ def test_base_invalid_descriptor_method():
             {1: 3.0, 2: 0},
         ),
         (domains[5], None, "FREE", "EXHAUSTIVE", {1: 3.0}),
+        (domains[5], None, "FREE", "FREE", {1: 3.0, 2: 3.0}),
     ],
 )
 def test_base_get_fixed_features(

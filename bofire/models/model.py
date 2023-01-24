@@ -152,10 +152,10 @@ class TrainableModel:
         test_results = []
         # now get the indices for the split
         for train_index, test_index in cv.split(experiments):
-            X_train = experiments.loc[train_index, self.input_features.get_keys()]  # type: ignore
-            X_test = experiments.loc[test_index, self.input_features.get_keys()]  # type: ignore
-            y_train = experiments.loc[train_index, self.output_features.get_keys()]  # type: ignore
-            y_test = experiments.loc[test_index, self.output_features.get_keys()]  # type: ignore
+            X_train = experiments.iloc[train_index][self.input_features.get_keys()]  # type: ignore
+            X_test = experiments.iloc[test_index][self.input_features.get_keys()]  # type: ignore
+            y_train = experiments.iloc[train_index][self.output_features.get_keys()]  # type: ignore
+            y_test = experiments.iloc[test_index][self.output_features.get_keys()]  # type: ignore
             # now fit the model
             self._fit(X_train, y_train)
             # now do the scoring

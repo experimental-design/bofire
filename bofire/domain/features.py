@@ -324,7 +324,7 @@ class ContinuousInput(NumericalInput):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
-        noise = 10e-8
+        noise = 10e-6
         super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
@@ -674,6 +674,7 @@ class CategoricalInput(InputFeature):
         return pd.DataFrame(
             {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories},
             dtype=float,
+            index=values.index,
         )
 
     def from_onehot_encoding(self, values: pd.DataFrame) -> pd.Series:
@@ -711,6 +712,7 @@ class CategoricalInput(InputFeature):
         return pd.DataFrame(
             {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories[1:]},
             dtype=float,
+            index=values.index,
         )
 
     def from_dummy_encoding(self, values: pd.DataFrame) -> pd.Series:
@@ -787,6 +789,9 @@ class CategoricalInput(InputFeature):
         if transform_type == CategoricalEncodingEnum.ORDINAL:
             return [0], [len(self.categories) - 1]
         if transform_type == CategoricalEncodingEnum.ONE_HOT:
+            # in the case that values are None, we return the bounds
+            # based on the optimization bounds, else we return the true
+            # bounds as this is for model fitting.
             if values is None:
                 lower = [0.0 for _ in self.categories]
                 upper = [
@@ -912,10 +917,12 @@ class CategoricalDescriptorInput(CategoricalInput):
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
         else:
+            # in case that values is None, we return the optimization bounds
+            # else we return the complete bounds
             if values is None:
                 df = self.to_df().loc[self.get_allowed_categories()]
             else:
-                df = self.to_df().loc[self.get_possible_categories(values)]
+                df = self.to_df()
             lower = df.min().values.tolist()  # type: ignore
             upper = df.max().values.tolist()  # type: ignore
             return lower, upper
@@ -982,6 +989,7 @@ class CategoricalDescriptorInput(CategoricalInput):
                 {cat: value for cat, value in zip(self.categories, self.values)}
             ).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
+            index=values.index,
         )
 
     def from_descriptor_encoding(self, values: pd.DataFrame) -> pd.Series:
@@ -1015,6 +1023,7 @@ class CategoricalDescriptorInput(CategoricalInput):
                 )
             ),
             columns=self.categories,
+            index=values.index,
         ).idxmin(1)
         s.name = self.key
         return s
