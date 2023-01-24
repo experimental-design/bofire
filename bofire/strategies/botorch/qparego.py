@@ -56,18 +56,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 raise ValueError(
                     "Only objective functions with weight 1 are supported."
                 )
-        # if (len(self.domain.get_features(CategoricalInput)) > 0) and (
-        #     self.categorical_method != CategoricalMethodEnum.FREE
-        # ):
-        #     raise ValueError(
-        #         "Only FREE optimization method for categoricals supported so far."
-        #     )
-        # if (len(self.domain.get_features(CategoricalDescriptorInput)) > 0) and (
-        #     self.descriptor_method != CategoricalMethodEnum.FREE
-        # ):
-        #     raise ValueError(
-        #         "Only FREE optimization method for Categorical with Descriptor supported so far."
-        #     )
 
         super()._init_domain()
         return

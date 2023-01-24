@@ -23,13 +23,11 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
         models=[
             SingleTaskGPModel(
                 input_features=domains[6].input_features,
-                input_features=domains[6].input_features,
                 output_features=OutputFeatures(
                     features=[domains[6].output_features.get_by_key("of1")]
                 ),
             ),
             SingleTaskGPModel(
-                input_features=domains[6].input_features,
                 input_features=domains[6].input_features,
                 output_features=OutputFeatures(
                     features=[domains[6].output_features.get_by_key("of2")]
