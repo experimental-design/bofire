@@ -14,7 +14,6 @@ from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInput,
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     InputFeature,
