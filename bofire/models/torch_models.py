@@ -33,7 +33,12 @@ from bofire.domain.features import (
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
-from bofire.models.priors import GammaPrior, Prior
+from bofire.models.priors import (
+    GammaPrior,
+    Prior,
+    botorch_lengthcale_prior,
+    mbo_lengthcale_prior,
+)
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 
@@ -111,7 +116,7 @@ class RBF(ContinuousKernel):
 class Matern(ContinuousKernel):
     ard: bool = True
     nu: float = 2.5
-    lengthscale_prior: Optional[Prior] = None
+    lengthscale_prior: Optional[Prior] = botorch_lengthcale_prior
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
@@ -415,7 +420,7 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
         )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=20)
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):

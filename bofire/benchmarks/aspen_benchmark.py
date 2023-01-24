@@ -166,8 +166,9 @@ class Aspen_benchmark(Benchmark):
                 except ConnectionAbortedError:
                     logger.exception("Not able to retrieve " + key + " from Aspen.")
 
+        XY = pd.concat([candidates, Y], axis=1)
         logger.info("Simluation completed. Results:")
-        logger.info(Y)
+        logger.info(XY)
         return Y
 
     # def __del__(self):
