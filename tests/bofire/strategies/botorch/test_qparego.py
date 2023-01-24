@@ -19,7 +19,6 @@ from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[6],
-    "domain": domains[6],
     "model_specs": BotorchModels(
         models=[
             SingleTaskGPModel(
