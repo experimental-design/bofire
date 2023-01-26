@@ -307,9 +307,9 @@ features.add_valid(
         "allowed": [True, True, False],
         "descriptors": ["d1", "d2"],
         "values": [
-            [1, 2],
-            [3, 7],
-            [5, 1],
+            [1.0, 2.0],
+            [3.0, 7.0],
+            [5.0, 1.0],
         ],
     },
 )
@@ -317,7 +317,7 @@ features.add_valid(
     ContinuousOutput,
     {
         "key": str(uuid.uuid4()),
-        "objective": objectives.valid().typed_spec(),
+        "objective": objectives.valid(MaximizeObjective).typed_spec(),
     },
 )
 
