@@ -1,4 +1,5 @@
 import math
+import os
 from typing import Optional
 
 import numpy as np
@@ -11,6 +12,7 @@ from scipy.special import gamma
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
 from bofire.domain.features import (
+    CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
     InputFeature,
@@ -18,6 +20,8 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.models.torch_models import SingleTaskGPModel
+from bofire.utils.enum import CategoricalEncodingEnum
 
 
 class DTLZ2(Benchmark):
@@ -319,3 +323,219 @@ class ZDT1(Benchmark):
         x = np.linspace(0, 1, points)
         y = np.stack([x, 1 - np.sqrt(x)], axis=1)
         return pd.DataFrame(y, columns=self.domain.outputs.get_keys())
+
+
+class CrossCoupling(Benchmark):
+    """Cross Coupling adapted from Summit (https://github.com/sustainable-processes/summit)
+
+    Virtual experiments representing the Aniline Cross-Coupling reaction
+    similar to Baumgartner et al. (2019) <https://`doi.org/10.1021/acs.oprd.9b00236>.
+    Experimental outcomes are based on a SingleTaskGP fitted on the experimental data published by Baumgartner et al.
+    This is a five dimensional optimisation of temperature, residence time, base equivalents,
+    catalyst and base.
+    The categorical variables (catalyst and base) contain descriptors
+    calculated using COSMO-RS. Specifically, the descriptors are the first two sigma moments.
+
+    Args:
+        Benchmark (Benchmark): Benchmark base class
+    """
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+
+        # "residence time in minutes"
+        input_features = [
+            CategoricalDescriptorInput(
+                key="catalyst",
+                categories=["tBuXPhos", "tBuBrettPhos", "AlPhos"],
+                descriptors=[
+                    "area_cat",
+                    "M2_cat",
+                ],  # , 'M3_cat', 'Macc3_cat', 'Mdon3_cat'] #,'mol_weight', 'sol']
+                values=[
+                    [
+                        460.7543,
+                        67.2057,
+                    ],  # 30.8413, 2.3043, 0], #, 424.64, 421.25040226],
+                    [
+                        518.8408,
+                        89.8738,
+                    ],  # 39.4424, 2.5548, 0], #, 487.7, 781.11247064],
+                    [
+                        819.933,
+                        129.0808,
+                    ],  # 83.2017, 4.2959, 0], #, 815.06, 880.74916884],
+                ],
+            ),
+            CategoricalDescriptorInput(
+                key="base",
+                categories=["TEA", "TMG", "BTMG", "DBU"],
+                descriptors=[
+                    "area",
+                    "M2",
+                ],  # , 'M3', 'Macc3', 'Mdon3', 'mol_weight', 'sol'
+                values=[
+                    [162.2992, 25.8165],  # 40.9469, 3.0278, 0], #101.19, 642.2973283],
+                    [
+                        165.5447,
+                        81.4847,
+                    ],  # 107.0287, 10.215, 0.0169], # 115.18, 534.01544123],
+                    [
+                        227.3523,
+                        30.554,
+                    ],  # 14.3676, 1.1196, 0.0127], # 171.28, 839.81215],
+                    [192.4693, 59.8367],  # 82.0661, 7.42, 0], # 152.24, 1055.82799],
+                ],
+            ),
+            # "base equivalents"
+            ContinuousInput(key="base_eq", lower_bound=1.0, upper_bound=2.5),
+            # "Reactor temperature in degrees celsius"
+            ContinuousInput(key="temperature", lower_bound=30, upper_bound=100.0),
+            # "residence time in seconds (s)"
+            ContinuousInput(key="t_res", lower_bound=60, upper_bound=1800.0),
+        ]
+
+        input_preprocessing_specs = {
+            "catalyst": CategoricalEncodingEnum.DESCRIPTOR,
+            "base": CategoricalEncodingEnum.DESCRIPTOR,
+        }
+
+        # Objectives: yield and cost
+        output_features = [
+            ContinuousOutput(
+                key="yield",
+                objective=MaximizeObjective(w=1.0),
+            ),
+            ContinuousOutput(
+                key="cost",
+                objective=MinimizeObjective(w=1.0),
+            ),
+        ]
+        self.ref_point = {"yield": 0.0, "cost": 1.0}
+
+        self._domain = Domain(
+            input_features=InputFeatures(features=input_features),
+            output_features=OutputFeatures(features=output_features),
+        )
+
+        data = pd.read_csv(
+            os.path.dirname(os.path.abspath(__file__))
+            + "/data/aniline_cn_crosscoupling.csv",
+            index_col=0,
+            skiprows=[1],
+        )
+
+        data = data.rename(columns={"base_equivalents": "base_eq", "yld": "yield"})
+        data["valid_yield"] = 1
+
+        ground_truth_yield = SingleTaskGPModel(
+            input_features=InputFeatures(features=input_features),
+            output_features=OutputFeatures(features=[output_features[0]]),
+            input_preprocessing_specs=input_preprocessing_specs,
+        )
+
+        ground_truth_yield.fit(experiments=data)
+        self.ground_truth_yield = ground_truth_yield
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Function evaluation. Returns output vector.
+
+        Args:
+            candidates (pd.DataFrame): Input vector. Columns: catalyst, base, base_eq, temperature, t_res
+
+        Returns:
+            pd.DataFrame: Output vector. Columns: yield, cost, valid_yield, valid_cost
+        """
+
+        costs = self._calculate_costs(candidates)
+        yields = self.ground_truth_yield.predict(candidates)
+
+        Y = pd.concat([yields["yield_pred"], pd.Series(costs, name="cost")], axis=1)
+        Y.rename(columns={"yield_pred": "yield"}, inplace=True)
+
+        Y[
+            [
+                "valid_%s" % feat
+                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
+                    excludes=None
+                )
+            ]
+        ] = 1
+        return Y
+
+    def _calculate_costs(self, conditions):
+        """Function to calculate the overall costs of a recipe
+
+        Args:
+            conditions (pd.DataFrame): The suggested candidate experiments
+
+        Returns:
+            np.array: Vector with costs of suggested candidates
+        """
+        catalyst = conditions["catalyst"].values
+        base = conditions["base"].values
+        base_equiv = conditions["base_eq"].values
+
+        # Calculate amounts
+        droplet_vol = 40 * 1e-3  # mL
+        mmol_triflate = 0.91 * droplet_vol
+        mmol_anniline = 1.6 * mmol_triflate
+        catalyst_equiv = {
+            "tBuXPhos": 0.0095,
+            "tBuBrettPhos": 0.0094,
+            "AlPhos": 0.0094,
+        }
+        mmol_catalyst = [catalyst_equiv[c] * mmol_triflate for c in catalyst]
+        mmol_base = base_equiv * mmol_triflate
+
+        # Calculate costs
+        cost_triflate = mmol_triflate * 5.91  # triflate is $5.91/mmol
+        cost_anniline = mmol_anniline * 0.01  # anniline is $0.01/mmol
+        cost_catalyst = np.array(
+            [self._get_catalyst_cost(c, m) for c, m in zip(catalyst, mmol_catalyst)]
+        )
+        cost_base = np.array(
+            [self._get_base_cost(b, m) for b, m in zip(base, mmol_base)]
+        )
+        tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
+        if len(tot_cost) == 1:
+            tot_cost = tot_cost[0]
+        return tot_cost
+
+    def _get_catalyst_cost(self, catalyst, catalyst_mmol):
+        """Function to calculate the catalyst costs
+
+        Args:
+            catalyst (str): Catalyst name
+            catalyst_mmol (float): Amount of catalyst used
+
+        Returns:
+            float: Catalyst costs
+        """
+        catalyst_prices = {
+            "tBuXPhos": 94.08,
+            "tBuBrettPhos": 182.85,
+            "AlPhos": 594.18,
+        }
+        return float(catalyst_prices[catalyst] * catalyst_mmol)
+
+    def _get_base_cost(self, base, mmol_base):
+        """Function to calculate the base costs
+
+        Args:
+            base (str): Base name
+            mmol_base (float): Amount of base used
+
+        Returns:
+            float: Base costs
+        """
+        # prices in $/mmol
+        base_prices = {
+            "DBU": 0.03,
+            "BTMG": 1.2,
+            "TMG": 0.001,
+            "TEA": 0.01,
+        }
+        return float(base_prices[base] * mmol_base)

@@ -15,7 +15,7 @@ from bofire.domain.constraints import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.features import CategoricalDescriptorInput, CategoricalInput, Feature
+from bofire.domain.features import CategoricalInput, Feature
 from bofire.domain.objectives import (
     IdentityObjective,
     MaximizeObjective,
@@ -29,8 +29,6 @@ from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
-# currently it works only with categorical and desriptor method free, botorch feature to implement acqf_list_mixed needs to be
-# implemented first https://github.com/pytorch/botorch/issues/1272
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
@@ -58,18 +56,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 raise ValueError(
                     "Only objective functions with weight 1 are supported."
                 )
-        if (len(self.domain.get_features(CategoricalInput)) > 0) and (
-            self.categorical_method != CategoricalMethodEnum.FREE
-        ):
-            raise ValueError(
-                "Only FREE optimization method for categoricals supported so far."
-            )
-        if (len(self.domain.get_features(CategoricalDescriptorInput)) > 0) and (
-            self.descriptor_method != CategoricalMethodEnum.FREE
-        ):
-            raise ValueError(
-                "Only FREE optimization method for Categorical with Descriptor supported so far."
-            )
 
         super()._init_domain()
         return
@@ -130,6 +116,36 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         # optimize
         lower, upper = self.domain.inputs.get_bounds(self.input_preprocessing_specs)
 
+        num_categorical_features = len(self.domain.get_features(CategoricalInput))
+        num_categorical_combinations = len(
+            self.domain.inputs.get_categorical_combinations()
+        )
+
+        fixed_features = None
+        fixed_features_list = None
+
+        if (
+            (num_categorical_features == 0)
+            or (num_categorical_combinations == 1)
+            or (
+                (self.categorical_method == CategoricalMethodEnum.FREE)
+                and (self.descriptor_method == CategoricalMethodEnum.FREE)
+            )
+        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
+            fixed_features = self.get_fixed_features()
+
+        elif (
+            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
+            or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
+        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
+
+            fixed_features_list = self.get_categorical_combinations()
+
+        elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
+            fixed_features_list = self.get_fixed_values_list()
+        else:
+            raise IOError()
+
         candidates, _ = optimize_acqf_list(
             acq_function_list=acqf_list,
             bounds=torch.tensor([lower, upper]).to(**tkwargs),
@@ -141,7 +157,8 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             inequality_constraints=get_linear_constraints(
                 domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
             ),
-            fixed_features=self.get_fixed_features(),
+            fixed_features=fixed_features,
+            fixed_features_list=fixed_features_list,
             options={"batch_limit": 5, "maxiter": 200},
         )
 
