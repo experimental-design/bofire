@@ -4,6 +4,7 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
+import torch
 from pydantic import validator
 from pydantic.types import PositiveInt
 from scipy.integrate import solve_ivp
@@ -19,7 +20,11 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.domain.objectives import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+)
 from bofire.models.torch_models import SingleTaskGPModel
 from bofire.utils.enum import CategoricalEncodingEnum
 
@@ -103,17 +108,64 @@ class DTLZ2(Benchmark):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
 
-        col_names = self.domain.output_features.get_keys_by_objective(excludes=None)  # type: ignore
+        col_names = self.domain.output_features.get_keys_by_objective(includes=MinimizeObjective)  # type: ignore
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
             [
                 "valid_%s" % feat
                 for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
-                    excludes=None
+                    includes=MinimizeObjective
                 )
             ]
         ] = 1
+        return Y
+
+
+class C2DTLZ2(DTLZ2):
+    """Constrained DTLZ2 benchmark function. Taken from
+    https://github.com/pytorch/botorch/blob/main/botorch/test_functions/multi_objective.py.
+    """
+
+    def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2):
+        super().__init__(dim, num_objectives)
+        # add also the constraint
+        self._domain.outputs.features.append(  # type: ignore
+            ContinuousOutput(
+                key="slack",
+                objective=MaximizeSigmoidObjective(w=1.0, tp=0, steepness=1.0 / 1e-3),
+            )
+        )
+
+    @property
+    def best_possible_hypervolume(self) -> float:
+        return 0.3996406303723544
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        r = 0.2
+        Y = super()._f(candidates=candidates)
+        # here the constrained is calculated
+        # TODO port it to numpy
+        f_X = torch.from_numpy(
+            Y[self.domain.outputs.get_keys_by_objective(MinimizeObjective)].values,
+        )
+        term1 = (f_X - 1).pow(2)
+        mask = ~(torch.eye(f_X.shape[-1], device=f_X.device).bool())
+        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)
+        indexer = indices[mask].view(f_X.shape[1], f_X.shape[-1] - 1)
+        term2_inner = (
+            f_X.unsqueeze(1)
+            .expand(f_X.shape[0], f_X.shape[-1], f_X.shape[-1])
+            .gather(dim=-1, index=indexer.repeat(f_X.shape[0], 1, 1))
+        )
+        term2 = (term2_inner.pow(2) - r**2).sum(dim=-1)
+        min1 = (term1 + term2).min(dim=-1).values
+        min2 = ((f_X - 1 / math.sqrt(f_X.shape[-1])).pow(2) - r**2).sum(dim=-1)
+        slack = pd.Series(
+            -torch.min(min1, min2).unsqueeze(-1).squeeze().numpy(), name="slack"
+        )
+        Y = pd.concat([Y, slack], axis=1)
+        Y["valid_slack"] = 1
         return Y
 
 
