@@ -10,7 +10,7 @@ from botorch.acquisition.multi_objective import (
 )
 from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputObjective
 
-from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.multi import C2DTLZ2, DTLZ2
 from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
@@ -18,7 +18,12 @@ from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.utils.enum import CategoricalMethodEnum
 from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
-from tests.bofire.utils.test_multiobjective import dfs, invalid_domains, valid_domains
+from tests.bofire.utils.test_multiobjective import (
+    dfs,
+    invalid_domains,
+    valid_constrained_domains,
+    valid_domains,
+)
 
 if1 = ContinuousInput(
     **{
@@ -84,6 +89,17 @@ def test_invalid_qehvi_init_domain(domain, ref_point):
         BoTorchQehviStrategy(domain=domain, ref_point=ref_point)
 
 
+@pytest.mark.parametrize("domain", valid_constrained_domains)
+def test_qehvi_invalid_constrained_objectives(domain):
+    with pytest.raises(ValueError):
+        BoTorchQehviStrategy(domain=domain)
+
+
+@pytest.mark.parametrize("domain", valid_constrained_domains)
+def test_qnehvi_valid_constrained_objectives(domain):
+    BoTorchQnehviStrategy(domain=domain)
+
+
 @pytest.mark.parametrize(
     "domain, ref_point, experiments, expected",
     [
@@ -137,18 +153,42 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     assert acqf_vals.shape[0] == num_test_candidates
 
 
+def test_qnehvi_constraints():
+    benchmark = C2DTLZ2(dim=4)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    my_strategy = BoTorchQnehviStrategy(
+        domain=benchmark.domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+    )
+    my_strategy.tell(experiments)
+    assert isinstance(my_strategy.objective, WeightedMCMultiOutputObjective)
+    assert isinstance(my_strategy.acqf, qNoisyExpectedHypervolumeImprovement)
+    assert my_strategy.acqf.eta == torch.tensor(1e-3)
+    assert len(my_strategy.acqf.constraints) == 1
+    assert torch.allclose(
+        my_strategy.acqf.objective.outcomes, torch.tensor([0, 1], dtype=torch.int64)
+    )
+    assert torch.allclose(
+        my_strategy.acqf.objective.weights, torch.tensor([-1, -1], dtype=torch.double)
+    )
+    assert torch.allclose(
+        my_strategy.acqf.ref_point,
+        torch.tensor([-1.1, -1.1], dtype=torch.double),
+    )
+
+
 @pytest.mark.parametrize(
-    "strategy, specs, num_experiments, num_candidates",
+    "strategy, ref_point, num_experiments, num_candidates",
     [
-        (strategy, specs, num_experiments, num_candidates)
+        (strategy, ref_point, num_experiments, num_candidates)
         for strategy in [BoTorchQehviStrategy, BoTorchQnehviStrategy]
-        for specs in BOTORCH_QEHVI_STRATEGY_SPECS["valids"]
+        for ref_point in [None, {"f_0": 1.1, "f_1": 1.1}]
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
     ],
 )
 @pytest.mark.slow
-def test_get_acqf_input(strategy, specs, num_experiments, num_candidates):
+def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
 
     # generate data
     benchmark = DTLZ2(dim=6)
@@ -156,11 +196,7 @@ def test_get_acqf_input(strategy, specs, num_experiments, num_candidates):
     experiments = benchmark.f(
         random_strategy._sample(n=num_experiments), return_complete=True
     )
-
-    strategy = strategy(
-        domain=benchmark.domain,
-        **{key: value for key, value in specs.items() if key != "domain"}
-    )
+    strategy = strategy(domain=benchmark.domain, ref_point=ref_point)
 
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None
