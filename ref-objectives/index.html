@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-features/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.8">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.558e4712.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.0d440cfe.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
@@ -253,16 +253,16 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
       
       
       
-        <label class="md-nav__link" for="__nav_3" tabindex="0" aria-expanded="true">
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           API Reference
@@ -306,7 +306,7 @@
   
     <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
         
@@ -702,6 +702,7 @@
 
 
 
+
   <div class="doc doc-object doc-class">
 
 
@@ -875,14 +876,17 @@ BotorchConstrainedObjective        </code>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints.&quot;&quot;&quot;</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">                list of the corresponding botorch eta values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
 </code></pre></div>
@@ -943,22 +947,26 @@ BotorchConstrainedObjective        </code>
   </thead>
   <tbody>
     <tr>
-      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
-      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective, and
+    list of the corresponding botorch eta values.</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]]:</span>
+<span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">            list of the corresponding botorch eta values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">pass</span>
 </code></pre></div>
@@ -1765,16 +1773,19 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)))</span>
 
-    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">                list of the corresponding botorch eta values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
 </code></pre></div>
         </details>
 
@@ -1906,23 +1917,27 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
   </thead>
   <tbody>
     <tr>
-      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
-      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective, and
+    list of the corresponding botorch eta values.</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">            list of the corresponding botorch eta values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
 </code></pre></div>
         </details>
     </div>
@@ -2180,16 +2195,19 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)))</span>
 
-    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">                list of the corresponding botorch eta values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)]</span>
+        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
 </code></pre></div>
         </details>
 
@@ -2321,23 +2339,27 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
   </thead>
   <tbody>
     <tr>
-      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
-      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective, and
+    list of the corresponding botorch eta values.</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">            list of the corresponding botorch eta values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)]</span>
+    <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
 </code></pre></div>
         </details>
     </div>
@@ -2767,21 +2789,22 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
             <span class="p">)</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
-
-<span class="sd">        Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">                list of the corresponding botorch eta values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
             <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)),</span>
-        <span class="p">]</span>
+        <span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
 </code></pre></div>
         </details>
 
@@ -2902,7 +2925,6 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
     <div class="doc doc-contents ">
 
       <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code> to setup ouput constrained optimizations.</p>
-<p>Here two callables are returned as the constraint is a product of the <code>MaximizeSigmoidObjective</code> and <code>MinimizeSigmoidObjective</code>.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2933,28 +2955,30 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
   </thead>
   <tbody>
     <tr>
-      <td><code>List[Callable[[Tensor], Tensor]]</code></td>
-      <td><p>List of callables that can be used by botorch for setting up the constrained objective.</p></td>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective, and
+    list of the corresponding botorch eta values.</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objectives.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.</span>
-
-<span class="sd">    Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">            list of the corresponding botorch eta values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span>
         <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)),</span>
-    <span class="p">]</span>
+    <span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
 </code></pre></div>
         </details>
     </div>
@@ -3019,10 +3043,10 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.db81ec45.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.51d95adb.min.js"></script>
+      <script src="../assets/javascripts/bundle.a00a7c5e.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       

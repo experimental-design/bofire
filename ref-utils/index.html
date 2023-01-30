@@ -15,7 +15,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.6">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.8">
     
     
       
@@ -23,7 +23,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.558e4712.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.0d440cfe.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
@@ -251,16 +251,16 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " data-md-toggle="__nav_3" type="checkbox" id="__nav_3" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
       
       
       
-        <label class="md-nav__link" for="__nav_3" tabindex="0" aria-expanded="true">
+        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" aria-label="API Reference" data-md-level="1">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           API Reference
@@ -360,7 +360,7 @@
   
     <li class="md-nav__item md-nav__item--active">
       
-      <input class="md-nav__toggle md-toggle" data-md-toggle="toc" type="checkbox" id="__toc">
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
         
@@ -450,6 +450,26 @@
           <li class="md-nav__item">
   <a href="#bofire.utils.enum.ScalerEnum" class="md-nav__link">
     ScalerEnum
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bofire.utils.multiobjective" class="md-nav__link">
+    multiobjective
+  </a>
+  
+    <nav class="md-nav" aria-label="multiobjective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.multiobjective.get_ref_point_mask" class="md-nav__link">
+    get_ref_point_mask()
   </a>
   
 </li>
@@ -593,6 +613,13 @@
           <li class="md-nav__item">
   <a href="#bofire.utils.torch_tools.get_linear_constraints" class="md-nav__link">
     get_linear_constraints()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.torch_tools.get_output_constraints" class="md-nav__link">
+    get_output_constraints()
   </a>
   
 </li>
@@ -1075,6 +1102,144 @@ Currently, normalization and standardization are implemented.</p>
 
   </div>
 
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.utils.multiobjective" class="doc doc-heading">
+        <code>multiobjective</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.multiobjective.get_ref_point_mask" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_ref_point_mask</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">output_feature_keys</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Method to get a mask for the reference points taking into account if we
+want to maximize or minimize an objective. In case it is maximize the value
+in the mask is 1, in case we want to minimize it is -1.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>domain</code></td>
+        <td><code>Domain</code></td>
+        <td><p>Domain for which the mask should be generated.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>output_feature_keys</code></td>
+        <td><code>Optional[list]</code></td>
+        <td><p>Name of output feature keys
+that should be considered in the mask. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p><em>description</em></p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/multiobjective.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_ref_point_mask</span><span class="p">(</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">output_feature_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a mask for the reference points taking into account if we</span>
+<span class="sd">    want to maximize or minimize an objective. In case it is maximize the value</span>
+<span class="sd">    in the mask is 1, in case we want to minimize it is -1.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        domain (Domain): Domain for which the mask should be generated.</span>
+<span class="sd">        output_feature_keys (Optional[list], optional): Name of output feature keys</span>
+<span class="sd">            that should be considered in the mask. Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">output_feature_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_feature_keys</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span>
+            <span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_feature_keys</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least two output features have to be provided.&quot;</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">output_feature_keys</span><span class="p">:</span>
+        <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Only `MaximizeObjective` and `MinimizeObjective` supported&quot;</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 
@@ -2711,6 +2876,89 @@ have been transformed to one-hot representation.</p></td>
 
 
 
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.torch_tools.get_output_constraints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_output_constraints</span><span class="p">(</span><span class="n">output_features</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Method to translate output constraint objectives into a list of
+callables and list of etas for use in botorch.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>output_features</code></td>
+        <td><code>OutputFeatures</code></td>
+        <td><p>Output feature object that should
+be processed.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
+      <td><p>List of constraint callables,
+    list of associated etas.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_constraints</span><span class="p">(</span>
+    <span class="n">output_features</span><span class="p">:</span> <span class="n">OutputFeatures</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to translate output constraint objectives into a list of</span>
+<span class="sd">    callables and list of etas for use in botorch.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        output_features (OutputFeatures): Output feature object that should</span>
+<span class="sd">            be processed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,</span>
+<span class="sd">            list of associated etas.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">etas</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">output_features</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">BotorchConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">to_constraints</span><span class="p">(</span><span class="n">idx</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+            <span class="n">constraints</span> <span class="o">+=</span> <span class="n">iconstraints</span>
+            <span class="n">etas</span> <span class="o">+=</span> <span class="n">ietas</span>
+    <span class="k">return</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">etas</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
 
 
 
@@ -2765,10 +3013,10 @@ have been transformed to one-hot representation.</p></td>
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.e5c33ebb.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.db81ec45.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.51d95adb.min.js"></script>
+      <script src="../assets/javascripts/bundle.a00a7c5e.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
