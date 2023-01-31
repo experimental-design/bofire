@@ -57,3 +57,21 @@ def valid_constraint_spec(request) -> specs.Spec:
 @fixture(params=specs.constraints.invalids)
 def invalid_constraint_spec(request) -> specs.Spec:
     return request.param
+
+
+# model
+
+
+@fixture
+def model() -> Constraint:
+    return specs.models.valid().obj()
+
+
+@fixture(params=specs.models.valids)
+def valid_model_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.models.invalids)
+def invalid_model_spec(request) -> specs.Spec:
+    return request.param
