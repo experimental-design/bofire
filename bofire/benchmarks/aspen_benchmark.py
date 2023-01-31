@@ -9,7 +9,7 @@ from bofire.domain import Domain
 
 # Create a folder for the log file, if not alredy exists.
 if not os.path.exists("bofire_logs"):
-    os.makedirs("bofire_logs")      
+    os.makedirs("bofire_logs")
 
 # Create a Logger that safes console output.
 logger = logging.getLogger(__name__)
@@ -30,15 +30,13 @@ class Aspen_benchmark(Benchmark):
         Benchmark: Subclass of the Benchmark function class.
     """
 
-    def __init__(
-        self, filename: str, domain: Domain, paths: dict[str, str]
-    ) -> None:
+    def __init__(self, filename: str, domain: Domain, paths: dict[str, str]) -> None:
         """Initializes Aspen_benchmark. A class that connects to Aspen plus.
 
         Args:
             filename (str): Filepath of the Aspen plus simulation file.
             domain (Domain): Domain of the benchmark setting inclunding bounds and information about input values.
-            paths (dict[str, str]): A dictionary with the key value pairs "key_of_variable": "path_to_variable". 
+            paths (dict[str, str]): A dictionary with the key value pairs "key_of_variable": "path_to_variable".
             The keys must be the same as provided in the domain.
 
         Raises:
@@ -47,7 +45,7 @@ class Aspen_benchmark(Benchmark):
         if os.path.exists(filename):
             self.filename = filename
         else:
-            raise ValueError("Unable to find Aspen file " + filename)    
+            raise ValueError("Unable to find Aspen file " + filename)
 
         self._domain = domain
         # Get the variable names (keys) from the domain to access them later easily.
@@ -110,7 +108,7 @@ class Aspen_benchmark(Benchmark):
             pd.DataFrame: Output values from Aspen. The dataframe includes valid_(variable_name) columns for
             each output variable when the simulation went successful.
         """
-        
+
         # Only start Aspen, when it is not already blocking.
         if self.aspen_is_running is False:
             self.start_aspen()
@@ -177,4 +175,3 @@ class Aspen_benchmark(Benchmark):
         logger.info("Simluation completed. Results:")
         logger.info(XY)
         return Y
-
