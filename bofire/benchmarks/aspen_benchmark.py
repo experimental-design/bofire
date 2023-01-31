@@ -11,8 +11,6 @@ from bofire.domain import Domain
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
-if not os.path.exists("bofire_logs"):
-    os.makedirs("bofire_logs")
 file_handler = logging.FileHandler("bofire_logs/aspen_benchmark.log")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -106,6 +104,9 @@ class Aspen_benchmark(Benchmark):
             each output variable when the simulation went successful.
         """
 
+        # Create a folder for the log file, if not alredy exists.
+        if not os.path.exists("bofire_logs"):
+            os.makedirs("bofire_logs")      
         # Only start Aspen, when it is not already blocking.
         if self.aspen_is_running is False:
             self.start_aspen()

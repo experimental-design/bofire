@@ -14,9 +14,6 @@ from bofire.domain.features import OutputFeature
 from bofire.domain.objectives import Objective
 from bofire.strategies.strategy import Strategy
 
-if not os.path.exists("bofire_autosaves"):
-    os.makedirs("bofire_autosaves")
-
 
 # TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
 def best(domain: Domain, reduction: Callable[[pd.DataFrame], pd.Series]):
@@ -87,6 +84,11 @@ def _single_run(
             benchmark:
             metric values
         """
+
+        # Create a folder for autosaves, if not already exists.
+        if not os.path.exists("bofire_autosaves"):
+            os.makedirs("bofire_autosaves")
+
         benchmark_name = benchmark.__class__.__name__
         filename = (
             "bofire_autosaves/" + str(benchmark_name) + "_run" + str(run_idx) + ".json"
