@@ -33,12 +33,7 @@ from bofire.domain.features import (
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
-from bofire.models.priors import (
-    GammaPrior,
-    Prior,
-    botorch_lengthcale_prior,
-    mbo_lengthcale_prior,
-)
+from bofire.models.priors import GammaPrior, Prior, botorch_lengthcale_prior
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 
