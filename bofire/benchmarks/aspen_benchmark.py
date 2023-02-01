@@ -138,10 +138,9 @@ class Aspen_benchmark(Benchmark):
             logger.info("Retrieving outputs from Aspen.")
             for key in self.keys[1]:
                 try:
-                    y_list = y_outputs.get(key)
-                    y_list.append(aspen.Tree.FindNode(self.paths.get(key)).Value)
-                    y_outputs[key] = y_list
-
+                    y_outputs[key].append(
+                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                    )
                     # Check for errors during simulation in Aspen that disqualify the y_value
                     status = aspen.Tree.FindNode(
                         "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
