@@ -85,20 +85,26 @@ def _single_run(
             metric values
         """
 
-        # Create a folder for autosaves, if not already exists.
-        if not os.path.exists("bofire_autosaves"):
-            os.makedirs("bofire_autosaves")
-
         benchmark_name = benchmark.__class__.__name__
-        filename = (
-            "bofire_autosaves/" + str(benchmark_name) + "_run" + str(run_idx) + ".json"
-        )
-        hyper_vol = pd.DataFrame(data=metric_values, columns=["hypervolume"])
-        df_to_save = pd.concat([benchmark.domain.experiments, hyper_vol], axis=1)
-        parsed = df_to_save.to_json(orient="split")
+        # Create a folder for autosaves, if not already exists.
+        if not os.path.exists("bofire_autosaves/" + benchmark_name):
+            os.makedirs("bofire_autosaves/" + benchmark_name)
 
+        filename = (
+            "bofire_autosaves/" + benchmark_name + "/run" + str(run_idx) + ".json"
+        )
+        parsed_domain = benchmark.domain.dict()
         with open(filename, "w") as file:
-            json.dump(parsed, file)
+            json.dump(parsed_domain, file)
+
+    def translate_into_bofire_readable(
+        domain: Domain, candidates: pd.DataFrame
+    ) -> pd.DataFrame:
+        for feature in domain.inputs.features:
+            if feature.type == "CategoricalDescriptorInput":
+                key = feature.key
+                candidates[key] = candidates[key].astype(str)
+        return candidates
 
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
@@ -108,17 +114,20 @@ def _single_run(
     strategy = strategy_factory(domain=benchmark.domain)
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
-    for i_bar, it in zip(pbar, range(n_iterations)):
+    for i in pbar:
         X = strategy.ask(candidate_count=n_candidates_per_proposals)
         X = X[benchmark.domain.inputs.get_keys()]
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
+        # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
+        # colum needs to be converted back to str to be added to the benchmark domain.
+        XY = translate_into_bofire_readable(domain=benchmark.domain, candidates=XY)
         strategy.tell(XY)
-        metric_values[i_bar] = metric(strategy.domain)
+        metric_values[i] = metric(strategy.domain)
         pbar.set_description(
-            f"run {run_idx:02d} with current best {metric_values[i_bar]:0.3f}"
+            f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
         )
-        if (it + 1) % 1 == 0:
+        if (i + 1) % 1 == 0:
             autosafe_results(
                 benchmark=benchmark, metric_values=pd.Series(metric_values)
             )

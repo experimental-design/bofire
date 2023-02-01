@@ -95,6 +95,19 @@ class Aspen_benchmark(Benchmark):
             logger.exception(log_string)
             raise ValueError(log_string)
 
+    def translate_into_aspen_readable(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Tranlates the input data that may contain strings and other datatypes used by bofire
+        that Aspen plus is not able to read natively.
+
+        Returns:
+            pd.DataFrame: Input data ready to be given to Aspen plus.
+        """
+        for feature in self.domain.inputs.features:
+            if feature.type == "CategoricalDescriptorInput":
+                key = feature.key
+                candidates[key] = candidates[key].astype(int)
+        return candidates
+
     # Run simulation in Aspen
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation of the Aspen plus benchmark. Passes input values to Aspen, runs
@@ -113,11 +126,16 @@ class Aspen_benchmark(Benchmark):
         if self.aspen_is_running is False:
             self.start_aspen()
 
+        # Make inputs Aspen-readable
+        candidates_aspen_readable = self.translate_into_aspen_readable(
+            candidates=candidates
+        )
+
         y_outputs = {}
         for key in self.keys[1]:
             y_outputs[key] = []
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
-        for index, row in candidates.iterrows():
+        for index, row in candidates_aspen_readable.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
             for key in self.keys[0]:
