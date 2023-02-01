@@ -76,13 +76,12 @@ def _single_run(
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
     n_candidates_per_proposals: int,
 ) -> Tuple[Benchmark, pd.Series]:
-    def autosafe_results(benchmark, metric_values: pd.Series):
+    def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
         Autosave should operate every 10 iterations.
 
         Args:
-            benchmark:
-            metric values
+            benchmark: Benchmark function that is suposed be evaluated.
         """
 
         benchmark_name = benchmark.__class__.__name__
@@ -93,7 +92,9 @@ def _single_run(
         filename = (
             "bofire_autosaves/" + benchmark_name + "/run" + str(run_idx) + ".json"
         )
-        parsed_domain = benchmark.domain.dict()
+        # TODO: Save domain as a whole into a .json. Possible when domain can be parsed into a dict (waiting for an update)
+        # parsed_domain = benchmark.domain.dict()
+        parsed_domain = benchmark.domain.experiments.to_json(orient="split")
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
@@ -128,9 +129,7 @@ def _single_run(
             f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
         )
         if (i + 1) % 1 == 0:
-            autosafe_results(
-                benchmark=benchmark, metric_values=pd.Series(metric_values)
-            )
+            autosafe_results(benchmark=benchmark)
     return benchmark, pd.Series(metric_values)
 
 

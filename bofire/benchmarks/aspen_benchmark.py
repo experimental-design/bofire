@@ -2,7 +2,6 @@ import logging
 import os
 
 import pandas as pd
-import win32com.client as win32
 
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
@@ -83,6 +82,8 @@ class Aspen_benchmark(Benchmark):
         Raises:
             ValueError: In case it is not possible to start Aspen plus.
         """
+        import win32com.client as win32
+
         logger.info("Starting Aspen plus")
         # Aspen should be accessible from every function as a global variable.
         global aspen
