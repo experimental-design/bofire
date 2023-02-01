@@ -1,3 +1,5 @@
+import json
+import os
 from abc import abstractmethod
 from copy import deepcopy
 from typing import Callable, List, Optional, Protocol, Tuple
@@ -11,6 +13,9 @@ from bofire.domain.domain import Domain
 from bofire.domain.features import OutputFeature
 from bofire.domain.objectives import Objective
 from bofire.strategies.strategy import Strategy
+
+if not os.path.exists("bofire_autosaves"):
+    os.makedirs("bofire_autosaves")
 
 
 # TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
@@ -74,6 +79,31 @@ def _single_run(
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
     n_candidates_per_proposals: int,
 ) -> Tuple[Benchmark, pd.Series]:
+    def autosafe_results(benchmark, metric_values: pd.Series):
+        """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
+        Autosave should operate every 10 iterations.
+
+        Args:
+            benchmark:
+            metric values
+        """
+
+        benchmark_name = benchmark.__class__.__name__
+        filename = (
+            "bofire_autosaves/"
+            + str(benchmark_name)
+            + "_run"
+            + str(run_idx + 1)
+            + ".json"
+        )
+
+        exp_dataframe = benchmark.domain.experiments
+        exp_dataframe["hypervolume"] = metric_values
+        parsed = exp_dataframe.to_json(orient="split")
+
+        with open(filename, "w") as file:
+            json.dump(parsed, file)
+
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
         Y = benchmark.f(X)
@@ -82,16 +112,20 @@ def _single_run(
     strategy = strategy_factory(domain=benchmark.domain)
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
-    for i in pbar:
+    for i_bar, it in zip(pbar, range(n_iterations)):
         X = strategy.ask(candidate_count=n_candidates_per_proposals)
         X = X[benchmark.domain.inputs.get_keys()]
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
         strategy.tell(XY)
-        metric_values[i] = metric(strategy.domain)
+        metric_values[i_bar] = metric(strategy.domain)
         pbar.set_description(
-            f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
+            f"run {run_idx:02d} with current best {metric_values[i_bar]:0.3f}"
         )
+        if it % 10 == 0 and it > 0:
+            autosafe_results(
+                benchmark=benchmark, metric_values=pd.Series(metric_values)
+            )
     return benchmark, pd.Series(metric_values)
 
 
