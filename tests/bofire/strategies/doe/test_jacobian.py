@@ -22,11 +22,6 @@ def test_default_jacobian_building_block():
         output_features=[ContinuousOutput(key="y")],
     )
 
-    # problem = opti.Problem(
-    #     inputs=[opti.Continuous(f"x{i+1}", domain=[0, 1]) for i in range(3)],
-    #     outputs=[opti.Continuous("y")],
-    # )
-
     vars = domain.inputs.get_keys()
     model_terms = np.array(Formula("x1 + x2 + x3 + x1:x2 + {x3**2}").terms, dtype=str)
     x = [1, 2, 3]
@@ -315,11 +310,6 @@ def test_default_jacobian_building_block():
 
 def test_JacobianForLogdet_instantiation():
     # default jacobian building block
-    # domain = opti.Problem(
-    #     inputs=[opti.Continuous(f"x{i+1}", domain=[0, 1]) for i in range(3)],
-    #     outputs=[opti.Continuous("y")],
-    # )
-
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
@@ -360,11 +350,6 @@ def test_JacobianForLogdet_instantiation():
         B[:, 1:] = 5 * np.diag(x**4)
         return B
 
-    # problem = opti.Problem(
-    #     inputs=[opti.Continuous(f"x{i+1}", domain=[0, 1]) for i in range(3)],
-    #     outputs=[opti.Continuous("y")],
-    # )
-
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
@@ -390,11 +375,6 @@ def test_JacobianForLogdet_jacobian():
     # n_experiment = 1, n_inputs = 2, model: x1 + x2
     def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
-
-    # problem = opti.Problem(
-    # inputs=[opti.Continuous(f"x{i+1}", domain=[0, 1]) for i in range(2)],
-    # outputs=[opti.Continuous("y")],
-    # )
 
     domain = Domain(
         input_features=[

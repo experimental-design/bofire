@@ -2,20 +2,26 @@ import warnings
 from typing import Callable, Dict, Optional, Union
 
 import numpy as np
-import opti
+from bofire.domain import Domain
+from bofire.domain.constraints import (
+    NChooseKConstraint,
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
 import pandas as pd
 from cyipopt import minimize_ipopt
 from formulaic import Formula
-from opti.parameter import Continuous
+from bofire.domain.features import ContinuousInput
 from scipy.optimize._minimize import standardize_constraints
 
-from doe.jacobian import JacobianForLogdet
-from doe.sampling import OptiSampling, Sampling
-from doe.utils import (
+from bofire.strategies.doe.jacobian import JacobianForLogdet
+from bofire.strategies.doe.sampling import OptiSampling, Sampling
+from bofire.strategies.doe.utils import (
     ProblemContext,
     constraints_as_scipy_constraints,
     metrics,
     nchoosek_constraints_as_bounds,
+    get_formula_from_string,
 )
 
 
@@ -25,14 +31,14 @@ def logD(A: np.ndarray, delta: float = 1e-7) -> float:
 
 
 def get_objective(
-    problem_context: ProblemContext,
+    domain: Domain,
     model_type: Union[str, Formula],
     delta: float = 1e-7,
 ) -> Callable:
     """Returns a function that computes the objective value.
 
     Args:
-        problem (opti.Problem): An opti problem defining the DoE problem together with model_type.
+        domain (Domain): A domain defining the DoE problem together with model_type.
         model_type (str or Formula): A formula containing all model terms.
         delta (float): Regularization parameter for information matrix. Default value is 1e-3.
 
@@ -40,17 +46,15 @@ def get_objective(
         A function computing the objective -logD for a given input vector x
 
     """
-    D = problem_context.problem.n_inputs
-    model_formula = problem_context.get_formula_from_string(
-        model_type=model_type, rhs_only=True
+    D = len(domain.inputs)
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
     )
 
     # define objective function
     def objective(x):
         # evaluate model terms
-        A = pd.DataFrame(
-            x.reshape(len(x) // D, D), columns=problem_context.problem.inputs.names
-        )
+        A = pd.DataFrame(x.reshape(len(x) // D, D), columns=domain.inputs.get_keys())
         A = model_formula.get_model_matrix(A)
 
         # compute objective value
@@ -61,7 +65,7 @@ def get_objective(
 
 
 def find_local_max_ipopt(
-    problem: opti.Problem,
+    domain: Domain,
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
     tol: float = 0,
@@ -70,7 +74,6 @@ def find_local_max_ipopt(
     jacobian_building_block: Optional[Callable] = None,
     sampling: Union[Sampling, np.ndarray] = OptiSampling,
     fixed_experiments: Optional[np.ndarray] = None,
-    relax_problem: bool = True,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given opti problem and model.
 
@@ -88,57 +91,49 @@ def find_local_max_ipopt(
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
         fixed_experiments (np.ndarray): numpy array containing experiments that will definitely part of the design.
             Values are set before the optimization.
-        relax_problem (bool): Needed to solve for categorical and discrete inputs. If flag True, a relaxed
-            version of the problem is generated, solved, and its solution projected into the feasible space
-            of the original problem
 
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. This is only a
         local optimum.
 
     """
-    problem_context = ProblemContext(problem=problem)
+
+    assert not any(
+        [c.min_count == 0 for c in domain.cnstrs if isinstance(c, NChooseKConstraint)]
+    ), "NChooseKConstraint with min_count !=0 is not supported!"
+
     # determine number of experiments
     n_experiments_min = (
         len(
-            problem_context.get_formula_from_string(
-                model_type=model_type, rhs_only=True
+            get_formula_from_string(
+                model_type=model_type, rhs_only=True, domain=domain
             ).terms
         )
         + 3
     )
 
-    assert (
-        not problem_context.has_constraint_with_cats_or_discrete_variables
-    ), "Discrete or categorical variables subject to constraints are not supported!"
-
-    if problem_context.has_categoricals or problem_context.has_discrete:
-        problem_context.relax_problem()
-
-    D = problem_context.problem.n_inputs
-    model_formula = problem_context.get_formula_from_string(
-        model_type=model_type, rhs_only=True
+    D = len(domain.inputs)
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
     )
 
+    _domain = domain
     # check if there are NChooseK constraints that must be ignored when sampling with opti.Problem.sample_inputs
-    _problem = problem_context.problem
-    if problem_context.problem.n_constraints > 0:
-        if any(
-            [isinstance(c, opti.NChooseK) for c in problem_context.problem.constraints]
-        ) and not all(
-            [isinstance(c, opti.NChooseK) for c in problem_context.problem.constraints]
+    if len(domain.cnstrs) > 0:
+        if any([isinstance(c, NChooseKConstraint) for c in domain.cnstrs]) and not all(
+            [isinstance(c, NChooseKConstraint) for c in domain.cnstrs]
         ):
             warnings.warn(
                 "Sampling of points fulfilling this problem's constraints is not implemented."
             )
 
             _constraints = []
-            for c in problem_context.problem.constraints:
-                if not isinstance(c, opti.NChooseK):
+            for c in domain.cnstrs:
+                if not isinstance(c, NChooseKConstraint):
                     _constraints.append(c)
-            _problem = opti.Problem(
-                inputs=problem_context.problem.inputs,
-                outputs=problem_context.problem.outputs,
+            _domain = Domain(
+                input_features=domain.inputs,
+                outputs_features=domain.outputs,
                 constraints=_constraints,
             )
 
@@ -153,14 +148,14 @@ def find_local_max_ipopt(
     if isinstance(sampling, np.ndarray):
         x0 = sampling
     else:
-        x0 = sampling(_problem).sample(n_experiments)
+        x0 = sampling(_domain).sample(n_experiments)
 
     # get objective function
-    objective = get_objective(problem_context, model_type, delta=delta)
+    objective = get_objective(_domain, model_type, delta=delta)
 
     # get jacobian
     J = JacobianForLogdet(
-        problem_context.problem,
+        _domain,
         model_formula,
         n_experiments,
         delta=delta,
@@ -168,19 +163,15 @@ def find_local_max_ipopt(
     )
 
     # write constraints as scipy constraints
-    constraints = constraints_as_scipy_constraints(
-        problem_context.problem, n_experiments, tol
-    )
+    constraints = constraints_as_scipy_constraints(_domain, n_experiments, tol)
 
     # find bounds imposing NChooseK constraints
-    bounds = nchoosek_constraints_as_bounds(problem_context.problem, n_experiments)
+    bounds = nchoosek_constraints_as_bounds(_domain, n_experiments)
 
     # fix experiments if any are given
     if fixed_experiments is not None:
         fixed_experiments = np.array(fixed_experiments)
-        check_fixed_experiments(
-            problem_context.problem, n_experiments, fixed_experiments
-        )
+        check_fixed_experiments(_domain, n_experiments, fixed_experiments)
         for i, val in enumerate(fixed_experiments.flatten()):
             bounds[i] = (val, val)
             x0[i] = val
@@ -203,35 +194,32 @@ def find_local_max_ipopt(
         jac=J.jacobian,
     )
 
-    A = pd.DataFrame(
+    design = pd.DataFrame(
         result["x"].reshape(n_experiments, D),
-        columns=problem_context.problem.inputs.names,
+        columns=domain.inputs.get_keys(),
         index=[f"exp{i}" for i in range(n_experiments)],
     )
-
-    if problem_context.is_relaxed:
-        A = problem_context.transform_onto_original_problem(A)
 
     # exit message
     if _ipopt_options[b"print_level"] > 12:
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
         X = model_formula.get_model_matrix(A).to_numpy()
-        d = metrics(X, problem_context.problem, n_samples=1000)
+        d = metrics(X, _domain, n_samples=1000)
         print("metrics:", d)
 
-    # check if all points respect the domain and the constraints
-    check_constraints_and_domain_respected(problem=problem, A=A, tol=tol)
+    # check if all points respect the domain and the constraint
+    domain.validate_candidates(candidates=design, only_inputs=True)
 
-    return A
+    return design
 
 
 def check_fixed_experiments(
-    problem: opti.Problem, n_experiments: int, fixed_experiments: np.ndarray
+    domain: Domain, n_experiments: int, fixed_experiments: np.ndarray
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
-        problem (opti.Problem): problem defining the input variables used for the check.
+        domain (Domain): domain defining the input variables used for the check.
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
         fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
     """
@@ -243,53 +231,7 @@ def check_fixed_experiments(
             "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
         )
 
-    if D != problem.n_inputs:
+    if D != len(domain.inputs):
         raise ValueError(
-            f"Invalid shape of fixed_experiments. Length along axis 1 is {D}, but must be {problem.n_inputs}"
-        )
-
-
-def check_constraints_and_domain_respected(
-    problem: opti.Problem, A: pd.DataFrame, tol: float
-) -> None:
-    """Checks if all points of a design A satisfy the constraints and domain of a given opti.Problem.
-    Warns if at least one point does not.
-
-    Args:
-        problem (opti.Problem): Problem object used for the check.
-        A (pd.DataFrame): design matrix used for the check.
-        tol (float): tolerance for constraint violation.
-    """
-
-    # warn if solutions do not satisfy constraints or bounds
-    tol = np.max([tol, 1e-6])  # only warn for sufficiently large constraint violations
-    if problem.constraints is not None:
-        constraints_satisfied = np.all(
-            [(c(A) <= tol) for c in problem.constraints if not c.is_equality]
-            + [(np.abs(c(A)) <= tol) for c in problem.constraints if c.is_equality]
-        )
-        if not constraints_satisfied:
-            warnings.warn(
-                "Some constraints are violated in this design. Please check your results.",
-                UserWarning,
-            )
-
-    inside_domain = [
-        problem.inputs[k].contains(v)
-        for k, v in A.items()
-        if not isinstance(problem.inputs[k], Continuous)
-    ]
-    inside_domain += [
-        np.logical_and(
-            problem.inputs[k].bounds[1] + 1e-6 >= v,
-            problem.inputs[k].bounds[0] - 1e-6 <= v,
-        )
-        for k, v in A.items()
-        if isinstance(problem.inputs[k], Continuous)
-    ]
-    inside_domain = np.all(np.stack(inside_domain, axis=1))
-    if not inside_domain:
-        warnings.warn(
-            "Some points do not lie inside the domain. Please check your results.",
-            UserWarning,
+            f"Invalid shape of fixed_experiments. Length along axis 1 is {D}, but must be {len(domain.inputs)}"
         )

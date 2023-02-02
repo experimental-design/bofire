@@ -10,6 +10,8 @@ import pandas as pd
 from formulaic import Formula
 from opti import Categorical, Discrete
 from scipy.optimize import LinearConstraint, NonlinearConstraint
+from bofire.domain import Domain
+from bofire.domain.features import ContinuousInput, ContinuousOutput
 
 CAT_TOL = 0.1
 DISCRETE_TOL = 0.1
@@ -211,14 +213,14 @@ def value2discrete(value: np.float64, input: opti.Discrete):
 
 def get_formula_from_string(
     model_type: Union[str, Formula] = "linear",
-    problem_context: Optional[ProblemContext] = None,
+    domain: Optional[Domain] = None,
     rhs_only: bool = True,
 ) -> Formula:
     """Reformulates a string describing a model or certain keywords as Formula objects.
 
     Args:
         model_type (str or Formula): A formula containing all model terms.
-        problem_context (ProblemContext): A problem context that nests necessary information on
+        domain (Domain): A domain that nests necessary information on
         how to translate a problem to a formula. Contains a problem.
         rhs_only (bool): The function returns only the right hand side of the formula if set to True.
         Returns:
@@ -234,19 +236,19 @@ def get_formula_from_string(
     else:
         # linear model
         if model_type == "linear":
-            formula = linear_formula(problem_context=problem_context)
+            formula = linear_formula(domain)
 
         # linear and interactions model
         elif model_type == "linear-and-quadratic":
-            formula = linear_and_quadratic_formula(problem_context=problem_context)
+            formula = linear_and_quadratic_formula(domain)
 
         # linear and quadratic model
         elif model_type == "linear-and-interactions":
-            formula = linear_and_interactions_formula(problem_context=problem_context)
+            formula = linear_and_interactions_formula(domain)
 
         # fully quadratic model
         elif model_type == "fully-quadratic":
-            formula = fully_quadratic_formula(problem_context=problem_context)
+            formula = fully_quadratic_formula(domain)
 
         else:
             formula = model_type + "   "
@@ -264,142 +266,99 @@ def get_formula_from_string(
 
 
 def linear_formula(
-    problem_context: Optional[ProblemContext],
+    domain: Optional[Domain],
 ) -> str:
     """Reformulates a string describing a linear-model or certain keywords as Formula objects.
         formula = model_type + "   "
 
-    Args: problem_context (ProblemContext): A problem context that nests necessary information on
+    Args: domain (Domain): A problem context that nests necessary information on
         how to translate a problem to a formula. Contains a problem.
 
     Returns:
         A string describing the model that was given as string or keyword.
     """
     assert (
-        problem_context is not None
-    ), "If the model is described by a keyword a problem must be provided"
-    formula = "".join([input.name + " + " for input in problem_context.problem.inputs])
+        domain is not None
+    ), "If the model is described by a keyword a domain must be provided"
+    formula = "".join([input.key + " + " for input in domain.inputs])
     return formula
 
 
 def linear_and_quadratic_formula(
-    problem_context: Optional[ProblemContext],
+    domain: Optional[Domain],
 ) -> str:
     """Reformulates a string describing a linear-and-quadratic model or certain keywords as Formula objects.
 
-    Args: problem_context (ProblemContext): A problem context that nests necessary information on
+    Args: domain (Domain): A problem context that nests necessary information on
         how to translate a problem to a formula. Contains a problem.
 
     Returns:
         A string describing the model that was given as string or keyword.
     """
     assert (
-        problem_context is not None
+        domain is not None
     ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.name + " + " for input in problem_context.problem.inputs])
-    formula += "".join(
-        [
-            ""
-            if input.name
-            in problem_context.list_of_variables_without_higher_order_terms  # exclude h.o. terms for categoricals
-            else "{" + input.name + "**2} + "
-            for input in problem_context.problem.inputs
-        ]
-    )
+    formula = "".join([input.key + " + " for input in domain.inputs])
+    formula += "".join(["{" + input.key + "**2} + " for input in domain.inputs])
     return formula
 
 
 def linear_and_interactions_formula(
-    problem_context: Optional[ProblemContext],
+    domain: Optional[Domain],
 ) -> str:
     """Reformulates a string describing a linear-and-interactions model or certain keywords as Formula objects.
 
-    Args: problem_context (ProblemContext): A problem context that nests necessary information on
+    Args: domain (Domain): A problem context that nests necessary information on
         how to translate a problem to a formula. Contains a problem.
 
     Returns:
         A string describing the model that was given as string or keyword.
     """
     assert (
-        problem_context is not None
+        domain is not None
     ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.name + " + " for input in problem_context.problem.inputs])
-    for i in range(problem_context.problem.n_inputs):
+    formula = "".join([input.key + " + " for input in domain.inputs])
+    for i in range(len(domain.inputs)):
         for j in range(i):
-            # exclude h.o. terms for categoricals
-            exlude_flag = (
-                problem_context.problem.inputs.names[i]
-                in problem_context.list_of_variables_without_higher_order_terms
-                and problem_context.problem.inputs.names[j]
-                in problem_context.list_of_variables_without_higher_order_terms
+            formula += (
+                domain.inputs.get_keys()[j] + ":" + domain.inputs.get_keys()[i] + " + "
             )
-
-            if exlude_flag:
-                """"""
-            else:
-                formula += (
-                    problem_context.problem.inputs.names[j]
-                    + ":"
-                    + problem_context.problem.inputs.names[i]
-                    + " + "
-                )
     return formula
 
 
 def fully_quadratic_formula(
-    problem_context: Optional[ProblemContext],
+    domain: Optional[Domain],
 ) -> str:
     """Reformulates a string describing a fully-quadratic model or certain keywords as Formula objects.
 
-    Args: problem_context (ProblemContext): A problem context that nests necessary information on
+    Args: domain (Domain): A problem context that nests necessary information on
         how to translate a problem to a formula. Contains a problem.
 
     Returns:
         A string describing the model that was given as string or keyword.
     """
     assert (
-        problem_context is not None
+        domain is not None
     ), "If the model is described by a keyword a problem must be provided."
-    formula = "".join([input.name + " + " for input in problem_context.problem.inputs])
-    for i in range(problem_context.problem.n_inputs):
+    formula = "".join([input.key + " + " for input in domain.inputs])
+    for i in range(len(domain.inputs)):
         for j in range(i):
-            # exclude h.o. terms for categoricals
-            exlude_flag = (
-                problem_context.problem.inputs.names[i]
-                in problem_context.list_of_variables_without_higher_order_terms
-                and problem_context.problem.inputs.names[j]
-                in problem_context.list_of_variables_without_higher_order_terms
+            formula += (
+                domain.inputs.get_keys()[j] + ":" + domain.inputs.get_keys()[i] + " + "
             )
-            if exlude_flag:
-                """"""
-            else:
-                formula += (
-                    problem_context.problem.inputs.names[j]
-                    + ":"
-                    + problem_context.problem.inputs.names[i]
-                    + " + "
-                )
-    formula += "".join(
-        [
-            ""
-            if input.name
-            in problem_context.list_of_variables_without_higher_order_terms  # exclude h.o. terms for categoricals
-            else "{" + input.name + "**2} + "
-            for input in problem_context.problem.inputs
-        ]
-    )
+    formula += "".join(["{" + input.key + "**2} + " for input in domain.inputs])
     return formula
 
 
 def n_zero_eigvals(
-    problem_context: ProblemContext, model_type: Union[str, Formula], epsilon=1e-7
+    domain: Domain, model_type: Union[str, Formula], epsilon=1e-7
 ) -> int:
     """Determine the number of eigenvalues of the information matrix that are necessarily zero because of
     equality constraints."""
 
     # sample points (fulfilling the constraints)
-    model_formula = problem_context.get_formula_from_string(
-        model_type=model_type, rhs_only=True
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
     )
     N = len(model_formula.terms) + 3
     X = problem_context.problem.sample_inputs(N)
@@ -700,7 +659,6 @@ def nchoosek_constraints_as_bounds(
     if problem.n_constraints > 0:
         for constraint in problem.constraints:
             if isinstance(constraint, opti.NChooseK):
-
                 n_inactive = len(constraint.names) - constraint.max_active
 
                 # find indices of constraint.names in names
