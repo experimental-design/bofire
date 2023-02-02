@@ -55,6 +55,7 @@ setup(
             "mkdocs-material",
             "mkdocstrings>=0.18",
             "mkdocstrings-python-legacy",
+            "mike",
         ],
     },
 )
