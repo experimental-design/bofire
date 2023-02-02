@@ -388,7 +388,7 @@ def test_JacobianForLogdet_instantiation():
 
 def test_JacobianForLogdet_jacobian():
     # n_experiment = 1, n_inputs = 2, model: x1 + x2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
     # problem = opti.Problem(
@@ -399,7 +399,7 @@ def test_JacobianForLogdet_jacobian():
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
-            for i in range(3)
+            for i in range(2)
         ],
         output_features=[ContinuousOutput(key="y")],
     )
@@ -414,7 +414,7 @@ def test_JacobianForLogdet_jacobian():
         assert np.allclose(J.jacobian(x), jacobian(x), rtol=1e-3)
 
     # n_experiment = 1, n_inputs = 2, model: x1**2 + x2**2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -4 * x**3 / (x[0] ** 4 + x[1] ** 4 + delta)
 
     model = Formula("{x1**2} + {x2**2} - 1")
@@ -426,7 +426,7 @@ def test_JacobianForLogdet_jacobian():
         assert np.allclose(J.jacobian(x), jacobian(x), rtol=1e-3)
 
     # n_experiment = 2, n_inputs = 2, model = x1 + x2
-    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:
+    def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         X = x.reshape(2, 2)
 
         y = np.empty(4)
@@ -467,10 +467,10 @@ def test_JacobianForLogdet_jacobian():
 
     model = Formula("x1 + x2 - 1")
     n_experiments = 2
-    J = JacobianForLogdet(problem, model, n_experiments, delta=1e-3)
+    J = JacobianForLogdet(domain, model, n_experiments, delta=1e-3)
 
     np.random.seed(1)
-    for i in range(10):
+    for _ in range(10):
         x = np.random.rand(4)
         assert np.allclose(J.jacobian(x), jacobian(x), rtol=1e-3)
 
@@ -515,9 +515,9 @@ def test_JacobianForLogdet_jacobian():
         return y
 
     model = Formula("{x1**2} + {x2**2} - 1")
-    J = JacobianForLogdet(problem, model, n_experiments, delta=1e-3)
+    J = JacobianForLogdet(domain, model, n_experiments, delta=1e-3)
 
     np.random.seed(1)
-    for i in range(10):
+    for _ in range(10):
         x = np.random.rand(4)
         assert np.allclose(J.jacobian(x), jacobian(x), rtol=1e-3)

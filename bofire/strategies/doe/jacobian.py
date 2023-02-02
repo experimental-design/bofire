@@ -170,7 +170,7 @@ def default_jacobian_building_block(
 
         # derivatives of second order interaction terms
         col = 2 * n_vars + 1
-        for (i, _) in enumerate(vars[:-1]):
+        for i, _ in enumerate(vars[:-1]):
             n_terms = len(vars[i + 1 :])
             B[i, col : col + n_terms] = x[i + 1 :]
             B[i + 1 :, col : col + n_terms] = x[i] * np.eye(n_terms)
@@ -181,7 +181,7 @@ def default_jacobian_building_block(
         col += n_vars
 
         # derivatives of third order interaction terms
-        for (i, _) in enumerate(vars[:-2]):
+        for i, _ in enumerate(vars[:-2]):
             for j in range(i + 1, n_vars - 1):
                 n_terms = len(vars[j + 1 :])
                 B[i, col : col + n_terms] = x[j] * x[j + 1 :]
