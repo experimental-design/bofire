@@ -779,14 +779,14 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
 
 
 def test_categorical_to_one_hot_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    c = CategoricalInput(key="c_c", categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_onehot_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
-            columns=["c_B", "c_A", "c_C"],
+            columns=["c_c_B", "c_c_A", "c_c_C"],
         ),
     )
     untransformed = c.from_onehot_encoding(t_samples)
@@ -794,9 +794,9 @@ def test_categorical_to_one_hot_encoding():
 
 
 def test_categorical_from_one_hot_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+    c = CategoricalInput(key="c_c", categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
-        columns=["c_B", "c_A", "c_C", "misc"],
+        columns=["c_c_B", "c_c_A", "c_c_C", "misc"],
         data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
     )
     samples = c.from_onehot_encoding(one_hot_values)

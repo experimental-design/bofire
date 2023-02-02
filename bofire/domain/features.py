@@ -701,9 +701,11 @@ class CategoricalInput(InputFeature):
             raise ValueError(
                 f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
             )
-        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
-        s.name = self.key
-        return s
+        return pd.Series(
+            [i.split(_CAT_SEP)[-1] for i in values[cat_cols].idxmax(1).to_list()],
+            name=self.key,
+            index=values.index,
+        )
 
     def to_dummy_encoding(self, values: pd.Series) -> pd.DataFrame:
         """Converts values to a dummy-hot encoding, dropping the first categorical level.
