@@ -5,6 +5,18 @@
 # BoFire
 BoFire is a **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**eal **E**xperiments. 
 
+Why BoFire?
+
+Bofire ...
+
+- supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,
+- separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,
+- supports different specific and generic constraints as well as black-box output constraints,
+- provides sampling methods for constrained mixed variable spaces,
+- json-serializes problems for use in RESTful APIs and json/bson DBs,
+- allows easy out of the box usage of strategies for single and multi-objective Bayesian optimization, and 
+- provides a high flexibility on the modelling side if needed.
+
 ## Installation
 
 Bofire has BoTorch as its main dependency which depends on PyTorch. In the following you find different options to install BoFire and its dependencies.
