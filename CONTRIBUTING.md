@@ -8,7 +8,7 @@ We recommend an editable installation. After cloning the repository via
 ```
 git clone https://github.com/experimental-design/bofire.git
 ```
-and cd `bofire` you can proceed with
+and cd `bofire`, you can proceed with
 ```
 pip install -e .[testing]
 ```
@@ -41,8 +41,8 @@ pre-commit install
 
 ## Type checks
 
-We make havily use of [Pydantic](https://docs.pydantic.dev/) to enforce type checks during runtime. Further, we use [Pyright](https://github.com/microsoft/pyright) for static type checking. We enforce Pyright type checks in our CI/CD pipeline.
+We make heavily use of [Pydantic](https://docs.pydantic.dev/) to enforce type checks during runtime. Further, we use [Pyright](https://github.com/microsoft/pyright) for static type checking. We enforce Pyright type checks in our CI/CD pipeline.
 
 ## Documentation
 
-We use mkdocs and deploy our documentation to https://experimental-design.github.io/bofire/. Thereby, an API is description is extracted from the doc-strings. Additionally, we have tutorials and getting-started-sections. 
+We use [MkDocs](https://www.mkdocs.org/) with [material theme](https://squidfunk.github.io/mkdocs-material/) and deploy our documentation to https://experimental-design.github.io/bofire/. Thereby, an API description is extracted from the doc-strings. Additionally, we have tutorials and getting-started-sections.
