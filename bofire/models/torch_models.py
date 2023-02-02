@@ -73,6 +73,12 @@ class BaseKernel(PydanticBaseModel):
     ) -> GpytorchKernel:
         pass
 
+    def __add__(self, other):
+        return AdditiveKernel(kernel1=self, kernel2=other)
+
+    def __mul__(self, other):
+        return MultiplicativeKernel(kernel1=self, kernel2=other)
+
 
 class ContinuousKernel(BaseKernel):
     pass
@@ -80,6 +86,35 @@ class ContinuousKernel(BaseKernel):
 
 class CategoricalKernel(BaseKernel):
     pass
+
+class AdditiveKernel(BaseKernel):
+    kernel1: BaseKernel
+    kernel2: BaseKernel
+    
+    def __repr__(self):
+        return repr(self.kernel1) + " + " + repr(self.kernel2)
+
+    def to_gpytorch(
+        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
+    ) -> GpytorchKernel:
+        k1 = self.kernel1.to_gpytorch(batch_shape, ard_num_dims, active_dims)
+        k2 = self.kernel2.to_gpytorch(batch_shape, ard_num_dims, active_dims)
+        return k1 + k2
+
+
+class MultiplicativeKernel(BaseKernel):
+    kernel1: BaseKernel
+    kernel2: BaseKernel
+    
+    def __repr__(self):
+        return repr(self.kernel1) + " * " + repr(self.kernel2)
+
+    def to_gpytorch(
+        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
+    ) -> GpytorchKernel:
+        k1 = self.kernel1.to_gpytorch(batch_shape, ard_num_dims, active_dims)
+        k2 = self.kernel2.to_gpytorch(batch_shape, ard_num_dims, active_dims)
+        return k1 * k2
 
 
 class HammondDistanceKernel(CategoricalKernel):
@@ -334,7 +369,7 @@ class BotorchModels(PydanticBaseModel):
 
 
 class SingleTaskGPModel(BotorchModel, TrainableModel):
-    kernel: ContinuousKernel = Matern(ard=True, nu=2.5)
+    kernel: BaseKernel = Matern(ard=True, nu=2.5)
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.SingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = (
@@ -419,8 +454,8 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
-    continuous_kernel: ContinuousKernel = Matern(ard=True, nu=2.5)
-    categorical_kernel: CategoricalKernel = HammondDistanceKernel(ard=True)
+    continuous_kernel: BaseKernel = Matern(ard=True, nu=2.5)
+    categorical_kernel: BaseKernel = HammondDistanceKernel(ard=True)
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.MixedSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
