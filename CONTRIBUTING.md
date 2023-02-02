@@ -1,37 +1,14 @@
+# Contributing
+
+Contributions to BoFire are highly welcome!
 
 ## Development Enviromnent
 
-### Virtual Environments
-
-For development of BoFire, we recommend to use a virtual environment, e.g., [venv](https://docs.python.org/3/library/venv.html) as follows:
-- Linux
-  ```bash
-  # init
-  python -m venv .venv
-  # activate
-  source .venv/bin/activate
-  ```
-
-- Windows
-  ```bat
-  python -m venv .venv
-  .venv/Scripts/activate.bat
-  ```
-  
-### Dependencies and Tests
-To install dependencies and run unit tests, activate your environment first.
-- Linux
-  ```bash
-  source .venv/bin/activate
-  ```
-- Windows 
-  ```bat
-  .venv/Scripts/activate.bat
-  ```
-
-
-You can install all dependencies and BoFire in editable mode via
-
+We recommend an editable installation. After cloning the repository via
+```
+git clone https://github.com/experimental-design/bofire.git
+```
+and cd `bofire` you can proceed with
 ```
 pip install -e .[testing]
 ```
@@ -39,11 +16,33 @@ Afterwards, you can check that the tests are successful via
 ```
 pytest tests/
 ```
+## Coding Style
+We format our code with [Black](https://github.com/psf/black).
+```
+pip install black
+``` 
+Our doc-strings are in [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html).
+Further, we use [Flake8](https://flake8.pycqa.org/en/latest/) for coding-style enforcement.
+```
+pip install flake8
+```
+Imports are sorted via [Isort](https://github.com/PyCQA/isort).
+```
+pip install isort
+```
 
-### Pre-commit Hooks
-We use [Black](https://github.com/psf/black), [Flake8](https://flake8.pycqa.org/en/latest/), and [Isort](https://github.com/PyCQA/isort) as pre-commit hooks. Further, we use corresponding checks in the Github pipeline. To install the
-pre-commit hooks defined in `.pre-commit-config.yaml`, you can proceed as follows.
+In our CI/CD pipeline we check if contributions are compliant to Black, Flake8, and Isort. To make contributors' lives easier,
+we have pre-commit hooks for Black, Flake8, and Isort configured in the versions corresponding to the pipeline. Pre-commit hooks can be installed via
+
 ```
 pip install pre-commit
 pre-commit install
 ```
+
+## Type checks
+
+We make havily use of [Pydantic](https://docs.pydantic.dev/) to enforce type checks during runtime. Further, we use [Pyright](https://github.com/microsoft/pyright) for static type checking. We enforce Pyright type checks in our CI/CD pipeline.
+
+## Documentation
+
+We use mkdocs and deploy our documentation to https://experimental-design.github.io/bofire/. Thereby, an API is description is extracted from the doc-strings. Additionally, we have tutorials and getting-started-sections. 
