@@ -12,6 +12,12 @@ from opti import Categorical, Discrete
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 from bofire.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
+from bofire.domain.constraints import (
+    Constraint,
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+)
 
 CAT_TOL = 0.1
 DISCRETE_TOL = 0.1
@@ -28,7 +34,7 @@ class ProblemContext:
         self._discrete_list = []
         self._exclude_list = []
         self._is_relaxed = False
-        for input in problem.inputs:
+        for input in domain.inputs:
             if isinstance(input, Categorical):
                 self._exclude_list.append(input.name)
                 self._cat_list.append(input.name)
@@ -53,7 +59,7 @@ class ProblemContext:
             new_constraints = [constraint for constraint in self._problem.constraints]
         else:
             new_constraints = []
-        for input in self._problem.inputs:
+        for input in self._domain.inputs:
             if isinstance(input, Categorical):
                 cat_names = [
                     col.replace("§", "____")
@@ -88,7 +94,7 @@ class ProblemContext:
         self._discrete_list = []
         self._exclude_list = []
         self._is_relaxed = False
-        for input in self._original_problem.inputs:
+        for input in self._original_domain.inputs:
             if isinstance(input, Categorical):
                 self._exclude_list.append(input.name)
                 self._cat_list.append(input.name)
@@ -103,7 +109,7 @@ class ProblemContext:
         Returns:
             Feasible points of the original problem
         """
-        for input in self.original_problem.inputs:
+        for input in self.original_domain.inputs:
             if isinstance(input, opti.Categorical):
                 cat_col = [
                     value2cat(x, input)
@@ -128,7 +134,7 @@ class ProblemContext:
         Returns:
             Feasible points of the relaxed problem
         """
-        for input in self.original_problem.inputs:
+        for input in self.original_domain.inputs:
             if isinstance(input, opti.Categorical):
                 new_cols = input.to_onehot_encoding(feasible_points[input.name])
                 feasible_points = pd.concat(
@@ -361,7 +367,7 @@ def n_zero_eigvals(
         model_type=model_type, rhs_only=True, domain=domain
     )
     N = len(model_formula.terms) + 3
-    X = problem_context.problem.sample_inputs(N)
+    X = domain.inputs.sample(N)
 
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
@@ -371,7 +377,7 @@ def n_zero_eigvals(
 
 
 def constraints_as_scipy_constraints(
-    problem: opti.Problem,
+    domain: Domain,
     n_experiments: int,
     tol: float = 1e-3,
 ) -> List:
@@ -386,25 +392,25 @@ def constraints_as_scipy_constraints(
     Returns:
         A list of scipy constraints corresponding to the constraints of the given opti problem.
     """
-    D = problem.n_inputs
+    D = len(domain.inputs)
 
     # reformulate constraints
     constraints = []
-    if problem.constraints is None:
+    if len(domain.cnstrs) == 0:
         return constraints
-    for c in problem.constraints:
-        if isinstance(c, opti.LinearEquality):
+    for c in domain.cnstrs:
+        if isinstance(c, LinearEqualityConstraint):
             # write lower/upper bound as vector
-            lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.lhs) - tol)
-            ub = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.lhs) + tol)
+            lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients) - tol)
+            ub = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients) + tol)
 
             # write constraint as matrix
             lhs = {
-                c.names[i]: c.lhs[i] / np.linalg.norm(c.lhs)
-                for i in range(len(c.names))
+                c.features[i]: c.coefficients[i] / np.linalg.norm(c.coefficients)
+                for i in range(len(c.features))
             }
             row = np.zeros(D)
-            for i, name in enumerate(problem.inputs.names):
+            for i, name in enumerate(domain.inputs.get_keys()):
                 if name in lhs.keys():
                     row[i] = lhs[name]
 
@@ -414,7 +420,7 @@ def constraints_as_scipy_constraints(
 
             constraints.append(LinearConstraint(A, lb, ub))
 
-        elif isinstance(c, opti.LinearInequality):
+        elif isinstance(c, LinearInequalityConstraint):
             # write upper/lowe bound as vector
             lb = -np.inf * np.ones(n_experiments)
             ub = np.ones(n_experiments) * c.rhs / np.linalg.norm(c.lhs)
@@ -425,7 +431,7 @@ def constraints_as_scipy_constraints(
                 for i in range(len(c.names))
             }
             row = np.zeros(D)
-            for i, name in enumerate(problem.inputs.names):
+            for i, name in enumerate(domain.inputs.get_keys()):
                 if name in lhs.keys():
                     row[i] = lhs[name]
 
@@ -435,27 +441,27 @@ def constraints_as_scipy_constraints(
 
             constraints.append(LinearConstraint(A, lb, ub))
 
-        elif isinstance(c, opti.NonlinearEquality):
-            # write upper/lower bound as vector
-            lb = np.zeros(n_experiments) - tol
-            ub = np.zeros(n_experiments) + tol
+        # elif isinstance(c, opti.NonlinearEquality):
+        #     # write upper/lower bound as vector
+        #     lb = np.zeros(n_experiments) - tol
+        #     ub = np.zeros(n_experiments) + tol
 
-            # define constraint evaluation
-            fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
+        #     # define constraint evaluation
+        #     fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
 
-            constraints.append(NonlinearConstraint(fun, lb, ub))
+        #     constraints.append(NonlinearConstraint(fun, lb, ub))
 
-        elif isinstance(c, opti.NonlinearInequality):
-            # write upper/lower bound as vector
-            lb = -np.inf * np.ones(n_experiments)
-            ub = np.zeros(n_experiments)
+        # elif isinstance(c, opti.NonlinearInequality):
+        #     # write upper/lower bound as vector
+        #     lb = -np.inf * np.ones(n_experiments)
+        #     ub = np.zeros(n_experiments)
 
-            # define constraint evaluation
-            fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
+        #     # define constraint evaluation
+        #     fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
 
-            constraints.append(NonlinearConstraint(fun, lb, ub))
+        #     constraints.append(NonlinearConstraint(fun, lb, ub))
 
-        elif isinstance(c, opti.NChooseK):
+        elif isinstance(c, NChooseKConstraint):
             pass
 
         else:
@@ -469,8 +475,8 @@ class ConstraintWrapper:
 
     def __init__(
         self,
-        constraint: opti.constraint.Constraint,
-        problem: opti.Problem,
+        constraint: Constraint,
+        domain: Domain,
         tol: float = 1e-3,
     ) -> None:
         """
@@ -481,8 +487,8 @@ class ConstraintWrapper:
         """
         self.constraint = constraint
         self.tol = tol
-        self.names = problem.inputs.names
-        self.D = problem.n_inputs
+        self.names = domain.inputs.get_keys()
+        self.D = len(domain.inputs)
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         "call constraint with flattened numpy array"
@@ -598,19 +604,19 @@ def metrics(
     )
 
 
-def check_nchoosek_constraints_as_bounds(problem: opti.Problem) -> None:
+def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     """Checks if NChooseK constraints of problem can be formulated as bounds.
 
     Args:
         problem (opti.Problem): problem whose NChooseK constraints should be checked
     """
     # collect NChooseK constraints
-    if problem.n_constraints == 0:
+    if len(domain.cnstrs) == 0:
         return
 
     nchoosek_constraints = []
-    for c in problem.constraints:
-        if isinstance(c, opti.NChooseK):
+    for c in domain.cnstrs:
+        if isinstance(c, NChooseKConstraint):
             nchoosek_constraints.append(c)
 
     if len(nchoosek_constraints) == 0:
@@ -618,8 +624,11 @@ def check_nchoosek_constraints_as_bounds(problem: opti.Problem) -> None:
 
     # check if the domains of all NCHooseK constraints are compatible to linearization
     for c in nchoosek_constraints:
-        for name in np.unique(c.names):
-            if problem.inputs[name].domain[0] > 0 or problem.inputs[name].domain[1] < 0:
+        for name in np.unique(c.features):
+            if (
+                domain.inputs.get_by_key(name).lower_bound > 0
+                or domain.inputs.get_by_key(name).upper_bound < 0
+            ):
                 raise ValueError(
                     f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
                     domain of the affected decision variables."
@@ -629,16 +638,16 @@ def check_nchoosek_constraints_as_bounds(problem: opti.Problem) -> None:
     for c in nchoosek_constraints:
         for _c in nchoosek_constraints:
             if c != _c:
-                for name in c.names:
-                    if name in _c.names:
+                for name in c.features:
+                    if name in _c.features:
                         raise ValueError(
-                            f"Problem {problem} cannot be used for formulation as bounds. \
+                            f"Domain {domain} cannot be used for formulation as bounds. \
                             names attribute of NChooseK constraints must be pairwise disjoint."
                         )
 
 
 def nchoosek_constraints_as_bounds(
-    problem: opti.Problem,
+    domain: Domain,
     n_experiments: int,
 ) -> List:
     """Determines the box bounds for the decision variables
@@ -651,20 +660,22 @@ def nchoosek_constraints_as_bounds(
         A list of tuples containing bounds that respect NChooseK constraint imposed
         onto the decision variables.
     """
-    check_nchoosek_constraints_as_bounds(problem)
+    check_nchoosek_constraints_as_bounds(domain)
 
     # bounds without NChooseK constraints
-    bounds = np.array([(p.bounds) for p in problem.inputs] * n_experiments)
+    bounds = np.array(
+        [(p.lower_bound, p.upper_bound) for p in domain.inputs] * n_experiments
+    )
 
-    if problem.n_constraints > 0:
-        for constraint in problem.constraints:
+    if len(domain.cnstrs) > 0:
+        for constraint in domain.cnstrs:
             if isinstance(constraint, opti.NChooseK):
                 n_inactive = len(constraint.names) - constraint.max_active
 
                 # find indices of constraint.names in names
                 ind = [
                     i
-                    for i, p in enumerate(problem.inputs.names)
+                    for i, p in enumerate(domain.inputs.get_keys())
                     if p in constraint.names
                 ]
 
@@ -675,7 +686,7 @@ def nchoosek_constraints_as_bounds(
                 # set bounds to zero in each experiments for the variables that should be inactive
                 for i in range(n_experiments):
                     ind_vanish = ind[i % len(ind)]
-                    bounds[ind_vanish + i * len(problem.inputs.names), :] = [0, 0]
+                    bounds[ind_vanish + i * len(domain.inputs.get_keys()), :] = [0, 0]
 
     # convert bounds to list of tuples
     bounds = [(b[0], b[1]) for b in bounds]

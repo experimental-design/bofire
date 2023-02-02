@@ -6,6 +6,7 @@ from bofire.domain import Domain
 from bofire.domain.constraints import (
     NChooseKConstraint,
     LinearEqualityConstraint,
+    LinearConstraint,
     LinearInequalityConstraint,
 )
 import pandas as pd
@@ -15,7 +16,9 @@ from bofire.domain.features import ContinuousInput
 from scipy.optimize._minimize import standardize_constraints
 
 from bofire.strategies.doe.jacobian import JacobianForLogdet
-from bofire.strategies.doe.sampling import OptiSampling, Sampling
+
+# from bofire.strategies.doe.sampling import OptiSampling, Sampling
+from bofire.samplers import PolytopeSampler, apply_nchoosek
 from bofire.strategies.doe.utils import (
     ProblemContext,
     constraints_as_scipy_constraints,
@@ -72,7 +75,7 @@ def find_local_max_ipopt(
     delta: float = 1e-7,
     ipopt_options: Dict = {},
     jacobian_building_block: Optional[Callable] = None,
-    sampling: Union[Sampling, np.ndarray] = OptiSampling,
+    sampling: Optional[np.ndarray] = None,
     fixed_experiments: Optional[np.ndarray] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given opti problem and model.
@@ -98,7 +101,7 @@ def find_local_max_ipopt(
 
     """
 
-    assert not any(
+    assert all(
         [c.min_count == 0 for c in domain.cnstrs if isinstance(c, NChooseKConstraint)]
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
@@ -117,7 +120,7 @@ def find_local_max_ipopt(
         model_type=model_type, rhs_only=True, domain=domain
     )
 
-    _domain = domain
+    domain_for_sampling = domain
     # check if there are NChooseK constraints that must be ignored when sampling with opti.Problem.sample_inputs
     if len(domain.cnstrs) > 0:
         if any([isinstance(c, NChooseKConstraint) for c in domain.cnstrs]) and not all(
@@ -131,7 +134,7 @@ def find_local_max_ipopt(
             for c in domain.cnstrs:
                 if not isinstance(c, NChooseKConstraint):
                     _constraints.append(c)
-            _domain = Domain(
+            domain_for_sampling = Domain(
                 input_features=domain.inputs,
                 outputs_features=domain.outputs,
                 constraints=_constraints,
@@ -145,17 +148,24 @@ def find_local_max_ipopt(
         )
 
     # initital values
-    if isinstance(sampling, np.ndarray):
+    if sampling is not None:
         x0 = sampling
     else:
-        x0 = sampling(_domain).sample(n_experiments)
+        if len(domain_for_sampling.cnstrs.get(NChooseKConstraint)):
+            samples = domain_for_sampling.inputs.sample(n_experiments)
+            for constraint in domain_for_sampling.cnstrs.get():
+                apply_nchoosek(samples=samples, constraint=constraint)
+            x0 = samples.values
+        else:
+            sampler = PolytopeSampler(domain=domain_for_sampling)
+            x0 = sampler.ask(n_experiments).values
 
     # get objective function
-    objective = get_objective(_domain, model_type, delta=delta)
+    objective = get_objective(domain_for_sampling, model_type, delta=delta)
 
     # get jacobian
     J = JacobianForLogdet(
-        _domain,
+        domain_for_sampling,
         model_formula,
         n_experiments,
         delta=delta,
@@ -163,15 +173,17 @@ def find_local_max_ipopt(
     )
 
     # write constraints as scipy constraints
-    constraints = constraints_as_scipy_constraints(_domain, n_experiments, tol)
+    constraints = constraints_as_scipy_constraints(
+        domain_for_sampling, n_experiments, tol
+    )
 
     # find bounds imposing NChooseK constraints
-    bounds = nchoosek_constraints_as_bounds(_domain, n_experiments)
+    bounds = nchoosek_constraints_as_bounds(domain_for_sampling, n_experiments)
 
     # fix experiments if any are given
     if fixed_experiments is not None:
         fixed_experiments = np.array(fixed_experiments)
-        check_fixed_experiments(_domain, n_experiments, fixed_experiments)
+        check_fixed_experiments(domain_for_sampling, n_experiments, fixed_experiments)
         for i, val in enumerate(fixed_experiments.flatten()):
             bounds[i] = (val, val)
             x0[i] = val
@@ -183,6 +195,7 @@ def find_local_max_ipopt(
     if _ipopt_options["disp"] > 12:
         _ipopt_options["disp"] = 0
 
+    print(bounds)
     # do the optimization
     result = minimize_ipopt(
         objective,
@@ -205,7 +218,7 @@ def find_local_max_ipopt(
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
         X = model_formula.get_model_matrix(A).to_numpy()
-        d = metrics(X, _domain, n_samples=1000)
+        d = metrics(X, domain_for_sampling, n_samples=1000)
         print("metrics:", d)
 
     # check if all points respect the domain and the constraint
