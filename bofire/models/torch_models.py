@@ -1,6 +1,6 @@
 import itertools
 from abc import abstractmethod
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import botorch
 import numpy as np
@@ -21,7 +21,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 from gpytorch.kernels import LinearKernel, MaternKernel, RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from pydantic import validator
+from pydantic import validator, root_validator
 
 from bofire.domain.features import (
     CategoricalDescriptorInput,
@@ -80,41 +80,81 @@ class BaseKernel(PydanticBaseModel):
         return MultiplicativeKernel(kernel1=self, kernel2=other)
 
 
-class ContinuousKernel(BaseKernel):
-    pass
-
-
-class CategoricalKernel(BaseKernel):
-    pass
-
-class AdditiveKernel(BaseKernel):
+class CombinedKernel(BaseKernel):
     kernel1: BaseKernel
     kernel2: BaseKernel
-    
+
+    @root_validator
+    def validate_kernel_base(cls, values):
+        k1, k2 = values.get("kernel1"), values.get("kernel2")
+        # check all kernels are either continuous or categorical
+        t1 = cls._find_kernel_base(k1)
+        t2 = cls._find_kernel_base(k2)
+        if not t1 is t2:
+            raise TypeError(f"Cannot combine {t1.__name__} & {t2.__name__}.")
+        return values
+
+    @staticmethod
+    def _find_kernel_base(kernel: BaseKernel):
+        if isinstance(kernel, CombinedKernel):
+            kernel_base = CombinedKernel._find_kernel_base(kernel.kernel1)
+        else:
+            kernel_base = type(kernel).__base__
+        return kernel_base
+
+
+class AdditiveKernel(CombinedKernel):
     def __repr__(self):
         return repr(self.kernel1) + " + " + repr(self.kernel2)
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> GpytorchKernel:
-        k1 = self.kernel1.to_gpytorch(batch_shape, ard_num_dims, active_dims)
-        k2 = self.kernel2.to_gpytorch(batch_shape, ard_num_dims, active_dims)
+        k1 = self.kernel1.to_gpytorch(
+            batch_shape=batch_shape,
+            ard_num_dims=ard_num_dims,
+            active_dims=active_dims
+        )
+        k2 = self.kernel2.to_gpytorch(
+            batch_shape=batch_shape,
+            ard_num_dims=ard_num_dims,
+            active_dims=active_dims
+        )
         return k1 + k2
 
 
-class MultiplicativeKernel(BaseKernel):
-    kernel1: BaseKernel
-    kernel2: BaseKernel
-    
+class MultiplicativeKernel(CombinedKernel):
     def __repr__(self):
-        return repr(self.kernel1) + " * " + repr(self.kernel2)
+        text1 = repr(self.kernel1)
+        if isinstance(self.kernel1, AdditiveKernel):
+            text1 = "(" + text1 + ")"
+        text2 = repr(self.kernel2)
+        if isinstance(self.kernel2, AdditiveKernel):
+            text2 = "(" + text2 + ")"
+        return text1 + " * " + text2
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> GpytorchKernel:
-        k1 = self.kernel1.to_gpytorch(batch_shape, ard_num_dims, active_dims)
-        k2 = self.kernel2.to_gpytorch(batch_shape, ard_num_dims, active_dims)
+        k1 = self.kernel1.to_gpytorch(
+            batch_shape=batch_shape,
+            ard_num_dims=ard_num_dims,
+            active_dims=active_dims
+        )
+        k2 = self.kernel2.to_gpytorch(
+            batch_shape=batch_shape,
+            ard_num_dims=ard_num_dims,
+            active_dims=active_dims
+        )
         return k1 * k2
+
+
+class ContinuousKernel(BaseKernel):
+    pass
+
+
+class CategoricalKernel(BaseKernel):
+    pass
 
 
 class HammondDistanceKernel(CategoricalKernel):
@@ -369,7 +409,7 @@ class BotorchModels(PydanticBaseModel):
 
 
 class SingleTaskGPModel(BotorchModel, TrainableModel):
-    kernel: BaseKernel = Matern(ard=True, nu=2.5)
+    kernel: Union[ContinuousKernel, CombinedKernel] = Matern(ard=True, nu=2.5)
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.SingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = (
@@ -378,6 +418,12 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
     # features2idx: Optional[Dict] = None  # only relevant for training
     # non_numerical_features: Optional[List] = None  # only relevant for training
     training_specs: Dict = {}  # only relevant for training
+
+    @validator("kernel", pre=True)
+    def validate_kernel(cls, v):
+        if not CombinedKernel._find_kernel_base(v) is ContinuousKernel:
+            raise TypeError("kernel must be continuous")
+        return v
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         # get transform meta information
@@ -454,14 +500,26 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
-    continuous_kernel: BaseKernel = Matern(ard=True, nu=2.5)
-    categorical_kernel: BaseKernel = HammondDistanceKernel(ard=True)
+    continuous_kernel: Union[ContinuousKernel, CombinedKernel] = Matern(ard=True, nu=2.5)
+    categorical_kernel: Union[CategoricalKernel, CombinedKernel] = HammondDistanceKernel(ard=True)
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.MixedSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     # features2idx: Optional[Dict] = None
     # non_numerical_features: Optional[List] = None
     training_specs: Dict = {}
+
+    @validator("continuous_kernel", pre=True)
+    def validate_continuous_kernel(cls, v):
+        if not CombinedKernel._find_kernel_base(v) is ContinuousKernel:
+            raise TypeError("continuous_kernel is not continuous")
+        return v
+
+    @validator("categorical_kernel", pre=True)
+    def validate_categorical_kernel(cls, v):
+        if not CombinedKernel._find_kernel_base(v) is CategoricalKernel:
+            raise TypeError("categorical_kernel is not categorical")
+        return v
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         # get transform meta information
