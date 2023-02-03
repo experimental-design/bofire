@@ -423,12 +423,12 @@ def constraints_as_scipy_constraints(
         elif isinstance(c, LinearInequalityConstraint):
             # write upper/lowe bound as vector
             lb = -np.inf * np.ones(n_experiments)
-            ub = np.ones(n_experiments) * c.rhs / np.linalg.norm(c.lhs)
+            ub = np.ones(n_experiments) * c.rhs / np.linalg.norm(c.coefficients)
 
             # write constraint as matrix
             lhs = {
-                c.names[i]: c.lhs[i] / np.linalg.norm(c.lhs)
-                for i in range(len(c.names))
+                c.features[i]: c.coefficients[i] / np.linalg.norm(c.coefficients)
+                for i in range(len(c.features))
             }
             row = np.zeros(D)
             for i, name in enumerate(domain.inputs.get_keys()):
@@ -690,5 +690,6 @@ def nchoosek_constraints_as_bounds(
 
     # convert bounds to list of tuples
     bounds = [(b[0], b[1]) for b in bounds]
+    # bounds = [[b[0] for b in bounds], [b[1] for b in bounds]]
 
     return bounds

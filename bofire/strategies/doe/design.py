@@ -155,10 +155,10 @@ def find_local_max_ipopt(
             samples = domain_for_sampling.inputs.sample(n_experiments)
             for constraint in domain_for_sampling.cnstrs.get():
                 apply_nchoosek(samples=samples, constraint=constraint)
-            x0 = samples.values
+            x0 = samples.to_numpy().flatten()
         else:
             sampler = PolytopeSampler(domain=domain_for_sampling)
-            x0 = sampler.ask(n_experiments).values
+            x0 = sampler.ask(n_experiments).to_numpy().flatten()
 
     # get objective function
     objective = get_objective(domain_for_sampling, model_type, delta=delta)
@@ -195,7 +195,6 @@ def find_local_max_ipopt(
     if _ipopt_options["disp"] > 12:
         _ipopt_options["disp"] = 0
 
-    print(bounds)
     # do the optimization
     result = minimize_ipopt(
         objective,
