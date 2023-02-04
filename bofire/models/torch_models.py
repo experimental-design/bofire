@@ -21,7 +21,7 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 from gpytorch.kernels import LinearKernel, MaternKernel, RBFKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.mlls import ExactMarginalLogLikelihood
-from pydantic import validator
+from pydantic import Field, validator
 
 from bofire.domain.features import (
     CategoricalDescriptorInput,
@@ -334,7 +334,7 @@ class BotorchModels(PydanticBaseModel):
 
 
 class SingleTaskGPModel(BotorchModel, TrainableModel):
-    kernel: ContinuousKernel = Matern(ard=True, nu=2.5)
+    kernel: ContinuousKernel = Field(default_factory=lambda: Matern(ard=True, nu=2.5))
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.SingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = (
@@ -419,8 +419,12 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
-    continuous_kernel: ContinuousKernel = Matern(ard=True, nu=2.5)
-    categorical_kernel: CategoricalKernel = HammondDistanceKernel(ard=True)
+    continuous_kernel: ContinuousKernel = Field(
+        default_factory=lambda: Matern(ard=True, nu=2.5)
+    )
+    categorical_kernel: CategoricalKernel = Field(
+        default_factory=lambda: HammondDistanceKernel(ard=True)
+    )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     model: Optional[botorch.models.MixedSingleTaskGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
