@@ -82,7 +82,7 @@ class IdentityObjective(Objective):
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
-    w: TWeight
+    w: TWeight = 1
     lower_bound: float = 0
     upper_bound: float = 1
 
@@ -189,7 +189,7 @@ class SigmoidObjective(Objective, BotorchConstrainedObjective):
     type: Literal["SigmoidObjective"] = "SigmoidObjective"
     steepness: TGt0
     tp: float
-    w: TWeight
+    w: TWeight = 1
 
 
 class MaximizeSigmoidObjective(SigmoidObjective):
@@ -276,7 +276,7 @@ class ConstantObjective(Objective):
     """
 
     type: Literal["ConstantObjective"] = "ConstantObjective"
-    w: TWeight
+    w: TWeight = 1
     value: float
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
@@ -295,7 +295,7 @@ class AbstractTargetObjective(Objective):
     # TODO: add docstring to AbstractTargetObjective
 
     type: Literal["AbstractTargetObjective"] = "AbstractTargetObjective"
-    w: TWeight
+    w: TWeight = 1
     target_value: float
     tolerance: TGe0
 
