@@ -60,7 +60,7 @@ The input feature container further provides methods to return a feature contain
 ```python
 free_inputs = input_features.get_free()
 fixed_inputs = input_features.get_fixed()
-```s
+```
 
 We can sample from individual input features or input feature containers:
 ```python
