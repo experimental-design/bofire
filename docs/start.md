@@ -13,7 +13,7 @@ x2 = ContinuousInput(key="x2", lower_bound=0, upper_bound=1)
 x3 = ContinuousInput(key="x3", lower_bound=0, upper_bound=1)
 x4 = DiscreteInput(key="x4", values=[1, 2, 5, 7.5])
 x5 = CategoricalInput(key="x5", categories=["A", "B", "C"], allowed=[True,True,False])
-x6 = CategoricalDescriptorInput(key="x6", categories=["c1", "c2", "c3"], descriptors=["d1", "d2"], values = [[1,2],s[2,5],[1,7]])
+x6 = CategoricalDescriptorInput(key="x6", categories=["c1", "c2", "c3"], descriptors=["d1", "d2"], values = [[1,2],[2,5],[1,7]])
 ```
 
 As output features, currently only continuous output features are supported. Each ouput feature has to have an objective, which can be a minimze or maximize objective. Each objective needs to have a weight w between 0 and 1, which would be considered in 
@@ -188,3 +188,35 @@ random_candidates
 ```
 
 Since a predictive strategy includes a prediction model, we need to generate some historical data:
+
+```python
+import random 
+
+for feat in domain.output_features.get_keys():
+    X[feat] = [random.uniform(0, 10) for _ in range(10)]
+    X["valid_" + feat] = 1
+
+X.at[0,'x5'] = 'C'
+
+X
+>>> 
+x1	x2	x3	x4	x6	x5	y1	valid_y1	y2	valid_y2	y3	valid_y3
+0	0.076580	0.114333	0.908693	2.0	c3	C	1.778685	1	7.431654	1	6.480092	1
+1	0.101352	0.816144	0.998311	1.0	c3	A	4.455056	1	4.308399	1	1.115206	1
+2	0.786277	0.723443	0.958959	1.0	c1	A	1.409387	1	6.301221	1	1.187027	1
+3	0.230341	0.717695	0.080950	5.0	c2	A	1.828613	1	4.099128	1	5.062944	1
+4	0.696330	0.404462	0.111464	7.5	c2	B	9.743244	1	0.452868	1	3.402737	1
+5	0.434963	0.593474	0.664282	2.0	c3	A	6.041753	1	6.515593	1	9.370194	1
+6	0.770037	0.369990	0.879929	1.0	c2	A	0.701850	1	5.059462	1	0.709087	1
+7	0.757170	0.494272	0.868837	7.5	c3	A	8.477390	1	6.085909	1	5.291752	1
+8	0.487407	0.482285	0.521498	5.0	c3	A	5.454225	1	2.672694	1	5.616514	1
+9	0.539006	0.689065	0.333560	5.0	c1	A	6.503267	1	7.491846	1	4.210929	1
+```
+
+Note that we defined one entry of x5 to be the non-allowed category. If we would not pass historical data containing the non-allowed category, BoFire would suggest to remove the unused category from the domain:
+
+```python
+sobo_strategy.tell(X.loc[1:], replace=True)
+```
+
+The argument replace = True  
