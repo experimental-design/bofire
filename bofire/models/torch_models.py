@@ -111,7 +111,7 @@ class RBF(ContinuousKernel):
 class Matern(ContinuousKernel):
     ard: bool = True
     nu: float = 2.5
-    lengthscale_prior: Optional[Prior] = botorch_lengthcale_prior
+    lengthscale_prior: Optional[Prior] = botorch_lengthcale_prior  # type: ignore
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
