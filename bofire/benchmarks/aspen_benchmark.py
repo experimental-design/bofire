@@ -57,21 +57,6 @@ class Aspen_benchmark(Benchmark):
                 if key not in paths.keys():
                     raise ValueError("Path for " + key + " is not provided.")
 
-        # Check, if number of paths matches number of variables
-        if (len(self.keys[0]) + len(self.keys[1])) != len(paths.items()):
-            log_string = (
-                "Number of variables ("
-                + str(len(self.keys[0]) + len(self.keys[1]))
-                + ") names must match number of paths ("
-                + str(len(paths.items()))
-                + "). \n"
-                + "Variables: "
-                + str(self.keys)
-                + "\nPaths: "
-                + str(paths.items())
-            )
-            raise ValueError(log_string)
-
         self.paths = paths
         self.aspen_is_running = False
 
