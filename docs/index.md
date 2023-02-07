@@ -5,6 +5,8 @@ These problems can arise in a number of closely related fields including experim
 
 BoFire problem specifications are json serializable for use in RESTful APIs and are to a large extent agnostic to the specific methods and frameworks in which the problems are solved.
 
+You can find code-examples in the Getting Started section of this document, as well as full worked-out examples of code-usage in the /tutorials section of this repository!
+
 ## Experimental design
 In the context of experimental design BoFire allows to define a design space
 
