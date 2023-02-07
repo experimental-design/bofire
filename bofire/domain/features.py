@@ -1403,11 +1403,22 @@ class InputFeatures(Features):
         features = [
             f
             for f in self.get(includes=include, excludes=exclude)
-            if isinstance(f, CategoricalInput) and not f.is_fixed()
+            if (isinstance(f, CategoricalInput) and not f.is_fixed())
         ]
         list_of_lists = [
             [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
         ]
+
+        discretes = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, DiscreteInput) and not f.is_fixed())
+        ]
+
+        list_of_lists_2 = [[(d.key, v) for v in d.values] for d in discretes]
+
+        list_of_lists = list_of_lists + list_of_lists_2
+
         return list(itertools.product(*list_of_lists))
 
     # transformation related methods
