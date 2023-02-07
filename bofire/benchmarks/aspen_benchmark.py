@@ -120,6 +120,7 @@ class Aspen_benchmark(Benchmark):
         y_outputs = {}
         for key in self.keys[1]:
             y_outputs[key] = []
+            y_outputs["valid_" + key] = []
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
         for index, row in candidates_aspen_readable.iterrows():
             logger.info("Writing inputs into Aspen")
@@ -152,9 +153,9 @@ class Aspen_benchmark(Benchmark):
                     if status == 8:
                         # Result is valid and add valid_var = 1
                         # Status = 8 corresponds to a valid result that should be kept, 10 is a warning, 9 does not converge
-                        y_outputs["valid_" + key] = 1
+                        y_outputs["valid_" + key].append(1)
                     else:
-                        y_outputs["valid_" + key] = 0
+                        y_outputs["valid_" + key].append(0)
                         if status == 9:
                             logger.error(
                                 "Result"
