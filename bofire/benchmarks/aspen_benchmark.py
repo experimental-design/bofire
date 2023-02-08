@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Callable, Optional
 
 import pandas as pd
 
@@ -29,7 +30,15 @@ class Aspen_benchmark(Benchmark):
         Benchmark: Subclass of the Benchmark function class.
     """
 
-    def __init__(self, filename: str, domain: Domain, paths: dict[str, str]) -> None:
+    def __init__(
+        self,
+        filename: str,
+        domain: Domain,
+        paths: dict[str, str],
+        translate_into_aspen_readable: Optional[
+            Callable[[Domain], pd.DataFrame]
+        ] = None,
+    ) -> None:
         """Initializes Aspen_benchmark. A class that connects to Aspen plus.
 
         Args:
@@ -37,6 +46,8 @@ class Aspen_benchmark(Benchmark):
             domain (Domain): Domain of the benchmark setting inclunding bounds and information about input values.
             paths (dict[str, str]): A dictionary with the key value pairs "key_of_variable": "path_to_variable".
             The keys must be the same as provided in the domain.
+            translate_into_aspen_readable (Optional: Callable): A function that converts dataframe columns into
+            integers or floats so Aspen plus is able to read their values.
 
         Raises:
             ValueError: In case the number of provided variable names does not match the number of provided Aspen variable tree paths.
@@ -46,6 +57,7 @@ class Aspen_benchmark(Benchmark):
         else:
             raise ValueError("Unable to find Aspen file " + filename)
 
+        self.translate_into_aspen_readable = translate_into_aspen_readable
         self._domain = domain
         # Get the variable names (keys) from the domain to access them later easily.
         self.keys = [self.domain.inputs.get_keys(), self.domain.outputs.get_keys()]
@@ -81,19 +93,6 @@ class Aspen_benchmark(Benchmark):
             logger.exception(log_string)
             raise ValueError(log_string)
 
-    def translate_into_aspen_readable(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        """Tranlates the input data that may contain strings and other datatypes used by bofire
-        that Aspen plus is not able to read natively.
-
-        Returns:
-            pd.DataFrame: Input data ready to be given to Aspen plus.
-        """
-        for feature in self.domain.inputs.features:
-            if feature.type == "CategoricalDescriptorInput":
-                key = feature.key
-                candidates[key] = candidates[key].astype(int)
-        return candidates
-
     # Run simulation in Aspen
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation of the Aspen plus benchmark. Passes input values to Aspen, runs
@@ -113,16 +112,18 @@ class Aspen_benchmark(Benchmark):
             self.start_aspen()
 
         # Make inputs Aspen-readable
-        candidates_aspen_readable = self.translate_into_aspen_readable(
-            candidates=candidates
-        )
+        if self.translate_into_aspen_readable is not None:
+            candidates = self.translate_into_aspen_readable(
+                domain=self.domain,
+                candidates=candidates,
+            )
 
         y_outputs = {}
         for key in self.keys[1]:
             y_outputs[key] = []
             y_outputs["valid_" + key] = []
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
-        for index, row in candidates_aspen_readable.iterrows():
+        for index, row in candidates.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
             for key in self.keys[0]:
