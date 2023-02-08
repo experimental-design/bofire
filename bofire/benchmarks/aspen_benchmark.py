@@ -114,7 +114,7 @@ class Aspen_benchmark(Benchmark):
         # Make inputs Aspen-readable
         if self.translate_into_aspen_readable is not None:
             candidates = self.translate_into_aspen_readable(
-                domain=self.domain,
+                domain=self.domain,  # type: ignore
                 candidates=candidates,
             )
 
