@@ -1388,8 +1388,8 @@ class InputFeatures(Features):
 
     def get_categorical_combinations(
         self,
-        include: Type[Feature] = InputFeature,
-        exclude: Optional[Type[InputFeature]] = None,
+        include: Union[Type, List[Type]] = InputFeature,
+        exclude: Union[Type, List[Type]] = None,
     ):
         """get a list of tuples pairing the feature keys with a list of valid categories
 

@@ -465,8 +465,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
         """
         fixed_basis = self.get_fixed_features()
-        include = CategoricalInput
-        exclude = None
 
         methods = [
             self.descriptor_method,
@@ -478,8 +476,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             return [{}]
         else:
             include = []
+            exclude = None
 
-            if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
+            if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
                 include.append(DiscreteInput)
 
             if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
@@ -490,8 +489,11 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 include.append(CategoricalDescriptorInput)
                 exclude = None
 
+        if not include:
+            include = None
+
         combos = self.domain.inputs.get_categorical_combinations(
-            include=include, exclude=exclude
+            include=(include if include else InputFeature), exclude=exclude
         )
         # now build up the fixed feature list
         if len(combos) == 1:

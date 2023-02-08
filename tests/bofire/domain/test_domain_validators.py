@@ -13,6 +13,7 @@ from bofire.domain.features import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    DiscreteInput,
     InputFeature,
     OutputFeature,
 )
@@ -94,6 +95,10 @@ def generate_experiments(
                 **{
                     f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)
                     for f in domain.get_features(ContinuousInput)
+                },
+                **{
+                    f.key: random.choice(f.values)
+                    for f in domain.get_features(DiscreteInput)
                 },
                 **{
                     k: random.random()
