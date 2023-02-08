@@ -6,7 +6,8 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
-from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
+from bofire.models.gps import SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.strategies.botorch.sobo import BoTorchSoboStrategy
 from bofire.strategies.strategy import Strategy

@@ -8,8 +8,6 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.gps.priors import AnyPrior
 
-# from gpytorch.kernels import LinearKernel, MaternKernel, RBFKernel
-
 
 class BaseKernel(PydanticBaseModel):
     type: str
@@ -21,10 +19,10 @@ class BaseKernel(PydanticBaseModel):
         pass
 
     def __add__(self, other):
-        return AdditiveKernel(kernels=[self, other])
+        return AdditiveKernel(kernels=[self, other])  # type: ignore
 
     def __mul__(self, other):
-        return MultiplicativeKernel(kernels=[self, other])
+        return MultiplicativeKernel(kernels=[self, other])  # type: ignore
 
 
 class ContinuousKernel(BaseKernel):
@@ -113,7 +111,7 @@ class AdditiveKernel(BaseKernel):
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> gpytorch.kernels.AdditiveKernel:
         return gpytorch.kernels.AdditiveKernel(
-            *[
+            *[  # type: ignore
                 k.to_gpytorch(
                     batch_shape=batch_shape,
                     ard_num_dims=ard_num_dims,
@@ -142,7 +140,7 @@ class MultiplicativeKernel(BaseKernel):
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> gpytorch.kernels.AdditiveKernel:
         return gpytorch.kernels.ProductKernel(
-            *[
+            *[  # type: ignore
                 k.to_gpytorch(
                     batch_shape=batch_shape,
                     ard_num_dims=ard_num_dims,
@@ -162,7 +160,6 @@ class ScaleKernel(BaseKernel):
         HammondDistanceKernel,
         AdditiveKernel,
         MultiplicativeKernel,
-        "ScaleKernel",
     ]
     output_scale_prior: Optional[AnyPrior] = None
 

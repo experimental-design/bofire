@@ -25,7 +25,7 @@ from bofire.domain.objectives import (
     MaximizeSigmoidObjective,
     MinimizeObjective,
 )
-from bofire.models.torch_models import SingleTaskGPModel
+from bofire.models.gps import SingleTaskGPModel
 from bofire.utils.enum import CategoricalEncodingEnum
 
 
