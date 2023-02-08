@@ -764,7 +764,7 @@ AbstractTargetObjective            (<a class="autorefs autorefs-internal" title=
     <span class="c1"># TODO: add docstring to AbstractTargetObjective</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;AbstractTargetObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;AbstractTargetObjective&quot;</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">target_value</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">tolerance</span><span class="p">:</span> <span class="n">TGe0</span>
 
@@ -1077,7 +1077,7 @@ ConstantObjective            (<a class="autorefs autorefs-internal" title="bofir
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ConstantObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ConstantObjective&quot;</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">value</span><span class="p">:</span> <span class="nb">float</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
@@ -1423,7 +1423,7 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;IdentityObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IdentityObjective&quot;</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>
 
@@ -2694,7 +2694,7 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;SigmoidObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;SigmoidObjective&quot;</span>
     <span class="n">steepness</span><span class="p">:</span> <span class="n">TGt0</span>
     <span class="n">tp</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
 </code></pre></div>
         </details>
 
