@@ -17,33 +17,28 @@ from bofire.domain.objectives import (
 )
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
-VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC = {
-    "value": 100.0,
-    "w": 0.5,
-}
+VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC = {"value": 100.0}
 
 INVALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC = {
     "w": "s",
 }
 
-VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC = {"w": 0.5}
+VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC = {}
 
-VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC = {"w": 0.5, "ref_point": 5}
+VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC = {"ref_point": 5}
 
-VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC = {"steepness": 5, "tp": -44.1, "w": 0.5}
+VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC = {"steepness": 5, "tp": -44.1}
 
 VALID_TARGET_DESIRABILITY_FUNCTION_SPEC = {
     "target_value": -42,
     "steepness": 5,
     "tolerance": 100,
-    "w": 0.5,
 }
 
 VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC = {
     "target_value": 42,
     "exponent": 2,
     "tolerance": 1.5,
-    "w": 1.0,
 }
 
 INVALID_W = [
@@ -69,8 +64,11 @@ INVALID_TOLERANCE = [
 
 DESIRABILITY_FUNCTION_SPECS = {
     MinimizeObjective: {
-        "valids": [VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC],
-        "invalids": INVALID_SPECS
+        "valids": [
+            VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
+        "invalids": INVALID_SPECS[0]
         + get_invalids(VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC)
         + [
             {
@@ -84,8 +82,11 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     MaximizeObjective: {
-        "valids": [VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC],
-        "invalids": INVALID_SPECS
+        "valids": [
+            VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
+        "invalids": INVALID_SPECS[0]
         + get_invalids(VALID_IDENTITY_DESIRABILITY_FUNCTION_SPEC)
         + [
             {
@@ -96,7 +97,10 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     DeltaObjective: {
-        "valids": [VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC],
+        "valids": [
+            VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_DELTA_IDENTITY_DESIRABILITY_FUNCTION_SPEC)
         + [
@@ -108,7 +112,10 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     MinimizeSigmoidObjective: {
-        "valids": [VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC],
+        "valids": [
+            VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC)
         + [
@@ -120,7 +127,10 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     MaximizeSigmoidObjective: {
-        "valids": [VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC],
+        "valids": [
+            VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_SIGMOID_DESIRABILITY_FUNCTION_SPEC)
         + [
@@ -132,7 +142,10 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     TargetObjective: {
-        "valids": [VALID_TARGET_DESIRABILITY_FUNCTION_SPEC],
+        "valids": [
+            VALID_TARGET_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_TARGET_DESIRABILITY_FUNCTION_SPEC, "w": 1},
+        ],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_TARGET_DESIRABILITY_FUNCTION_SPEC)
         + [
@@ -145,7 +158,10 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     CloseToTargetObjective: {
-        "valids": [VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC],
+        "valids": [
+            VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
         "invalids": INVALID_SPECS
         + get_invalids(VALID_CLOSE_TO_TARGET_DESIRABILITY_FUNCTION_SPEC)
         + [
@@ -158,7 +174,10 @@ DESIRABILITY_FUNCTION_SPECS = {
         ],
     },
     ConstantObjective: {
-        "valids": [VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC],
+        "valids": [
+            VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC,
+            {**VALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC, "w": 0.5},
+        ],
         "invalids": [INVALID_CONSTANT_DESIRABILITY_FUNCTION_SPEC],
     },
 }
