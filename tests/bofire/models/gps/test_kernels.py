@@ -2,8 +2,100 @@ import gpytorch.kernels
 import pytest
 import torch
 
-from bofire.models.gps.kernels import LinearKernel, MaternKernel, RBFKernel
-from bofire.models.gps.priors import GammaPrior
+from bofire.models.gps.kernels import (
+    AdditiveKernel,
+    LinearKernel,
+    MaternKernel,
+    MultiplicativeKernel,
+    RBFKernel,
+    ScaleKernel,
+)
+from bofire.models.gps.priors import GammaPrior, botorch_lengthcale_prior
+from tests.bofire.domain.utils import get_invalids
+
+EQUIVALENTS = {
+    RBFKernel: gpytorch.kernels.RBFKernel,
+    MaternKernel: gpytorch.kernels.MaternKernel,
+    LinearKernel: gpytorch.kernels.LinearKernel,
+    ScaleKernel: gpytorch.kernels.ScaleKernel,
+    AdditiveKernel: gpytorch.kernels.AdditiveKernel,
+    MultiplicativeKernel: gpytorch.kernels.ProductKernel,
+}
+
+VALID_RBF_SPEC = {
+    "type": "RBFKernel",
+    "ard": True,
+    "lenghtscale_prior": botorch_lengthcale_prior(),
+}
+VALID_MATERN_SPEC = {
+    "type": "MaternKernel",
+    "ard": True,
+    "nu": 2.5,
+    "lenghtscale_prior": botorch_lengthcale_prior(),
+}
+VALID_LINEAR_SPEC = {"type": "LinearKernel"}
+
+VALID_SCALE_SPEC = {"type": "ScaleKernel", "base_kernel": RBFKernel()}
+
+VALID_ADDITIVE_SPEC = {"type": "AdditiveKernel", "kernels": [RBFKernel(), RBFKernel()]}
+
+VALID_MULTIPLICATIVE_SPEC = {
+    "type": "MultiplicativeKernel",
+    "kernels": [RBFKernel(), RBFKernel()],
+}
+
+KERNEL_SPECS = {
+    RBFKernel: {
+        "valids": [
+            VALID_RBF_SPEC,
+        ],
+        "invalids": [
+            *get_invalids(VALID_RBF_SPEC),
+        ],
+    },
+    MaternKernel: {
+        "valids": [
+            VALID_MATERN_SPEC,
+        ],
+        "invalids": [
+            *get_invalids(VALID_MATERN_SPEC),
+        ],
+    },
+    LinearKernel: {
+        "valids": [
+            VALID_LINEAR_SPEC,
+        ],
+        "invalids": [
+            *get_invalids(VALID_LINEAR_SPEC),
+        ],
+        ScaleKernel: {
+            "valids": [VALID_SCALE_SPEC],
+            "invalids": [
+                *get_invalids(VALID_SCALE_SPEC),
+            ],
+        },
+        MultiplicativeKernel: {
+            "valids": [VALID_MULTIPLICATIVE_SPEC],
+            "invalids": [
+                *get_invalids(VALID_SCALE_SPEC),
+            ],
+        },
+    },
+}
+
+
+@pytest.mark.parametrize(
+    "cls, spec",
+    [(cls, valid) for cls, data in KERNEL_SPECS.items() for valid in data["valids"]],
+)
+def test_valid_kernel_specs(cls, spec):
+    res = cls(**spec)
+    assert isinstance(res, cls)
+    assert isinstance(res.__str__(), str)
+    gkernel = res.to_gpytorch(
+        batch_shape=torch.Size(), ard_num_dims=10, active_dims=list(range(5))
+    )
+    assert isinstance(gkernel, EQUIVALENTS[cls])
 
 
 @pytest.mark.parametrize(
