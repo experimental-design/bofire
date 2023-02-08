@@ -62,7 +62,7 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
             base_kernel=MaternKernel(
                 ard=True, nu=2.5, lengthscale_prior=botorch_lengthcale_prior()
             ),
-            output_scale_prior=botorch_scale_prior(),
+            outputscale_prior=botorch_scale_prior(),
         )
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE

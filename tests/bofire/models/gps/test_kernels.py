@@ -1,16 +1,22 @@
 import gpytorch.kernels
 import pytest
 import torch
+from pydantic import parse_obj_as
 
 from bofire.models.gps.kernels import (
     AdditiveKernel,
+    AnyKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
     RBFKernel,
     ScaleKernel,
 )
-from bofire.models.gps.priors import GammaPrior, botorch_lengthcale_prior
+from bofire.models.gps.priors import (
+    GammaPrior,
+    botorch_lengthcale_prior,
+    botorch_scale_prior,
+)
 from tests.bofire.domain.utils import get_invalids
 
 EQUIVALENTS = {
@@ -96,6 +102,28 @@ def test_valid_kernel_specs(cls, spec):
         batch_shape=torch.Size(), ard_num_dims=10, active_dims=list(range(5))
     )
     assert isinstance(gkernel, EQUIVALENTS[cls])
+    res2 = parse_obj_as(AnyKernel, res.dict())
+    assert res == res2
+
+
+def test_scale_kernel():
+    kernel = ScaleKernel(
+        base_kernel=RBFKernel(), outputscale_prior=botorch_scale_prior()
+    )
+    k = kernel.to_gpytorch(
+        batch_shape=torch.Size(),
+        ard_num_dims=10,
+        active_dims=list(range(5)),
+    )
+    assert hasattr(k, "outputscale_prior")
+    assert isinstance(k.outputscale_prior, gpytorch.priors.GammaPrior)
+    kernel = ScaleKernel(base_kernel=RBFKernel())
+    k = kernel.to_gpytorch(
+        batch_shape=torch.Size(),
+        ard_num_dims=10,
+        active_dims=list(range(5)),
+    )
+    assert hasattr(k, "outputscale_prior") is False
 
 
 @pytest.mark.parametrize(

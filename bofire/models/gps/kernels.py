@@ -161,7 +161,7 @@ class ScaleKernel(BaseKernel):
         AdditiveKernel,
         MultiplicativeKernel,
     ]
-    output_scale_prior: Optional[AnyPrior] = None
+    outputscale_prior: Optional[AnyPrior] = None
 
     def to_gpytorch(
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
@@ -172,8 +172,8 @@ class ScaleKernel(BaseKernel):
                 ard_num_dims=ard_num_dims,
                 active_dims=active_dims,
             ),
-            outputscale_prior=self.output_scale_prior.to_gpytorch()
-            if self.output_scale_prior is not None
+            outputscale_prior=self.outputscale_prior.to_gpytorch()
+            if self.outputscale_prior is not None
             else None,
         )
 
