@@ -435,6 +435,26 @@ class DiscreteInput(NumericalInput):
         """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
+    def to_discrete_values(self, values: pd.DataFrame) -> pd.Series:
+        """Converts continuous candidate values to valid discrete ones.
+
+        Args:
+            values (pd.DataFrame): Dataframe with continuous entries.
+
+        Returns:
+            pd.Series: Series with discrete values.
+        """
+
+        s = pd.DataFrame(
+            data=np.abs(
+                (values[self.key].to_numpy()[:, np.newaxis] - np.array(self.values))
+            ),
+            columns=self.values,
+            index=values.index,
+        ).idxmin(1)
+        s.name = self.key
+        return s
+
 
 TDescriptors = conlist(item_type=str, min_items=1)
 
@@ -999,13 +1019,10 @@ class CategoricalDescriptorInput(CategoricalInput):
 
     def from_descriptor_encoding(self, values: pd.DataFrame) -> pd.Series:
         """Converts values back from descriptor encoding.
-
         Args:
             values (pd.DataFrame): Descriptor encoded dataframe.
-
         Raises:
             ValueError: If descriptor columns not found in the dataframe.
-
         Returns:
             pd.Series: Series with categorical values.
         """
@@ -1534,7 +1551,9 @@ class InputFeatures(Features):
         self._validate_transform_specs(specs=specs)
         transformed = []
         for feat in self.get():
-            if feat.key not in specs.keys():
+            if isinstance(feat, DiscreteInput):
+                transformed.append(feat.to_discrete_values(experiments))
+            elif feat.key not in specs.keys():
                 transformed.append(experiments[feat.key])
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
                 assert isinstance(feat, CategoricalInput)

@@ -332,9 +332,6 @@ def test_base_invalid_descriptor_method():
     "domain, model_specs, categorical_method, descriptor_method, expected",
     [
         (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
-        # (domains[0], None, "EXHAUSTIVE", "FREE", {}),
-        # (domains[0], None, "FREE", "EXHAUSTIVE", {}),
-        # (domains[0], None, "FREE", "FREE", {}),
         (
             domains[1],
             None,
