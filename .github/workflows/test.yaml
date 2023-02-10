@@ -18,5 +18,5 @@ jobs:
       - name: Install Bofire
         run: pip install .[testing]
       - name: Run tests
-        run: pytest tests
+        run: pytest -ra --cov=bofire --cov-report term-missing tests
           
