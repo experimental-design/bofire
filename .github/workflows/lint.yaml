@@ -36,7 +36,7 @@ jobs:
           python-version: 3.9
       - name: flake8
         run: |
-          pip3 flake8==5.0.4
+          pip3 install flake8==5.0.4
           flake8 --verbose bofire tests
 
   black:
@@ -49,7 +49,7 @@ jobs:
           python-version: 3.9
       - name: black
         run: |
-          pip3 black==22.10.0
+          pip3 install black==22.10.0
           black --check bofire tests
 
   isort:
