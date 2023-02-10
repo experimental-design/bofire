@@ -1018,7 +1018,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         )
 
     def from_descriptor_encoding(self, values: pd.DataFrame) -> pd.Series:
-        """Converts values back from descriptor encoding.
+        """Converts values back from descriptor encoding. Only allowed categories are considered.
         Args:
             values (pd.DataFrame): Descriptor encoded dataframe.
         Raises:
