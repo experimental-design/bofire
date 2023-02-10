@@ -3,6 +3,7 @@ import os
 from typing import Callable, Optional
 
 import pandas as pd
+from pywintypes import com_error
 
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
@@ -35,6 +36,7 @@ class Aspen_benchmark(Benchmark):
         filename: str,
         domain: Domain,
         paths: dict[str, str],
+        additional_outputs: Optional[list] = [],
         translate_into_aspen_readable: Optional[
             Callable[[Domain], pd.DataFrame]
         ] = None,
@@ -61,11 +63,15 @@ class Aspen_benchmark(Benchmark):
         self._domain = domain
         # Get the variable names (keys) from the domain to access them later easily.
         self.keys = [self.domain.inputs.get_keys(), self.domain.outputs.get_keys()]
-        # keys[0] for x, keys[1] for y
+        self.input_keys = self.domain.inputs.get_keys()
+        self.output_keys = self.domain.outputs.get_keys()
+        self.additional_outputs = []
+        if additional_outputs is not None:
+            self.additional_outputs = additional_outputs
 
-        for key_list in self.keys:
-            # Check, if every input and output variable has a path to Aspen provided.
+        for key_list in [self.input_keys, self.output_keys]:
             for key in key_list:
+                # Check, if every input and output variable has a path to Aspen provided.
                 if key not in paths.keys():
                     raise ValueError("Path for " + key + " is not provided.")
 
@@ -88,10 +94,27 @@ class Aspen_benchmark(Benchmark):
             aspen = win32.Dispatch("Apwn.Document")
             aspen.InitFromFile2(os.path.abspath(self.filename))
             self.aspen_is_running = True
-        except OSError:
-            log_string = "Unable to start Aspen plus."
-            logger.exception(log_string)
-            raise ValueError(log_string)
+        except com_error as e:
+            # TODO: Implement Error handling for no license
+            if e.excepinfo[5] == -2147352567:
+                logger.info("Failed to check out a license.")
+            # else:
+            # logger.exception(e)
+            # raise ValueError(e)
+
+    def autosafe_results(self, results: pd.DataFrame):
+        benchmark_name = self.__class__.__name__
+        # Create a folder for autosaves, if not already exists.
+        filepath = "../results/aspen_autosaves/" + benchmark_name
+        if not os.path.exists(filepath):
+            os.makedirs(filepath)
+        filename = filepath + "/" + "save.csv"
+
+        if os.path.exists(filename):
+            results = pd.concat(
+                [pd.read_csv(filename, index_col=0), results], axis=0, ignore_index=True
+            )
+        results.to_csv(filename)
 
     # Run simulation in Aspen
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
@@ -119,14 +142,17 @@ class Aspen_benchmark(Benchmark):
             )
 
         y_outputs = {}
-        for key in self.keys[1]:
+        add_outputs = {}
+        for key in self.output_keys:
             y_outputs[key] = []
             y_outputs["valid_" + key] = []
+        for key in self.additional_outputs:
+            add_outputs[key] = []
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
         for index, row in candidates.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
-            for key in self.keys[0]:
+            for key in self.input_keys:
                 try:
                     aspen.Tree.FindNode(self.paths.get(key)).Value = row[key]
                 except ConnectionAbortedError:
@@ -142,15 +168,22 @@ class Aspen_benchmark(Benchmark):
 
             # Retrieve outputs from Aspen and write into data frame
             logger.info("Retrieving outputs from Aspen.")
-            for key in self.keys[1]:
-                try:
+            try:
+                # Check for errors during simulation in Aspen that disqualify the results
+                status = aspen.Tree.FindNode(
+                    "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
+                ).Value
+
+                for key in self.output_keys:
                     y_outputs[key].append(
                         aspen.Tree.FindNode(self.paths.get(key)).Value
                     )
-                    # Check for errors during simulation in Aspen that disqualify the y_value
-                    status = aspen.Tree.FindNode(
-                        "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
-                    ).Value
+                for key in self.additional_outputs:
+                    add_outputs[key].append(
+                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                    )
+
+                for key in self.domain.outputs.get_keys():
                     if status == 8:
                         # Result is valid and add valid_var = 1
                         # Status = 8 corresponds to a valid result that should be kept, 10 is a warning, 9 does not converge
@@ -172,11 +205,14 @@ class Aspen_benchmark(Benchmark):
                         else:
                             logger.warning("Unknown simulation status: " + str(status))
 
-                except ConnectionAbortedError:
-                    logger.exception("Not able to retrieve " + key + " from Aspen.")
-                    raise ValueError("Not able to retrieve " + key + " from Aspen.")
+            except ConnectionAbortedError:
+                logger.exception("Not able to retrieve values from Aspen.")
+                raise ValueError("Not able to retrieve values from Aspen.")
+
         Y = pd.DataFrame(y_outputs)
-        XY = pd.concat([candidates, Y], axis=1)
+        Z = pd.DataFrame(add_outputs)
+        XYZ = pd.concat([candidates, Y, Z], axis=1)
         logger.info("Simluation completed. Results:")
-        logger.info(XY)
+        logger.info(XYZ)
+        self.autosafe_results(results=XYZ)
         return Y

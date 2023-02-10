@@ -98,15 +98,6 @@ def _single_run(
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
-    def translate_into_bofire_readable(
-        domain: Domain, candidates: pd.DataFrame
-    ) -> pd.DataFrame:
-        for feature in domain.inputs.features:
-            if feature.type == "CategoricalDescriptorInput":
-                key = feature.key
-                candidates[key] = candidates[key].astype(str)
-        return candidates
-
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
         Y = benchmark.f(X)
@@ -122,7 +113,6 @@ def _single_run(
         XY = pd.concat([X, Y], axis=1)
         # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
         # colum needs to be converted back to str to be added to the benchmark domain.
-        XY = translate_into_bofire_readable(domain=benchmark.domain, candidates=XY)
         strategy.tell(XY)
         metric_values[i] = metric(strategy.domain)
         pbar.set_description(
