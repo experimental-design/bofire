@@ -3,7 +3,6 @@ import os
 from typing import Callable, Optional
 
 import pandas as pd
-from pywintypes import com_error
 
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
@@ -94,27 +93,9 @@ class Aspen_benchmark(Benchmark):
             aspen = win32.Dispatch("Apwn.Document")
             aspen.InitFromFile2(os.path.abspath(self.filename))
             self.aspen_is_running = True
-        except com_error as e:
-            # TODO: Implement Error handling for no license
-            if e.excepinfo[5] == -2147352567:
-                logger.info("Failed to check out a license.")
-            # else:
-            # logger.exception(e)
-            # raise ValueError(e)
-
-    def autosafe_results(self, results: pd.DataFrame):
-        benchmark_name = self.__class__.__name__
-        # Create a folder for autosaves, if not already exists.
-        filepath = "../results/aspen_autosaves/" + benchmark_name
-        if not os.path.exists(filepath):
-            os.makedirs(filepath)
-        filename = filepath + "/" + "save.csv"
-
-        if os.path.exists(filename):
-            results = pd.concat(
-                [pd.read_csv(filename, index_col=0), results], axis=0, ignore_index=True
-            )
-        results.to_csv(filename)
+        except OSError as e:
+            logger.exception(e)
+            raise ValueError(e)
 
     # Run simulation in Aspen
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
@@ -212,7 +193,7 @@ class Aspen_benchmark(Benchmark):
         Y = pd.DataFrame(y_outputs)
         Z = pd.DataFrame(add_outputs)
         XYZ = pd.concat([candidates, Y, Z], axis=1)
+        YZ = pd.concat([Y, Z], axis=1)
         logger.info("Simluation completed. Results:")
         logger.info(XYZ)
-        self.autosafe_results(results=XYZ)
-        return Y
+        return YZ
