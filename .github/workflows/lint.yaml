@@ -7,24 +7,6 @@ on:
     branches:
       - main
 
-# jobs:
-#   linting:
-#     runs-on: ubuntu-latest
-#     steps:
-#       - uses: actions/checkout@v2
-#       - uses: actions/setup-python@v2
-#         with:
-#           python-version: 3.9
-#       - name: Run black, flake8 and isort
-#         run: |
-#           pip3 install black==22.10.0 flake8==5.0.4 isort==5.10.1
-#           black --check bofire tests
-#           flake8 --verbose bofire tests
-#           isort . --check-only --verbose
-#       - name: Pyright
-#         run: |
-#           pip install .[testing]
-#           pyright
 jobs:    
   flake8:
     name: Lint with flake8
@@ -64,4 +46,17 @@ jobs:
         run: |
           pip3 install isort==5.10.1
           isort . --check-only --verbose
+
+  pyright:
+    name: Typechecking with pyright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: pyright
+        run: |
+          pip install .[testing]
+          pyright
           
