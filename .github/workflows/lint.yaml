@@ -1,4 +1,4 @@
-name: Tests
+name: Lint
 on:
   push:
     branches:
@@ -25,6 +25,4 @@ jobs:
         run: |
           pip install .[testing]
           pyright
-      - name: Run tests
-        run: pytest tests
           
