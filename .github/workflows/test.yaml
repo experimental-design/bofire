@@ -19,4 +19,6 @@ jobs:
         run: pip install .[testing]
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
+      #- name: Upload coverage
+      #  run: bash <(curl -s https://codecov.io/bash)
           
