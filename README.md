@@ -1,5 +1,6 @@
 
 [![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
+[![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
 [![Docs](https://github.com/experimental-design/bofire/workflows/Docs/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ADocs)
 [![PyPI](https://img.shields.io/pypi/v/bofire.svg)](https://pypi.org/project/bofire)
 # BoFire
@@ -7,7 +8,7 @@ BoFire is a **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**ea
 
 Why BoFire?
 
-Bofire ...
+BoFire ...
 
 - supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,
 - separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,
@@ -46,7 +47,15 @@ pip install -e .[testing]
 
 Documentation including a section on how to get started can be found under https://experimental-design.github.io/bofire/.
 
-## Pull Requests
+## Contributing
+
+> TL;DR of the [Contributing](./CONTRIBUTING.md) guidelines.
+
+### Release roadmap
+
+The features for the next release are tracked in the [milestones](https://github.com/experimental-design/bofire/milestones).
+
+### Pull Requests
 
 Pull requests are highly welcome:
 
@@ -55,10 +64,10 @@ Pull requests are highly welcome:
 3. Add doc-strings and update the documentation. You might consider contributing to the tutorials section.
 4. Make sure that the GitHub pipeline passes.
 
-## Issues
+### Issues
 
 If you find any issues, Bugs, or not sure about something -  feel free to create an Issue.
 
 ## License
 
-By contributing you agree that your contributions will be licensed under the same license as BoFire.
+By contributing you agree that your contributions will be licensed under the same license as BoFire: [BSD 3-Clause License](./LICENSE).
