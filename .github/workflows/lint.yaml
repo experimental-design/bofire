@@ -1,0 +1,62 @@
+name: Lint
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:    
+  flake8:
+    name: Lint with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: flake8
+        run: |
+          pip3 install flake8==5.0.4
+          flake8 --verbose bofire tests
+
+  black:
+    name: Lint with black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: black
+        run: |
+          pip3 install black==22.10.0
+          black --check bofire tests
+
+  isort:
+    name: Sort with isort
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: isort
+        run: |
+          pip3 install isort==5.10.1
+          isort . --check-only --verbose
+
+  pyright:
+    name: Typechecking with pyright
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: pyright
+        run: |
+          pip install .[testing]
+          pyright
+          

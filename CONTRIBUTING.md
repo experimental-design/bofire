@@ -2,7 +2,13 @@
 
 Contributions to BoFire are highly welcome!
 
-## Development Enviromnent
+## Release roadmap
+
+The features for the next release are tracked in the [milestones](https://github.com/experimental-design/bofire/milestones).
+
+When supporting BoFire, feel free to suggest if the change should be incorporated into the next release.
+
+## Development Environment
 
 We recommend an editable installation. After cloning the repository via
 ```
