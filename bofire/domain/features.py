@@ -396,7 +396,7 @@ class DiscreteInput(NumericalInput):
             raise ValueError("Discrete values must be unique")
         if len(values) < 2:
             raise ValueError(
-                "For a discrete input with only one value, please use a fixed continuous input"
+                "Fixed discrete inputs are not supported. For a discrete input with only one value, please use a fixed continuous input"
             )
         return sorted(values)
 
