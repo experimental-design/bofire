@@ -40,7 +40,6 @@ from tests.bofire.domain.test_features import (
     VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
-    VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC,
 )
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -155,14 +154,6 @@ if9 = DiscreteInput(
     }
 )
 
-if10 = DiscreteInput(
-    **{
-        **VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC,
-        "key": "if10",
-    }
-)
-
-
 of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
@@ -192,7 +183,6 @@ domains = [
             if5,
             if6,
             if9,
-            if10,
         ],  # all feature types incl. with fixed values
         output_features=[of1],
         constraints=[],
@@ -206,7 +196,6 @@ domains = [
             if5,
             if6,
             if9,
-            if10,
         ],  # all feature types incl. with fixed values + mutli-objective
         output_features=[of1, of2],
         constraints=[],
@@ -258,7 +247,6 @@ data = [
             "if5": ["c1", "c2", "c3", "c1"],
             "if6": ["c1", "c1", "c1", "c1"],
             "if9": [1.0, 2.0, 1.0, 2.0],
-            "if10": [2.0, 2.0, 2.0, 2.0],
             "of1": [10, 11, 12, 13],
             "valid_of1": [1, 0, 1, 0],
         }
@@ -272,7 +260,6 @@ data = [
             "if5": ["c1", "c2", "c3", "c1"],
             "if6": ["c1", "c1", "c1", "c1"],
             "if9": [1.0, 2.0, 1.0, 2.0],
-            "if10": [2.0, 2.0, 2.0, 2.0],
             "of1": [10, 11, 12, 13],
             "of2": [100, 103, 105, 110],
             "valid_of1": [1, 0, 1, 0],
@@ -337,7 +324,7 @@ def test_base_invalid_descriptor_method():
             None,
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            {1: 3, 2: 2, 6: 1, 7: 2, 11: 1, 12: 0, 13: 0},
+            {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
         ),
         (
             domains[1],
@@ -355,7 +342,7 @@ def test_base_invalid_descriptor_method():
             ),
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            {1: 3, 2: 2, 7: 1, 8: 0, 9: 0, 13: 1, 14: 0, 15: 0},
+            {1: 3, 6: 1, 7: 0, 8: 0, 12: 1, 13: 0, 14: 0},
         ),
         (
             domains[1],
@@ -369,7 +356,7 @@ def test_base_invalid_descriptor_method():
             ),
             "FREE",
             "EXHAUSTIVE",
-            {1: 3, 2: 2, 6: 1, 7: 2, 11: 1, 12: 0, 13: 0},
+            {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
         ),
         (  #
             domains[1],
@@ -387,7 +374,7 @@ def test_base_invalid_descriptor_method():
             ),
             "FREE",
             "FREE",
-            {1: 3, 2: 2, 7: 1, 8: 0, 9: 0, 13: 1, 14: 0, 15: 0},
+            {1: 3, 6: 1, 7: 0, 8: 0, 12: 1, 13: 0, 14: 0},
         ),
         (domains[5], None, "EXHAUSTIVE", "EXHAUSTIVE", {1: 3.0}),
         (

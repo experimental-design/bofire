@@ -126,6 +126,7 @@ def generate_experiments(
                 else feat.categories[:row_count]
             )
             experiments.loc[: len(categories) - 1, feat.key] = categories
+
     return experiments
 
 

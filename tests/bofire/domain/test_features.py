@@ -51,7 +51,7 @@ VALID_DISCRETE_INPUT_FEATURE_SPEC = {
     "values": [1.0, 2.0],
 }
 
-VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC = {
+INVALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC = {
     "type": "DiscreteInput",
     "key": str(uuid.uuid4()),
     "values": [2.0],
@@ -136,11 +136,9 @@ FEATURE_SPECS = {
         ],
     },
     DiscreteInput: {
-        "valids": [
-            VALID_DISCRETE_INPUT_FEATURE_SPEC,
-            VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC,
-        ],
+        "valids": [VALID_DISCRETE_INPUT_FEATURE_SPEC],
         "invalids": [
+            INVALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC,
             *get_invalids(VALID_DISCRETE_INPUT_FEATURE_SPEC),
             *[
                 {
@@ -554,7 +552,6 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
-        (DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC), True, [2.0]),
         (DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC), False, None),
     ],
 )
@@ -566,11 +563,6 @@ def test_discrete_input_feature_is_fixed(input_feature, expected, expected_value
 @pytest.mark.parametrize(
     "input_feature, expected_lower, expected_upper",
     [
-        (
-            DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
-            VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC["values"][0],
-            VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC["values"][0],
-        ),
         (
             DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
             VALID_DISCRETE_INPUT_FEATURE_SPEC["values"][0],
@@ -620,10 +612,6 @@ def test_discrete_input_feature_get_bounds(input_feature, expected):
             DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
             pd.Series([random.choice([1.0, 2.0]) for _ in range(20)]),
         ),
-        (
-            DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
-            pd.Series([2.0, 2.0, 2.0]),
-        ),
     ],
 )
 def test_discrete_input_feature_validate_candidental_valid(input_feature, values):
@@ -636,10 +624,6 @@ def test_discrete_input_feature_validate_candidental_valid(input_feature, values
         (
             DiscreteInput(**VALID_DISCRETE_INPUT_FEATURE_SPEC),
             pd.Series([random.choice([1.0, 3.0, 2.0]) for _ in range(20)]),
-        ),
-        (
-            DiscreteInput(**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC),
-            pd.Series([1.0, 2.0, 2.0]),
         ),
     ],
 )
@@ -1334,7 +1318,6 @@ if2 = CategoricalInput(**{**VALID_CATEGORICAL_INPUT_FEATURE_SPEC, "key": "if2"})
 if3 = ContinuousInput(**{**VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if3"})
 if4 = CategoricalInput(**{**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC, "key": "if4"})
 if5 = DiscreteInput(**{**VALID_DISCRETE_INPUT_FEATURE_SPEC, "key": "if5"})
-if6 = DiscreteInput(**{**VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC, "key": "if6"})
 if7 = CategoricalInput(
     **{
         **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
@@ -1469,7 +1452,7 @@ def test_features_get_by_key_invalid(features, key):
     "features, expected",
     [
         (InputFeatures(features=[if1, if2]), []),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6]), [if3, if4, if6]),
+        (InputFeatures(features=[if1, if2, if3, if4, if5]), [if3, if4]),
     ],
 )
 def test_input_features_get_fixed(features, expected):
@@ -1484,7 +1467,7 @@ def test_input_features_get_fixed(features, expected):
     "features, expected",
     [
         (InputFeatures(features=[if1, if2]), [if1, if2]),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6]), [if1, if2, if5]),
+        (InputFeatures(features=[if1, if2, if3, if4, if5]), [if1, if2, if5]),
     ],
 )
 def test_input_features_get_free(features, expected):
@@ -1501,7 +1484,7 @@ def test_input_features_get_free(features, expected):
         (features, num_samples, method)
         for features in [
             input_features,
-            InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]),
+            InputFeatures(features=[if1, if2, if3, if4, if5, if7]),
         ]
         for num_samples in [1, 2, 1024]
         for method in ["UNIFORM", "SOBOL", "LHS"]
