@@ -24,7 +24,8 @@ from bofire.domain.features import (
 )
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.domain.util import KeyModel
-from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
+from bofire.models.gps import SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
 from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective

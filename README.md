@@ -1,5 +1,6 @@
 
 [![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
+[![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
 [![Docs](https://github.com/experimental-design/bofire/workflows/Docs/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ADocs)
 [![PyPI](https://img.shields.io/pypi/v/bofire.svg)](https://pypi.org/project/bofire)
 # BoFire
@@ -23,9 +24,7 @@ BoFire has BoTorch as its main dependency which depends on PyTorch. In the follo
 
 ### Latest stable release
 
-```
-pip install bofire
-```
+We do not recommend the latest stable release from PyPI until we have published version [0.1](https://github.com/experimental-design/bofire/milestone/1). 
 
 ### Current main branch
 ```
