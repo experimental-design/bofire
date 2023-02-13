@@ -24,9 +24,7 @@ BoFire has BoTorch as its main dependency which depends on PyTorch. In the follo
 
 ### Latest stable release
 
-```
-pip install bofire
-```
+We do not recommend the latest stable release from PyPI until we have published version [0.1](https://github.com/experimental-design/bofire/milestone/1). 
 
 ### Current main branch
 ```
