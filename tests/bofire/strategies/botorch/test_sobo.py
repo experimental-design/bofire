@@ -57,7 +57,9 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
     [(domains[0], VALID_BOTORCH_SOBO_STRATEGY_SPEC["acquisition_function"])],
 )
 def test_SOBO_not_fitted(domain, acqf):
+
     strategy = BoTorchSoboStrategy(domain=domain, acquisition_function=acqf)
+
     msg = "Model not trained."
     with pytest.raises(AssertionError, match=msg):
         strategy._init_acqf()

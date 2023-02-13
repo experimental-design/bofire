@@ -703,28 +703,28 @@ def test_base_fit(domain, data, acquisition_function):
         (
             domains[0],
             generate_experiments(
-                domains[0], row_count=5, tol=1.0, force_all_categories=True
+                domains[0], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
         (
             domains[1],
             generate_experiments(
-                domains[1], row_count=5, tol=1.0, force_all_categories=True
+                domains[1], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
         (
             domains[2],
             generate_experiments(
-                domains[2], row_count=5, tol=1.0, force_all_categories=True
+                domains[2], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
         (
             domains[4],
             generate_experiments(
-                domains[4], row_count=5, tol=1.0, force_all_categories=True
+                domains[4], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
