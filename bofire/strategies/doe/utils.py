@@ -177,7 +177,7 @@ def n_zero_eigvals(
 
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
-    eigvals = np.abs(np.linalg.eigvalsh(A.T, A))  # type: ignore
+    eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
 
     return len(eigvals) - len(eigvals[eigvals > epsilon])
 
@@ -224,7 +224,7 @@ def constraints_as_scipy_constraints(
             for i in range(n_experiments):
                 A[i, i * D : (i + 1) * D] = row
 
-            constraints.append(LinearConstraint(A, float(lb), float(ub)))
+            constraints.append(LinearConstraint(A, lb, ub))
 
         elif isinstance(c, LinearInequalityConstraint):
             # write upper/lowe bound as vector
@@ -245,7 +245,7 @@ def constraints_as_scipy_constraints(
             for i in range(n_experiments):
                 A[i, i * D : (i + 1) * D] = row
 
-            constraints.append(LinearConstraint(A, float(lb), float(ub)))
+            constraints.append(LinearConstraint(A, lb, ub))
 
         # elif isinstance(c, opti.NonlinearEquality):
         #     # write upper/lower bound as vector

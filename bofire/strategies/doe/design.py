@@ -212,7 +212,7 @@ def find_local_max_ipopt(
     )
 
     # exit message
-    if _ipopt_options["print_level"] > 12:
+    if _ipopt_options[b"print_level"] > 12:
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
         X = model_formula.get_model_matrix(design).to_numpy()
@@ -220,7 +220,7 @@ def find_local_max_ipopt(
         print("metrics:", d)
 
     # check if all points respect the domain and the constraint
-    domain.validate_candidates(candidates=design, only_inputs=True)
+    domain.validate_candidates(candidates=np.round(design, 8), only_inputs=True)
 
     return design
 
