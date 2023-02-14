@@ -1,23 +1,21 @@
 import sys
 import warnings
-from copy import deepcopy
 from itertools import combinations
 from typing import List, Optional, Union
 
 import numpy as np
-import opti
 import pandas as pd
 from formulaic import Formula
-from opti import Categorical, Discrete
-from scipy.optimize import LinearConstraint, NonlinearConstraint
+from scipy.optimize import LinearConstraint
+
 from bofire.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput, CategoricalInput
 from bofire.domain.constraints import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
+from bofire.domain.features import CategoricalInput, ContinuousOutput
 
 CAT_TOL = 0.1
 DISCRETE_TOL = 0.1

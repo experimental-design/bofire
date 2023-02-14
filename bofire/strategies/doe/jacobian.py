@@ -2,10 +2,11 @@ from copy import deepcopy
 from typing import Callable, List, Optional
 
 import numpy as np
-from bofire.domain import Domain
 import pandas as pd
 import scipy as sp
 from formulaic import Formula
+
+from bofire.domain import Domain
 
 
 class JacobianForLogdet:

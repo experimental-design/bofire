@@ -1,26 +1,23 @@
 import warnings
+from copy import deepcopy
 from typing import Callable, Dict, Optional, Union
 
 import numpy as np
-from bofire.domain import Domain
-from bofire.domain.constraints import (
-    NChooseKConstraint,
-)
 import pandas as pd
 from cyipopt import minimize_ipopt
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.strategies.doe.jacobian import JacobianForLogdet
-
+from bofire.domain import Domain
+from bofire.domain.constraints import NChooseKConstraint
 from bofire.samplers import PolytopeSampler, apply_nchoosek
+from bofire.strategies.doe.jacobian import JacobianForLogdet
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
+    get_formula_from_string,
     metrics,
     nchoosek_constraints_as_bounds,
-    get_formula_from_string,
 )
-from copy import deepcopy
 
 
 def _domain_for_sampling(domain: Domain) -> Domain:
