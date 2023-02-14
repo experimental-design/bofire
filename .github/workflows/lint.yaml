@@ -58,5 +58,6 @@ jobs:
       - name: pyright
         run: |
           pip install .[testing]
+          conda install -c conda-forge cyipopt
           pyright
           
