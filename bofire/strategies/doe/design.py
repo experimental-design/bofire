@@ -5,31 +5,26 @@ import numpy as np
 from bofire.domain import Domain
 from bofire.domain.constraints import (
     NChooseKConstraint,
-    LinearEqualityConstraint,
-    LinearConstraint,
-    LinearInequalityConstraint,
 )
 import pandas as pd
 from cyipopt import minimize_ipopt
 from formulaic import Formula
-from bofire.domain.features import ContinuousInput
 from scipy.optimize._minimize import standardize_constraints
 
 from bofire.strategies.doe.jacobian import JacobianForLogdet
 
-# from bofire.strategies.doe.sampling import OptiSampling, Sampling
 from bofire.samplers import PolytopeSampler, apply_nchoosek
 from bofire.strategies.doe.utils import (
-    ProblemContext,
     constraints_as_scipy_constraints,
     metrics,
     nchoosek_constraints_as_bounds,
     get_formula_from_string,
 )
+from copy import deepcopy
 
 
 def _domain_for_sampling(domain: Domain) -> Domain:
-    domain_for_sampling = domain
+    domain_for_sampling = deepcopy(domain)
     # check if there are NChooseK constraints that must be ignored when sampling
     if len(domain.cnstrs) > 0:
         if any([isinstance(c, NChooseKConstraint) for c in domain.cnstrs]) and not all(
@@ -53,7 +48,8 @@ def _domain_for_sampling(domain: Domain) -> Domain:
 
 def logD(A: np.ndarray, delta: float = 1e-7) -> float:
     """Computes the sum of the log of A.T @ A ignoring the smallest num_ignore_eigvals eigenvalues."""
-    return np.linalg.slogdet(A.T @ A + delta * np.eye(A.shape[1]))[1]
+    X = A.T @ A + delta * np.eye(A.shape[1])
+    return np.linalg.slogdet(X)[1]
 
 
 def get_objective(
@@ -158,7 +154,8 @@ def find_local_max_ipopt(
         if len(domain_for_sampling.cnstrs.get(NChooseKConstraint)):
             samples = domain_for_sampling.inputs.sample(n_experiments)
             for constraint in domain_for_sampling.cnstrs.get():
-                apply_nchoosek(samples=samples, constraint=constraint)
+                if isinstance(constraint, NChooseKConstraint):
+                    apply_nchoosek(samples=samples, constraint=constraint)
             x0 = samples.to_numpy().flatten()
         else:
             sampler = PolytopeSampler(domain=domain_for_sampling)
@@ -215,7 +212,7 @@ def find_local_max_ipopt(
     )
 
     # exit message
-    if _ipopt_options[b"print_level"] > 12:
+    if _ipopt_options["print_level"] > 12:
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
         X = model_formula.get_model_matrix(design).to_numpy()
