@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 import pandas as pd
 
@@ -35,9 +35,9 @@ class Aspen_benchmark(Benchmark):
         filename: str,
         domain: Domain,
         paths: dict[str, str],
-        additional_outputs: Optional[list] = [],
+        additional_output_keys: List = [],
         translate_into_aspen_readable: Optional[
-            Callable[[Domain], pd.DataFrame]
+            Callable[[Domain, pd.DataFrame], pd.DataFrame]
         ] = None,
     ) -> None:
         """Initializes Aspen_benchmark. A class that connects to Aspen plus.
@@ -47,7 +47,7 @@ class Aspen_benchmark(Benchmark):
             domain (Domain): Domain of the benchmark setting inclunding bounds and information about input values.
             paths (dict[str, str]): A dictionary with the key value pairs "key_of_variable": "path_to_variable".
             The keys must be the same as provided in the domain.
-            translate_into_aspen_readable (Optional: Callable): A function that converts dataframe columns into
+            translate_into_aspen_readable (Optional: Callable): A function that converts the columns of a candidate dataframe into
             integers or floats so Aspen plus is able to read their values.
 
         Raises:
@@ -60,19 +60,12 @@ class Aspen_benchmark(Benchmark):
 
         self.translate_into_aspen_readable = translate_into_aspen_readable
         self._domain = domain
-        # Get the variable names (keys) from the domain to access them later easily.
-        self.keys = [self.domain.inputs.get_keys(), self.domain.outputs.get_keys()]
-        self.input_keys = self.domain.inputs.get_keys()
-        self.output_keys = self.domain.outputs.get_keys()
-        self.additional_outputs = []
-        if additional_outputs is not None:
-            self.additional_outputs = additional_outputs
+        self.additional_output_keys = additional_output_keys
 
-        for key_list in [self.input_keys, self.output_keys]:
-            for key in key_list:
-                # Check, if every input and output variable has a path to Aspen provided.
-                if key not in paths.keys():
-                    raise ValueError("Path for " + key + " is not provided.")
+        for key in self.domain.get_feature_keys():
+            # Check, if every input and output variable has a path to Aspen provided.
+            if key not in paths.keys():
+                raise ValueError("Path for " + key + " is not provided.")
 
         self.paths = paths
         self.aspen_is_running = False
@@ -122,18 +115,18 @@ class Aspen_benchmark(Benchmark):
                 candidates=candidates,
             )
 
-        y_outputs = {}
-        add_outputs = {}
-        for key in self.output_keys:
-            y_outputs[key] = []
-            y_outputs["valid_" + key] = []
-        for key in self.additional_outputs:
-            add_outputs[key] = []
+        y_outputs = {
+            k: []
+            for key in self.domain.outputs.get_keys()
+            for k in (key, "valid_" + key)
+        }
+        add_outputs = {key: [] for key in self.additional_output_keys}
+
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
         for index, row in candidates.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
-            for key in self.input_keys:
+            for key in self.domain.inputs.get_keys():
                 try:
                     aspen.Tree.FindNode(self.paths.get(key)).Value = row[key]
                 except ConnectionAbortedError:
@@ -155,22 +148,16 @@ class Aspen_benchmark(Benchmark):
                     "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
                 ).Value
 
-                for key in self.output_keys:
+                for key in self.domain.outputs.get_keys():
                     y_outputs[key].append(
                         aspen.Tree.FindNode(self.paths.get(key)).Value
                     )
-                for key in self.additional_outputs:
-                    add_outputs[key].append(
-                        aspen.Tree.FindNode(self.paths.get(key)).Value
-                    )
-
-                for key in self.domain.outputs.get_keys():
                     if status == 8:
                         # Result is valid and add valid_var = 1
                         # Status = 8 corresponds to a valid result that should be kept, 10 is a warning, 9 does not converge
-                        y_outputs["valid_" + key].append(1)
+                        y_outputs[f"valid_{key}"].append(1)
                     else:
-                        y_outputs["valid_" + key].append(0)
+                        y_outputs[f"valid_{key}"].append(0)
                         if status == 9:
                             logger.error(
                                 "Result"
@@ -185,6 +172,11 @@ class Aspen_benchmark(Benchmark):
                             )
                         else:
                             logger.warning("Unknown simulation status: " + str(status))
+
+                for key in self.additional_output_keys:
+                    add_outputs[key].append(
+                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                    )
 
             except ConnectionAbortedError:
                 logger.exception("Not able to retrieve values from Aspen.")
