@@ -49,7 +49,7 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     extras_require={
-        "testing": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov", "cyipopt"],
+        "testing": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov", "ipopt", "cyipopt"],
         "docs": [
             "mkdocs",
             "mkdocs-material",
