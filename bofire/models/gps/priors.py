@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from functools import partial
 from typing import Literal, Union
 
 import gpytorch.priors
@@ -93,14 +94,14 @@ AnyPrior = Union[GammaPrior, NormalPrior]
 
 # default priors of interest
 # botorch defaults
-botorch_lengthcale_prior = GammaPrior(concentration=3.0, rate=6.0)
-botorch_noise_prior = GammaPrior(concentration=1.1, rate=0.05)
-botorch_scale_prior = GammaPrior(concentration=2.0, rate=0.15)
+botorch_lengthcale_prior = partial(GammaPrior, concentration=3.0, rate=6.0)
+botorch_noise_prior = partial(GammaPrior, concentration=1.1, rate=0.05)
+botorch_scale_prior = partial(GammaPrior, concentration=2.0, rate=0.15)
 
 # mbo priors
 # By default BoTorch places a highly informative prior on the kernel lengthscales,
 # which easily leads to overfitting. Here we set a broader prior distribution for the
 # lengthscale. The priors for the noise and signal variance are set more tightly.
-mbo_lengthcale_prior = GammaPrior(concentration=2.0, rate=0.2)
-mbo_noise_prior = GammaPrior(concentration=2.0, rate=4.0)
-mbo_outputscale_prior = GammaPrior(concentration=2.0, rate=4.0)
+mbo_lengthcale_prior = partial(GammaPrior, concentration=2.0, rate=0.2)
+mbo_noise_prior = partial(GammaPrior, concentration=2.0, rate=4.0)
+mbo_outputscale_prior = partial(GammaPrior, concentration=2.0, rate=4.0)

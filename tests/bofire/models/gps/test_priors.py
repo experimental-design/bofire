@@ -2,7 +2,7 @@ import gpytorch.priors
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from bofire.models.priors import GammaPrior, NormalPrior, Prior
+from bofire.models.gps.priors import GammaPrior, NormalPrior, Prior
 from tests.bofire.domain.utils import get_invalids
 
 VALID_GAMMA_PRIOR_SPEC = {"type": "GammaPrior", "concentration": 2.0, "rate": 0.2}

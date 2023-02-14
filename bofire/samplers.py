@@ -131,12 +131,12 @@ class PolytopeSampler(Sampler):
         lower = [
             feat.lower_bound  # type: ignore
             for feat in self.domain.get_features(ContinuousInput)
-            if not feat.is_fixed()  # type: ignore
+            # if not feat.is_fixed()  # type: ignore
         ]
         upper = [
             feat.upper_bound  # type: ignore
             for feat in self.domain.get_features(ContinuousInput)
-            if not feat.is_fixed()  # type: ignore
+            # if not feat.is_fixed()  # type: ignore
         ]
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
 
@@ -162,11 +162,7 @@ class PolytopeSampler(Sampler):
         if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
             raise ValueError("Generated candidates are not unique!")
 
-        free_continuals = [
-            feat.key
-            for feat in self.domain.get_features(ContinuousInput)
-            if not feat.is_fixed()  # type: ignore
-        ]
+        free_continuals = self.domain.inputs.get_keys(ContinuousInput)
 
         # setup the output
         samples = pd.DataFrame(
