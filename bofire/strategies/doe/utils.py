@@ -222,7 +222,7 @@ def constraints_as_scipy_constraints(
             for i in range(n_experiments):
                 A[i, i * D : (i + 1) * D] = row
 
-            constraints.append(LinearConstraint(A, lb, ub))
+            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
         elif isinstance(c, LinearInequalityConstraint):
             # write upper/lowe bound as vector
@@ -243,7 +243,7 @@ def constraints_as_scipy_constraints(
             for i in range(n_experiments):
                 A[i, i * D : (i + 1) * D] = row
 
-            constraints.append(LinearConstraint(A, lb, ub))
+            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
         # elif isinstance(c, opti.NonlinearEquality):
         #     # write upper/lower bound as vector
