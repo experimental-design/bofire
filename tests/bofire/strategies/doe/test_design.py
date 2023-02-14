@@ -223,7 +223,7 @@ def test_find_local_max_ipopt_fixed_experiments():
         domain,
         "linear",
         n_experiments=12,
-        fixed_experiments=[[0.3, 0.5, 0.2]],
+        fixed_experiments=[[0.3, 0.5, 0.2]],  # type: ignore
     )
     print(A)
     opt = np.array(
@@ -278,7 +278,7 @@ def test_find_local_max_ipopt_fixed_experiments():
             domain,
             "fully-quadratic",
             ipopt_options={"maxiter": 100},
-            fixed_experiments=[[1, 0, 0], [0, 1, 0]],
+            fixed_experiments=[[1, 0, 0], [0, 1, 0]],  # type: ignore
         )
     opt = np.eye(3)
     for row in A.to_numpy():

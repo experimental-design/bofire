@@ -26,7 +26,7 @@ def test_default_jacobian_building_block():
     model_terms = np.array(Formula("x1 + x2 + x3 + x1:x2 + {x3**2}").terms, dtype=str)
     x = [1, 2, 3]
 
-    jacobian_building_block = default_jacobian_building_block(vars, model_terms)
+    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
 
     B = np.zeros(shape=(3, 6))
     B[:, 1:4] = np.eye(3)
@@ -44,7 +44,7 @@ def test_default_jacobian_building_block():
     )
     x = [1, 2, 3]
 
-    jacobian_building_block = default_jacobian_building_block(vars, model_terms)
+    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
 
     B = np.zeros(shape=(3, 10))
     B[:, 1:4] = np.eye(3)
@@ -73,7 +73,7 @@ def test_default_jacobian_building_block():
     model_terms = np.array(Formula("{x1**4} - 1").terms, dtype=str)
     x = [1, 2, 3]
 
-    jacobian_building_block = default_jacobian_building_block(vars, model_terms)
+    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
 
     with pytest.raises(KeyError):
         jacobian_building_block(x)
@@ -108,7 +108,7 @@ def test_default_jacobian_building_block():
     formula = Formula(formula[:-3])
     model_terms = np.array(formula.terms, dtype=str)
     x = [1, 2, 3, 4, 5]
-    jacobian_building_block = default_jacobian_building_block(vars, model_terms)
+    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
 
     B = np.array(
         [
