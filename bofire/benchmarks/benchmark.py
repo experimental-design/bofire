@@ -75,6 +75,7 @@ def _single_run(
     metric: Callable[[Domain], float],
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
     n_candidates_per_proposals: int,
+    safe_intervall: int,
 ) -> Tuple[Benchmark, pd.Series]:
     def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
@@ -118,7 +119,7 @@ def _single_run(
         pbar.set_description(
             f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
         )
-        if (i + 1) % 1 == 0:
+        if (i + 1) % safe_intervall == 0:
             autosafe_results(benchmark=benchmark)
     return benchmark, pd.Series(metric_values)
 
@@ -132,6 +133,7 @@ def run(
     n_candidates_per_proposal: int = 1,
     n_runs: int = 5,
     n_procs: int = 5,
+    safe_intervall: int = 3,
 ) -> List[Tuple[Benchmark, pd.Series]]:
     """Run a benchmark problem several times in parallel
 
@@ -159,6 +161,7 @@ def run(
             metric,
             initial_sampler,
             n_candidates_per_proposal,
+            safe_intervall,
         )
 
     if n_procs == 1:
