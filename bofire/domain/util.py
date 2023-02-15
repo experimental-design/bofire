@@ -83,7 +83,7 @@ class ValidatedSeries(pd.Series):
 class PydanticBaseModel(_BaseModel):
     class Config:
         validate_assignment = True
-        # TODO: this should be set to false (add per-type validators instead)
+        # TODO: this should be set to false (must add a validator for bofire.models.model.Model)
         arbitrary_types_allowed = True
         copy_on_model_validation = "none"
         json_encoders = {
