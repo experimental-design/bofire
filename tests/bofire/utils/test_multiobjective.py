@@ -16,38 +16,23 @@ from bofire.utils.multiobjective import (
     get_ref_point_mask,
     infer_ref_point,
 )
-from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
+from tests.bofire import specs
 
-if1 = ContinuousInput(
-    **{
-        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
-        "key": "if1",
-    }
-)
-
-if2 = ContinuousInput(
-    **{
-        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
-        "key": "if2",
-    }
-)
-
+if1 = specs.features.valid(ContinuousInput).obj(key="if1")
+if2 = specs.features.valid(ContinuousInput).obj(key="if2")
 
 of1 = ContinuousOutput(
     objective=MaximizeObjective(w=1),
     key="of1",
 )
-
 of2 = ContinuousOutput(
     objective=MinimizeObjective(w=1),
     key="of2",
 )
-
 of3 = ContinuousOutput(
     objective=MaximizeObjective(w=1),
     key="of3",
 )
-
 of4 = ContinuousOutput(
     objective=MinimizeObjective(w=1),
     key="of4",

@@ -16,64 +16,20 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from tests.bofire.domain.test_features import (
-    VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
-    VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
-    VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
-    VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
-    VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
-    VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
-)
+from tests.bofire import specs
 
-if1 = ContinuousInput(
-    **{
-        **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
-        "key": "cont",
-    }
+if1 = specs.features.valid(ContinuousInput).obj(key="cont")
+if2 = specs.features.valid(CategoricalInput).obj(key="cat")
+if3 = specs.features.valid(CategoricalDescriptorInput).obj(key="cat_")
+if4 = specs.features.valid(CategoricalInput).obj(
+    key="cat2", allowed=[True, True, False]
 )
-if2 = CategoricalInput(
-    **{
-        **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
-        "key": "cat",
-    }
+if5 = specs.features.valid(ContinuousInput).obj(key="if5", lower_bound=3, upper_bound=3)
+if6 = specs.features.valid(CategoricalInput).obj(
+    key="if6", categories=["c1", "c2", "c3"], allowed=[True, False, False]
 )
-if3 = CategoricalDescriptorInput(
-    **{
-        **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
-        "key": "cat_",
-    }
-)
-if4 = CategoricalInput(
-    **{
-        **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
-        "key": "cat2",
-        "allowed": [True, True, False],
-    }
-)
-if5 = ContinuousInput(
-    **{
-        **VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
-        "key": "if5",
-    }
-)
-if6 = CategoricalInput(
-    **{
-        **VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
-        "key": "if6",
-    }
-)
-of1 = ContinuousOutput(
-    **{
-        **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
-        "key": "out1",
-    }
-)
-of2 = ContinuousOutput(
-    **{
-        **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
-        "key": "out2",
-    }
-)
+of1 = specs.features.valid(ContinuousOutput).obj(key="out1")
+of2 = specs.features.valid(ContinuousOutput).obj(key="out2")
 
 
 def generate_experiments(
