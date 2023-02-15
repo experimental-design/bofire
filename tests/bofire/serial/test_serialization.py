@@ -72,3 +72,9 @@ def test_serialization_should_jsonify_model(valid_model_spec: specs.Spec):
     obj = valid_model_spec.obj()
     serialized = Serialization.json_dict(obj)
     assert serialized == valid_model_spec.typed_spec()
+
+
+def test_serialization_should_jsonify_domain(valid_domain_spec: specs.Spec):
+    obj = valid_domain_spec.obj()
+    serialized = Serialization.json_dict(obj)
+    assert serialized == valid_domain_spec.typed_spec()

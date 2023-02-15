@@ -87,3 +87,10 @@ def test_deserialization_should_process_model(valid_model_spec: specs.Spec):
     deserialized = Deserialization.model(valid_model_spec.typed_spec())
     assert isinstance(deserialized, valid_model_spec.cls)
     assert obj == deserialized
+
+
+def test_deserialization_should_process_domain(valid_domain_spec: specs.Spec):
+    obj = valid_domain_spec.obj()
+    deserialized = Deserialization.domain(valid_domain_spec.typed_spec())
+    assert isinstance(deserialized, valid_domain_spec.cls)
+    assert obj == deserialized
