@@ -12,7 +12,7 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
-from bofire.serial.serial import Deserialization
+from bofire.serial.deserialization import Deserialization
 from tests.bofire import specs
 
 

@@ -5,8 +5,8 @@ import gpytorch.kernels
 import torch
 from gpytorch.kernels import Kernel as GpytorchKernel
 
+from bofire.any.prior import AnyPrior
 from bofire.domain.util import PydanticBaseModel
-from bofire.serial.prior import AnyPrior
 
 
 class BaseKernel(PydanticBaseModel):

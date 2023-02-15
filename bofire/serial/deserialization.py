@@ -1,20 +1,18 @@
-import json
 from typing import Dict, Union
 
-from pydantic import BaseModel, parse_obj_as
+from pydantic import parse_obj_as
 
+from bofire.any.constraint import AnyConstraint
+from bofire.any.domain import AnyDomain
+from bofire.any.feature import AnyFeature
+from bofire.any.kernel import AnyKernel
+from bofire.any.model import AnyModel
+from bofire.any.objective import AnyObjective
+from bofire.any.prior import AnyPrior
+from bofire.any.strategy import AnyStrategy
 from bofire.domain.constraints import Constraints
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.serial.constraints import AnyConstraint
-from bofire.serial.domain import AnyDomain
-from bofire.serial.features import AnyFeature
-from bofire.serial.kernel import AnyKernel
-from bofire.serial.models import AnyModel
-from bofire.serial.objectives import AnyObjective
-from bofire.serial.prior import AnyPrior
-from bofire.serial.strategies import AnyStrategy
 
-# TODO: simplify imports, remove Any for Singles
 Any = Union[
     AnyConstraint,
     AnyDomain,
@@ -28,6 +26,9 @@ Any = Union[
     InputFeatures,
     OutputFeatures,
 ]
+
+# TODO: add AnyConstraints
+# TODO: add AnyFeatures
 
 
 class Deserialization:
@@ -98,25 +99,3 @@ class Deserialization:
         """Create instance of a strategy."""
 
         return parse_obj_as(AnyStrategy, data)
-
-
-class Serialization:
-    """Create serialized data from model instances."""
-
-    @staticmethod
-    def dict(data: BaseModel) -> Dict:
-        """Return `data.dict()`."""
-
-        return data.dict()
-
-    @staticmethod
-    def json(data: BaseModel) -> str:
-        """Return `data.json()`."""
-
-        return data.json()
-
-    @staticmethod
-    def json_dict(data: BaseModel) -> Dict:
-        """Return `json.loads(data.dict())`."""
-
-        return json.loads(data.json())

@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import botorch
 import numpy as np
@@ -232,4 +232,5 @@ class EmpiricalModel(BotorchModel):
         model (DeterministicModel): Botorch model instance.
     """
 
+    type: Literal["EmpiricalModel"] = "EmpiricalModel"
     model: Optional[DeterministicModel] = None

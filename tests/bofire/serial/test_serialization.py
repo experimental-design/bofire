@@ -11,7 +11,7 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
-from bofire.serial.serial import Serialization
+from bofire.serial.serialization import Serialization
 from tests.bofire import specs
 
 

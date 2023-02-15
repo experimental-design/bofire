@@ -13,6 +13,7 @@ from pydantic.class_validators import root_validator
 from pydantic.types import conint, conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
+from bofire.any.objective import AnyAbstractObjective, AnyObjective
 from bofire.domain.objectives import MaximizeObjective, Objective
 from bofire.domain.util import (
     KeyModel,
@@ -22,7 +23,6 @@ from bofire.domain.util import (
     is_numeric,
     name2key,
 )
-from bofire.serial.objectives import AnyAbstractObjective, AnyObjective
 from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum, ScalerEnum
 
 _CAT_SEP = "_"
