@@ -11,7 +11,12 @@ from sklearn.metrics import (
     r2_score,
 )
 
-from bofire.domain.util import PydanticBaseModel, is_numeric
+from bofire.domain.util import (
+    PydanticBaseModel,
+    ValidatedDataFrame,
+    ValidatedSeries,
+    is_numeric,
+)
 from bofire.utils.enum import RegressionMetricsEnum
 
 
@@ -193,11 +198,11 @@ class CvResult(PydanticBaseModel):
     """
 
     key: str
-    observed: pd.Series
-    predicted: pd.Series
-    standard_deviation: Optional[pd.Series] = None
-    labcodes: Optional[pd.Series] = None
-    X: Optional[pd.DataFrame] = None
+    observed: ValidatedSeries
+    predicted: ValidatedSeries
+    standard_deviation: Optional[ValidatedSeries] = None
+    labcodes: Optional[ValidatedSeries] = None
+    X: Optional[ValidatedDataFrame] = None
 
     @root_validator(pre=True)
     def validate_shapes(cls, values):
