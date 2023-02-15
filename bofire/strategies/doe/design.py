@@ -4,7 +4,6 @@ from typing import Callable, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from cyipopt import minimize_ipopt
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
@@ -116,6 +115,15 @@ def find_local_max_ipopt(
         local optimum.
 
     """
+
+    try:
+        from cyipopt import minimize_ipopt
+    except ImportError as e:
+        warnings.warn(e.msg)
+        warnings.warn(
+            "please run `conda install -c conda-forge cyipopt` for this functionality."
+        )
+        raise e
 
     assert all(
         [c.min_count == 0 for c in domain.cnstrs if isinstance(c, NChooseKConstraint)]

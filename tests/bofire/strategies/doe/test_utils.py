@@ -444,13 +444,18 @@ def test_g_efficiency():
     # define domain: sampling not implemented
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0.95, upper_bound=1.0)
+            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1.0)
             for i in range(4)
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "x3", "x4"],
+                coefficients=[-1, -1, -1, -1],
+                rhs=-0.95,
             ),
             NChooseKConstraint(
                 features=["x1", "x2", "x3", "x4"],
@@ -496,13 +501,18 @@ def test_metrics():
     # define domain: sampling not implemented
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0.95, upper_bound=1.0)
+            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1.0)
             for i in range(4)
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "x3", "x4"],
+                coefficients=[-1, -1, -1, -1],
+                rhs=-0.95,
             ),
             NChooseKConstraint(
                 features=["x1", "x2", "x3", "x4"],
@@ -547,35 +557,53 @@ def test_check_nchoosek_constraints_as_bounds():
             for i in range(4)
         ],
         output_features=[ContinuousOutput(key="y")],
-        constraints=[opti.LinearEquality(names=["x1", "x2"])],
+        constraints=[
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0)
+        ],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: possible to formulate as bounds, with NChooseK and other constraints
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=-i, upper_bound=1)
-            for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
-        constraints=[
-            opti.LinearEquality(names=["x1", "x2"]),
-            opti.LinearInequality(names=["x3", "x4"]),
-            opti.NChooseK(names=["x1", "x2"], max_active=1),
-            opti.NChooseK(names=["x3", "x4"], max_active=1),
-        ],
-    )
-    check_nchoosek_constraints_as_bounds(domain)
+    with pytest.warns(UserWarning):
+        domain = Domain(
+            input_features=[
+                ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
+                ContinuousInput(key=f"x{2}", lower_bound=-1, upper_bound=1),
+                ContinuousInput(key=f"x{3}", lower_bound=-2, upper_bound=1),
+                ContinuousInput(key=f"x{4}", lower_bound=-3, upper_bound=1),
+            ],
+            output_features=[ContinuousOutput(key="y")],
+            constraints=[
+                LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
+                LinearInequalityConstraint(
+                    features=["x3", "x4"], coefficients=[1, 1], rhs=0
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2"], max_count=1, min_count=0, none_also_valid=True
+                ),
+                NChooseKConstraint(
+                    features=["x3", "x4"], max_count=1, min_count=0, none_also_valid=True
+                ),
+            ],
+        )
+        check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: not possible to formulate as bounds, invalid bounds
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0.1, upper_bound=1)
+            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
             for i in range(4)
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
-            opti.NChooseK(names=["x1", "x2"], max_active=1),
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=[-1, -1],
+                rhs=-0.1,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"], max_count=1, min_count=0, none_also_valid=True
+            ),
         ],
     )
     with pytest.raises(ValueError):
@@ -583,12 +611,21 @@ def test_check_nchoosek_constraints_as_bounds():
 
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=-1, upper_bound=-0.1)
-            for i in range(4)
+            ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=-0.1),
+            ContinuousInput(key=f"x{2}", lower_bound=0, upper_bound=-0.1),
+            ContinuousInput(key=f"x{3}", lower_bound=-1, upper_bound=-0.1),
+            ContinuousInput(key=f"x{4}", lower_bound=-1, upper_bound=-0.1),
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
-            opti.NChooseK(names=["x1", "x2"], max_active=1),
+            LinearInequalityConstraint(
+                features=["x1", "x2"],
+                coefficients=[-1, -1],
+                rhs=1,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"], max_count=1, min_count=0, none_also_valid=True
+            ),
         ],
     )
     with pytest.raises(ValueError):
@@ -602,8 +639,15 @@ def test_check_nchoosek_constraints_as_bounds():
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
-            opti.NChooseK(names=["x1", "x2"], max_active=1),
-            opti.NChooseK(names=["x2", "x3", "x4"], max_active=2),
+            NChooseKConstraint(
+                features=["x1", "x2"], max_count=1, min_count=0, none_also_valid=True
+            ),
+            NChooseKConstraint(
+                features=["x2", "x3", "x4"],
+                max_count=2,
+                min_count=0,
+                none_also_valid=True,
+            ),
         ],
     )
     with pytest.raises(ValueError):

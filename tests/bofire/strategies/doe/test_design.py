@@ -1,5 +1,6 @@
 import warnings
 
+import importlib.util
 import numpy as np
 import pytest
 
@@ -17,6 +18,13 @@ from bofire.strategies.doe.design import (
     logD,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
+
+CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+
+
+@pytest.mark.skipif(CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_raise_error_if_cyipopt_not_available():
+    pytest.raises(ImportError)
 
 
 def test_logD():
@@ -43,6 +51,7 @@ def test_get_objective():
     assert np.allclose(objective(x), -np.log(4) - np.log(1e-7))
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_no_constraint():
     # Design for a problem with an n-choose-k constraint
     domain = Domain(
@@ -64,6 +73,7 @@ def test_find_local_max_ipopt_no_constraint():
     assert design.shape == (num_exp, dim_input)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_nchoosek():
     # Design for a problem with an n-choose-k constraint
     input_features = [
@@ -94,6 +104,7 @@ def test_find_local_max_ipopt_nchoosek():
     assert A.shape == (N, D)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_mixture():
     # Design for a problem with a mixture constraint
     input_features = [
@@ -116,6 +127,7 @@ def test_find_local_max_ipopt_mixture():
     assert A.shape == (N, D)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_mixed_results():
     input_features = [
         ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
@@ -142,7 +154,6 @@ def test_find_local_max_ipopt_mixed_results():
         A = find_local_max_ipopt(
             domain, "fully-quadratic", ipopt_options={"maxiter": 100}
         )
-        print(A)
     opt = np.eye(3)
     for row in A.to_numpy():
         assert any([np.allclose(row, o, atol=1e-2) for o in opt])
@@ -150,6 +161,7 @@ def test_find_local_max_ipopt_mixed_results():
         assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_results():
     # define problem: no NChooseK constraints
     input_features = [
@@ -197,6 +209,7 @@ def test_find_local_max_ipopt_results():
 #     find_local_max_ipopt(problem, "linear", n_experiments=10, sampling=sampling)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_fixed_experiments():
     input_features = [
         ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
@@ -288,6 +301,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     assert np.allclose(A.to_numpy()[:2, :], opt[:2, :])
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_check_fixed_experiments():
     # define problem: everything fine
     input_features = [
@@ -324,6 +338,7 @@ def test_check_fixed_experiments():
         check_fixed_experiments(domain, 3, fixed_experiments)
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_check_constraints_and_domain_respected():
     # problem with unfulfillable constraints
     # formulation constraint

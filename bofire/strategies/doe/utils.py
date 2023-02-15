@@ -172,13 +172,12 @@ def n_zero_eigvals(
         model_type=model_type, rhs_only=True, domain=domain
     )
     N = len(model_formula.terms) + 3
-    print(model_formula.terms)
+
     sampler = PolytopeSampler(domain=domain)
     X = sampler.ask(N)
+
     # compute eigenvalues of information matrix
-    print(X)
     A = model_formula.get_model_matrix(X)
-    print(A)
     eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
 
     return len(eigvals) - len(eigvals[eigvals > epsilon])
@@ -347,7 +346,8 @@ def g_efficiency(
     n, p = X.shape
 
     # take large sample from the design space
-    Y = domain.inputs.sample(int(n_samples)).to_numpy()
+    sampler = PolytopeSampler(domain=domain)
+    Y = sampler.ask(n_samples).to_numpy()
 
     # variance over set of runs
     D = Y @ np.linalg.inv(X.T @ X + delta * np.eye(p)) @ Y.T
