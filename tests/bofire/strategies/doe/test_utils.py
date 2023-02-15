@@ -603,16 +603,11 @@ def test_check_nchoosek_constraints_as_bounds():
     with pytest.warns(UserWarning):
         domain = Domain(
             input_features=[
-                ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+                ContinuousInput(key=f"x{i+1}", lower_bound=-1, upper_bound=-0.1)
                 for i in range(4)
             ],
             output_features=[ContinuousOutput(key="y")],
             constraints=[
-                LinearInequalityConstraint(
-                    features=["x1", "x2"],
-                    coefficients=[-1, -1],
-                    rhs=-0.1,
-                ),
                 NChooseKConstraint(
                     features=["x1", "x2"],
                     max_count=1,
@@ -627,21 +622,22 @@ def test_check_nchoosek_constraints_as_bounds():
     with pytest.warns(UserWarning):
         domain = Domain(
             input_features=[
-                ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=-0.1),
-                ContinuousInput(key=f"x{2}", lower_bound=0, upper_bound=-0.1),
-                ContinuousInput(key=f"x{3}", lower_bound=-1, upper_bound=-0.1),
-                ContinuousInput(key=f"x{4}", lower_bound=-1, upper_bound=-0.1),
+                ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
+                ContinuousInput(key=f"x{2}", lower_bound=0, upper_bound=1),
+                ContinuousInput(key=f"x{3}", lower_bound=0, upper_bound=1),
+                ContinuousInput(key=f"x{4}", lower_bound=0, upper_bound=1),
             ],
             output_features=[ContinuousOutput(key="y")],
             constraints=[
-                LinearInequalityConstraint(
-                    features=["x1", "x2"],
-                    coefficients=[-1, -1],
-                    rhs=1,
-                ),
                 NChooseKConstraint(
                     features=["x1", "x2"],
                     max_count=1,
+                    min_count=0,
+                    none_also_valid=True,
+                ),
+                NChooseKConstraint(
+                    features=["x1", "x2"],
+                    max_count=2,
                     min_count=0,
                     none_also_valid=True,
                 ),
