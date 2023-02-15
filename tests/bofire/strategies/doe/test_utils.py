@@ -564,7 +564,7 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: possible to formulate as bounds, with NChooseK and other constraints
-    with pytest.warns(UserWarning):
+    with pytest.raises(ValueError):
         domain = Domain(
             input_features=[
                 ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
@@ -597,7 +597,7 @@ def test_check_nchoosek_constraints_as_bounds():
         check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: not possible to formulate as bounds, invalid bounds
-    with pytest.warns(UserWarning):
+    with pytest.raises(ValueError):
         domain = Domain(
             input_features=[
                 ContinuousInput(key=f"x{i+1}", lower_bound=-1, upper_bound=-0.1)
@@ -616,7 +616,7 @@ def test_check_nchoosek_constraints_as_bounds():
         with pytest.raises(ValueError):
             check_nchoosek_constraints_as_bounds(domain)
 
-    with pytest.warns(UserWarning):
+    with pytest.raises(ValueError):
         domain = Domain(
             input_features=[
                 ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
@@ -644,7 +644,7 @@ def test_check_nchoosek_constraints_as_bounds():
             check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: not possible to formulate as bounds, names parameters of two NChooseK overlap
-    with pytest.warns(UserWarning):
+    with pytest.raises(ValueError):
         domain = Domain(
             input_features=[
                 ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
