@@ -8,17 +8,12 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-from pydantic import Field, parse_obj_as, validate_arguments, validator
+from pydantic import Field, validate_arguments, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conint, conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.domain.objectives import (
-    AnyAbstractObjective,
-    AnyObjective,
-    MaximizeObjective,
-    Objective,
-)
+from bofire.domain.objectives import MaximizeObjective, Objective
 from bofire.domain.util import (
     KeyModel,
     PydanticBaseModel,
@@ -27,6 +22,7 @@ from bofire.domain.util import (
     is_numeric,
     name2key,
 )
+from bofire.serial.objectives import AnyAbstractObjective, AnyObjective
 from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum, ScalerEnum
 
 _CAT_SEP = "_"
@@ -59,10 +55,6 @@ class Feature(KeyModel):
             return self.key < other.key
         else:
             return order_self < order_other
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(AnyFeature, dict_)
 
 
 class InputFeature(Feature):
@@ -152,10 +144,6 @@ class NumericalInput(InputFeature):
     """Abstract base class for all numerical (ordinal) input features."""
 
     type: Literal["NumericalInput"] = "NumericalInput"
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(AnyInputFeature, dict_)
 
     def to_unit_range(
         self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
@@ -1043,10 +1031,6 @@ class OutputFeature(Feature):
 
     type: Literal["OutputFeature"] = "OutputFeature"
     objective: Optional[AnyObjective]
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(AnyOutputFeature, dict_)
 
 
 class ContinuousOutput(OutputFeature):

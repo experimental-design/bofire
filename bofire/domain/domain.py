@@ -16,7 +16,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, parse_obj_as, validator
+from pydantic import Field, validator
 
 from bofire.domain.constraints import (
     AnyConstraint,
@@ -721,10 +721,6 @@ class Domain(PydanticBaseModel):
         if self.experiments is None:
             return 0
         return len(self.experiments)
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(Domain, dict_)
 
 
 def get_subdomain(

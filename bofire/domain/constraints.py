@@ -5,7 +5,7 @@ from typing import List, Literal, Sequence, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, parse_obj_as, validator
+from pydantic import Field, validator
 from pydantic.class_validators import root_validator
 from pydantic.types import conlist
 
@@ -40,10 +40,6 @@ class Constraint(PydanticBaseModel):
             pd.Series: Distance to reach constraint fulfillment.
         """
         pass
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(AnyConstraint, dict_)
 
 
 TFeatureKeys = conlist(item_type=str, min_items=2)

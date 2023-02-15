@@ -1,9 +1,12 @@
 from typing import Union
 
 from bofire.domain.objectives import (
+    AbstractTargetObjective,
+    BotorchConstrainedObjective,
     CloseToTargetObjective,
     ConstantObjective,
     DeltaObjective,
+    IdentityObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -13,7 +16,6 @@ from bofire.domain.objectives import (
 )
 
 AnyObjective = Union[
-    # IdentityObjective,
     MaximizeObjective,
     MinimizeObjective,
     DeltaObjective,
@@ -21,7 +23,21 @@ AnyObjective = Union[
     MaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
     ConstantObjective,
-    # AbstractTargetObjective,
     CloseToTargetObjective,
     TargetObjective,
+]
+
+AnyAbstractObjective = Union[
+    IdentityObjective,
+    MaximizeObjective,
+    MinimizeObjective,
+    DeltaObjective,
+    SigmoidObjective,
+    MaximizeSigmoidObjective,
+    MinimizeSigmoidObjective,
+    ConstantObjective,
+    AbstractTargetObjective,
+    CloseToTargetObjective,
+    TargetObjective,
+    BotorchConstrainedObjective,
 ]
