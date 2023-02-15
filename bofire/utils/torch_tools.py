@@ -9,7 +9,7 @@ from torch.nn import Module
 from torch.nn.functional import one_hot
 
 from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )

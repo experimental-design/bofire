@@ -18,12 +18,9 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 
-from bofire.domain.constraints import (
-    AnyConstraint,
-    Constraints,
-    LinearConstraint,
-    NChooseKConstraint,
-)
+from bofire.any.constraint import AnyConstraint
+from bofire.domain.constraint import LinearConstraint, NChooseKConstraint
+from bofire.domain.constraints import Constraints
 from bofire.domain.features import (
     AnyInputFeature,
     AnyOutputFeature,

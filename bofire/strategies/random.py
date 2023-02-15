@@ -4,7 +4,7 @@ import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,

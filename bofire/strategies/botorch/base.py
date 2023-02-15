@@ -13,7 +13,7 @@ from pydantic import PositiveInt
 from pydantic.class_validators import root_validator, validator
 from pydantic.types import NonNegativeInt, conlist
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,

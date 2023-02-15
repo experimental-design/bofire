@@ -8,7 +8,7 @@ from botorch.utils.sampling import get_polytope_samples
 from pydantic import validate_arguments, validator
 
 from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,

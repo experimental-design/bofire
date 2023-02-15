@@ -3,14 +3,14 @@ import uuid
 from abc import ABC, abstractmethod
 from typing import Any, List, Type
 
-from bofire.domain.constraints import (
-    Constraints,
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
+from bofire.domain.constraints import Constraints
 from bofire.domain.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInput,

@@ -16,7 +16,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 )
 from pydantic import confloat
 
-from bofire.domain.constraints import Constraint, NChooseKConstraint
+from bofire.domain.constraint import Constraint, NChooseKConstraint
 from bofire.domain.features import Feature
 from bofire.domain.objectives import (
     BotorchConstrainedObjective,

@@ -9,7 +9,7 @@ from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,

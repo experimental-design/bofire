@@ -1,9 +1,8 @@
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
-    Constraints,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -11,6 +10,7 @@ from bofire.domain.constraints import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
+from bofire.domain.constraints import Constraints
 from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeatures
 from bofire.utils.enum import SamplingMethodEnum
 from tests.bofire import specs

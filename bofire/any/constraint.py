@@ -1,11 +1,11 @@
 from typing import Union
 
-from bofire.domain import constraints
+from bofire.domain import constraint
 
 AnyConstraint = Union[
-    constraints.LinearEqualityConstraint,
-    constraints.LinearInequalityConstraint,
-    constraints.NonlinearEqualityConstraint,
-    constraints.NonlinearInequalityConstraint,
-    constraints.NChooseKConstraint,
+    constraint.LinearEqualityConstraint,
+    constraint.LinearInequalityConstraint,
+    constraint.NonlinearEqualityConstraint,
+    constraint.NonlinearInequalityConstraint,
+    constraint.NChooseKConstraint,
 ]
