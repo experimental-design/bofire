@@ -33,7 +33,15 @@ from bofire.domain.objectives import (
     TargetObjective,
 )
 from bofire.models.gps.gps import MixedSingleTaskGPModel, ScalerEnum, SingleTaskGPModel
-from bofire.models.gps.kernels import HammondDistanceKernel, MaternKernel, ScaleKernel
+from bofire.models.gps.kernels import (
+    AdditiveKernel,
+    HammondDistanceKernel,
+    LinearKernel,
+    MaternKernel,
+    MultiplicativeKernel,
+    RBFKernel,
+    ScaleKernel,
+)
 from bofire.models.gps.priors import botorch_lengthcale_prior, botorch_scale_prior
 
 
@@ -486,5 +494,65 @@ domains.add_valid(
             "d": [5, 2, 5],
             "e": [3, 4, 5],
         },
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
+# kernel
+# # # # # # # # # # # # # # # # # #
+
+kernels = Specs([])
+kernels.add_valid(
+    HammondDistanceKernel,
+    {
+        "ard": False,
+    },
+)
+kernels.add_valid(
+    LinearKernel,
+    {},
+)
+# TODO: add prior
+kernels.add_valid(
+    MaternKernel,
+    {
+        "ard": True,
+        "nu": 0.415,
+        "lengthscale_prior": None,
+    },
+)
+# TODO: add prior
+kernels.add_valid(
+    RBFKernel,
+    {
+        "ard": True,
+        "lengthscale_prior": None,
+    },
+)
+# TODO: add prior
+kernels.add_valid(
+    ScaleKernel,
+    {
+        "base_kernel": kernels.valid(LinearKernel).obj(),
+        "outputscale_prior": None,
+    },
+)
+kernels.add_valid(
+    AdditiveKernel,
+    {
+        "kernels": [
+            kernels.valid(LinearKernel).obj(),
+            kernels.valid(MaternKernel).obj(),
+        ]
+    },
+)
+kernels.add_valid(
+    MultiplicativeKernel,
+    {
+        "kernels": [
+            kernels.valid(LinearKernel).obj(),
+            kernels.valid(MaternKernel).obj(),
+        ]
     },
 )

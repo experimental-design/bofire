@@ -180,14 +180,3 @@ class ScaleKernel(BaseKernel):
 
 MultiplicativeKernel.update_forward_refs()
 AdditiveKernel.update_forward_refs()
-
-
-AnyKernel = Union[
-    HammondDistanceKernel,
-    RBFKernel,
-    MaternKernel,
-    LinearKernel,
-    ScaleKernel,
-    MultiplicativeKernel,
-    AdditiveKernel,
-]

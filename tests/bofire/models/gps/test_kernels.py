@@ -5,7 +5,6 @@ from pydantic import parse_obj_as
 
 from bofire.models.gps.kernels import (
     AdditiveKernel,
-    AnyKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
@@ -17,6 +16,7 @@ from bofire.models.gps.priors import (
     botorch_lengthcale_prior,
     botorch_scale_prior,
 )
+from bofire.serial.kernel import AnyKernel
 from tests.bofire.domain.utils import get_invalids
 
 EQUIVALENTS = {

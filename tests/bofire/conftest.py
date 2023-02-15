@@ -93,3 +93,21 @@ def valid_domain_spec(request) -> specs.Spec:
 @fixture(params=specs.domains.invalids)
 def invalid_domain_spec(request) -> specs.Spec:
     return request.param
+
+
+# kernel
+
+
+@fixture
+def kernel() -> Constraint:
+    return specs.kernels.valid().obj()
+
+
+@fixture(params=specs.kernels.valids)
+def valid_kernel_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.kernels.invalids)
+def invalid_kernel_spec(request) -> specs.Spec:
+    return request.param

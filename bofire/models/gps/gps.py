@@ -14,7 +14,6 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 from pydantic import Field
 
 from bofire.models.gps.kernels import (
-    AnyKernel,
     CategoricalKernel,
     ContinuousKernel,
     HammondDistanceKernel,
@@ -24,6 +23,7 @@ from bofire.models.gps.kernels import (
 from bofire.models.gps.priors import botorch_lengthcale_prior, botorch_scale_prior
 from bofire.models.model import TrainableModel
 from bofire.models.torch_models import BotorchModel
+from bofire.serial.kernel import AnyKernel
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 

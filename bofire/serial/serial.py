@@ -8,6 +8,7 @@ from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.serial.constraints import AnyConstraint
 from bofire.serial.domain import AnyDomain
 from bofire.serial.features import AnyFeature
+from bofire.serial.kernel import AnyKernel
 from bofire.serial.models import AnyModel
 from bofire.serial.objectives import AnyObjective
 from bofire.serial.strategies import AnyStrategy
@@ -20,10 +21,12 @@ Any = Union[
     AnyModel,
     AnyObjective,
     AnyStrategy,
+    AnyKernel,
     Constraints,
+    InputFeatures,
+    OutputFeatures,
 ]
 
-# TODO: move AnyKernel here
 # TODO: move AnyPrior here
 
 
@@ -65,6 +68,12 @@ class Deserialization:
         """Create instance of input or output features."""
 
         return parse_obj_as(Union[InputFeatures, OutputFeatures], data)
+
+    @staticmethod
+    def kernel(data: Dict) -> AnyKernel:
+        """Create instance of a kernel."""
+
+        return parse_obj_as(AnyKernel, data)
 
     @staticmethod
     def model(data: Dict) -> AnyModel:
