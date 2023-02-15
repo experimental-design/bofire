@@ -4,13 +4,16 @@ import torch
 
 from bofire.domain import Domain
 from bofire.domain.constraints import (
+    Constraints,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.domain.features import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    InputFeatures,
     OutputFeatures,
 )
 from bofire.domain.objectives import (
@@ -20,6 +23,7 @@ from bofire.domain.objectives import (
 )
 from bofire.utils.torch_tools import (
     get_linear_constraints,
+    get_nchoosek_constraints,
     get_output_constraints,
     tkwargs,
 )
@@ -179,3 +183,104 @@ def test_get_output_constraints(output_features):
     constraints, etas = get_output_constraints(output_features=output_features)
     assert len(constraints) == len(etas)
     assert np.allclose(etas, [0.5, 0.25, 0.25])
+
+
+def test_get_nchoosek_constraints():
+    domain = Domain(
+        input_features=InputFeatures(
+            features=[
+                ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
+                for i in range(8)
+            ]
+        ),
+        constraints=Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=[f"if{i+3}" for i in range(6)],
+                    min_count=2,
+                    max_count=5,
+                    none_also_valid=False,
+                )
+            ]
+        ),
+    )
+    constraints = get_nchoosek_constraints(domain=domain)
+    assert len(constraints) == 2
+    # wrong samples
+    samples = domain.inputs.sample(5)
+    # check max count not fulfilled
+    assert torch.allclose(
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
+        torch.ones(5).to(**tkwargs) * -1,
+    )
+    # check max count fulfilled
+    samples.if8 = 0
+    assert torch.allclose(
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
+        torch.zeros(5).to(**tkwargs),
+    )
+
+    # check min count fulfilled
+    samples = domain.inputs.sample(5)
+    assert torch.allclose(
+        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)),
+        torch.ones(5).to(**tkwargs) * 4,
+    )
+    # check min count not fulfilled
+    samples[[f"if{i+4}" for i in range(5)]] = 0.0
+    assert torch.allclose(
+        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)),
+        torch.ones(5).to(**tkwargs) * -1,
+    )
+    # check no creation of max_count constraint if max_count = n_features
+    domain = Domain(
+        input_features=InputFeatures(
+            features=[
+                ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
+                for i in range(8)
+            ]
+        ),
+        constraints=Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=[f"if{i+3}" for i in range(6)],
+                    min_count=3,
+                    max_count=6,
+                    none_also_valid=False,
+                )
+            ]
+        ),
+    )
+    constraints = get_nchoosek_constraints(domain=domain)
+    assert len(constraints) == 1
+    samples = domain.inputs.sample(5)
+    assert torch.allclose(
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
+        torch.ones(5).to(**tkwargs) * 3,
+    )
+    # check no creation of min_count constraint if min_count = 0
+    domain = Domain(
+        input_features=InputFeatures(
+            features=[
+                ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
+                for i in range(8)
+            ]
+        ),
+        constraints=Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=[f"if{i+3}" for i in range(6)],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=False,
+                )
+            ]
+        ),
+    )
+    constraints = get_nchoosek_constraints(domain=domain)
+    assert len(constraints) == 1
+    samples = domain.inputs.sample(5)
+    assert torch.allclose(
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
+        torch.ones(5).to(**tkwargs) * -4,
+    )
