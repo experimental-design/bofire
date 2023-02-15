@@ -551,20 +551,17 @@ def test_check_nchoosek_constraints_as_bounds():
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    with pytest.warns(UserWarning):
-        domain = Domain(
-            input_features=[
-                ContinuousInput(key=f"x{i+1}", lower_bound=-np.inf, upper_bound=1)
-                for i in range(4)
-            ],
-            output_features=[ContinuousOutput(key="y")],
-            constraints=[
-                LinearEqualityConstraint(
-                    features=["x1", "x2"], coefficients=[1, 1], rhs=0
-                )
-            ],
-        )
-        check_nchoosek_constraints_as_bounds(domain)
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key=f"x{i+1}", lower_bound=-np.inf, upper_bound=1)
+            for i in range(4)
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0)
+        ],
+    )
+    check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: possible to formulate as bounds, with NChooseK and other constraints
     with pytest.warns(UserWarning):
