@@ -407,6 +407,7 @@ AnyObjective = Union[
     TargetObjective,
 ]
 
+# TODO: check if this is needed...
 AnyAbstractObjective = Union[
     IdentityObjective,
     MaximizeObjective,
