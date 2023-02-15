@@ -42,7 +42,12 @@ from bofire.models.gps.kernels import (
     RBFKernel,
     ScaleKernel,
 )
-from bofire.models.gps.priors import botorch_lengthcale_prior, botorch_scale_prior
+from bofire.models.gps.priors import (
+    GammaPrior,
+    NormalPrior,
+    botorch_lengthcale_prior,
+    botorch_scale_prior,
+)
 
 
 class Spec:
@@ -499,6 +504,27 @@ domains.add_valid(
 
 
 # # # # # # # # # # # # # # # # # #
+# prior
+# # # # # # # # # # # # # # # # # #
+
+priors = Specs([])
+priors.add_valid(
+    NormalPrior,
+    {
+        "loc": 0.4,
+        "scale": 0.9,
+    },
+)
+priors.add_valid(
+    GammaPrior,
+    {
+        "concentration": 0.3,
+        "rate": 0.6,
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
 # kernel
 # # # # # # # # # # # # # # # # # #
 
@@ -513,29 +539,26 @@ kernels.add_valid(
     LinearKernel,
     {},
 )
-# TODO: add prior
 kernels.add_valid(
     MaternKernel,
     {
         "ard": True,
         "nu": 0.415,
-        "lengthscale_prior": None,
+        "lengthscale_prior": priors.valid().obj(),
     },
 )
-# TODO: add prior
 kernels.add_valid(
     RBFKernel,
     {
         "ard": True,
-        "lengthscale_prior": None,
+        "lengthscale_prior": priors.valid().obj(),
     },
 )
-# TODO: add prior
 kernels.add_valid(
     ScaleKernel,
     {
         "base_kernel": kernels.valid(LinearKernel).obj(),
-        "outputscale_prior": None,
+        "outputscale_prior": priors.valid().obj(),
     },
 )
 kernels.add_valid(

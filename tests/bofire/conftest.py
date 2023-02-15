@@ -95,6 +95,24 @@ def invalid_domain_spec(request) -> specs.Spec:
     return request.param
 
 
+# prior
+
+
+@fixture
+def prior() -> Constraint:
+    return specs.priors.valid().obj()
+
+
+@fixture(params=specs.priors.valids)
+def valid_prior_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.priors.invalids)
+def invalid_prior_spec(request) -> specs.Spec:
+    return request.param
+
+
 # kernel
 
 

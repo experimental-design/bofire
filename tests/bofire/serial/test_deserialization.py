@@ -96,6 +96,13 @@ def test_deserialization_should_process_domain(valid_domain_spec: specs.Spec):
     assert obj == deserialized
 
 
+def test_deserialization_should_process_prior(valid_prior_spec: specs.Spec):
+    obj = valid_prior_spec.obj()
+    deserialized = Deserialization.prior(valid_prior_spec.typed_spec())
+    assert isinstance(deserialized, valid_prior_spec.cls)
+    assert obj == deserialized
+
+
 def test_deserialization_should_process_kernel(valid_kernel_spec: specs.Spec):
     obj = valid_kernel_spec.obj()
     deserialized = Deserialization.kernel(valid_kernel_spec.typed_spec())
