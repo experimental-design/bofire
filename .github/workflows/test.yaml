@@ -18,12 +18,11 @@ jobs:
       - name: Install Bofire
         run: pip install .[testing]
       - name: Run tests
-        run: |
-        pytest -ra --cov=bofire --cov-report term-missing tests
+        run: pytest -ra --cov=bofire --cov-report term-missing tests
       - name: Run optional doe tests
-        run: |
-        conda install -c conda-forge cyipopt
-        pytest tests/bofire/strategies/doe/test_design.py
+        script:
+        - conda install -c conda-forge cyipopt
+        - pytest tests/bofire/strategies/doe/test_design.py
       #- name: Upload coverage
       #  run: bash <(curl -s https://codecov.io/bash)
           
