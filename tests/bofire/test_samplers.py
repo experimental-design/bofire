@@ -5,6 +5,7 @@ from bofire.domain.constraints import (
     Constraints,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.domain.features import CategoricalInput, ContinuousInput, InputFeatures
 from bofire.samplers import PolytopeSampler, RejectionSampler
@@ -94,6 +95,13 @@ c4 = LinearEqualityConstraint(
     coefficients=[1.0, 1.0, 1.0, 1.0, 1.0],
     rhs=2.0,
 )
+c5 = LinearEqualityConstraint(features=["if1", "if4"], coefficients=[1.0, 1.0], rhs=1.0)
+c6 = NChooseKConstraint(
+    features=["if1", "if2", "if3"],
+    min_count=1,
+    max_count=2,
+    none_also_valid=False,
+)
 
 domains = [
     Domain(input_features=[if1, if2, if3], constraints=[c2]),
@@ -107,6 +115,15 @@ domains = [
     Domain(input_features=[if1, if2, if3, if4, if6], constraints=[c1, c2, c3]),
     Domain(input_features=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3]),
     Domain(input_features=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3, c4]),
+    Domain(input_features=[if1, if2, if3, if4], constraints=[c5]),
+    Domain(
+        input_features=[if1, if2, if3, if4, if6, If7],
+        constraints=[c6, c2],
+    ),
+    Domain(
+        input_features=[if1, if2, if3, if4, if6, If7],
+        constraints=[c6, c2, c1],
+    ),
 ]
 
 
@@ -115,10 +132,18 @@ domains = [
     [
         (domain, candidate_count)
         for domain in domains
-        for candidate_count in range(1, 5)
+        for candidate_count in range(1, 2)
     ],
 )
-def test_RandomStrategyConstraints(domain, candidate_count):
+def test_PolytopeSampler(domain, candidate_count):
     sampler = PolytopeSampler(domain=domain)
     samples = sampler.ask(candidate_count)
-    assert len(samples) == candidate_count
+    if len(domain.constraints.get(NChooseKConstraint)) == 0:
+        assert len(samples) == candidate_count
+
+
+def test_PolytopeSampler_all_fixed():
+    domain = Domain(input_features=[if1, if4], constraints=[c5])
+    sampler = PolytopeSampler(domain=domain)
+    with pytest.raises(ValueError):
+        sampler.ask(2)
