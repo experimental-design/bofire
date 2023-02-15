@@ -1,4 +1,3 @@
-import json
 import random
 
 import numpy as np
@@ -1137,13 +1136,6 @@ of3 = specs.features.valid(ContinuousOutput).obj(key="of3", objective=None)
 input_features = InputFeatures(features=[if1, if2])
 output_features = OutputFeatures(features=[of1, of2])
 features = Features(features=[if1, if2, of1, of2])
-
-
-# TODO: move to serial
-@pytest.mark.parametrize("features", [input_features, output_features, features])
-def test_features_serialize(features):
-    nfeatures = Features(**json.loads(features.json()))
-    assert nfeatures == features
 
 
 @pytest.mark.parametrize(
