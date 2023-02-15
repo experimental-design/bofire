@@ -172,12 +172,13 @@ def n_zero_eigvals(
         model_type=model_type, rhs_only=True, domain=domain
     )
     N = len(model_formula.terms) + 3
-
+    print(model_formula.terms)
     sampler = PolytopeSampler(domain=domain)
     X = sampler.ask(N)
     # compute eigenvalues of information matrix
     print(X)
     A = model_formula.get_model_matrix(X)
+    print(A)
     eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
 
     return len(eigvals) - len(eigvals[eigvals > epsilon])
