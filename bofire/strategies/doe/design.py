@@ -117,7 +117,7 @@ def find_local_max_ipopt(
     """
 
     try:
-        from cyipopt import minimize_ipopt
+        from cyipopt import minimize_ipopt  # noqa
     except ImportError as e:
         warnings.warn(e.msg)
         warnings.warn(
