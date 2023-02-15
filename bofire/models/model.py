@@ -13,6 +13,7 @@ from bofire.utils.enum import OutputFilteringEnum
 
 
 class Model(PydanticBaseModel):
+    type: str
 
     input_features: InputFeatures
     output_features: OutputFeatures

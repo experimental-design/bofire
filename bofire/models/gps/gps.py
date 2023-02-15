@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Literal, Optional
 
 import botorch
 import pandas as pd
@@ -57,6 +57,7 @@ def get_dim_subsets(d: int, active_dims: List[int], cat_dims: List[int]):
 
 
 class SingleTaskGPModel(BotorchModel, TrainableModel):
+    type: Literal["SingleTaskGPModel"] = "SingleTaskGPModel"
     kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
             base_kernel=MaternKernel(
@@ -138,6 +139,7 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
 
 
 class MixedSingleTaskGPModel(BotorchModel, TrainableModel):
+    type: Literal["MixedSingleTaskGPModel"] = "MixedSingleTaskGPModel"
     continuous_kernel: ContinuousKernel = Field(
         default_factory=lambda: MaternKernel(ard=True, nu=2.5)
     )
