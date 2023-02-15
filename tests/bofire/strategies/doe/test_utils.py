@@ -644,30 +644,29 @@ def test_check_nchoosek_constraints_as_bounds():
             check_nchoosek_constraints_as_bounds(domain)
 
     # define domain: not possible to formulate as bounds, names parameters of two NChooseK overlap
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            for i in range(4)
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                max_count=1,
+                min_count=0,
+                none_also_valid=True,
+            ),
+            NChooseKConstraint(
+                features=["x2", "x3", "x4"],
+                max_count=2,
+                min_count=0,
+                none_also_valid=True,
+            ),
+        ],
+    )
     with pytest.raises(ValueError):
-        domain = Domain(
-            input_features=[
-                ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
-                for i in range(4)
-            ],
-            output_features=[ContinuousOutput(key="y")],
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2"],
-                    max_count=1,
-                    min_count=0,
-                    none_also_valid=True,
-                ),
-                NChooseKConstraint(
-                    features=["x2", "x3", "x4"],
-                    max_count=2,
-                    min_count=0,
-                    none_also_valid=True,
-                ),
-            ],
-        )
-        with pytest.raises(ValueError):
-            check_nchoosek_constraints_as_bounds(domain)
+        check_nchoosek_constraints_as_bounds(domain)
 
 
 def test_nchoosek_constraints_as_bounds():
