@@ -13,7 +13,12 @@ from pydantic.class_validators import root_validator
 from pydantic.types import conint, conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.domain.objectives import AnyObjective, MaximizeObjective, Objective
+from bofire.domain.objectives import (
+    AnyAbstractObjective,
+    AnyObjective,
+    MaximizeObjective,
+    Objective,
+)
 from bofire.domain.util import (
     KeyModel,
     PydanticBaseModel,
@@ -1610,9 +1615,15 @@ class OutputFeatures(Features):
     def get_by_objective(
         self,
         includes: Union[
-            List[Type[AnyObjective]], Type[AnyObjective], Type[Objective]
+            List[Type[AnyAbstractObjective]],
+            Type[AnyAbstractObjective],
+            Type[Objective],
         ] = Objective,
-        excludes: Union[List[Type[AnyObjective]], Type[AnyObjective], None] = None,
+        excludes: Union[
+            List[Type[AnyAbstractObjective]],
+            Type[AnyAbstractObjective],
+            None,
+        ] = None,
         exact: bool = False,
     ) -> "OutputFeatures":
         """Get output features filtered by the type of the attached objective.
@@ -1645,9 +1656,13 @@ class OutputFeatures(Features):
     def get_keys_by_objective(
         self,
         includes: Union[
-            List[Type[AnyObjective]], Type[AnyObjective], Type[Objective]
+            List[Type[AnyAbstractObjective]],
+            Type[AnyAbstractObjective],
+            Type[Objective],
         ] = Objective,
-        excludes: Union[List[Type[AnyObjective]], Type[AnyObjective], None] = None,
+        excludes: Union[
+            List[Type[AnyAbstractObjective]], Type[AnyAbstractObjective], None
+        ] = None,
         exact: bool = False,
     ) -> List[str]:
         """Get keys of output features filtered by the type of the attached objective.

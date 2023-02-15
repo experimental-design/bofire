@@ -26,11 +26,8 @@ from bofire.domain.features import (
     OutputFeatures,
     TInputTransformSpecs,
 )
-from bofire.models.torch_models import (
-    BotorchModels,
-    MixedSingleTaskGPModel,
-    SingleTaskGPModel,
-)
+from bofire.models.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import (  # DescriptorMethodEnum,
@@ -354,11 +351,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return df_candidates
 
     def _tell(self) -> None:
-        if self.has_sufficient_experiments():
-            # todo move this up to predictive strategy
-            self.fit()
-            self.init_acqf()
-        return
+        self.init_acqf()
 
     def init_acqf(self) -> None:
         self._init_acqf()

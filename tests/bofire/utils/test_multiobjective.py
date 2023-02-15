@@ -8,6 +8,7 @@ from bofire.domain.objectives import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
 )
 from bofire.utils.multiobjective import (
     compute_hypervolume,
@@ -55,6 +56,10 @@ of5 = ContinuousOutput(
     objective=MaximizeSigmoidObjective(w=1, tp=1, steepness=1),
     key="of5",
 )
+of6 = ContinuousOutput(
+    objective=MinimizeSigmoidObjective(w=1, tp=1, steepness=1),
+    key="of6",
+)
 
 valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2]),
@@ -62,6 +67,12 @@ valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2, of3, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of1, of3, of4]),
+]
+
+valid_constrained_domains = [
+    Domain(input_features=[if1, if2], output_features=[of1, of2, of5]),
+    Domain(input_features=[if1, if2], output_features=[of1, of2, of6]),
+    Domain(input_features=[if1, if2], output_features=[of1, of2, of5, of6]),
 ]
 
 invalid_domains = [
@@ -137,6 +148,7 @@ dfs = [
     "domain, expected",
     [
         (valid_domains[0], np.array([1.0, -1.0])),
+        (valid_constrained_domains[0], np.array([1.0, -1.0])),
         (valid_domains[1], np.array([1.0, 1.0])),
         (valid_domains[2], np.array([1.0, -1.0, 1.0, -1.0])),
         (valid_domains[3], np.array([-1.0, -1.0])),
@@ -169,6 +181,7 @@ def test_invalid_get_ref_point_mask(domain):
     "domain, experiments, expected_indices",
     [
         (valid_domains[0], dfs[0], np.array([1, 2], dtype="int64")),
+        (valid_constrained_domains[0], dfs[0], np.array([1, 2], dtype="int64")),
         (valid_domains[1], dfs[1], np.array([1, 3], dtype="int64")),
     ],
 )
@@ -181,6 +194,7 @@ def test_get_pareto_front(domain, experiments, expected_indices):
     "domain, experiments, ref_point",
     [
         (valid_domains[0], dfs[0], {"of1": 0.0, "of2": 20.0}),
+        (valid_constrained_domains[0], dfs[0], {"of1": 0.0, "of2": 20.0}),
         (valid_domains[1], dfs[1], {"of1": 0.0, "of3": 0.0}),
     ],
 )
@@ -197,21 +211,16 @@ def test_compute_hypervolume(domain, experiments, ref_point):
         (valid_domains[0], dfs[0], False, {"of1": 1.0, "of2": 5.0}),
         (valid_domains[1], dfs[1], True, {"of1": 1.0, "of3": 2.0}),
         (valid_domains[1], dfs[1], False, {"of1": 1.0, "of3": 2.0}),
+        (valid_constrained_domains[0], dfs[0], True, {"of1": 1.0, "of2": -5.0}),
+        (valid_constrained_domains[0], dfs[0], False, {"of1": 1.0, "of2": 5.0}),
     ],
 )
 def test_infer_ref_point(domain, experiments, return_masked, expected):
     ref_point = infer_ref_point(domain, experiments, return_masked)
+    keys = domain.outputs.get_keys_by_objective(
+        includes=[MaximizeObjective, MinimizeObjective]
+    )
     assert np.allclose(
-        np.array(
-            [
-                ref_point[feat]
-                for feat in domain.output_features.get_keys_by_objective(excludes=None)
-            ]
-        ),
-        np.array(
-            [
-                expected[feat]
-                for feat in domain.output_features.get_keys_by_objective(excludes=None)
-            ]
-        ),
+        np.array([ref_point[feat] for feat in keys]),
+        np.array([expected[feat] for feat in keys]),
     )
