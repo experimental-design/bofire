@@ -4,12 +4,14 @@ from abc import ABC, abstractmethod
 from typing import Any, List, Type
 
 from bofire.domain.constraints import (
+    Constraints,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
+from bofire.domain.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -17,6 +19,8 @@ from bofire.domain.features import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    InputFeatures,
+    OutputFeatures,
 )
 from bofire.domain.objectives import (
     CloseToTargetObjective,
@@ -28,6 +32,9 @@ from bofire.domain.objectives import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
+from bofire.models.gps.gps import MixedSingleTaskGPModel, ScalerEnum, SingleTaskGPModel
+from bofire.models.gps.kernels import HammondDistanceKernel, MaternKernel, ScaleKernel
+from bofire.models.gps.priors import botorch_lengthcale_prior, botorch_scale_prior
 
 
 class Spec:
@@ -35,6 +42,7 @@ class Spec:
 
     def __init__(self, cls: Type, spec: dict):
         self.cls = cls
+        # TODO: change spec to Union[dict, Callable] and "generate" for each call if callable
         self.spec = spec
 
     def obj(self, **kwargs) -> Any:
@@ -391,5 +399,75 @@ constraints.add_valid(
 # models
 # # # # # # # # # # # # # # # # # #
 
-# TODO: add model specs
 models = Specs([])
+models.add_valid(
+    MixedSingleTaskGPModel,
+    {
+        "input_features": InputFeatures(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "output_features": OutputFeatures(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "continuous_kernel": MaternKernel(ard=True, nu=2.5),
+        "categorical_kernel": HammondDistanceKernel(ard=True),
+        "scaler": ScalerEnum.NORMALIZE.value,
+        "model": None,
+        "input_preprocessing_specs": {},
+        "training_specs": {},
+    },
+)
+models.add_valid(
+    SingleTaskGPModel,
+    {
+        "input_features": InputFeatures(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "output_features": OutputFeatures(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=botorch_lengthcale_prior()
+            ),
+            outputscale_prior=botorch_scale_prior(),
+        ),
+        "scaler": ScalerEnum.NORMALIZE.value,
+        "model": None,
+        "input_preprocessing_specs": {},
+        "training_specs": {},
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
+# domain
+# # # # # # # # # # # # # # # # # #
+
+domains = Specs([])
+domains.add_valid(
+    Domain,
+    {
+        "input_features": InputFeatures(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "output_features": OutputFeatures(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "constraints": Constraints(),
+        "experiments": None,
+        "candidates": None,
+    },
+)

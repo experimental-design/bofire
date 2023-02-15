@@ -75,3 +75,21 @@ def valid_model_spec(request) -> specs.Spec:
 @fixture(params=specs.models.invalids)
 def invalid_model_spec(request) -> specs.Spec:
     return request.param
+
+
+# domain
+
+
+@fixture
+def domain() -> Constraint:
+    return specs.domains.valid().obj()
+
+
+@fixture(params=specs.domains.valids)
+def valid_domain_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.domains.invalids)
+def invalid_domain_spec(request) -> specs.Spec:
+    return request.param
