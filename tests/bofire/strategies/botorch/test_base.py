@@ -30,7 +30,7 @@ from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
 from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective
 from bofire.utils.enum import CategoricalEncodingEnum
 from tests.bofire.domain.test_domain_validators import generate_experiments
-from tests.bofire.domain.test_features import (
+from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,

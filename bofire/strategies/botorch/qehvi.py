@@ -34,9 +34,9 @@ from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 # TODO: unite this by using get_acquisiton
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
-    ref_point: Optional[dict]
-    ref_point_mask: Optional[np.ndarray]
-    objective: Optional[MCMultiOutputObjective]
+    ref_point: Optional[dict] = None
+    ref_point_mask: Optional[np.ndarray] = None
+    objective: Optional[MCMultiOutputObjective] = None
 
     def _init_acqf(self) -> None:
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(

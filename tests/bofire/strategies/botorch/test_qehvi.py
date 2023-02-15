@@ -17,7 +17,7 @@ from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.utils.enum import CategoricalMethodEnum
-from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
+from tests.bofire.strategies.specs import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
 from tests.bofire.utils.test_multiobjective import (
     dfs,
     invalid_domains,
