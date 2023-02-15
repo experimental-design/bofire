@@ -23,6 +23,9 @@ Any = Union[
     Constraints,
 ]
 
+# TODO: move AnyKernel here
+# TODO: move AnyPrior here
+
 
 class Deserialization:
     """Create model instance from serialized data."""
