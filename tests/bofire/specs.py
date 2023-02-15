@@ -471,3 +471,20 @@ domains.add_valid(
         "candidates": None,
     },
 )
+domains.add_valid(
+    Domain,
+    {
+        "input_features": InputFeatures(),
+        "output_features": OutputFeatures(),
+        "constraints": Constraints(),
+        "experiments": {
+            "a": [1, 2, 3, 4],
+            "b": [3, 4, 5, 6],
+            "c": [10, 2, -4, 5],
+        },
+        "candidates": {
+            "d": [5, 2, 5],
+            "e": [3, 4, 5],
+        },
+    },
+)

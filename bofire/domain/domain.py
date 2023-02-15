@@ -37,7 +37,12 @@ from bofire.domain.features import (
     OutputFeatures,
 )
 from bofire.domain.objectives import Objective
-from bofire.domain.util import PydanticBaseModel, is_numeric, isinstance_or_union
+from bofire.domain.util import (
+    PydanticBaseModel,
+    ValidatedDataFrame,
+    is_numeric,
+    isinstance_or_union,
+)
 
 
 class Domain(PydanticBaseModel):
@@ -56,8 +61,8 @@ class Domain(PydanticBaseModel):
         default_factory=lambda: Constraints()
     )
 
-    experiments: Optional[pd.DataFrame] = None
-    candidates: Optional[pd.DataFrame] = None
+    experiments: Optional[ValidatedDataFrame] = None
+    candidates: Optional[ValidatedDataFrame] = None
 
     """Representation of the optimization problem/domain
 
