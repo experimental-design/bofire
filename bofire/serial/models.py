@@ -1,6 +1,6 @@
 from typing import Union
 
-from bofire.models.torch_models import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 
 AnyModel = Union[
     SingleTaskGPModel,
