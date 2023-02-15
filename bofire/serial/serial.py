@@ -11,6 +11,7 @@ from bofire.serial.features import AnyFeature
 from bofire.serial.kernel import AnyKernel
 from bofire.serial.models import AnyModel
 from bofire.serial.objectives import AnyObjective
+from bofire.serial.prior import AnyPrior
 from bofire.serial.strategies import AnyStrategy
 
 # TODO: simplify imports, remove Any for Singles
@@ -22,12 +23,11 @@ Any = Union[
     AnyObjective,
     AnyStrategy,
     AnyKernel,
+    AnyPrior,
     Constraints,
     InputFeatures,
     OutputFeatures,
 ]
-
-# TODO: move AnyPrior here
 
 
 class Deserialization:
@@ -86,6 +86,12 @@ class Deserialization:
         """Create instance of an objective."""
 
         return parse_obj_as(AnyObjective, data)
+
+    @staticmethod
+    def prior(data: Dict) -> AnyPrior:
+        """Create instance of an prior."""
+
+        return parse_obj_as(AnyPrior, data)
 
     @staticmethod
     def strategy(data: Dict) -> AnyStrategy:
