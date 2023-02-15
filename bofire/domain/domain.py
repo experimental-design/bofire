@@ -1,7 +1,18 @@
 import collections.abc
 import itertools
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pandas as pd
@@ -30,6 +41,7 @@ from bofire.domain.util import PydanticBaseModel, is_numeric, isinstance_or_unio
 
 
 class Domain(PydanticBaseModel):
+    type: Literal["Domain"] = "Domain"
 
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.
