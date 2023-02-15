@@ -1127,21 +1127,16 @@ def is_continuous(var: Feature) -> bool:
         return False
 
 
-# TODO: check lists of all features, possibly remove abstract classes
+# TODO: reference serial AnyFeature here and remove duplicate definition
 AnyFeature = Union[
-    # InputFeature,
-    # NumericalInputFeature,
     DiscreteInput,
     ContinuousInput,
     ContinuousDescriptorInput,
     CategoricalInput,
     CategoricalDescriptorInput,
-    # OutputFeature,
     ContinuousOutput,
 ]
 AnyInputFeature = Union[
-    # InputFeature,
-    # NumericalInputFeature,
     ContinuousInput,
     DiscreteInput,
     ContinuousDescriptorInput,

@@ -350,12 +350,10 @@ class NChooseKConstraint(Constraint):
 TConstraint = TypeVar("TConstraint", bound=Constraint)
 
 
-# TODO: check list of all constraints, possibly remove abtract classes
+# TODO: reference serial AnyFeature here and remove duplicate definition
 AnyConstraint = Union[
-    # LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    # NonlinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
     NChooseKConstraint,
