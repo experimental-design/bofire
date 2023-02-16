@@ -1,16 +1,7 @@
 import collections.abc
 from abc import abstractmethod
 from itertools import chain
-from typing import (
-    Annotated,
-    List,
-    Literal,
-    Sequence,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Annotated, List, Literal, Sequence, Tuple, Type, TypeVar, Union
 
 import numpy as np
 import pandas as pd
