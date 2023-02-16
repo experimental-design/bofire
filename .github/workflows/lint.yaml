@@ -44,7 +44,7 @@ jobs:
           python-version: 3.9
       - name: isort
         run: |
-          pip3 install isort==5.10.1
+          pip3 install isort==5.12.0
           isort . --check-only --verbose
 
   pyright:
