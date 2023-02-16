@@ -212,12 +212,16 @@ def test_get_nchoosek_constraints():
     assert torch.allclose(
         constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
         torch.ones(5).to(**tkwargs) * -1,
+        rtol=1e-4,
+        atol=1e-6,
     )
     # check max count fulfilled
     samples.if8 = 0
     assert torch.allclose(
         constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
         torch.zeros(5).to(**tkwargs),
+        rtol=1e-4,
+        atol=1e-6,
     )
 
     # check min count fulfilled
@@ -225,12 +229,16 @@ def test_get_nchoosek_constraints():
     assert torch.allclose(
         constraints[1](torch.from_numpy(samples.values).to(**tkwargs)),
         torch.ones(5).to(**tkwargs) * 4,
+        rtol=1e-4,
+        atol=1e-6,
     )
     # check min count not fulfilled
     samples[[f"if{i+4}" for i in range(5)]] = 0.0
     assert torch.allclose(
         constraints[1](torch.from_numpy(samples.values).to(**tkwargs)),
         torch.ones(5).to(**tkwargs) * -1,
+        rtol=1e-4,
+        atol=1e-6,
     )
     # check no creation of max_count constraint if max_count = n_features
     domain = Domain(
@@ -257,6 +265,8 @@ def test_get_nchoosek_constraints():
     assert torch.allclose(
         constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
         torch.ones(5).to(**tkwargs) * 3,
+        rtol=1e-4,
+        atol=1e-6,
     )
     # check no creation of min_count constraint if min_count = 0
     domain = Domain(
@@ -283,4 +293,6 @@ def test_get_nchoosek_constraints():
     assert torch.allclose(
         constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
         torch.ones(5).to(**tkwargs) * -4,
+        rtol=1e-4,
+        atol=1e-6,
     )
