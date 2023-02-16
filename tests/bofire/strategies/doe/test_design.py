@@ -1,6 +1,6 @@
+import importlib.util
 import warnings
 
-import importlib.util
 import numpy as np
 import pytest
 
@@ -307,7 +307,7 @@ def test_check_fixed_experiments():
     input_features = [
         ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
         ContinuousInput(key=f"x{2}", lower_bound=0, upper_bound=1),
-        ContinuousInput(key=f"x{3}", lower_bound=0, upper_bound=1),
+        ContinuousInput(key=f"x{3}", lower_bound=-1.0, upper_bound=1),
     ]
     domain = Domain(
         input_features=input_features,
