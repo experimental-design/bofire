@@ -616,7 +616,7 @@ def test_base_predict(domain, data, acquisition_function):
 
     predictions = myStrategy.predict(data)
 
-    assert len(predictions.columns.tolist()) == 2 * len(
+    assert len(predictions.columns.tolist()) == 3 * len(
         domain.get_feature_keys(OutputFeature)
     )
     assert data.index[-1] == predictions.index[-1]

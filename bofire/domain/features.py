@@ -1678,21 +1678,33 @@ class OutputFeatures(Features):
         """
         return [f.key for f in self.get_by_objective(includes, excludes, exact)]
 
-    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        """Evaluate the objective for every
+    def __call__(
+        self, experiments: pd.DataFrame, predictions: bool = False
+    ) -> pd.DataFrame:
+        """Evaluate the objective for every feature.
 
         Args:
             experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
+            predictions (bool, optional): If True use the prediction columns in the dataframe to calc the
+                desirabilities `f"{feat.key}_pred`.
 
         Returns:
             pd.DataFrame: Objective values for the experiments of interest.
         """
-        return pd.concat(
+        desis = pd.concat(
             [
-                feat.objective(experiments[[feat.key]])  # type: ignore
+                feat.objective(experiments[[f"{feat.key}_pred" if predictions else feat.key]])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
             ],
+            axis=1,
+        )
+        return desis.rename(
+            {
+                f"{feat.key}_pred" if predictions else feat.key: f"{feat.key}_des"
+                for feat in self.features
+                if feat.objective is not None
+            },
             axis=1,
         )
 

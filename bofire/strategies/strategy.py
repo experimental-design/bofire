@@ -363,6 +363,11 @@ class PredictiveStrategy(Strategy):
             add_pending=add_pending,
             candidate_pool=candidate_pool,
         )
+        # we have to generate predictions for the candidate pool candidates
+        if candidate_pool is not None:
+            pred = self.predict(candidates)
+            pred.index = candidates.index
+            candidates = pd.concat([candidates, pred], axis=1)
         self.domain.validate_candidates(candidates=candidates)
         return candidates
 
@@ -415,8 +420,8 @@ class PredictiveStrategy(Strategy):
                     for feat in self.domain.outputs.get_by_objective(Objective)
                 ]
                 + [
-                    "%s_sd" % featkey
-                    for featkey in self.domain.outputs.get_by_objective(Objective)
+                    "%s_sd" % feat.key
+                    for feat in self.domain.outputs.get_by_objective(Objective)
                 ],
             )
         else:
@@ -427,6 +432,9 @@ class PredictiveStrategy(Strategy):
                     for feat in self.domain.outputs.get_by_objective(Objective)
                 ],
             )
+        desis = self.domain.outputs(predictions, predictions=True)
+        predictions = pd.concat((predictions, desis), axis=1)
+        predictions.index = experiments.index
         return predictions
 
     @abstractmethod
