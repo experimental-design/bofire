@@ -3,7 +3,18 @@ from __future__ import annotations
 import itertools
 import warnings
 from abc import abstractmethod
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast
+from typing import (
+    Annotated,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -364,7 +375,7 @@ class ContinuousInput(NumericalInput):
         return f"[{self.lower_bound},{self.upper_bound}]"
 
 
-TDiscreteVals = conlist(item_type=float, min_items=1)
+TDiscreteVals = Annotated[List[float], conlist(item_type=float, min_items=1)]
 
 
 class DiscreteInput(NumericalInput):
@@ -436,7 +447,7 @@ class DiscreteInput(NumericalInput):
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
 
-TDescriptors = conlist(item_type=str, min_items=1)
+TDescriptors = Annotated[List[str], conlist(item_type=str, min_items=1)]
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -496,7 +507,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         )
 
 
-TCategoryVals = conlist(item_type=str, min_items=2)
+TCategoryVals = Annotated[List[str], conlist(item_type=str, min_items=2)]
 TAllowedVals = Optional[conlist(item_type=bool, min_items=2)]
 
 
@@ -829,9 +840,10 @@ class CategoricalInput(InputFeature):
         return f"{len(self.categories)} categories"
 
 
-TCategoricalDescriptorVals = conlist(
-    item_type=conlist(item_type=float, min_items=1), min_items=1
-)
+TCategoricalDescriptorVals = Annotated[
+    Union[List[List[float]], List[List[int]]],
+    conlist(item_type=conlist(item_type=float, min_items=1), min_items=1),
+]
 
 
 class CategoricalDescriptorInput(CategoricalInput):
@@ -1283,9 +1295,6 @@ class Features(PydanticBaseModel):
         ]
 
 
-Tnum_samples = conint(gt=0)
-
-
 class InputFeatures(Features):
     """Container of input features, only input features are allowed.
 
@@ -1314,7 +1323,7 @@ class InputFeatures(Features):
     @validate_arguments
     def sample(
         self,
-        n: Tnum_samples = 1,
+        n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
     ) -> pd.DataFrame:
         """Draw sobol samples

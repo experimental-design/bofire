@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, List, Literal, Tuple, Union
+from typing import Annotated, Callable, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -15,9 +15,9 @@ from bofire.domain.util import PydanticBaseModel
 # for the return functions we do not distinguish between multiplicative/ additive (i.e. *weight or **weight),
 # since when a objective is called directly, we only have one objective
 
-TGt0 = confloat(gt=0)
-TGe0 = confloat(ge=0)
-TWeight = confloat(gt=0, le=1)
+TGt0 = Annotated[float, confloat(gt=0)]
+TGe0 = Annotated[float, confloat(ge=0)]
+TWeight = Annotated[float, confloat(gt=0, le=1)]
 
 
 class BotorchConstrainedObjective:

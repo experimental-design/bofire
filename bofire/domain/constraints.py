@@ -1,7 +1,7 @@
 import collections.abc
 from abc import abstractmethod
 from itertools import chain
-from typing import List, Literal, Sequence, Tuple, Type, TypeVar, Union
+from typing import Annotated, List, Literal, Sequence, Tuple, Type, TypeAlias, TypeVar, Union
 
 import numpy as np
 import pandas as pd
@@ -61,8 +61,8 @@ class LinearConstraint(Constraint):
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    features: TFeatureKeys
-    coefficients: TCoefficients
+    features: Annotated[List[str], TFeatureKeys]
+    coefficients: Annotated[List[float], TCoefficients]
     rhs: float
 
     @validator("features")
@@ -271,15 +271,15 @@ class NChooseKConstraint(Constraint):
     """NChooseK constraint that defines how many ingredients are allowed in a formulation.
 
     Attributes:
-        features (List[str]): List of feature keys to which the constraint applies.
-        min_count (int): Minimal number of non-zero/active feature values.
-        max_count (int): Maximum number of non-zero/active feature values.
-        none_also_valid (bool): In case that min_count > 0,
+        features: List of feature keys to which the constraint applies.
+        min_count: Minimal number of non-zero/active feature values.
+        max_count: Maximum number of non-zero/active feature values.
+        none_also_valid: In case that min_count > 0,
             this flag decides if zero active features are also allowed.
     """
 
     type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
-    features: TFeatureKeys
+    features: Annotated[List[str], TFeatureKeys]
     min_count: int
     max_count: int
     none_also_valid: bool

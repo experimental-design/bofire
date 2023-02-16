@@ -22,7 +22,6 @@ from bofire.domain.features import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    Tnum_samples,
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.strategies.strategy import (
@@ -63,14 +62,14 @@ class Sampler(PydanticBaseModel):
     )
 
     @validate_arguments
-    def ask(self, n: Tnum_samples) -> pd.DataFrame:
+    def ask(self, n: int) -> pd.DataFrame:
         """Generates the samples.
 
         Args:
-            n (Tnum_samples): number of samples to generate
+            n: number of samples to generate
 
         Returns:
-            pd.DataFrame: Dataframe with samples.
+            Dataframe with samples.
         """
         samples = self._sample(n)
         if len(samples) != n:
@@ -78,7 +77,7 @@ class Sampler(PydanticBaseModel):
         return self.domain.validate_candidates(samples, only_inputs=True)
 
     @abstractmethod
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         """Abstract method that has to be overwritten in the actual sampler to generate the samples
 
         Args:
@@ -123,7 +122,7 @@ class PolytopeSampler(Sampler):
         domain (Domain): Domain defining the constrained input space
     """
 
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, SamplingMethodEnum.UNIFORM)
 
@@ -207,10 +206,10 @@ class RejectionSampler(Sampler):
     """
 
     sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
-    num_base_samples: Tnum_samples = 1000
-    max_iters: Tnum_samples = 1000
+    num_base_samples: int = 1000
+    max_iters: int = 1000
 
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, self.sampling_method)
         n_iters = 0
