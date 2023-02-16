@@ -375,7 +375,7 @@ class ContinuousInput(NumericalInput):
         return f"[{self.lower_bound},{self.upper_bound}]"
 
 
-TDiscreteVals = Annotated[List[float], conlist(item_type=float, min_items=1)]
+TDiscreteVals = Annotated[List[float], Field(min_items=1)]
 
 
 class DiscreteInput(NumericalInput):
@@ -447,7 +447,7 @@ class DiscreteInput(NumericalInput):
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
 
-TDescriptors = Annotated[List[str], conlist(item_type=str, min_items=1)]
+TDescriptors = Annotated[List[str], Field(min_items=1)]
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -507,7 +507,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         )
 
 
-TCategoryVals = Annotated[List[str], conlist(item_type=str, min_items=2)]
+TCategoryVals = Annotated[List[str], Field(min_items=2)]
 TAllowedVals = Optional[conlist(item_type=bool, min_items=2)]
 
 
@@ -842,7 +842,7 @@ class CategoricalInput(InputFeature):
 
 TCategoricalDescriptorVals = Annotated[
     Union[List[List[float]], List[List[int]]],
-    conlist(item_type=conlist(item_type=float, min_items=1), min_items=1),
+    Field(min_items=1),
 ]
 
 

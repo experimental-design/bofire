@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, parse_obj_as, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conlist
 
 from bofire.domain.util import PydanticBaseModel, filter_by_class
 
@@ -46,8 +45,8 @@ class Constraint(PydanticBaseModel):
         return parse_obj_as(AnyConstraint, dict_)
 
 
-TFeatureKeys = conlist(item_type=str, min_items=2)
-TCoefficients = conlist(item_type=float, min_items=2)
+TFeatureKeys = Annotated[List[str], Field(min_items=2)]
+TCoefficients = Annotated[List[float], Field(min_items=2)]
 
 
 class LinearConstraint(Constraint):
@@ -61,8 +60,8 @@ class LinearConstraint(Constraint):
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    features: Annotated[List[str], TFeatureKeys]
-    coefficients: Annotated[List[float], TCoefficients]
+    features: TFeatureKeys
+    coefficients: TCoefficients
     rhs: float
 
     @validator("features")
@@ -279,7 +278,7 @@ class NChooseKConstraint(Constraint):
     """
 
     type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
-    features: Annotated[List[str], TFeatureKeys]
+    features: TFeatureKeys
     min_count: int
     max_count: int
     none_also_valid: bool
