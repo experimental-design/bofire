@@ -452,7 +452,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                     for j, idx in enumerate(features2idx[feat.key]):
                         if lower[j] == upper[j]:
                             fixed_features[idx] = lower[j]
-
         return fixed_features
 
     def get_categorical_combinations(self):

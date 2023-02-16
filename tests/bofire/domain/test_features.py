@@ -632,14 +632,14 @@ def test_discrete_input_feature_validate_candidental_invalid(input_feature, valu
         input_feature.validate_candidental(values)
 
 
-def test_get_discrete_values():
+def test_from_continuous():
     d = DiscreteInput(key="d", values=[1, 2, 3])
 
     continuous_values = pd.DataFrame(
         columns=["d"],
         data=[1.8, 1.7, 2.9, 1.9],
     )
-    samples = d.to_discrete_values(continuous_values)
+    samples = d.from_continuous(continuous_values)
     assert np.all(samples == pd.Series([2, 2, 3, 2]))
 
 

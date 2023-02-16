@@ -440,8 +440,8 @@ class DiscreteInput(NumericalInput):
         """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
-    def to_discrete_values(self, values: pd.DataFrame) -> pd.Series:
-        """Converts continuous candidate values to valid discrete ones.
+    def from_continuous(self, values: pd.DataFrame) -> pd.Series:
+        """Rounds continuous values to the closest discrete ones.
 
         Args:
             values (pd.DataFrame): Dataframe with continuous entries.
@@ -1557,7 +1557,7 @@ class InputFeatures(Features):
         transformed = []
         for feat in self.get():
             if isinstance(feat, DiscreteInput):
-                transformed.append(feat.to_discrete_values(experiments))
+                transformed.append(feat.from_continuous(experiments))
             elif feat.key not in specs.keys():
                 transformed.append(experiments[feat.key])
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
