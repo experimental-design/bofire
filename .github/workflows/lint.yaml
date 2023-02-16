@@ -18,7 +18,7 @@ jobs:
           python-version: 3.9
       - name: style
         run: |
-          pip3 install flake8==5.0.4 black==22.10.0 isort=5.12.0
+          pip3 install flake8==5.0.4 black==22.10.0 isort==5.12.0
           flake8 --verbose bofire tests
           black --check bofire tests
           isort . --check-only --verbose
