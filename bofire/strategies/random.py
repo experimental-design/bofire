@@ -9,7 +9,7 @@ from bofire.domain.constraint import (
     NChooseKConstraint,
     NonlinearEqualityConstraint,
 )
-from bofire.domain.features import Feature
+from bofire.domain.feature import Feature
 from bofire.domain.objectives import Objective
 from bofire.samplers import PolytopeSampler, RejectionSampler, Sampler
 from bofire.strategies.strategy import Strategy

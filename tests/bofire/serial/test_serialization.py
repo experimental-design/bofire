@@ -4,13 +4,8 @@ from typing import List, Type
 import pytest
 
 from bofire.domain.constraints import Constraints
-from bofire.domain.features import (
-    CategoricalInput,
-    ContinuousInput,
-    ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
-)
+from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.serial.serialization import Serialization
 from tests.bofire import specs
 

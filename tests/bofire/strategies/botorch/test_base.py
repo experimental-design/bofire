@@ -7,13 +7,13 @@ import pandas as pd
 import pytest
 
 from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,

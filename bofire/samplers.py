@@ -15,7 +15,7 @@ from bofire.domain.constraint import (
     NChooseKConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,

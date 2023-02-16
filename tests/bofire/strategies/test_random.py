@@ -3,14 +3,14 @@ import warnings
 import pytest
 
 from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,

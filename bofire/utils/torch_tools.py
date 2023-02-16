@@ -13,7 +13,8 @@ from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import InputFeature, OutputFeatures
+from bofire.domain.feature import InputFeature
+from bofire.domain.features import OutputFeatures
 from bofire.domain.objectives import BotorchConstrainedObjective
 
 tkwargs = {

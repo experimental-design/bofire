@@ -14,7 +14,8 @@ from bofire.domain.constraint import (
     NChooseKConstraint,
 )
 from bofire.domain.constraints import Constraints
-from bofire.domain.features import ContinuousInput, InputFeature, InputFeatures
+from bofire.domain.feature import ContinuousInput, InputFeature
+from bofire.domain.features import InputFeatures
 
 ### this module is based on the original implementation in basf/opti.
 

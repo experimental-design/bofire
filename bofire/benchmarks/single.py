@@ -4,14 +4,13 @@ from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
 )
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
 
 

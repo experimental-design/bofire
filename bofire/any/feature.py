@@ -1,24 +1,24 @@
 from typing import List, Tuple, Union
 
-from bofire.domain import features
+from bofire.domain import feature
 
 AnyFeature = Union[
-    features.DiscreteInput,
-    features.ContinuousInput,
-    features.ContinuousDescriptorInput,
-    features.CategoricalInput,
-    features.CategoricalDescriptorInput,
-    features.ContinuousOutput,
+    feature.DiscreteInput,
+    feature.ContinuousInput,
+    feature.ContinuousDescriptorInput,
+    feature.CategoricalInput,
+    feature.CategoricalDescriptorInput,
+    feature.ContinuousOutput,
 ]
 
 AnyInputFeature = Union[
-    features.ContinuousInput,
-    features.DiscreteInput,
-    features.ContinuousDescriptorInput,
-    features.CategoricalInput,
-    features.CategoricalDescriptorInput,
+    feature.ContinuousInput,
+    feature.DiscreteInput,
+    feature.ContinuousDescriptorInput,
+    feature.CategoricalInput,
+    feature.CategoricalDescriptorInput,
 ]
 
-AnyOutputFeature = features.ContinuousOutput
+AnyOutputFeature = feature.ContinuousOutput
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]

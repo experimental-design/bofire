@@ -19,13 +19,13 @@ from bofire.domain.constraint import (
     NChooseKConstraint,
 )
 from bofire.domain.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     InputFeature,
-    OutputFeatures,
     TInputTransformSpecs,
 )
+from bofire.domain.features import OutputFeatures
 from bofire.models.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
 from bofire.strategies.strategy import PredictiveStrategy

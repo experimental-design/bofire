@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 
 from bofire.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
 from bofire.domain.objectives import (
     MaximizeObjective,
     MaximizeSigmoidObjective,

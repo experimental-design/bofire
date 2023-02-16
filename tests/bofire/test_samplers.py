@@ -6,7 +6,8 @@ from bofire.domain.constraint import (
     LinearInequalityConstraint,
 )
 from bofire.domain.constraints import Constraints
-from bofire.domain.features import CategoricalInput, ContinuousInput, InputFeatures
+from bofire.domain.feature import CategoricalInput, ContinuousInput
+from bofire.domain.features import InputFeatures
 from bofire.samplers import PolytopeSampler, RejectionSampler
 
 input_features = InputFeatures(

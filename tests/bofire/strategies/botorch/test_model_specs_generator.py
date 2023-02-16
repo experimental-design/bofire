@@ -1,11 +1,7 @@
 import pytest
 
-from bofire.domain.features import (
-    ContinuousInput,
-    ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
-)
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.gps import SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy

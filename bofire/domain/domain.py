@@ -19,20 +19,17 @@ import pandas as pd
 from pydantic import Field, validator
 
 from bofire.any.constraint import AnyConstraint
+from bofire.any.feature import AnyInputFeature, AnyOutputFeature
 from bofire.domain.constraint import LinearConstraint, NChooseKConstraint
 from bofire.domain.constraints import Constraints
-from bofire.domain.features import (
-    AnyInputFeature,
-    AnyOutputFeature,
+from bofire.domain.feature import (
     ContinuousInput,
     ContinuousOutput,
     Feature,
-    Features,
     InputFeature,
-    InputFeatures,
     OutputFeature,
-    OutputFeatures,
 )
+from bofire.domain.features import Features, InputFeatures, OutputFeatures
 from bofire.domain.objectives import Objective
 from bofire.domain.util import (
     PydanticBaseModel,

@@ -11,7 +11,8 @@ from bofire.domain.constraint import (
     NonlinearInequalityConstraint,
 )
 from bofire.domain.constraints import Constraints
-from bofire.domain.features import ContinuousInput, ContinuousOutput, InputFeatures
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures
 from bofire.utils.enum import SamplingMethodEnum
 from tests.bofire import specs
 

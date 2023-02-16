@@ -12,16 +12,15 @@ from bofire.domain.constraint import (
 )
 from bofire.domain.constraints import Constraints
 from bofire.domain.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    InputFeatures,
-    OutputFeatures,
 )
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.domain.objectives import (
     CloseToTargetObjective,
     ConstantObjective,

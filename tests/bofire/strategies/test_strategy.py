@@ -6,13 +6,13 @@ import pytest
 from _pytest.fixtures import fixture
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.domain.domain import Domain
-from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.domain.objectives import TargetObjective
 from bofire.strategies.strategy import Strategy
 from tests.bofire.domain.test_domain_validators import (

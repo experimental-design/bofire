@@ -9,7 +9,7 @@ from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.constraint import LinearEqualityConstraint, NChooseKConstraint
 from bofire.domain.domain import Domain, get_subdomain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,

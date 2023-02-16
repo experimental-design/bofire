@@ -6,7 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousDescriptorInput,
@@ -14,12 +14,10 @@ from bofire.domain.features import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    Features,
     InputFeature,
-    InputFeatures,
     OutputFeature,
-    OutputFeatures,
 )
+from bofire.domain.features import Features, InputFeatures, OutputFeatures
 from bofire.domain.objectives import (
     MaximizeSigmoidObjective,
     MinimizeObjective,

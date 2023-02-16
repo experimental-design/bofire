@@ -11,14 +11,13 @@ from botorch.models.model import Model as BotorchBaseModel
 from botorch.models.transforms.input import ChainedInputTransform, FilterFeatures
 from pydantic import validator
 
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
-    InputFeatures,
     NumericalInput,
-    OutputFeatures,
     TInputTransformSpecs,
 )
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
 from bofire.utils.enum import CategoricalEncodingEnum

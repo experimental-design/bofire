@@ -1,13 +1,13 @@
 import uuid
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousDescriptorInput,

@@ -3,12 +3,8 @@ from typing import Literal
 import pandas as pd
 import pytest
 
-from bofire.domain.features import (
-    ContinuousInput,
-    ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
-)
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.model import Model
 
 

@@ -5,7 +5,7 @@ from botorch.models.gpytorch import GPyTorchModel
 from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
 
 from bofire.domain.constraints import Constraint
-from bofire.domain.features import Feature
+from bofire.domain.feature import Feature
 from bofire.domain.objectives import Objective
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.strategies.botorch.utils.objectives import (

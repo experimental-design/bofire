@@ -4,7 +4,7 @@ import pytest
 
 from bofire.domain.constraint import NChooseKConstraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,

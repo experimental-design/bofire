@@ -5,12 +5,12 @@ import numpy as np
 import pandas as pd
 from pydantic.types import NonNegativeInt
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import ContinuousInput, ContinuousOutput, Feature
+from bofire.domain.feature import ContinuousInput, ContinuousOutput, Feature
 from bofire.domain.objectives import MaximizeObjective, MinimizeObjective, Objective
 from bofire.strategies.strategy import PredictiveStrategy, Strategy
 
