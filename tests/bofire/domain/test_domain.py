@@ -19,7 +19,7 @@ from bofire.domain.feature import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.objectives import Objective, TargetObjective
+from bofire.domain.objective import Objective, TargetObjective
 from bofire.domain.util import PydanticBaseModel
 
 

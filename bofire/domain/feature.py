@@ -11,7 +11,7 @@ from pydantic.class_validators import root_validator
 from pydantic.types import conint, conlist
 
 from bofire.any.objective import AnyObjective
-from bofire.domain.objectives import MaximizeObjective
+from bofire.domain.objective import MaximizeObjective
 from bofire.domain.util import KeyModel, is_numeric, name2key
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
 

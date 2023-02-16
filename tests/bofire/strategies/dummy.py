@@ -11,7 +11,7 @@ from bofire.domain.constraint import (
     LinearInequalityConstraint,
 )
 from bofire.domain.feature import ContinuousInput, ContinuousOutput, Feature
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective, Objective
+from bofire.domain.objective import MaximizeObjective, MinimizeObjective, Objective
 from bofire.strategies.strategy import PredictiveStrategy, Strategy
 
 

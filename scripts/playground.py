@@ -15,7 +15,7 @@ from bofire.domain.feature import (  # noqa: E402
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.domain.objectives import MaximizeObjective  # noqa: E402
+from bofire.domain.objective import MaximizeObjective  # noqa: E402
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy  # noqa: E402
 from tests.bofire.domain.test_domain_validators import (  # noqa: E402
     generate_experiments,

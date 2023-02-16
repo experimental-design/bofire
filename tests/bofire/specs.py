@@ -21,7 +21,7 @@ from bofire.domain.feature import (
     DiscreteInput,
 )
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     CloseToTargetObjective,
     ConstantObjective,
     DeltaObjective,

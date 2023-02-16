@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bofire.domain import Domain
+from bofire.domain.domain import Domain
 from bofire.domain.feature import ContinuousInput, ContinuousOutput
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,

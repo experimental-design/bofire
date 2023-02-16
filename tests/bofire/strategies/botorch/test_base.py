@@ -6,13 +6,13 @@ from typing import Type
 import pandas as pd
 import pytest
 
-from bofire.domain import Domain
 from bofire.domain.constraint import (
     Constraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
+from bofire.domain.domain import Domain
 from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -21,7 +21,7 @@ from bofire.domain.feature import (
     Feature,
     OutputFeature,
 )
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.domain.objective import MaximizeObjective, MinimizeObjective
 from bofire.domain.util import KeyModel
 from bofire.models.gps import SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels

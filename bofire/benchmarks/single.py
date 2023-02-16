@@ -3,7 +3,7 @@ import pandas as pd
 from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain import Domain
+from bofire.domain.domain import Domain
 from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -11,7 +11,7 @@ from bofire.domain.feature import (
     ContinuousOutput,
 )
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.domain.objective import MaximizeObjective, MinimizeObjective
 
 
 class Ackley(Benchmark):

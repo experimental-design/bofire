@@ -16,7 +16,7 @@ from bofire.domain.constraint import (
     NChooseKConstraint,
 )
 from bofire.domain.feature import CategoricalInput, Feature
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     IdentityObjective,
     MaximizeObjective,
     MinimizeObjective,

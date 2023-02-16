@@ -24,7 +24,7 @@ from bofire.domain.feature import (
     TInputTransformSpecs,
     Tnum_samples,
 )
-from bofire.domain.objectives import Objective
+from bofire.domain.objective import Objective
 from bofire.domain.util import PydanticBaseModel, filter_by_attribute, filter_by_class
 from bofire.utils.enum import CategoricalEncodingEnum, SamplingMethodEnum
 

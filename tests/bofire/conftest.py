@@ -2,7 +2,7 @@ from pytest import fixture
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.feature import Feature
-from bofire.domain.objectives import Objective
+from bofire.domain.objective import Objective
 from tests.bofire import specs
 
 # objective

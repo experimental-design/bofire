@@ -11,7 +11,7 @@ from scipy.integrate import solve_ivp
 from scipy.special import gamma
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain import Domain
+from bofire.domain.domain import Domain
 from bofire.domain.feature import (
     CategoricalDescriptorInput,
     ContinuousInput,
@@ -19,7 +19,7 @@ from bofire.domain.feature import (
     InputFeature,
 )
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,

@@ -10,7 +10,7 @@ from bofire.domain.constraint import (
     NonlinearEqualityConstraint,
 )
 from bofire.domain.feature import Feature
-from bofire.domain.objectives import Objective
+from bofire.domain.objective import Objective
 from bofire.samplers import PolytopeSampler, RejectionSampler, Sampler
 from bofire.strategies.strategy import Strategy
 

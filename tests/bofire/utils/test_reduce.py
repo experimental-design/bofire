@@ -1,11 +1,11 @@
 import numpy as np
 import pytest
 
-from bofire.domain import Domain
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
+from bofire.domain.domain import Domain
 from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.utils.reduce import (
     check_domain_for_reduction,

@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 
 from bofire.any.constraint import AnyConstraint
-from bofire.domain import Domain
 from bofire.domain.constraint import (
     Constraint,
     LinearConstraint,
@@ -14,6 +13,7 @@ from bofire.domain.constraint import (
     NChooseKConstraint,
 )
 from bofire.domain.constraints import Constraints
+from bofire.domain.domain import Domain
 from bofire.domain.feature import ContinuousInput, InputFeature
 from bofire.domain.features import InputFeatures
 

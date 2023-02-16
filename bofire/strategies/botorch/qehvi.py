@@ -18,7 +18,7 @@ from pydantic import confloat
 
 from bofire.domain.constraint import Constraint, NChooseKConstraint
 from bofire.domain.feature import Feature
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     BotorchConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,

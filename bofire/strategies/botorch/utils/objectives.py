@@ -4,7 +4,7 @@ import torch
 from botorch.acquisition import MCAcquisitionObjective  # type: ignore
 from torch import Tensor
 
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     CloseToTargetObjective,
     ConstantObjective,
     DeltaObjective,

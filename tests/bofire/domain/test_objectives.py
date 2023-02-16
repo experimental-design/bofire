@@ -4,7 +4,7 @@ import torch
 from botorch.utils.objective import soft_eval_constraint
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     MaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
     TargetObjective,

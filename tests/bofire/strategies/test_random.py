@@ -2,7 +2,6 @@ import warnings
 
 import pytest
 
-from bofire.domain import Domain
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -10,6 +9,7 @@ from bofire.domain.constraint import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
+from bofire.domain.domain import Domain
 from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,

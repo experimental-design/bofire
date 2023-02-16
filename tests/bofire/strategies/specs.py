@@ -15,7 +15,7 @@ from bofire.domain.feature import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.domain.objectives import MinimizeObjective
+from bofire.domain.objective import MinimizeObjective
 from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
 
 objective = MinimizeObjective(w=1)

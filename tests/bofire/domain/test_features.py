@@ -18,7 +18,7 @@ from bofire.domain.feature import (
     OutputFeature,
 )
 from bofire.domain.features import Features, InputFeatures, OutputFeatures
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     MaximizeSigmoidObjective,
     MinimizeObjective,
     Objective,

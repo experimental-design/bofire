@@ -30,7 +30,7 @@ from bofire.domain.feature import (
     OutputFeature,
 )
 from bofire.domain.features import Features, InputFeatures, OutputFeatures
-from bofire.domain.objectives import Objective
+from bofire.domain.objective import Objective
 from bofire.domain.util import (
     PydanticBaseModel,
     ValidatedDataFrame,

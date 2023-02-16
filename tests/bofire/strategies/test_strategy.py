@@ -13,7 +13,7 @@ from bofire.domain.constraint import (
 )
 from bofire.domain.domain import Domain
 from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
-from bofire.domain.objectives import TargetObjective
+from bofire.domain.objective import TargetObjective
 from bofire.strategies.strategy import Strategy
 from tests.bofire.domain.test_domain_validators import (
     generate_candidates,

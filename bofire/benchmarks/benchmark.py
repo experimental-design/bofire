@@ -9,7 +9,7 @@ from tqdm import tqdm
 
 from bofire.domain.domain import Domain
 from bofire.domain.feature import OutputFeature
-from bofire.domain.objectives import Objective
+from bofire.domain.objective import Objective
 from bofire.strategies.strategy import Strategy
 
 
