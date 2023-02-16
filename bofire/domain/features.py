@@ -21,7 +21,6 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, parse_obj_as, validate_arguments, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.domain.objectives import (
@@ -508,7 +507,7 @@ class ContinuousDescriptorInput(ContinuousInput):
 
 
 TCategoryVals = Annotated[List[str], Field(min_items=2)]
-TAllowedVals = Optional[conlist(item_type=bool, min_items=2)]
+TAllowedVals = Optional[Annotated[List[bool], Field(min_items=2)]]
 
 
 class CategoricalInput(InputFeature):
