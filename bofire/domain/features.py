@@ -21,7 +21,7 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, parse_obj_as, validate_arguments, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conint, conlist
+from pydantic.types import conlist
 from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.domain.objectives import (
