@@ -1,11 +1,3 @@
-import json
-from typing import List, Type
-
-import pytest
-
-from bofire.domain.constraints import Constraints
-from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
-from bofire.domain.features import Features, InputFeatures, OutputFeatures
 from bofire.serial.deserialization import Deserialization
 from tests.bofire import specs
 
@@ -17,21 +9,10 @@ def test_deserialization_should_process_constraint(valid_constraint_spec: specs.
     assert obj == deserialized
 
 
-def test_deserialization_should_process_constraints():
-    c1 = specs.constraints.valid().obj(key="c1")
-    c2 = specs.constraints.valid().obj(key="c2")
-    c3 = specs.constraints.valid().obj(key="c3")
-    obj = Constraints(constraints=[c1, c2, c3])
-    spec = {
-        "type": "Constraints",
-        "constraints": [
-            json.loads(c1.json()),
-            json.loads(c2.json()),
-            json.loads(c3.json()),
-        ],
-    }
-    deserialized = Deserialization.constraints(spec)
-    assert isinstance(deserialized, Constraints)
+def test_deserialization_should_process_constraints(valid_constraints_spec: specs.Spec):
+    obj = valid_constraints_spec.obj()
+    deserialized = Deserialization.constraints(valid_constraints_spec.typed_spec())
+    assert isinstance(deserialized, valid_constraints_spec.cls)
     assert obj == deserialized
 
 
@@ -42,30 +23,10 @@ def test_deserialization_should_process_feature(valid_feature_spec: specs.Spec):
     assert obj == deserialized
 
 
-@pytest.mark.parametrize(
-    "cls, feature_types",
-    [
-        (
-            InputFeatures,
-            [ContinuousInput, CategoricalInput, ContinuousInput, CategoricalInput],
-        ),
-        (OutputFeatures, [ContinuousOutput, ContinuousOutput]),
-    ],
-)
-def test_deserialization_should_process_features(
-    cls: Type,
-    feature_types: List[Type],
-):
-    features = [
-        specs.features.valid(t).obj(key=f"f{i}") for i, t in enumerate(feature_types)
-    ]
-    obj = cls(features=features)
-    spec = {
-        "type": cls.__name__,
-        "features": features,
-    }
-    deserialized = Deserialization.features(spec)
-    assert isinstance(deserialized, Features)
+def test_deserialization_should_process_features(valid_features_spec: specs.Spec):
+    obj = valid_features_spec.obj()
+    deserialized = Deserialization.features(valid_features_spec.typed_spec())
+    assert isinstance(deserialized, valid_features_spec.cls)
     assert obj == deserialized
 
 

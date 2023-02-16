@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import itertools
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -38,6 +38,7 @@ class Features(PydanticBaseModel):
         features (List(Features)): list of the features.
     """
 
+    type: Literal["Features"] = "Features"
     features: FeatureSequence = Field(default_factory=lambda: [])
 
     def __iter__(self):
@@ -150,6 +151,7 @@ class InputFeatures(Features):
         features (List(InputFeatures)): list of the features.
     """
 
+    type: Literal["InputFeatures"] = "InputFeatures"
     features: Sequence[AnyInputFeature] = Field(default_factory=lambda: [])
 
     def get_fixed(self) -> "InputFeatures":
@@ -467,6 +469,7 @@ class OutputFeatures(Features):
         features (List(OutputFeatures)): list of the features.
     """
 
+    type: Literal["OutputFeatures"] = "OutputFeatures"
     features: Sequence[AnyOutputFeature] = Field(default_factory=lambda: [])
 
     def get_by_objective(

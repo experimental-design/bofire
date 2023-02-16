@@ -1,6 +1,6 @@
 import collections.abc
 from itertools import chain
-from typing import List, Sequence, Type, Union
+from typing import List, Literal, Sequence, Type, Union
 
 import pandas as pd
 from pydantic import Field
@@ -12,6 +12,7 @@ from bofire.domain.util import PydanticBaseModel, filter_by_class
 
 class Constraints(PydanticBaseModel):
 
+    type: Literal["Constraints"] = "Constraints"
     constraints: Sequence[AnyConstraint] = Field(default_factory=lambda: [])
 
     def __iter__(self):

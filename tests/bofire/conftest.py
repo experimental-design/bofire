@@ -1,7 +1,9 @@
 from pytest import fixture
 
-from bofire.domain.constraints import Constraint
+from bofire.domain.constraint import Constraint
+from bofire.domain.constraints import Constraints
 from bofire.domain.feature import Feature
+from bofire.domain.features import Features
 from bofire.domain.objective import Objective
 from tests.bofire import specs
 
@@ -41,6 +43,24 @@ def invalid_feature_spec(request) -> specs.Spec:
     return request.param
 
 
+# features
+
+
+@fixture
+def features() -> Features:
+    return specs.featuress.valid().obj()
+
+
+@fixture(params=specs.featuress.valids)
+def valid_features_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.featuress.invalids)
+def invalid_features_spec(request) -> specs.Spec:
+    return request.param
+
+
 # constraint
 
 
@@ -56,6 +76,24 @@ def valid_constraint_spec(request) -> specs.Spec:
 
 @fixture(params=specs.constraints.invalids)
 def invalid_constraint_spec(request) -> specs.Spec:
+    return request.param
+
+
+# constraints
+
+
+@fixture
+def constraints() -> Constraints:
+    return specs.constraintss.valid().obj()
+
+
+@fixture(params=specs.constraintss.valids)
+def valid_constraints_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.constraintss.invalids)
+def invalid_constraints_spec(request) -> specs.Spec:
     return request.param
 
 

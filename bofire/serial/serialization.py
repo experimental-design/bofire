@@ -5,7 +5,9 @@ from pydantic import BaseModel
 
 
 class Serialization:
-    """Create serialized data from model instances."""
+    """Create serialized data from model instances.
+
+    All methods are simple wrappers, mainly used to unify calls in testing."""
 
     @staticmethod
     def dict(data: BaseModel) -> Dict:

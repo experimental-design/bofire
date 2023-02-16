@@ -1,3 +1,4 @@
+import json
 import random
 import uuid
 from abc import ABC, abstractmethod
@@ -343,6 +344,43 @@ features.add_valid(
 
 
 # # # # # # # # # # # # # # # # # #
+# featuress
+# # # # # # # # # # # # # # # # # #
+
+featuress = Specs([])
+
+featuress.add_valid(
+    InputFeatures,
+    {
+        "features": [],
+    },
+)
+featuress.add_valid(
+    InputFeatures,
+    {
+        "features": [
+            features.valid(CategoricalInput).obj(),
+            features.valid(ContinuousInput).obj(),
+        ],
+    },
+)
+featuress.add_valid(
+    OutputFeatures,
+    {
+        "features": [],
+    },
+)
+featuress.add_valid(
+    OutputFeatures,
+    {
+        "features": [
+            features.valid(ContinuousOutput).obj(),
+        ],
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
 # constraints
 # # # # # # # # # # # # # # # # # #
 
@@ -408,6 +446,28 @@ constraints.add_valid(
 
 
 # # # # # # # # # # # # # # # # # #
+# constraintss
+# # # # # # # # # # # # # # # # # #
+
+constraintss = Specs([])
+constraintss.add_valid(
+    Constraints,
+    {
+        "constraints": [],
+    },
+)
+constraintss.add_valid(
+    Constraints,
+    {
+        "constraints": [
+            constraints.valid(NonlinearEqualityConstraint).obj(),
+            constraints.valid(NChooseKConstraint).obj(),
+        ],
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
 # models
 # # # # # # # # # # # # # # # # # #
 
@@ -468,17 +528,9 @@ domains = Specs([])
 domains.add_valid(
     Domain,
     {
-        "input_features": InputFeatures(
-            features=[
-                features.valid(ContinuousInput).obj(),
-            ]
-        ),
-        "output_features": OutputFeatures(
-            features=[
-                features.valid(ContinuousOutput).obj(),
-            ]
-        ),
-        "constraints": Constraints(),
+        "input_features": json.loads(featuress.valid(InputFeatures).obj().json()),
+        "output_features": json.loads(featuress.valid(OutputFeatures).obj().json()),
+        "constraints": json.loads(Constraints().json()),
         "experiments": None,
         "candidates": None,
     },
@@ -486,9 +538,9 @@ domains.add_valid(
 domains.add_valid(
     Domain,
     {
-        "input_features": InputFeatures(),
-        "output_features": OutputFeatures(),
-        "constraints": Constraints(),
+        "input_features": json.loads(featuress.valid(InputFeatures).obj().json()),
+        "output_features": json.loads(featuress.valid(OutputFeatures).obj().json()),
+        "constraints": json.loads(Constraints().json()),
         "experiments": {
             "a": [1, 2, 3, 4],
             "b": [3, 4, 5, 6],

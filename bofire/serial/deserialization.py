@@ -1,44 +1,30 @@
-from typing import Dict, Union
+from typing import Dict
 
 from pydantic import parse_obj_as
 
-from bofire.any.constraint import AnyConstraint
-from bofire.any.domain import AnyDomain
-from bofire.any.feature import AnyFeature
-from bofire.any.kernel import AnyKernel
-from bofire.any.model import AnyModel
-from bofire.any.objective import AnyObjective
-from bofire.any.prior import AnyPrior
-from bofire.any.strategy import AnyStrategy
-from bofire.domain.constraints import Constraints
-from bofire.domain.features import InputFeatures, OutputFeatures
-
-Any = Union[
+from bofire.any.api import (
     AnyConstraint,
+    AnyConstraints,
     AnyDomain,
     AnyFeature,
+    AnyFeatures,
+    AnyKernel,
     AnyModel,
     AnyObjective,
-    AnyStrategy,
-    AnyKernel,
     AnyPrior,
-    Constraints,
-    InputFeatures,
-    OutputFeatures,
-]
-
-# TODO: add AnyConstraints
-# TODO: add AnyFeatures
+    AnyStrategy,
+    AnyThing,
+)
 
 
 class Deserialization:
     """Create model instance from serialized data."""
 
     @staticmethod
-    def any(data: Dict) -> Any:
+    def any(data: Dict) -> AnyThing:
         """Create instance of any model."""
 
-        return parse_obj_as(Any, data)
+        return parse_obj_as(AnyThing, data)
 
     @staticmethod
     def constraint(data: Dict) -> AnyConstraint:
@@ -47,10 +33,10 @@ class Deserialization:
         return parse_obj_as(AnyConstraint, data)
 
     @staticmethod
-    def constraints(data: Dict) -> Constraints:
+    def constraints(data: Dict) -> AnyConstraints:
         """Create instance of constraints."""
 
-        return parse_obj_as(Constraints, data)
+        return parse_obj_as(AnyConstraints, data)
 
     @staticmethod
     def domain(data: Dict) -> AnyDomain:
@@ -65,10 +51,10 @@ class Deserialization:
         return parse_obj_as(AnyFeature, data)
 
     @staticmethod
-    def features(data: Dict) -> Union[InputFeatures, OutputFeatures]:
+    def features(data: Dict) -> AnyFeatures:
         """Create instance of input or output features."""
 
-        return parse_obj_as(Union[InputFeatures, OutputFeatures], data)
+        return parse_obj_as(AnyFeatures, data)
 
     @staticmethod
     def kernel(data: Dict) -> AnyKernel:
