@@ -3,12 +3,13 @@ import sys
 import numpy as np
 import pytest
 from scipy.optimize import LinearConstraint
+
+from bofire.domain import Domain
 from bofire.domain.constraints import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput, DiscreteInput
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
