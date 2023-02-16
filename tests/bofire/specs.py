@@ -55,7 +55,6 @@ class Spec:
 
     def __init__(self, cls: Type, spec: dict):
         self.cls = cls
-        # TODO: change spec to Union[dict, Callable] and "generate" for each call if callable
         self.spec = spec
 
     def obj(self, **kwargs) -> Any:
@@ -274,16 +273,15 @@ objectives.add_valid(
 
 features = Specs(
     [
-        # TODO: enable the invalidator
-        # Overwrite(
-        #     "lower_bound",
-        #     [
-        #         {"lower_bound": 5, "upper_bound": 3},
-        #         {"lower_bound": None, "upper_bound": None},
-        #         {"lower_bound": 5, "upper_bound": None},
-        #         {"lower_bound": None, "upper_bound": 3},
-        #     ],
-        # ),
+        Overwrite(
+            "lower_bound",
+            [
+                {"lower_bound": 5, "upper_bound": 3},
+                {"lower_bound": None, "upper_bound": None},
+                {"lower_bound": 5, "upper_bound": None},
+                {"lower_bound": None, "upper_bound": 3},
+            ],
+        ),
     ]
 )
 
