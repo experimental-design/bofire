@@ -12,14 +12,13 @@ from botorch.models.transforms.input import (
 )
 from torch import Tensor
 
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
 )
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels, EmpiricalModel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum

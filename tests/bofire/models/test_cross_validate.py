@@ -1,12 +1,11 @@
 import pytest
 
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
 )
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.gps import SingleTaskGPModel
 from bofire.utils.enum import CategoricalEncodingEnum
 

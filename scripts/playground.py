@@ -1,4 +1,3 @@
-import json
 import os
 import pathlib
 import sys
@@ -6,35 +5,24 @@ import sys
 pypath = os.path.join(str(pathlib.Path.cwd().parent), "bofire")
 sys.path.append(pypath)
 
-import torch
-
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (  # noqa: E402
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
-from bofire.domain.objectives import (
-    ConstantObjective,
-    MaximizeObjective,
-    MinimizeObjective,
+from bofire.domain.domain import Domain  # noqa: E402
+from bofire.domain.feature import (  # noqa: E402
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
 )
-from bofire.strategies.botorch.base import ModelSpec
-from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy
-from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
-from bofire.strategies.botorch.sobo import BoTorchSoboStrategy as SOBO
-from bofire.strategies.botorch.utils.objectives import (
-    AdditiveObjective,
-    MultiplicativeObjective,
-)
-from bofire.strategies.strategy import PredictiveStrategy
-from tests.bofire.domain.test_domain_validators import (
-    generate_candidates,
+from bofire.domain.objective import MaximizeObjective  # noqa: E402
+from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy  # noqa: E402
+from tests.bofire.domain.test_domain_validators import (  # noqa: E402
     generate_experiments,
 )
-from tests.bofire.strategies.botorch.test_qehvi import BOTORCH_QEHVI_STRATEGY_SPECS
-from tests.bofire.strategies.dummy import DummyStrategy
-from tests.bofire.utils.test_multiobjective import dfs, invalid_domains
+from tests.bofire.strategies.botorch.test_qehvi import (  # noqa: E402
+    BOTORCH_QEHVI_STRATEGY_SPECS,
+)
 
 feature1 = ContinuousInput(key="x1", lower_bound=0.0, upper_bound=0.7)
 feature2 = ContinuousInput(key="x2", lower_bound=0.0, upper_bound=0.45)
@@ -81,7 +69,6 @@ strategy = BoTorchQehviStrategy(
     domain=domain
 )  # #ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QNEI')
 
-# model_specs = ModelSpec(output_feature = 'y1', input_features = ['x1', 'x2', 'x3'], kernel = "MATERN_25", ard =True, scaler = "NORMALIZE")
 # strategy = BoTorchQparegoStrategy(domain=domain, ref_point = {'x1': 1., 'x2': 4., 'x3': 6.}, acquisition_function='QEI', model_specs=[model_specs])
 # strategy = DummyStrategy(domain=domain) #, acquisition_function='QNEI')
 

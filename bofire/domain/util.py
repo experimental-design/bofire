@@ -1,4 +1,5 @@
 import collections.abc as collections
+import json
 from typing import Any, Callable, List, Sequence, Type, Union, get_args, get_origin
 
 import pandas as pd
@@ -26,12 +27,69 @@ def name2key(name):
     return name
 
 
+class ValidatedDataFrame(pd.DataFrame):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate_type
+
+    @classmethod
+    def validate_type(cls, val):
+        if isinstance(val, str):
+            val = json.loads(val)
+        if isinstance(val, dict):
+            val = pd.DataFrame.from_dict(val)
+        if isinstance(val, pd.DataFrame):
+            val = cls(val)
+        if isinstance(val, cls):
+            return val
+        raise TypeError("expected {cls.__name__}, pd.Dataframe, dict, or str")
+
+    def __eq__(self, other):
+        if isinstance(other, pd.DataFrame):
+            res = super().__eq__(other)
+            while isinstance(res, (pd.DataFrame, pd.Series)):
+                res = res.all()
+            return res
+        raise TypeError(f"cannot compare {self.__class__} to {other.__class__}")
+
+
+class ValidatedSeries(pd.Series):
+    @classmethod
+    def __get_validators__(cls):
+        yield cls.validate_type
+
+    @classmethod
+    def validate_type(cls, val):
+        if isinstance(val, str):
+            val = json.loads(val)
+        if isinstance(val, list):
+            val = pd.Series(data=val)
+        if isinstance(val, pd.Series):
+            val = cls(val)
+        if isinstance(val, cls):
+            return val
+        raise TypeError(f"expected {cls.__name__}, pd.Series, list, or str")
+
+    def __eq__(self, other):
+        if isinstance(other, pd.Series):
+            res = super().__eq__(other)
+            while isinstance(res, pd.Series):
+                res = res.all()
+            return res
+        raise TypeError(f"cannot compare {self.__class__} to {other.__class__}")
+
+
 # config details: https://pydantic-docs.helpmanual.io/usage/model_config/
 class PydanticBaseModel(_BaseModel):
     class Config:
         validate_assignment = True
+        # TODO: this should be set to false (must add a validator for bofire.models.model.Model)
         arbitrary_types_allowed = True
         copy_on_model_validation = "none"
+        json_encoders = {
+            pd.DataFrame: lambda x: x.to_dict(orient="list"),
+            pd.Series: lambda x: x.to_list(),
+        }
 
 
 class KeyModel(PydanticBaseModel):
