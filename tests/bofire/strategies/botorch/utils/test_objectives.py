@@ -6,7 +6,7 @@ import pytest
 import torch
 from sklearn.utils._testing import assert_allclose
 
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     CloseToTargetObjective,
     ConstantObjective,
     DeltaObjective,

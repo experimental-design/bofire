@@ -9,7 +9,7 @@ from sklearn.metrics import (
     r2_score,
 )
 
-from bofire.domain.features import CategoricalInput, ContinuousInput
+from bofire.domain.feature import CategoricalInput, ContinuousInput
 from bofire.models.diagnostics import (
     CvResult,
     CvResults,

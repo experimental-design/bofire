@@ -7,9 +7,9 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.constraints import LinearEqualityConstraint, NChooseKConstraint
+from bofire.domain.constraint import LinearEqualityConstraint, NChooseKConstraint
 from bofire.domain.domain import Domain, get_subdomain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
@@ -19,7 +19,7 @@ from bofire.domain.features import (
     InputFeature,
     OutputFeature,
 )
-from bofire.domain.objectives import Objective, TargetObjective
+from bofire.domain.objective import Objective, TargetObjective
 from bofire.domain.util import PydanticBaseModel
 
 
@@ -397,7 +397,7 @@ def test_domain_serialize(domain):
     import json
 
     print("dict:", json.dumps(domain.dict(), indent=4))
-    ndomain = Domain(**domain.dict())
+    ndomain = Domain(**json.loads(domain.json()))
     assert ndomain == domain
 
 

@@ -6,14 +6,14 @@ from typing import Type
 import pandas as pd
 import pytest
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.domain import Domain
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
@@ -21,15 +21,16 @@ from bofire.domain.features import (
     Feature,
     OutputFeature,
 )
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.domain.objective import MaximizeObjective, MinimizeObjective
 from bofire.domain.util import KeyModel
-from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
+from bofire.models.gps import SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
 from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective
 from bofire.utils.enum import CategoricalEncodingEnum
 from tests.bofire.domain.test_domain_validators import generate_experiments
-from tests.bofire.domain.test_features import (
+from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,

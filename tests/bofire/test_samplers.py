@@ -1,12 +1,13 @@
 import pytest
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
-    Constraints,
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import CategoricalInput, ContinuousInput, InputFeatures
+from bofire.domain.constraints import Constraints
+from bofire.domain.domain import Domain
+from bofire.domain.feature import CategoricalInput, ContinuousInput
+from bofire.domain.features import InputFeatures
 from bofire.samplers import PolytopeSampler, RejectionSampler
 
 input_features = InputFeatures(
@@ -79,6 +80,7 @@ if6 = CategoricalInput(
     allowed=[False, True, False],
     key="if6",
 )
+If7 = ContinuousInput(lower_bound=1.0, upper_bound=1.0, key="If7")
 c1 = LinearEqualityConstraint(
     features=["if1", "if2", "if3", "if4"], coefficients=[1.0, 1.0, 1.0, 1.0], rhs=1.0
 )
@@ -87,6 +89,11 @@ c2 = LinearInequalityConstraint.from_greater_equal(
 )
 c3 = LinearInequalityConstraint.from_greater_equal(
     features=["if1", "if2", "if4"], coefficients=[1.0, 1.0, 0.5], rhs=0.2
+)
+c4 = LinearEqualityConstraint(
+    features=["if1", "if2", "if3", "if4", "If7"],
+    coefficients=[1.0, 1.0, 1.0, 1.0, 1.0],
+    rhs=2.0,
 )
 
 domains = [
@@ -99,6 +106,8 @@ domains = [
     Domain(input_features=[if1, if2, if3, if6], constraints=[c2]),
     Domain(input_features=[if1, if2, if3, if4, if6], constraints=[c1, c2]),
     Domain(input_features=[if1, if2, if3, if4, if6], constraints=[c1, c2, c3]),
+    Domain(input_features=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3]),
+    Domain(input_features=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3, c4]),
 ]
 
 
