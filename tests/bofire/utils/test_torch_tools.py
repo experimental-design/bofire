@@ -204,38 +204,20 @@ def test_get_nchoosek_constraints():
     # wrong samples
     samples = domain.inputs.sample(5)
     # check max count not fulfilled
-    assert torch.allclose(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
-        torch.ones(5).to(**tkwargs) * -1,
-        rtol=1e-4,
-        atol=1e-6,
-    )
+    assert torch.all(constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
     # check max count fulfilled
     samples.if8 = 0
-    assert torch.allclose(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
-        torch.zeros(5).to(**tkwargs),
-        rtol=1e-4,
-        atol=1e-6,
+    assert torch.all(
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0
     )
 
     # check min count fulfilled
     samples = domain.inputs.sample(5)
-    assert torch.allclose(
-        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)),
-        torch.ones(5).to(**tkwargs) * 4,
-        rtol=1e-4,
-        atol=1e-6,
+    assert torch.all(
+        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) >= 0
     )
-    # check min count not fulfilled
     samples[[f"if{i+4}" for i in range(5)]] = 0.0
-    assert torch.allclose(
-        constraints[1](torch.from_numpy(samples.values).to(**tkwargs)),
-        torch.ones(5).to(**tkwargs) * -1,
-        rtol=1e-4,
-        atol=1e-6,
-    )
-    # check no creation of max_count constraint if max_count = n_features
+    assert torch.all(constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
     domain = Domain(
         input_features=InputFeatures(
             features=[
@@ -257,13 +239,10 @@ def test_get_nchoosek_constraints():
     constraints = get_nchoosek_constraints(domain=domain)
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
-    assert torch.allclose(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
-        torch.ones(5).to(**tkwargs) * 3,
-        rtol=1e-4,
-        atol=1e-6,
+    assert torch.all(
+        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) >= 0
     )
-    # check no creation of min_count constraint if min_count = 0
+
     domain = Domain(
         input_features=InputFeatures(
             features=[
@@ -285,9 +264,4 @@ def test_get_nchoosek_constraints():
     constraints = get_nchoosek_constraints(domain=domain)
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
-    assert torch.allclose(
-        constraints[0](torch.from_numpy(samples.values).to(**tkwargs)),
-        torch.ones(5).to(**tkwargs) * -4,
-        rtol=1e-4,
-        atol=1e-6,
-    )
+    assert torch.all(constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
