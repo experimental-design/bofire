@@ -110,10 +110,12 @@ class Aspen_benchmark(Benchmark):
 
         # Make inputs Aspen-readable
         if self.translate_into_aspen_readable is not None:
-            candidates = self.translate_into_aspen_readable(
+            X = self.translate_into_aspen_readable(
                 domain=self.domain,  # type: ignore
-                candidates=candidates,
+                candidates=candidates.copy(),
             )
+        else:
+            X = candidates
 
         y_outputs = {
             k: []
@@ -123,7 +125,7 @@ class Aspen_benchmark(Benchmark):
         add_outputs = {key: [] for key in self.additional_output_keys}
 
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
-        for index, row in candidates.iterrows():
+        for index, row in X.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
             for key in self.domain.inputs.get_keys():
