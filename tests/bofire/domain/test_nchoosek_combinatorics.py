@@ -1,8 +1,11 @@
+import unittest
+
 import numpy as np
 import pandas as pd
 import pytest
 
 from bofire.domain.constraint import NChooseKConstraint
+from bofire.domain.constraints import Constraints
 from bofire.domain.domain import Domain
 from bofire.domain.feature import (
     CategoricalDescriptorInput,
@@ -10,6 +13,7 @@ from bofire.domain.feature import (
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.domain.features import InputFeatures
 
 # NChooseKConstraint constraints 1
 cc1a = NChooseKConstraint(
@@ -181,8 +185,50 @@ test_cases.append(test_case)
 @pytest.mark.parametrize("test_case", test_cases)
 def test_nchoosek_combinations_completeness(test_case):
     domain = test_case["domain"]
-    features_used, features_unused = domain.get_nchoosek_combinations()
+    features_used, features_unused = domain.get_nchoosek_combinations(exhaustive=True)
     for features in test_case["test_features_used"]:
         assert features in features_used
     for features in test_case["test_features_unused"]:
         assert features in features_unused
+
+
+def test_nchoosek_combinations_nonexhaustive():
+    domain = Domain(
+        input_features=InputFeatures(
+            features=[
+                ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
+                for i in range(6)
+            ]
+        ),
+        constraints=Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=[f"if{i+1}" for i in range(4)],
+                    min_count=0,
+                    max_count=2,
+                    none_also_valid=True,
+                )
+            ]
+        ),
+    )
+    used, unused = domain.get_nchoosek_combinations(exhaustive=False)
+    expected_used = [
+        ["if1", "if2"],
+        ["if1", "if3"],
+        ["if1", "if4"],
+        ["if2", "if3"],
+        ["if2", "if4"],
+        ["if3", "if4"],
+    ]
+    expected_unused = [
+        ["if3", "if4"],
+        ["if2", "if4"],
+        ["if2", "if3"],
+        ["if1", "if4"],
+        ["if1", "if3"],
+        ["if1", "if2"],
+    ]
+    # print(combos, expected_combos)
+    c = unittest.TestCase()
+    c.assertCountEqual(used, expected_used)
+    c.assertCountEqual(unused, expected_unused)

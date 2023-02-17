@@ -306,13 +306,16 @@ class Domain(PydanticBaseModel):
         assert isinstance(self.input_features, InputFeatures)
         return {f.key: f for f in self.input_features + self.output_features}[key]
 
-    # getting list of fixed values
-    def get_nchoosek_combinations(self):
+    # TODO: tidy this up
+    def get_nchoosek_combinations(self, exhaustive: bool = False):  # noqa: C901
         """get all possible NChooseK combinations
+
+        Args:
+            exhaustive (bool, optional): if True all combinations are returned. Defaults to False.
 
         Returns:
             Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
-             unused_features_list is a list of lists containing features unused in each NChooseK combination.
+                unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
         if len(self.cnstrs.get(NChooseKConstraint)) == 0:
@@ -326,11 +329,16 @@ class Domain(PydanticBaseModel):
             assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
-            for n in range(con.min_count, con.max_count + 1):
-                used_features_list.extend(itertools.combinations(con.features, n))
+            if exhaustive:
+                for n in range(con.min_count, con.max_count + 1):
+                    used_features_list.extend(itertools.combinations(con.features, n))
 
-            if con.none_also_valid:
-                used_features_list.append(tuple([]))
+                if con.none_also_valid:
+                    used_features_list.append(tuple([]))
+            else:
+                used_features_list.extend(
+                    itertools.combinations(con.features, con.max_count)
+                )
 
             used_features_list_all.append(used_features_list)
 
