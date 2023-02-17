@@ -131,7 +131,7 @@ def run(
     n_candidates_per_proposal: int = 1,
     n_runs: int = 5,
     n_procs: int = 5,
-    safe_intervall: int = 3,
+    safe_intervall: int = 1000,
 ) -> List[Tuple[Benchmark, pd.Series]]:
     """Run a benchmark problem several times in parallel
 
