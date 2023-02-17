@@ -26,7 +26,7 @@ from bofire.domain.feature import (
     TInputTransformSpecs,
 )
 from bofire.domain.features import OutputFeatures
-from bofire.models.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
 from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two

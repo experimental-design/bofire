@@ -19,7 +19,7 @@ from bofire.domain.feature import (
     ContinuousOutput,
 )
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.models.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels, EmpiricalModel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
