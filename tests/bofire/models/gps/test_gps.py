@@ -10,7 +10,7 @@ from botorch.models.transforms.outcome import Standardize
 
 from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.models.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.gps.kernels import HammondDistanceKernel, RBFKernel, ScaleKernel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric

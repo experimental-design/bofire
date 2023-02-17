@@ -9,7 +9,7 @@ from bofire.models.feature_importance import (
     permutation_importance,
     permutation_importance_hook,
 )
-from bofire.models.gps import SingleTaskGPModel
+from bofire.models.gps.gps import SingleTaskGPModel
 
 
 def get_model_and_data():
