@@ -150,6 +150,22 @@ class Aspen_benchmark(Benchmark):
                     "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
                 ).Value
 
+                if status != 8:
+                    if status == 9:
+                        logger.error(
+                            "Result"
+                            + " does not converge. Simulation status: "
+                            + str(status)
+                        )
+                    elif status == 10:
+                        logger.warning(
+                            "Result"
+                            + " gives an Aspen warning. Simulation status: "
+                            + str(status)
+                        )
+                    else:
+                        logger.warning("Unknown simulation status: " + str(status))
+
                 for key in self.domain.outputs.get_keys():
                     y_outputs[key].append(
                         aspen.Tree.FindNode(self.paths.get(key)).Value
@@ -160,20 +176,6 @@ class Aspen_benchmark(Benchmark):
                         y_outputs[f"valid_{key}"].append(1)
                     else:
                         y_outputs[f"valid_{key}"].append(0)
-                        if status == 9:
-                            logger.error(
-                                "Result"
-                                + " does not converge. Simulation status: "
-                                + str(status)
-                            )
-                        elif status == 10:
-                            logger.warning(
-                                "Result"
-                                + " gives an Aspen warning. Simulation status: "
-                                + str(status)
-                            )
-                        else:
-                            logger.warning("Unknown simulation status: " + str(status))
 
                 for key in self.additional_output_keys:
                     add_outputs[key].append(
