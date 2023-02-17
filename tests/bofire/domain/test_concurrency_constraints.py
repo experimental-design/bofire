@@ -12,8 +12,8 @@ from bofire.domain.feature import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
-    InputFeatures,
 )
+from bofire.domain.features import InputFeatures
 
 # NChooseKConstraint constraints 1
 cc1a = NChooseKConstraint(
