@@ -6,7 +6,7 @@ from bofire.domain.feature import (
     ContinuousOutput,
 )
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.models.gps import SingleTaskGPModel
+from bofire.models.gps.gps import SingleTaskGPModel
 from bofire.utils.enum import CategoricalEncodingEnum
 
 
