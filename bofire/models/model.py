@@ -6,13 +6,15 @@ import pandas as pd
 from pydantic import Field, validator
 from sklearn.model_selection import KFold
 
-from bofire.domain.features import InputFeatures, OutputFeatures, TInputTransformSpecs
+from bofire.domain.feature import TInputTransformSpecs
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.diagnostics import CvResult, CvResults
 from bofire.utils.enum import OutputFilteringEnum
 
 
 class Model(PydanticBaseModel):
+    type: str
 
     input_features: InputFeatures
     output_features: OutputFeatures

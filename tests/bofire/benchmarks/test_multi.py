@@ -1,6 +1,6 @@
 import pytest
 
-from bofire.benchmarks.multi import DTLZ2, ZDT1, CrossCoupling, SnarBenchmark
+from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, ZDT1, CrossCoupling, SnarBenchmark
 
 
 @pytest.mark.parametrize(
@@ -22,6 +22,8 @@ from bofire.benchmarks.multi import DTLZ2, ZDT1, CrossCoupling, SnarBenchmark
             False,
             {},
         ),
+        (C2DTLZ2, True, {"dim": 4}),
+        (C2DTLZ2, False, {"dim": 4}),
     ],
 )
 def test_multi_objective_benchmarks(cls_benchmark, return_complete, kwargs):

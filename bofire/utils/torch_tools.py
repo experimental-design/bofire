@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -8,12 +8,14 @@ from torch import Tensor
 from torch.nn import Module
 from torch.nn.functional import one_hot
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import InputFeature
+from bofire.domain.domain import Domain
+from bofire.domain.feature import InputFeature
+from bofire.domain.features import OutputFeatures
+from bofire.domain.objective import BotorchConstrainedObjective
 
 tkwargs = {
     "dtype": torch.double,
@@ -76,6 +78,30 @@ def get_linear_constraints(
                 )
             )
     return constraints
+
+
+def get_output_constraints(
+    output_features: OutputFeatures,
+) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
+    """Method to translate output constraint objectives into a list of
+    callables and list of etas for use in botorch.
+
+    Args:
+        output_features (OutputFeatures): Output feature object that should
+            be processed.
+
+    Returns:
+        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,
+            list of associated etas.
+    """
+    constraints = []
+    etas = []
+    for idx, feat in enumerate(output_features.get()):
+        if isinstance(feat.objective, BotorchConstrainedObjective):  # type: ignore
+            iconstraints, ietas = feat.objective.to_constraints(idx=idx)  # type: ignore
+            constraints += iconstraints
+            etas += ietas
+    return constraints, etas
 
 
 # this is copied from https://github.com/pytorch/botorch/pull/1534, will be removed as soon as it is in botorch

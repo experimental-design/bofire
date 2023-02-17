@@ -6,30 +6,28 @@ import pytest
 from _pytest.fixtures import fixture
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.domain.domain import Domain
-from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
-from bofire.domain.objectives import TargetObjective
+from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.objective import TargetObjective
 from bofire.strategies.strategy import Strategy
-from tests.bofire.domain.test_constraints import (
-    VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
-    VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
-    VALID_NCHOOSEKE_CONSTRAINT_SPEC,
-)
 from tests.bofire.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
 )
-from tests.bofire.domain.test_features import (
+from tests.bofire.strategies.dummy import DummyPredictiveStrategy, DummyStrategy
+from tests.bofire.strategies.specs import (
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
+    VALID_LINEAR_EQUALITY_CONSTRAINT_SPEC,
+    VALID_LINEAR_INEQUALITY_CONSTRAINT_SPEC,
+    VALID_NCHOOSEKE_CONSTRAINT_SPEC,
 )
-from tests.bofire.strategies.dummy import DummyPredictiveStrategy, DummyStrategy
 
 if1 = ContinuousInput(
     **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "lower_bound": 0.0}
