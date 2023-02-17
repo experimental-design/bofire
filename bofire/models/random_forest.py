@@ -1,4 +1,4 @@
-from typing import Optional, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -74,6 +74,7 @@ class RandomForest(BotorchModel, TrainableModel):
     The same hyperparameters are available as for the wrapped sklearn RandomForestRegreesor.
     """
 
+    type: Literal["RandomForest"] = "RandomForest"
     # hyperparams passed down to `RandomForestRegressor`
     n_estimators: int = 100
     criterion: str = "squared_error"
@@ -81,7 +82,7 @@ class RandomForest(BotorchModel, TrainableModel):
     min_samples_split: Union[int, float] = 2
     min_samples_leaf: Union[int, float] = 1
     min_weight_fraction_leaf: float = 0.0
-    max_features: Union[str, int, float] = 1
+    max_features: Union[int, float, str] = 1  # todo also string possible
     max_leaf_nodes: Optional[int] = None
     min_impurity_decrease: float = 0.0
     bootstrap: bool = True
