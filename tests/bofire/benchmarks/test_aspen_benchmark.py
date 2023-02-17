@@ -3,7 +3,7 @@ import os
 import pytest
 
 from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
-from bofire.domain import Domain
+from bofire.domain.domain import Domain
 from bofire.domain.features import (
     CategoricalDescriptorInput,
     ContinuousInput,
@@ -11,7 +11,7 @@ from bofire.domain.features import (
     InputFeatures,
     OutputFeatures,
 )
-from bofire.domain.objectives import MaximizeObjective
+from bofire.domain.objective import MaximizeObjective
 
 
 @pytest.mark.parametrize(
