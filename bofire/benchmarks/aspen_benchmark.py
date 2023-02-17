@@ -5,7 +5,7 @@ from typing import Callable, List, Optional
 import pandas as pd
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain import Domain
+from bofire.domain.domain import Domain
 
 # Create a folder for the log file, if not alredy exists.
 if not os.path.exists("bofire_logs"):

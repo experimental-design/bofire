@@ -93,9 +93,7 @@ def _single_run(
         filename = (
             "bofire_autosaves/" + benchmark_name + "/run" + str(run_idx) + ".json"
         )
-        # TODO: Save domain as a whole into a .json. Possible when domain can be parsed into a dict (waiting for an update)
-        # parsed_domain = benchmark.domain.dict()
-        parsed_domain = benchmark.domain.experiments.to_json(orient="split")
+        parsed_domain = benchmark.domain.json()
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
