@@ -5,8 +5,8 @@ import gpytorch.kernels
 import torch
 from gpytorch.kernels import Kernel as GpytorchKernel
 
+from bofire.any.prior import AnyPrior
 from bofire.domain.util import PydanticBaseModel
-from bofire.models.gps.priors import AnyPrior
 
 
 class BaseKernel(PydanticBaseModel):
@@ -180,14 +180,3 @@ class ScaleKernel(BaseKernel):
 
 MultiplicativeKernel.update_forward_refs()
 AdditiveKernel.update_forward_refs()
-
-
-AnyKernel = Union[
-    HammondDistanceKernel,
-    RBFKernel,
-    MaternKernel,
-    LinearKernel,
-    ScaleKernel,
-    MultiplicativeKernel,
-    AdditiveKernel,
-]

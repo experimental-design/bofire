@@ -5,7 +5,6 @@ from typing import Callable, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import parse_obj_as
 from pydantic.class_validators import root_validator
 from pydantic.types import confloat
 from torch import Tensor
@@ -65,10 +64,6 @@ class Objective(PydanticBaseModel):
             matplotlib.axes.Axes: The object to be plotted
         """
         return ax
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(AnyObjective, dict_)
 
 
 class IdentityObjective(Objective):
@@ -390,34 +385,3 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
             lambda Z: (Z[..., idx] - (self.target_value - self.tolerance)) * -1.0,
             lambda Z: (Z[..., idx] - (self.target_value + self.tolerance)),
         ], [1.0 / self.steepness, 1.0 / self.steepness]
-
-
-# TODO: check list of all objectives, possibly remove abstract classes
-AnyObjective = Union[
-    IdentityObjective,
-    MaximizeObjective,
-    MinimizeObjective,
-    DeltaObjective,
-    SigmoidObjective,
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    ConstantObjective,
-    AbstractTargetObjective,
-    CloseToTargetObjective,
-    TargetObjective,
-]
-
-AnyAbstractObjective = Union[
-    IdentityObjective,
-    MaximizeObjective,
-    MinimizeObjective,
-    DeltaObjective,
-    SigmoidObjective,
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    ConstantObjective,
-    AbstractTargetObjective,
-    CloseToTargetObjective,
-    TargetObjective,
-    BotorchConstrainedObjective,
-]

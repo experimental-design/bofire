@@ -8,13 +8,15 @@ from torch import Tensor
 from torch.nn import Module
 from torch.nn.functional import one_hot
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
-from bofire.domain.features import InputFeature, OutputFeatures
-from bofire.domain.objectives import BotorchConstrainedObjective
+from bofire.domain.domain import Domain
+from bofire.domain.feature import ContinuousInput, InputFeature
+from bofire.domain.features import OutputFeatures
+from bofire.domain.objective import BotorchConstrainedObjective
 
 tkwargs = {
     "dtype": torch.double,
@@ -75,6 +77,44 @@ def get_linear_constraints(
                     -torch.tensor(coefficients).to(**tkwargs),
                     -(rhs + c.rhs),  # type: ignore
                 )
+            )
+    return constraints
+
+
+def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+    """Transforms NChooseK constraints into a list of non-linear inequality constraint callables
+    that can be parsed by pydantic. For this purpose the NChooseK constraint is continuously
+    relaxed by countig the number of zeros in a candidate by a sum of narrow gaussians centered
+    at zero.
+
+    Args:
+        domain (Domain): Optimization problem definition.
+
+    Returns:
+        List[Callable[[Tensor], float]]: List of callables that can be used
+            as nonlinear equality constraints in botorch.
+    """
+
+    def narrow_gaussian(x, ell=1e-3):
+        return torch.exp(-0.5 * (x / ell) ** 2)
+
+    constraints = []
+    # ignore none also valid for the start
+    for c in domain.cnstrs.get(NChooseKConstraint):
+        assert isinstance(c, NChooseKConstraint)
+        indices = torch.tensor(
+            [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
+            dtype=torch.int64,
+        )
+        if c.max_count != len(c.features):
+            constraints.append(
+                lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1)
+                - (len(c.features) - c.max_count)  # type: ignore
+            )
+        if c.min_count > 0:
+            constraints.append(
+                lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1)
+                + (len(c.features) - c.min_count)  # type: ignore
             )
     return constraints
 

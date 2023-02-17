@@ -8,8 +8,8 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import Feature, OutputFeature, TInputTransformSpecs
-from bofire.domain.objectives import Objective
+from bofire.domain.feature import Feature, OutputFeature, TInputTransformSpecs
+from bofire.domain.objective import Objective
 
 
 def validate_constraints(cls, domain: Domain):

@@ -1,16 +1,16 @@
+from typing import Literal
+
 import pandas as pd
 import pytest
 
-from bofire.domain.features import (
-    ContinuousInput,
-    ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
-)
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.model import Model
 
 
 class Dummy(Model):
+    type: Literal["Dummy"] = "Dummy"
+
     def _predict(self, transformed_X: pd.DataFrame):
         pass
 

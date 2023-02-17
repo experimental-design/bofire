@@ -3,9 +3,9 @@ import pytest
 import torch
 from pydantic import parse_obj_as
 
+from bofire.any.kernel import AnyKernel
 from bofire.models.gps.kernels import (
     AdditiveKernel,
-    AnyKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
