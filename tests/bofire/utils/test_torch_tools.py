@@ -2,18 +2,14 @@ import numpy as np
 import pytest
 import torch
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import (
-    CategoricalInput,
-    ContinuousInput,
-    ContinuousOutput,
-    OutputFeatures,
-)
-from bofire.domain.objectives import (
+from bofire.domain.domain import Domain
+from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.features import OutputFeatures
+from bofire.domain.objective import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     TargetObjective,

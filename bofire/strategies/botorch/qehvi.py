@@ -16,9 +16,9 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 )
 from pydantic import confloat
 
-from bofire.domain.constraints import Constraint, NChooseKConstraint
-from bofire.domain.features import Feature
-from bofire.domain.objectives import (
+from bofire.domain.constraint import Constraint, NChooseKConstraint
+from bofire.domain.feature import Feature
+from bofire.domain.objective import (
     BotorchConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -34,9 +34,9 @@ from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 # TODO: unite this by using get_acquisiton
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
-    ref_point: Optional[dict]
-    ref_point_mask: Optional[np.ndarray]
-    objective: Optional[MCMultiOutputObjective]
+    ref_point: Optional[dict] = None
+    ref_point_mask: Optional[np.ndarray] = None
+    objective: Optional[MCMultiOutputObjective] = None
 
     def _init_acqf(self) -> None:
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(

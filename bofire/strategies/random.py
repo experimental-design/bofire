@@ -4,13 +4,13 @@ import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
 )
-from bofire.domain.features import Feature
-from bofire.domain.objectives import Objective
+from bofire.domain.feature import Feature
+from bofire.domain.objective import Objective
 from bofire.samplers import PolytopeSampler, RejectionSampler, Sampler
 from bofire.strategies.strategy import Strategy
 

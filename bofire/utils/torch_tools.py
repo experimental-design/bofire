@@ -8,13 +8,14 @@ from torch import Tensor
 from torch.nn import Module
 from torch.nn.functional import one_hot
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import InputFeature, OutputFeatures
-from bofire.domain.objectives import BotorchConstrainedObjective
+from bofire.domain.domain import Domain
+from bofire.domain.feature import InputFeature
+from bofire.domain.features import OutputFeatures
+from bofire.domain.objective import BotorchConstrainedObjective
 
 tkwargs = {
     "dtype": torch.double,

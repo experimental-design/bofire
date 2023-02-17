@@ -7,15 +7,15 @@ import torch
 from botorch.utils.sampling import get_polytope_samples
 from pydantic import validate_arguments, validator
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.domain import Domain
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,

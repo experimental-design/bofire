@@ -1,35 +1,46 @@
 import collections.abc
 import itertools
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, parse_obj_as, validator
+from pydantic import Field, validator
 
-from bofire.domain.constraints import (
-    AnyConstraint,
-    Constraints,
-    LinearConstraint,
-    NChooseKConstraint,
-)
-from bofire.domain.features import (
-    AnyInputFeature,
-    AnyOutputFeature,
+from bofire.any.constraint import AnyConstraint
+from bofire.any.feature import AnyInputFeature, AnyOutputFeature
+from bofire.domain.constraint import LinearConstraint, NChooseKConstraint
+from bofire.domain.constraints import Constraints
+from bofire.domain.feature import (
     ContinuousInput,
     ContinuousOutput,
     Feature,
-    Features,
     InputFeature,
-    InputFeatures,
     OutputFeature,
-    OutputFeatures,
 )
-from bofire.domain.objectives import Objective
-from bofire.domain.util import PydanticBaseModel, is_numeric, isinstance_or_union
+from bofire.domain.features import Features, InputFeatures, OutputFeatures
+from bofire.domain.objective import Objective
+from bofire.domain.util import (
+    PydanticBaseModel,
+    ValidatedDataFrame,
+    is_numeric,
+    isinstance_or_union,
+)
 
 
 class Domain(PydanticBaseModel):
+    type: Literal["Domain"] = "Domain"
 
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.
@@ -44,8 +55,8 @@ class Domain(PydanticBaseModel):
         default_factory=lambda: Constraints()
     )
 
-    experiments: Optional[pd.DataFrame] = None
-    candidates: Optional[pd.DataFrame] = None
+    experiments: Optional[ValidatedDataFrame] = None
+    candidates: Optional[ValidatedDataFrame] = None
 
     """Representation of the optimization problem/domain
 
@@ -704,10 +715,6 @@ class Domain(PydanticBaseModel):
         if self.experiments is None:
             return 0
         return len(self.experiments)
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(Domain, dict_)
 
 
 def get_subdomain(
