@@ -4,7 +4,7 @@ import torch
 from botorch.acquisition import MCAcquisitionObjective  # type: ignore
 from torch import Tensor
 
-from bofire.domain.objectives import (
+from bofire.domain.objective import (
     CloseToTargetObjective,
     ConstantObjective,
     DeltaObjective,
@@ -175,7 +175,9 @@ class MultiplicativeObjective(AquisitionObjective):
         for i in range(self.num_targets):
             r, infeasible = self.reward(samples[..., i], self.targets[i])
             reward *= r
-            infeasible_cost += infeasible  # TODO: where do we check the feasibility of the samples? #TODO:
+            infeasible_cost += (
+                infeasible  # TODO: where do we check the feasibility of the samples?
+            )
         return reward - infeasible_cost
 
 

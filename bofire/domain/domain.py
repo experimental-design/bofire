@@ -1,35 +1,46 @@
 import collections.abc
 import itertools
 from copy import deepcopy
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Type, Union, cast
+from typing import (
+    Any,
+    Dict,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+    cast,
+)
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, parse_obj_as, validator
+from pydantic import Field, validator
 
-from bofire.domain.constraints import (
-    AnyConstraint,
-    Constraints,
-    LinearConstraint,
-    NChooseKConstraint,
-)
-from bofire.domain.features import (
-    AnyInputFeature,
-    AnyOutputFeature,
+from bofire.any.constraint import AnyConstraint
+from bofire.any.feature import AnyInputFeature, AnyOutputFeature
+from bofire.domain.constraint import LinearConstraint, NChooseKConstraint
+from bofire.domain.constraints import Constraints
+from bofire.domain.feature import (
     ContinuousInput,
     ContinuousOutput,
     Feature,
-    Features,
     InputFeature,
-    InputFeatures,
     OutputFeature,
-    OutputFeatures,
 )
-from bofire.domain.objectives import Objective
-from bofire.domain.util import PydanticBaseModel, is_numeric, isinstance_or_union
+from bofire.domain.features import Features, InputFeatures, OutputFeatures
+from bofire.domain.objective import Objective
+from bofire.domain.util import (
+    PydanticBaseModel,
+    ValidatedDataFrame,
+    is_numeric,
+    isinstance_or_union,
+)
 
 
 class Domain(PydanticBaseModel):
+    type: Literal["Domain"] = "Domain"
 
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.
@@ -44,8 +55,8 @@ class Domain(PydanticBaseModel):
         default_factory=lambda: Constraints()
     )
 
-    experiments: Optional[pd.DataFrame] = None
-    candidates: Optional[pd.DataFrame] = None
+    experiments: Optional[ValidatedDataFrame] = None
+    candidates: Optional[ValidatedDataFrame] = None
 
     """Representation of the optimization problem/domain
 
@@ -295,13 +306,16 @@ class Domain(PydanticBaseModel):
         assert isinstance(self.input_features, InputFeatures)
         return {f.key: f for f in self.input_features + self.output_features}[key]
 
-    # getting list of fixed values
-    def get_nchoosek_combinations(self):
+    # TODO: tidy this up
+    def get_nchoosek_combinations(self, exhaustive: bool = False):  # noqa: C901
         """get all possible NChooseK combinations
+
+        Args:
+            exhaustive (bool, optional): if True all combinations are returned. Defaults to False.
 
         Returns:
             Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
-             unused_features_list is a list of lists containing features unused in each NChooseK combination.
+                unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
         if len(self.cnstrs.get(NChooseKConstraint)) == 0:
@@ -315,11 +329,16 @@ class Domain(PydanticBaseModel):
             assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
-            for n in range(con.min_count, con.max_count + 1):
-                used_features_list.extend(itertools.combinations(con.features, n))
+            if exhaustive:
+                for n in range(con.min_count, con.max_count + 1):
+                    used_features_list.extend(itertools.combinations(con.features, n))
 
-            if con.none_also_valid:
-                used_features_list.append(tuple([]))
+                if con.none_also_valid:
+                    used_features_list.append(tuple([]))
+            else:
+                used_features_list.extend(
+                    itertools.combinations(con.features, con.max_count)
+                )
 
             used_features_list_all.append(used_features_list)
 
@@ -704,10 +723,6 @@ class Domain(PydanticBaseModel):
         if self.experiments is None:
             return 0
         return len(self.experiments)
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(Domain, dict_)
 
 
 def get_subdomain(

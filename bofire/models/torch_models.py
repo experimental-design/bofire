@@ -1,5 +1,5 @@
 import itertools
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 import botorch
 import numpy as np
@@ -11,14 +11,13 @@ from botorch.models.model import Model as BotorchBaseModel
 from botorch.models.transforms.input import ChainedInputTransform, FilterFeatures
 from pydantic import validator
 
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
-    InputFeatures,
     NumericalInput,
-    OutputFeatures,
     TInputTransformSpecs,
 )
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.domain.util import PydanticBaseModel
 from bofire.models.model import Model, TrainableModel
 from bofire.utils.enum import CategoricalEncodingEnum
@@ -232,4 +231,5 @@ class EmpiricalModel(BotorchModel):
         model (DeterministicModel): Botorch model instance.
     """
 
+    type: Literal["EmpiricalModel"] = "EmpiricalModel"
     model: Optional[DeterministicModel] = None
