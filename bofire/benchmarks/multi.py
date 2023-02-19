@@ -11,21 +11,20 @@ from scipy.integrate import solve_ivp
 from scipy.special import gamma
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.domain import Domain
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
     InputFeature,
-    InputFeatures,
-    OutputFeatures,
 )
-from bofire.domain.objectives import (
+from bofire.domain.features import InputFeatures, OutputFeatures
+from bofire.domain.objective import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
 )
-from bofire.models.torch_models import SingleTaskGPModel
+from bofire.models.gps.gps import SingleTaskGPModel
 from bofire.utils.enum import CategoricalEncodingEnum
 
 
@@ -458,11 +457,11 @@ class CrossCoupling(Benchmark):
         output_features = [
             ContinuousOutput(
                 key="yield",
-                objective=MaximizeObjective(w=1.0),
+                objective=MaximizeObjective(w=1.0, lower_bound=0.0, upper_bound=1.0),
             ),
             ContinuousOutput(
                 key="cost",
-                objective=MinimizeObjective(w=1.0),
+                objective=MinimizeObjective(w=1.0, lower_bound=0.0, upper_bound=1.0),
             ),
         ]
         self.ref_point = {"yield": 0.0, "cost": 1.0}

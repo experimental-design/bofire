@@ -3,25 +3,24 @@ from typing import Dict, Optional
 
 import pandas as pd
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.features import (
+from bofire.domain.domain import Domain
+from bofire.domain.feature import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     InputFeature,
-    InputFeatures,
     OutputFeature,
-    OutputFeatures,
 )
-from bofire.domain.objectives import (
+from bofire.domain.features import InputFeatures, OutputFeatures
+from bofire.domain.objective import (
     CloseToTargetObjective,
     MaximizeObjective,
     MinimizeObjective,

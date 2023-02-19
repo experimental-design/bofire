@@ -14,10 +14,11 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
+from pydantic import confloat
 
-from bofire.domain.constraints import Constraint, NChooseKConstraint
-from bofire.domain.features import Feature
-from bofire.domain.objectives import (
+from bofire.domain.constraint import Constraint, NChooseKConstraint
+from bofire.domain.feature import Feature
+from bofire.domain.objective import (
     BotorchConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -33,9 +34,9 @@ from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 # TODO: unite this by using get_acquisiton
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
-    ref_point: Optional[dict]
-    ref_point_mask: Optional[np.ndarray]
-    objective: Optional[MCMultiOutputObjective]
+    ref_point: Optional[dict] = None
+    ref_point_mask: Optional[np.ndarray] = None
+    objective: Optional[MCMultiOutputObjective] = None
 
     def _init_acqf(self) -> None:
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
@@ -207,6 +208,9 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
+
+    alpha: confloat(ge=0, le=0.5) = 0.0  # type: ignore
+
     def _init_acqf(self) -> None:
 
         X_train, X_pending = self.get_acqf_input_tensors()
@@ -231,6 +235,7 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             X_pending=X_pending,
             constraints=constraints,
             eta=etas,
+            alpha=self.alpha,
         )
         # todo comment in after new botorch deployment
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])

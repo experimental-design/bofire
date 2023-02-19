@@ -13,24 +13,21 @@ from pydantic import PositiveInt
 from pydantic.class_validators import root_validator, validator
 from pydantic.types import NonNegativeInt, conlist
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.domain.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     InputFeature,
-    OutputFeatures,
     TInputTransformSpecs,
 )
-from bofire.models.torch_models import (
-    BotorchModels,
-    MixedSingleTaskGPModel,
-    SingleTaskGPModel,
-)
+from bofire.domain.features import OutputFeatures
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import (  # DescriptorMethodEnum,
@@ -512,7 +509,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
         # generate botorch-friendly fixed values
         features2idx = self._features2idx
-        used_features, unused_features = self.domain.get_nchoosek_combinations()
+        used_features, unused_features = self.domain.get_nchoosek_combinations(
+            exhaustive=True
+        )
         fixed_values_list_cc = []
         for used, unused in zip(used_features, unused_features):
             fixed_values = {}

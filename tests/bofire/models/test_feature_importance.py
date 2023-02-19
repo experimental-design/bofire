@@ -1,19 +1,15 @@
 import pandas as pd
 import pytest
 
-from bofire.domain.features import (
-    ContinuousInput,
-    ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
-)
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.diagnostics import metrics
 from bofire.models.feature_importance import (
     combine_permutation_importances,
     permutation_importance,
     permutation_importance_hook,
 )
-from bofire.models.torch_models import SingleTaskGPModel
+from bofire.models.gps.gps import SingleTaskGPModel
 
 
 def get_model_and_data():

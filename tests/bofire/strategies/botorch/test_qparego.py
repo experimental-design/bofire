@@ -6,11 +6,8 @@ import torch
 
 from bofire.benchmarks.multi import DTLZ2, CrossCoupling
 from bofire.domain.features import OutputFeatures
-from bofire.models.torch_models import (
-    BotorchModels,
-    MixedSingleTaskGPModel,
-    SingleTaskGPModel,
-)
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
 from bofire.utils.enum import AcquisitionFunctionEnum
