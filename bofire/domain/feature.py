@@ -1020,13 +1020,13 @@ class CategoricalDescriptorInput(CategoricalInput):
                 np.sum(
                     (
                         values[cat_cols].to_numpy()[:, np.newaxis, :]
-                        - self.to_df().to_numpy()
+                        - self.to_df().iloc[self.allowed].to_numpy()
                     )
                     ** 2,
                     axis=2,
                 )
             ),
-            columns=self.categories,
+            columns=self.get_allowed_categories(),
             index=values.index,
         ).idxmin(1)
         s.name = self.key

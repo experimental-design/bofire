@@ -702,7 +702,7 @@ def test_categorical_descriptor_to_descriptor_encoding():
 
 
 def test_categorical_descriptor_from_descriptor_encoding():
-    c = CategoricalDescriptorInput(
+    c1 = CategoricalDescriptorInput(
         key="c",
         categories=["B", "A", "C"],
         descriptors=["d1", "d2"],
@@ -712,9 +712,21 @@ def test_categorical_descriptor_from_descriptor_encoding():
         columns=["c_d1", "c_d2", "misc"],
         data=[[1.05, 2.5, 6], [4, 4.5, 9]],
     )
-    samples = c.from_descriptor_encoding(descriptor_values)
+    samples = c1.from_descriptor_encoding(descriptor_values)
     print(samples)
     assert np.all(samples == pd.Series(["B", "A"]))
+
+    c2 = CategoricalDescriptorInput(
+        key="c",
+        categories=["B", "A", "C"],
+        descriptors=["d1", "d2"],
+        values=[[1, 2], [3, 4], [5, 6]],
+        allowed=[False, True, True],
+    )
+
+    samples = c2.from_descriptor_encoding(descriptor_values)
+    print(samples)
+    assert np.all(samples == pd.Series(["A", "A"]))
 
 
 def test_categorical_descriptor_to_descriptor_encoding_1d():
