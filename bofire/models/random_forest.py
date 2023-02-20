@@ -27,6 +27,8 @@ class _RandomForest(EnsembleModel):
             rf (RandomForestRegressor): Fitted sklearn random forest regressor.
         """
         super().__init__()
+        if not isinstance(rf, RandomForestRegressor):
+            raise ValueError("`rf` is not a sklearn RandomForestRegressor.")
         check_is_fitted(rf)
         self._rf = rf
 
