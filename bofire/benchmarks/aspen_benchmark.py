@@ -1,6 +1,7 @@
 import logging
 import os
-from typing import Callable, List, Optional
+
+from typing import Callable, Dict, List, Optional
 
 import pandas as pd
 
@@ -34,7 +35,7 @@ class Aspen_benchmark(Benchmark):
         self,
         filename: str,
         domain: Domain,
-        paths: dict[str, str],
+        paths: Dict[str, str],
         additional_output_keys: List = [],
         translate_into_aspen_readable: Optional[
             Callable[[Domain, pd.DataFrame], pd.DataFrame]

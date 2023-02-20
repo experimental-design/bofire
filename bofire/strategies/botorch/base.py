@@ -509,7 +509,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
         # generate botorch-friendly fixed values
         features2idx = self._features2idx
-        used_features, unused_features = self.domain.get_nchoosek_combinations()
+        used_features, unused_features = self.domain.get_nchoosek_combinations(
+            exhaustive=True
+        )
         fixed_values_list_cc = []
         for used, unused in zip(used_features, unused_features):
             fixed_values = {}
