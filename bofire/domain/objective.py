@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Callable, List, Literal, Union
+from typing import Callable, List, Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import parse_obj_as
 from pydantic.class_validators import root_validator
 from pydantic.types import confloat
 from torch import Tensor
@@ -24,14 +23,17 @@ class BotorchConstrainedObjective:
     """This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints."""
 
     @abstractmethod
-    def to_constraints(self, idx: int) -> List[Callable[[Tensor], Tensor]]:
+    def to_constraints(
+        self, idx: int
+    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Args:
             idx (int): Index of the constraint objective in the list of outputs.
 
         Returns:
-            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+                list of the corresponding botorch eta values.
         """
         pass
 
@@ -63,10 +65,6 @@ class Objective(PydanticBaseModel):
         """
         return ax
 
-    @staticmethod
-    def from_dict(dict_: dict):
-        return parse_obj_as(AnyObjective, dict_)
-
 
 class IdentityObjective(Objective):
     """An objective returning the identity as reward.
@@ -79,7 +77,7 @@ class IdentityObjective(Objective):
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
-    w: TWeight
+    w: TWeight = 1
     lower_bound: float = 0
     upper_bound: float = 1
 
@@ -186,7 +184,7 @@ class SigmoidObjective(Objective, BotorchConstrainedObjective):
     type: Literal["SigmoidObjective"] = "SigmoidObjective"
     steepness: TGt0
     tp: float
-    w: TWeight
+    w: TWeight = 1
 
 
 class MaximizeSigmoidObjective(SigmoidObjective):
@@ -212,16 +210,19 @@ class MaximizeSigmoidObjective(SigmoidObjective):
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
-    def to_constraints(self, idx: int):
+    def to_constraints(
+        self, idx: int
+    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Args:
             idx (int): Index of the constraint objective in the list of outputs.
 
         Returns:
-            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+                list of the corresponding botorch eta values.
         """
-        return [lambda Z: (Z[..., idx] - self.tp) * -1.0]
+        return [lambda Z: (Z[..., idx] - self.tp) * -1.0], [1.0 / self.steepness]
 
 
 class MinimizeSigmoidObjective(SigmoidObjective):
@@ -246,16 +247,19 @@ class MinimizeSigmoidObjective(SigmoidObjective):
         """
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
-    def to_constraints(self, idx: int):
+    def to_constraints(
+        self, idx: int
+    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
 
         Args:
             idx (int): Index of the constraint objective in the list of outputs.
 
         Returns:
-            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+                list of the corresponding botorch eta values.
         """
-        return [lambda Z: (Z[..., idx] - self.tp)]
+        return [lambda Z: (Z[..., idx] - self.tp)], [1.0 / self.steepness]
 
 
 class ConstantObjective(Objective):
@@ -267,7 +271,7 @@ class ConstantObjective(Objective):
     """
 
     type: Literal["ConstantObjective"] = "ConstantObjective"
-    w: TWeight
+    w: TWeight = 1
     value: float
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
@@ -286,7 +290,7 @@ class AbstractTargetObjective(Objective):
     # TODO: add docstring to AbstractTargetObjective
 
     type: Literal["AbstractTargetObjective"] = "AbstractTargetObjective"
-    w: TWeight
+    w: TWeight = 1
     target_value: float
     tolerance: TGe0
 
@@ -365,34 +369,19 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
             )
         )
 
-    def to_constraints(self, idx: int):
+    def to_constraints(
+        self, idx: int
+    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
         """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
-
-        Here two callables are returned as the constraint is a product of the `MaximizeSigmoidObjective` and `MinimizeSigmoidObjective`.
 
         Args:
             idx (int): Index of the constraint objective in the list of outputs.
 
         Returns:
-            List[Callable[[Tensor], Tensor]]: List of callables that can be used by botorch for setting up the constrained objective.
+            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+                list of the corresponding botorch eta values.
         """
         return [
             lambda Z: (Z[..., idx] - (self.target_value - self.tolerance)) * -1.0,
             lambda Z: (Z[..., idx] - (self.target_value + self.tolerance)),
-        ]
-
-
-# TODO: check list of all objectives, possibly remove abstract classes
-AnyObjective = Union[
-    IdentityObjective,
-    MaximizeObjective,
-    MinimizeObjective,
-    DeltaObjective,
-    SigmoidObjective,
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    ConstantObjective,
-    AbstractTargetObjective,
-    CloseToTargetObjective,
-    TargetObjective,
-]
+        ], [1.0 / self.steepness, 1.0 / self.steepness]

@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 import pytest
 
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,

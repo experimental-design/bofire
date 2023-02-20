@@ -1,12 +1,24 @@
+import numpy as np
+import pytest
 import torch
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.features import CategoricalInput, ContinuousInput
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.domain.domain import Domain
+from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.features import OutputFeatures
+from bofire.domain.objective import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    TargetObjective,
+)
+from bofire.utils.torch_tools import (
+    get_linear_constraints,
+    get_output_constraints,
+    tkwargs,
+)
 
 if1 = ContinuousInput(
     lower_bound=0.0,
@@ -135,3 +147,31 @@ def test_get_linear_constraints_unit_scaled():
         constraints[0][1], torch.tensor([0.4, 0.6, 0.5]).to(**tkwargs) * -1
     )
     assert torch.allclose(constraints[0][0], torch.tensor([1, 2, 0]))
+
+
+of1 = ContinuousOutput(key="of1", objective=MaximizeObjective(w=1.0))
+of2 = ContinuousOutput(
+    key="of2",
+    objective=MaximizeSigmoidObjective(
+        w=1.0,
+        tp=0,
+        steepness=2,
+    ),
+)
+of3 = ContinuousOutput(
+    key="of3",
+    objective=TargetObjective(w=1.0, tolerance=2, target_value=5, steepness=4),
+)
+
+
+@pytest.mark.parametrize(
+    "output_features",
+    [
+        OutputFeatures(features=[of1, of2, of3]),
+        OutputFeatures(features=[of2, of1, of3]),
+    ],
+)
+def test_get_output_constraints(output_features):
+    constraints, etas = get_output_constraints(output_features=output_features)
+    assert len(constraints) == len(etas)
+    assert np.allclose(etas, [0.5, 0.25, 0.25])

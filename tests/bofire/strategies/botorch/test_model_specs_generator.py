@@ -1,20 +1,17 @@
 import pytest
 
-from bofire.domain.features import (
-    ContinuousInput,
-    ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
-)
-from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.features import InputFeatures, OutputFeatures
+from bofire.models.gps.gps import SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.strategies.botorch.sobo import BoTorchSoboStrategy
 from bofire.strategies.strategy import Strategy
-from tests.bofire.domain.test_features import (
+from tests.bofire.strategies.botorch.test_sobo import VALID_BOTORCH_SOBO_STRATEGY_SPEC
+from tests.bofire.strategies.specs import (
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
 )
-from tests.bofire.strategies.botorch.test_sobo import VALID_BOTORCH_SOBO_STRATEGY_SPEC
 
 if1 = ContinuousInput(
     **{

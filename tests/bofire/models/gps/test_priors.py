@@ -2,7 +2,7 @@ import gpytorch.priors
 import pytest
 from pydantic.error_wrappers import ValidationError
 
-from bofire.models.priors import GammaPrior, NormalPrior, Prior
+from bofire.models.gps.priors import GammaPrior, NormalPrior
 from tests.bofire.domain.utils import get_invalids
 
 VALID_GAMMA_PRIOR_SPEC = {"type": "GammaPrior", "concentration": 2.0, "rate": 0.2}
@@ -84,16 +84,3 @@ def test_prior(prior, expected_prior):
             continue
         assert value == getattr(gprior, key)
     prior.plot_pdf(lower=-5, upper=5)
-
-
-@pytest.mark.parametrize(
-    "prior",
-    [
-        GammaPrior(concentration=2.0, rate=0.2),
-        NormalPrior(loc=0, scale=0.5),
-    ],
-)
-def test_prior_from_dict(prior):
-    d = prior.dict()
-    prior2 = Prior.from_dict(d)
-    assert prior == prior2

@@ -1,18 +1,20 @@
 import logging
 import os
+from typing import Callable, List, Optional
 
 import pandas as pd
-import win32com.client as win32
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain import Domain
+from bofire.domain.domain import Domain
+
+# Create a folder for the log file, if not alredy exists.
+if not os.path.exists("bofire_logs"):
+    os.makedirs("bofire_logs")
 
 # Create a Logger that safes console output.
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 formatter = logging.Formatter("%(asctime)s:%(levelname)s:%(message)s")
-if not os.path.exists("bofire_logs"):
-    os.makedirs("bofire_logs")
 file_handler = logging.FileHandler("bofire_logs/aspen_benchmark.log")
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
@@ -29,57 +31,54 @@ class Aspen_benchmark(Benchmark):
     """
 
     def __init__(
-        self, filename: str, domain: Domain, paths: list[list[dict[str, str]]]
+        self,
+        filename: str,
+        domain: Domain,
+        paths: dict[str, str],
+        additional_output_keys: List = [],
+        translate_into_aspen_readable: Optional[
+            Callable[[Domain, pd.DataFrame], pd.DataFrame]
+        ] = None,
     ) -> None:
         """Initializes Aspen_benchmark. A class that connects to Aspen plus.
 
         Args:
             filename (str): Filepath of the Aspen plus simulation file.
             domain (Domain): Domain of the benchmark setting inclunding bounds and information about input values.
-            paths (list[list[dict[str, str]]]): 2xn list with dictionaries containing the filepaths to the variables in the Aspen variable tree
-            in Aspen plus {"name": "path"}.
+            paths (dict[str, str]): A dictionary with the key value pairs "key_of_variable": "path_to_variable".
+            The keys must be the same as provided in the domain.
+            translate_into_aspen_readable (Optional: Callable): A function that converts the columns of a candidate dataframe into
+            integers or floats so Aspen plus is able to read their values.
 
         Raises:
-            SystemExit: In case the number of provided variable names does not match the number of provided Aspen variable tree paths.
+            ValueError: In case the number of provided variable names does not match the number of provided Aspen variable tree paths.
         """
+        if os.path.exists(filename):
+            self.filename = filename
+        else:
+            raise ValueError("Unable to find Aspen file " + filename)
 
-        self.filename = filename
+        self.translate_into_aspen_readable = translate_into_aspen_readable
         self._domain = domain
+        self.additional_output_keys = additional_output_keys
+
+        for key in self.domain.get_feature_keys():
+            # Check, if every input and output variable has a path to Aspen provided.
+            if key not in paths.keys():
+                raise ValueError("Path for " + key + " is not provided.")
+
         self.paths = paths
-
         self.aspen_is_running = False
-
-        # Get the variable names (keys) from the domain to access them later easily.
-        self.keys = [[], []]  # keys[0] for x, keys[1] for y
-        for feature in self.domain.inputs.features:
-            self.keys[0].append(feature.key)
-        for feature in self.domain.outputs.features:
-            self.keys[1].append(feature.key)
-
-        # Check, if number of paths matches number of variables
-        for key_list, path_list in zip(self.keys, self.paths):
-            if len(key_list) != len(path_list):
-                log_string = (
-                    "Number of variables ("
-                    + str(len(key_list))
-                    + ") names must match number of paths ("
-                    + str(len(path_list))
-                    + "). \n"
-                    + "Variables: "
-                    + str(key_list)
-                    + "\nPaths: "
-                    + str(path_list)
-                )
-                logger.exception(log_string)
-                raise SystemExit(log_string)
 
     # Start Aspen
     def start_aspen(self):
         """Starts Aspen plus and opens desired simulation file.
 
         Raises:
-            SystemExit: In case it is not possible to start Aspen plus.
+            ValueError: In case it is not possible to start Aspen plus.
         """
+        import win32com.client as win32
+
         logger.info("Starting Aspen plus")
         # Aspen should be accessible from every function as a global variable.
         global aspen
@@ -87,10 +86,9 @@ class Aspen_benchmark(Benchmark):
             aspen = win32.Dispatch("Apwn.Document")
             aspen.InitFromFile2(os.path.abspath(self.filename))
             self.aspen_is_running = True
-        except OSError:
-            log_string = "Unable to start Aspen plus."
-            logger.exception(log_string)
-            raise SystemExit(log_string)
+        except OSError as e:
+            logger.exception(e)
+            raise ValueError(e)
 
     # Run simulation in Aspen
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
@@ -110,17 +108,32 @@ class Aspen_benchmark(Benchmark):
         if self.aspen_is_running is False:
             self.start_aspen()
 
-        # TODO: Initiate dataframe more memory efficient without interfering with the pd.concat method.
-        Y = pd.DataFrame()
+        # Make inputs Aspen-readable
+        if self.translate_into_aspen_readable is not None:
+            X = self.translate_into_aspen_readable(
+                domain=self.domain,  # type: ignore
+                candidates=candidates.copy(),
+            )
+        else:
+            X = candidates
+
+        y_outputs = {
+            k: []
+            for key in self.domain.outputs.get_keys()
+            for k in (key, "valid_" + key)
+        }
+        add_outputs = {key: [] for key in self.additional_output_keys}
+
         # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
-        for index, row in candidates.iterrows():
+        for index, row in X.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.
-            for key, path in zip(self.keys[0], self.paths[0]):
+            for key in self.domain.inputs.get_keys():
                 try:
-                    aspen.Tree.FindNode(path.get(key)).Value = row[key]
+                    aspen.Tree.FindNode(self.paths.get(key)).Value = row[key]
                 except ConnectionAbortedError:
                     logger.exception("Not able to write " + key + " into Aspen.")
+                    raise ValueError("Not able to write " + key + " into Aspen.")
 
             # Reset Aspen simulation
             aspen.Reinit()
@@ -131,48 +144,52 @@ class Aspen_benchmark(Benchmark):
 
             # Retrieve outputs from Aspen and write into data frame
             logger.info("Retrieving outputs from Aspen.")
-            for key, path in zip(self.keys[1], self.paths[1]):
-                try:
-                    Y.at[index, key] = aspen.Tree.FindNode(path.get(key)).Value
+            try:
+                # Check for errors during simulation in Aspen that disqualify the results
+                status = aspen.Tree.FindNode(
+                    "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
+                ).Value
 
-                    # Check for errors during simulation in Aspen that disqualify the y_value
-                    status = aspen.Tree.FindNode(
-                        "\\Data\\Results Summary\\Run-Status\\Output\\UOSSTAT2"
-                    ).Value
+                if status != 8:
+                    if status == 9:
+                        logger.error(
+                            "Result"
+                            + " does not converge. Simulation status: "
+                            + str(status)
+                        )
+                    elif status == 10:
+                        logger.warning(
+                            "Result"
+                            + " gives an Aspen warning. Simulation status: "
+                            + str(status)
+                        )
+                    else:
+                        logger.warning("Unknown simulation status: " + str(status))
+
+                for key in self.domain.outputs.get_keys():
+                    y_outputs[key].append(
+                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                    )
                     if status == 8:
                         # Result is valid and add valid_var = 1
                         # Status = 8 corresponds to a valid result that should be kept, 10 is a warning, 9 does not converge
-                        Y.at[index, "valid_" + key] = 1
+                        y_outputs[f"valid_{key}"].append(1)
                     else:
-                        Y.at[index, "valid_" + key] = 0
-                        value = Y.at[index, key]
-                        if status == 9:
-                            logger.error(
-                                "Result of "
-                                + str(value)
-                                + " does not converge. Simulation status: "
-                                + str(status)
-                            )
-                        elif status == 10:
-                            logger.warning(
-                                "Result of "
-                                + str(value)
-                                + " gives an Aspen warning. Simulation status: "
-                                + str(status)
-                            )
-                        else:
-                            logger.warning("Unknown simulation status: " + str(status))
+                        y_outputs[f"valid_{key}"].append(0)
 
-                except ConnectionAbortedError:
-                    logger.exception("Not able to retrieve " + key + " from Aspen.")
+                for key in self.additional_output_keys:
+                    add_outputs[key].append(
+                        aspen.Tree.FindNode(self.paths.get(key)).Value
+                    )
 
+            except ConnectionAbortedError:
+                logger.exception("Not able to retrieve values from Aspen.")
+                raise ValueError("Not able to retrieve values from Aspen.")
+
+        Y = pd.DataFrame(y_outputs)
+        Z = pd.DataFrame(add_outputs)
+        XYZ = pd.concat([candidates, Y, Z], axis=1)
+        YZ = pd.concat([Y, Z], axis=1)
         logger.info("Simluation completed. Results:")
-        logger.info(Y)
-        return Y
-
-    def __del__(self):
-        # Can cause trouble. The qehvi takes time to generate the next input, meanwhile the python cleaner can close the class.
-        """Deinitializes class and closes Aspen plus."""
-        if self.aspen_is_running:
-            aspen.Close()
-            logger.info("Aspen closed.")
+        logger.info(XYZ)
+        return YZ

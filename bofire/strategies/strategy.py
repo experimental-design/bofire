@@ -8,8 +8,8 @@ from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import Feature, OutputFeature, TInputTransformSpecs
-from bofire.domain.objectives import Objective
+from bofire.domain.feature import Feature, OutputFeature, TInputTransformSpecs
+from bofire.domain.objective import Objective
 
 
 def validate_constraints(cls, domain: Domain):
@@ -384,11 +384,11 @@ class PredictiveStrategy(Strategy):
             self.domain.set_experiments(experiments)
         else:
             self.domain.add_experiments(experiments)
-        if retrain:
+        if retrain and self.has_sufficient_experiments():
             self.fit()
-        # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
-        # to fitting the models like initializing the ACQF.
-        self._tell()
+            # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
+            # to fitting the models like initializing the ACQF.
+            self._tell()
 
     def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Run predictions for the provided experiments. Only input features have to be provided.

@@ -4,9 +4,10 @@ from itertools import chain
 import pytest
 import torch
 
-from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.multi import DTLZ2, CrossCoupling
 from bofire.domain.features import OutputFeatures
-from bofire.models.torch_models import BotorchModels, SingleTaskGPModel
+from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
+from bofire.models.torch_models import BotorchModels
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
 from bofire.utils.enum import AcquisitionFunctionEnum
@@ -31,12 +32,7 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
             ),
         ]
     ),
-    # "num_sobol_samples": 1024,
-    # "num_restarts": 8,
-    # "num_raw_samples": 1024,
-    # "descriptor_encoding": random.choice(list(DescriptorEncodingEnum)),
     "descriptor_method": "FREE",
-    # "categorical_encoding": "ONE_HOT",
     "acquisition_function": random.choice(list(AcquisitionFunctionEnum)),
     "categorical_method": "FREE",
 }
@@ -57,28 +53,28 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
 BOTORCH_QPAREGO_STRATEGY_SPECS = {
     "valids": [
         VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
-        # {
-        #     **VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
-        #     "domain": domains[2],
-        #     "model_specs": BotorchModels(
-        #         models=[
-        #             MixedSingleTaskGPModel(
-        #                 input_features=domains[6].input_features,
-        #                 output_features=OutputFeatures(
-        #                     features=[domains[6].output_features.get_by_key("of1")]
-        #                 ),
-        #             ),
-        #             MixedSingleTaskGPModel(
-        #                 input_features=domains[6].input_features,
-        #                 output_features=OutputFeatures(
-        #                     features=[domains[6].output_features.get_by_key("of2")]
-        #                 ),
-        #             ),
-        #         ]
-        #     ),
-        #     "descriptor_method": random.choice(list(CategoricalMethodEnum)),
-        #     "categorical_method": random.choice(list(CategoricalMethodEnum)),
-        # },
+        {
+            **VALID_BOTORCH_QPAREGO_STRATEGY_SPEC,
+            "domain": domains[2],
+            "model_specs": BotorchModels(
+                models=[
+                    MixedSingleTaskGPModel(
+                        input_features=domains[2].input_features,
+                        output_features=OutputFeatures(
+                            features=[domains[2].output_features.get_by_key("of1")]
+                        ),
+                    ),
+                    MixedSingleTaskGPModel(
+                        input_features=domains[2].input_features,
+                        output_features=OutputFeatures(
+                            features=[domains[2].output_features.get_by_key("of2")]
+                        ),
+                    ),
+                ]
+            ),
+            "descriptor_method": "EXHAUSTIVE",
+            "categorical_method": "EXHAUSTIVE",
+        },
         {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "seed": 1},
         # {**VALID_BOTORCH_QPAREGO_STRATEGY_SPEC, "model_specs": VALID_MODEL_SPEC_LIST},
     ],
@@ -126,22 +122,26 @@ def test_qparego(num_test_candidates, acquisition_function):
 
 
 @pytest.mark.parametrize(
-    "specs, num_experiments, num_candidates",
+    "specs, benchmark, num_experiments, num_candidates",
     [
         (
-            random.choice(BOTORCH_QPAREGO_STRATEGY_SPECS["valids"]),
-            num_experiments,
-            num_candidates,
-        )
-        for num_experiments in range(8, 10)
-        for num_candidates in range(1, 3)
+            BOTORCH_QPAREGO_STRATEGY_SPECS["valids"][0],
+            DTLZ2(dim=6),
+            random.randint(8, 10),
+            random.randint(1, 3),
+        ),
+        (
+            BOTORCH_QPAREGO_STRATEGY_SPECS["valids"][1],
+            CrossCoupling(),
+            random.randint(8, 10),
+            random.randint(1, 3),
+        ),
     ],
 )
 @pytest.mark.slow
-def test_get_acqf_input(specs, num_experiments, num_candidates):
+def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
 
     # generate data
-    benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.f(
         random_strategy._sample(n=num_experiments), return_complete=True

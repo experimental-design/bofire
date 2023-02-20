@@ -10,12 +10,9 @@ from multiprocess.pool import Pool
 from tqdm import tqdm
 
 from bofire.domain.domain import Domain
-from bofire.domain.features import OutputFeature
-from bofire.domain.objectives import Objective
+from bofire.domain.feature import OutputFeature
+from bofire.domain.objective import Objective
 from bofire.strategies.strategy import Strategy
-
-if not os.path.exists("bofire_autosaves"):
-    os.makedirs("bofire_autosaves")
 
 
 # TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
@@ -78,31 +75,27 @@ def _single_run(
     metric: Callable[[Domain], float],
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
     n_candidates_per_proposals: int,
+    safe_intervall: int,
 ) -> Tuple[Benchmark, pd.Series]:
-    def autosafe_results(benchmark, metric_values: pd.Series):
+    def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
         Autosave should operate every 10 iterations.
 
         Args:
-            benchmark:
-            metric values
+            benchmark: Benchmark function that is suposed be evaluated.
         """
 
         benchmark_name = benchmark.__class__.__name__
+        # Create a folder for autosaves, if not already exists.
+        if not os.path.exists("bofire_autosaves/" + benchmark_name):
+            os.makedirs("bofire_autosaves/" + benchmark_name)
+
         filename = (
-            "bofire_autosaves/"
-            + str(benchmark_name)
-            + "_run"
-            + str(run_idx + 1)
-            + ".json"
+            "bofire_autosaves/" + benchmark_name + "/run" + str(run_idx) + ".json"
         )
-
-        exp_dataframe = benchmark.domain.experiments
-        exp_dataframe["hypervolume"] = metric_values
-        parsed = exp_dataframe.to_json(orient="split")
-
+        parsed_domain = benchmark.domain.json()
         with open(filename, "w") as file:
-            json.dump(parsed, file)
+            json.dump(parsed_domain, file)
 
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
@@ -112,20 +105,20 @@ def _single_run(
     strategy = strategy_factory(domain=benchmark.domain)
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
-    for i_bar, it in zip(pbar, range(n_iterations)):
+    for i in pbar:
         X = strategy.ask(candidate_count=n_candidates_per_proposals)
         X = X[benchmark.domain.inputs.get_keys()]
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
+        # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
+        # colum needs to be converted back to str to be added to the benchmark domain.
         strategy.tell(XY)
-        metric_values[i_bar] = metric(strategy.domain)
+        metric_values[i] = metric(strategy.domain)
         pbar.set_description(
-            f"run {run_idx:02d} with current best {metric_values[i_bar]:0.3f}"
+            f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
         )
-        if it % 10 == 0 and it > 0:
-            autosafe_results(
-                benchmark=benchmark, metric_values=pd.Series(metric_values)
-            )
+        if (i + 1) % safe_intervall == 0:
+            autosafe_results(benchmark=benchmark)
     return benchmark, pd.Series(metric_values)
 
 
@@ -138,6 +131,7 @@ def run(
     n_candidates_per_proposal: int = 1,
     n_runs: int = 5,
     n_procs: int = 5,
+    safe_intervall: int = 1000,
 ) -> List[Tuple[Benchmark, pd.Series]]:
     """Run a benchmark problem several times in parallel
 
@@ -165,6 +159,7 @@ def run(
             metric,
             initial_sampler,
             n_candidates_per_proposal,
+            safe_intervall,
         )
 
     if n_procs == 1:

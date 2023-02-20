@@ -2,9 +2,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bofire.domain.constraints import NChooseKConstraint
+from bofire.domain.constraint import NChooseKConstraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import (
+from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
