@@ -4,8 +4,8 @@ import numpy as np
 import pytest
 from scipy.optimize import LinearConstraint
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.domain import Domain
+from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
