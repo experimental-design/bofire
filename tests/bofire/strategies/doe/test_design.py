@@ -4,12 +4,12 @@ import warnings
 import numpy as np
 import pytest
 
-from bofire.domain.domain import Domain
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
+from bofire.domain.domain import Domain
 from bofire.domain.features import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
