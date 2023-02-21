@@ -31,10 +31,9 @@ def test_logD():
     design = np.ones(shape=(10, 5))
     design[0, 0] = 2
 
-    log_d = logD(design)
     log_d_true = np.linalg.slogdet(design.T @ design + 1e-7 * np.eye(5))[1]
 
-    assert np.allclose(log_d, log_d_true)
+    assert np.allclose(logD(design), log_d_true)
 
 
 def test_get_objective():
