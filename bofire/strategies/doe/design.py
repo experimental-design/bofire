@@ -1,5 +1,4 @@
 import warnings
-from copy import deepcopy
 from typing import Callable, Dict, Optional, Union
 
 import numpy as np
@@ -7,9 +6,9 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.domain import Domain
-from bofire.domain.constraints import NChooseKConstraint
-from bofire.samplers import PolytopeSampler, apply_nchoosek
+from bofire.domain.domain import Domain
+from bofire.domain.constraint import NChooseKConstraint
+from bofire.samplers import PolytopeSampler
 from bofire.strategies.doe.jacobian import JacobianForLogdet
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -17,29 +16,6 @@ from bofire.strategies.doe.utils import (
     metrics,
     nchoosek_constraints_as_bounds,
 )
-
-
-def _domain_for_sampling(domain: Domain) -> Domain:
-    domain_for_sampling = deepcopy(domain)
-    # check if there are NChooseK constraints that must be ignored when sampling
-    if len(domain.cnstrs) > 0:
-        if any([isinstance(c, NChooseKConstraint) for c in domain.cnstrs]) and not all(
-            [isinstance(c, NChooseKConstraint) for c in domain.cnstrs]
-        ):
-            warnings.warn(
-                "Sampling of points fulfilling this problem's constraints is not implemented."
-            )
-
-            _constraints = []
-            for c in domain.cnstrs:
-                if not isinstance(c, NChooseKConstraint):
-                    _constraints.append(c)
-            domain_for_sampling = Domain(
-                input_features=domain.inputs,
-                output_features=domain.outputs,
-                constraints=_constraints,
-            )
-    return domain_for_sampling
 
 
 def logD(A: np.ndarray, delta: float = 1e-7) -> float:
@@ -86,12 +62,12 @@ def find_local_max_ipopt(
     domain: Domain,
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
-    tol: float = 0,
+    tol: float = 0.0,
     delta: float = 1e-7,
     ipopt_options: Dict = {},
     jacobian_building_block: Optional[Callable] = None,
-    sampling: Optional[np.ndarray] = None,
-    fixed_experiments: Optional[np.ndarray] = None,
+    sampling: Optional[pd.DataFrame] = None,
+    fixed_experiments: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given opti problem and model.
 
@@ -153,18 +129,13 @@ def find_local_max_ipopt(
 
     # initital values
     if sampling is not None:
-        x0 = sampling
+        assert domain.validate_experiments(
+            sampling, only_inputs=True
+        ), "Samples provided are not valid!"
+        x0 = sampling.values
     else:
-        domain_for_sampling = _domain_for_sampling(domain=domain)
-        if len(domain_for_sampling.cnstrs.get(NChooseKConstraint)):
-            samples = domain_for_sampling.inputs.sample(n_experiments)
-            for constraint in domain_for_sampling.cnstrs.get():
-                if isinstance(constraint, NChooseKConstraint):
-                    apply_nchoosek(samples=samples, constraint=constraint)
-            x0 = samples.to_numpy().flatten()
-        else:
-            sampler = PolytopeSampler(domain=domain_for_sampling)
-            x0 = sampler.ask(n_experiments).to_numpy().flatten()
+        sampler = PolytopeSampler(domain=domain)
+        x0 = sampler.ask(n_experiments).to_numpy().flatten()
 
     # get objective function
     objective = get_objective(domain, model_type, delta=delta)
@@ -186,8 +157,10 @@ def find_local_max_ipopt(
 
     # fix experiments if any are given
     if fixed_experiments is not None:
-        fixed_experiments = np.array(fixed_experiments)
-        check_fixed_experiments(domain, n_experiments, fixed_experiments)
+        assert domain.validate_experiments(
+            fixed_experiments, only_inputs=True
+        ), "Fixed experiments provided are not valid!"
+        fixed_experiments = np.array(fixed_experiments.values)
         for i, val in enumerate(fixed_experiments.flatten()):
             bounds[i] = (val, val)
             x0[i] = val
