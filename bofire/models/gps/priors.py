@@ -1,12 +1,12 @@
 from abc import abstractmethod
 from functools import partial
-from typing import Literal, Union
+from typing import Literal
 
 import gpytorch.priors
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from pydantic import BaseModel, parse_obj_as
+from pydantic import BaseModel
 from pydantic.types import PositiveFloat
 
 
@@ -23,18 +23,6 @@ class Prior(BaseModel):
             gpytorch.priors.Prior: Equivalent gpytorch prior object.
         """
         pass
-
-    @staticmethod
-    def from_dict(dict_: dict):
-        """Parse object from dictionary.
-
-        Args:
-            dict_ (dict): Dictionary serialized prior class.
-
-        Returns:
-            AnyPrior: Instantiated prior class.
-        """
-        return parse_obj_as(AnyPrior, dict_)
 
     def plot_pdf(self, lower: float, upper: float):
         """Plot the probability density function of the prior with matplotlib.
@@ -89,8 +77,6 @@ class NormalPrior(Prior):
     def to_gpytorch(self) -> gpytorch.priors.NormalPrior:
         return gpytorch.priors.NormalPrior(loc=self.loc, scale=self.scale)
 
-
-AnyPrior = Union[GammaPrior, NormalPrior]
 
 # default priors of interest
 # botorch defaults
