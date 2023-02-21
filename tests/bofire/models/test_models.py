@@ -44,8 +44,8 @@ def test_zero_output_features():
 
 def test_predicted_value():
     # valid
-    PredictedValue(value=5.0, standardDeviation=0.1)
-    PredictedValue(value=5.0, standardDeviation=0.0)
+    PredictedValue(predictedValue=5.0, standardDeviation=0.1)
+    PredictedValue(predictedValue=5.0, standardDeviation=0.0)
     # invalid
     with pytest.raises(ValidationError):
         PredictedValue(value=5.0, standardDeviation=-0.1)
