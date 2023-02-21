@@ -13,7 +13,6 @@ from bofire.strategies.doe.jacobian import (
 
 def test_default_jacobian_building_block():
     # "small" model
-
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
