@@ -19,10 +19,6 @@ jobs:
         run: pip install .[testing]
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
-      # - name: Install optional dependencies
-      #   run: conda install -c conda-forge cyipopt
-      # - name: Run optional tests
-      #   run: pytest tests/bofire/strategies/doe/test_design.py
       #- name: Upload coverage
       #  run: bash <(curl -s https://codecov.io/bash)
           
