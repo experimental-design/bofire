@@ -1,9 +1,9 @@
 from abc import abstractmethod
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, confloat, validator
 from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
@@ -87,6 +87,64 @@ def validate_output_feature_count(cls, domain: Domain):
     if len(domain.outputs.get_by_objective(Objective)) == 0:
         raise ValueError("no output feature with objective specified")
     return domain
+
+
+Value = Union[float, str, int]
+
+
+class OutputValue(BaseModel):
+    """Bofire predicted output value.
+
+    Attributes:
+        predictedValue (Value): The predicted value.
+        standardDeviation (float): Standard deviation, has to be zero or larger.
+        objective (float): The objective value.
+    """
+
+    predictedValue: Value
+    standardDeviation: confloat(ge=0)  # type: ignore
+    objective: float
+
+
+class InputValue(BaseModel):
+    """Bofire input value.
+
+    Attributes:
+        value (Union[float, str, int]): The input value.
+    """
+
+    value: Value
+
+
+class Candidate(BaseModel):
+    """A Bofire candidate.
+
+    Attributes:
+        inputValues (Dict[str, InputValue]): Dictionary of input values where the key is the
+            corresponding input feature key.
+        outputValues (Dict[str, OutputValue], optional): Dictionary of output values where
+            the key is the corresponding output feature key.
+    """
+
+    inputValues: Dict[str, InputValue]
+    outputValues: Optional[Dict[str, OutputValue]] = None
+
+    def to_series(self) -> pd.Series:
+        """Transform to pandas series.
+
+        Returns:
+            pd.Series: pandas series which corresponds to one row in the original candidates dataframe
+        """
+        data = []
+        index = []
+        for key, value in self.inputValues.items():
+            data.append(value.value)
+            index.append(key)
+        if self.outputValues is not None:
+            for key, value in self.outputValues.items():
+                data += [value.predictedValue, value.standardDeviation, value.objective]
+                index += [f"{key}_{p}" for p in ["pred", "sd", "des"]]
+        return pd.Series(data=data, index=index)
 
 
 class Strategy(BaseModel):
@@ -322,6 +380,25 @@ class Strategy(BaseModel):
         """
         pass
 
+    def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
+        """Transform candiadtes dataframe to a list of `Candidate` objects.
+
+        Args:
+            candidates (pd.DataFrame): candidates formatted as dataframe
+
+        Returns:
+            List[Candidate]: candidates formatted as list of `Candidate` objects.
+        """
+        return [
+            Candidate(
+                inputValues={
+                    key: InputValue(value=row[key])
+                    for key in self.domain.inputs.get_keys()
+                },
+            )
+            for _, row in candidates.iterrows()
+        ]
+
 
 class PredictiveStrategy(Strategy):
     """Base class for all model based strategies.
@@ -448,3 +525,30 @@ class PredictiveStrategy(Strategy):
     def _fit(self, experiments: pd.DataFrame):
         """Abstract method where the acutal prediction are occuring."""
         pass
+
+    def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
+        """Transform candiadtes dataframe to a list of `Candidate` objects.
+
+        Args:
+            candidates (pd.DataFrame): candidates formatted as dataframe
+
+        Returns:
+            List[Candidate]: candidates formatted as list of `Candidate` objects.
+        """
+        return [
+            Candidate(
+                inputValues={
+                    key: InputValue(value=row[key])
+                    for key in self.domain.inputs.get_keys()
+                },
+                outputValues={
+                    key: OutputValue(
+                        predictedValue=row[f"{key}_pred"],
+                        standardDeviation=row[f"{key}_sd"],
+                        objective=row[f"{key}_des"],
+                    )
+                    for key in self.domain.outputs.get_keys()
+                },
+            )
+            for _, row in candidates.iterrows()
+        ]
