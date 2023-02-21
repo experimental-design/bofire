@@ -230,7 +230,6 @@ def test_constraints_as_scipy_constraints():
     # test domains from the paper "The construction of D- and I-optimal designs for
     # mixture experiments with linear constraints on the components" by R. Coetzer and
     # L. M. Haines.
-
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
