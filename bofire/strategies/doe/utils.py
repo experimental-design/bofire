@@ -8,8 +8,8 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize import LinearConstraint
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
+from bofire.domain.domain import Domain
+from bofire.domain.constraint import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -175,7 +175,7 @@ def n_zero_eigvals(
 
     sampler = PolytopeSampler(domain=domain)
     X = sampler.ask(N)
-
+    print(X)
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
     eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
@@ -505,6 +505,5 @@ def nchoosek_constraints_as_bounds(
 
     # convert bounds to list of tuples
     bounds = [(b[0], b[1]) for b in bounds]
-    # bounds = [[b[0] for b in bounds], [b[1] for b in bounds]]
 
     return bounds

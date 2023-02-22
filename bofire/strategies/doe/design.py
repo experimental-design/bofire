@@ -129,13 +129,11 @@ def find_local_max_ipopt(
 
     # initital values
     if sampling is not None:
-        assert domain.validate_experiments(
-            sampling, only_inputs=True
-        ), "Samples provided are not valid!"
+        domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values
     else:
         sampler = PolytopeSampler(domain=domain)
-        x0 = sampler.ask(n_experiments).to_numpy().flatten()
+        x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
 
     # get objective function
     objective = get_objective(domain, model_type, delta=delta)
@@ -157,9 +155,7 @@ def find_local_max_ipopt(
 
     # fix experiments if any are given
     if fixed_experiments is not None:
-        assert domain.validate_experiments(
-            fixed_experiments, only_inputs=True
-        ), "Fixed experiments provided are not valid!"
+        domain.validate_candidates(fixed_experiments, only_inputs=True)
         fixed_experiments = np.array(fixed_experiments.values)
         for i, val in enumerate(fixed_experiments.flatten()):
             bounds[i] = (val, val)
