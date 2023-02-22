@@ -45,11 +45,11 @@ def get_ref_point_mask(
     return np.array(mask)
 
 
-def get_pareto_front(
+def get_pareto_mask(
     domain: Domain,
     experiments: pd.DataFrame,
     output_feature_keys: Optional[list] = None,
-) -> pd.DataFrame:
+) -> np.array:
     if output_feature_keys is None:
         output_feature_keys = domain.outputs.get_keys_by_objective(
             includes=[MaximizeObjective, MinimizeObjective]
@@ -65,6 +65,20 @@ def get_pareto_front(
         is_non_dominated(
             torch.from_numpy(df[output_feature_keys].values * ref_point_mask)
         )
+    )
+    return pareto_mask
+
+
+def get_pareto_front(
+    domain: Domain,
+    experiments: pd.DataFrame,
+    output_feature_keys: Optional[list] = None,
+) -> pd.DataFrame:
+    pareto_mask = get_pareto_mask(
+        domain=domain, experiments=experiments, output_feature_keys=output_feature_keys
+    )
+    df = domain.outputs.preprocess_experiments_all_valid_outputs(
+        experiments, output_feature_keys
     )
     return df.loc[pareto_mask]
 
