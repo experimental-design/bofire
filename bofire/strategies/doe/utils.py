@@ -175,7 +175,6 @@ def n_zero_eigvals(
 
     sampler = PolytopeSampler(domain=domain)
     X = sampler.ask(N)
-    print(X)
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
     eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
