@@ -27,7 +27,7 @@ from bofire.models.torch_models import BotorchModels, EmpiricalModel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
 
-CLOUDPICKLE_AVAILABLE = importlib.util.find_spec("cloudpickle") is not None
+CLOUDPICKLE_NOT_AVAILABLE = importlib.util.find_spec("cloudpickle") is None
 
 
 @pytest.mark.parametrize("modelclass", [(SingleTaskGPModel), (MixedSingleTaskGPModel)])
@@ -727,7 +727,7 @@ def test_empirical_model():
     assert np.allclose(preds2.y2_pred.values, preds[:, 1])
 
 
-@pytest.mark.skipif(CLOUDPICKLE_AVAILABLE, reason="requires cloudpickle")
+@pytest.mark.skipif(CLOUDPICKLE_NOT_AVAILABLE, reason="requires cloudpickle")
 def test_empirical_model_io():
     input_features = InputFeatures(
         features=[
