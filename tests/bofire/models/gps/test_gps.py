@@ -7,6 +7,7 @@ from botorch.models.transforms.input import (
     Normalize,
 )
 from botorch.models.transforms.outcome import Standardize
+from pandas.testing import assert_frame_equal
 
 from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.domain.features import InputFeatures, OutputFeatures
@@ -41,8 +42,12 @@ def test_SingleTaskGPModel(kernel, scaler):
         scaler=scaler,
     )
     model.fit(experiments)
-    preds = model.predict(experiments)
-    assert preds.shape == (10, 2)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    samples = input_features.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
@@ -50,6 +55,16 @@ def test_SingleTaskGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, Normalize)
     else:
         assert isinstance(model.model.input_transform, InputStandardize)
+    # reload the model from dump and check for equality in predictions
+    model2 = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+        kernel=kernel,
+        scaler=scaler,
+    )
+    model2.loads(dump)
+    preds2 = model2.predict(samples)
+    assert_frame_equal(preds, preds2)
 
 
 @pytest.mark.parametrize(
@@ -84,8 +99,12 @@ def test_MixedGPModel(kernel, scaler):
     )
 
     model.fit(experiments)
-    preds = model.predict(experiments)
-    assert preds.shape == (10, 2)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    samples = input_features.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, MixedSingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
@@ -98,3 +117,13 @@ def test_MixedGPModel(kernel, scaler):
         model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
     ).all()
     assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    # reload the model from dump and check for equality in predictions
+    model2 = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+        kernel=kernel,
+        scaler=scaler,
+    )
+    model2.loads(dump)
+    preds2 = model2.predict(samples)
+    assert_frame_equal(preds, preds2)

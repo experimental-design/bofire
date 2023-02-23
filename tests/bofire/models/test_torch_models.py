@@ -1,3 +1,5 @@
+import importlib
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -10,6 +12,7 @@ from botorch.models.transforms.input import (
     InputStandardize,
     Normalize,
 )
+from pandas.testing import assert_frame_equal
 from torch import Tensor
 
 from bofire.domain.feature import (
@@ -23,6 +26,8 @@ from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels, EmpiricalModel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
 from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
+
+CLOUDPICKLE_AVAILABLE = importlib.util.find_spec("cloudpickle") is not None
 
 
 @pytest.mark.parametrize("modelclass", [(SingleTaskGPModel), (MixedSingleTaskGPModel)])
@@ -705,3 +710,28 @@ def test_empirical_model():
 
     assert np.allclose(preds1.y_pred.values, preds[:, 0])
     assert np.allclose(preds2.y2_pred.values, preds[:, 1])
+
+
+@pytest.mark.skipif(CLOUDPICKLE_AVAILABLE, reason="requires cloudpickle")
+def test_empirical_model_io():
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+    )
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    model = EmpiricalModel(
+        input_features=input_features, output_features=output_features
+    )
+    model.model = HimmelblauModel()
+    samples = input_features.sample(5)
+    preds = model.predict(samples)
+    dump = model.dumps()
+    #
+    model2 = EmpiricalModel(
+        input_features=input_features, output_features=output_features
+    )
+    model2.loads(dump)
+    preds2 = model2.predict(samples)
+    assert_frame_equal(preds, preds2)

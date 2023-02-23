@@ -1,4 +1,7 @@
+import base64
+import io
 import itertools
+import warnings
 from typing import List, Literal, Optional
 
 import botorch
@@ -70,6 +73,18 @@ class BotorchModel(Model):
             preds = self.model.posterior(X=X, observation_noise=True).mean.cpu().detach().numpy()  # type: ignore
             stds = np.sqrt(self.model.posterior(X=X, observation_noise=True).variance.cpu().detach().numpy())  # type: ignore
         return preds, stds
+
+    def dumps(self) -> str:
+        """Dumps the actual model to a string via pickle as this is not directly json serializable."""
+        buffer = io.BytesIO()
+        torch.save(self.model, buffer)
+        return base64.b64encode(buffer.getvalue()).decode()
+        # return codecs.encode(pickle.dumps(self.model), "base64").decode()
+
+    def loads(self, data: str):
+        """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
+        buffer = io.BytesIO(base64.b64decode(data.encode()))
+        self.model = torch.load(buffer)
 
 
 class BotorchModels(PydanticBaseModel):
@@ -233,3 +248,29 @@ class EmpiricalModel(BotorchModel):
 
     type: Literal["EmpiricalModel"] = "EmpiricalModel"
     model: Optional[DeterministicModel] = None
+
+    def dumps(self) -> str:
+        """Dumps the actual model to a string via pickle as this is not directly json serializable."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            import bofire.models.cloudpickle_module as cloudpickle_module
+
+            if len(w) == 1:
+                raise ModuleNotFoundError("Cloudpickle is not available.")
+
+        buffer = io.BytesIO()
+        torch.save(self.model, buffer, pickle_module=cloudpickle_module)  # type: ignore
+        return base64.b64encode(buffer.getvalue()).decode()
+        # return codecs.encode(pickle.dumps(self.model), "base64").decode()
+
+    def loads(self, data: str):
+        """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            import bofire.models.cloudpickle_module as cloudpickle_module
+
+            if len(w) == 1:
+                raise ModuleNotFoundError("Cloudpickle is not available.")
+
+        buffer = io.BytesIO(base64.b64decode(data.encode()))
+        self.model = torch.load(buffer, pickle_module=cloudpickle_module)  # type: ignore

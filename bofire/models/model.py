@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -19,6 +19,7 @@ class Model(PydanticBaseModel):
     input_features: InputFeatures
     output_features: OutputFeatures
     input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=lambda: {})
+    model: Optional[Any] = None
 
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
@@ -51,6 +52,14 @@ class Model(PydanticBaseModel):
     @abstractmethod
     def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         pass
+
+    @abstractmethod
+    def dumps(self) -> str:
+        """Dumps the actual model to a string as this is not directly json serializable."""
+
+    @abstractmethod
+    def loads(self, data: str):
+        """Loads the actual model from a string and writes it to the `model` attribute."""
 
 
 class TrainableModel:
