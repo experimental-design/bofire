@@ -41,11 +41,14 @@ def test_SingleTaskGPModel(kernel, scaler):
         kernel=kernel,
         scaler=scaler,
     )
+    samples = input_features.sample(5)
+    # test error on non fitted model
+    with pytest.raises(ValueError):
+        model.predict(samples)
     model.fit(experiments)
     # dump the model
     dump = model.dumps()
     # make predictions
-    samples = input_features.sample(5)
     preds = model.predict(samples)
     assert preds.shape == (5, 2)
     # check that model is composed correctly
@@ -55,6 +58,7 @@ def test_SingleTaskGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, Normalize)
     else:
         assert isinstance(model.model.input_transform, InputStandardize)
+    assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = SingleTaskGPModel(
         input_features=input_features,
@@ -117,6 +121,7 @@ def test_MixedGPModel(kernel, scaler):
         model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
     ).all()
     assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = SingleTaskGPModel(
         input_features=input_features,
