@@ -12,8 +12,8 @@ from bofire.utils.multiobjective import get_pareto_front, get_pareto_mask
 class Layout:
     colorstyles = {
         "evonik": {
-            "plotbgcolor": "#FFFFFF",
-            "bgcolor": "#E8E5DF",
+            "plotbgcolor": "#E8E5DF",
+            "bgcolor": "#FFFFFF",
             "fontcolor": "#000000",
             "highlight": "#8C3080",
             "highlight2": "#A29B93",
