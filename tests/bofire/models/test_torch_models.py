@@ -566,6 +566,8 @@ def test_botorch_models_fit_and_compatibilize():
     )
     # fit the models
     models.fit(experiments=experiments)
+    assert model1.is_compatibilized is False
+    assert model2.is_compatibilized is False
     # make and store predictions for later comparison
     preds1 = model1.predict(experiments1)
     preds2 = model2.predict(experiments2)
@@ -583,13 +585,15 @@ def test_botorch_models_fit_and_compatibilize():
     combined = models.compatibilize(
         input_features=input_features, output_features=output_features
     )
+    assert model1.is_compatibilized is True
+    assert model2.is_compatibilized is False
     # check combined
     assert isinstance(combined.models[0], SingleTaskGP)
     assert isinstance(combined.models[1], MixedSingleTaskGP)
     assert isinstance(combined.models[0].input_transform, ChainedInputTransform)
-    assert isinstance(combined.models[0].input_transform.tf1, FilterFeatures)
+    assert isinstance(combined.models[0].input_transform.tcompatibilize, FilterFeatures)
     assert torch.eq(
-        combined.models[0].input_transform.tf1.feature_indices,
+        combined.models[0].input_transform.tcompatibilize.feature_indices,
         torch.tensor([0, 1], dtype=torch.int64),
     ).all()
     assert isinstance(combined.models[0].input_transform.tf2, Normalize)
@@ -607,6 +611,17 @@ def test_botorch_models_fit_and_compatibilize():
 
     assert np.allclose(preds1.y_pred.values, preds[:, 0])
     assert np.allclose(preds2.y2_pred.values, preds[:, 1])
+    ## now decompatibilize the models again
+    model1.decompatibilize()
+    model2.decompatibilize()
+    assert model1.is_compatibilized is False
+    assert model2.is_compatibilized is False
+    # check again the predictions
+    preds11 = model1.predict(experiments1)
+    preds22 = model2.predict(experiments2)
+    assert_frame_equal(preds1, preds11)
+    assert_frame_equal(preds2, preds22)
+    assert isinstance(model1.model.input_transform, Normalize)
 
 
 class HimmelblauModel(DeterministicModel):

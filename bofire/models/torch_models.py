@@ -74,12 +74,34 @@ class BotorchModel(Model):
             stds = np.sqrt(self.model.posterior(X=X, observation_noise=True).variance.cpu().detach().numpy())  # type: ignore
         return preds, stds
 
+    @property
+    def is_compatibilized(self) -> bool:
+        if self.is_fitted:
+            if hasattr(self.model, "input_transform"):
+                if self.model.input_transform is not None:  # type: ignore
+                    if isinstance(self.model.input_transform, FilterFeatures):  # type: ignore
+                        return True
+                    if isinstance(self.model.input_transform, ChainedInputTransform):  # type: ignore
+                        if "tcompatibilize" in self.model.input_transform.keys():  # type: ignore
+                            return True
+        return False
+
+    def decompatibilize(self):
+        if self.is_fitted:
+            if self.is_compatibilized:
+                if isinstance(self.model.input_transform, FilterFeatures):  # type: ignore
+                    self.model.input_transform = None  # type: ignore
+                elif isinstance(self.model.input_transform, ChainedInputTransform):  # type: ignore
+                    self.model.input_transform = self.model.input_transform.tf2  # type: ignore
+                else:
+                    raise ValueError("Undefined input transform structure detected.")
+
     def dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
+        self.decompatibilize()
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         return base64.b64encode(buffer.getvalue()).decode()
-        # return codecs.encode(pickle.dumps(self.model), "base64").decode()
 
     def loads(self, data: str):
         """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
@@ -222,7 +244,7 @@ class BotorchModels(PydanticBaseModel):
                     and model.model.input_transform is not None  # type: ignore
                 ):
                     model.model.input_transform = ChainedInputTransform(  # type: ignore
-                        tf1=features_filter, tf2=model.model.input_transform  # type: ignore
+                        tcompatibilize=features_filter, tf2=model.model.input_transform  # type: ignore
                     )
                 else:
                     model.model.input_transform = features_filter  # type: ignore
