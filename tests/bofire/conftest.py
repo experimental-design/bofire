@@ -5,6 +5,7 @@ from bofire.domain.constraints import Constraints
 from bofire.domain.feature import Feature
 from bofire.domain.features import Features
 from bofire.domain.objective import Objective
+from bofire.samplers import Sampler
 from tests.bofire import specs
 
 # objective
@@ -166,4 +167,22 @@ def valid_kernel_spec(request) -> specs.Spec:
 
 @fixture(params=specs.kernels.invalids)
 def invalid_kernel_spec(request) -> specs.Spec:
+    return request.param
+
+
+# sampler
+
+
+@fixture
+def sampler() -> Sampler:
+    return specs.samplers.valid().obj()
+
+
+@fixture(params=specs.samplers.valids)
+def valid_sampler_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.samplers.invalids)
+def invalid_sampler_spec(request) -> specs.Spec:
     return request.param

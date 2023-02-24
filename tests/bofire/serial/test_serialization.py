@@ -56,3 +56,11 @@ def test_serialization_should_jsonify_kernel(valid_kernel_spec: specs.Spec):
     obj = valid_kernel_spec.obj()
     serialized = Serialization.json_dict(obj)
     assert serialized == valid_kernel_spec.typed_spec()
+
+
+def test_serialization_should_jsonify_sampler(valid_sampler_spec: specs.Spec):
+    obj = valid_sampler_spec.obj()
+    # print(serialized)
+    # print(valid_sampler_spec)
+    serialized = Serialization.json_dict(obj)
+    assert serialized == valid_sampler_spec.typed_spec()
