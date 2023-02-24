@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 import torch
+from pandas.testing import assert_frame_equal
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError
 
@@ -74,3 +75,10 @@ def test_random_forest():
     rf = RandomForest(input_features=input_features, output_features=output_features)
     assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ONE_HOT
     rf.fit(experiments=experiments)
+    # test dumps and load
+    preds = rf.predict(experiments)
+    dump = rf.dumps()
+    rf2 = RandomForest(input_features=input_features, output_features=output_features)
+    rf2.loads(dump)
+    preds2 = rf.predict(experiments)
+    assert_frame_equal(preds, preds2)

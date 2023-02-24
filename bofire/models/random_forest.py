@@ -1,3 +1,5 @@
+import codecs
+import pickle
 from typing import Literal, Optional, Union
 
 import numpy as np
@@ -122,3 +124,15 @@ class RandomForest(BotorchModel, TrainableModel):
         )
         rf.fit(X=transformed_X.values, y=Y.values.ravel())
         self.model = _RandomForest(rf=rf)
+
+    def dumps(self) -> str:
+        """Dumps the random forest to a string via pickle as this is not directly json serializable."""
+        self.decompatibilize()
+        assert self.is_fitted is True
+        return codecs.encode(pickle.dumps(self.model._rf), "base64").decode()  # type: ignore
+
+    def loads(self, data: str):
+        """Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
+        self.model = _RandomForest(
+            rf=pickle.loads(codecs.decode(data.encode(), "base64"))
+        )
