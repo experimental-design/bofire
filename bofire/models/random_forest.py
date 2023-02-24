@@ -81,12 +81,14 @@ class RandomForest(BotorchModel, TrainableModel):
     type: Literal["RandomForest"] = "RandomForest"
     # hyperparams passed down to `RandomForestRegressor`
     n_estimators: int = 100
-    criterion: str = "squared_error"
+    criterion: Literal[
+        "squared_error", "absolute_error", "friedman_mse", "poisson"
+    ] = "squared_error"
     max_depth: Optional[int] = None
     min_samples_split: Union[int, float] = 2
     min_samples_leaf: Union[int, float] = 1
     min_weight_fraction_leaf: float = 0.0
-    max_features: Union[int, float, str] = 1  # todo also string possible
+    max_features: Union[int, float, Literal["auto", "sqrt", "log2"]] = 1.0
     max_leaf_nodes: Optional[int] = None
     min_impurity_decrease: float = 0.0
     bootstrap: bool = True
