@@ -60,6 +60,26 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         super()._init_domain()
         return
 
+        # def get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        #     ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
+        #         **tkwargs
+        #     )
+        #     weights = (
+        #         sample_simplex(
+        #             len(
+        #                 self.domain.outputs.get_keys_by_objective(
+        #                     includes=[MaximizeObjective, MinimizeObjective]
+        #                 )
+        #             ),
+        #             **tkwargs
+        #         ).squeeze()
+        #         * ref_point_mask
+        #     )
+        #     scalarization = get_chebyshev_scalarization(weights=weights, Y=pred)
+        #     if weights
+        #     objective = GenericMCObjective(scalarization)
+        # return objective
+
     def _ask(self, candidate_count: int):
         assert candidate_count > 0, "candidate_count has to be larger than zero."
 
