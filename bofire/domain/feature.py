@@ -366,12 +366,20 @@ class DiscreteInput(NumericalInput):
 
         Raises:
             ValueError: when values are non-unique.
+            ValueError: when values contains only one entry.
+            ValueError: when values is empty.
 
         Returns:
             List[values]: Sorted list of values
         """
         if len(values) != len(set(values)):
             raise ValueError("Discrete values must be unique")
+        if len(values) == 1:
+            raise ValueError(
+                "Fixed discrete inputs are not supported. Please use a fixed continuous input."
+            )
+        if len(values) == 0:
+            raise ValueError("No values defined.")
         return sorted(values)
 
     @property
