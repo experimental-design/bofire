@@ -4,17 +4,18 @@ from typing import List, Tuple, cast
 import numpy as np
 import pandas as pd
 
-from bofire.domain import Domain
-from bofire.domain.constraints import (
-    AnyConstraint,
+from bofire.any.constraint import AnyConstraint
+from bofire.domain.constraint import (
     Constraint,
-    Constraints,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.features import ContinuousInput, InputFeature, InputFeatures
+from bofire.domain.constraints import Constraints
+from bofire.domain.domain import Domain
+from bofire.domain.feature import ContinuousInput, InputFeature
+from bofire.domain.features import InputFeatures
 
 ### this module is based on the original implementation in basf/opti.
 

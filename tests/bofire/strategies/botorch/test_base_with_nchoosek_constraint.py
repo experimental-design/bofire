@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bofire.domain.constraints import NChooseKConstraint
+from bofire.domain.constraint import NChooseKConstraint
 from bofire.domain.domain import Domain
-from bofire.domain.features import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum, BoTorchSoboStrategy
 from bofire.utils.enum import CategoricalMethodEnum
 

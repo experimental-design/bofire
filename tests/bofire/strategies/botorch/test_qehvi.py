@@ -12,12 +12,12 @@ from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputO
 
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2
 from bofire.domain.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput
-from bofire.domain.objectives import MaximizeObjective, MinimizeObjective
+from bofire.domain.feature import ContinuousInput, ContinuousOutput
+from bofire.domain.objective import MaximizeObjective, MinimizeObjective
 from bofire.samplers import PolytopeSampler
 from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
 from bofire.utils.enum import CategoricalMethodEnum
-from tests.bofire.domain.test_features import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
+from tests.bofire.strategies.specs import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
 from tests.bofire.utils.test_multiobjective import (
     dfs,
     invalid_domains,
