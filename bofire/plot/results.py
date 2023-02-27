@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from bofire.domain.domain import Domain
-from bofire.utils.multiobjective import get_pareto_mask, get_pareto_front
+from bofire.utils.multiobjective import get_pareto_front
 
 
 class Layout:
