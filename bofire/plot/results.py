@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from bofire.domain.domain import Domain
-from bofire.utils.multiobjective import get_pareto_front, get_pareto_mask
+from bofire.utils.multiobjective import get_pareto_mask
 
 
 class Layout:
@@ -17,6 +17,7 @@ class Layout:
             "fontcolor": "#000000",
             "highlight": "#8C3080",
             "highlight2": "#A29B93",
+            "highlight3": "#9A2006",
         },
         "basf": {
             "plotbgcolor": "#e6f2ff",
@@ -24,6 +25,7 @@ class Layout:
             "fontcolor": "#3F3F3F",
             "highlight": "#004A96",
             "highlight2": "#21A0D2",
+            "highlight3": "#9A2006",
         },
         "standard": {
             "plotbgcolor": "#C8C9C7",
@@ -31,6 +33,7 @@ class Layout:
             "fontcolor": "#000000",
             "highlight": "#FC9547",
             "highlight2": "#55CFBE",
+            "highlight3": "#9A2006",
         },
     }
 
@@ -59,13 +62,14 @@ def plot_scatter_matrix(
     if display_pareto:
         pareto_mask = get_pareto_mask(domain=domain, experiments=experiments)
         for index, _ in experiments.iterrows():
-            if pareto_mask[index] == True:
+            if pareto_mask[index]:
                 experiments["point type"].iloc[index] = "pareto optimal"
 
     if ref_point != {}:
         ref_point_df = pd.DataFrame(ref_point, index=[0])
         ref_point_df["point type"] = "ref point"
         experiments = pd.concat([experiments, ref_point_df], axis=0)
+        experiments.reset_index(inplace=True, drop=True)
 
     hover_data = {}
     for key in domain.get_feature_keys():
@@ -81,10 +85,23 @@ def plot_scatter_matrix(
     fig = go.Figure()
     slider_steps = []
 
+    # set symbols for point types
+    point_types = np.unique(experiments["point type"].values).tolist()
+    point_code = {point_types[k]: k for k in range(len(point_types))}
+    symbol_vals = [point_code[cl] for cl in experiments["point type"]]
+
+    # create custom hover data for all objectives
+    hover_data_tuple = ()
+    for key in domain.inputs.get_keys():
+        hover_data_tuple = hover_data_tuple + (experiments[key],)
+    custom_hover_data = np.dstack(hover_data_tuple)
+
+    print(custom_hover_data[0])
+
     for i, _ in experiments.iterrows():
         dimensions = []
         for key in objectives:  # type: ignore
-            dimension = dict(label=labels[key], values=experiments[key].iloc[0:i])
+            dimension = dict(label=labels[key], values=experiments[key].iloc[0 : i + 1])
             dimensions.append(dimension)
 
         points = go.Splom(
@@ -94,13 +111,23 @@ def plot_scatter_matrix(
             marker=dict(
                 size=12,
                 line=dict(width=1, color=colorstyle["fontcolor"]),
-                color=colorstyle["highlight"],
+                color=symbol_vals,
+                colorscale=[
+                    colorstyle["highlight2"],
+                    colorstyle["highlight"],
+                    colorstyle["highlight3"],
+                ],
             ),
+            customdata=custom_hover_data,
+            hovertemplate="<b>z1:%{f_0:.3f}</b><br>z2:%{custom_hover_data[0]:.3f} <br>z3: %{customdata[1]:.3f} ",
         )
-        fig.add_trace(points)
-        # frames.append(go.Frame(data=[points]))
+        # fig.add_trace(points)
+        frame = go.Frame(data=points)
+        fig.frames = fig.frames + (frame,)
 
         visible_position = [False] * len(experiments)
+        # visible_position[-1] = True
+
         visible_position[i] = True
         step = dict(
             method="update",
@@ -111,11 +138,9 @@ def plot_scatter_matrix(
         )
         slider_steps.append(step)
 
+    fig.add_trace(points)
+
     # scatter_matrix = px.scatter_matrix(
-    #     # color="VW",
-    #     color_discrete_sequence=[colorstyle["highlight"], colorstyle["highlight2"]],
-    #     symbol="point type",
-    #     symbol_sequence=["x", "circle", "square"],
     #     hover_data=hover_data,
     # )
 
@@ -134,6 +159,8 @@ def plot_scatter_matrix(
     fig.update_layout(
         paper_bgcolor=colorstyle["bgcolor"],
         plot_bgcolor=colorstyle["plotbgcolor"],
+        showlegend=True,
+        hovermode="x unified",
         title=dict(
             text="<b>Feature Scatter Matrix</b>",
             xanchor="center",
@@ -142,27 +169,44 @@ def plot_scatter_matrix(
             y=0.98,
         ),
         font=dict(family="Arial", size=18, color=colorstyle["fontcolor"]),
-        # updatemenus=[button],
-        sliders=[
-            {
-                "active": 0,
-                "yanchor": "top",
-                "xanchor": "left",
-                "currentvalue": {
-                    "font": {"size": 20},
-                    "visible": True,
-                    "xanchor": "right",
-                },
-                "transition": {"duration": 300, "easing": "cubic-in-out"},
-                "pad": {"b": 10, "t": 50},
-                "len": 0.9,
-                "x": 0.1,
-                "y": 0,
-                "steps": slider_steps,
-            }
-        ],
+        updatemenus=[button],
+        # sliders=[
+        #     {
+        #         "active": 0,
+        #         "yanchor": "top",
+        #         "xanchor": "left",
+        #         "currentvalue": {
+        #             "font": {"size": 20},
+        #             "visible": True,
+        #             "xanchor": "right",
+        #         },
+        #         "transition": {"duration": 300, "easing": "cubic-in-out"},
+        #         "pad": {"b": 10, "t": 50},
+        #         "len": 0.9,
+        #         "x": 0.1,
+        #         "y": 0,
+        #         "steps": slider_steps,
+        #     }
+        # ],
         width=400 * len(objectives),  # type: ignore
         height=400 * len(objectives),  # type: ignore
     )
+
+    # set ranges for axis
+    axis_specs = {}
+    ax_count = 1
+    for objective in objectives:
+        scale = experiments[objective].mean() * 0.2
+        for x in ["x", "y"]:
+            key = x + "axis" + str(ax_count)
+            axis_specs[key] = dict(
+                range=[
+                    experiments[objective].min() - scale,
+                    experiments[objective].max() + scale,
+                ]
+            )
+        ax_count += 1
+
+    fig.update_layout(axis_specs)
 
     return fig
