@@ -22,6 +22,12 @@ class Dummy(Model):
         )
         return preds, stds
 
+    def dumps(self):
+        pass
+
+    def loads(self, dumpstr: str):
+        pass
+
 
 def test_zero_input_features():
     input_features = InputFeatures(features=[])
@@ -63,9 +69,25 @@ def test_to_outputs(n_output_features):
         features=[ContinuousOutput(key=f"y_{i+1}") for i in range(n_output_features)]
     )
     model = Dummy(input_features=input_features, output_features=output_features)
+    model.model = "dummymodel"
     preds = model.predict(input_features.sample(10))
     output = model.to_predictions(preds)
     assert len(output) == n_output_features
     assert sorted(output.keys()) == [f"y_{i+1}" for i in range(n_output_features)]
     for key in [f"y_{i+1}" for i in range(n_output_features)]:
         assert len(output[key]) == 10
+
+
+def test_is_fitted():
+    input_features = InputFeatures(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(5)
+        ]
+    )
+
+    output_features = OutputFeatures(features=[ContinuousOutput(key="y")])
+    d = Dummy(input_features=input_features, output_features=output_features)
+    assert d.is_fitted is False
+    d.model = "dummymodel"
+    assert d.is_fitted is True

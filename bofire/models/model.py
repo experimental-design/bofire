@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -35,6 +35,9 @@ class Model(PydanticBaseModel):
     output_features: OutputFeatures
     input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=lambda: {})
 
+    # this is the actual prediction model and is an internal attribute
+    model: Optional[Any] = None
+
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
         # we also validate the number of input features here
@@ -49,7 +52,17 @@ class Model(PydanticBaseModel):
             raise ValueError("At least one output feature has to be provided.")
         return v
 
+    @property
+    def is_fitted(self) -> bool:
+        """Return True if model is fitted, else False."""
+        return self.model is not None
+
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        # check if model is fitted
+        if not self.is_fitted:
+            raise ValueError(
+                "Model is not fitted yet. Call 'fit' with appropriate arguments before using this model."
+            )
         # validate
         X = self.input_features.validate_experiments(X, strict=False)
         # transform
@@ -99,6 +112,14 @@ class Model(PydanticBaseModel):
     @abstractmethod
     def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         pass
+
+    @abstractmethod
+    def dumps(self) -> str:
+        """Dumps the actual model to a string as this is not directly json serializable."""
+
+    @abstractmethod
+    def loads(self, data: str):
+        """Loads the actual model from a string and writes it to the `model` attribute."""
 
 
 class TrainableModel:
