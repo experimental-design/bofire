@@ -24,7 +24,6 @@ from bofire.domain.feature import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    Tnum_samples,
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.strategies.strategy import (
@@ -66,7 +65,7 @@ class Sampler(PydanticBaseModel):
     )
 
     @validate_arguments
-    def ask(self, n: Tnum_samples, return_all: bool = True) -> pd.DataFrame:
+    def ask(self, n: int, return_all: bool = True) -> pd.DataFrame:
         """Generates the samples. In the case that `NChooseK` constraints are
         present, per combination `n` samples are generated.
 
@@ -76,7 +75,7 @@ class Sampler(PydanticBaseModel):
                 are generated, else only `n` samples in total. Defaults to True.
 
         Returns:
-            pd.DataFrame: Dataframe with samples.
+            Dataframe with samples.
         """
         # handle here NChooseK
         if len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
@@ -119,7 +118,7 @@ class Sampler(PydanticBaseModel):
         pass
 
     @abstractmethod
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         """Abstract method that has to be overwritten in the actual sampler to generate the samples
 
         Args:
@@ -169,7 +168,7 @@ class PolytopeSampler(Sampler):
     type: Literal["PolytopeSampler"] = "PolytopeSampler"
     fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
 
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, self.fallback_sampling_method)
 
@@ -327,10 +326,10 @@ class RejectionSampler(Sampler):
 
     type: Literal["RejectionSampler"] = "RejectionSampler"
     sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
-    num_base_samples: Tnum_samples = 1000
-    max_iters: Tnum_samples = 1000
+    num_base_samples: int = 1000
+    max_iters: int = 1000
 
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, self.sampling_method)
         n_iters = 0
