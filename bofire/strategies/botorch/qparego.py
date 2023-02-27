@@ -1,9 +1,9 @@
-from typing import Type
+from typing import Type, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition.objective import GenericMCObjective
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.acquisition.utils import get_acquisition_function
 from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
@@ -25,7 +25,11 @@ from bofire.domain.objective import (
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
 from bofire.utils.multiobjective import get_ref_point_mask
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_linear_constraints,
+    get_output_constraints,
+    tkwargs,
+)
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
@@ -60,25 +64,31 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         super()._init_domain()
         return
 
-        # def get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
-        #     ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
-        #         **tkwargs
-        #     )
-        #     weights = (
-        #         sample_simplex(
-        #             len(
-        #                 self.domain.outputs.get_keys_by_objective(
-        #                     includes=[MaximizeObjective, MinimizeObjective]
-        #                 )
-        #             ),
-        #             **tkwargs
-        #         ).squeeze()
-        #         * ref_point_mask
-        #     )
-        #     scalarization = get_chebyshev_scalarization(weights=weights, Y=pred)
-        #     if weights
-        #     objective = GenericMCObjective(scalarization)
-        # return objective
+    def get_objective(
+        self, pred: torch.Tensor
+    ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
+            **tkwargs
+        )
+        weights = (
+            sample_simplex(
+                len(
+                    self.domain.outputs.get_keys_by_objective(
+                        includes=[MaximizeObjective, MinimizeObjective]
+                    )
+                ),
+                **tkwargs
+            ).squeeze()
+            * ref_point_mask
+        )
+        scalarization = get_chebyshev_scalarization(weights=weights, Y=pred)
+        if len(weights) != len(self.domain.outputs):
+            constraints, etas = get_output_constraints(self.domain.outputs)
+            etas = torch.tensor(etas).to(**tkwargs)
+            return ConstrainedMCObjective(
+                objective=scalarization, constraints=constraints, eta=etas
+            )
+        return GenericMCObjective(scalarization)
 
     def _ask(self, candidate_count: int):
         assert candidate_count > 0, "candidate_count has to be larger than zero."
@@ -105,19 +115,19 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
 
         for i in range(candidate_count):
-            ref_point_mask = torch.from_numpy(
-                get_ref_point_mask(domain=self.domain)
-            ).to(**tkwargs)
-            weights = (
-                sample_simplex(
-                    len(self.domain.outputs.get_keys_by_objective(excludes=None)),
-                    **tkwargs
-                ).squeeze()
-                * ref_point_mask
-            )
-            objective = GenericMCObjective(
-                get_chebyshev_scalarization(weights=weights, Y=pred)
-            )
+            # ref_point_mask = torch.from_numpy(
+            #     get_ref_point_mask(domain=self.domain)
+            # ).to(**tkwargs)
+            # weights = (
+            #     sample_simplex(
+            #         len(self.domain.outputs.get_keys_by_objective(excludes=None)),
+            #         **tkwargs
+            #     ).squeeze()
+            #     * ref_point_mask
+            # )
+            # objective = GenericMCObjective(
+            #     get_chebyshev_scalarization(weights=weights, Y=pred)
+            # )
 
             assert self.model is not None
             acqf = get_acquisition_function(
@@ -125,7 +135,7 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
                 if self.acqf == AcquisitionFunctionEnum.QNEI
                 else "qEI",
                 model=self.model,
-                objective=objective,
+                objective=self.get_objective(pred),
                 X_observed=observed_x,
                 mc_samples=self.num_sobol_samples,
                 qmc=True,
