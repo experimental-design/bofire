@@ -62,9 +62,10 @@ matrix = plot_scatter_matrix(
     domain=domain,
     experiments=random_results[0][0].domain.experiments,
     objectives=["x_0", "x_1", "f_0", "f_1"],
+    display_pareto_only=False,
     diagonal_visible=True,
     showupperhalf=True,
-    ref_point={"f_0": 1.1, "f_1": 1.1},
+    ref_point={"f_0": 2, "f_1": 2},
     colorstyle="evonik",
 )
 
