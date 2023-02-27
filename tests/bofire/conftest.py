@@ -2,9 +2,13 @@ from pytest import fixture
 
 from bofire.domain.constraint import Constraint
 from bofire.domain.constraints import Constraints
+from bofire.domain.domain import Domain
 from bofire.domain.feature import Feature
 from bofire.domain.features import Features
 from bofire.domain.objective import Objective
+from bofire.models.gps.kernels import BaseKernel
+from bofire.models.gps.priors import Prior
+from bofire.models.model import Model
 from tests.bofire import specs
 
 # objective
@@ -101,7 +105,7 @@ def invalid_constraints_spec(request) -> specs.Spec:
 
 
 @fixture
-def model() -> Constraint:
+def model() -> Model:
     return specs.models.valid().obj()
 
 
@@ -119,7 +123,7 @@ def invalid_model_spec(request) -> specs.Spec:
 
 
 @fixture
-def domain() -> Constraint:
+def domain() -> Domain:
     return specs.domains.valid().obj()
 
 
@@ -137,7 +141,7 @@ def invalid_domain_spec(request) -> specs.Spec:
 
 
 @fixture
-def prior() -> Constraint:
+def prior() -> Prior:
     return specs.priors.valid().obj()
 
 
@@ -155,7 +159,7 @@ def invalid_prior_spec(request) -> specs.Spec:
 
 
 @fixture
-def kernel() -> Constraint:
+def kernel() -> BaseKernel:
     return specs.kernels.valid().obj()
 
 
