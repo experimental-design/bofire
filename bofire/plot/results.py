@@ -1,8 +1,7 @@
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import numpy as np
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 
 from bofire.domain.domain import Domain
@@ -42,27 +41,28 @@ def plot_scatter_matrix(
     domain: Domain,
     experiments: pd.DataFrame,
     objectives: Optional[List[str]] = [],
-    display_pareto_only=True,
-    ref_point: dict = {},
-    labels: dict = {},
+    display_pareto_only: bool = False,
+    ref_point: Dict = {},
+    labels: Dict = {},
     colorstyle="standard",
-    diagonal_visible=False,
-    showupperhalf=False,
+    diagonal_visible: bool = False,
+    showupperhalf: bool = True,
+    show_amimation: bool = True,
+    ms_per_frame: int = 500
 ):
-
     if objectives == []:
         objectives = domain.output_features.get_keys()  # type: ignore
+
+    if len(objectives) < 2:
+        raise ValueError("Specify at least two features, that should be plotted.")
+    elif len(objectives) == 2 and (showupperhalf is False and diagonal_visible is False):
+        raise ValueError("For two features either showupperhalf or diaginal_visible must be set to True.")
 
     if labels == {}:
         for key in objectives:  # type: ignore
             labels[key] = "<b>" + key + "</b>"
 
-    experiments["point type"] = "point"
-
-    hover_data = {}
-    for key in domain.get_feature_keys():
-        hover_data[key] = ":.f1"
-
+    # set colorstyles
     colorstyles = Layout().colorstyles
     if colorstyle in colorstyles.keys():
         colorstyle = colorstyles.get(colorstyle)
@@ -71,35 +71,9 @@ def plot_scatter_matrix(
 
     # create frames for animation
     fig = go.Figure()
-    slider_steps = []
 
-    # create custom hover data for all objectives
-    hover_data_tuple = ()
-    for key in domain.inputs.get_keys():
-        hover_data_tuple = hover_data_tuple + (experiments[key],)
-    custom_hover_data = np.dstack(hover_data_tuple)
-
+    # one frame for each row in experiments dataframe
     for i, _ in experiments.iterrows():
-        if display_pareto_only is False:
-            dimensions_points = []
-            for key in objectives:  # type: ignore
-                dimension = dict(label=labels[key], values=experiments[key].iloc[0 : i + 1])
-                dimensions_points.append(dimension)
-
-            points = go.Splom(
-                name="all points",
-                dimensions=dimensions_points,
-                diagonal_visible=diagonal_visible,
-                showupperhalf=showupperhalf,
-                marker=dict(
-                    size=12,
-                    line=dict(width=1, color=colorstyle["fontcolor"]),
-                    color=colorstyle["highlight2"],
-                ),
-                # customdata=custom_hover_data,
-                # hovertemplate="<b>z1:%{f_0:.3f}</b><br>z2:%{custom_hover_data[0]:.3f} <br>z3: %{customdata[1]:.3f} ",
-            )
-
         dimensions_pareto_points = []
         pareto_front = get_pareto_front(
             domain=domain,
@@ -119,39 +93,45 @@ def plot_scatter_matrix(
                 line=dict(width=1, color=colorstyle["fontcolor"]),
                 color=colorstyle["highlight"],
             ),
-            # customdata=custom_hover_data,
-            # hovertemplate="<b>z1:%{f_0:.3f}</b><br>z2:%{custom_hover_data[0]:.3f} <br>z3: %{customdata[1]:.3f} ",
         )
 
-        # fig.add_trace(points)
-        frame = go.Frame(data=[points, pareto_trace])
+        if display_pareto_only is False:
+            dimensions_points = []
+            for key in objectives:  # type: ignore
+                dimension = dict(label=labels[key], values=experiments[key].iloc[0 : i + 1])
+                dimensions_points.append(dimension)
+
+            common_trace = go.Splom(
+                name="all points",
+                dimensions=dimensions_points,
+                diagonal_visible=diagonal_visible,
+                showupperhalf=showupperhalf,
+                marker=dict(
+                    size=12,
+                    line=dict(width=1, color=colorstyle["fontcolor"]),
+                    color=colorstyle["highlight2"],
+                    symbol="x"
+                ),
+            )
+            frame = go.Frame(data=[common_trace, pareto_trace])
+        else:
+            frame = go.Frame(data=pareto_trace)
+
         fig.frames = fig.frames + (frame,)
 
-        visible_position = [False] * len(experiments)
+    if display_pareto_only is False:
+        fig.add_trace(common_trace)
 
-        visible_position[i] = True
-        step = dict(
-            method="update",
-            label="Sim: " + str(i),
-            args=[
-                {"visible": visible_position},
-            ],  # layout attribute
-        )
-        slider_steps.append(step)
-
-    fig.add_traces([points, pareto_trace])   
+    fig.add_trace(pareto_trace)
 
 # create trace for the ref point if specified
     dimensions_ref_point = []
     if ref_point != {}:
         for obj in objectives:
-            
             if obj not in ref_point.keys():
                 ref_point[obj] = np.nan
-
             dimension = dict(values=[ref_point[key]])
             dimensions_ref_point.append(dimension)
-
         experiments = pd.concat([experiments, pd.DataFrame(ref_point, index=[0])], axis=0)  # append to experiments for bound calculation of displayed axes
 
         ref_point_trace = go.Splom(
@@ -167,27 +147,12 @@ def plot_scatter_matrix(
         )
         fig.add_trace(ref_point_trace)
 
-    # scatter_matrix = px.scatter_matrix(
-    #     hover_data=hover_data,
-    # )
-
-    # create the button
-    button = {
-        "type": "buttons",
-        "buttons": [
-            {
-                "label": "Play",
-                "method": "animate",
-                "args": [None, {"frame": {"duration": 250}}],
-            }
-        ],
-    }
-
+    # specify plot layout
     fig.update_layout(
         paper_bgcolor=colorstyle["bgcolor"],
         plot_bgcolor=colorstyle["plotbgcolor"],
         showlegend=True,
-        hovermode="x unified",
+        hovermode="closest",
         title=dict(
             text="<b>Feature Scatter Matrix</b>",
             xanchor="center",
@@ -196,7 +161,6 @@ def plot_scatter_matrix(
             y=0.98,
         ),
         font=dict(family="Arial", size=18, color=colorstyle["fontcolor"]),
-        updatemenus=[button],
         width=400 * len(objectives),  # type: ignore
         height=400 * len(objectives),  # type: ignore
     )
@@ -217,5 +181,21 @@ def plot_scatter_matrix(
         ax_count += 1
 
     fig.update_layout(axis_specs)
+
+    if show_amimation:
+        # create and add animation button
+        button = {
+            "type": "buttons",
+            "buttons": [
+                {
+                    "label": "Play",
+                    "method": "animate",
+                    "args": [None, {"frame": {"duration": ms_per_frame}}],
+                }
+            ],
+        }
+        fig.update_layout(
+            updatemenus=[button]
+        )
 
     return fig

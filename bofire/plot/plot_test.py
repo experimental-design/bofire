@@ -61,12 +61,8 @@ from bofire.plot.results import plot_scatter_matrix
 matrix = plot_scatter_matrix(
     domain=domain,
     experiments=random_results[0][0].domain.experiments,
-    objectives=["x_0", "x_1", "f_0", "f_1"],
-    display_pareto_only=False,
-    diagonal_visible=True,
-    showupperhalf=True,
     ref_point={"f_0": 2, "f_1": 2},
-    colorstyle="evonik",
+    colorstyle="basf",
 )
 
 matrix.show()
