@@ -22,7 +22,6 @@ from bofire.domain.feature import (
     InputFeature,
     OutputFeature,
     TInputTransformSpecs,
-    Tnum_samples,
 )
 from bofire.domain.objective import Objective
 from bofire.domain.util import PydanticBaseModel, filter_by_attribute, filter_by_class
@@ -173,7 +172,7 @@ class InputFeatures(Features):
     @validate_arguments
     def sample(
         self,
-        n: Tnum_samples = 1,
+        n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
     ) -> pd.DataFrame:
         """Draw sobol samples
