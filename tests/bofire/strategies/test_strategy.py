@@ -411,7 +411,17 @@ def test_predictive_strategy_ask_invalid():
 def test_predictive_strategy_predict(domain, experiments):
     strategy = DummyPredictiveStrategy(domain=domain)
     strategy.tell(experiments)
-    strategy.predict(generate_candidates(domain=domain))
+    preds = strategy.predict(generate_candidates(domain=domain))
+    assert sorted(list(preds.columns)) == sorted(
+        [
+            "of1_pred",
+            "of2_pred",
+            "of1_sd",
+            "of2_sd",
+            "of1_des",
+            "of2_des",
+        ]
+    )
 
 
 @pytest.mark.parametrize(

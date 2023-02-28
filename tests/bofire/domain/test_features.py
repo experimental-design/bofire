@@ -1786,7 +1786,9 @@ def test_input_features_get_bounds_fit():
 def test_output_features_call(features, samples):
     o = features(samples)
     assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
-    assert list(o.columns) == features.get_keys_by_objective(Objective)
+    assert list(o.columns) == [
+        f"{key}_des" for key in features.get_keys_by_objective(Objective)
+    ]
 
 
 @pytest.mark.parametrize(

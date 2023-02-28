@@ -8,6 +8,7 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
     Normalize,
+    OneHotToNumeric,
 )
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
@@ -25,7 +26,7 @@ from bofire.models.gps.priors import botorch_lengthcale_prior, botorch_scale_pri
 from bofire.models.model import TrainableModel
 from bofire.models.torch_models import BotorchModel
 from bofire.utils.enum import CategoricalEncodingEnum, OutputFilteringEnum, ScalerEnum
-from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 
 def get_dim_subsets(d: int, active_dims: List[int], cat_dims: List[int]):

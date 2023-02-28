@@ -48,6 +48,7 @@ from bofire.models.gps.priors import (
     botorch_lengthcale_prior,
     botorch_scale_prior,
 )
+from bofire.models.random_forest import RandomForest
 from bofire.samplers import PolytopeSampler, RejectionSampler
 
 
@@ -531,6 +532,37 @@ models.add_valid(
         "model": None,
         "input_preprocessing_specs": {},
         "training_specs": {},
+    },
+)
+models.add_valid(
+    RandomForest,
+    {
+        "input_features": InputFeatures(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "output_features": OutputFeatures(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "model": None,
+        "input_preprocessing_specs": {},
+        "n_estimators": 100,
+        "criterion": "squared_error",
+        "max_depth": None,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "min_weight_fraction_leaf": 0.0,
+        "max_features": 1,
+        "max_leaf_nodes": None,
+        "min_impurity_decrease": 0.0,
+        "bootstrap": True,
+        "oob_score": False,
+        "random_state": None,
+        "ccp_alpha": 0.0,
+        "max_samples": None,
     },
 )
 

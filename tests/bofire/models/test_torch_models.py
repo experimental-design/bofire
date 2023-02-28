@@ -11,6 +11,7 @@ from botorch.models.transforms.input import (
     FilterFeatures,
     InputStandardize,
     Normalize,
+    OneHotToNumeric,
 )
 from pandas.testing import assert_frame_equal
 from torch import Tensor
@@ -25,7 +26,7 @@ from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels, EmpiricalModel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
-from bofire.utils.torch_tools import OneHotToNumeric, tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 CLOUDPICKLE_NOT_AVAILABLE = importlib.util.find_spec("cloudpickle") is None
 
