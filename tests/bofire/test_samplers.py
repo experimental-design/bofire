@@ -146,5 +146,5 @@ def test_PolytopeSampler(domain, candidate_count):
 def test_PolytopeSampler_all_fixed():
     domain = Domain(input_features=[if1, if4], constraints=[c5])
     sampler = PolytopeSampler(domain=domain)
-    with pytest.raises(ValueError):
+    with pytest.warns(UserWarning):
         sampler.ask(2)

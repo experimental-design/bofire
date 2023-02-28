@@ -1,6 +1,7 @@
+import warnings
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, Type
+from typing import Any, Dict, Literal, Type
 
 import numpy as np
 import pandas as pd
@@ -23,7 +24,6 @@ from bofire.domain.feature import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    Tnum_samples,
 )
 from bofire.domain.util import PydanticBaseModel
 from bofire.strategies.strategy import (
@@ -55,6 +55,7 @@ class Sampler(PydanticBaseModel):
         domain (Domain): Domain defining the constrained input space
     """
 
+    type: str
     domain: Domain
 
     _validate_constraints = validator("domain", allow_reuse=True)(validate_constraints)
@@ -64,7 +65,7 @@ class Sampler(PydanticBaseModel):
     )
 
     @validate_arguments
-    def ask(self, n: Tnum_samples, return_all: bool = True) -> pd.DataFrame:
+    def ask(self, n: int, return_all: bool = True) -> pd.DataFrame:
         """Generates the samples. In the case that `NChooseK` constraints are
         present, per combination `n` samples are generated.
 
@@ -74,7 +75,7 @@ class Sampler(PydanticBaseModel):
                 are generated, else only `n` samples in total. Defaults to True.
 
         Returns:
-            pd.DataFrame: Dataframe with samples.
+            Dataframe with samples.
         """
         # handle here NChooseK
         if len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
@@ -117,7 +118,7 @@ class Sampler(PydanticBaseModel):
         pass
 
     @abstractmethod
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         """Abstract method that has to be overwritten in the actual sampler to generate the samples
 
         Args:
@@ -164,9 +165,10 @@ class PolytopeSampler(Sampler):
             constraints are present. Defaults to UNIFORM.
     """
 
+    type: Literal["PolytopeSampler"] = "PolytopeSampler"
     fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
 
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, self.fallback_sampling_method)
 
@@ -197,10 +199,9 @@ class PolytopeSampler(Sampler):
         feature_map = {}
         counter = 0
         for i, feat in enumerate(self.domain.get_features(ContinuousInput)):
-            if (not feat.is_fixed()) and (feat.key not in pseudo_fixed.keys()):
+            if (not feat.is_fixed()) and (feat.key not in pseudo_fixed.keys()):  # type: ignore
                 feature_map[i] = counter
                 counter += 1
-        print(feature_map, counter)
 
         # get the bounds
         lower = [
@@ -209,66 +210,73 @@ class PolytopeSampler(Sampler):
             if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
         ]
         if len(lower) == 0:
-            raise ValueError("Nothing to sample, all is fixed.")
-        upper = [
-            feat.upper_bound  # type: ignore
-            for feat in self.domain.get_features(ContinuousInput)
-            if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
-        ]
-        bounds = torch.tensor([lower, upper]).to(**tkwargs)
-        assert bounds.shape[-1] == len(feature_map) == counter
+            warnings.warn(
+                "Nothing to sample, all is fixed. Just the fixed set is returned.",
+                UserWarning,
+            )
+            samples = pd.DataFrame(
+                data=np.nan, index=range(n), columns=self.domain.inputs.get_keys()
+            )
+        else:
+            upper = [
+                feat.upper_bound  # type: ignore
+                for feat in self.domain.get_features(ContinuousInput)
+                if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
+            ]
+            bounds = torch.tensor([lower, upper]).to(**tkwargs)
+            assert bounds.shape[-1] == len(feature_map) == counter
 
-        # get the inequality constraints and map features back
-        # we also check that only features present in the mapper
-        # are present in the constraints
-        ineqs = get_linear_constraints(
-            domain=self.domain,
-            constraint=LinearInequalityConstraint,  # type: ignore
-            unit_scaled=False,
-        )
-        for ineq in ineqs:
-            for key, value in feature_map.items():
-                if key != value:
-                    ineq[0][ineq[0] == key] = value
-            assert (
-                ineq[0].max() <= counter
-            ), "Something went wrong when transforming the linear constraints. Revisit the problem."
+            # get the inequality constraints and map features back
+            # we also check that only features present in the mapper
+            # are present in the constraints
+            ineqs = get_linear_constraints(
+                domain=self.domain,
+                constraint=LinearInequalityConstraint,  # type: ignore
+                unit_scaled=False,
+            )
+            for ineq in ineqs:
+                for key, value in feature_map.items():
+                    if key != value:
+                        ineq[0][ineq[0] == key] = value
+                assert (
+                    ineq[0].max() <= counter
+                ), "Something went wrong when transforming the linear constraints. Revisit the problem."
 
-        # map the indice of the equality constraints
-        for eq in cleaned_eqs:
-            for key, value in feature_map.items():
-                if key != value:
-                    eq[0][eq[0] == key] = value
-            assert (
-                eq[0].max() <= counter
-            ), "Something went wrong when transforming the linear constraints. Revisit the problem."
+            # map the indice of the equality constraints
+            for eq in cleaned_eqs:
+                for key, value in feature_map.items():
+                    if key != value:
+                        eq[0][eq[0] == key] = value
+                assert (
+                    eq[0].max() <= counter
+                ), "Something went wrong when transforming the linear constraints. Revisit the problem."
 
-        # now use the hit and run sampler
-        candidates = get_polytope_samples(
-            n=n,
-            bounds=bounds.to(**tkwargs),
-            inequality_constraints=ineqs if len(ineqs) > 0 else None,
-            equality_constraints=cleaned_eqs if len(cleaned_eqs) > 0 else None,
-            n_burnin=1000,
-            # thinning=200
-        )
+            # now use the hit and run sampler
+            candidates = get_polytope_samples(
+                n=n,
+                bounds=bounds.to(**tkwargs),
+                inequality_constraints=ineqs if len(ineqs) > 0 else None,
+                equality_constraints=cleaned_eqs if len(cleaned_eqs) > 0 else None,
+                n_burnin=1000,
+                # thinning=200
+            )
 
-        # check that the random generated candidates are not always the same
-        if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
-            raise ValueError("Generated candidates are not unique!")
+            # check that the random generated candidates are not always the same
+            if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
+                raise ValueError("Generated candidates are not unique!")
 
-        free_continuals = [
-            feat.key
-            for feat in self.domain.get_features(ContinuousInput)
-            if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
-        ]
+            free_continuals = [
+                feat.key
+                for feat in self.domain.get_features(ContinuousInput)
+                if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
+            ]
 
-        # setup the output
-        samples = pd.DataFrame(
-            data=candidates.detach().numpy().reshape(n, len(free_continuals)),
-            index=range(n),
-            columns=free_continuals,
-        )
+            # setup the output
+            samples = pd.DataFrame(
+                data=candidates.detach().numpy().reshape(n, len(free_continuals)),
+                index=range(n),
+                columns=free_continuals,
+            )
 
         # setup the categoricals and discrete ones as uniform sampled vals
         for feat in self.domain.get_features([CategoricalInput, DiscreteInput]):
@@ -303,7 +311,7 @@ class PolytopeSampler(Sampler):
         ]
 
     def get_portable_attributes(self) -> Dict[str, Any]:
-        return {}
+        return {"fallback_sampling_method": self.fallback_sampling_method}
 
 
 class RejectionSampler(Sampler):
@@ -316,11 +324,12 @@ class RejectionSampler(Sampler):
         max_iters (int, optinal): Number of iterations. Defaults to 1000.
     """
 
+    type: Literal["RejectionSampler"] = "RejectionSampler"
     sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
-    num_base_samples: Tnum_samples = 1000
-    max_iters: Tnum_samples = 1000
+    num_base_samples: int = 1000
+    max_iters: int = 1000
 
-    def _sample(self, n: Tnum_samples) -> pd.DataFrame:
+    def _sample(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, self.sampling_method)
         n_iters = 0
