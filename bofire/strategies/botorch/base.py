@@ -11,7 +11,7 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
 from pydantic import PositiveInt
 from pydantic.class_validators import root_validator, validator
-from pydantic.types import NonNegativeInt, conlist
+from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
@@ -33,8 +33,6 @@ from bofire.strategies.strategy import PredictiveStrategy
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
-
-Tkeys = conlist(item_type=str, min_items=1)
 
 
 class BotorchBasicBoStrategy(PredictiveStrategy):

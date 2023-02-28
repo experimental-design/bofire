@@ -48,6 +48,7 @@ from bofire.models.gps.priors import (
     botorch_lengthcale_prior,
     botorch_scale_prior,
 )
+from bofire.samplers import PolytopeSampler, RejectionSampler
 
 
 class Spec:
@@ -642,5 +643,41 @@ kernels.add_valid(
             kernels.valid(LinearKernel).obj(),
             kernels.valid(MaternKernel).obj(),
         ]
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
+# sampler
+# # # # # # # # # # # # # # # # # #
+samplers = Specs([])
+samplers.add_valid(
+    PolytopeSampler,
+    {
+        "domain": Domain(
+            input_features=InputFeatures(
+                features=[
+                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
+                    for i in range(2)
+                ]
+            ),
+        ),
+        "fallback_sampling_method": "UNIFORM",
+    },
+)
+samplers.add_valid(
+    RejectionSampler,
+    {
+        "domain": Domain(
+            input_features=InputFeatures(
+                features=[
+                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
+                    for i in range(2)
+                ]
+            )
+        ),
+        "max_iters": 1000,
+        "num_base_samples": 1000,
+        "sampling_method": "UNIFORM",
     },
 )
