@@ -364,12 +364,20 @@ class DiscreteInput(NumericalInput):
 
         Raises:
             ValueError: when values are non-unique.
+            ValueError: when values contains only one entry.
+            ValueError: when values is empty.
 
         Returns:
             List[values]: Sorted list of values
         """
         if len(values) != len(set(values)):
             raise ValueError("Discrete values must be unique")
+        if len(values) == 1:
+            raise ValueError(
+                "Fixed discrete inputs are not supported. Please use a fixed continuous input."
+            )
+        if len(values) == 0:
+            raise ValueError("No values defined.")
         return sorted(values)
 
     @property
@@ -411,6 +419,26 @@ class DiscreteInput(NumericalInput):
             pd.Series: drawn samples.
         """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
+
+    def from_continuous(self, values: pd.DataFrame) -> pd.Series:
+        """Rounds continuous values to the closest discrete ones.
+
+        Args:
+            values (pd.DataFrame): Dataframe with continuous entries.
+
+        Returns:
+            pd.Series: Series with discrete values.
+        """
+
+        s = pd.DataFrame(
+            data=np.abs(
+                (values[self.key].to_numpy()[:, np.newaxis] - np.array(self.values))
+            ),
+            columns=self.values,
+            index=values.index,
+        ).idxmin(1)
+        s.name = self.key
+        return s
 
 
 TDescriptors = Annotated[List[str], Field(min_items=1)]
@@ -999,13 +1027,13 @@ class CategoricalDescriptorInput(CategoricalInput):
                 np.sum(
                     (
                         values[cat_cols].to_numpy()[:, np.newaxis, :]
-                        - self.to_df().to_numpy()
+                        - self.to_df().iloc[self.allowed].to_numpy()
                     )
                     ** 2,
                     axis=2,
                 )
             ),
-            columns=self.categories,
+            columns=self.get_allowed_categories(),
             index=values.index,
         ).idxmin(1)
         s.name = self.key

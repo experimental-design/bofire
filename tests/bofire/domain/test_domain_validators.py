@@ -13,6 +13,7 @@ from bofire.domain.feature import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    DiscreteInput,
     InputFeature,
     OutputFeature,
 )
@@ -52,6 +53,10 @@ def generate_experiments(
                     for f in domain.get_features(ContinuousInput)
                 },
                 **{
+                    f.key: random.choice(f.values)
+                    for f in domain.get_features(DiscreteInput)
+                },
+                **{
                     k: random.random()
                     for k in [
                         *domain.get_feature_keys(ContinuousOutput),
@@ -77,6 +82,7 @@ def generate_experiments(
                 else feat.categories[:row_count]
             )
             experiments.loc[: len(categories) - 1, feat.key] = categories
+
     return experiments
 
 

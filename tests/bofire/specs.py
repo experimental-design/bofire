@@ -157,6 +157,13 @@ class Specs:
                 self.invalids += invalidator.invalidate(spec_)
         return spec_
 
+    def add_invalid(self, cls: Type, spec: dict) -> Spec:
+        """Add a new invalid spec to the list."""
+
+        spec_ = Spec(cls, spec)
+        self.invalids.append(spec_)
+        return spec_
+
 
 # # # # # # # # # # # # # # # # # #
 # objectives
@@ -293,6 +300,15 @@ features.add_valid(
         "values": [1.0, 2.0, 2.5],
     },
 )
+
+features.add_invalid(
+    DiscreteInput,
+    {
+        "key": str(uuid.uuid4()),
+        "values": [1.0],
+    },
+)
+
 features.add_valid(
     ContinuousInput,
     {

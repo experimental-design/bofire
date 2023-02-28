@@ -18,6 +18,7 @@ from bofire.domain.feature import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    DiscreteInput,
     Feature,
     OutputFeature,
 )
@@ -36,6 +37,7 @@ from tests.bofire.strategies.specs import (
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
+    VALID_DISCRETE_INPUT_FEATURE_SPEC,
     VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
@@ -86,6 +88,7 @@ class DummyStrategy(BotorchBasicBoStrategy):
         return my_type in [
             ContinuousInput,
             CategoricalInput,
+            DiscreteInput,
             CategoricalDescriptorInput,
             ContinuousOutput,
         ]
@@ -145,6 +148,13 @@ if8 = CategoricalDescriptorInput(
     }
 )
 
+if9 = DiscreteInput(
+    **{
+        **VALID_DISCRETE_INPUT_FEATURE_SPEC,
+        "key": "if9",
+    }
+)
+
 of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
@@ -161,7 +171,7 @@ of2 = ContinuousOutput(
 
 domains = [
     Domain(
-        input_features=[if1, if3, if5],  # no fixed features
+        input_features=[if1, if3, if5, if9],  # no fixed features
         output_features=[of1],
         constraints=[],
     ),
@@ -173,6 +183,7 @@ domains = [
             if4,
             if5,
             if6,
+            if9,
         ],  # all feature types incl. with fixed values
         output_features=[of1],
         constraints=[],
@@ -185,6 +196,7 @@ domains = [
             if4,
             if5,
             if6,
+            if9,
         ],  # all feature types incl. with fixed values + mutli-objective
         output_features=[of1, of2],
         constraints=[],
@@ -195,7 +207,7 @@ domains = [
         constraints=[],
     ),
     Domain(
-        input_features=[if1, if3, if5],  # all feature types + mutli-objective
+        input_features=[if1, if3, if5, if9],  # all feature types + mutli-objective
         output_features=[of1, of2],
         constraints=[],
     ),
@@ -222,6 +234,7 @@ data = [
             "if1": [3, 4, 5, 4.5],
             "if3": ["c1", "c2", "c3", "c1"],
             "if5": ["c1", "c2", "c3", "c1"],
+            "if9": [1.0, 2.0, 1.0, 2.0],
             "of1": [10, 11, 12, 13],
             "valid_of1": [1, 0, 1, 0],
         }
@@ -234,6 +247,7 @@ data = [
             "if4": ["c1", "c1", "c1", "c1"],
             "if5": ["c1", "c2", "c3", "c1"],
             "if6": ["c1", "c1", "c1", "c1"],
+            "if9": [1.0, 2.0, 1.0, 2.0],
             "of1": [10, 11, 12, 13],
             "valid_of1": [1, 0, 1, 0],
         }
@@ -246,6 +260,7 @@ data = [
             "if4": ["c1", "c1", "c1", "c1"],
             "if5": ["c1", "c2", "c3", "c1"],
             "if6": ["c1", "c1", "c1", "c1"],
+            "if9": [1.0, 2.0, 1.0, 2.0],
             "of1": [10, 11, 12, 13],
             "of2": [100, 103, 105, 110],
             "valid_of1": [1, 0, 1, 0],
@@ -265,6 +280,7 @@ data = [
             "if1": [3, 4, 5, 4.5],
             "if3": ["c1", "c2", "c3", "c1"],
             "if5": ["c1", "c2", "c3", "c1"],
+            "if9": [1.0, 2.0, 1.0, 2.0],
             "of1": [10, 11, 12, 13],
             "of2": [100, 103, 105, 110],
             "valid_of1": [1, 0, 1, 0],
@@ -304,15 +320,12 @@ def test_base_invalid_descriptor_method():
     "domain, model_specs, categorical_method, descriptor_method, expected",
     [
         (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
-        (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
-        (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
-        (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
         (
             domains[1],
             None,
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            {1: 3, 4: 1, 5: 2, 9: 1, 10: 0, 11: 0},
+            {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
         ),
         (
             domains[1],
@@ -330,7 +343,7 @@ def test_base_invalid_descriptor_method():
             ),
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            {1: 3, 5: 1, 6: 0, 7: 0, 11: 1, 12: 0, 13: 0},
+            {1: 3, 6: 1, 7: 0, 8: 0, 12: 1, 13: 0, 14: 0},
         ),
         (
             domains[1],
@@ -344,7 +357,7 @@ def test_base_invalid_descriptor_method():
             ),
             "FREE",
             "EXHAUSTIVE",
-            {1: 3, 4: 1, 5: 2, 9: 1, 10: 0, 11: 0},
+            {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
         ),
         (  #
             domains[1],
@@ -362,7 +375,7 @@ def test_base_invalid_descriptor_method():
             ),
             "FREE",
             "FREE",
-            {1: 3, 5: 1, 6: 0, 7: 0, 11: 1, 12: 0, 13: 0},
+            {1: 3, 6: 1, 7: 0, 8: 0, 12: 1, 13: 0, 14: 0},
         ),
         (domains[5], None, "EXHAUSTIVE", "EXHAUSTIVE", {1: 3.0}),
         (
@@ -407,27 +420,56 @@ def test_base_get_fixed_features(
 
 
 @pytest.mark.parametrize(
-    "domain, descriptor_method, categorical_method, model_specs, expected",
+    "domain, descriptor_method, categorical_method, discrete_method, model_specs, expected",
     [
         (
             domains[0],
             "EXHAUSTIVE",
             "EXHAUSTIVE",
+            "EXHAUSTIVE",
             None,
             [
-                {3: 1.0, 4: 0.0, 5: 0.0, 1: 1.0, 2: 2.0},
-                {3: 1.0, 4: 0.0, 5: 0.0, 1: 3.0, 2: 7.0},
-                {3: 1.0, 4: 0.0, 5: 0.0, 1: 5.0, 2: 1.0},
-                {3: 0.0, 4: 1.0, 5: 0.0, 1: 1.0, 2: 2.0},
-                {3: 0.0, 4: 1.0, 5: 0.0, 1: 3.0, 2: 7.0},
-                {3: 0.0, 4: 1.0, 5: 0.0, 1: 5.0, 2: 1.0},
-                {3: 0.0, 4: 0.0, 5: 1.0, 1: 1.0, 2: 2.0},
-                {3: 0.0, 4: 0.0, 5: 1.0, 1: 3.0, 2: 7.0},
-                {3: 0.0, 4: 0.0, 5: 1.0, 1: 5.0, 2: 1.0},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0, 1: 1},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0, 1: 1},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 5.0, 3: 1.0, 1: 1},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 1.0, 3: 2.0, 1: 1},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 3.0, 3: 7.0, 1: 1},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 5.0, 3: 1.0, 1: 1},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 1.0, 3: 2.0, 1: 1},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 3.0, 3: 7.0, 1: 1},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 5.0, 3: 1.0, 1: 1},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0, 1: 2},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0, 1: 2},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 5.0, 3: 1.0, 1: 2},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 1.0, 3: 2.0, 1: 2},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 3.0, 3: 7.0, 1: 2},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 5.0, 3: 1.0, 1: 2},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 1.0, 3: 2.0, 1: 2},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 3.0, 3: 7.0, 1: 2},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 5.0, 3: 1.0, 1: 2},
             ],
         ),
         (
             domains[0],
+            "EXHAUSTIVE",
+            "EXHAUSTIVE",
+            "FREE",
+            None,
+            [
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0},
+                {4: 1.0, 5: 0.0, 6: 0.0, 2: 5.0, 3: 1.0},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 1.0, 3: 2.0},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 3.0, 3: 7.0},
+                {4: 0.0, 5: 1.0, 6: 0.0, 2: 5.0, 3: 1.0},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 1.0, 3: 2.0},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 3.0, 3: 7.0},
+                {4: 0.0, 5: 0.0, 6: 1.0, 2: 5.0, 3: 1.0},
+            ],
+        ),
+        (
+            domains[0],
+            "EXHAUSTIVE",
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             BotorchModels(
@@ -442,20 +484,58 @@ def test_base_get_fixed_features(
                 ]
             ),
             [
-                {1: 1.0, 2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 0.0},
-                {1: 1.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0},
-                {1: 1.0, 2: 0.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 1.0},
-                {1: 0.0, 2: 1.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 0.0},
-                {1: 0.0, 2: 1.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0},
-                {1: 0.0, 2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 1.0},
-                {1: 0.0, 2: 0.0, 3: 1.0, 4: 1.0, 5: 0.0, 6: 0.0},
-                {1: 0.0, 2: 0.0, 3: 1.0, 4: 0.0, 5: 1.0, 6: 0.0},
-                {1: 0.0, 2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 1.0},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 1},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 1.0, 7: 0.0, 1: 1},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 1.0, 1: 1},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 1},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 1.0, 7: 0.0, 1: 1},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 1.0, 1: 1},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 1},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 1.0, 7: 0.0, 1: 1},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 0.0, 7: 1.0, 1: 1},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 2},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 1.0, 7: 0.0, 1: 2},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 1.0, 1: 2},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 2},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 1.0, 7: 0.0, 1: 2},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 1.0, 1: 2},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 2},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 1.0, 7: 0.0, 1: 2},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 0.0, 7: 1.0, 1: 2},
             ],
         ),
         (
             domains[0],
             "EXHAUSTIVE",
+            "EXHAUSTIVE",
+            "FREE",
+            BotorchModels(
+                models=[
+                    SingleTaskGPModel(
+                        input_features=domains[0].input_features,
+                        output_features=domains[0].output_features,
+                        input_preprocessing_specs={
+                            "if5": CategoricalEncodingEnum.ONE_HOT,
+                        },
+                    )
+                ]
+            ),
+            [
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 1.0, 7: 0.0},
+                {2: 1.0, 3: 0.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 1.0},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 1.0, 7: 0.0},
+                {2: 0.0, 3: 1.0, 4: 0.0, 5: 0.0, 6: 0.0, 7: 1.0},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 1.0, 6: 0.0, 7: 0.0},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 1.0, 7: 0.0},
+                {2: 0.0, 3: 0.0, 4: 1.0, 5: 0.0, 6: 0.0, 7: 1.0},
+            ],
+        ),
+        (
+            domains[0],
+            "EXHAUSTIVE",
+            "FREE",
             "FREE",
             BotorchModels(
                 models=[
@@ -465,10 +545,48 @@ def test_base_get_fixed_features(
                     )
                 ]
             ),
-            [{1: 1.0, 2: 2.0}, {1: 3.0, 2: 7.0}, {1: 5.0, 2: 1.0}],
+            [{2: 1.0, 3: 2.0}, {2: 3.0, 3: 7.0}, {2: 5.0, 3: 1.0}],
         ),
         (
             domains[0],
+            "FREE",
+            "FREE",
+            "EXHAUSTIVE",
+            BotorchModels(
+                models=[
+                    SingleTaskGPModel(
+                        input_features=domains[0].input_features,
+                        output_features=domains[0].output_features,
+                    )
+                ]
+            ),
+            [{1: 1.0}, {1: 2.0}],
+        ),
+        (
+            domains[0],
+            "EXHAUSTIVE",
+            "FREE",
+            "EXHAUSTIVE",
+            BotorchModels(
+                models=[
+                    SingleTaskGPModel(
+                        input_features=domains[0].input_features,
+                        output_features=domains[0].output_features,
+                    )
+                ]
+            ),
+            [
+                {2: 1.0, 3: 2.0, 1: 1.0},
+                {2: 3.0, 3: 7.0, 1: 1.0},
+                {2: 5.0, 3: 1.0, 1: 1.0},
+                {2: 1.0, 3: 2.0, 1: 2.0},
+                {2: 3.0, 3: 7.0, 1: 2.0},
+                {2: 5.0, 3: 1.0, 1: 2.0},
+            ],
+        ),
+        (
+            domains[0],
+            "FREE",
             "FREE",
             "FREE",
             BotorchModels(
@@ -488,15 +606,17 @@ def test_base_get_fixed_features(
             domains[0],
             "FREE",
             "EXHAUSTIVE",
+            "FREE",
             None,
             [
-                {3: 1.0, 4: 0.0, 5: 0.0},
-                {3: 0.0, 4: 1.0, 5: 0.0},
-                {3: 0.0, 4: 0.0, 5: 1.0},
+                {4: 1.0, 5: 0.0, 6: 0.0},
+                {4: 0.0, 5: 1.0, 6: 0.0},
+                {4: 0.0, 5: 0.0, 6: 1.0},
             ],
         ),
         (
             domains[3],
+            "EXHAUSTIVE",
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             None,
@@ -510,6 +630,7 @@ def test_base_get_categorical_combinations(
     domain,
     descriptor_method,
     categorical_method,
+    discrete_method,
     model_specs,
     expected,
 ):
@@ -519,6 +640,7 @@ def test_base_get_categorical_combinations(
         model_specs=model_specs,
         descriptor_method=descriptor_method,
         categorical_method=categorical_method,
+        discrete_method=discrete_method,
     )
     c = unittest.TestCase()
     combo = myStrategy.get_categorical_combinations()
@@ -582,28 +704,28 @@ def test_base_fit(domain, data, acquisition_function):
         (
             domains[0],
             generate_experiments(
-                domains[0], row_count=5, tol=1.0, force_all_categories=True
+                domains[0], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
         (
             domains[1],
             generate_experiments(
-                domains[1], row_count=5, tol=1.0, force_all_categories=True
+                domains[1], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
         (
             domains[2],
             generate_experiments(
-                domains[2], row_count=5, tol=1.0, force_all_categories=True
+                domains[2], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
         (
             domains[4],
             generate_experiments(
-                domains[4], row_count=5, tol=1.0, force_all_categories=True
+                domains[4], row_count=10, tol=1.0, force_all_categories=True
             ),
             random.choice(list(AcquisitionFunctionEnum)),
         ),
