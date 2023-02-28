@@ -1,5 +1,5 @@
 import sys
-
+import torch
 import numpy as np
 import pytest
 from scipy.optimize import LinearConstraint
@@ -442,6 +442,7 @@ def test_g_efficiency():
     assert np.allclose(g_efficiency(X, domain), 0.333, atol=5e-3)
 
     # define domain: sampling not implemented
+    # update: now it is implemented
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1.0)
@@ -465,8 +466,8 @@ def test_g_efficiency():
             ),
         ],
     )
-    with pytest.raises(Exception):
-        g_efficiency(X, domain, n_samples=1)
+    # with pytest.raises(Exception):
+    g_efficiency(X, domain, n_samples=1)
 
 
 def test_metrics():
@@ -488,17 +489,21 @@ def test_metrics():
         output_features=[ContinuousOutput(key="y")],
     )
 
+    np.random.seed(1)
     d = metrics(X, domain)
+    np.random.seed(1)
+    g_eff = g_efficiency(X, domain)
     assert d.index[0] == "D-optimality"
     assert d.index[1] == "A-optimality"
     assert d.index[2] == "G-efficiency"
     assert np.allclose(
         d,
-        np.array([d_optimality(X), a_optimality(X), g_efficiency(X, domain)]),
+        np.array([d_optimality(X), a_optimality(X), g_eff]),
         rtol=0.05,
     )
 
     # define domain: sampling not implemented
+    # update: now it is implemented
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1.0)
@@ -522,12 +527,12 @@ def test_metrics():
             ),
         ],
     )
-    with pytest.warns(UserWarning):
-        d = metrics(X, domain, n_samples=1)
+    # with pytest.warns(UserWarning):
+    d = metrics(X, domain, n_samples=1)
     assert d.index[0] == "D-optimality"
     assert d.index[1] == "A-optimality"
     assert d.index[2] == "G-efficiency"
-    assert np.allclose(d, np.array([d_optimality(X), a_optimality(X), 0]))
+    assert np.allclose(d, np.array([d_optimality(X), a_optimality(X), 5.0e01]))
 
 
 def test_check_nchoosek_constraints_as_bounds():
