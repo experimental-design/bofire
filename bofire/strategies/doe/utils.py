@@ -8,13 +8,13 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize import LinearConstraint
 
-from bofire.domain.domain import Domain
 from bofire.domain.constraint import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
+from bofire.domain.domain import Domain
 from bofire.domain.features import CategoricalInput, ContinuousOutput
 from bofire.samplers import PolytopeSampler
 
