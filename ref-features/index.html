@@ -2390,21 +2390,33 @@ OutputFeatures            (<a class="autorefs autorefs-internal" title="bofire.d
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="p">,</span> <span class="n">excludes</span><span class="p">,</span> <span class="n">exact</span><span class="p">)]</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the objective for every</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate the objective for every feature.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.</span>
+<span class="sd">            predictions (bool, optional): If True use the prediction columns in the dataframe to calc the</span>
+<span class="sd">                desirabilities `f&quot;{feat.key}_pred`.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Objective values for the experiments of interest.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+        <span class="n">desis</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
             <span class="p">[</span>
-                <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">experiments</span><span class="p">[[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]])</span>  <span class="c1"># type: ignore</span>
+                <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">experiments</span><span class="p">[[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span> <span class="k">if</span> <span class="n">predictions</span> <span class="k">else</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]])</span>  <span class="c1"># type: ignore</span>
                 <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span>
                 <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
             <span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">desis</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span> <span class="k">if</span> <span class="n">predictions</span> <span class="k">else</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span>
+                <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span>
+                <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="p">},</span>
             <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -2502,7 +2514,7 @@ OutputFeatures            (<a class="autorefs autorefs-internal" title="bofire.d
 
 
 <h3 id="bofire.domain.features.OutputFeatures.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">,</span> <span class="n">predictions</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -2512,7 +2524,7 @@ OutputFeatures            (<a class="autorefs autorefs-internal" title="bofire.d
 
     <div class="doc doc-contents ">
 
-      <p>Evaluate the objective for every</p>
+      <p>Evaluate the objective for every feature.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2530,6 +2542,13 @@ OutputFeatures            (<a class="autorefs autorefs-internal" title="bofire.d
         <td><code>pd.DataFrame</code></td>
         <td><p>Experiments for which the objectives should be evaluated.</p></td>
         <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>predictions</code></td>
+        <td><code>bool</code></td>
+        <td><p>If True use the prediction columns in the dataframe to calc the
+desirabilities <code>f"{feat.key}_pred</code>.</p></td>
+        <td><code>False</code></td>
       </tr>
   </tbody>
 </table>
@@ -2550,21 +2569,33 @@ OutputFeatures            (<a class="autorefs autorefs-internal" title="bofire.d
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/features.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the objective for every</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">predictions</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Evaluate the objective for every feature.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.</span>
+<span class="sd">        predictions (bool, optional): If True use the prediction columns in the dataframe to calc the</span>
+<span class="sd">            desirabilities `f&quot;{feat.key}_pred`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Objective values for the experiments of interest.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+    <span class="n">desis</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
         <span class="p">[</span>
-            <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">experiments</span><span class="p">[[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]])</span>  <span class="c1"># type: ignore</span>
+            <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">experiments</span><span class="p">[[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span> <span class="k">if</span> <span class="n">predictions</span> <span class="k">else</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]])</span>  <span class="c1"># type: ignore</span>
             <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span>
             <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="p">],</span>
+        <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">desis</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span>
+        <span class="p">{</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span> <span class="k">if</span> <span class="n">predictions</span> <span class="k">else</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span>
+            <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">features</span>
+            <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">},</span>
         <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div>
