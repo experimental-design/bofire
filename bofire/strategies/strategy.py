@@ -1,15 +1,16 @@
 from abc import abstractmethod
-from typing import Any, Optional, Tuple, Type
+from typing import Any, Literal, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, validator
+from pydantic import validator
 from pydantic.types import NonNegativeInt, PositiveInt
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
 from bofire.domain.feature import Feature, OutputFeature, TInputTransformSpecs
 from bofire.domain.objective import Objective
+from bofire.domain.util import PydanticBaseModel
 
 
 def validate_constraints(cls, domain: Domain):
@@ -89,7 +90,17 @@ def validate_output_feature_count(cls, domain: Domain):
     return domain
 
 
-class Strategy(BaseModel):
+def add_exclude(kwargs: dict, *fields: str):
+    """Add the given fields to the exclude property of the dict."""
+    kwargs = kwargs.copy()
+    if "exclude" in kwargs:
+        kwargs["exclude"] = {*kwargs["exclude"], *fields}
+    else:
+        kwargs["exclude"] = {*fields}
+    return kwargs
+
+
+class Strategy(PydanticBaseModel):
     """Base class for all strategies
 
     Attributes:
@@ -100,9 +111,17 @@ class Strategy(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    type: str
+
     domain: Domain
     seed: Optional[NonNegativeInt] = None
     rng: Optional[np.random.Generator] = None
+
+    def json(self, **kwargs):
+        return super().json(**add_exclude(kwargs, "rng"))
+
+    def dict(self, **kwargs):
+        return super().dict(**add_exclude(kwargs, "rng"))
 
     _validate_constraints = validator("domain", allow_reuse=True)(validate_constraints)
     _validate_features = validator("domain", allow_reuse=True)(validate_features)
@@ -328,6 +347,8 @@ class PredictiveStrategy(Strategy):
 
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
     """
+
+    type: Literal["PredictiveStrategy"] = "PredictiveStrategy"
 
     is_fitted: bool = False
 

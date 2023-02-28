@@ -6,3 +6,9 @@ AnyModel = Union[
     gps.SingleTaskGPModel,
     gps.MixedSingleTaskGPModel,
 ]
+
+# # TODO: add RandomForest here
+# AnyBotorchModel = Union[
+#     gps.SingleTaskGPModel,
+#     gps.MixedSingleTaskGPModel,
+# ]

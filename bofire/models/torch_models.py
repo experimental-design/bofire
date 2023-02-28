@@ -109,6 +109,16 @@ class BotorchModel(Model):
         self.model = torch.load(buffer)
 
 
+# from bofire.strategies.botorch.base import MixedSingleTaskGPModel, SingleTaskGPModel
+
+# # TODO: move this to bofire.any
+# # TODO: add RandomForest here
+# AnyBotorchModel = Union[
+#     SingleTaskGPModel,
+#     MixedSingleTaskGPModel,
+# ]
+
+
 class BotorchModels(PydanticBaseModel):
 
     models: List[BotorchModel]

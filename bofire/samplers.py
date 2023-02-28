@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Any, Dict, Type
+from typing import Any, Dict, Literal, Type
 
 import numpy as np
 import pandas as pd
@@ -54,6 +54,8 @@ class Sampler(PydanticBaseModel):
     Attributes
         domain (Domain): Domain defining the constrained input space
     """
+
+    type: str
 
     domain: Domain
 
@@ -163,6 +165,8 @@ class PolytopeSampler(Sampler):
         fallback_sampling_method: SamplingMethodEnum, optional): Method to use for sampling when no
             constraints are present. Defaults to UNIFORM.
     """
+
+    type: Literal["PolytopeSampler"] = "PolytopeSampler"
 
     fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
 
@@ -315,6 +319,8 @@ class RejectionSampler(Sampler):
         num_base_samples (int, optional): Number of base samples to sample in each iteration. Defaults to 1000.
         max_iters (int, optinal): Number of iterations. Defaults to 1000.
     """
+
+    type: Literal["RejectionSampler"] = "RejectionSampler"
 
     sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
     num_base_samples: Tnum_samples = 1000

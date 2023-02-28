@@ -28,7 +28,7 @@ from bofire.domain.feature import (
 from bofire.domain.features import OutputFeatures
 from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
-from bofire.strategies.strategy import PredictiveStrategy
+from bofire.strategies.strategy import PredictiveStrategy, add_exclude
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import (  # DescriptorMethodEnum,
     CategoricalEncodingEnum,
@@ -52,6 +52,18 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
     # use_combined_bounds: bool = True  # parameter to switch to legacy behavior
+
+    # TODO: unhide model_specs
+    def json(self, **kwargs):
+        return super().json(
+            **add_exclude(kwargs, "objective", "acqf", "model", "model_specs")
+        )
+
+    # TODO: unhide model_specs
+    def dict(self, **kwargs):
+        return super().dict(
+            **add_exclude(kwargs, "objective", "acqf", "model", "model_specs")
+        )
 
     @validator("num_sobol_samples")
     def validate_num_sobol_samples(cls, v):
