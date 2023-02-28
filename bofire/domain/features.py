@@ -18,7 +18,6 @@ from bofire.domain.feature import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    Feature,
     InputFeature,
     OutputFeature,
     TInputTransformSpecs,
