@@ -253,6 +253,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     assert np.allclose(A.to_numpy()[0, :], np.array([0.3, 0.5, 0.2]))
 
     # define domain: no NChooseK constraints, invalid proposal
+    np.random.seed(1)
     with pytest.raises(ValueError):
         find_local_max_ipopt(
             domain,
@@ -286,6 +287,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     )
 
     # with pytest.warns(ValueError):
+    np.random.seed(1)
     A = find_local_max_ipopt(
         domain,
         "fully-quadratic",
