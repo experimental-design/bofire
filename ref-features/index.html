@@ -1281,8 +1281,8 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
 
     <span class="k">def</span> <span class="nf">get_categorical_combinations</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">include</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Feature</span><span class="p">]</span> <span class="o">=</span> <span class="n">InputFeature</span><span class="p">,</span>
-        <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">include</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">InputFeature</span><span class="p">,</span>
+        <span class="n">exclude</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;get a list of tuples pairing the feature keys with a list of valid categories</span>
 
@@ -1296,11 +1296,22 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
         <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">f</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">())</span>
         <span class="p">]</span>
         <span class="n">list_of_lists</span> <span class="o">=</span> <span class="p">[</span>
             <span class="p">[(</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">cat</span><span class="p">)</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
         <span class="p">]</span>
+
+        <span class="n">discretes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">f</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">DiscreteInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">())</span>
+        <span class="p">]</span>
+
+        <span class="n">list_of_lists_2</span> <span class="o">=</span> <span class="p">[[(</span><span class="n">d</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">discretes</span><span class="p">]</span>
+
+        <span class="n">list_of_lists</span> <span class="o">=</span> <span class="n">list_of_lists</span> <span class="o">+</span> <span class="n">list_of_lists_2</span>
+
         <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">list_of_lists</span><span class="p">))</span>
 
     <span class="c1"># transformation related methods</span>
@@ -1416,7 +1427,9 @@ InputFeatures            (<a class="autorefs autorefs-internal" title="bofire.do
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_transform_specs</span><span class="p">(</span><span class="n">specs</span><span class="o">=</span><span class="n">specs</span><span class="p">)</span>
         <span class="n">transformed</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
-            <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">specs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">DiscreteInput</span><span class="p">):</span>
+                <span class="n">transformed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">from_continuous</span><span class="p">(</span><span class="n">experiments</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">specs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
                 <span class="n">transformed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
             <span class="k">elif</span> <span class="n">specs</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">:</span>
                 <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
@@ -1715,8 +1728,8 @@ feature bounds and the extreme points in the dataframe. Defaults to None,</p></t
           <summary>Source code in <code>bofire/domain/features.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_categorical_combinations</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
-    <span class="n">include</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">Feature</span><span class="p">]</span> <span class="o">=</span> <span class="n">InputFeature</span><span class="p">,</span>
-    <span class="n">exclude</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">InputFeature</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">include</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">InputFeature</span><span class="p">,</span>
+    <span class="n">exclude</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;get a list of tuples pairing the feature keys with a list of valid categories</span>
 
@@ -1730,11 +1743,22 @@ feature bounds and the extreme points in the dataframe. Defaults to None,</p></t
     <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">f</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">()</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">())</span>
     <span class="p">]</span>
     <span class="n">list_of_lists</span> <span class="o">=</span> <span class="p">[</span>
         <span class="p">[(</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">cat</span><span class="p">)</span> <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span>
     <span class="p">]</span>
+
+    <span class="n">discretes</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">f</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="n">exclude</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">DiscreteInput</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">f</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">())</span>
+    <span class="p">]</span>
+
+    <span class="n">list_of_lists_2</span> <span class="o">=</span> <span class="p">[[(</span><span class="n">d</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">discretes</span><span class="p">]</span>
+
+    <span class="n">list_of_lists</span> <span class="o">=</span> <span class="n">list_of_lists</span> <span class="o">+</span> <span class="n">list_of_lists_2</span>
+
     <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">list_of_lists</span><span class="p">))</span>
 </code></pre></div>
         </details>
@@ -1914,7 +1938,9 @@ input feature is transformed by which encoder.</p></td>
     <span class="bp">self</span><span class="o">.</span><span class="n">_validate_transform_specs</span><span class="p">(</span><span class="n">specs</span><span class="o">=</span><span class="n">specs</span><span class="p">)</span>
     <span class="n">transformed</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
-        <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">specs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">DiscreteInput</span><span class="p">):</span>
+            <span class="n">transformed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">from_continuous</span><span class="p">(</span><span class="n">experiments</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">feat</span><span class="o">.</span><span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">specs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
             <span class="n">transformed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
         <span class="k">elif</span> <span class="n">specs</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">==</span> <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">CategoricalInput</span><span class="p">)</span>
