@@ -179,7 +179,7 @@ def plot_scatter_matrix(
     pareto_front = get_pareto_front(domain=domain, experiments=experiments)
     for i, _ in experiments.iterrows():
         if i not in pareto_front.index:
-            pareto_front.loc[i] = np.nan
+            pareto_front.loc[i] = np.nan  # type: ignore
             pareto_front.sort_index(inplace=True)
 
         dimensions_pareto_points = Layout().make_dimensions(
