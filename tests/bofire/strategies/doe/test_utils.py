@@ -1,5 +1,5 @@
 import sys
-import torch
+
 import numpy as np
 import pytest
 from scipy.optimize import LinearConstraint
