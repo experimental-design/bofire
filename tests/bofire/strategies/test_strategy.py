@@ -4,6 +4,7 @@ import mock
 import pandas as pd
 import pytest
 from _pytest.fixtures import fixture
+from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
 from bofire.domain.constraint import (
@@ -306,6 +307,18 @@ def test_strategy_ask_valid(
         strategy.ask(candidate_count=1)
 
 
+def test_strategy_to_candidates():
+    strategy = DummyStrategy(domain=domain)
+    candidates = strategy.domain.inputs.sample(5)
+    transformed = strategy.to_candidates(candidates=candidates)
+    df = pd.concat(
+        [pd.DataFrame(c.to_series()).transpose() for c in transformed],
+        axis=0,
+        ignore_index=True,
+    )
+    assert_frame_equal(df, candidates)
+
+
 @pytest.mark.parametrize(
     "domain, experiments, candidate_pool, candidate_count",
     [
@@ -372,6 +385,24 @@ def test_predictive_strategy_ask_valid(
 
     with mock.patch.object(DummyPredictiveStrategy, "_ask", new=test_ask):
         strategy.ask(candidate_count=1)
+
+
+def test_predictivestrategy_to_candidates():
+    domain = Domain(
+        input_features=[if1, if2],
+        output_features=[of1, of2],
+        constraints=[],
+    )
+    strategy = DummyPredictiveStrategy(domain=domain)
+    candidates = generate_candidates(domain, 5)
+    print(candidates)
+    transformed = strategy.to_candidates(candidates=candidates)
+    df = pd.concat(
+        [pd.DataFrame(c.to_series()).transpose() for c in transformed],
+        axis=0,
+        ignore_index=True,
+    )
+    assert_frame_equal(df.sort_index(axis=1), candidates.sort_index(axis=1))
 
 
 def test_predictive_strategy_ask_invalid():

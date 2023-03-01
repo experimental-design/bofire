@@ -100,8 +100,10 @@ class KeyModel(PydanticBaseModel):
         return name2key(v)
 
 
-def is_numeric(s: pd.Series):
-    return pd.to_numeric(s, errors="coerce").notnull().all()
+def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
+    if isinstance(s, pd.Series):
+        return pd.to_numeric(s, errors="coerce").notnull().all()
+    return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
 
 
 def is_categorical(s: pd.Series, categories: List[str]):
