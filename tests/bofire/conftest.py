@@ -10,6 +10,7 @@ from bofire.models.gps.kernels import BaseKernel
 from bofire.models.gps.priors import Prior
 from bofire.models.model import Model
 from bofire.samplers import Sampler
+from bofire.strategies.strategy import Strategy
 from tests.bofire import specs
 
 # objective
@@ -189,4 +190,22 @@ def valid_sampler_spec(request) -> specs.Spec:
 
 @fixture(params=specs.samplers.invalids)
 def invalid_sampler_spec(request) -> specs.Spec:
+    return request.param
+
+
+# strategy
+
+
+@fixture
+def strategy() -> Strategy:
+    return specs.strategies.valid().obj()
+
+
+@fixture(params=specs.strategies.valids)
+def valid_strategy_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.strategies.invalids)
+def invalid_strategy_spec(request) -> specs.Spec:
     return request.param

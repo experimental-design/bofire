@@ -1,9 +1,10 @@
-from typing import Optional, Type
+from typing import Literal, Optional, Type
 
 import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
 
+from bofire.any.sampler import AnySampler
 from bofire.domain.constraint import (
     Constraint,
     NChooseKConstraint,
@@ -11,8 +12,8 @@ from bofire.domain.constraint import (
 )
 from bofire.domain.feature import Feature
 from bofire.domain.objective import Objective
-from bofire.samplers import PolytopeSampler, RejectionSampler, Sampler
-from bofire.strategies.strategy import Strategy
+from bofire.samplers import PolytopeSampler, RejectionSampler
+from bofire.strategies.strategy import Strategy, add_exclude
 
 
 class RandomStrategy(Strategy):
@@ -22,7 +23,15 @@ class RandomStrategy(Strategy):
     Uses PolytopeSampler or RejectionSampler, depending on the constraints.
     """
 
-    sampler: Optional[Sampler] = None
+    type: Literal["RandomStrategy"] = "RandomStrategy"
+
+    sampler: Optional[AnySampler] = None
+
+    def json(self, **kwargs):
+        return super().json(**add_exclude(kwargs, "sampler"))
+
+    def dict(self, **kwargs):
+        return super().dict(**add_exclude(kwargs, "sampler"))
 
     def _init_domain(self) -> None:
         errors = []

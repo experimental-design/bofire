@@ -70,3 +70,12 @@ def test_deserialization_should_process_sampler(valid_sampler_spec: specs.Spec):
     deserialized = Deserialization.sampler(valid_sampler_spec.typed_spec())
     assert isinstance(deserialized, valid_sampler_spec.cls)
     assert obj == deserialized
+
+
+def test_deserialization_should_process_strategy(valid_strategy_spec: specs.Spec):
+    obj = valid_strategy_spec.obj()
+    deserialized = Deserialization.strategy(valid_strategy_spec.typed_spec())
+    assert isinstance(deserialized, valid_strategy_spec.cls)
+    # TODO: we have to compare dict instead of obj because some fields are "hidden"
+    # can this be changed in the __eq__ of strategy?
+    assert obj.dict() == deserialized.dict()
