@@ -735,6 +735,7 @@ strategy_commons = {
     "num_restarts": 8,
     "descriptor_method": "EXHAUSTIVE",
     "categorical_method": "EXHAUSTIVE",
+    "discrete_method": "EXHAUSTIVE",
     "is_fitted": False,
 }
 
