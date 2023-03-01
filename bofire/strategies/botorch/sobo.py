@@ -1,8 +1,14 @@
-from typing import Type
+from typing import Literal, Type, Union
 
 from botorch.acquisition import get_acquisition_function
 from botorch.models.gpytorch import GPyTorchModel
-from pydantic import BaseModel, PositiveFloat, validate_arguments, validator
+from pydantic import (
+    BaseModel,
+    PositiveFloat,
+    parse_obj_as,
+    validate_arguments,
+    validator,
+)
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.feature import Feature
@@ -15,7 +21,11 @@ from bofire.strategies.botorch.utils.objectives import (
 from bofire.utils.enum import AcquisitionFunctionEnum
 
 
+# TODO: move acquisition functions to separate module
+# TODO: remove enum
 class AcquisitionFunction(BaseModel):
+    type: str
+
     @staticmethod
     @validate_arguments
     def from_enum(acquistion_function_enum: AcquisitionFunctionEnum):
@@ -35,23 +45,35 @@ class AcquisitionFunction(BaseModel):
 
 
 class qNEI(AcquisitionFunction):
-    pass
+    type: Literal["qNEI"] = "qNEI"
 
 
 class qEI(AcquisitionFunction):
-    pass
+    type: Literal["qEI"] = "qEI"
 
 
 class qSR(AcquisitionFunction):
-    pass
+    type: Literal["qSR"] = "qSR"
 
 
 class qUCB(AcquisitionFunction):
+    type: Literal["qUCB"] = "qUCB"
     beta: PositiveFloat = 0.2
 
 
 class qPI(AcquisitionFunction):
+    type: Literal["qPI"] = "qPI"
     tau: PositiveFloat = 1e-3
+
+
+# TODO: move this to bofire.any
+AnyAquisitionFunction = Union[
+    qNEI,
+    qEI,
+    qSR,
+    qUCB,
+    qPI,
+]
 
 
 class BoTorchSoboStrategy(BotorchBasicBoStrategy):
@@ -62,6 +84,8 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
     def validate_acquisition_function(cls, v):
         if isinstance(v, AcquisitionFunction):
             return v
+        elif isinstance(v, dict):
+            return parse_obj_as(AnyAquisitionFunction, v)
         else:
             return AcquisitionFunction.from_enum(v)
 
@@ -136,6 +160,9 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
+
+    type: Literal["BoTorchSoboAdditiveStrategy"] = "BoTorchSoboAdditiveStrategy"
+
     def _init_objective(self):
         self.objective = AdditiveObjective(
             targets=[
@@ -147,4 +174,7 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
 
 
 class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
-    pass
+
+    type: Literal[
+        "BoTorchSoboMultiplicativeStrategy"
+    ] = "BoTorchSoboMultiplicativeStrategy"

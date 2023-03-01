@@ -1,4 +1,4 @@
-from typing import Optional, Type
+from typing import Literal, Optional, Type
 
 import numpy as np
 import torch
@@ -27,16 +27,31 @@ from bofire.domain.objective import (
     Objective,
     TargetObjective,
 )
-from bofire.strategies.botorch.base import BotorchBasicBoStrategy
+from bofire.strategies.botorch.base import BotorchBasicBoStrategy, add_exclude
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 
 # TODO: unite this by using get_acquisiton
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
+
+    type: Literal["BoTorchQehviStrategy"] = "BoTorchQehviStrategy"
+
     ref_point: Optional[dict] = None
     ref_point_mask: Optional[np.ndarray] = None
     objective: Optional[MCMultiOutputObjective] = None
+
+    # TODO: unhide fields
+    def json(self, **kwargs):
+        return super().json(
+            **add_exclude(kwargs, "ref_point", "ref_point_mask", "objective")
+        )
+
+    # TODO: unhide fields
+    def dict(self, **kwargs):
+        return super().dict(
+            **add_exclude(kwargs, "ref_point", "ref_point_mask", "objective")
+        )
 
     def _init_acqf(self) -> None:
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
@@ -208,6 +223,8 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
+
+    type: Literal["BoTorchQnehviStrategy"] = "BoTorchQnehviStrategy"
 
     alpha: confloat(ge=0, le=0.5) = 0.0  # type: ignore
 

@@ -1,5 +1,5 @@
 import inspect
-from typing import List, Optional, Tuple, Type
+from typing import List, Literal, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -16,6 +16,8 @@ from bofire.strategies.strategy import PredictiveStrategy, Strategy
 
 
 class DummyStrategy(Strategy):
+    type: Literal["DummyStrategy"] = "DummyStrategy"
+
     def _init_domain(
         self,
     ) -> None:

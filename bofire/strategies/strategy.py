@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from bofire.domain.constraints import Constraint
 from bofire.domain.domain import Domain
 from bofire.domain.feature import Feature, OutputFeature, TInputTransformSpecs
 from bofire.domain.objective import Objective
+from bofire.domain.util import PydanticBaseModel
 
 
 def validate_constraints(cls, domain: Domain):
@@ -147,7 +148,17 @@ class Candidate(BaseModel):
         return pd.Series(data=data, index=index)
 
 
-class Strategy(BaseModel):
+def add_exclude(kwargs: dict, *fields: str):
+    """Add the given fields to the exclude property of the dict."""
+    kwargs = kwargs.copy()
+    if "exclude" in kwargs:
+        kwargs["exclude"] = {*kwargs["exclude"], *fields}
+    else:
+        kwargs["exclude"] = {*fields}
+    return kwargs
+
+
+class Strategy(PydanticBaseModel):
     """Base class for all strategies
 
     Attributes:
@@ -158,9 +169,17 @@ class Strategy(BaseModel):
     class Config:
         arbitrary_types_allowed = True
 
+    type: str
+
     domain: Domain
     seed: Optional[NonNegativeInt] = None
     rng: Optional[np.random.Generator] = None
+
+    def json(self, **kwargs):
+        return super().json(**add_exclude(kwargs, "rng"))
+
+    def dict(self, **kwargs):
+        return super().dict(**add_exclude(kwargs, "rng"))
 
     _validate_constraints = validator("domain", allow_reuse=True)(validate_constraints)
     _validate_features = validator("domain", allow_reuse=True)(validate_features)
@@ -405,6 +424,8 @@ class PredictiveStrategy(Strategy):
 
     Provides abstract scaffold for fit, predict, and calc_acquistion methods.
     """
+
+    type: Literal["PredictiveStrategy"] = "PredictiveStrategy"
 
     is_fitted: bool = False
 
