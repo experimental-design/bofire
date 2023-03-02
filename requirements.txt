@@ -8,3 +8,4 @@ torch>=1.12
 botorch>=0.8.2
 multiprocess
 plotly
+formulaic==0.3.4
