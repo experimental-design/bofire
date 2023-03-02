@@ -286,47 +286,19 @@ class ConstantObjective(Objective):
         return np.ones(x.shape) * self.value
 
 
-class AbstractTargetObjective(Objective):
-    # TODO: add docstring to AbstractTargetObjective
-
-    type: Literal["AbstractTargetObjective"] = "AbstractTargetObjective"
-    w: TWeight = 1
-    target_value: float
-    tolerance: TGe0
-
-    def plot_details(self, ax):
-        """Plot function highlighting the tolerance area of the objective
-
-        Args:
-            ax (matplotlib.axes.Axes): Matplotlib axes object
-
-        Returns:
-            matplotlib.axes.Axes: The object to be plotted
-        """
-        ax.axvline(self.target_value, color="black")
-        ax.axvspan(
-            self.target_value - self.tolerance,
-            self.target_value + self.tolerance,
-            color="gray",
-            alpha=0.5,
-        )
-        return ax
-
-
-class CloseToTargetObjective(AbstractTargetObjective):
+class CloseToTargetObjective(Objective):
     # TODO: add docstring to CloseToTargetObjective
 
     type: Literal["CloseToTargetObjective"] = "CloseToTargetObjective"
+    w: TWeight = 1
+    target_value: float
     exponent: float
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
-        return (
-            np.abs(x - self.target_value) ** self.exponent
-            - self.tolerance**self.exponent
-        )
+        return -1 * (np.abs(x - self.target_value) ** self.exponent)
 
 
-class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
+class TargetObjective(Objective, BotorchConstrainedObjective):
     """Class for objectives for optimizing towards a target value
 
     Attributes:
@@ -338,6 +310,9 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
     """
 
     type: Literal["TargetObjective"] = "TargetObjective"
+    w: TWeight = 1
+    target_value: float
+    tolerance: TGe0
     steepness: TGt0
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
@@ -368,6 +343,24 @@ class TargetObjective(AbstractTargetObjective, BotorchConstrainedObjective):
                 )
             )
         )
+
+    def plot_details(self, ax):
+        """Plot function highlighting the tolerance area of the objective
+
+        Args:
+            ax (matplotlib.axes.Axes): Matplotlib axes object
+
+        Returns:
+            matplotlib.axes.Axes: The object to be plotted
+        """
+        ax.axvline(self.target_value, color="black")
+        ax.axvspan(
+            self.target_value - self.tolerance,
+            self.target_value + self.tolerance,
+            color="gray",
+            alpha=0.5,
+        )
+        return ax
 
     def to_constraints(
         self, idx: int

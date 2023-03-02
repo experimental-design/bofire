@@ -203,7 +203,6 @@ objectives.add_valid(
     {
         "target_value": 42,
         "exponent": 2,
-        "tolerance": 1.5,
         "w": 1.0,
     },
 )
