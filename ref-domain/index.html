@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-constraints/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.15">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.0">
     
     
       
@@ -25,7 +25,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.113286f1.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.402914a4.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
@@ -91,7 +91,9 @@
     
       
 
-<header class="md-header" data-md-component="header">
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
     <a href=".." title="BoFire" class="md-header__button md-logo" aria-label="BoFire" data-md-component="logo">
       
@@ -677,7 +679,6 @@ Domain            (<a class="autorefs autorefs-internal" title="bofire.domain.ut
           <summary>Source code in <code>bofire/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Domain</span><span class="p">(</span><span class="n">PydanticBaseModel</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;Domain&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Domain&quot;</span>
-
     <span class="c1"># The types describe what we expect to be passed as arguments.</span>
     <span class="c1"># They will be converted to InputFeatures and OutputFeatures, respectively.</span>
     <span class="n">input_features</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyInputFeature</span><span class="p">],</span> <span class="n">InputFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -985,7 +986,6 @@ Domain            (<a class="autorefs autorefs-internal" title="bofire.domain.ut
         <span class="c1"># format into a list of used features</span>
         <span class="n">used_features_list_formatted</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">used_features_list</span> <span class="ow">in</span> <span class="n">used_features_list_all</span><span class="p">:</span>
-
             <span class="n">used_features_list_flattened</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">used_features_list</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span>
             <span class="p">]</span>
@@ -2264,7 +2264,6 @@ involved output features.</p>
     <span class="c1"># format into a list of used features</span>
     <span class="n">used_features_list_formatted</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">used_features_list</span> <span class="ow">in</span> <span class="n">used_features_list_all</span><span class="p">:</span>
-
         <span class="n">used_features_list_flattened</span> <span class="o">=</span> <span class="p">[</span>
             <span class="n">item</span> <span class="k">for</span> <span class="n">sublist</span> <span class="ow">in</span> <span class="n">used_features_list</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">sublist</span>
         <span class="p">]</span>
@@ -3309,7 +3308,7 @@ DomainError            (<span title="Exception">Exception</span>)
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.2a6f1dda.min.js"></script>
+      <script src="../assets/javascripts/bundle.ce72ebac.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
