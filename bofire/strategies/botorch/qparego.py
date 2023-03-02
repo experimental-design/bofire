@@ -108,11 +108,10 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         if len(weights) != len(self.domain.outputs):
             constraints, etas = get_output_constraints(self.domain.outputs)
             infeasible_costs = 0.0
-            etas = torch.tensor(etas).to(**tkwargs)
             return ConstrainedMCObjective(
                 objective=scalarization,
                 constraints=constraints,
-                eta=etas,
+                eta=torch.tensor(etas).to(**tkwargs),
                 infeasible_cost=infeasible_costs,
             )
         return GenericMCObjective(scalarization)

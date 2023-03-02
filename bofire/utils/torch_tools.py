@@ -252,9 +252,9 @@ def get_additive_botorch_objective(
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(output_features.get())
-        if feat.objective is not None
+        if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)
+            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
@@ -262,9 +262,9 @@ def get_additive_botorch_objective(
     weights = [
         feat.objective.w  # type: ignore
         for i, feat in enumerate(output_features.get())
-        if feat.objective is not None
+        if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)
+            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )

@@ -3,7 +3,7 @@ import random
 import numpy as np
 import pytest
 import torch
-from botorch.acquisition.objective import GenericMCObjective
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
@@ -25,6 +25,7 @@ from bofire.domain.objective import (
     TargetObjective,
 )
 from bofire.utils.torch_tools import (
+    get_additive_botorch_objective,
     get_linear_constraints,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
@@ -139,6 +140,61 @@ def test_get_multiplicative_botorch_objective():
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
+
+
+@pytest.mark.parametrize("exclude_constraints", [True, False])
+def test_get_additive_botorch_objective(exclude_constraints):
+    samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    obj1 = MaximizeObjective(w=0.5)
+    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
+    obj3 = DeltaObjective(w=0.5, ref_point=10.0)
+    output_features = OutputFeatures(
+        features=[
+            ContinuousOutput(
+                key="alpha",
+                objective=obj1,
+            ),
+            ContinuousOutput(
+                key="beta",
+                objective=obj2,
+            ),
+            ContinuousOutput(
+                key="gamma",
+                objective=obj3,
+            ),
+        ]
+    )
+    objective = get_additive_botorch_objective(output_features, exclude_constraints)
+    generic_objective = GenericMCObjective(objective=objective)
+    objective_forward = generic_objective.forward(samples)
+
+    # calc with numpy
+    reward1 = obj1(a_samples[:, 0])
+    reward2 = obj2(a_samples[:, 1])
+    reward3 = obj3(a_samples[:, 2])
+    # do the comparison
+    assert np.allclose(
+        # objective.reward(samples, desFunc)[0].detach().numpy(),
+        reward1 * obj1.w + reward3 * obj3.w
+        if exclude_constraints
+        else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w,
+        objective_forward.detach().numpy(),
+        rtol=1e-06,
+    )
+    if exclude_constraints:
+        constraints, etas = get_output_constraints(output_features=output_features)
+        generic_objective = ConstrainedMCObjective(
+            objective=objective,
+            constraints=constraints,
+            eta=torch.tensor(etas).to(**tkwargs),
+        )
+        objective_forward = generic_objective.forward(samples)
+        assert np.allclose(
+            (reward1 * obj1.w + reward3 * obj3.w) * reward2,
+            objective_forward.detach().numpy(),
+            rtol=1e-06,
+        )
 
 
 def test_get_linear_constraints():
