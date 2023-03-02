@@ -11,7 +11,7 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
 from pydantic import PositiveInt
 from pydantic.class_validators import root_validator, validator
-from pydantic.types import NonNegativeInt, conlist
+from pydantic.types import NonNegativeInt
 
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
@@ -22,21 +22,17 @@ from bofire.domain.domain import Domain
 from bofire.domain.feature import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    DiscreteInput,
     InputFeature,
     TInputTransformSpecs,
 )
 from bofire.domain.features import OutputFeatures
 from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
-from bofire.strategies.strategy import PredictiveStrategy
+from bofire.strategies.strategy import PredictiveStrategy, add_exclude
 from bofire.strategies.utils import is_power_of_two
-from bofire.utils.enum import (  # DescriptorMethodEnum,
-    CategoricalEncodingEnum,
-    CategoricalMethodEnum,
-)
+from bofire.utils.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.utils.torch_tools import get_linear_constraints, tkwargs
-
-Tkeys = conlist(item_type=str, min_items=1)
 
 
 class BotorchBasicBoStrategy(PredictiveStrategy):
@@ -45,6 +41,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     num_raw_samples: PositiveInt = 1024
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
+    discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     model_specs: Optional[BotorchModels] = None
 
     # private ones
@@ -52,6 +49,18 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
     # use_combined_bounds: bool = True  # parameter to switch to legacy behavior
+
+    # TODO: unhide model_specs
+    def json(self, **kwargs):
+        return super().json(
+            **add_exclude(kwargs, "objective", "acqf", "model", "model_specs")
+        )
+
+    # TODO: unhide model_specs
+    def dict(self, **kwargs):
+        return super().dict(
+            **add_exclude(kwargs, "objective", "acqf", "model", "model_specs")
+        )
 
     @validator("num_sobol_samples")
     def validate_num_sobol_samples(cls, v):
@@ -246,7 +255,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # - categoricals with one hot and exhaustive screening, could be in combination with garrido merchan - check
         # - categoricals with one hot and OEN, could be in combination with garrido merchan - OEN not implemented
         # - descriptized categoricals not yet implemented
-        num_categorical_features = len(self.domain.get_features(CategoricalInput))
+        num_categorical_features = len(
+            self.domain.get_features([CategoricalInput, DiscreteInput])
+        )
         num_categorical_combinations = len(
             self.domain.inputs.get_categorical_combinations()
         )
@@ -261,10 +272,17 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             (num_categorical_features == 0)
             or (num_categorical_combinations == 1)
             or (
-                (self.categorical_method == CategoricalMethodEnum.FREE)
-                and (self.descriptor_method == CategoricalMethodEnum.FREE)
+                all(
+                    enc == CategoricalMethodEnum.FREE
+                    for enc in [
+                        self.categorical_method,
+                        self.descriptor_method,
+                        self.discrete_method,
+                    ]
+                )
             )
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
+
             candidates = optimize_acqf(
                 acq_function=self.acqf,
                 bounds=bounds,
@@ -280,13 +298,12 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 fixed_features=self.get_fixed_features(),
                 return_best_only=True,
             )
-            # options={"seed":self.seed})
 
         elif (
-            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
-            or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
+            CategoricalMethodEnum.EXHAUSTIVE
+            in [self.categorical_method, self.descriptor_method, self.discrete_method]
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            # TODO: marry this withe groups of XY
+
             candidates = optimize_acqf_mixed(
                 acq_function=self.acqf,
                 bounds=bounds,
@@ -301,9 +318,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 ),
                 fixed_features_list=self.get_categorical_combinations(),
             )
-            # options={"seed":self.seed})
 
         elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
+
             candidates = optimize_acqf_mixed(
                 acq_function=self.acqf,
                 bounds=bounds,
@@ -405,7 +422,7 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         # in case the optimization method is free and not allowed categories are present
         # one has to fix also them, this is abit of double work as it should be also reflected
         # in the bounds but helps to make it safer
-        # TODO: this has to be done also for the descriptors
+
         if (
             self.categorical_method == CategoricalMethodEnum.FREE
             and CategoricalEncodingEnum.ONE_HOT
@@ -454,20 +471,35 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             list_of_fixed_features List[dict]: Each dict contains a combination of fixed values
         """
         fixed_basis = self.get_fixed_features()
-        include = CategoricalInput
-        exclude = None
 
-        if (self.descriptor_method == CategoricalMethodEnum.FREE) and (
-            self.categorical_method == CategoricalMethodEnum.FREE
-        ):
+        methods = [
+            self.descriptor_method,
+            self.discrete_method,
+            self.categorical_method,
+        ]
+
+        if all(m == CategoricalMethodEnum.FREE for m in methods):
             return [{}]
-        elif self.descriptor_method == CategoricalMethodEnum.FREE:
-            exclude = CategoricalDescriptorInput
-        elif self.categorical_method == CategoricalMethodEnum.FREE:
-            include = CategoricalDescriptorInput
+        else:
+            include = []
+            exclude = None
+
+            if self.discrete_method == CategoricalMethodEnum.EXHAUSTIVE:
+                include.append(DiscreteInput)
+
+            if self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE:
+                include.append(CategoricalInput)
+                exclude = CategoricalDescriptorInput
+
+            if self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE:
+                include.append(CategoricalDescriptorInput)
+                exclude = None
+
+        if not include:
+            include = None
 
         combos = self.domain.inputs.get_categorical_combinations(
-            include=include, exclude=exclude
+            include=(include if include else InputFeature), exclude=exclude
         )
         # now build up the fixed feature list
         if len(combos) == 1:
@@ -497,6 +529,9 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                         transformed = feature.to_onehot_encoding(pd.Series([val]))
                         for j, idx in enumerate(features2idx[feat]):
                             fixed_features[idx] = transformed.values[0, j]
+
+                    elif isinstance(feature, DiscreteInput):
+                        fixed_features[features2idx[feat][0]] = val
 
                 list_of_fixed_features.append(fixed_features)
         return list_of_fixed_features

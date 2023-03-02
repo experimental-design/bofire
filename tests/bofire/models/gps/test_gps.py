@@ -5,15 +5,16 @@ from botorch.models.transforms.input import (
     ChainedInputTransform,
     InputStandardize,
     Normalize,
+    OneHotToNumeric,
 )
 from botorch.models.transforms.outcome import Standardize
+from pandas.testing import assert_frame_equal
 
 from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.gps.kernels import HammondDistanceKernel, RBFKernel, ScaleKernel
 from bofire.utils.enum import CategoricalEncodingEnum, ScalerEnum
-from bofire.utils.torch_tools import OneHotToNumeric
 
 
 @pytest.mark.parametrize(
@@ -40,9 +41,16 @@ def test_SingleTaskGPModel(kernel, scaler):
         kernel=kernel,
         scaler=scaler,
     )
+    samples = input_features.sample(5)
+    # test error on non fitted model
+    with pytest.raises(ValueError):
+        model.predict(samples)
     model.fit(experiments)
-    preds = model.predict(experiments)
-    assert preds.shape == (10, 2)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
@@ -50,6 +58,17 @@ def test_SingleTaskGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, Normalize)
     else:
         assert isinstance(model.model.input_transform, InputStandardize)
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+        kernel=kernel,
+        scaler=scaler,
+    )
+    model2.loads(dump)
+    preds2 = model2.predict(samples)
+    assert_frame_equal(preds, preds2)
 
 
 @pytest.mark.parametrize(
@@ -84,8 +103,12 @@ def test_MixedGPModel(kernel, scaler):
     )
 
     model.fit(experiments)
-    preds = model.predict(experiments)
-    assert preds.shape == (10, 2)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    samples = input_features.sample(5)
+    preds = model.predict(samples)
+    assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, MixedSingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
@@ -98,3 +121,14 @@ def test_MixedGPModel(kernel, scaler):
         model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
     ).all()
     assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = SingleTaskGPModel(
+        input_features=input_features,
+        output_features=output_features,
+        kernel=kernel,
+        scaler=scaler,
+    )
+    model2.loads(dump)
+    preds2 = model2.predict(samples)
+    assert_frame_equal(preds, preds2)

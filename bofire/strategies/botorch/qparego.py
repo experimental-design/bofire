@@ -1,4 +1,4 @@
-from typing import Type, Union
+from typing import Literal, Type, Union
 
 import numpy as np
 import pandas as pd
@@ -36,6 +36,8 @@ from bofire.utils.torch_tools import (
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
+    type: Literal["BoTorchQparegoStrategy"] = "BoTorchQparegoStrategy"
+
     def _init_acqf(self) -> None:
         pass
 

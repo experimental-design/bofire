@@ -41,7 +41,6 @@ from bofire.domain.util import (
 
 class Domain(PydanticBaseModel):
     type: Literal["Domain"] = "Domain"
-
     # The types describe what we expect to be passed as arguments.
     # They will be converted to InputFeatures and OutputFeatures, respectively.
     input_features: Union[Sequence[AnyInputFeature], InputFeatures] = Field(
@@ -349,7 +348,6 @@ class Domain(PydanticBaseModel):
         # format into a list of used features
         used_features_list_formatted = []
         for used_features_list in used_features_list_all:
-
             used_features_list_flattened = [
                 item for sublist in used_features_list for item in sublist
             ]

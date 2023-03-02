@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Dict, List, Literal, Optional, Tuple, Union
+from typing import Annotated, Dict, List, Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 from pydantic.class_validators import root_validator
-from pydantic.types import conint, conlist
 
 from bofire.any.objective import AnyObjective
 from bofire.domain.objective import MaximizeObjective
@@ -20,7 +19,6 @@ _CAT_SEP = "_"
 
 TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
 TInputTransformSpecs = Dict[str, CategoricalEncodingEnum]
-Tnum_samples = conint(gt=0)
 
 
 class Feature(KeyModel):
@@ -343,7 +341,7 @@ class ContinuousInput(NumericalInput):
         return f"[{self.lower_bound},{self.upper_bound}]"
 
 
-TDiscreteVals = conlist(item_type=float, min_items=1)
+TDiscreteVals = Annotated[List[float], Field(min_items=1)]
 
 
 class DiscreteInput(NumericalInput):
@@ -366,12 +364,20 @@ class DiscreteInput(NumericalInput):
 
         Raises:
             ValueError: when values are non-unique.
+            ValueError: when values contains only one entry.
+            ValueError: when values is empty.
 
         Returns:
             List[values]: Sorted list of values
         """
         if len(values) != len(set(values)):
             raise ValueError("Discrete values must be unique")
+        if len(values) == 1:
+            raise ValueError(
+                "Fixed discrete inputs are not supported. Please use a fixed continuous input."
+            )
+        if len(values) == 0:
+            raise ValueError("No values defined.")
         return sorted(values)
 
     @property
@@ -414,8 +420,28 @@ class DiscreteInput(NumericalInput):
         """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
+    def from_continuous(self, values: pd.DataFrame) -> pd.Series:
+        """Rounds continuous values to the closest discrete ones.
 
-TDescriptors = conlist(item_type=str, min_items=1)
+        Args:
+            values (pd.DataFrame): Dataframe with continuous entries.
+
+        Returns:
+            pd.Series: Series with discrete values.
+        """
+
+        s = pd.DataFrame(
+            data=np.abs(
+                (values[self.key].to_numpy()[:, np.newaxis] - np.array(self.values))
+            ),
+            columns=self.values,
+            index=values.index,
+        ).idxmin(1)
+        s.name = self.key
+        return s
+
+
+TDescriptors = Annotated[List[str], Field(min_items=1)]
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -475,8 +501,8 @@ class ContinuousDescriptorInput(ContinuousInput):
         )
 
 
-TCategoryVals = conlist(item_type=str, min_items=2)
-TAllowedVals = Optional[conlist(item_type=bool, min_items=2)]
+TCategoryVals = Annotated[List[str], Field(min_items=2)]
+TAllowedVals = Optional[Annotated[List[bool], Field(min_items=2)]]
 
 
 class CategoricalInput(InputFeature):
@@ -808,9 +834,10 @@ class CategoricalInput(InputFeature):
         return f"{len(self.categories)} categories"
 
 
-TCategoricalDescriptorVals = conlist(
-    item_type=conlist(item_type=float, min_items=1), min_items=1
-)
+TCategoricalDescriptorVals = Annotated[
+    Union[List[List[float]], List[List[int]]],
+    Field(min_items=1),
+]
 
 
 class CategoricalDescriptorInput(CategoricalInput):
@@ -1000,13 +1027,13 @@ class CategoricalDescriptorInput(CategoricalInput):
                 np.sum(
                     (
                         values[cat_cols].to_numpy()[:, np.newaxis, :]
-                        - self.to_df().to_numpy()
+                        - self.to_df().iloc[self.allowed].to_numpy()
                     )
                     ** 2,
                     axis=2,
                 )
             ),
-            columns=self.categories,
+            columns=self.get_allowed_categories(),
             index=values.index,
         ).idxmin(1)
         s.name = self.key

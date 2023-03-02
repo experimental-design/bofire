@@ -301,7 +301,6 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
-        (specs.features.valid(DiscreteInput).obj(values=[2]), True, [2.0]),
         (specs.features.valid(DiscreteInput).obj(values=[1, 2, 3]), False, None),
     ],
 )
@@ -314,11 +313,6 @@ def test_discrete_input_feature_is_fixed(input_feature, expected, expected_value
 @pytest.mark.parametrize(
     "input_feature, expected_lower, expected_upper",
     [
-        (
-            specs.features.valid(DiscreteInput).obj(values=[2.0]),
-            2.0,
-            2.0,
-        ),
         (
             specs.features.valid(DiscreteInput).obj(values=[1.0, 2.0, 3.0]),
             1,
@@ -368,10 +362,6 @@ def test_discrete_input_feature_get_bounds(input_feature, expected):
             specs.features.valid(DiscreteInput).obj(values=[1, 2, 3]),
             pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
         ),
-        (
-            specs.features.valid(DiscreteInput).obj(values=[2.0]),
-            pd.Series([2.0, 2.0, 2.0]),
-        ),
     ],
 )
 def test_discrete_input_feature_validate_candidental_valid(input_feature, values):
@@ -385,15 +375,22 @@ def test_discrete_input_feature_validate_candidental_valid(input_feature, values
             specs.features.valid(DiscreteInput).obj(values=[1, 2]),
             pd.Series([1, 2, 3]),
         ),
-        (
-            specs.features.valid(DiscreteInput).obj(values=[1]),
-            pd.Series([1, 2, 2]),
-        ),
     ],
 )
 def test_discrete_input_feature_validate_candidental_invalid(input_feature, values):
     with pytest.raises(ValueError):
         input_feature.validate_candidental(values)
+
+
+def test_from_continuous():
+    d = DiscreteInput(key="d", values=[1, 2, 3])
+
+    continuous_values = pd.DataFrame(
+        columns=["d"],
+        data=[1.8, 1.7, 2.9, 1.9],
+    )
+    samples = d.from_continuous(continuous_values)
+    assert np.all(samples == pd.Series([2, 2, 3, 2]))
 
 
 @pytest.mark.parametrize(
@@ -705,7 +702,7 @@ def test_categorical_descriptor_to_descriptor_encoding():
 
 
 def test_categorical_descriptor_from_descriptor_encoding():
-    c = CategoricalDescriptorInput(
+    c1 = CategoricalDescriptorInput(
         key="c",
         categories=["B", "A", "C"],
         descriptors=["d1", "d2"],
@@ -715,9 +712,21 @@ def test_categorical_descriptor_from_descriptor_encoding():
         columns=["c_d1", "c_d2", "misc"],
         data=[[1.05, 2.5, 6], [4, 4.5, 9]],
     )
-    samples = c.from_descriptor_encoding(descriptor_values)
+    samples = c1.from_descriptor_encoding(descriptor_values)
     print(samples)
     assert np.all(samples == pd.Series(["B", "A"]))
+
+    c2 = CategoricalDescriptorInput(
+        key="c",
+        categories=["B", "A", "C"],
+        descriptors=["d1", "d2"],
+        values=[[1, 2], [3, 4], [5, 6]],
+        allowed=[False, True, True],
+    )
+
+    samples = c2.from_descriptor_encoding(descriptor_values)
+    print(samples)
+    assert np.all(samples == pd.Series(["A", "A"]))
 
 
 def test_categorical_descriptor_to_descriptor_encoding_1d():
@@ -1119,7 +1128,6 @@ if4 = specs.features.valid(CategoricalInput).obj(
     key="if4", categories=["a", "b"], allowed=[True, False]
 )
 if5 = specs.features.valid(DiscreteInput).obj(key="if5")
-if6 = specs.features.valid(DiscreteInput).obj(key="if6", values=[2])
 if7 = specs.features.valid(CategoricalInput).obj(
     key="if7",
     categories=["c", "d", "e"],
@@ -1246,7 +1254,7 @@ def test_features_get_by_key_invalid(features, key):
     "features, expected",
     [
         (InputFeatures(features=[if1, if2]), []),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6]), [if3, if4, if6]),
+        (InputFeatures(features=[if1, if2, if3, if4, if5]), [if3, if4]),
     ],
 )
 def test_input_features_get_fixed(features, expected):
@@ -1261,7 +1269,7 @@ def test_input_features_get_fixed(features, expected):
     "features, expected",
     [
         (InputFeatures(features=[if1, if2]), [if1, if2]),
-        (InputFeatures(features=[if1, if2, if3, if4, if5, if6]), [if1, if2, if5]),
+        (InputFeatures(features=[if1, if2, if3, if4, if5]), [if1, if2, if5]),
     ],
 )
 def test_input_features_get_free(features, expected):
@@ -1278,7 +1286,7 @@ def test_input_features_get_free(features, expected):
         (features, num_samples, method)
         for features in [
             input_features,
-            InputFeatures(features=[if1, if2, if3, if4, if5, if6, if7]),
+            InputFeatures(features=[if1, if2, if3, if4, if5, if7]),
         ]
         for num_samples in [1, 2, 1024]
         for method in ["UNIFORM", "SOBOL", "LHS"]
@@ -1778,7 +1786,9 @@ def test_input_features_get_bounds_fit():
 def test_output_features_call(features, samples):
     o = features(samples)
     assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
-    assert list(o.columns) == features.get_keys_by_objective(Objective)
+    assert list(o.columns) == [
+        f"{key}_des" for key in features.get_keys_by_objective(Objective)
+    ]
 
 
 @pytest.mark.parametrize(

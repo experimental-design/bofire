@@ -9,6 +9,7 @@ from bofire.any.kernel import AnyKernel
 from bofire.any.model import AnyModel
 from bofire.any.objective import AnyObjective
 from bofire.any.prior import AnyPrior
+from bofire.any.sampler import AnySampler
 from bofire.any.strategy import AnyStrategy
 
 AnyThing = Union[
@@ -22,4 +23,5 @@ AnyThing = Union[
     AnyPrior,
     AnyConstraints,
     AnyFeatures,
+    AnySampler,
 ]

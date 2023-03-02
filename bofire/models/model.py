@@ -1,16 +1,31 @@
 from abc import abstractmethod
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import BaseModel, Field, confloat, validator
 from sklearn.model_selection import KFold
 
 from bofire.domain.feature import TInputTransformSpecs
 from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.util import PydanticBaseModel
+from bofire.domain.util import PydanticBaseModel, is_numeric
 from bofire.models.diagnostics import CvResult, CvResults
 from bofire.utils.enum import OutputFilteringEnum
+
+
+class PredictedValue(BaseModel):
+    """Container holding information regarding individual predictions.
+
+    Used to comunicate with backend services.
+
+    Attributes:
+        predictedValue (float): The predicted value.
+        standardDeviation (float): The standard deviation associated with the prediction.
+            Has to be greater/equal than zero.
+    """
+
+    predictedValue: float
+    standardDeviation: confloat(ge=0)  # type: ignore
 
 
 class Model(PydanticBaseModel):
@@ -19,6 +34,9 @@ class Model(PydanticBaseModel):
     input_features: InputFeatures
     output_features: OutputFeatures
     input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=lambda: {})
+
+    # this is the actual prediction model and is an internal attribute
+    model: Optional[Any] = None
 
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
@@ -34,7 +52,17 @@ class Model(PydanticBaseModel):
             raise ValueError("At least one output feature has to be provided.")
         return v
 
+    @property
+    def is_fitted(self) -> bool:
+        """Return True if model is fitted, else False."""
+        return self.model is not None
+
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
+        # check if model is fitted
+        if not self.is_fitted:
+            raise ValueError(
+                "Model is not fitted yet. Call 'fit' with appropriate arguments before using this model."
+            )
         # validate
         X = self.input_features.validate_experiments(X, strict=False)
         # transform
@@ -42,15 +70,56 @@ class Model(PydanticBaseModel):
         # predict
         preds, stds = self._predict(Xt)
         # postprocess
-        return pd.DataFrame(
+        predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
             columns=["%s_pred" % featkey for featkey in self.output_features.get_keys()]
             + ["%s_sd" % featkey for featkey in self.output_features.get_keys()],
         )
+        # validate
+        self.validate_predictions(predictions=predictions)
+        # return
+        return predictions
+
+    def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
+        expected_cols = [
+            f"{key}_{t}"
+            for key in self.output_features.get_keys()
+            for t in ["pred", "sd"]
+        ]
+        if sorted(list(predictions.columns)) != sorted(expected_cols):
+            raise ValueError(
+                f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
+            )
+        # check that values are numeric
+        if not is_numeric(predictions):
+            raise ValueError("Not all values in predictions are numeric.")
+        return predictions
+
+    def to_predictions(
+        self, predictions: pd.DataFrame
+    ) -> Dict[str, List[PredictedValue]]:
+        outputs = {key: [] for key in self.output_features.get_keys()}
+        for _, row in predictions.iterrows():
+            for key in self.output_features.get_keys():
+                outputs[key].append(
+                    PredictedValue(
+                        predictedValue=row[f"{key}_pred"],
+                        standardDeviation=row[f"{key}_sd"],
+                    )
+                )
+        return outputs
 
     @abstractmethod
     def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         pass
+
+    @abstractmethod
+    def dumps(self) -> str:
+        """Dumps the actual model to a string as this is not directly json serializable."""
+
+    @abstractmethod
+    def loads(self, data: str):
+        """Loads the actual model from a string and writes it to the `model` attribute."""
 
 
 class TrainableModel:

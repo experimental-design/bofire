@@ -2,9 +2,15 @@ from pytest import fixture
 
 from bofire.domain.constraint import Constraint
 from bofire.domain.constraints import Constraints
+from bofire.domain.domain import Domain
 from bofire.domain.feature import Feature
 from bofire.domain.features import Features
 from bofire.domain.objective import Objective
+from bofire.models.gps.kernels import BaseKernel
+from bofire.models.gps.priors import Prior
+from bofire.models.model import Model
+from bofire.samplers import Sampler
+from bofire.strategies.strategy import Strategy
 from tests.bofire import specs
 
 # objective
@@ -101,7 +107,7 @@ def invalid_constraints_spec(request) -> specs.Spec:
 
 
 @fixture
-def model() -> Constraint:
+def model() -> Model:
     return specs.models.valid().obj()
 
 
@@ -119,7 +125,7 @@ def invalid_model_spec(request) -> specs.Spec:
 
 
 @fixture
-def domain() -> Constraint:
+def domain() -> Domain:
     return specs.domains.valid().obj()
 
 
@@ -137,7 +143,7 @@ def invalid_domain_spec(request) -> specs.Spec:
 
 
 @fixture
-def prior() -> Constraint:
+def prior() -> Prior:
     return specs.priors.valid().obj()
 
 
@@ -155,7 +161,7 @@ def invalid_prior_spec(request) -> specs.Spec:
 
 
 @fixture
-def kernel() -> Constraint:
+def kernel() -> BaseKernel:
     return specs.kernels.valid().obj()
 
 
@@ -166,4 +172,40 @@ def valid_kernel_spec(request) -> specs.Spec:
 
 @fixture(params=specs.kernels.invalids)
 def invalid_kernel_spec(request) -> specs.Spec:
+    return request.param
+
+
+# sampler
+
+
+@fixture
+def sampler() -> Sampler:
+    return specs.samplers.valid().obj()
+
+
+@fixture(params=specs.samplers.valids)
+def valid_sampler_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.samplers.invalids)
+def invalid_sampler_spec(request) -> specs.Spec:
+    return request.param
+
+
+# strategy
+
+
+@fixture
+def strategy() -> Strategy:
+    return specs.strategies.valid().obj()
+
+
+@fixture(params=specs.strategies.valids)
+def valid_strategy_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.strategies.invalids)
+def invalid_strategy_spec(request) -> specs.Spec:
     return request.param

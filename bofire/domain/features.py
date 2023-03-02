@@ -18,11 +18,9 @@ from bofire.domain.feature import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
-    Feature,
     InputFeature,
     OutputFeature,
     TInputTransformSpecs,
-    Tnum_samples,
 )
 from bofire.domain.objective import Objective
 from bofire.domain.util import PydanticBaseModel, filter_by_attribute, filter_by_class
@@ -173,7 +171,7 @@ class InputFeatures(Features):
     @validate_arguments
     def sample(
         self,
-        n: Tnum_samples = 1,
+        n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
     ) -> pd.DataFrame:
         """Draw sobol samples
@@ -247,8 +245,8 @@ class InputFeatures(Features):
 
     def get_categorical_combinations(
         self,
-        include: Type[Feature] = InputFeature,
-        exclude: Optional[Type[InputFeature]] = None,
+        include: Union[Type, List[Type]] = InputFeature,
+        exclude: Union[Type, List[Type]] = None,
     ):
         """get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -262,11 +260,22 @@ class InputFeatures(Features):
         features = [
             f
             for f in self.get(includes=include, excludes=exclude)
-            if isinstance(f, CategoricalInput) and not f.is_fixed()
+            if (isinstance(f, CategoricalInput) and not f.is_fixed())
         ]
         list_of_lists = [
             [(f.key, cat) for cat in f.get_allowed_categories()] for f in features
         ]
+
+        discretes = [
+            f
+            for f in self.get(includes=include, excludes=exclude)
+            if (isinstance(f, DiscreteInput) and not f.is_fixed())
+        ]
+
+        list_of_lists_2 = [[(d.key, v) for v in d.values] for d in discretes]
+
+        list_of_lists = list_of_lists + list_of_lists_2
+
         return list(itertools.product(*list_of_lists))
 
     # transformation related methods
@@ -382,7 +391,9 @@ class InputFeatures(Features):
         self._validate_transform_specs(specs=specs)
         transformed = []
         for feat in self.get():
-            if feat.key not in specs.keys():
+            if isinstance(feat, DiscreteInput):
+                transformed.append(feat.from_continuous(experiments))
+            elif feat.key not in specs.keys():
                 transformed.append(experiments[feat.key])
             elif specs[feat.key] == CategoricalEncodingEnum.ONE_HOT:
                 assert isinstance(feat, CategoricalInput)
@@ -538,21 +549,33 @@ class OutputFeatures(Features):
         """
         return [f.key for f in self.get_by_objective(includes, excludes, exact)]
 
-    def __call__(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        """Evaluate the objective for every
+    def __call__(
+        self, experiments: pd.DataFrame, predictions: bool = False
+    ) -> pd.DataFrame:
+        """Evaluate the objective for every feature.
 
         Args:
             experiments (pd.DataFrame): Experiments for which the objectives should be evaluated.
+            predictions (bool, optional): If True use the prediction columns in the dataframe to calc the
+                desirabilities `f"{feat.key}_pred`.
 
         Returns:
             pd.DataFrame: Objective values for the experiments of interest.
         """
-        return pd.concat(
+        desis = pd.concat(
             [
-                feat.objective(experiments[[feat.key]])  # type: ignore
+                feat.objective(experiments[[f"{feat.key}_pred" if predictions else feat.key]])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
             ],
+            axis=1,
+        )
+        return desis.rename(
+            {
+                f"{feat.key}_pred" if predictions else feat.key: f"{feat.key}_des"
+                for feat in self.features
+                if feat.objective is not None
+            },
             axis=1,
         )
 

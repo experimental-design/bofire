@@ -12,6 +12,7 @@ from bofire.any.api import (
     AnyModel,
     AnyObjective,
     AnyPrior,
+    AnySampler,
     AnyStrategy,
     AnyThing,
 )
@@ -79,6 +80,12 @@ class Deserialization:
         """Create instance of an prior."""
 
         return parse_obj_as(AnyPrior, data)
+
+    @staticmethod
+    def sampler(data: Dict) -> AnySampler:
+        """Create instance of an sampler."""
+
+        return parse_obj_as(AnySampler, data)
 
     @staticmethod
     def strategy(data: Dict) -> AnyStrategy:

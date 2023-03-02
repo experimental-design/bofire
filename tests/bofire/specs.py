@@ -48,6 +48,18 @@ from bofire.models.gps.priors import (
     botorch_lengthcale_prior,
     botorch_scale_prior,
 )
+from bofire.models.random_forest import RandomForest
+from bofire.samplers import PolytopeSampler, RejectionSampler
+from bofire.strategies.botorch.qehvi import BoTorchQehviStrategy, BoTorchQnehviStrategy
+from bofire.strategies.botorch.qparego import BoTorchQparegoStrategy
+from bofire.strategies.botorch.sobo import (
+    BoTorchSoboAdditiveStrategy,
+    BoTorchSoboMultiplicativeStrategy,
+    qPI,
+)
+from bofire.strategies.random import RandomStrategy
+
+# TODO: split into multiple modules
 
 
 class Spec:
@@ -156,6 +168,13 @@ class Specs:
                 self.invalids += invalidator.invalidate(spec_)
         return spec_
 
+    def add_invalid(self, cls: Type, spec: dict) -> Spec:
+        """Add a new invalid spec to the list."""
+
+        spec_ = Spec(cls, spec)
+        self.invalids.append(spec_)
+        return spec_
+
 
 # # # # # # # # # # # # # # # # # #
 # objectives
@@ -210,13 +229,13 @@ objectives.add_valid(
     ConstantObjective,
     {
         "value": 0.2,
-        "w": 0.4,
+        "w": 1.0,
     },
 )
 objectives.add_valid(
     DeltaObjective,
     {
-        "w": 0.3,
+        "w": 1.0,
         "lower_bound": 0.1,
         "upper_bound": 0.9,
         "ref_point": 1,
@@ -226,7 +245,7 @@ objectives.add_valid(
 objectives.add_valid(
     MaximizeObjective,
     {
-        "w": 0.3,
+        "w": 1.0,
         "lower_bound": 0.1,
         "upper_bound": 0.9,
     },
@@ -236,13 +255,13 @@ objectives.add_valid(
     {
         "steepness": 0.2,
         "tp": 0.3,
-        "w": 0.4,
+        "w": 1.0,
     },
 )
 objectives.add_valid(
     MinimizeObjective,
     {
-        "w": 0.3,
+        "w": 1.0,
         "lower_bound": 0.1,
         "upper_bound": 0.9,
     },
@@ -252,13 +271,13 @@ objectives.add_valid(
     {
         "steepness": 0.2,
         "tp": 0.3,
-        "w": 0.4,
+        "w": 1.0,
     },
 )
 objectives.add_valid(
     TargetObjective,
     {
-        "w": 0.2,
+        "w": 1.0,
         "target_value": 0.4,
         "tolerance": 0.4,
         "steepness": 0.3,
@@ -291,6 +310,15 @@ features.add_valid(
         "values": [1.0, 2.0, 2.5],
     },
 )
+
+features.add_invalid(
+    DiscreteInput,
+    {
+        "key": str(uuid.uuid4()),
+        "values": [1.0],
+    },
+)
+
 features.add_valid(
     ContinuousInput,
     {
@@ -349,7 +377,9 @@ featuress = Specs([])
 featuress.add_valid(
     InputFeatures,
     {
-        "features": [],
+        "features": [
+            features.valid(ContinuousInput).obj(),
+        ],
     },
 )
 featuress.add_valid(
@@ -364,14 +394,9 @@ featuress.add_valid(
 featuress.add_valid(
     OutputFeatures,
     {
-        "features": [],
-    },
-)
-featuress.add_valid(
-    OutputFeatures,
-    {
         "features": [
-            features.valid(ContinuousOutput).obj(),
+            features.valid(ContinuousOutput).obj(key="out1"),
+            features.valid(ContinuousOutput).obj(key="out2"),
         ],
     },
 )
@@ -515,6 +540,37 @@ models.add_valid(
         "training_specs": {},
     },
 )
+models.add_valid(
+    RandomForest,
+    {
+        "input_features": InputFeatures(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "output_features": OutputFeatures(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "model": None,
+        "input_preprocessing_specs": {},
+        "n_estimators": 100,
+        "criterion": "squared_error",
+        "max_depth": None,
+        "min_samples_split": 2,
+        "min_samples_leaf": 1,
+        "min_weight_fraction_leaf": 0.0,
+        "max_features": 1,
+        "max_leaf_nodes": None,
+        "min_impurity_decrease": 0.0,
+        "bootstrap": True,
+        "oob_score": False,
+        "random_state": None,
+        "ccp_alpha": 0.0,
+        "max_samples": None,
+    },
+)
 
 
 # # # # # # # # # # # # # # # # # #
@@ -532,23 +588,23 @@ domains.add_valid(
         "candidates": None,
     },
 )
-domains.add_valid(
-    Domain,
-    {
-        "input_features": json.loads(featuress.valid(InputFeatures).obj().json()),
-        "output_features": json.loads(featuress.valid(OutputFeatures).obj().json()),
-        "constraints": json.loads(Constraints().json()),
-        "experiments": {
-            "a": [1, 2, 3, 4],
-            "b": [3, 4, 5, 6],
-            "c": [10, 2, -4, 5],
-        },
-        "candidates": {
-            "d": [5, 2, 5],
-            "e": [3, 4, 5],
-        },
-    },
-)
+# domains.add_valid(
+#     Domain,
+#     {
+#         "input_features": json.loads(featuress.valid(InputFeatures).obj().json()),
+#         "output_features": json.loads(featuress.valid(OutputFeatures).obj().json()),
+#         "constraints": json.loads(Constraints().json()),
+#         "experiments": {
+#             "a": [1, 2, 3, 4],
+#             "b": [3, 4, 5, 6],
+#             "c": [10, 2, -4, 5],
+#         },
+#         "candidates": {
+#             "d": [5, 2, 5],
+#             "e": [3, 4, 5],
+#         },
+#     },
+# )
 
 
 # # # # # # # # # # # # # # # # # #
@@ -625,5 +681,112 @@ kernels.add_valid(
             kernels.valid(LinearKernel).obj(),
             kernels.valid(MaternKernel).obj(),
         ]
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
+# sampler
+# # # # # # # # # # # # # # # # # #
+
+samplers = Specs([])
+samplers.add_valid(
+    PolytopeSampler,
+    {
+        "domain": Domain(
+            input_features=InputFeatures(
+                features=[
+                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
+                    for i in range(2)
+                ]
+            ),
+        ),
+        "fallback_sampling_method": "UNIFORM",
+    },
+)
+samplers.add_valid(
+    RejectionSampler,
+    {
+        "domain": Domain(
+            input_features=InputFeatures(
+                features=[
+                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
+                    for i in range(2)
+                ]
+            )
+        ),
+        "max_iters": 1000,
+        "num_base_samples": 1000,
+        "sampling_method": "UNIFORM",
+        "num_base_samples": 1000,
+        "max_iters": 1000,
+    },
+)
+
+
+# # # # # # # # # # # # # # # # # #
+# strategy
+# # # # # # # # # # # # # # # # # #
+
+strategy_commons = {
+    "num_raw_samples": 1024,
+    "num_sobol_samples": 512,
+    "num_restarts": 8,
+    "descriptor_method": "EXHAUSTIVE",
+    "categorical_method": "EXHAUSTIVE",
+    "discrete_method": "EXHAUSTIVE",
+    "is_fitted": False,
+}
+
+strategies = Specs([])
+
+strategies.add_valid(
+    BoTorchQehviStrategy,
+    {
+        "domain": json.loads(domains.valid(Domain).obj().json()),
+        "seed": 42,
+        **strategy_commons,
+    },
+)
+strategies.add_valid(
+    BoTorchQnehviStrategy,
+    {
+        "domain": json.loads(domains.valid(Domain).obj().json()),
+        "seed": 42,
+        **strategy_commons,
+        "alpha": 0.4,
+    },
+)
+strategies.add_valid(
+    BoTorchQparegoStrategy,
+    {
+        "domain": json.loads(domains.valid(Domain).obj().json()),
+        "seed": 42,
+        **strategy_commons,
+    },
+)
+strategies.add_valid(
+    BoTorchSoboAdditiveStrategy,
+    {
+        "domain": json.loads(domains.valid(Domain).obj().json()),
+        "seed": 42,
+        "acquisition_function": json.loads(qPI(tau=0.1).json()),
+        **strategy_commons,
+    },
+)
+strategies.add_valid(
+    BoTorchSoboMultiplicativeStrategy,
+    {
+        "domain": json.loads(domains.valid(Domain).obj().json()),
+        "seed": 42,
+        **strategy_commons,
+        "acquisition_function": json.loads(qPI(tau=0.1).json()),
+    },
+)
+strategies.add_valid(
+    RandomStrategy,
+    {
+        "domain": json.loads(domains.valid(Domain).obj().json()),
+        "seed": 42,
     },
 )
