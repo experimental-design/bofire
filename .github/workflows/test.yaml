@@ -18,7 +18,8 @@ jobs:
       - name: Install Bofire
         run: pip install .[testing]
       - name: Install optional dependencies
-        run: conda install -c conda-forge cyipopt
+        run: apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
+        run: pip install cyipopt
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
           
