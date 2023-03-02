@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import pytest
 import torch
@@ -12,13 +14,20 @@ from bofire.domain.domain import Domain
 from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
 from bofire.domain.features import InputFeatures, OutputFeatures
 from bofire.domain.objective import (
+    CloseToTargetObjective,
+    ConstantObjective,
+    DeltaObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
+    MinimizeObjective,
+    MinimizeSigmoidObjective,
     TargetObjective,
 )
 from bofire.utils.torch_tools import (
     get_linear_constraints,
+    get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
+    get_objective_callable,
     get_output_constraints,
     tkwargs,
 )
@@ -61,6 +70,73 @@ c2 = LinearInequalityConstraint(
 c3 = LinearInequalityConstraint(
     features=["if1", "if2", "if4"], coefficients=[1.0, 1.0, 0.5], rhs=0.2
 )
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        DeltaObjective(w=0.5, ref_point=1.0, scale=0.8),
+        MaximizeObjective(w=0.5),
+        MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+        MinimizeObjective(w=0.5),
+        MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+        TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
+        CloseToTargetObjective(target_value=2.0, exponent=1.0, tolerance=1e-3, w=0.5),
+        # ConstantObjective(w=0.5, value=1.0),
+    ],
+)
+def test_get_objective_callable(objective):
+    samples = (torch.rand(50, 3, requires_grad=True) * 5.0).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    callable = get_objective_callable(idx=1, objective=objective)
+    assert np.allclose(
+        # objective.reward(samples, desFunc)[0].detach().numpy(),
+        callable(samples).detach().numpy(),
+        objective(a_samples[:, 1]),
+        rtol=1e-06,
+    )
+
+
+def test_get_objective_callable_not_implemented():
+    with pytest.raises(NotImplementedError):
+        get_objective_callable(idx=1, objective=ConstantObjective(w=0.5, value=1.0))
+
+
+def test_get_multiplicative_botorch_objective():
+    (obj1, obj2) = random.choices(
+        [
+            DeltaObjective(w=0.5, ref_point=10.0),
+            MaximizeObjective(w=0.5),
+            MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+            MinimizeObjective(w=1),
+            MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+            TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
+            CloseToTargetObjective(
+                target_value=2.0, exponent=1.0, tolerance=1e-3, w=1.0
+            ),
+        ],
+        k=2,
+    )
+    output_features = OutputFeatures(
+        features=[
+            ContinuousOutput(key="alpha", objective=obj1),
+            ContinuousOutput(key="beta", objective=obj2),
+        ]
+    )
+    objective = get_multiplicative_botorch_objective(output_features)
+    samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    objective_forward = objective.forward(samples)
+    # calc with numpy
+    reward1 = obj1(a_samples[:, 0])
+    reward2 = obj2(a_samples[:, 1])
+    # do the comparison
+    assert np.allclose(
+        # objective.reward(samples, desFunc)[0].detach().numpy(),
+        reward1**obj1.w * reward2**obj2.w,
+        objective_forward.detach().numpy(),
+        rtol=1e-06,
+    )
 
 
 def test_get_linear_constraints():
