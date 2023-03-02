@@ -211,26 +211,26 @@ def test_find_local_max_ipopt_results():
 def test_find_local_max_ipopt_fixed_experiments():
     # TODO fix this test. Currently it gets stuck in a local minimum 50% of the time
     # working if fixed experiments is tested below. Do I need this test?
-    # input_features = [
-    #     ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
-    #     ContinuousInput(key=f"x{2}", lower_bound=0.1, upper_bound=1),
-    #     ContinuousInput(key=f"x{3}", lower_bound=0, upper_bound=0.6),
-    # ]
-    # domain = Domain(
-    #     input_features=input_features,
-    #     output_features=[ContinuousOutput(key="y")],
-    #     constraints=[
-    #         LinearEqualityConstraint(
-    #             features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
-    #         ),
-    #         LinearInequalityConstraint(
-    #             features=["x1", "x2"], coefficients=[5, 4], rhs=3.9
-    #         ),
-    #         LinearInequalityConstraint(
-    #             features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
-    #         ),
-    #     ],
-    # )
+    input_features = [
+        ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
+        ContinuousInput(key=f"x{2}", lower_bound=0.1, upper_bound=1),
+        ContinuousInput(key=f"x{3}", lower_bound=0, upper_bound=0.6),
+    ]
+    domain = Domain(
+        input_features=input_features,
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(
+                features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2"], coefficients=[5, 4], rhs=3.9
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+            ),
+        ],
+    )
     # np.random.seed(1)
     # fixed_experiments = pd.DataFrame([[0.3, 0.5, 0.2]], columns=["x1", "x2", "x3"])
     # A = find_local_max_ipopt(
