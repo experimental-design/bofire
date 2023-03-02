@@ -3,7 +3,6 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from botorch.acquisition.objective import GenericMCObjective
 from botorch.models.transforms.input import InputTransform
 from torch import Tensor
 from torch.nn import Module
@@ -228,7 +227,9 @@ def get_objective_callable(
         )
 
 
-def get_multiplicative_botorch_objective(output_features: OutputFeatures):
+def get_multiplicative_botorch_objective(
+    output_features: OutputFeatures,
+) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(output_features.get())
@@ -246,7 +247,7 @@ def get_multiplicative_botorch_objective(output_features: OutputFeatures):
             val *= c(samples) ** w
         return val  # type: ignore
 
-    return GenericMCObjective(objective=objective)
+    return objective
 
 
 def get_additive_botorch_objective(

@@ -3,6 +3,7 @@ import random
 import numpy as np
 import pytest
 import torch
+from botorch.acquisition.objective import GenericMCObjective
 
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
@@ -124,9 +125,10 @@ def test_get_multiplicative_botorch_objective():
         ]
     )
     objective = get_multiplicative_botorch_objective(output_features)
+    generic_objective = GenericMCObjective(objective=objective)
     samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
-    objective_forward = objective.forward(samples)
+    objective_forward = generic_objective.forward(samples)
     # calc with numpy
     reward1 = obj1(a_samples[:, 0])
     reward2 = obj2(a_samples[:, 1])
