@@ -109,6 +109,16 @@ class BotorchModel(Model):
         self.model = torch.load(buffer)
 
 
+# from bofire.strategies.botorch.base import MixedSingleTaskGPModel, SingleTaskGPModel
+
+# # TODO: move this to bofire.any
+# # TODO: add RandomForest here
+# AnyBotorchModel = Union[
+#     SingleTaskGPModel,
+#     MixedSingleTaskGPModel,
+# ]
+
+
 class BotorchModels(PydanticBaseModel):
 
     models: List[BotorchModel]
@@ -250,8 +260,8 @@ class BotorchModels(PydanticBaseModel):
                     model.model.input_transform = features_filter  # type: ignore
 
                 botorch_models.append(model.model)
-            if isinstance(model.model, botorch.models.SingleTaskGP) is False:
-                all_gp = False
+                if isinstance(model.model, botorch.models.SingleTaskGP) is False:
+                    all_gp = False
 
         if len(botorch_models) == 1:
             return botorch_models[0]

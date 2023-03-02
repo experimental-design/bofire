@@ -45,6 +45,8 @@ class ValidatedDataFrame(pd.DataFrame):
         raise TypeError("expected {cls.__name__}, pd.Dataframe, dict, or str")
 
     def __eq__(self, other):
+        if isinstance(other, dict):
+            other = pd.DataFrame.from_dict(other)
         if isinstance(other, pd.DataFrame):
             res = super().__eq__(other)
             while isinstance(res, (pd.DataFrame, pd.Series)):
@@ -71,6 +73,8 @@ class ValidatedSeries(pd.Series):
         raise TypeError(f"expected {cls.__name__}, pd.Series, list, or str")
 
     def __eq__(self, other):
+        if isinstance(other, list):
+            other = pd.Series(data=other)
         if isinstance(other, pd.Series):
             res = super().__eq__(other)
             while isinstance(res, pd.Series):

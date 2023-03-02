@@ -1,5 +1,8 @@
 from typing import Union
 
-from bofire.samplers import PolytopeSampler, RejectionSampler
+from bofire import samplers
 
-AnySampler = Union[PolytopeSampler, RejectionSampler]
+AnySampler = Union[
+    samplers.PolytopeSampler,
+    samplers.RejectionSampler,
+]

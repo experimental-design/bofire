@@ -82,12 +82,13 @@ class Deserialization:
         return parse_obj_as(AnyPrior, data)
 
     @staticmethod
+    def sampler(data: Dict) -> AnySampler:
+        """Create instance of an sampler."""
+
+        return parse_obj_as(AnySampler, data)
+
+    @staticmethod
     def strategy(data: Dict) -> AnyStrategy:
         """Create instance of a strategy."""
 
         return parse_obj_as(AnyStrategy, data)
-
-    @staticmethod
-    def sampler(data: Dict) -> AnySampler:
-        """Create instance of a sampler."""
-        return parse_obj_as(AnySampler, data)
