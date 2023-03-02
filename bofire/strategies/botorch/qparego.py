@@ -67,6 +67,15 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
     def get_objective(
         self, pred: torch.Tensor
     ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        """Returns the scalarized objective.
+
+        Args:
+            pred (torch.Tensor): Predictions for the training data from the
+                trained model.
+
+        Returns:
+            Union[GenericMCObjective, ConstrainedMCObjective]: the botorch objective.
+        """
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs
         )
@@ -81,12 +90,28 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             ).squeeze()
             * ref_point_mask
         )
-        scalarization = get_chebyshev_scalarization(weights=weights, Y=pred)
+        key2indices = {key: i for i, key in enumerate(self.domain.outputs.get_keys())}
+        indices = torch.tensor(
+            [
+                key2indices[key]
+                for key in self.domain.outputs.get_keys_by_objective(
+                    includes=[MaximizeObjective, MinimizeObjective]
+                )
+            ],
+            dtype=torch.int64,
+        )
+        scalarization = get_chebyshev_scalarization(
+            weights=weights, Y=pred[..., indices]
+        )
         if len(weights) != len(self.domain.outputs):
             constraints, etas = get_output_constraints(self.domain.outputs)
+            infeasible_costs = 0.0
             etas = torch.tensor(etas).to(**tkwargs)
             return ConstrainedMCObjective(
-                objective=scalarization, constraints=constraints, eta=etas
+                objective=scalarization,
+                constraints=constraints,
+                eta=etas,
+                infeasible_cost=infeasible_costs,
             )
         return GenericMCObjective(scalarization)
 
@@ -115,20 +140,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
 
         for i in range(candidate_count):
-            # ref_point_mask = torch.from_numpy(
-            #     get_ref_point_mask(domain=self.domain)
-            # ).to(**tkwargs)
-            # weights = (
-            #     sample_simplex(
-            #         len(self.domain.outputs.get_keys_by_objective(excludes=None)),
-            #         **tkwargs
-            #     ).squeeze()
-            #     * ref_point_mask
-            # )
-            # objective = GenericMCObjective(
-            #     get_chebyshev_scalarization(weights=weights, Y=pred)
-            # )
-
             assert self.model is not None
             acqf = get_acquisition_function(
                 acquisition_function_name="qNEI"
@@ -168,7 +179,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
             or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-
             fixed_features_list = self.get_categorical_combinations()
 
         elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
