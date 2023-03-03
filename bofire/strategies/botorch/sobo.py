@@ -1,6 +1,9 @@
+from abc import abstractmethod
 from typing import Literal, Type, Union
 
+import torch
 from botorch.acquisition import get_acquisition_function
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.models.gpytorch import GPyTorchModel
 from pydantic import (
     BaseModel,
@@ -12,13 +15,15 @@ from pydantic import (
 
 from bofire.domain.constraints import Constraint
 from bofire.domain.feature import Feature
-from bofire.domain.objective import Objective
+from bofire.domain.objective import BotorchConstrainedObjective, Objective
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
-from bofire.strategies.botorch.utils.objectives import (
-    AdditiveObjective,
-    MultiplicativeObjective,
-)
 from bofire.utils.enum import AcquisitionFunctionEnum
+from bofire.utils.torch_tools import (
+    get_additive_botorch_objective,
+    get_multiplicative_botorch_objective,
+    get_output_constraints,
+    tkwargs,
+)
 
 
 # TODO: move acquisition functions to separate module
@@ -77,7 +82,6 @@ AnyAquisitionFunction = Union[
 
 
 class BoTorchSoboStrategy(BotorchBasicBoStrategy):
-
     acquisition_function: AcquisitionFunction
 
     @validator("acquisition_function", pre=True)
@@ -97,7 +101,7 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         self.acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
             self.model,  # type: ignore
-            self.objective,  # type: ignore
+            self._get_objective(),
             X_observed=X_train,
             X_pending=X_pending,
             constraints=None,
@@ -113,14 +117,9 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         )
         return
 
-    def _init_objective(self):
-        self.objective = MultiplicativeObjective(
-            targets=[
-                var.objective  # type: ignore
-                for var in self.domain.outputs.get_by_objective(excludes=None)
-            ]
-        )
-        return
+    @abstractmethod
+    def _get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        pass
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -160,21 +159,42 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
-
     type: Literal["BoTorchSoboAdditiveStrategy"] = "BoTorchSoboAdditiveStrategy"
+    use_output_constraints: bool = True
 
-    def _init_objective(self):
-        self.objective = AdditiveObjective(
-            targets=[
-                var.objective  # type: ignore
-                for var in self.domain.outputs.get_by_objective(excludes=None)
-            ]
+    def _get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        if (
+            self.use_output_constraints
+            and len(self.domain.outputs.get_by_objective(BotorchConstrainedObjective))
+            > 0
+        ):
+            constraints, etas = get_output_constraints(
+                output_features=self.domain.outputs
+            )
+            objective = get_additive_botorch_objective(
+                output_features=self.domain.outputs, exclude_constraints=True
+            )
+            # infeasible_cost = get_infeasible_cost(X=, model=self.model, objective=objective)
+            return ConstrainedMCObjective(
+                objective=objective,  # type: ignore
+                constraints=constraints,
+                eta=torch.tensor(etas).to(**tkwargs),
+            )
+        return GenericMCObjective(
+            objective=get_additive_botorch_objective(  # type: ignore
+                output_features=self.domain.outputs, exclude_constraints=False
+            )
         )
-        return
 
 
 class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
-
     type: Literal[
         "BoTorchSoboMultiplicativeStrategy"
     ] = "BoTorchSoboMultiplicativeStrategy"
+
+    def _get_objective(self) -> GenericMCObjective:
+        return GenericMCObjective(
+            objective=get_multiplicative_botorch_objective(  # type: ignore
+                output_features=self.domain.outputs
+            )
+        )

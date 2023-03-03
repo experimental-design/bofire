@@ -5,7 +5,6 @@ from typing import Dict, Optional, Tuple
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition import MCAcquisitionObjective
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
@@ -36,6 +35,7 @@ from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 class BotorchBasicBoStrategy(PredictiveStrategy):
+    # public args
     num_sobol_samples: PositiveInt = 512
     num_restarts: PositiveInt = 8
     num_raw_samples: PositiveInt = 1024
@@ -45,22 +45,17 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     model_specs: Optional[BotorchModels] = None
 
     # private ones
-    objective: Optional[MCAcquisitionObjective] = None
     acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
     # use_combined_bounds: bool = True  # parameter to switch to legacy behavior
 
     # TODO: unhide model_specs
     def json(self, **kwargs):
-        return super().json(
-            **add_exclude(kwargs, "objective", "acqf", "model", "model_specs")
-        )
+        return super().json(**add_exclude(kwargs, "acqf", "model", "model_specs"))
 
     # TODO: unhide model_specs
     def dict(self, **kwargs):
-        return super().dict(
-            **add_exclude(kwargs, "objective", "acqf", "model", "model_specs")
-        )
+        return super().dict(**add_exclude(kwargs, "acqf", "model", "model_specs"))
 
     @validator("num_sobol_samples")
     def validate_num_sobol_samples(cls, v):
@@ -150,7 +145,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
     def _init_domain(self):
         """set up the transformer and the objective"""
         torch.manual_seed(self.seed)
-        self.init_objective()
 
     @property
     def input_preprocessing_specs(self) -> TInputTransformSpecs:
@@ -282,7 +276,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
                 )
             )
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-
             candidates = optimize_acqf(
                 acq_function=self.acqf,
                 bounds=bounds,
@@ -303,7 +296,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             CategoricalMethodEnum.EXHAUSTIVE
             in [self.categorical_method, self.descriptor_method, self.discrete_method]
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-
             candidates = optimize_acqf_mixed(
                 acq_function=self.acqf,
                 bounds=bounds,
@@ -320,7 +312,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             )
 
         elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
-
             candidates = optimize_acqf_mixed(
                 acq_function=self.acqf,
                 bounds=bounds,
@@ -376,16 +367,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
 
     @abstractmethod
     def _init_acqf(
-        self,
-    ) -> None:
-        pass
-
-    def init_objective(self) -> None:
-        self._init_objective()
-        return
-
-    @abstractmethod
-    def _init_objective(
         self,
     ) -> None:
         pass
@@ -537,7 +518,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return list_of_fixed_features
 
     def get_nchoosek_combinations(self):
-
         """
         generate a list of fixed values dictionaries from n-choose-k constraints
         """
@@ -563,7 +543,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return fixed_values_list_cc
 
     def get_fixed_values_list(self):
-
         # CARTESIAN PRODUCTS: fixed values from categorical combinations X fixed values from nchoosek constraints
         fixed_values_full = []
 
@@ -589,7 +568,6 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
         return False
 
     def get_acqf_input_tensors(self):
-
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
