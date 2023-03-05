@@ -771,6 +771,7 @@ strategies.add_valid(
         "domain": json.loads(domains.valid(Domain).obj().json()),
         "seed": 42,
         "acquisition_function": json.loads(qPI(tau=0.1).json()),
+        "use_output_constraints": True,
         **strategy_commons,
     },
 )
