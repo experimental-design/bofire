@@ -166,10 +166,6 @@ def get_objective_callable(
         return lambda x: -1.0 * (
             torch.abs(x[..., idx] - objective.target_value) ** objective.exponent
         )
-    if isinstance(objective, CloseToTargetObjective):
-        return lambda x: -1.0 * (
-            torch.abs(x[..., idx] - objective.target_value) ** objective.exponent
-        )
     if isinstance(objective, MinimizeSigmoidObjective):
         return lambda x: (
             (
