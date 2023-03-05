@@ -165,6 +165,7 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
     use_output_constraints: bool = True
 
     def _get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        # TODO: test this
         if (
             self.use_output_constraints
             and len(self.domain.outputs.get_by_objective(BotorchConstrainedObjective))
