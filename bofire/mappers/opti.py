@@ -52,7 +52,6 @@ def objective2feature(config: Dict):
             w=1,
             target_value=config["target"],
             exponent=config.get("tolerance", 1.0),
-            tolerance=config.get("tolerance", 0.0),
         )
     else:
         raise ValueError(f"Unknown objective type {config['type']}.")
