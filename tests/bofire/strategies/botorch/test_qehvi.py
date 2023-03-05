@@ -141,7 +141,7 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
         ref_point=benchmark.ref_point if use_ref_point else None,
     )
     my_strategy.tell(experiments)
-    assert isinstance(my_strategy.objective, WeightedMCMultiOutputObjective)
+    assert isinstance(my_strategy.acqf.objective, WeightedMCMultiOutputObjective)
     assert isinstance(
         my_strategy.acqf,
         qExpectedHypervolumeImprovement
@@ -161,7 +161,7 @@ def test_qnehvi_constraints():
         domain=benchmark.domain, ref_point={"f_0": 1.1, "f_1": 1.1}
     )
     my_strategy.tell(experiments)
-    assert isinstance(my_strategy.objective, WeightedMCMultiOutputObjective)
+    assert isinstance(my_strategy.acqf.objective, WeightedMCMultiOutputObjective)
     assert isinstance(my_strategy.acqf, qNoisyExpectedHypervolumeImprovement)
     assert my_strategy.acqf.eta == torch.tensor(1e-3)
     assert len(my_strategy.acqf.constraints) == 1
@@ -189,7 +189,6 @@ def test_qnehvi_constraints():
 )
 @pytest.mark.slow
 def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
-
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)

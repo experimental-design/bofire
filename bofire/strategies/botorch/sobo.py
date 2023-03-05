@@ -1,4 +1,3 @@
-from abc import abstractmethod
 from typing import Literal, Type, Union
 
 import torch
@@ -117,9 +116,12 @@ class BoTorchSoboStrategy(BotorchBasicBoStrategy):
         )
         return
 
-    @abstractmethod
-    def _get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
-        pass
+    def _get_objective(self) -> GenericMCObjective:
+        return GenericMCObjective(
+            objective=get_multiplicative_botorch_objective(  # type: ignore
+                output_features=self.domain.outputs
+            )
+        )
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -174,11 +176,11 @@ class BoTorchSoboAdditiveStrategy(BoTorchSoboStrategy):
             objective = get_additive_botorch_objective(
                 output_features=self.domain.outputs, exclude_constraints=True
             )
-            # infeasible_cost = get_infeasible_cost(X=, model=self.model, objective=objective)
             return ConstrainedMCObjective(
                 objective=objective,  # type: ignore
                 constraints=constraints,
                 eta=torch.tensor(etas).to(**tkwargs),
+                infeasible_cost=self.get_infeasible_cost(objective=objective),
             )
         return GenericMCObjective(
             objective=get_additive_botorch_objective(  # type: ignore
@@ -191,10 +193,3 @@ class BoTorchSoboMultiplicativeStrategy(BoTorchSoboStrategy):
     type: Literal[
         "BoTorchSoboMultiplicativeStrategy"
     ] = "BoTorchSoboMultiplicativeStrategy"
-
-    def _get_objective(self) -> GenericMCObjective:
-        return GenericMCObjective(
-            objective=get_multiplicative_botorch_objective(  # type: ignore
-                output_features=self.domain.outputs
-            )
-        )

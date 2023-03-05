@@ -17,13 +17,15 @@ from bofire.domain.constraint import (
 )
 from bofire.domain.feature import CategoricalInput, Feature
 from bofire.domain.objective import (
-    IdentityObjective,
     MaximizeObjective,
+    MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
     Objective,
+    TargetObjective,
 )
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
-from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
+from bofire.utils.enum import CategoricalMethodEnum
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import (
     get_linear_constraints,
@@ -41,23 +43,24 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
     def _init_acqf(self) -> None:
         pass
 
-    def _init_objective(self) -> None:
-        pass
-
     def calc_acquisition(self, experiments: pd.DataFrame, combined: bool = False):
         raise ValueError("ACQF calc not implemented for qparego")
 
     def _init_domain(self) -> None:
         # first part of this is doubled with qehvi --> maybe create a common base class
-        if len(self.domain.outputs.get_by_objective(excludes=None)) < 2:
+        # this has to go into the validators
+        if (
+            len(
+                self.domain.outputs.get_by_objective(
+                    includes=[MaximizeObjective, MinimizeObjective]
+                )
+            )
+            < 2
+        ):
             raise ValueError(
-                "At least two output features has to be defined in the domain."
+                "At least two features with objective type `MaximizeObjective` or `MinimizeObjective` has to be defined in the domain."
             )
         for feat in self.domain.outputs.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
-                raise ValueError(
-                    "Only `MaximizeObjective` and `MinimizeObjective` supported."
-                )
             if feat.objective.w != 1.0:  # type: ignore
                 raise ValueError(
                     "Only objective functions with weight 1 are supported."
@@ -102,17 +105,21 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             ],
             dtype=torch.int64,
         )
+
         scalarization = get_chebyshev_scalarization(
             weights=weights, Y=pred[..., indices]
         )
+
+        def objective(Z, X=None):
+            return scalarization(Z[..., indices], X)
+
         if len(weights) != len(self.domain.outputs):
             constraints, etas = get_output_constraints(self.domain.outputs)
-            infeasible_costs = 0.0
             return ConstrainedMCObjective(
-                objective=scalarization,
+                objective=objective,
                 constraints=constraints,
                 eta=torch.tensor(etas).to(**tkwargs),
-                infeasible_cost=infeasible_costs,
+                infeasible_cost=self.get_infeasible_cost(objective=objective),
             )
         return GenericMCObjective(scalarization)
 
@@ -140,12 +147,11 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         )
         observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
 
+        # TODO: unite it with SOBO and also add the other acquisition functions
         for i in range(candidate_count):
             assert self.model is not None
             acqf = get_acquisition_function(
-                acquisition_function_name="qNEI"
-                if self.acqf == AcquisitionFunctionEnum.QNEI
-                else "qEI",
+                acquisition_function_name="qNEI",
                 model=self.model,
                 objective=self.get_objective(pred),
                 X_observed=observed_x,
@@ -240,6 +246,12 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        if my_type not in [MaximizeObjective, MinimizeObjective]:
+        if my_type not in [
+            MaximizeObjective,
+            MinimizeObjective,
+            TargetObjective,
+            MinimizeSigmoidObjective,
+            MaximizeSigmoidObjective,
+        ]:
             return False
         return True

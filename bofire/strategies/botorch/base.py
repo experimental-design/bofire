@@ -1,16 +1,18 @@
 import copy
 from abc import abstractmethod
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
 from pydantic import PositiveInt
 from pydantic.class_validators import root_validator, validator
 from pydantic.types import NonNegativeInt
+from torch import Tensor
 
 from bofire.domain.constraint import (
     LinearEqualityConstraint,
@@ -28,6 +30,7 @@ from bofire.domain.feature import (
 from bofire.domain.features import OutputFeatures
 from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
+from bofire.samplers import PolytopeSampler
 from bofire.strategies.strategy import PredictiveStrategy, add_exclude
 from bofire.strategies.utils import is_power_of_two
 from bofire.utils.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -593,3 +596,20 @@ class BotorchBasicBoStrategy(PredictiveStrategy):
             X_pending = None
 
         return X_train, X_pending
+
+    def get_infeasible_cost(
+        self, objective: Callable[[Tensor, Tensor], Tensor], n_samples=128
+    ) -> Tensor:
+        X_train, X_pending = self.get_acqf_input_tensors()
+        sampler = PolytopeSampler(domain=self.domain)
+        samples = torch.from_numpy(
+            sampler.ask(n=n_samples, return_all=False).values
+        ).to(**tkwargs)
+        X = (
+            torch.cat((X_train, X_pending, samples))
+            if X_pending is not None
+            else torch.cat((X_train, samples))
+        )
+        return get_infeasible_cost(
+            X=X, model=self.model, objective=objective  # type: ignore
+        )
