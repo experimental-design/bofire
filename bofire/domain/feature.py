@@ -133,6 +133,7 @@ class NumericalInput(InputFeature):
     """Abstract base class for all numerical (ordinal) input features."""
 
     type: Literal["NumericalInput"] = "NumericalInput"
+    unit: Optional[str]
 
     def to_unit_range(
         self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
@@ -1062,6 +1063,7 @@ class ContinuousOutput(OutputFeature):
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
+    unit: Optional[str]
 
     def plot(
         self,
