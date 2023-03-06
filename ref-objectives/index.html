@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-features/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.0">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.1">
     
     
       
@@ -382,33 +382,6 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#bofire.domain.objective.AbstractTargetObjective" class="md-nav__link">
-    AbstractTargetObjective
-  </a>
-  
-    <nav class="md-nav" aria-label="AbstractTargetObjective">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.objective.AbstractTargetObjective.__json_encoder__" class="md-nav__link">
-    __json_encoder__()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.domain.objective.AbstractTargetObjective.plot_details" class="md-nav__link">
-    plot_details()
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
   <a href="#bofire.domain.objective.BotorchConstrainedObjective" class="md-nav__link">
     BotorchConstrainedObjective
   </a>
@@ -728,6 +701,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.domain.objective.TargetObjective.plot_details" class="md-nav__link">
+    plot_details()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.domain.objective.TargetObjective.to_constraints" class="md-nav__link">
     to_constraints()
   </a>
@@ -847,181 +827,6 @@
 
 
 
-
-
-
-  <div class="doc doc-object doc-class">
-
-
-
-<h2 id="bofire.domain.objective.AbstractTargetObjective" class="doc doc-heading">
-        <code>
-AbstractTargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objective.Objective" href="#bofire.domain.objective.Objective">Objective</a>)
-        </code>
-
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
-
-</h2>
-
-    <div class="doc doc-contents ">
-
-
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/objective.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">AbstractTargetObjective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
-    <span class="c1"># TODO: add docstring to AbstractTargetObjective</span>
-
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;AbstractTargetObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;AbstractTargetObjective&quot;</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">target_value</span><span class="p">:</span> <span class="nb">float</span>
-    <span class="n">tolerance</span><span class="p">:</span> <span class="n">TGe0</span>
-
-    <span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            ax (matplotlib.axes.Axes): Matplotlib axes object</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            matplotlib.axes.Axes: The object to be plotted</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
-            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ax</span>
-</code></pre></div>
-        </details>
-
-
-
-  <div class="doc doc-children">
-
-
-
-
-
-
-
-
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.objective.AbstractTargetObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.domain.objective.AbstractTargetObjective.plot_details" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Plot function highlighting the tolerance area of the objective</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ax</code></td>
-        <td><code>matplotlib.axes.Axes</code></td>
-        <td><p>Matplotlib axes object</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>matplotlib.axes.Axes</code></td>
-      <td><p>The object to be plotted</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/domain/objective.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        ax (matplotlib.axes.Axes): Matplotlib axes object</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        matplotlib.axes.Axes: The object to be plotted</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ax</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-
-
-  </div>
-
-    </div>
-
-  </div>
 
 
 
@@ -1164,7 +969,7 @@ BotorchConstrainedObjective        </code>
 
 <h2 id="bofire.domain.objective.CloseToTargetObjective" class="doc doc-heading">
         <code>
-CloseToTargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objective.AbstractTargetObjective" href="#bofire.domain.objective.AbstractTargetObjective">AbstractTargetObjective</a>)
+CloseToTargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objective.Objective" href="#bofire.domain.objective.Objective">Objective</a>)
         </code>
 
 
@@ -1179,23 +984,24 @@ CloseToTargetObjective            (<a class="autorefs autorefs-internal" title="
 
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objective.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CloseToTargetObjective</span><span class="p">(</span><span class="n">AbstractTargetObjective</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CloseToTargetObjective</span><span class="p">(</span><span class="n">Objective</span><span class="p">):</span>
     <span class="c1"># TODO: add docstring to CloseToTargetObjective</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CloseToTargetObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CloseToTargetObjective&quot;</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">target_value</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">exponent</span><span class="p">:</span> <span class="nb">float</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">)</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">exponent</span>
-            <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">exponent</span>
-        <span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">)</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">exponent</span><span class="p">)</span>
 </code></pre></div>
         </details>
 
 
 
   <div class="doc doc-children">
+
+
 
 
 
@@ -3161,7 +2967,7 @@ of the given arguments and keywords.</p>
 
 <h2 id="bofire.domain.objective.TargetObjective" class="doc doc-heading">
         <code>
-TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objective.AbstractTargetObjective" href="#bofire.domain.objective.AbstractTargetObjective">AbstractTargetObjective</a>, <a class="autorefs autorefs-internal" title="bofire.domain.objective.BotorchConstrainedObjective" href="#bofire.domain.objective.BotorchConstrainedObjective">BotorchConstrainedObjective</a>)
+TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.domain.objective.Objective" href="#bofire.domain.objective.Objective">Objective</a>, <a class="autorefs autorefs-internal" title="bofire.domain.objective.BotorchConstrainedObjective" href="#bofire.domain.objective.BotorchConstrainedObjective">BotorchConstrainedObjective</a>)
         </code>
 
 
@@ -3209,7 +3015,7 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/domain/objective.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">TargetObjective</span><span class="p">(</span><span class="n">AbstractTargetObjective</span><span class="p">,</span> <span class="n">BotorchConstrainedObjective</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">TargetObjective</span><span class="p">(</span><span class="n">Objective</span><span class="p">,</span> <span class="n">BotorchConstrainedObjective</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for objectives for optimizing towards a target value</span>
 
 <span class="sd">    Attributes:</span>
@@ -3221,6 +3027,9 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;TargetObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;TargetObjective&quot;</span>
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">target_value</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="n">tolerance</span><span class="p">:</span> <span class="n">TGe0</span>
     <span class="n">steepness</span><span class="p">:</span> <span class="n">TGt0</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
@@ -3252,6 +3061,24 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
             <span class="p">)</span>
         <span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            ax (matplotlib.axes.Axes): Matplotlib axes object</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            matplotlib.axes.Axes: The object to be plotted</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
+            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ax</span>
+
     <span class="k">def</span> <span class="nf">to_constraints</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
@@ -3274,6 +3101,9 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 
 
   <div class="doc doc-children">
+
+
+
 
 
 
@@ -3393,6 +3223,81 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
       <p>partial(func, <em>args, </em>*keywords) - new function with partial application
 of the given arguments and keywords.</p>
 
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h3 id="bofire.domain.objective.TargetObjective.plot_details" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Plot function highlighting the tolerance area of the objective</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ax</code></td>
+        <td><code>matplotlib.axes.Axes</code></td>
+        <td><p>Matplotlib axes object</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>matplotlib.axes.Axes</code></td>
+      <td><p>The object to be plotted</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/domain/objective.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        ax (matplotlib.axes.Axes): Matplotlib axes object</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        matplotlib.axes.Axes: The object to be plotted</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
+        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ax</span>
+</code></pre></div>
+        </details>
     </div>
 
   </div>
@@ -3533,7 +3438,7 @@ of the given arguments and keywords.</p>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.ce72ebac.min.js"></script>
+      <script src="../assets/javascripts/bundle.b78d2936.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
