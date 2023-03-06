@@ -23,7 +23,6 @@ AnyAbstractObjective = Union[
     objective.MaximizeSigmoidObjective,
     objective.MinimizeSigmoidObjective,
     objective.ConstantObjective,
-    objective.AbstractTargetObjective,
     objective.CloseToTargetObjective,
     objective.TargetObjective,
     objective.BotorchConstrainedObjective,

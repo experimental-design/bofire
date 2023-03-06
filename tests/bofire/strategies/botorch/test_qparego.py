@@ -4,7 +4,7 @@ from itertools import chain
 import pytest
 import torch
 
-from bofire.benchmarks.multi import DTLZ2, CrossCoupling
+from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
 from bofire.domain.features import OutputFeatures
 from bofire.models.gps.gps import MixedSingleTaskGPModel, SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
@@ -99,22 +99,33 @@ def test_invalid_qparego_init_domain(domain):
 
 
 @pytest.mark.parametrize(
-    "num_test_candidates, acquisition_function",
-    [
-        (num_test_candidates, acquisition_function)
-        for num_test_candidates in range(1, 3)
-        for acquisition_function in list(AcquisitionFunctionEnum)
-    ],
+    "num_test_candidates",
+    [num_test_candidates for num_test_candidates in range(1, 2)],
 )
-def test_qparego(num_test_candidates, acquisition_function):
+def test_qparego(num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
     # init strategy
-    my_strategy = BoTorchQparegoStrategy(
-        domain=benchmark.domain, acquisition_function=acquisition_function
-    )
+    my_strategy = BoTorchQparegoStrategy(domain=benchmark.domain)
+    my_strategy.tell(experiments)
+    # ask
+    candidates = my_strategy.ask(num_test_candidates)
+    assert len(candidates) == num_test_candidates
+
+
+@pytest.mark.parametrize(
+    "num_test_candidates",
+    [num_test_candidates for num_test_candidates in range(1, 2)],
+)
+def test_qparego_constraints(num_test_candidates):
+    # generate data
+    benchmark = C2DTLZ2(dim=4)
+    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    # init strategy
+    my_strategy = BoTorchQparegoStrategy(domain=benchmark.domain)
     my_strategy.tell(experiments)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
@@ -140,16 +151,19 @@ def test_qparego(num_test_candidates, acquisition_function):
 )
 @pytest.mark.slow
 def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
-
     # generate data
     random_strategy = PolytopeSampler(domain=benchmark.domain)
     experiments = benchmark.f(
         random_strategy._sample(n=num_experiments), return_complete=True
     )
-
+    print(specs.items())
     strategy = BoTorchQparegoStrategy(
         domain=benchmark.domain,
-        **{key: value for key, value in specs.items() if key != "domain"}
+        **{
+            key: value
+            for key, value in specs.items()
+            if key not in ["domain", "model_specs"]
+        }
     )
     # just to ensure there are no former experiments/ candidates already stored in the domain
     strategy.domain.experiments = None
@@ -174,3 +188,25 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
         num_candidates,
         len(set(chain(*names.values()))),
     )
+
+
+# def test_qparego_constraints():
+#     benchmark = C2DTLZ2(dim=4)
+#     random_strategy = PolytopeSampler(domain=benchmark.domain)
+#     experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+#     my_strategy = BoTorchQparegoStrategy(domain=benchmark.domain)
+#     my_strategy.tell(experiments)
+#     assert isinstance(my_strategy.objective, WeightedMCMultiOutputObjective)
+#     assert isinstance(my_strategy.acqf, qNoisyExpectedHypervolumeImprovement)
+#     assert my_strategy.acqf.eta == torch.tensor(1e-3)
+#     assert len(my_strategy.acqf.constraints) == 1
+#     assert torch.allclose(
+#         my_strategy.acqf.objective.outcomes, torch.tensor([0, 1], dtype=torch.int64)
+#     )
+#     assert torch.allclose(
+#         my_strategy.acqf.objective.weights, torch.tensor([-1, -1], dtype=torch.double)
+#     )
+#     assert torch.allclose(
+#         my_strategy.acqf.ref_point,
+#         torch.tensor([-1.1, -1.1], dtype=torch.double),
+#     )

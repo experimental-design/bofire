@@ -34,7 +34,6 @@ from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 # TODO: unite this by using get_acquisiton
 class BoTorchQehviStrategy(BotorchBasicBoStrategy):
-
     type: Literal["BoTorchQehviStrategy"] = "BoTorchQehviStrategy"
 
     ref_point: Optional[dict] = None
@@ -88,7 +87,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
             partitioning=partitioning,
             # sampler=self.sampler,
             # define an objective that specifies which outcomes are the objectives
-            objective=self.objective,
+            objective=self._get_objective(),
             X_pending=X_pending,
             # TODO: implement constraints
             # specify that the constraint is on the last outcome
@@ -98,7 +97,7 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return
 
-    def _init_objective(self) -> None:
+    def _get_objective(self) -> WeightedMCMultiOutputObjective:
         weights, indices = [], []
         for idx, feat in enumerate(self.domain.outputs.get()):
             if feat.objective is not None and not isinstance(  # type: ignore
@@ -108,11 +107,10 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
                 indices.append(idx)
 
         weights = np.array(weights) * self.ref_point_mask
-        self.objective = WeightedMCMultiOutputObjective(
+        return WeightedMCMultiOutputObjective(
             outcomes=indices,
             weights=torch.from_numpy(weights).to(**tkwargs),
         )
-        return
 
     def _init_domain(self) -> None:
         # TODO: check for None
@@ -223,13 +221,11 @@ class BoTorchQehviStrategy(BotorchBasicBoStrategy):
 
 
 class BoTorchQnehviStrategy(BoTorchQehviStrategy):
-
     type: Literal["BoTorchQnehviStrategy"] = "BoTorchQnehviStrategy"
 
     alpha: confloat(ge=0, le=0.5) = 0.0  # type: ignore
 
     def _init_acqf(self) -> None:
-
         X_train, X_pending = self.get_acqf_input_tensors()
 
         # get etas and constraints
@@ -247,7 +243,7 @@ class BoTorchQnehviStrategy(BoTorchQehviStrategy):
             X_baseline=X_train,
             # sampler=self.sampler,
             prune_baseline=True,
-            objective=self.objective,
+            objective=self._get_objective(),
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             X_pending=X_pending,
             constraints=constraints,

@@ -28,7 +28,6 @@ from bofire.models.gps.gps import SingleTaskGPModel
 from bofire.models.torch_models import BotorchModels
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
 from bofire.strategies.botorch.sobo import AcquisitionFunctionEnum
-from bofire.strategies.botorch.utils.objectives import MultiplicativeObjective
 from bofire.utils.enum import CategoricalEncodingEnum
 from tests.bofire.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.specs import (
@@ -63,17 +62,6 @@ class DummyStrategy(BotorchBasicBoStrategy):
         self,
     ) -> None:
         pass
-
-    def _init_objective(
-        self,
-    ) -> None:
-        self.objective = MultiplicativeObjective(
-            targets=[
-                var.objective
-                for var in self.domain.output_features.get_by_objective(excludes=None)
-            ]
-        )
-        return
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -402,7 +390,6 @@ def test_base_invalid_descriptor_method():
 def test_base_get_fixed_features(
     domain, model_specs, categorical_method, descriptor_method, expected
 ):
-
     myStrategy = DummyStrategy(
         domain=domain,
         model_specs=model_specs,
@@ -634,7 +621,6 @@ def test_base_get_categorical_combinations(
     model_specs,
     expected,
 ):
-
     myStrategy = DummyStrategy(
         domain=domain,
         model_specs=model_specs,

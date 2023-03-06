@@ -1,9 +1,9 @@
-from typing import Literal, Type
+from typing import Literal, Type, Union
 
 import numpy as np
 import pandas as pd
 import torch
-from botorch.acquisition.objective import GenericMCObjective
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.acquisition.utils import get_acquisition_function
 from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
@@ -17,28 +17,30 @@ from bofire.domain.constraint import (
 )
 from bofire.domain.feature import CategoricalInput, Feature
 from bofire.domain.objective import (
-    IdentityObjective,
     MaximizeObjective,
+    MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
     Objective,
+    TargetObjective,
 )
 from bofire.strategies.botorch.base import BotorchBasicBoStrategy
-from bofire.utils.enum import AcquisitionFunctionEnum, CategoricalMethodEnum
+from bofire.utils.enum import CategoricalMethodEnum
 from bofire.utils.multiobjective import get_ref_point_mask
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_linear_constraints,
+    get_output_constraints,
+    tkwargs,
+)
 
 
 # this implementation follows this tutorial: https://github.com/pytorch/botorch/blob/main/tutorials/multi_objective_bo.ipynb
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
-
     type: Literal["BoTorchQparegoStrategy"] = "BoTorchQparegoStrategy"
 
     def _init_acqf(self) -> None:
-        pass
-
-    def _init_objective(self) -> None:
         pass
 
     def calc_acquisition(self, experiments: pd.DataFrame, combined: bool = False):
@@ -46,15 +48,19 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     def _init_domain(self) -> None:
         # first part of this is doubled with qehvi --> maybe create a common base class
-        if len(self.domain.outputs.get_by_objective(excludes=None)) < 2:
+        # this has to go into the validators
+        if (
+            len(
+                self.domain.outputs.get_by_objective(
+                    includes=[MaximizeObjective, MinimizeObjective]
+                )
+            )
+            < 2
+        ):
             raise ValueError(
-                "At least two output features has to be defined in the domain."
+                "At least two features with objective type `MaximizeObjective` or `MinimizeObjective` has to be defined in the domain."
             )
         for feat in self.domain.outputs.get_by_objective(excludes=None):
-            if isinstance(feat.objective, IdentityObjective) is False:  # type: ignore
-                raise ValueError(
-                    "Only `MaximizeObjective` and `MinimizeObjective` supported."
-                )
             if feat.objective.w != 1.0:  # type: ignore
                 raise ValueError(
                     "Only objective functions with weight 1 are supported."
@@ -62,6 +68,60 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
         super()._init_domain()
         return
+
+    def get_objective(
+        self, pred: torch.Tensor
+    ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+        """Returns the scalarized objective.
+
+        Args:
+            pred (torch.Tensor): Predictions for the training data from the
+                trained model.
+
+        Returns:
+            Union[GenericMCObjective, ConstrainedMCObjective]: the botorch objective.
+        """
+        ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
+            **tkwargs
+        )
+        weights = (
+            sample_simplex(
+                len(
+                    self.domain.outputs.get_keys_by_objective(
+                        includes=[MaximizeObjective, MinimizeObjective]
+                    )
+                ),
+                **tkwargs
+            ).squeeze()
+            * ref_point_mask
+        )
+        key2indices = {key: i for i, key in enumerate(self.domain.outputs.get_keys())}
+        indices = torch.tensor(
+            [
+                key2indices[key]
+                for key in self.domain.outputs.get_keys_by_objective(
+                    includes=[MaximizeObjective, MinimizeObjective]
+                )
+            ],
+            dtype=torch.int64,
+        )
+
+        scalarization = get_chebyshev_scalarization(
+            weights=weights, Y=pred[..., indices]
+        )
+
+        def objective(Z, X=None):
+            return scalarization(Z[..., indices], X)
+
+        if len(weights) != len(self.domain.outputs):
+            constraints, etas = get_output_constraints(self.domain.outputs)
+            return ConstrainedMCObjective(
+                objective=objective,
+                constraints=constraints,
+                eta=torch.tensor(etas).to(**tkwargs),
+                infeasible_cost=self.get_infeasible_cost(objective=objective),
+            )
+        return GenericMCObjective(scalarization)
 
     def _ask(self, candidate_count: int):
         assert candidate_count > 0, "candidate_count has to be larger than zero."
@@ -87,28 +147,13 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
         )
         observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
 
+        # TODO: unite it with SOBO and also add the other acquisition functions
         for i in range(candidate_count):
-            ref_point_mask = torch.from_numpy(
-                get_ref_point_mask(domain=self.domain)
-            ).to(**tkwargs)
-            weights = (
-                sample_simplex(
-                    len(self.domain.outputs.get_keys_by_objective(excludes=None)),
-                    **tkwargs
-                ).squeeze()
-                * ref_point_mask
-            )
-            objective = GenericMCObjective(
-                get_chebyshev_scalarization(weights=weights, Y=pred)
-            )
-
             assert self.model is not None
             acqf = get_acquisition_function(
-                acquisition_function_name="qNEI"
-                if self.acqf == AcquisitionFunctionEnum.QNEI
-                else "qEI",
+                acquisition_function_name="qNEI",
                 model=self.model,
-                objective=objective,
+                objective=self.get_objective(pred),
                 X_observed=observed_x,
                 mc_samples=self.num_sobol_samples,
                 qmc=True,
@@ -141,7 +186,6 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
             (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
             or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
         ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-
             fixed_features_list = self.get_categorical_combinations()
 
         elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
@@ -202,6 +246,12 @@ class BoTorchQparegoStrategy(BotorchBasicBoStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        if my_type not in [MaximizeObjective, MinimizeObjective]:
+        if my_type not in [
+            MaximizeObjective,
+            MinimizeObjective,
+            TargetObjective,
+            MinimizeSigmoidObjective,
+            MaximizeSigmoidObjective,
+        ]:
             return False
         return True
