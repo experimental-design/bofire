@@ -54,7 +54,7 @@ Documentation including a section on how to get started can be found under https
 
 ## Contributing
 
-> TL;DR of the [Contributing](./CONTRIBUTING.md) guidelines.
+See our [Contributing](./CONTRIBUTING.md) guidelines.
 
 ### Release roadmap
 
