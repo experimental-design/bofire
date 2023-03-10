@@ -90,10 +90,10 @@ class SingleTaskGPModel(BotorchModel, TrainableModel):
             Y.values
         ).to(**tkwargs)
 
-        if tX.dim() == 2:
-            batch_shape = torch.Size()
-        else:
-            batch_shape = torch.Size([tX.shape[0]])
+        # if tX.dim() == 2:
+        batch_shape = torch.Size()
+        # else:
+        #    batch_shape = torch.Size([tX.shape[0]])
 
         d = tX.shape[-1]
 
