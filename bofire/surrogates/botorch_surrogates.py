@@ -24,7 +24,7 @@ class BotorchSurrogates(ABC):
         data_model: DataModel,
         **kwargs,
     ):
-        self.surrogates = [map_surrogate(model) for model in data_model.surrogates]
+        self.surrogates = [map_surrogate(model) for model in data_model.surrogates]  # type: ignore
 
     @property
     def input_preprocessing_specs(self) -> TInputTransformSpecs:

@@ -49,7 +49,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.descriptor_method = data_model.descriptor_method
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
-        self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)
+        self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
         self._init_domain()
 
     acqf: Optional[AcquisitionFunction] = None

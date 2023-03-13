@@ -1,4 +1,4 @@
-from typing import Type, Union, _UnionGenericAlias
+from typing import Type, Union, _UnionGenericAlias  # type: ignore
 
 
 def to_list(union: Union[Type, _UnionGenericAlias]):
