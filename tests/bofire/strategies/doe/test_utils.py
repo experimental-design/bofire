@@ -4,13 +4,17 @@ import numpy as np
 import pytest
 from scipy.optimize import LinearConstraint
 
-from bofire.domain.constraint import (
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput, DiscreteInput
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import (
+    ContinuousInput,
+    ContinuousOutput,
+    DiscreteInput,
+)
 from bofire.strategies.doe.utils import (
     ConstraintWrapper,
     a_optimality,

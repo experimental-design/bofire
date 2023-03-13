@@ -6,9 +6,9 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.domain.constraint import NChooseKConstraint
-from bofire.domain.domain import Domain
-from bofire.samplers import PolytopeSampler
+from bofire.data_models.constraints.api import NChooseKConstraint
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.samplers.api import PolytopeSampler
 from bofire.strategies.doe.jacobian import JacobianForLogdet
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,

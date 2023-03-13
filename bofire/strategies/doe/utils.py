@@ -8,15 +8,15 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize import LinearConstraint
 
-from bofire.domain.constraint import (
+from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.features import CategoricalInput, ContinuousOutput
-from bofire.samplers import PolytopeSampler
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
+from bofire.data_models.samplers.api import PolytopeSampler
 
 CAT_TOL = 0.1
 DISCRETE_TOL = 0.1

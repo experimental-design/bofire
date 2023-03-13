@@ -3,15 +3,13 @@ import os
 import pytest
 
 from bofire.benchmarks.aspen_benchmark import Aspen_benchmark
-from bofire.domain.domain import Domain
-from bofire.domain.features import (
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
-    InputFeatures,
-    OutputFeatures,
 )
-from bofire.domain.objective import MaximizeObjective
+from bofire.data_models.objectives.api import MaximizeObjective
 
 
 @pytest.mark.parametrize(
@@ -30,7 +28,7 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
     """
 
     domain = Domain(
-        input_features=InputFeatures(
+        input_features=Inputs(
             features=[
                 ContinuousInput(
                     key="A", type="ContinuousInput", lower_bound=0, upper_bound=10.0
@@ -51,7 +49,7 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
                 ),
             ]
         ),
-        output_features=OutputFeatures(
+        output_features=Outputs(
             features=[
                 ContinuousOutput(
                     key="X",

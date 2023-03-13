@@ -1,0 +1,194 @@
+from typing import List, Literal, Tuple
+
+import numpy as np
+import pandas as pd
+from pydantic import root_validator, validator
+
+from bofire.data_models.constraints.constraint import (
+    Coefficients,
+    Constraint,
+    FeatureKeys,
+)
+
+
+class LinearConstraint(Constraint):
+    """Abstract base class for linear equality and inequality constraints.
+
+    Attributes:
+        features (list): list of feature keys (str) on which the constraint works on.
+        coefficients (list): list of coefficients (float) of the constraint.
+        rhs (float): Right-hand side of the constraint
+    """
+
+    type: Literal["LinearConstraint"] = "LinearConstraint"
+
+    features: FeatureKeys
+    coefficients: Coefficients
+    rhs: float
+
+    @validator("features")
+    def validate_features_unique(cls, features):
+        """Validate that feature keys are unique."""
+        if len(features) != len(set(features)):
+            raise ValueError("features must be unique")
+        return features
+
+    @root_validator(pre=False, skip_on_failure=True)
+    def validate_list_lengths(cls, values):
+        """Validate that length of the feature and coefficient lists have the same length."""
+        if len(values["features"]) != len(values["coefficients"]):
+            raise ValueError(
+                f'must provide same number of features and coefficients, got {len(values["features"])} != {len(values["coefficients"])}'
+            )
+        return values
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        return (
+            experiments[self.features] @ self.coefficients - self.rhs
+        ) / np.linalg.norm(self.coefficients)
+
+    # def lhs(self, df_data: pd.DataFrame) -> float:
+    #     """Evaluate the left-hand side of the constraint on each row of a dataframe
+
+    #     Args:
+    #         df_data (pd.DataFrame): Dataframe on which the left-hand side should be evaluated.
+
+    #     Returns:
+    #         np.array: 1-dim array with left-hand side of each row of the provided dataframe.
+    #     """
+    #     cols = self.features
+    #     coefficients = self.coefficients
+    #     return np.sum(df_data[cols].values * np.array(coefficients), axis=1)
+
+    def __str__(self) -> str:
+        """Generate string representation of the constraint.
+
+        Returns:
+            str: string representation of the constraint.
+        """
+        return " + ".join(
+            [f"{self.coefficients[i]} * {feat}" for i, feat in enumerate(self.features)]
+        )
+
+
+class LinearEqualityConstraint(LinearConstraint):
+    """Linear equality constraint of the form `coefficients * x = rhs`.
+
+    Attributes:
+        features (list): list of feature keys (str) on which the constraint works on.
+        coefficients (list): list of coefficients (float) of the constraint.
+        rhs (float): Right-hand side of the constraint
+    """
+
+    type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
+
+    # def is_fulfilled(self, experiments: pd.DataFrame, complete: bool) -> bool:
+    #     """Check if the linear equality constraint is fulfilled for all the rows of the provided dataframe.
+
+    #     Args:
+    #         df_data (pd.DataFrame): Dataframe to evaluate constraint on.
+
+    #     Returns:
+    #         bool: True if fulfilled else False.
+    #     """
+    #     fulfilled = np.isclose(self(experiments), 0)
+    #     if complete:
+    #         return fulfilled.all()
+    #     else:
+    #         pd.Series(fulfilled, index=experiments.index)
+
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
+
+    def __str__(self) -> str:
+        """Generate string representation of the constraint.
+
+        Returns:
+            str: string representation of the constraint.
+        """
+        return super().__str__() + f" = {self.rhs}"
+
+
+class LinearInequalityConstraint(LinearConstraint):
+    """Linear inequality constraint of the form `coefficients * x <= rhs`.
+
+    To instantiate a constraint of the form `coefficients * x >= rhs` multiply coefficients and rhs by -1, or
+    use the classmethod `from_greater_equal`.
+
+    Attributes:
+        features (list): list of feature keys (str) on which the constraint works on.
+        coefficients (list): list of coefficients (float) of the constraint.
+        rhs (float): Right-hand side of the constraint
+    """
+
+    type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
+
+    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+        noise = 10e-6
+        return self(experiments) <= 0 + noise
+
+    def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
+        """Return attributes in the smaller equal convention
+
+        Returns:
+            Tuple[List[str], List[float], float]: features, coefficients, rhs
+        """
+        return self.features, self.coefficients, self.rhs
+
+    def as_greater_equal(self) -> Tuple[List[str], List[float], float]:
+        """Return attributes in the greater equal convention
+
+        Returns:
+            Tuple[List[str], List[float], float]: features, coefficients, rhs
+        """
+        return self.features, [-1.0 * c for c in self.coefficients], -1.0 * self.rhs
+
+    # TODO: from_greater_equal should take the object as input
+    @classmethod
+    def from_greater_equal(
+        cls,
+        features: List[str],
+        coefficients: List[float],
+        rhs: float,
+    ):
+        """Class method to construct linear inequality constraint of the form `coefficients * x >= rhs`.
+
+        Args:
+            features (List[str]): List of feature keys.
+            coefficients (List[float]): List of coefficients.
+            rhs (float): Right-hand side of the constraint.
+        """
+        return cls(
+            features=features,
+            coefficients=[-1.0 * c for c in coefficients],
+            rhs=-1.0 * rhs,
+        )
+
+    # TODO: from_smaller_equal should take the object as input
+    @classmethod
+    def from_smaller_equal(
+        cls,
+        features: List[str],
+        coefficients: List[float],
+        rhs: float,
+    ):
+        """Class method to construct linear inequality constraint of the form `coefficients * x <= rhs`.
+
+        Args:
+            features (List[str]): List of feature keys.
+            coefficients (List[float]): List of coefficients.
+            rhs (float): Right-hand side of the constraint.
+        """
+        return cls(
+            features=features,
+            coefficients=coefficients,
+            rhs=rhs,
+        )
+
+    def __str__(self):
+        """Generate string representation of the constraint.
+
+        Returns:
+            str: string representation of the constraint.
+        """
+        return super().__str__() + f" <= {self.rhs}"

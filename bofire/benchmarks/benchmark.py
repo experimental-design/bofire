@@ -9,9 +9,9 @@ import pandas as pd
 from multiprocess.pool import Pool
 from tqdm import tqdm
 
-from bofire.domain.domain import Domain
-from bofire.domain.feature import OutputFeature
-from bofire.domain.objective import Objective
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import Output
+from bofire.data_models.objectives.api import Objective
 from bofire.strategies.strategy import Strategy
 
 
@@ -22,7 +22,7 @@ def best(domain: Domain, reduction: Callable[[pd.DataFrame], pd.Series]):
     output_values = domain.experiments[outputs_with_objectives.get_keys()]
     objective_values = list()
     for output, col_name in zip(outputs_with_objectives, output_values):
-        assert isinstance(output, OutputFeature)
+        assert isinstance(output, Output)
         assert output.objective is not None
         objective_values.append(output.objective(output_values[col_name]))
     objective_values = reduction(pd.concat([ov.to_frame() for ov in objective_values]))

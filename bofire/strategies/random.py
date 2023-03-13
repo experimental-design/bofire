@@ -1,19 +1,13 @@
-from typing import Literal, Optional, Type
+from typing import Optional
 
 import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
 
-from bofire.any.sampler import AnySampler
-from bofire.domain.constraint import (
-    Constraint,
-    NChooseKConstraint,
-    NonlinearEqualityConstraint,
-)
-from bofire.domain.feature import Feature
-from bofire.domain.objective import Objective
-from bofire.samplers import PolytopeSampler, RejectionSampler
-from bofire.strategies.strategy import Strategy, add_exclude
+from bofire.data_models.api import AnySampler
+from bofire.data_models.samplers.api import PolytopeSampler, RejectionSampler
+from bofire.data_models.strategies.api import RandomStrategy as DataModel
+from bofire.strategies.strategy import Strategy
 
 
 class RandomStrategy(Strategy):
@@ -23,17 +17,17 @@ class RandomStrategy(Strategy):
     Uses PolytopeSampler or RejectionSampler, depending on the constraints.
     """
 
-    type: Literal["RandomStrategy"] = "RandomStrategy"
+    def __init__(
+        self,
+        data_model: DataModel,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
+        self._init_sampler()
 
     sampler: Optional[AnySampler] = None
 
-    def json(self, **kwargs):
-        return super().json(**add_exclude(kwargs, "sampler"))
-
-    def dict(self, **kwargs):
-        return super().dict(**add_exclude(kwargs, "sampler"))
-
-    def _init_domain(self) -> None:
+    def _init_sampler(self) -> None:
         errors = []
         for S in [PolytopeSampler, RejectionSampler]:
             try:
@@ -43,20 +37,6 @@ class RandomStrategy(Strategy):
                 errors.append(err)
         if self.sampler is None:
             raise Exception(errors)
-
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
-        if my_type in [NChooseKConstraint, NonlinearEqualityConstraint]:
-            return False
-        return True
-
-    @classmethod
-    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        return True
-
-    @classmethod
-    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        return True
 
     def has_sufficient_experiments(self) -> bool:
         return True

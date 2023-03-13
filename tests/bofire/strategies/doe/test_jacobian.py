@@ -3,8 +3,8 @@ import pandas as pd
 import pytest
 from formulaic import Formula
 
-from bofire.domain.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.jacobian import (
     JacobianForLogdet,
     default_jacobian_building_block,
