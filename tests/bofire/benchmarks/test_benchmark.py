@@ -7,7 +7,7 @@ from bofire.data_models.strategies.api import (
     RejectionSampler as RejectionSamplerDataModel,
 )
 from bofire.strategies.api import QparegoStrategy, RejectionSampler
-from bofire.strategies.multiobjective import compute_hypervolume
+from bofire.utils.multiobjective import compute_hypervolume
 
 # from bofire.data_models.strategies.api import QparegoStrategy
 

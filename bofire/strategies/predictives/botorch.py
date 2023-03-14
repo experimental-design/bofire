@@ -1,5 +1,3 @@
-# TODO: refactor: use functions samplers instead of data models
-
 import copy
 from abc import abstractmethod
 from typing import Callable, Dict, Optional, Tuple
@@ -34,7 +32,7 @@ from bofire.data_models.strategies.api import (
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
-from bofire.surrogates.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 def is_power_of_two(n):

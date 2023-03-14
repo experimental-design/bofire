@@ -17,8 +17,8 @@ from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.torch_tools import tkwargs
 from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.utils.torch_tools import tkwargs
 
 
 class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):

@@ -11,7 +11,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     MinimizeSigmoidObjective,
 )
-from bofire.strategies.multiobjective import (
+from bofire.utils.multiobjective import (
     compute_hypervolume,
     get_pareto_front,
     get_ref_point_mask,

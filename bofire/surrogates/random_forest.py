@@ -13,8 +13,8 @@ from torch import Tensor
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.torch_tools import tkwargs
 from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.utils.torch_tools import tkwargs
 
 
 class _RandomForest(EnsembleModel):

@@ -15,9 +15,9 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 
 from bofire.data_models.objectives.api import BotorchConstrainedObjective
 from bofire.data_models.strategies.api import QehviStrategy as DataModel
-from bofire.strategies.multiobjective import get_ref_point_mask
 from bofire.strategies.predictives.botorch import BotorchStrategy
-from bofire.surrogates.torch_tools import tkwargs
+from bofire.utils.multiobjective import get_ref_point_mask
+from bofire.utils.torch_tools import tkwargs
 
 
 # TODO: unite this by using get_acquisiton

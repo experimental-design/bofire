@@ -18,9 +18,9 @@ from bofire.data_models.enum import CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
-from bofire.strategies.multiobjective import get_ref_point_mask
 from bofire.strategies.predictives.botorch import BotorchStrategy
-from bofire.surrogates.torch_tools import (
+from bofire.utils.multiobjective import get_ref_point_mask
+from bofire.utils.torch_tools import (
     get_linear_constraints,
     get_output_constraints,
     tkwargs,

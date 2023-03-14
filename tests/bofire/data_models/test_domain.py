@@ -12,7 +12,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     NChooseKConstraint,
 )
-from bofire.data_models.domain.api import Domain, get_subdomain
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -24,6 +24,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import Objective, TargetObjective
+from bofire.utils.subdomain import get_subdomain
 
 
 def test_empty_domain():

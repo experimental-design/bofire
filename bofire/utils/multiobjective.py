@@ -1,5 +1,3 @@
-# TODO: move this to bofire.utils
-
 from typing import Optional
 
 import numpy as np

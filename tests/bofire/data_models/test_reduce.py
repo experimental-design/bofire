@@ -6,16 +6,16 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.domain.reduce import (
-    check_domain_for_reduction,
-    check_existence_of_solution,
-    reduce_domain,
-    rref,
-)
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+)
+from bofire.utils.reduce import (
+    check_domain_for_reduction,
+    check_existence_of_solution,
+    reduce_domain,
+    rref,
 )
 
 if1 = ContinuousInput(key="if1", lower_bound=0.0, upper_bound=0.8)

@@ -8,7 +8,7 @@ from botorch.models.transforms.input import ChainedInputTransform, FilterFeature
 
 from bofire.data_models.surrogates.api import BotorchSurrogate as DataModel
 from bofire.surrogates.surrogate import Surrogate
-from bofire.surrogates.torch_tools import tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 
 class BotorchSurrogate(Surrogate):

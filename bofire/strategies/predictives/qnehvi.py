@@ -6,7 +6,7 @@ from botorch.models.gpytorch import GPyTorchModel
 
 from bofire.data_models.strategies.api import QnehviStrategy as DataModel
 from bofire.strategies.predictives.qehvi import QehviStrategy
-from bofire.surrogates.torch_tools import get_output_constraints, tkwargs
+from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 
 class QnehviStrategy(QehviStrategy):

@@ -26,7 +26,7 @@ from bofire.data_models.objectives.api import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
-from bofire.surrogates.torch_tools import (
+from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_linear_constraints,
     get_multiplicative_botorch_objective,

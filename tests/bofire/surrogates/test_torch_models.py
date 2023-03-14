@@ -28,7 +28,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.api import BotorchSurrogates
-from bofire.surrogates.torch_tools import tkwargs
+from bofire.utils.torch_tools import tkwargs
 
 CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
 
