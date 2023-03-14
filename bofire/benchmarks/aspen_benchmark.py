@@ -77,7 +77,7 @@ class Aspen_benchmark(Benchmark):
         Raises:
             ValueError: In case it is not possible to start Aspen plus.
         """
-        import win32com.client as win32
+        import win32com.client as win32  # type: ignore
 
         logger.info("Starting Aspen plus")
         # Aspen should be accessible from every function as a global variable.

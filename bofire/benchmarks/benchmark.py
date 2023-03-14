@@ -81,7 +81,7 @@ def _single_run(
     strategy = strategies.map(strategy_data)
     # tell it
     if initial_sampler is not None:
-        strategy.tell(XY)
+        strategy.tell(XY)  # type: ignore
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:

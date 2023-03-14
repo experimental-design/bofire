@@ -487,7 +487,7 @@ class CrossCoupling(Benchmark):
         )
         ground_truth_yield = surrogates.map(data_model)
 
-        ground_truth_yield.fit(experiments=data)
+        ground_truth_yield.fit(experiments=data)  # type: ignore
         self.ground_truth_yield = ground_truth_yield
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:

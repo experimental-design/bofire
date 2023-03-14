@@ -2,7 +2,7 @@ from typing import Optional
 
 from pydantic import PositiveInt, root_validator, validator
 
-from bofire.data_models.domain.api import Constraints, Domain, Outputs
+from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
@@ -100,7 +100,6 @@ class BotorchStrategy(PredictiveStrategy):
                     MixedSingleTaskGPSurrogate(
                         input_features=domain.inputs,
                         output_features=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
-                        constraints=Constraints(),
                     )
                 )
             else:
