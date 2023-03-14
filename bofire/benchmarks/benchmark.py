@@ -11,33 +11,7 @@ from tqdm import tqdm
 
 import bofire.strategies.api as strategies
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import Output
-from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.api import AnyStrategy
-
-
-# TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
-def best(domain: Domain, reduction: Callable[[pd.DataFrame], pd.Series]):
-    assert domain.experiments is not None
-    outputs_with_objectives = domain.outputs.get_by_objective(Objective)
-    output_values = domain.experiments[outputs_with_objectives.get_keys()]
-    objective_values = list()
-    for output, col_name in zip(outputs_with_objectives, output_values):
-        assert isinstance(output, Output)
-        assert output.objective is not None
-        objective_values.append(output.objective(output_values[col_name]))
-    objective_values = reduction(pd.concat([ov.to_frame() for ov in objective_values]))
-    return objective_values.max()
-
-
-# TODO: remove as soon as additive/multiplicative is part of Domain
-def best_additive(domain: Domain):
-    return best(domain, lambda df: df.sum(axis=1))
-
-
-# TODO: remove as soon as additive/multiplicative is part of Domain
-def best_multiplicative(domain: Domain):
-    return best(domain, lambda df: df.prod(axis=1))
 
 
 class Benchmark:

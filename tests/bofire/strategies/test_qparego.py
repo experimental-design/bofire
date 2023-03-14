@@ -14,7 +14,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.strategies.api import PolytopeSampler, QparegoStrategy
 from tests.bofire.strategies.test_base import domains
-from tests.bofire.strategies.test_multiobjective import invalid_domains
+from tests.bofire.utils.test_multiobjective import invalid_domains
 
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[6],

@@ -22,7 +22,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.strategies.api import PolytopeSampler
 from tests.bofire.strategies.specs import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
-from tests.bofire.strategies.test_multiobjective import (
+from tests.bofire.utils.test_multiobjective import (
     dfs,
     invalid_domains,
     valid_constrained_domains,
