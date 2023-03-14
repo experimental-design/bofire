@@ -1,4 +1,4 @@
-from pydantic import PositiveFloat
+from pydantic import confloat
 
 from bofire.data_models.base import BaseModel
 
@@ -15,5 +15,4 @@ class PredictedValue(BaseModel):
     """
 
     predictedValue: float
-    standardDeviation: PositiveFloat
-    # Annotated[List[str], Field(ge=0)]  # type: ignore
+    standardDeviation: confloat(ge=0)  # type: ignore

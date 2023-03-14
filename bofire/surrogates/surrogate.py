@@ -33,9 +33,7 @@ class Surrogate(ABC):
     def predict(self, X: pd.DataFrame) -> pd.DataFrame:
         # check if model is fitted
         if not self.is_fitted:
-            raise ValueError(
-                "Model is not fitted yet. Call 'fit' with appropriate arguments before using this model."
-            )
+            raise ValueError("Model is not fitted/available yet.")
         # validate
         X = self.input_features.validate_experiments(X, strict=False)
         # transform
