@@ -9,10 +9,11 @@ import pandas as pd
 from multiprocess.pool import Pool
 from tqdm import tqdm
 
+import bofire.strategies.api as strategies
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import Output
 from bofire.data_models.objectives.api import Objective
-from bofire.strategies.strategy import Strategy
+from bofire.data_models.strategies.api import AnyStrategy
 
 
 # TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
@@ -63,7 +64,7 @@ class Benchmark:
 
 
 class StrategyFactory(Protocol):
-    def __call__(self, domain: Domain) -> Strategy:
+    def __call__(self, domain: Domain) -> AnyStrategy:
         ...
 
 
@@ -72,11 +73,11 @@ def _single_run(
     benchmark: Benchmark,
     strategy_factory: StrategyFactory,
     n_iterations: int,
-    metric: Callable[[Domain], float],
-    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
+    metric: Callable[[Domain, pd.DataFrame], float],
     n_candidates_per_proposals: int,
     safe_intervall: int,
-) -> Tuple[Benchmark, pd.Series]:
+    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
+) -> Tuple[pd.DataFrame, pd.Series]:
     def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
         Autosave should operate every 10 iterations.
@@ -97,12 +98,16 @@ def _single_run(
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
+    # sample initial values
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
-        Y = benchmark.f(X)
-        XY = pd.concat([X, Y], axis=1)
-        benchmark.domain.add_experiments(XY)
-    strategy = strategy_factory(domain=benchmark.domain)
+        XY = benchmark.f(X, return_complete=True)
+    strategy_data = strategy_factory(domain=benchmark.domain)
+    # map it
+    strategy = strategies.map(strategy_data)
+    # tell it
+    if initial_sampler is not None:
+        strategy.tell(XY)
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
@@ -113,26 +118,26 @@ def _single_run(
         # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
         # colum needs to be converted back to str to be added to the benchmark domain.
         strategy.tell(XY)
-        metric_values[i] = metric(strategy.domain)
+        metric_values[i] = metric(strategy.domain, strategy.experiments)  # type: ignore
         pbar.set_description(
             f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
         )
         if (i + 1) % safe_intervall == 0:
             autosafe_results(benchmark=benchmark)
-    return benchmark, pd.Series(metric_values)
+    return strategy.experiments, pd.Series(metric_values)  # type: ignore
 
 
 def run(
     benchmark: Benchmark,
     strategy_factory: StrategyFactory,
     n_iterations: int,
-    metric: Callable[[Domain], float],
+    metric: Callable[[Domain, pd.DataFrame], float],
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
     n_candidates_per_proposal: int = 1,
     n_runs: int = 5,
     n_procs: int = 5,
     safe_intervall: int = 1000,
-) -> List[Tuple[Benchmark, pd.Series]]:
+) -> List[Tuple[pd.DataFrame, pd.Series]]:
     """Run a benchmark problem several times in parallel
 
     Args:
@@ -157,9 +162,9 @@ def run(
             strategy_factory,
             n_iterations,
             metric,
-            initial_sampler,
             n_candidates_per_proposal,
             safe_intervall,
+            initial_sampler,
         )
 
     if n_procs == 1:

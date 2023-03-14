@@ -1,21 +1,21 @@
 import pandas as pd
 
 import bofire.benchmarks.benchmark as benchmark
+import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import ZDT1
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import (
+    QparegoStrategy as QparegoStrategyDataModel,
+)
+from bofire.data_models.strategies.api import (
     RejectionSampler as RejectionSamplerDataModel,
 )
-from bofire.strategies.api import QparegoStrategy, RejectionSampler
 from bofire.utils.multiobjective import compute_hypervolume
 
-# from bofire.data_models.strategies.api import QparegoStrategy
 
-
-# TODO: re-enable this benchmark test
-def _test_benchmark():
+def test_benchmark():
     zdt1 = ZDT1(n_inputs=5)
-    qparego_factory = QparegoStrategy
+    qparego_factory = QparegoStrategyDataModel
 
     n_initial_samples = 10
     n_runs = 3
@@ -23,16 +23,13 @@ def _test_benchmark():
 
     def sample(domain):
         nonlocal n_initial_samples
-        sampler = RejectionSampler(data_model=RejectionSamplerDataModel(domain=domain))
+        sampler = strategies.map(RejectionSamplerDataModel(domain=domain))
         sampled = sampler.ask(n_initial_samples)
 
         return sampled
 
-    def hypervolume(domain: Domain) -> float:
-        assert domain.experiments is not None
-        return compute_hypervolume(
-            domain, domain.experiments, ref_point={"y1": 10, "y2": 10}
-        )
+    def hypervolume(domain: Domain, experiments: pd.DataFrame) -> float:
+        return compute_hypervolume(domain, experiments, ref_point={"y1": 10, "y2": 10})
 
     results = benchmark.run(
         zdt1,
@@ -45,8 +42,9 @@ def _test_benchmark():
     )
 
     assert len(results) == n_runs
-    for bench, best in results:
-        assert bench.experiments is not None
-        assert bench.experiments.shape[0] == n_initial_samples + n_iterations
+    for experiments, best in results:
+        assert experiments is not None
+        assert experiments.shape[0] == n_initial_samples + n_iterations
         assert best.shape[0] == n_iterations
         assert isinstance(best, pd.Series)
+        assert isinstance(experiments, pd.DataFrame)
