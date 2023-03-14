@@ -9,9 +9,10 @@ from botorch.models.transforms.input import (
 )
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
+from pydantic import ValidationError
 
 import bofire.surrogates.api as surrogates
-from bofire.data_models.domain.api import Constraints, Inputs, Outputs
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -82,6 +83,24 @@ def test_SingleTaskGPModel(kernel, scaler):
     assert_frame_equal(preds, preds2)
 
 
+def test_MixedGPModel_invalid_preprocessing():
+    input_features = Inputs(
+        features=[
+            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            for i in range(2)
+        ]
+    )
+    output_features = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = input_features.sample(n=10)
+    experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments["valid_y"] = 1
+    with pytest.raises(ValidationError):
+        MixedSingleTaskGPSurrogate(
+            input_features=input_features,
+            output_features=output_features,
+        )
+
+
 @pytest.mark.parametrize(
     "kernel, scaler",
     [
@@ -108,7 +127,6 @@ def test_MixedGPModel(kernel, scaler):
         input_features=input_features,
         output_features=output_features,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
-        constraints=Constraints(),
         scaler=scaler,
         continuous_kernel=kernel,
         categorical_kernel=HammondDistanceKernel(),
