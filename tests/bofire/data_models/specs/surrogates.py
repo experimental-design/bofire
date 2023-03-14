@@ -93,3 +93,30 @@ specs.add_valid(
         "max_samples": None,
     },
 )
+specs.add_valid(
+    models.MLPEnsemble,
+    lambda: {
+        "input_features": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "output_features": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.NORMALIZE,
+        "input_preprocessing_specs": {},
+    },
+)
