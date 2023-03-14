@@ -37,12 +37,6 @@ def test_domain_should_be_serializable(domain_spec: Spec):
     assert obj.dict() == spec
 
 
-def test_sampler_should_be_serializable(sampler_spec: Spec):
-    spec = sampler_spec.typed_spec()
-    obj = sampler_spec.cls(**spec)
-    assert obj.dict() == spec
-
-
 def test_surrogate_should_be_serializable(surrogate_spec: Spec):
     spec = surrogate_spec.typed_spec()
     obj = surrogate_spec.cls(**spec)

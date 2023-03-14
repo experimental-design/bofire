@@ -10,7 +10,7 @@ from bofire.data_models.objectives.api import (
     Objective,
     TargetObjective,
 )
-from bofire.data_models.strategies.qehvi import QehviStrategy
+from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
 
 
 class QnehviStrategy(QehviStrategy):

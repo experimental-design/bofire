@@ -6,14 +6,7 @@ from pydantic import validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import Feature, Output
-from bofire.data_models.objectives.api import Objective
-from bofire.strategies.validation import (
-    validate_constraints,
-    validate_features,
-    validate_input_feature_count,
-    validate_output_feature_count,
-)
+from bofire.data_models.features.api import Feature
 
 
 class Strategy(BaseModel):
@@ -21,48 +14,61 @@ class Strategy(BaseModel):
     domain: Domain
 
     @validator("domain")
-    def validate_objectives(cls, domain: Domain):
-        """Validator to ensure that all objectives defined in the domain are valid for the chosen strategy
+    def validate_constraints(cls, domain: Domain):
+        """Validator to ensure that all constraints defined in the domain are valid for the chosen strategy
 
         Args:
             domain (Domain): The domain to be used in the strategy
 
         Raises:
-            ValueError: if a objective type is defined in the domain but is invalid for the strategy chosen
+            ValueError: if a constraint is defined in the domain but is invalid for the strategy chosen
 
         Returns:
             Domain: the domain
         """
-        for feature in domain.outputs.get_by_objective(Objective):
-            assert isinstance(feature, Output)
-            assert feature.objective is not None
-            if not cls.is_objective_implemented(type(feature.objective)):
+        for constraint in domain.constraints:
+            if not cls.is_constraint_implemented(type(constraint)):
                 raise ValueError(
-                    f"Objective `{type(feature.objective)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
                 )
         return domain
 
-    @classmethod
-    @abstractmethod
-    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        """Abstract method to check if a objective type is implemented for the strategy
+    @validator("domain")
+    def validate_features(cls, domain: Domain):
+        """Validator to ensure that all features defined in the domain are valid for the chosen strategy
 
         Args:
-            my_type (Type[Objective]): Objective class
+            domain (Domain): The domain to be used in the strategy
+
+        Raises:
+            ValueError: if a feature type is defined in the domain but is invalid for the strategy chosen
 
         Returns:
-            bool: True if the objective type is valid for the strategy chosen, False otherwise
+            Domain: the domain
         """
-        pass
+        for feature in domain.inputs + domain.output_features:
+            if not cls.is_feature_implemented(type(feature)):
+                raise ValueError(
+                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
+                )
+        return domain
 
-    _validate_constraints = validator("domain", allow_reuse=True)(validate_constraints)
-    _validate_features = validator("domain", allow_reuse=True)(validate_features)
-    _validate_input_feature_count = validator("domain", allow_reuse=True)(
-        validate_input_feature_count
-    )
-    _validate_output_feature_count = validator("domain", allow_reuse=True)(
-        validate_output_feature_count
-    )
+    @validator("domain")
+    def validate_input_feature_count(cls, domain: Domain):
+        """Validator to ensure that at least one input is defined.
+
+        Args:
+            domain (Domain): The domain to be used in the strategy
+
+        Raises:
+            ValueError: if no input feature is specified
+
+        Returns:
+            Domain: the domain
+        """
+        if len(domain.input_features) == 0:
+            raise ValueError("no input feature specified")
+        return domain
 
     @classmethod
     @abstractmethod

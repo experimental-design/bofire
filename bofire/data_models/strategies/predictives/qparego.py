@@ -10,7 +10,7 @@ from bofire.data_models.objectives.api import (
     Objective,
     TargetObjective,
 )
-from bofire.data_models.strategies.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class QparegoStrategy(BotorchStrategy):

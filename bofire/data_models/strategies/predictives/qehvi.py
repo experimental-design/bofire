@@ -7,7 +7,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     Objective,
 )
-from bofire.data_models.strategies.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class QehviStrategy(BotorchStrategy):

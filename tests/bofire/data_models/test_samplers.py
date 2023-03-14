@@ -1,5 +1,7 @@
 import pytest
 
+import bofire.data_models.strategies.api as data_models
+import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -7,7 +9,6 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
-from bofire.data_models.samplers.api import PolytopeSampler, RejectionSampler
 
 input_features = Inputs(
     features=[
@@ -36,7 +37,10 @@ def test_rejection_sampler(features, constraints, sampling_method, num_samples):
         input_features=features,
         constraints=constraints,
     )
-    sampler = RejectionSampler(domain=domain, sampling_method=sampling_method)
+    data_model = data_models.RejectionSampler(
+        domain=domain, sampling_method=sampling_method
+    )
+    sampler = strategies.RejectionSampler(data_model=data_model)
     sampler.ask(num_samples)
 
 
@@ -45,7 +49,10 @@ def test_rejection_sampler_not_converged():
         input_features=input_features,
         constraints=constraints,
     )
-    sampler = RejectionSampler(domain=domain, num_base_samples=16, max_iters=2)
+    data_model = data_models.RejectionSampler(
+        domain=domain, num_base_samples=16, max_iters=2
+    )
+    sampler = strategies.RejectionSampler(data_model=data_model)
     with pytest.raises(ValueError):
         sampler.ask(128)
 
@@ -135,7 +142,8 @@ domains = [
     ],
 )
 def test_PolytopeSampler(domain, candidate_count):
-    sampler = PolytopeSampler(domain=domain)
+    data_model = data_models.PolytopeSampler(domain=domain)
+    sampler = strategies.PolytopeSampler(data_model=data_model)
     samples = sampler.ask(candidate_count)
     if len(domain.constraints.get(NChooseKConstraint)) == 0:
         assert len(samples) == candidate_count
@@ -143,6 +151,7 @@ def test_PolytopeSampler(domain, candidate_count):
 
 def test_PolytopeSampler_all_fixed():
     domain = Domain(input_features=[if1, if4], constraints=[c5])
-    sampler = PolytopeSampler(domain=domain)
+    data_model = data_models.PolytopeSampler(domain=domain)
+    sampler = strategies.PolytopeSampler(data_model=data_model)
     with pytest.warns(UserWarning):
         sampler.ask(2)

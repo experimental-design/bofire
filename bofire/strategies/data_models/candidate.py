@@ -3,7 +3,7 @@ from typing import Dict, Optional
 import pandas as pd
 
 from bofire.data_models.base import BaseModel
-from bofire.strategies.values import InputValue, OutputValue
+from bofire.strategies.data_models.values import InputValue, OutputValue
 
 
 class Candidate(BaseModel):

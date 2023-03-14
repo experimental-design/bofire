@@ -9,7 +9,6 @@ from tests.bofire.data_models.specs.features import specs as features  # noqa: F
 from tests.bofire.data_models.specs.kernels import specs as kernels  # noqa: F401
 from tests.bofire.data_models.specs.objectives import specs as objectives  # noqa: F401
 from tests.bofire.data_models.specs.priors import specs as priors  # noqa: F401
-from tests.bofire.data_models.specs.samplers import specs as samplers  # noqa: F401
 from tests.bofire.data_models.specs.specs import Spec, Specs  # noqa: F401
 from tests.bofire.data_models.specs.strategies import specs as strategies  # noqa: F401
 from tests.bofire.data_models.specs.surrogates import specs as surrogates  # noqa: F401

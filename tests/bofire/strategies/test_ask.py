@@ -7,7 +7,10 @@ import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Ackley
-from bofire.data_models.samplers.api import PolytopeSampler
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.api import PolytopeSampler
 from tests.bofire.strategies.test_qehvi import VALID_BOTORCH_QEHVI_STRATEGY_SPEC
 from tests.bofire.strategies.test_sobo import VALID_BOTORCH_SOBO_STRATEGY_SPEC
 
@@ -38,7 +41,9 @@ STRATEGY_SPECS_MULTI_OBJECTIVE = {
 def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_count):
     # generate data
     benchmark = Ackley(categorical=categorical, descriptor=descriptor)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
     experiments = benchmark.f(random_strategy.ask(n=10), return_complete=True)
 
     # set up of the strategy
@@ -72,7 +77,9 @@ def test_ask_multi_objective(cls, spec, use_ref_point, candidate_count):
     benchmark = DTLZ2(
         dim=6
     )  # TODO: expand benchmark also towards categorical features?
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
     experiments = benchmark.f(random_strategy.ask(n=10), return_complete=True)
 
     # set up of the strategy

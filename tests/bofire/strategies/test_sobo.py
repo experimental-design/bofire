@@ -8,8 +8,10 @@ import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import DTLZ2
 from bofire.data_models.acquisition_functions.api import qUCB
-from bofire.data_models.samplers.api import PolytopeSampler
-from bofire.strategies.api import SoboStrategy
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.api import PolytopeSampler, SoboStrategy
 from tests.bofire.strategies.test_base import domains
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -76,9 +78,9 @@ def test_SOBO_not_fitted(domain, acqf):
 #     # generate data
 #     benchmark = DTLZ2(dim=6)
 #     random_strategy = PolytopeSampler(domain=benchmark.domain)
-#     experiments = benchmark.f(random_strategy._sample(n=20), return_complete=True)
+#     experiments = benchmark.f(random_strategy._ask(n=20), return_complete=True)
 #     experiments_test = benchmark.f(
-#         random_strategy._sample(n=num_test_candidates), return_complete=True
+#         random_strategy._ask(n=num_test_candidates), return_complete=True
 #     )
 
 #     data_model = data_models.SoboStrategy(
@@ -99,8 +101,10 @@ def test_SOBO_init_qUCB():
 
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.f(random_strategy._sample(n=20), return_complete=True)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(random_strategy._ask(n=20), return_complete=True)
 
     data_model = data_models.SoboStrategy(
         domain=benchmark.domain, acquisition_function=acqf
@@ -123,9 +127,11 @@ def test_SOBO_init_qUCB():
 def test_get_acqf_input(acqf, num_experiments, num_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
     experiments = benchmark.f(
-        random_strategy._sample(n=num_experiments), return_complete=True
+        random_strategy._ask(n=num_experiments), return_complete=True
     )
 
     data_model = data_models.SoboStrategy(

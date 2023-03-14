@@ -3,8 +3,10 @@ import pandas as pd
 import bofire.benchmarks.benchmark as benchmark
 from bofire.benchmarks.multi import ZDT1
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.samplers.api import RejectionSampler
-from bofire.strategies.api import QparegoStrategy
+from bofire.data_models.strategies.api import (
+    RejectionSampler as RejectionSamplerDataModel,
+)
+from bofire.strategies.api import QparegoStrategy, RejectionSampler
 from bofire.strategies.multiobjective import compute_hypervolume
 
 # from bofire.data_models.strategies.api import QparegoStrategy
@@ -21,7 +23,7 @@ def _test_benchmark():
 
     def sample(domain):
         nonlocal n_initial_samples
-        sampler = RejectionSampler(domain=domain)
+        sampler = RejectionSampler(data_model=RejectionSamplerDataModel(domain=domain))
         sampled = sampler.ask(n_initial_samples)
 
         return sampled

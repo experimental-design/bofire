@@ -33,11 +33,6 @@ def domain_spec(request) -> specs.Spec:
     return request.param
 
 
-@fixture(params=specs.samplers.valids)
-def sampler_spec(request) -> specs.Spec:
-    return request.param
-
-
 @fixture(params=specs.surrogates.valids)
 def surrogate_spec(request) -> specs.Spec:
     return request.param

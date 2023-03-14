@@ -5,7 +5,7 @@ from pydantic import PositiveInt, root_validator, validator
 from bofire.data_models.domain.api import Constraints, Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
-from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
@@ -17,7 +17,7 @@ def is_power_of_two(n):
     return (n != 0) and (n & (n - 1) == 0)
 
 
-class BotorchStrategy(Strategy):
+class BotorchStrategy(PredictiveStrategy):
     num_sobol_samples: PositiveInt = 512
     num_restarts: PositiveInt = 8
     num_raw_samples: PositiveInt = 1024

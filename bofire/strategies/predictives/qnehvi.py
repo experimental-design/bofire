@@ -5,7 +5,7 @@ from botorch.acquisition.multi_objective.monte_carlo import (
 from botorch.models.gpytorch import GPyTorchModel
 
 from bofire.data_models.strategies.api import QnehviStrategy as DataModel
-from bofire.strategies.qehvi import QehviStrategy
+from bofire.strategies.predictives.qehvi import QehviStrategy
 from bofire.surrogates.torch_tools import get_output_constraints, tkwargs
 
 
@@ -43,6 +43,6 @@ class QnehviStrategy(QehviStrategy):
             eta=etas,
             alpha=self.alpha,
         )
-        # todo comment in after new botorch deployment
+        # TODO: comment in after new botorch deployment
         # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return

@@ -6,8 +6,8 @@ import pandas as pd
 from pydantic import PositiveInt
 
 from bofire.data_models.strategies.api import Strategy as DataModel
-from bofire.strategies.candidate import Candidate
-from bofire.strategies.values import InputValue
+from bofire.strategies.data_models.candidate import Candidate
+from bofire.strategies.data_models.values import InputValue
 
 
 class Strategy(ABC):
@@ -149,34 +149,6 @@ class Strategy(ABC):
             )
             for _, row in candidates.iterrows()
         ]
-
-    @abstractmethod
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[PositiveInt] = None,
-    ) -> pd.DataFrame:
-        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
-
-        Args:
-            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The chosen set of candidates.
-        """
-        pass
-
-    @abstractmethod
-    def has_sufficient_experiments(
-        self,
-    ) -> bool:
-        """Abstract method to check if sufficient experiments are available.
-
-        Returns:
-            bool: True if number of passed experiments is sufficient, False otherwise
-        """
-        pass
 
     def set_candidates(self, candidates: pd.DataFrame):
         candidates = self.domain.validate_candidates(candidates)

@@ -9,8 +9,10 @@ import bofire.data_models.surrogates.api as surrogate_data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
 from bofire.data_models.domain.api import Outputs
-from bofire.data_models.samplers.api import PolytopeSampler
-from bofire.strategies.api import QparegoStrategy
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.api import PolytopeSampler, QparegoStrategy
 from tests.bofire.strategies.test_base import domains
 from tests.bofire.strategies.test_multiobjective import invalid_domains
 
@@ -108,8 +110,10 @@ def test_invalid_qparego_init_domain(domain):
 def test_qparego(num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
     # init strategy
     data_model = data_models.QparegoStrategy(domain=benchmark.domain)
     my_strategy = QparegoStrategy(data_model=data_model)
@@ -126,8 +130,10 @@ def test_qparego(num_test_candidates):
 def test_qparego_constraints(num_test_candidates):
     # generate data
     benchmark = C2DTLZ2(dim=4)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
     # init strategy
     data_model = data_models.QparegoStrategy(domain=benchmark.domain)
     my_strategy = QparegoStrategy(data_model=data_model)
@@ -157,9 +163,11 @@ def test_qparego_constraints(num_test_candidates):
 @pytest.mark.slow
 def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
     # generate data
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
     experiments = benchmark.f(
-        random_strategy._sample(n=num_experiments), return_complete=True
+        random_strategy._ask(n=num_experiments), return_complete=True
     )
     print(specs.items())
     data_model = data_models.QparegoStrategy(
@@ -197,7 +205,7 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
 # def test_qparego_constraints():
 #     benchmark = C2DTLZ2(dim=4)
 #     random_strategy = PolytopeSampler(domain=benchmark.domain)
-#     experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+#     experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
 #     my_strategy = QparegoStrategy(domain=benchmark.domain)
 #     my_strategy.tell(experiments)
 #     assert isinstance(my_strategy.objective, WeightedMCMultiOutputObjective)

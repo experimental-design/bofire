@@ -1,5 +1,4 @@
 import warnings
-from typing import Any, Dict, Literal, Type
 
 import numpy as np
 import pandas as pd
@@ -9,22 +8,19 @@ from botorch.utils.sampling import get_polytope_samples
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    NChooseKConstraint,
 )
-from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
-    ContinuousOutput,
     DiscreteInput,
-    Feature,
 )
-from bofire.data_models.samplers.sampler import Sampler
 from bofire.data_models.samplers.torch_tools import get_linear_constraints, tkwargs
+from bofire.data_models.strategies.api import PolytopeSampler as DataModel
+from bofire.strategies.samplers.sampler import SamplerStrategy
 
 
-class PolytopeSampler(Sampler):
+class PolytopeSampler(SamplerStrategy):
     """Sampler that generates samples from a Polytope defined by linear equality and ineqality constraints.
 
     Attributes:
@@ -33,10 +29,15 @@ class PolytopeSampler(Sampler):
             constraints are present. Defaults to UNIFORM.
     """
 
-    type: Literal["PolytopeSampler"] = "PolytopeSampler"
-    fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
+    def __init__(
+        self,
+        data_model: DataModel,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
+        self.fallback_sampling_method = data_model.fallback_sampling_method
 
-    def _sample(self, n: int) -> pd.DataFrame:
+    def _ask(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(n, self.fallback_sampling_method)
 
@@ -160,23 +161,9 @@ class PolytopeSampler(Sampler):
 
         return samples
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
-        return my_type in [
-            LinearInequalityConstraint,
-            LinearEqualityConstraint,
-            NChooseKConstraint,
-        ]
-
-    @classmethod
-    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        return my_type in [
-            ContinuousInput,
-            ContinuousOutput,
-            CategoricalInput,
-            DiscreteInput,
-            CategoricalDescriptorInput,
-        ]
-
-    def get_portable_attributes(self) -> Dict[str, Any]:
-        return {"fallback_sampling_method": self.fallback_sampling_method}
+    def duplicate(self, domain: Domain) -> SamplerStrategy:
+        data_model = DataModel(
+            domain=domain,
+            fallback_sampling_method=self.fallback_sampling_method,
+        )
+        return self.__class__(data_model=data_model)

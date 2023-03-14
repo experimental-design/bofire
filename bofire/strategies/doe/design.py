@@ -8,7 +8,10 @@ from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.samplers.api import PolytopeSampler
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.api import PolytopeSampler
 from bofire.strategies.doe.jacobian import JacobianForLogdet
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -132,7 +135,7 @@ def find_local_max_ipopt(
         domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values
     else:
-        sampler = PolytopeSampler(domain=domain)
+        sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
         x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
 
     # get objective function

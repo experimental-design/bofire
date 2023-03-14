@@ -7,7 +7,6 @@ from bofire.data_models.api import (
     AnyKernel,
     AnyObjective,
     AnyPrior,
-    AnySampler,
     AnyStrategy,
     AnySurrogate,
     Domain,
@@ -48,12 +47,6 @@ def test_feature_should_be_deserializable(feature_spec: Spec):
 def test_domain_should_be_deserializable(domain_spec: Spec):
     obj = domain_spec.obj()
     deserialized = parse_obj_as(Domain, obj.dict())
-    assert obj == deserialized
-
-
-def test_sampler_should_be_deserializable(sampler_spec: Spec):
-    obj = sampler_spec.obj()
-    deserialized = parse_obj_as(AnySampler, obj.dict())
     assert obj == deserialized
 
 

@@ -16,7 +16,10 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
-from bofire.data_models.samplers.api import PolytopeSampler
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.api import PolytopeSampler
 
 CAT_TOL = 0.1
 DISCRETE_TOL = 0.1
@@ -173,7 +176,7 @@ def n_zero_eigvals(
     )
     N = len(model_formula.terms) + 3
 
-    sampler = PolytopeSampler(domain=domain)
+    sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
     X = sampler.ask(N)
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
@@ -345,7 +348,7 @@ def g_efficiency(
     n, p = X.shape
 
     # take large sample from the design space
-    sampler = PolytopeSampler(domain=domain)
+    sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
     Y = sampler.ask(n_samples).to_numpy()
 
     # variance over set of runs

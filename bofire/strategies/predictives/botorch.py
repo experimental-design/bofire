@@ -1,3 +1,5 @@
+# TODO: refactor: use functions samplers instead of data models
+
 import copy
 from abc import abstractmethod
 from typing import Callable, Dict, Optional, Tuple
@@ -25,9 +27,12 @@ from bofire.data_models.features.api import (
     Input,
     TInputTransformSpecs,
 )
-from bofire.data_models.samplers.api import PolytopeSampler
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
-from bofire.strategies.predictive import PredictiveStrategy
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.surrogates.torch_tools import get_linear_constraints, tkwargs
 
@@ -512,7 +517,9 @@ class BotorchStrategy(PredictiveStrategy):
         self, objective: Callable[[Tensor, Tensor], Tensor], n_samples=128
     ) -> Tensor:
         X_train, X_pending = self.get_acqf_input_tensors()
-        sampler = PolytopeSampler(domain=self.domain)
+        sampler = PolytopeSampler(
+            data_model=PolytopeSamplerDataModel(domain=self.domain)
+        )
         samples = torch.from_numpy(
             sampler.ask(n=n_samples, return_all=False).values
         ).to(**tkwargs)

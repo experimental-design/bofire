@@ -17,7 +17,10 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalMethodEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
-from bofire.data_models.samplers.api import PolytopeSampler
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.api import PolytopeSampler
 from tests.bofire.strategies.specs import VALID_CONTINUOUS_INPUT_FEATURE_SPEC
 from tests.bofire.strategies.test_multiobjective import (
     dfs,
@@ -137,10 +140,12 @@ def test_qehvi_get_adjusted_refpoint(domain, ref_point, experiments, expected):
 def test_qehvi(strategy, use_ref_point, num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
     experiments_test = benchmark.f(
-        random_strategy._sample(n=num_test_candidates), return_complete=True
+        random_strategy._ask(n=num_test_candidates), return_complete=True
     )
     # init strategy
     data_model = strategy(
@@ -163,8 +168,10 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
 
 def test_qnehvi_constraints():
     benchmark = C2DTLZ2(dim=4)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
-    experiments = benchmark.f(random_strategy._sample(n=10), return_complete=True)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
     data_model = data_models.QnehviStrategy(
         domain=benchmark.domain, ref_point={"f_0": 1.1, "f_1": 1.1}
     )
@@ -201,9 +208,11 @@ def test_qnehvi_constraints():
 def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(domain=benchmark.domain)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
     experiments = benchmark.f(
-        random_strategy._sample(n=num_experiments), return_complete=True
+        random_strategy._ask(n=num_experiments), return_complete=True
     )
     data_model = strategy(domain=benchmark.domain)
     strategy = strategies.map(data_model)

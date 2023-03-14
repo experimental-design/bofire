@@ -4,7 +4,7 @@ from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
-from bofire.data_models.strategies.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class SoboStrategy(BotorchStrategy):

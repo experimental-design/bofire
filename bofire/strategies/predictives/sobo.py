@@ -12,7 +12,7 @@ from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
 from bofire.data_models.strategies.api import SoboStrategy as DataModel
-from bofire.strategies.botorch import BotorchStrategy
+from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.surrogates.torch_tools import (
     get_additive_botorch_objective,
     get_multiplicative_botorch_objective,

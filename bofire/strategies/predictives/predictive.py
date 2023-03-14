@@ -8,9 +8,9 @@ from pydantic import PositiveInt
 from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.api import Strategy as DataModel
-from bofire.strategies.candidate import Candidate
+from bofire.strategies.data_models.candidate import Candidate
+from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy
-from bofire.strategies.values import InputValue, OutputValue
 
 
 class PredictiveStrategy(Strategy):
@@ -24,8 +24,8 @@ class PredictiveStrategy(Strategy):
         data_model: DataModel,
         **kwargs,
     ):
-        self.is_fitted = False
         super().__init__(data_model=data_model, **kwargs)
+        self.is_fitted = False
 
     @property
     @abstractmethod
@@ -173,3 +173,31 @@ class PredictiveStrategy(Strategy):
             )
             for _, row in candidates.iterrows()
         ]
+
+    @abstractmethod
+    def _choose_from_pool(
+        self,
+        candidate_pool: pd.DataFrame,
+        candidate_count: Optional[PositiveInt] = None,
+    ) -> pd.DataFrame:
+        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
+
+        Args:
+            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
+            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
+
+        Returns:
+            pd.DataFrame: The chosen set of candidates.
+        """
+        pass
+
+    @abstractmethod
+    def has_sufficient_experiments(
+        self,
+    ) -> bool:
+        """Abstract method to check if sufficient experiments are available.
+
+        Returns:
+            bool: True if number of passed experiments is sufficient, False otherwise
+        """
+        pass
