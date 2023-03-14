@@ -1,8 +1,13 @@
 import random
 
 import bofire.data_models.surrogates.api as models
-from bofire.data_models.domain.api import Constraints, Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import (
     HammondDistanceKernel,
     MaternKernel,
@@ -22,17 +27,17 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
+            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
         ),
         "output_features": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
-        "constraints": Constraints(),
         "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
-        "input_preprocessing_specs": {},
+        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
     },
 )
 specs.add_valid(

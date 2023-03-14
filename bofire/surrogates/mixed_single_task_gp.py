@@ -27,7 +27,6 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         data_model: DataModel,
         **kwargs,
     ):
-        self.constraints = data_model.constraints
         self.continuous_kernel = data_model.continuous_kernel
         self.categorical_kernel = data_model.categorical_kernel
         self.scaler = data_model.scaler
