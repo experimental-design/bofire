@@ -27,11 +27,8 @@ class EmpiricalSurrogate(BotorchSurrogate):
 
     model: Optional[DeterministicModel] = None
 
-    def dumps(self) -> str:
+    def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
-        if not self.is_fitted:
-            raise ValueError("Model has to be fitted before dumping")
-        self.decompatibilize()
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             import bofire.surrogates.cloudpickle_module as cloudpickle_module

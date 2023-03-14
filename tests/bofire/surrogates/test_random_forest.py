@@ -84,6 +84,8 @@ def test_random_forest():
     )
     rf = surrogates.map(rf)
     assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ONE_HOT
+    with pytest.raises(ValueError):
+        rf.dumps()
     rf.fit(experiments=experiments)
     # test dumps and load
     preds = rf.predict(experiments)

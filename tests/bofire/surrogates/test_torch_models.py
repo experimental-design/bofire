@@ -745,6 +745,8 @@ def test_empirical_model_io():
         input_features=input_features, output_features=output_features
     )
     surrogate = surrogates.map(data_model)
+    with pytest.raises(ValueError):
+        surrogate.dumps()
     surrogate.model = HimmelblauModel()
     samples = input_features.sample(5)
     preds = surrogate.predict(samples)

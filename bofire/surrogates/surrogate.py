@@ -86,9 +86,19 @@ class Surrogate(ABC):
     def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         pass
 
-    @abstractmethod
     def dumps(self) -> str:
         """Dumps the actual model to a string as this is not directly json serializable."""
+        if not self.is_fitted:
+            raise ValueError("Model has to be fitted before dumping")
+        self._prepare_for_dump()
+        return self._dumps()
+
+    @abstractmethod
+    def _dumps() -> str:
+        pass
+
+    def _prepare_for_dump(self):
+        """Prepares the model before the dump."""
         pass
 
     @abstractmethod

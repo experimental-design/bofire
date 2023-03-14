@@ -32,7 +32,7 @@ class Dummy(Surrogate):
         )
         return preds, stds
 
-    def dumps(self):
+    def _dumps(self):
         pass
 
     def loads(self, dumpstr: str):

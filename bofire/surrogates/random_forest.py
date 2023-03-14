@@ -129,12 +129,8 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
         rf.fit(X=transformed_X.values, y=Y.values.ravel())
         self.model = _RandomForest(rf=rf)
 
-    def dumps(self) -> str:
+    def _dumps(self) -> str:
         """Dumps the random forest to a string via pickle as this is not directly json serializable."""
-        if not self.is_fitted:
-            raise ValueError("Model has to be fitted before dumping")
-        self.decompatibilize()
-        assert self.is_fitted is True
         return codecs.encode(pickle.dumps(self.model._rf), "base64").decode()  # type: ignore
 
     def loads(self, data: str):

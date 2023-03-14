@@ -132,7 +132,8 @@ def test_MixedGPModel(kernel, scaler):
         categorical_kernel=HammondDistanceKernel(),
     )
     model = surrogates.map(model)
-
+    with pytest.raises(ValueError):
+        model.dumps()
     model.fit(experiments)
     # dump the model
     dump = model.dumps()

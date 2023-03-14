@@ -49,11 +49,12 @@ class BotorchSurrogate(Surrogate):
                 else:
                     raise ValueError("Undefined input transform structure detected.")
 
-    def dumps(self) -> str:
-        """Dumps the actual model to a string via pickle as this is not directly json serializable."""
-        if not self.is_fitted:
-            raise ValueError("Model has to be fitted before dumping")
+    def _prepare_for_dump(self):
+        """Decompatibilize the model before the dump"""
         self.decompatibilize()
+
+    def _dumps(self) -> str:
+        """Dumps the actual model to a string via pickle as this is not directly json serializable."""
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         return base64.b64encode(buffer.getvalue()).decode()
