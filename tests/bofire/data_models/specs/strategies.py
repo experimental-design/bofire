@@ -17,6 +17,7 @@ strategy_commons = {
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
     "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
     "surrogate_specs": None,
+    "seed": 42,
 }
 
 
@@ -71,6 +72,7 @@ specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
         "domain": domain.valid().obj().dict(),
+        "seed": 42,
     },
 )
 
@@ -86,6 +88,7 @@ specs.add_valid(
             ),
         ),
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
+        "seed": 42,
     },
 )
 specs.add_valid(
@@ -104,5 +107,6 @@ specs.add_valid(
         "sampling_method": SamplingMethodEnum.UNIFORM,
         "num_base_samples": 1000,
         "max_iters": 1000,
+        "seed": 42,
     },
 )

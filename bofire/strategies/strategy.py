@@ -19,16 +19,9 @@ class Strategy(ABC):
     def __init__(
         self,
         data_model: DataModel,
-        seed: Optional[int] = None,
     ):
-        if seed is not None:
-            if int(seed) < 0:
-                raise ValueError(f"expected non negative seed, got {seed}")
-        else:
-            seed = np.random.default_rng().integers(1000)
-
         self.domain = data_model.domain
-        self.seed = seed
+        self.seed = data_model.seed
         self.rng = np.random.default_rng(self.seed)
         self.experiments = None
         self.candidates = None
