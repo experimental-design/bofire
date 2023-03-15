@@ -3,6 +3,7 @@ from itertools import chain
 
 import pytest
 import torch
+from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
@@ -98,9 +99,8 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
     ],
 )
 def test_invalid_qparego_init_domain(domain):
-    data_model = data_models.QparegoStrategy(domain=domain)
-    with pytest.raises(ValueError):
-        QparegoStrategy(data_model=data_model)
+    with pytest.raises(ValidationError):
+        data_models.QparegoStrategy(domain=domain)
 
 
 @pytest.mark.parametrize(

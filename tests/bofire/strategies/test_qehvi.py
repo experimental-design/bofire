@@ -87,13 +87,16 @@ BOTORCH_QEHVI_STRATEGY_SPECS = {
 @pytest.mark.parametrize(
     "domain, ref_point",
     [
-        # TODO: fix validation in data model and re-enable the following test
-        # (invalid_domains[0], None),
+        (invalid_domains[0], None),
         (invalid_domains[1], None),
         (valid_domains[0], [0]),
+        (valid_domains[0], {}),
+        (valid_domains[0], {"of1": 0.0, "of2": 0, "of3": 0}),
+        (valid_domains[0], {"of1": 0.0}),
+        (valid_domains[0], {"of1": 0.0, "of3": 0.0}),
     ],
 )
-def test_invalid_qehvi_init_domain(domain, ref_point):
+def test_invalid_qehvi(domain, ref_point):
     with pytest.raises(ValueError):
         data_models.QehviStrategy(domain=domain, ref_point=ref_point)
 
