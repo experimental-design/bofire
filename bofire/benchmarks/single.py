@@ -176,7 +176,7 @@ class Himmelblau(Benchmark):
         )
         input_features.append(
             ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=4.0)
-        )  # ToDo, check for correct bounds
+        )
 
         desirability_function = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore

@@ -91,7 +91,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             d=d, active_dims=list(range(d)), cat_dims=cat_dims
         )
         # first get the scaler
-        # TODO use here the correct bounds
+        # TODO use here the real bounds
         if self.scaler == ScalerEnum.NORMALIZE:
             lower, upper = self.input_features.get_bounds(
                 specs=self.input_preprocessing_specs, experiments=X

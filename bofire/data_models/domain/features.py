@@ -508,7 +508,6 @@ class Outputs(Features):
         if len(self.features) == 0:
             return Outputs(features=[])
         else:
-            # TODO: why only continuous output?
             return Outputs(
                 features=sorted(
                     filter_by_attribute(

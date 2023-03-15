@@ -61,7 +61,6 @@ class NumericalInput(Input):
         Returns:
             Boolean: True when the feature is fixed, false otherwise.
         """
-        # TODO: the bounds are declared in the derived classes, hence the type checks fail here :(.
         return self.lower_bound == self.upper_bound  # type: ignore
 
     def fixed_value(

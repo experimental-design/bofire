@@ -1,7 +1,5 @@
 from enum import Enum
 
-# TODO: move enums to corresponding domain model classes (or get rid of them)
-
 
 class SamplingMethodEnum(Enum):
     UNIFORM = "UNIFORM"

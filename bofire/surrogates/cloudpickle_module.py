@@ -2,8 +2,6 @@
 # this is based on the mlflow implementation: https://github.com/mlflow/mlflow/blob/master/mlflow/pytorch/pickle_module.py
 import warnings
 
-# TODO: rename this module to cloudpickle?
-
 try:
     from pickle import Unpickler  # noqa: F401
 

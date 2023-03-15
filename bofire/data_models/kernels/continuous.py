@@ -7,7 +7,6 @@ from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior
 
 
-# TODO: can we remove ContinuousKernel (it only adds a new hierarchy level)?
 class ContinuousKernel(Kernel):
     pass
 

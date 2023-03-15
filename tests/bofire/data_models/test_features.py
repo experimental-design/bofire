@@ -1544,7 +1544,7 @@ input_features2 = Inputs(
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if5": CategoricalEncodingEnum.DESCRIPTOR,
             },
-            [[3, 1, 1, 0, 0, 0], [5.3, 5, 7, 1, 1, 1]],
+            [[3, 1, 2, 0, 0, 0], [5.3, 1, 2, 1, 1, 1]],
         ),
         (
             input_features1,
@@ -1552,7 +1552,7 @@ input_features2 = Inputs(
                 "if3": CategoricalEncodingEnum.DUMMY,
                 "if5": CategoricalEncodingEnum.DESCRIPTOR,
             },
-            [[3, 1, 1, 0, 0], [5.3, 5, 7, 1, 1]],
+            [[3, 1, 2, 0, 0], [5.3, 1, 2, 1, 1]],
         ),
         (
             input_features1,
@@ -1568,7 +1568,7 @@ input_features2 = Inputs(
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if5": CategoricalEncodingEnum.ONE_HOT,
             },
-            [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 1, 1, 1, 1, 1]],
+            [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 0, 0, 1, 1, 1]],
         ),
         (
             input_features1,
@@ -1576,7 +1576,7 @@ input_features2 = Inputs(
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if5": CategoricalEncodingEnum.DESCRIPTOR,
             },
-            [[3, 1, 1, 0], [5.3, 5, 7, 2]],
+            [[3, 1, 2, 0], [5.3, 1, 2, 2]],
         ),
         (
             input_features1,
@@ -1596,12 +1596,12 @@ input_features2 = Inputs(
                 "if6": CategoricalEncodingEnum.DESCRIPTOR,
             },
             [
-                [3, 3, 1, 1, 1, 2, 0, 0, 0, 0, 0, 0],
+                [3, 3, 1, 2, 1, 2, 0, 0, 0, 0, 0, 0],
                 [
                     5.3,
                     3,
-                    5,
-                    7,
+                    1,
+                    2,
                     1,
                     2,
                     1,
@@ -1623,7 +1623,7 @@ input_features2 = Inputs(
             },
             [
                 [3, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [5.3, 3, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0],
+                [5.3, 3, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0],
             ],
         ),
         (
@@ -1639,13 +1639,13 @@ input_features2 = Inputs(
                     3,
                     3,
                     1,
-                    1,
+                    2,
                     1,
                     2,
                     0,
                     0,
                 ],
-                [5.3, 3, 5, 7, 1, 2, 2, 2],
+                [5.3, 3, 1, 2, 1, 2, 2, 2],
             ],
         ),
         (
@@ -1667,25 +1667,28 @@ input_features2 = Inputs(
                 "if6": CategoricalEncodingEnum.DESCRIPTOR,
             },
             [
-                [3, 3, 0, 1, 2, 0, 0, 0, 0],
+                [3.0, 3.0, 0.0, 1.0, 2.0, 0.0, 0.0, 0.0, 0.0],
                 [
                     5.3,
-                    3,
-                    2,
-                    1,
-                    2,
-                    2,
-                    1,
-                    0,
-                    0,
+                    3.0,
+                    2.0,
+                    1.0,
+                    2.0,
+                    2.0,
+                    1.0,
+                    0.0,
+                    0.0,
                 ],
             ],
         ),
     ],
 )
 # TODO: re-enable broken tests
-def _test_input_features_get_bounds(input_features, specs, expected_bounds):
+def test_input_features_get_bounds(input_features, specs, expected_bounds):
     lower, upper = input_features.get_bounds(specs=specs)
+    print(lower)
+    print(upper)
+    print(expected_bounds)
     assert np.allclose(
         expected_bounds[0], lower
     )  # torch.equal asserts false due to deviation of 1e-7??

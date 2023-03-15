@@ -7,9 +7,12 @@ from bofire.data_models.constraints.constraint import Constraint
 
 
 class NonlinearConstraint(Constraint):
-    # TODO: add docstring to NonLinearConstraint
+    """Base class for nonlinear equality and inequality constraints.
 
-    type: Literal["NonlinearConstraint"] = "NonlinearConstraint"
+    Attributes:
+        expression: Mathematical expression that can be evaluated by `pandas.eval`.
+    """
+
     expression: str
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
@@ -17,7 +20,12 @@ class NonlinearConstraint(Constraint):
 
 
 class NonlinearEqualityConstraint(NonlinearConstraint):
-    # TODO: add docstring to NonlinearEqualityConstraint
+    """Nonlinear inequality constraint of the form 'expression <= 0'.
+
+    Attributes:
+        expression: Mathematical expression that can be evaluated by `pandas.eval`.
+    """
+
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
@@ -28,7 +36,12 @@ class NonlinearEqualityConstraint(NonlinearConstraint):
 
 
 class NonlinearInequalityConstraint(NonlinearConstraint):
-    # TODO: add docstring to NonlinearInequalityConstraint
+    """Linear inequality constraint of the form 'expression == 0'.
+
+    Attributes:
+        expression: Mathematical expression that can be evaluated by `pandas.eval`.
+    """
+
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
 
     def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:

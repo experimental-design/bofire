@@ -49,8 +49,8 @@ class BotorchSurrogates(ABC):
             )
         )
 
+    # TODO: is this really neede here, code duplication with functional model
     def _check_compability(self, input_features: Inputs, output_features: Outputs):
-        # TODO: add sync option
         used_output_feature_keys = self.output_features.get_keys()
         if sorted(used_output_feature_keys) != sorted(output_features.get_keys()):
             raise ValueError("Output features do not match.")

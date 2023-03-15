@@ -14,7 +14,14 @@ from bofire.data_models.objectives.objective import (
 
 
 class CloseToTargetObjective(Objective):
-    # TODO: add docstring to CloseToTargetObjective
+    """Optimize towards a target value. It can be used as objective
+    in multiobjective scenarios.
+
+    Attributes:
+        w (float): float between zero and one for weighting the objective.
+        target_value (float): target value that should be reached.
+        exponent (float): the exponent of the expression.
+    """
 
     type: Literal["CloseToTargetObjective"] = "CloseToTargetObjective"
     w: TWeight = 1

@@ -43,6 +43,5 @@ class QnehviStrategy(QehviStrategy):
             eta=etas,
             alpha=self.alpha,
         )
-        # TODO: comment in after new botorch deployment
-        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
+        self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return

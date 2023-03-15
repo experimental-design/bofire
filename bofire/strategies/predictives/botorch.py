@@ -283,17 +283,6 @@ class BotorchStrategy(PredictiveStrategy):
     ) -> None:
         pass
 
-    # TODO: maybe replace the one below witht this one.
-    # def get_fixed_features(self):
-    #     lower, upper = self.domain.inputs.get_bounds(
-    #         specs=self.input_preprocessing_specs
-    #     )
-    #     fixed_features = {}
-    #     for i in range(len(lower)):
-    #         if lower[i] == upper[i]:
-    #             fixed_features[i] = lower[i]
-    #     return fixed_features
-
     def get_fixed_features(self):
         """provides the values of all fixed features
 

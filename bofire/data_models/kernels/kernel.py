@@ -15,11 +15,3 @@ class Kernel(BaseModel):
         self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> GpytorchKernel:
         pass
-
-    # TODO: can this be removed? circular import...
-    # def __add__(self, other):
-    #     return AdditiveKernel(kernels=[self, other])  # type: ignore
-
-    # TODO: can this be removed? circular import...
-    # def __mul__(self, other):
-    #     return MultiplicativeKernel(kernels=[self, other])  # type: ignore

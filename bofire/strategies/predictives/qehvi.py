@@ -20,7 +20,6 @@ from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import tkwargs
 
 
-# TODO: unite this by using get_acquisiton
 class QehviStrategy(BotorchStrategy):
     def __init__(
         self,
@@ -71,12 +70,8 @@ class QehviStrategy(BotorchStrategy):
             # define an objective that specifies which outcomes are the objectives
             objective=self._get_objective(),
             X_pending=X_pending,
-            # TODO: implement constraints
-            # specify that the constraint is on the last outcome
-            # constraints=[lambda Z: Z[..., -1]],
         )
-        # todo comment in after new botorch deployment
-        # self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
+        self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return
 
     def _get_objective(self) -> WeightedMCMultiOutputObjective:

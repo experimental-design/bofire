@@ -143,7 +143,6 @@ class LinearInequalityConstraint(LinearConstraint):
         """
         return self.features, [-1.0 * c for c in self.coefficients], -1.0 * self.rhs
 
-    # TODO: from_greater_equal should take the object as input
     @classmethod
     def from_greater_equal(
         cls,
@@ -164,7 +163,6 @@ class LinearInequalityConstraint(LinearConstraint):
             rhs=-1.0 * rhs,
         )
 
-    # TODO: from_smaller_equal should take the object as input
     @classmethod
     def from_smaller_equal(
         cls,

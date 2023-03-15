@@ -43,7 +43,6 @@ def get_subdomain(
     input_features = Inputs(features=input_features)
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
-        # TODO: fix type hint
         for key in c.features:  # type: ignore
             if key not in input_features.get_keys():
                 raise ValueError(

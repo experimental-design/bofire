@@ -6,7 +6,6 @@ from gpytorch.kernels import Kernel as GpytorchKernel
 from bofire.data_models.kernels.kernel import Kernel
 
 
-# TODO: can we remove CategoricalKernel (it only adds a new hierarchy level)?
 class CategoricalKernel(Kernel):
     pass
 
