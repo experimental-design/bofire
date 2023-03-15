@@ -1,6 +1,9 @@
 from typing import Union
 
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.multiobjective import (
+    MultiobjectiveStrategy,
+)
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
 from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
@@ -21,6 +24,7 @@ AbstractStrategy = Union[
     BotorchStrategy,
     SamplerStrategy,
     PredictiveStrategy,
+    MultiobjectiveStrategy,
 ]
 
 AnyStrategy = Union[

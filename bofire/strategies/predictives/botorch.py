@@ -53,15 +53,10 @@ class BotorchStrategy(PredictiveStrategy):
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
         self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
-        self._init_domain()
+        torch.manual_seed(self.seed)
 
     acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
-    # use_combined_bounds: bool = True  # parameter to switch to legacy behavior
-
-    def _init_domain(self):
-        """set up the transformer and the objective"""
-        torch.manual_seed(self.seed)
 
     @property
     def input_preprocessing_specs(self) -> TInputTransformSpecs:

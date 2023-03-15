@@ -10,10 +10,12 @@ from bofire.data_models.objectives.api import (
     Objective,
     TargetObjective,
 )
-from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.multiobjective import (
+    MultiobjectiveStrategy,
+)
 
 
-class QparegoStrategy(BotorchStrategy):
+class QparegoStrategy(MultiobjectiveStrategy):
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
 
     @classmethod

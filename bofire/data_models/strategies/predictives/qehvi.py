@@ -1,5 +1,7 @@
 from typing import Dict, Literal, Optional, Type
 
+from pydantic import validator
+
 from bofire.data_models.constraints.api import Constraint, NChooseKConstraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import (
@@ -7,13 +9,29 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     Objective,
 )
-from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.multiobjective import (
+    MultiobjectiveStrategy,
+)
 
 
-class QehviStrategy(BotorchStrategy):
+class QehviStrategy(MultiobjectiveStrategy):
     type: Literal["QehviStrategy"] = "QehviStrategy"
 
     ref_point: Optional[Dict[str, float]] = None
+
+    @validator("ref_point")
+    def validate_ref_point(cls, v, values):
+        """Validate that the provided refpoint matches the provided domain."""
+        if v is None:
+            return v
+        keys = values["domain"].outputs.get_keys_by_objective(
+            [MaximizeObjective, MinimizeObjective]
+        )
+        if sorted(keys) != sorted(v.keys()):
+            raise ValueError(
+                f"Provided refpoint do not match the domain, expected keys: {keys}"
+            )
+        return v
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

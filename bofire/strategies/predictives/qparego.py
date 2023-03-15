@@ -44,29 +44,6 @@ class QparegoStrategy(BotorchStrategy):
     def calc_acquisition(self, experiments: pd.DataFrame, combined: bool = False):
         raise ValueError("ACQF calc not implemented for qparego")
 
-    def _init_domain(self) -> None:
-        # first part of this is doubled with qehvi --> maybe create a common base class
-        # this has to go into the validators
-        if (
-            len(
-                self.domain.outputs.get_by_objective(
-                    includes=[MaximizeObjective, MinimizeObjective]
-                )
-            )
-            < 2
-        ):
-            raise ValueError(
-                "At least two features with objective type `MaximizeObjective` or `MinimizeObjective` has to be defined in the domain."
-            )
-        for feat in self.domain.outputs.get_by_objective(excludes=None):
-            if feat.objective.w != 1.0:  # type: ignore
-                raise ValueError(
-                    "Only objective functions with weight 1 are supported."
-                )
-
-        super()._init_domain()
-        return
-
     def get_objective(
         self, pred: torch.Tensor
     ) -> Union[GenericMCObjective, ConstrainedMCObjective]:

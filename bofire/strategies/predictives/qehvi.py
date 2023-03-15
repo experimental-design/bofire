@@ -29,10 +29,9 @@ class QehviStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.ref_point = data_model.ref_point
-        # self._init_domain()
+        self.ref_point_mask = get_ref_point_mask(self.domain)
 
     ref_point: Optional[dict] = None
-    ref_point_mask: Optional[np.ndarray] = None
     objective: Optional[MCMultiOutputObjective] = None
 
     def _init_acqf(self) -> None:
@@ -94,44 +93,6 @@ class QehviStrategy(BotorchStrategy):
             outcomes=indices,
             weights=torch.from_numpy(weights).to(**tkwargs),
         )
-
-    def _init_domain(self) -> None:
-        super()._init_domain()
-        # TODO: check for None
-        if (
-            len(
-                self.domain.outputs.get_by_objective(
-                    excludes=BotorchConstrainedObjective
-                )
-            )
-            < 2
-        ):
-            raise ValueError(
-                "At least two output features has to be defined in the domain."
-            )
-        for feat in self.domain.outputs.get_by_objective(
-            excludes=BotorchConstrainedObjective
-        ):
-            if feat.objective.w != 1.0:  # type: ignore
-                raise ValueError("Only objectives with weight 1 are supported.")
-        if self.ref_point is not None:
-            if len(self.ref_point) != len(
-                self.domain.outputs.get_by_objective(
-                    excludes=BotorchConstrainedObjective
-                )
-            ):
-                raise ValueError(
-                    "Dimensionality of provided ref_point does not match number of output features."
-                )
-            for feat in self.domain.outputs.get_keys_by_objective(
-                excludes=BotorchConstrainedObjective
-            ):
-                assert (
-                    feat in self.ref_point.keys()
-                ), f"No reference point defined for output feature {feat}."
-        self.ref_point_mask = get_ref_point_mask(self.domain)
-        super()._init_domain()
-        return
 
     def get_adjusted_refpoint(self):
         if self.ref_point is not None:
