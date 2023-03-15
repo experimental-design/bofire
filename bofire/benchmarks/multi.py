@@ -1,5 +1,5 @@
+import json
 import math
-import os
 from typing import Optional
 
 import numpy as np
@@ -12,6 +12,9 @@ from scipy.special import gamma
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.benchmark import Benchmark
+from bofire.benchmarks.data.aniline_cn_crosscoupling import (
+    EXPERIMENTS as ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS,
+)
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -470,12 +473,7 @@ class CrossCoupling(Benchmark):
             output_features=Outputs(features=output_features),
         )
 
-        data = pd.read_csv(
-            os.path.dirname(os.path.abspath(__file__))
-            + "/data/aniline_cn_crosscoupling.csv",
-            index_col=0,
-            skiprows=[1],
-        )
+        data = pd.DataFrame.from_dict(json.loads(ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS))
 
         data = data.rename(columns={"base_equivalents": "base_eq", "yld": "yield"})
         data["valid_yield"] = 1
