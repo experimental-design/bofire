@@ -221,11 +221,66 @@ def test_strategy_tell_initial(
     strategy = dummy.DummyStrategy(
         data_model=dummy.DummyStrategyDataModel(domain=domain)
     )
-    print("mama", strategy.experiments)  # , strategy.experiments.shape)
-    # print("mama", experiments.shape)
     strategy.tell(experiments=experiments, replace=replace)
-    print("papa", strategy.experiments, strategy.experiments.shape)
     assert strategy.experiments.equals(experiments)
+
+
+def test_strategy_set_experiments():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_experiments == 0
+    experiments = generate_experiments(domain, 2)
+    strategy.set_experiments(experiments=experiments)
+    assert_frame_equal(strategy.experiments, experiments)
+    assert_frame_equal(strategy._experiments, experiments)
+    assert strategy.num_experiments == 2
+
+
+def test_strategy_add_experiments():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_experiments == 0
+    experiments = generate_experiments(domain, 2)
+    strategy.add_experiments(experiments=experiments)
+    assert_frame_equal(strategy.experiments, experiments)
+    assert strategy.num_experiments == 2
+    experiments2 = generate_experiments(domain, 5)
+    strategy.add_experiments(experiments=experiments2)
+    assert strategy.num_experiments == 7
+    assert_frame_equal(
+        strategy.experiments, pd.concat((experiments, experiments2), ignore_index=True)
+    )
+
+
+def test_strategy_set_candidates():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_candidates == 0
+    candidates = generate_candidates(domain, 2)
+    strategy.set_candidates(candidates=candidates)
+    assert_frame_equal(strategy.candidates, candidates)
+    assert_frame_equal(strategy._candidates, candidates)
+    assert strategy.num_candidates == 2
+
+
+def test_strategy_add_candidates():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_candidates == 0
+    candidates = generate_candidates(domain, 2)
+    strategy.add_candidates(candidates=candidates)
+    assert_frame_equal(strategy.candidates, candidates)
+    assert strategy.num_candidates == 2
+    candidates2 = generate_candidates(domain, 5)
+    strategy.add_candidates(candidates=candidates2)
+    assert strategy.num_candidates == 7
+    assert_frame_equal(
+        strategy.candidates, pd.concat((candidates, candidates2), ignore_index=True)
+    )
 
 
 @pytest.mark.parametrize(

@@ -23,12 +23,31 @@ class Strategy(ABC):
         self.domain = data_model.domain
         self.seed = data_model.seed
         self.rng = np.random.default_rng(self.seed)
-        self.experiments = None
-        self.candidates = None
+        self._experiments = None
+        self._candidates = None
 
     @classmethod
     def from_spec(cls, data_model: DataModel) -> "Strategy":
+        """Used by the mapper to map from data model to functional strategy."""
         return cls(data_model=data_model)
+
+    @property
+    def experiments(self) -> pd.DataFrame:
+        """Returns the experiments of the strategy.
+
+        Returns:
+            pd.DataFrame: Current experiments.
+        """
+        return self._experiments  # type: ignore
+
+    @property
+    def candidates(self) -> pd.DataFrame:
+        """Returns the (pending) candidates of the strategy.
+
+        Returns:
+            pd.DataFrame: Pending experiments.
+        """
+        return self._candidates  # type: ignore
 
     def tell(
         self,
@@ -43,13 +62,10 @@ class Strategy(ABC):
         """
         if len(experiments) == 0:
             return
-        if replace or self.experiments is None:
-            self.experiments = experiments
+        if replace:
+            self.set_experiments(experiments=experiments)
         else:
-            self.experiments = pd.concat(
-                (self.experiments, experiments),
-                ignore_index=True,
-            )
+            self.add_experiments(experiments=experiments)
         self._tell()
 
     def _tell(self) -> None:
@@ -172,41 +188,61 @@ class Strategy(ABC):
         ]
 
     def set_candidates(self, candidates: pd.DataFrame):
+        """Set candidates of the strategy. Overwrites existing ones.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with candidates.
+        """
         candidates = self.domain.validate_candidates(candidates)
-        self.candidates = candidates
+        self._candidates = candidates
 
     def add_candidates(self, candidates: pd.DataFrame):
+        """Add candidates to the strategy. Appends to existing ones.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with candidates.
+        """
         candidates = self.domain.validate_candidates(candidates)
-        if candidates is None:
-            self.candidates = candidates
+        if self.candidates is None:
+            self._candidates = candidates
         else:
-            self.candidates = pd.concat(
+            self._candidates = pd.concat(
                 (self.candidates, candidates), ignore_index=True
             )
 
     @property
     def num_candidates(self) -> int:
+        """Returns number of (pending) candidates"""
         if self.candidates is None:
             return 0
         return len(self.candidates)
 
     def set_experiments(self, experiments: pd.DataFrame):
+        """Set experiments of the strategy. Overwrites existing ones.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experiments.
+        """
         experiments = self.domain.validate_experiments(experiments)
-        self.experiments = experiments
+        self._experiments = experiments
 
     def add_experiments(self, experiments: pd.DataFrame):
+        """Add experiments to the strategy. Appends to existing ones.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with experiments.
+        """
         experiments = self.domain.validate_experiments(experiments)
-        if experiments is None:
-            self.experiments = None
-        elif self.experiments is None:
-            self.experiments = experiments
+        if self.experiments is None:
+            self._experiments = experiments
         else:
-            self.experiments = pd.concat(
+            self._experiments = pd.concat(
                 (self.experiments, experiments), ignore_index=True
             )
 
     @property
     def num_experiments(self) -> int:
+        """Returns number of experiments"""
         if self.experiments is None:
             return 0
         return len(self.experiments)
