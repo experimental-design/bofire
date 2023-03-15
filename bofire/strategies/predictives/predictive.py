@@ -190,14 +190,3 @@ class PredictiveStrategy(Strategy):
             pd.DataFrame: The chosen set of candidates.
         """
         pass
-
-    @abstractmethod
-    def has_sufficient_experiments(
-        self,
-    ) -> bool:
-        """Abstract method to check if sufficient experiments are available.
-
-        Returns:
-            bool: True if number of passed experiments is sufficient, False otherwise
-        """
-        pass

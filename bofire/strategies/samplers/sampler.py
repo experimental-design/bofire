@@ -57,13 +57,7 @@ class SamplerStrategy(Strategy):
                     feat.lower_bound = 0.0
                     feat.upper_bound = 0.0
                 # setup then sampler for this situation
-                # todo also pass the other args here
                 sampler: SamplerStrategy = self.duplicate(domain=domain)
-                # sampler = self.__class__(
-                #     # TODO: change to instance of data model
-                #     domain=domain,
-                #     **self.get_portable_attributes(),
-                # )
                 samples.append(sampler.ask(n=n))
             samples = pd.concat(samples, axis=0, ignore_index=True)
             if return_all:
@@ -74,3 +68,6 @@ class SamplerStrategy(Strategy):
         if len(samples) != n:
             raise ValueError(f"expected {n} samples, got {len(samples)}.")
         return self.domain.validate_candidates(samples, only_inputs=True)
+
+    def has_sufficient_experiments(self) -> bool:
+        return True

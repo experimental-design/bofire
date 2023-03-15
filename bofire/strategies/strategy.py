@@ -111,6 +111,34 @@ class Strategy(ABC):
 
         return candidates
 
+    def _choose_from_pool(
+        self,
+        candidate_pool: pd.DataFrame,
+        candidate_count: Optional[PositiveInt] = None,
+    ) -> pd.DataFrame:
+        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
+
+        Args:
+            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
+            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
+
+        Returns:
+            pd.DataFrame: The chosen set of candidates.
+        """
+        # TODO: change inheritence hierarchy to make this an optional feature of a strategy provided by inheritence
+        raise NotImplementedError
+
+    @abstractmethod
+    def has_sufficient_experiments(
+        self,
+    ) -> bool:
+        """Abstract method to check if sufficient experiments are available.
+
+        Returns:
+            bool: True if number of passed experiments is sufficient, False otherwise
+        """
+        pass
+
     @abstractmethod
     def _ask(
         self,
