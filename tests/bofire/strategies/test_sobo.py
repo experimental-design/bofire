@@ -3,11 +3,18 @@ from itertools import chain
 
 import pytest
 import torch
+from botorch.acquisition import (
+    qExpectedImprovement,
+    qNoisyExpectedImprovement,
+    qProbabilityOfImprovement,
+    qSimpleRegret,
+    qUpperConfidenceBound,
+)
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import DTLZ2
-from bofire.data_models.acquisition_functions.api import qUCB
+from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -54,45 +61,43 @@ def test_SOBO_not_fitted(domain, acqf):
         strategy._init_acqf()
 
 
-# TODO: can this tests be removed as acqfs are not initialized via str / enum anymore
-# @pytest.mark.parametrize(
-#     "acqf, expected, num_test_candidates",
-#     [
-#         (acqf_inp[0], acqf_inp[1], num_test_candidates)
-#         for acqf_inp in [
-#             ("QEI", qExpectedImprovement),
-#             ("QNEI", qNoisyExpectedImprovement),
-#             ("QPI", qProbabilityOfImprovement),
-#             ("QUCB", qUpperConfidenceBound),
-#             ("QSR", qSimpleRegret),
-#             (qEI(), qExpectedImprovement),
-#             (qNEI(), qNoisyExpectedImprovement),
-#             (qPI(), qProbabilityOfImprovement),
-#             (qUCB(), qUpperConfidenceBound),
-#             (qSR(), qSimpleRegret),
-#         ]
-#         for num_test_candidates in range(1, 3)
-#     ],
-# )
-# def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
-#     # generate data
-#     benchmark = DTLZ2(dim=6)
-#     random_strategy = PolytopeSampler(domain=benchmark.domain)
-#     experiments = benchmark.f(random_strategy._ask(n=20), return_complete=True)
-#     experiments_test = benchmark.f(
-#         random_strategy._ask(n=num_test_candidates), return_complete=True
-#     )
+@pytest.mark.parametrize(
+    "acqf, expected, num_test_candidates",
+    [
+        (acqf_inp[0], acqf_inp[1], num_test_candidates)
+        for acqf_inp in [
+            (qEI(), qExpectedImprovement),
+            (qNEI(), qNoisyExpectedImprovement),
+            (qPI(), qProbabilityOfImprovement),
+            (qUCB(), qUpperConfidenceBound),
+            (qSR(), qSimpleRegret),
+        ]
+        for num_test_candidates in range(1, 3)
+    ],
+)
+def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
+    # generate data
+    benchmark = DTLZ2(dim=6)
 
-#     data_model = data_models.SoboStrategy(
-#         domain=benchmark.domain, acquisition_function=acqf
-#     )
-#     strategy = SoboStrategy(data_model=data_model)
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
 
-#     strategy.tell(experiments)
-#     assert isinstance(strategy.acqf, expected)
-#     # test acqf calc
-#     acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
-#     assert acqf_vals.shape[0] == num_test_candidates
+    experiments = benchmark.f(random_strategy.ask(n=20), return_complete=True)
+    experiments_test = benchmark.f(
+        random_strategy._ask(n=num_test_candidates), return_complete=True
+    )
+
+    data_model = data_models.SoboStrategy(
+        domain=benchmark.domain, acquisition_function=acqf
+    )
+    strategy = SoboStrategy(data_model=data_model)
+
+    strategy.tell(experiments)
+    assert isinstance(strategy.acqf, expected)
+    # test acqf calc
+    acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
+    assert acqf_vals.shape[0] == num_test_candidates
 
 
 def test_SOBO_init_qUCB():

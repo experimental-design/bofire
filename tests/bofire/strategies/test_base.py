@@ -688,6 +688,7 @@ def test_base_fit(domain, data, acquisition_function):
     myStrategy.fit()
 
 
+# TODO: replace this with proper benchmark methods
 @pytest.mark.parametrize(
     "domain, data, acquisition_function",
     [

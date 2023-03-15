@@ -1683,15 +1683,9 @@ input_features2 = Inputs(
         ),
     ],
 )
-# TODO: re-enable broken tests
 def test_input_features_get_bounds(input_features, specs, expected_bounds):
     lower, upper = input_features.get_bounds(specs=specs)
-    print(lower)
-    print(upper)
-    print(expected_bounds)
-    assert np.allclose(
-        expected_bounds[0], lower
-    )  # torch.equal asserts false due to deviation of 1e-7??
+    assert np.allclose(expected_bounds[0], lower)
     assert np.allclose(expected_bounds[1], upper)
 
 
