@@ -143,9 +143,9 @@ def plot_scatter_matrix(
         ms_per_frame (int, optional): Duration per animation frame in milliseconds.. Defaults to 750.
 
     Raises:
-        ValueError: _description_
-        ValueError: _description_
-        ValueError: _description_
+        ValueError: If not enough features are given to be plotted.
+        ValueError: If both showupperhalf and diagonal_visible are set to be False.
+        ValueError: If an invalid colorstyle is given
 
     Returns:
         _type_: _description_
