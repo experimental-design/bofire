@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 
-from bofire.domain.domain import Domain
+from bofire.data_models.domain.domain import Domain
 from bofire.utils.multiobjective import get_pareto_front
 
 
