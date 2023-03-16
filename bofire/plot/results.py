@@ -121,7 +121,7 @@ def plot_scatter_matrix(
     colorstyle="standard",
     diagonal_visible: bool = False,
     showupperhalf: bool = True,
-    show_amimation: bool = True,
+    show_animation: bool = False,
     ms_per_frame: int = 750,
 ):
     """Creates a scatter matrix with an animation that shows the point exploration of the strategy.
@@ -139,7 +139,7 @@ def plot_scatter_matrix(
         colorstyle (str, optional): Colorstyle of the scatter matrix. Defaults to "standard".
         diagonal_visible (bool, optional): Whether the diagonal is visible. Defaults to False.
         showupperhalf (bool, optional): Whether the upper half is visible. Defaults to True.
-        show_amimation (bool, optional): Whether the animation is visible. Defaults to True.
+        show_animation (bool, optional): Whether the animation is visible. Defaults to False.
         ms_per_frame (int, optional): Duration per animation frame in milliseconds.. Defaults to 750.
 
     Raises:
@@ -178,6 +178,9 @@ def plot_scatter_matrix(
     # one frame for each row in experiments dataframe
     pareto_front = get_pareto_front(domain=domain, experiments=experiments)
     for i, _ in experiments.iterrows():
+        if show_animation is False:
+            i = len(experiments)
+
         if i not in pareto_front.index:
             pareto_front.loc[i] = np.nan  # type: ignore
             pareto_front.sort_index(inplace=True)
@@ -226,6 +229,9 @@ def plot_scatter_matrix(
             frame = go.Frame(data=pareto_trace)
 
         fig.frames = fig.frames + (frame,)
+
+        if show_animation is False:
+            break
 
     if display_pareto_only is False:
         fig.add_trace(common_trace)  # type: ignore
@@ -280,7 +286,7 @@ def plot_scatter_matrix(
         Layout().calculate_axis_ranges(features=features, experiments=experiments)
     )
 
-    if show_amimation:
+    if show_animation:
         # create and add animation button
         button = Layout().create_button(ms_per_frame=ms_per_frame)
         fig.update_layout(updatemenus=[button])
