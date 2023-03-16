@@ -118,6 +118,7 @@ def plot_scatter_matrix(
     display_pareto_only: bool = False,
     ref_point: Dict = {},
     labels: Dict = {},
+    scale: int = 1,
     colorstyle="standard",
     diagonal_visible: bool = False,
     showupperhalf: bool = True,
@@ -136,6 +137,7 @@ def plot_scatter_matrix(
         ref_point (Dict, optional): Coordinates of the ref_point. Defaults to {}.
         labels (Dict, optional): Labels that set the x and y titles next to the axis of each feature.
         Has to be in the form: {"feature_key": "desired label"}. Defaults to {}.
+        scale (int, optional): Enlargens or shrinks the overall size of the window.
         colorstyle (str, optional): Colorstyle of the scatter matrix. Defaults to "standard".
         diagonal_visible (bool, optional): Whether the diagonal is visible. Defaults to False.
         showupperhalf (bool, optional): Whether the upper half is visible. Defaults to True.
@@ -198,7 +200,7 @@ def plot_scatter_matrix(
             diagonal_visible=diagonal_visible,
             showupperhalf=showupperhalf,
             marker=dict(
-                size=12,
+                size=12 * scale,
                 line=dict(width=1, color=style["fontcolor"]),  # type: ignore
                 color=style["highlight"],  # type: ignore
             ),
@@ -218,8 +220,10 @@ def plot_scatter_matrix(
                 diagonal_visible=diagonal_visible,
                 showupperhalf=showupperhalf,
                 marker=dict(
-                    size=10,
-                    line=dict(width=1, color=style["fontcolor"]),  # type: ignore
+                    size=10 * scale,
+                    line=dict(
+                        width=1 * scale, color=style["fontcolor"]  # type: ignore
+                    ),
                     color=style["highlight2"],  # type: ignore
                     symbol="x",
                 ),
@@ -256,7 +260,7 @@ def plot_scatter_matrix(
             diagonal_visible=diagonal_visible,
             showupperhalf=showupperhalf,
             marker=dict(
-                size=12,
+                size=12 * scale,
                 line=dict(width=1, color=style["fontcolor"]),  # type: ignore
                 color=style["highlight3"],  # type: ignore
             ),
@@ -276,9 +280,9 @@ def plot_scatter_matrix(
             x=0.5,
             y=0.98,
         ),
-        font=dict(family="Arial", size=18, color=style["fontcolor"]),  # type: ignore
-        width=400 * len(features),
-        height=400 * len(features),
+        font=dict(family="Arial", size=18 * scale, color=style["fontcolor"]),  # type: ignore
+        width=400 * scale * len(features),
+        height=400 * scale * len(features),
     )
 
     # set ranges for axis
