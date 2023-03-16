@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, Optional
 import pandas as pd
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain.domain import Domain
+from bofire.data_models.domain.api import Domain
 
 # Create a folder for the log file, if not alredy exists.
 if not os.path.exists("bofire_logs"):
@@ -77,7 +77,7 @@ class Aspen_benchmark(Benchmark):
         Raises:
             ValueError: In case it is not possible to start Aspen plus.
         """
-        import win32com.client as win32
+        import win32com.client as win32  # type: ignore
 
         logger.info("Starting Aspen plus")
         # Aspen should be accessible from every function as a global variable.

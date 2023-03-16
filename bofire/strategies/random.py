@@ -1,17 +1,12 @@
-from typing import Optional, Type
+from typing import Optional
 
 import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
 
-from bofire.domain.constraint import (
-    Constraint,
-    NChooseKConstraint,
-    NonlinearEqualityConstraint,
-)
-from bofire.domain.feature import Feature
-from bofire.domain.objective import Objective
-from bofire.samplers import PolytopeSampler, RejectionSampler, Sampler
+import bofire.data_models.strategies.api as data_models
+from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.strategies.samplers.rejection import RejectionSampler
 from bofire.strategies.strategy import Strategy
 
 
@@ -22,32 +17,28 @@ class RandomStrategy(Strategy):
     Uses PolytopeSampler or RejectionSampler, depending on the constraints.
     """
 
-    sampler: Optional[Sampler] = None
+    def __init__(
+        self,
+        data_model: data_models.RandomStrategy,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
+        self._init_sampler()
 
-    def _init_domain(self) -> None:
+    def _init_sampler(self) -> None:
         errors = []
-        for S in [PolytopeSampler, RejectionSampler]:
+        for dm, functional in [
+            (data_models.PolytopeSampler, PolytopeSampler),
+            (data_models.RejectionSampler, RejectionSampler),
+        ]:
             try:
-                self.sampler = S(domain=self.domain)
+                data_model = dm(domain=self.domain)
+                self.sampler = functional(data_model=data_model)
                 break
             except ValidationError as err:
                 errors.append(err)
         if self.sampler is None:
             raise Exception(errors)
-
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
-        if my_type in [NChooseKConstraint, NonlinearEqualityConstraint]:
-            return False
-        return True
-
-    @classmethod
-    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        return True
-
-    @classmethod
-    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        return True
 
     def has_sufficient_experiments(self) -> bool:
         return True

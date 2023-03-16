@@ -22,6 +22,13 @@ BoFire ...
 
 BoFire has BoTorch as its main dependency which depends on PyTorch. In the following you find different options to install BoFire and its dependencies.
 
+### Optional dependencies
+
+BoFire has functionality to create D-optimal experimental designs via the doe module. To use this module please install cyipopt. The most comfortable way to do this is via `conda`
+```
+conda install -c conda-forge cyipopt
+```
+
 ### Latest stable release
 
 We do not recommend the latest stable release from PyPI until we have published version [0.1](https://github.com/experimental-design/bofire/milestone/1). 
@@ -47,7 +54,7 @@ Documentation including a section on how to get started can be found under https
 
 ## Contributing
 
-> TL;DR of the [Contributing](./CONTRIBUTING.md) guidelines.
+See our [Contributing](./CONTRIBUTING.md) guidelines.
 
 ### Release roadmap
 
