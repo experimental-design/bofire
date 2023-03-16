@@ -5,16 +5,18 @@ import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 
-from bofire.domain.constraint import (
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.constraints import Constraints
-from bofire.domain.domain import Domain
-from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
-from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objective import (
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     ConstantObjective,
     DeltaObjective,
@@ -119,7 +121,7 @@ def test_get_multiplicative_botorch_objective():
         ],
         k=2,
     )
-    output_features = OutputFeatures(
+    output_features = Outputs(
         features=[
             ContinuousOutput(key="alpha", objective=obj1),
             ContinuousOutput(key="beta", objective=obj2),
@@ -149,7 +151,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
     obj1 = MaximizeObjective(w=0.5)
     obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
     obj3 = DeltaObjective(w=0.5, ref_point=10.0)
-    output_features = OutputFeatures(
+    output_features = Outputs(
         features=[
             ContinuousOutput(
                 key="alpha",
@@ -304,8 +306,8 @@ of3 = ContinuousOutput(
 @pytest.mark.parametrize(
     "output_features",
     [
-        OutputFeatures(features=[of1, of2, of3]),
-        OutputFeatures(features=[of2, of1, of3]),
+        Outputs(features=[of1, of2, of3]),
+        Outputs(features=[of2, of1, of3]),
     ],
 )
 def test_get_output_constraints(output_features):
@@ -316,7 +318,7 @@ def test_get_output_constraints(output_features):
 
 def test_get_nchoosek_constraints():
     domain = Domain(
-        input_features=InputFeatures(
+        input_features=Inputs(
             features=[
                 ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
                 for i in range(8)
@@ -353,7 +355,7 @@ def test_get_nchoosek_constraints():
     samples[[f"if{i+4}" for i in range(5)]] = 0.0
     assert torch.all(constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
     domain = Domain(
-        input_features=InputFeatures(
+        input_features=Inputs(
             features=[
                 ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
                 for i in range(8)
@@ -378,7 +380,7 @@ def test_get_nchoosek_constraints():
     )
 
     domain = Domain(
-        input_features=InputFeatures(
+        input_features=Inputs(
             features=[
                 ContinuousInput(key=f"if{i+1}", lower_bound=0, upper_bound=1)
                 for i in range(8)

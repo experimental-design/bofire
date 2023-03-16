@@ -6,7 +6,7 @@ import pandas as pd
 import scipy as sp
 from formulaic import Formula
 
-from bofire.domain.domain import Domain
+from bofire.data_models.domain.api import Domain
 
 
 class JacobianForLogdet:

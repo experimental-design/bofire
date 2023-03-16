@@ -4,16 +4,14 @@ import numpy as np
 import torch
 from torch import Tensor
 
-from bofire.any.objective import AnyObjective
-from bofire.domain.constraint import (
+from bofire.data_models.api import AnyObjective, Domain, Outputs
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.feature import ContinuousInput, InputFeature
-from bofire.domain.features import OutputFeatures
-from bofire.domain.objective import (
+from bofire.data_models.features.api import ContinuousInput, Input
+from bofire.data_models.objectives.api import (
     BotorchConstrainedObjective,
     CloseToTargetObjective,
     DeltaObjective,
@@ -53,7 +51,7 @@ def get_linear_constraints(
         upper = []
         rhs = 0.0
         for i, featkey in enumerate(c.features):  # type: ignore
-            idx = domain.get_feature_keys(InputFeature).index(featkey)
+            idx = domain.get_feature_keys(Input).index(featkey)
             feat = domain.get_feature(featkey)
             if feat.is_fixed():  # type: ignore
                 rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
@@ -126,13 +124,13 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 
 
 def get_output_constraints(
-    output_features: OutputFeatures,
+    output_features: Outputs,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
 
     Args:
-        output_features (OutputFeatures): Output feature object that should
+        output_features (Outputs): Output feature object that should
             be processed.
 
     Returns:
@@ -220,7 +218,7 @@ def get_objective_callable(
 
 
 def get_multiplicative_botorch_objective(
-    output_features: OutputFeatures,
+    output_features: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
@@ -243,7 +241,7 @@ def get_multiplicative_botorch_objective(
 
 
 def get_additive_botorch_objective(
-    output_features: OutputFeatures, exclude_constraints: bool = True
+    output_features: Outputs, exclude_constraints: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore

@@ -1,22 +1,54 @@
 import inspect
-from typing import List, Literal, Optional, Tuple, Type
+from typing import Dict, List, Literal, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
 from pydantic.types import NonNegativeInt
 
-from bofire.domain.constraint import (
+import bofire.data_models.strategies.api as data_models
+from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.feature import ContinuousInput, ContinuousOutput, Feature
-from bofire.domain.objective import MaximizeObjective, MinimizeObjective, Objective
-from bofire.strategies.strategy import PredictiveStrategy, Strategy
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, Feature
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MinimizeObjective,
+    Objective,
+)
+from bofire.strategies.api import PredictiveStrategy, Strategy
+
+
+class DummyStrategyDataModel(data_models.BotorchStrategy):
+    type: Literal["DummyStrategyDataModel"] = "DummyStrategyDataModel"
+
+    @classmethod
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+        return my_type in [
+            LinearEqualityConstraint,
+            LinearInequalityConstraint,
+        ]
+
+    @classmethod
+    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+        return my_type in [ContinuousInput, ContinuousOutput]
+
+    @classmethod
+    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
+        return my_type in [
+            MaximizeObjective,
+            MinimizeObjective,
+        ]
 
 
 class DummyStrategy(Strategy):
-    type: Literal["DummyStrategy"] = "DummyStrategy"
+    def __init__(
+        self,
+        data_model: DummyStrategyDataModel,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
 
     def _init_domain(
         self,
@@ -53,6 +85,12 @@ class DummyStrategy(Strategy):
     ) -> bool:
         return len(self.experiments) >= 3
 
+
+class DummyPredictiveStrategyDataModel(data_models.Strategy):
+    type: Literal[
+        "DummyPredictiveStrategyDataModel"
+    ] = "DummyPredictiveStrategyDataModel"
+
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return my_type in [
@@ -73,6 +111,13 @@ class DummyStrategy(Strategy):
 
 
 class DummyPredictiveStrategy(PredictiveStrategy):
+    def __init__(
+        self,
+        data_model: DummyPredictiveStrategyDataModel,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
+
     def _init_domain(
         self,
     ) -> None:
@@ -121,20 +166,13 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     ) -> bool:
         return len(self.experiments) >= 3
 
-    @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
-        return my_type in [
-            LinearEqualityConstraint,
-            LinearInequalityConstraint,
-        ]
 
-    @classmethod
-    def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        return my_type in [ContinuousInput, ContinuousOutput]
+STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
+    DummyStrategyDataModel: DummyStrategy,
+    DummyPredictiveStrategyDataModel: DummyPredictiveStrategy,
+}
 
-    @classmethod
-    def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        return my_type in [
-            MaximizeObjective,
-            MinimizeObjective,
-        ]
+
+def map(data_model: data_models.Strategy) -> Strategy:
+    cls = STRATEGY_MAP[data_model.__class__]
+    return cls.from_spec(data_model=data_model)

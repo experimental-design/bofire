@@ -7,20 +7,24 @@ from _pytest.fixtures import fixture
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
-from bofire.domain.constraint import (
+import tests.bofire.strategies.dummy as dummy
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
-from bofire.domain.objective import TargetObjective
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
+from bofire.data_models.objectives.api import TargetObjective
 from bofire.strategies.strategy import Strategy
-from tests.bofire.domain.test_domain_validators import (
+from tests.bofire.data_models.test_domain_validators import (
     generate_candidates,
     generate_experiments,
 )
-from tests.bofire.strategies.dummy import DummyPredictiveStrategy, DummyStrategy
 from tests.bofire.strategies.specs import (
     VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
@@ -86,7 +90,14 @@ c3 = NChooseKConstraint(
 
 @fixture
 def strategy():
-    return DummyStrategy()
+    data_model = dummy.DummyStrategyDataModel(
+        domain=Domain(
+            input_features=[if1, if2],
+            output_features=[of1, of2],
+            constraints=[],
+        )
+    )
+    return dummy.DummyStrategy(data_model=data_model)
 
 
 @pytest.mark.parametrize(
@@ -105,8 +116,7 @@ def strategy():
 def test_strategy_constructor(
     domain: Domain,
 ):
-    print(domain)
-    DummyStrategy(domain=domain)
+    dummy.DummyStrategyDataModel(domain=domain)
 
 
 @pytest.mark.parametrize(
@@ -126,7 +136,7 @@ def test_strategy_init_domain_invalid_constraints(
     domain: Domain,
 ):
     with pytest.raises(ValidationError):
-        DummyStrategy(domain=domain)
+        dummy.DummyStrategyDataModel(domain=domain)
 
 
 @pytest.mark.parametrize(
@@ -144,7 +154,7 @@ def test_strategy_init_domain_invalid_constraints(
 )
 def test_strategy_init_domain_invalid_input(domain: Domain):
     with pytest.raises(ValidationError):
-        DummyStrategy(domain=domain)
+        dummy.DummyStrategyDataModel(domain=domain)
 
 
 @pytest.mark.parametrize(
@@ -162,7 +172,7 @@ def test_strategy_init_domain_invalid_input(domain: Domain):
 )
 def test_strategy_init_domain_invalid_objective(domain: Domain):
     with pytest.raises(ValidationError):
-        DummyStrategy(domain=domain)
+        dummy.DummyStrategyDataModel(domain=domain)
 
 
 def test_strategy_init_domain_noobjective():
@@ -172,7 +182,7 @@ def test_strategy_init_domain_noobjective():
         constraints=[],
     )
     with pytest.raises(ValidationError):
-        DummyStrategy(domain=domain)
+        dummy.DummyStrategyDataModel(domain=domain)
 
 
 domain = Domain(
@@ -208,12 +218,69 @@ def test_strategy_tell_initial(
     replace: bool,
 ):
     """verify that tell correctly stores initial experiments"""
-    strategy = DummyStrategy(domain=domain)
-    print("mama", strategy.domain.experiments)  # , strategy.domain.experiments.shape)
-    # print("mama", experiments.shape)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments=experiments, replace=replace)
-    print("papa", strategy.domain.experiments, strategy.domain.experiments.shape)
-    assert strategy.domain.experiments.equals(experiments)
+    assert strategy.experiments.equals(experiments)
+
+
+def test_strategy_set_experiments():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_experiments == 0
+    experiments = generate_experiments(domain, 2)
+    strategy.set_experiments(experiments=experiments)
+    assert_frame_equal(strategy.experiments, experiments)
+    assert_frame_equal(strategy._experiments, experiments)
+    assert strategy.num_experiments == 2
+
+
+def test_strategy_add_experiments():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_experiments == 0
+    experiments = generate_experiments(domain, 2)
+    strategy.add_experiments(experiments=experiments)
+    assert_frame_equal(strategy.experiments, experiments)
+    assert strategy.num_experiments == 2
+    experiments2 = generate_experiments(domain, 5)
+    strategy.add_experiments(experiments=experiments2)
+    assert strategy.num_experiments == 7
+    assert_frame_equal(
+        strategy.experiments, pd.concat((experiments, experiments2), ignore_index=True)
+    )
+
+
+def test_strategy_set_candidates():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_candidates == 0
+    candidates = generate_candidates(domain, 2)
+    strategy.set_candidates(candidates=candidates)
+    assert_frame_equal(strategy.candidates, candidates)
+    assert_frame_equal(strategy._candidates, candidates)
+    assert strategy.num_candidates == 2
+
+
+def test_strategy_add_candidates():
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    assert strategy.num_candidates == 0
+    candidates = generate_candidates(domain, 2)
+    strategy.add_candidates(candidates=candidates)
+    assert_frame_equal(strategy.candidates, candidates)
+    assert strategy.num_candidates == 2
+    candidates2 = generate_candidates(domain, 5)
+    strategy.add_candidates(candidates=candidates2)
+    assert strategy.num_candidates == 7
+    assert_frame_equal(
+        strategy.candidates, pd.concat((candidates, candidates2), ignore_index=True)
+    )
 
 
 @pytest.mark.parametrize(
@@ -234,11 +301,13 @@ def test_strategy_tell_append(
     domain: Domain,
     experimentss: List[pd.DataFrame],
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     for index, experiments in enumerate(experimentss):
         strategy.tell(experiments=experiments, replace=False)
         expected_len = sum([len(e) for e in experimentss[: index + 1]])
-        assert len(strategy.domain.experiments) == expected_len
+        assert len(strategy.experiments) == expected_len
 
 
 @pytest.mark.parametrize(
@@ -249,11 +318,13 @@ def test_strategy_tell_replace(
     domain: Domain,
     experimentss: List[pd.DataFrame],
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     for experiments in experimentss:
         strategy.tell(experiments=experiments, replace=True)
         expected_len = len(experiments)
-        assert len(strategy.domain.experiments) == expected_len
+        assert len(strategy.experiments) == expected_len
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
@@ -261,7 +332,9 @@ def test_strategy_ask_invalid_candidates(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
 
     def test_ask(self: Strategy, candidate_count: int):
@@ -269,7 +342,7 @@ def test_strategy_ask_invalid_candidates(
         candidates = candidates.drop(candidates.columns[0], axis=1)
         return candidates
 
-    with mock.patch.object(DummyStrategy, "_ask", new=test_ask):
+    with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
         with pytest.raises(ValueError):
             strategy.ask(candidate_count=1)
 
@@ -279,14 +352,16 @@ def test_strategy_ask_invalid_candidate_count(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
 
     def test_ask(self: Strategy, candidate_count: int):
         candidates = generate_candidates(self.domain, candidate_count)[:-1]
         return candidates
 
-    with mock.patch.object(DummyStrategy, "_ask", new=test_ask):
+    with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
         with pytest.raises(ValueError):
             strategy.ask(candidate_count=4)
 
@@ -296,27 +371,17 @@ def test_strategy_ask_valid(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
 
     def test_ask(self: Strategy, candidate_count: int):
         candidates = generate_candidates(self.domain, candidate_count)
         return candidates
 
-    with mock.patch.object(DummyStrategy, "_ask", new=test_ask):
+    with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
         strategy.ask(candidate_count=1)
-
-
-def test_strategy_to_candidates():
-    strategy = DummyStrategy(domain=domain)
-    candidates = strategy.domain.inputs.sample(5)
-    transformed = strategy.to_candidates(candidates=candidates)
-    df = pd.concat(
-        [pd.DataFrame(c.to_series()).transpose() for c in transformed],
-        axis=0,
-        ignore_index=True,
-    )
-    assert_frame_equal(df, candidates)
 
 
 @pytest.mark.parametrize(
@@ -329,7 +394,9 @@ def test_strategy_to_candidates():
 def test_strategy_ask_valid_candidate_pool(
     domain, experiments, candidate_pool, candidate_count
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
     strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
 
@@ -344,14 +411,18 @@ def test_strategy_ask_valid_candidate_pool(
 def test_ask_invalid_candidate_count_request_pool(
     domain, experiments, candidate_pool, candidate_count
 ):
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
     with pytest.raises((AssertionError, ValueError)):
         strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
 
 
 def test_ask_invalid_candidate_count_request():
-    strategy = DummyStrategy(domain=domain)
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
     strategy.tell(e3)
     with pytest.raises(ValueError):
         strategy.ask(-1)
@@ -376,14 +447,16 @@ def test_predictive_strategy_ask_valid(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
-    strategy = DummyPredictiveStrategy(domain=domain)
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
 
     def test_ask(self: Strategy, candidate_count: int):
         candidates = generate_candidates(self.domain, candidate_count)
         return candidates
 
-    with mock.patch.object(DummyPredictiveStrategy, "_ask", new=test_ask):
+    with mock.patch.object(dummy.DummyPredictiveStrategy, "_ask", new=test_ask):
         strategy.ask(candidate_count=1)
 
 
@@ -393,7 +466,9 @@ def test_predictivestrategy_to_candidates():
         output_features=[of1, of2],
         constraints=[],
     )
-    strategy = DummyPredictiveStrategy(domain=domain)
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+    )
     candidates = generate_candidates(domain, 5)
     print(candidates)
     transformed = strategy.to_candidates(candidates=candidates)
@@ -407,11 +482,13 @@ def test_predictivestrategy_to_candidates():
 
 def test_predictive_strategy_ask_invalid():
     """Test that PretictiveStrategy also checks if candidates contain output columns."""
-    strategy = DummyPredictiveStrategy(
-        domain=Domain(
-            input_features=[if1, if2],
-            output_features=[of1, of2],
-            constraints=[],
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(
+            domain=Domain(
+                input_features=[if1, if2],
+                output_features=[of1, of2],
+                constraints=[],
+            )
         )
     )
     strategy.tell(e3)
@@ -420,7 +497,7 @@ def test_predictive_strategy_ask_invalid():
         candidates = generate_candidates(self.domain, candidate_count)
         return candidates.drop(columns=["of1_pred"])
 
-    with mock.patch.object(DummyPredictiveStrategy, "_ask", new=test_ask):
+    with mock.patch.object(dummy.DummyPredictiveStrategy, "_ask", new=test_ask):
         with pytest.raises(ValueError):
             strategy.ask(candidate_count=2)
 
@@ -440,7 +517,9 @@ def test_predictive_strategy_ask_invalid():
     ],
 )
 def test_predictive_strategy_predict(domain, experiments):
-    strategy = DummyPredictiveStrategy(domain=domain)
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+    )
     strategy.tell(experiments)
     preds = strategy.predict(generate_candidates(domain=domain))
     assert sorted(list(preds.columns)) == sorted(
@@ -468,6 +547,8 @@ def test_predictive_strategy_predict(domain, experiments):
     ],
 )
 def test_predictive_strategy_predict_not_fitted(domain):
-    strategy = DummyPredictiveStrategy(domain=domain)
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+    )
     with pytest.raises(ValueError):
         strategy.predict(generate_candidates(domain=domain))

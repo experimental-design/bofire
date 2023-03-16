@@ -4,13 +4,13 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bofire.domain.constraint import (
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.features import ContinuousInput, ContinuousOutput
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     find_local_max_ipopt,

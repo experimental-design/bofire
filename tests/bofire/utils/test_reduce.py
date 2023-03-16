@@ -1,12 +1,16 @@
 import numpy as np
 import pytest
 
-from bofire.domain.constraint import (
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.feature import CategoricalInput, ContinuousInput, ContinuousOutput
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.utils.reduce import (
     check_domain_for_reduction,
     check_existence_of_solution,

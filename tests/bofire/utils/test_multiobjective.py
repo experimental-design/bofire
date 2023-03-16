@@ -2,9 +2,10 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from bofire.domain.domain import Domain
-from bofire.domain.feature import ContinuousInput, ContinuousOutput
-from bofire.domain.objective import (
+import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -16,7 +17,6 @@ from bofire.utils.multiobjective import (
     get_ref_point_mask,
     infer_ref_point,
 )
-from tests.bofire import specs
 
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
