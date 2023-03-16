@@ -3,15 +3,14 @@ import pandas as pd
 from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain.domain import Domain
-from bofire.domain.feature import (
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objective import MaximizeObjective, MinimizeObjective
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
 
 class Ackley(Benchmark):
@@ -101,8 +100,8 @@ class Ackley(Benchmark):
         output_feature = ContinuousOutput(key="y", objective=MaximizeObjective(w=1))
 
         self._domain = Domain(
-            input_features=InputFeatures(features=input_feature_list),
-            output_features=OutputFeatures(features=[output_feature]),
+            input_features=Inputs(features=input_feature_list),
+            output_features=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -177,7 +176,7 @@ class Himmelblau(Benchmark):
         )
         input_features.append(
             ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=4.0)
-        )  # ToDo, check for correct bounds
+        )
 
         desirability_function = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
@@ -185,8 +184,8 @@ class Himmelblau(Benchmark):
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
         self._domain = Domain(
-            input_features=InputFeatures(features=input_features),
-            output_features=OutputFeatures(features=[output_feature]),
+            input_features=Inputs(features=input_features),
+            output_features=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:

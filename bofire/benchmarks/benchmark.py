@@ -9,34 +9,9 @@ import pandas as pd
 from multiprocess.pool import Pool
 from tqdm import tqdm
 
-from bofire.domain.domain import Domain
-from bofire.domain.feature import OutputFeature
-from bofire.domain.objective import Objective
-from bofire.strategies.strategy import Strategy
-
-
-# TODO: remove reduction parameter as soon as additive/multiplicative is part of Domain
-def best(domain: Domain, reduction: Callable[[pd.DataFrame], pd.Series]):
-    assert domain.experiments is not None
-    outputs_with_objectives = domain.outputs.get_by_objective(Objective)
-    output_values = domain.experiments[outputs_with_objectives.get_keys()]
-    objective_values = list()
-    for output, col_name in zip(outputs_with_objectives, output_values):
-        assert isinstance(output, OutputFeature)
-        assert output.objective is not None
-        objective_values.append(output.objective(output_values[col_name]))
-    objective_values = reduction(pd.concat([ov.to_frame() for ov in objective_values]))
-    return objective_values.max()
-
-
-# TODO: remove as soon as additive/multiplicative is part of Domain
-def best_additive(domain: Domain):
-    return best(domain, lambda df: df.sum(axis=1))
-
-
-# TODO: remove as soon as additive/multiplicative is part of Domain
-def best_multiplicative(domain: Domain):
-    return best(domain, lambda df: df.prod(axis=1))
+import bofire.strategies.api as strategies
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.strategies.api import AnyStrategy
 
 
 class Benchmark:
@@ -63,7 +38,7 @@ class Benchmark:
 
 
 class StrategyFactory(Protocol):
-    def __call__(self, domain: Domain) -> Strategy:
+    def __call__(self, domain: Domain) -> AnyStrategy:
         ...
 
 
@@ -72,11 +47,11 @@ def _single_run(
     benchmark: Benchmark,
     strategy_factory: StrategyFactory,
     n_iterations: int,
-    metric: Callable[[Domain], float],
-    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]],
+    metric: Callable[[Domain, pd.DataFrame], float],
     n_candidates_per_proposals: int,
     safe_intervall: int,
-) -> Tuple[Benchmark, pd.Series]:
+    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
+) -> Tuple[pd.DataFrame, pd.Series]:
     def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
         Autosave should operate every 10 iterations.
@@ -97,12 +72,16 @@ def _single_run(
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
+    # sample initial values
     if initial_sampler is not None:
         X = initial_sampler(benchmark.domain)
-        Y = benchmark.f(X)
-        XY = pd.concat([X, Y], axis=1)
-        benchmark.domain.add_experiments(XY)
-    strategy = strategy_factory(domain=benchmark.domain)
+        XY = benchmark.f(X, return_complete=True)
+    strategy_data = strategy_factory(domain=benchmark.domain)
+    # map it
+    strategy = strategies.map(strategy_data)
+    # tell it
+    if initial_sampler is not None:
+        strategy.tell(XY)  # type: ignore
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
@@ -113,26 +92,26 @@ def _single_run(
         # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
         # colum needs to be converted back to str to be added to the benchmark domain.
         strategy.tell(XY)
-        metric_values[i] = metric(strategy.domain)
+        metric_values[i] = metric(strategy.domain, strategy.experiments)  # type: ignore
         pbar.set_description(
             f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
         )
         if (i + 1) % safe_intervall == 0:
             autosafe_results(benchmark=benchmark)
-    return benchmark, pd.Series(metric_values)
+    return strategy.experiments, pd.Series(metric_values)  # type: ignore
 
 
 def run(
     benchmark: Benchmark,
     strategy_factory: StrategyFactory,
     n_iterations: int,
-    metric: Callable[[Domain], float],
+    metric: Callable[[Domain, pd.DataFrame], float],
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
     n_candidates_per_proposal: int = 1,
     n_runs: int = 5,
     n_procs: int = 5,
     safe_intervall: int = 1000,
-) -> List[Tuple[Benchmark, pd.Series]]:
+) -> List[Tuple[pd.DataFrame, pd.Series]]:
     """Run a benchmark problem several times in parallel
 
     Args:
@@ -157,9 +136,9 @@ def run(
             strategy_factory,
             n_iterations,
             metric,
-            initial_sampler,
             n_candidates_per_proposal,
             safe_intervall,
+            initial_sampler,
         )
 
     if n_procs == 1:

@@ -234,7 +234,7 @@ def plot_scatter_matrix(
 
         fig.frames = fig.frames + (frame,)
 
-        if show_animation is False:
+        if show_animation is False:  # stop loop after first run without animation
             break
 
     if display_pareto_only is False:
