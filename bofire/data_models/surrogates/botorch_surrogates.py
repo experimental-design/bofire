@@ -6,6 +6,7 @@ from pydantic import validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import TInputTransformSpecs
+from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
@@ -14,6 +15,7 @@ from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 
 AnyBotorchSurrogate = Union[
+    EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
