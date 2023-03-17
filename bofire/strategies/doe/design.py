@@ -75,7 +75,7 @@ def find_local_max_ipopt(
     """Function computing a d-optimal design" for a given opti problem and model.
 
     Args:
-        problem (opti.Problem): problem containing the inputs and constraints.
+        domain (Doman): Domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
             are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
         n_experiments (int): Number of experiments. By default the value corresponds to
@@ -86,7 +86,7 @@ def find_local_max_ipopt(
         jacobian_building_block (Callable): Only needed for models of higher order than 3. derivatives
             of each model term with respect to each input variable.
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
-        fixed_experiments (np.ndarray): numpy array containing experiments that will definitely part of the design.
+        fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
 
     Returns:
@@ -122,6 +122,7 @@ def find_local_max_ipopt(
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
+    # warnings.warn(f"The used formula is: {model_formula}.")
 
     if n_experiments is None:
         n_experiments = n_experiments_min
