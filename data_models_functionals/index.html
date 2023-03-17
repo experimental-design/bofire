@@ -8,25 +8,27 @@
       
       
       
-        <link rel="canonical" href="https://experimental-design.github.io/bofire/">
+        <link rel="canonical" href="https://experimental-design.github.io/bofire/data_models_functionals/">
       
       
+        <link rel="prev" href="../install/">
       
-        <link rel="next" href="install/">
       
-      <link rel="icon" href="assets/images/favicon.png">
+        <link rel="next" href="../ref-domain/">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.3">
     
     
       
-        <title>BoFire</title>
+        <title>Data Models vs Functional Components - BoFire</title>
       
     
     
-      <link rel="stylesheet" href="assets/stylesheets/main.c4a75a56.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.c4a75a56.min.css">
       
         
-        <link rel="stylesheet" href="assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
       
       
 
@@ -42,9 +44,9 @@
       
     
     
-      <link rel="stylesheet" href="assets/_mkdocstrings.css">
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
     
-    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
     
       
 
@@ -73,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#introduction" class="md-skip">
+        <a href="#data-models-vs-functional-components" class="md-skip">
           Skip to content
         </a>
       
@@ -93,7 +95,7 @@
 
 <header class="md-header md-header--shadow" data-md-component="header">
   <nav class="md-header__inner md-grid" aria-label="Header">
-    <a href="." title="BoFire" class="md-header__button md-logo" aria-label="BoFire" data-md-component="logo">
+    <a href=".." title="BoFire" class="md-header__button md-logo" aria-label="BoFire" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -112,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Introduction
+              Data Models vs Functional Components
             
           </span>
         </div>
@@ -221,7 +223,7 @@
 
 <nav class="md-nav md-nav--primary md-nav--integrated" aria-label="Navigation" data-md-level="0">
   <label class="md-nav__title" for="__drawer">
-    <a href="." title="BoFire" class="md-nav__button md-logo" aria-label="BoFire" data-md-component="logo">
+    <a href=".." title="BoFire" class="md-nav__button md-logo" aria-label="BoFire" data-md-component="logo">
       
   
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
@@ -250,66 +252,11 @@
 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Introduction
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="." class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
         Introduction
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#experimental-design" class="md-nav__link">
-    Experimental design
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#multiobjective-optimization" class="md-nav__link">
-    Multiobjective optimization
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#bayesian-optimization" class="md-nav__link">
-    Bayesian optimization
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -322,7 +269,7 @@
   
   
     <li class="md-nav__item">
-      <a href="install/" class="md-nav__link">
+      <a href="../install/" class="md-nav__link">
         Install
       </a>
     </li>
@@ -335,14 +282,16 @@
 
   
   
+    
+  
   
     
-    <li class="md-nav__item md-nav__item--nested">
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
       
       
       
@@ -351,7 +300,7 @@
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
         <label class="md-nav__title" for="__nav_3">
           <span class="md-nav__icon md-icon"></span>
           Package Architecture
@@ -362,11 +311,21 @@
               
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="data_models_functionals/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Data Models vs Functional Components
       </a>
+      
     </li>
   
 
@@ -413,7 +372,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-domain/" class="md-nav__link">
+      <a href="../ref-domain/" class="md-nav__link">
         Domain
       </a>
     </li>
@@ -427,7 +386,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-constraints/" class="md-nav__link">
+      <a href="../ref-constraints/" class="md-nav__link">
         Constraints
       </a>
     </li>
@@ -441,7 +400,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-objectives/" class="md-nav__link">
+      <a href="../ref-objectives/" class="md-nav__link">
         Objectives
       </a>
     </li>
@@ -455,7 +414,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-features/" class="md-nav__link">
+      <a href="../ref-features/" class="md-nav__link">
         Features
       </a>
     </li>
@@ -469,7 +428,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-domain-util/" class="md-nav__link">
+      <a href="../ref-domain-util/" class="md-nav__link">
         Domain Util
       </a>
     </li>
@@ -483,7 +442,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-mappers/" class="md-nav__link">
+      <a href="../ref-mappers/" class="md-nav__link">
         Mappers
       </a>
     </li>
@@ -497,7 +456,7 @@
   
   
     <li class="md-nav__item">
-      <a href="ref-utils/" class="md-nav__link">
+      <a href="../ref-utils/" class="md-nav__link">
         Utils
       </a>
     </li>
@@ -529,51 +488,50 @@
   
 
 
-<h1 id="introduction">Introduction</h1>
-<p>BoFire is a framework to define and solve black-box optimization problems. 
-These problems can arise in a number of closely related fields including experimental design, multiobjective optimization and active learning.</p>
-<p>BoFire problem specifications are json serializable for use in RESTful APIs and are to a large extent agnostic to the specific methods and frameworks in which the problems are solved.</p>
-<h2 id="experimental-design">Experimental design</h2>
-<p>In the context of experimental design BoFire allows to define a design space</p>
-<div class="arithmatex">\[
-\mathbb{X} = x_1 \otimes x_2 \ldots \otimes x_D
-\]</div>
-<p>where the design parameters may take values depending on their type and domain, e.g.</p>
-<ul>
-<li>continuous: <span class="arithmatex">\(x_1 \in [0, 1]\)</span></li>
-<li>discrete: <span class="arithmatex">\(x_2 \in \{1, 2, 5, 7.5\}\)</span></li>
-<li>categorical: <span class="arithmatex">\(x_3 \in \{A, B, C\}\)</span></li>
-</ul>
-<p>and a set of equations define additional experimental constraints, e.g.</p>
-<ul>
-<li>linear equality: <span class="arithmatex">\(\sum x_i = 1\)</span></li>
-<li>linear inequality: <span class="arithmatex">\(2 x_1 \leq x_2\)</span></li>
-<li>non-linear inequality: <span class="arithmatex">\(\sum x_i^2 \leq 1\)</span></li>
-<li>n-choose-k: only <span class="arithmatex">\(k\)</span> out of <span class="arithmatex">\(n\)</span> parameters can take non-zero values.</li>
-</ul>
-<h2 id="multiobjective-optimization">Multiobjective optimization</h2>
-<p>In the context of multiobjective optimization BoFire allows to define a vector-valued optimization problem</p>
-<div class="arithmatex">\[
-\min_{x \in \mathbb{X}} s(y(x))
-\]</div>
-<p>where</p>
-<ul>
-<li><span class="arithmatex">\(x \in \mathbb{X}\)</span> is again the experimental design space</li>
-<li><span class="arithmatex">\(y = \{y_1, \ldots y_M\}\)</span> are known functions describing your experimental outputs and</li>
-<li><span class="arithmatex">\(s = \{s_1, \ldots s_M\}\)</span> are the objectives to be minimized, e.g. <span class="arithmatex">\(s_1\)</span> is the identity function if <span class="arithmatex">\(y_1\)</span> is to be minimized.</li>
-</ul>
-<p>Since the objectives are in general conflicting, there is no point <span class="arithmatex">\(x\)</span> that simulataneously optimizes all objectives.
-Instead the goal is to find the Pareto front of all optimal compromises.
-A decision maker can then explore these compromises to get a deep understanding of the problem and make the best informed decision.</p>
-<h2 id="bayesian-optimization">Bayesian optimization</h2>
-<p>In the context of Bayesian optimization we want to simultaneously learn the unknown function <span class="arithmatex">\(y(x)\)</span> (exploration), while focusing the experimental effort on promising regions (exploitation).
-This is done by using the experimental data to fit a probabilistic model <span class="arithmatex">\(p(y|x, {data})\)</span> that estimates the distribution of posible outcomes for <span class="arithmatex">\(y\)</span>.
-An acquisition function <span class="arithmatex">\(a\)</span> then formulates the desired trade-off between exploration and exploitation</p>
-<div class="arithmatex">\[
-\min_{x \in \mathbb{X}} a(s(p_y(x)))
-\]</div>
-<p>and the minimizer <span class="arithmatex">\(x_\mathrm{opt}\)</span> of this acquisition function. determines the next experiment <span class="arithmatex">\(y(x)\)</span> to run.
-When are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.</p>
+<h1 id="data-models-vs-functional-components">Data Models vs. Functional Components</h1>
+<p>Data models in bofire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</p>
+<p>All data models in <code>bofire.data_models</code>, are specified as pydantic models and inherit from <code>bofire.data_models.base.BaseModel</code>. These data models can be (de)serialized via <code>.dict()</code> and <code>.json()</code> (provided by pydantic). A json schema of each data model can be obtained using <code>.schema()</code>.</p>
+<p>For surrogates and strategies, all functional parts are located in <code>bofire.surrogates</code> and <code>bofire.strategies</code>. These functionalities include the <code>ask</code> and <code>tell</code> as well as <code>fit</code> and <code>predict</code> methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a <code>RandomStrategy</code>:</p>
+<div class="highlight"><pre><span></span><code>import bofire.data_models.domain.api as dm_domain
+import bofire.data_models.features.api as dm_features
+import bofire.data_models.strategies.api as dm_strategies
+
+in1 = dm_features.ContinuousInput(key=&quot;in1&quot;, lower_bound=0.0, upper_bound=1.0)
+in2 = dm_features.ContinuousInput(key=&quot;in2&quot;, lower_bound=0.0, upper_bound=2.0)
+in3 = dm_features.ContinuousInput(key=&quot;in3&quot;, lower_bound=0.0, upper_bound=3.0)
+
+out1 = dm_features.ContinuousOutput(key=&quot;out1&quot;)
+
+input_features = dm_domain.Inputs(features=[in1, in2, in3])
+output_features = dm_domain.Outputs(features=[out1])
+constraints = dm_domain.Constraints()
+
+domain = dm_domain.Domain(
+    input_features=input_features,
+    output_features=output_features,
+    constraints=constraints,
+)
+
+data_model = dm_strategies.RandomStrategy(domain=domain)
+</code></pre></div>
+<p>Such a data model can be (de)serialized as follows:</p>
+<div class="highlight"><pre><span></span><code>import json
+from pydantic import parse_obj_as
+from bofire.data_models.strategies.api import AnyStrategy
+
+serialized = data_model.json()
+data = json.loads(serialized)
+# alternative: data = data_model.dict()
+data_model_ = parse_obj_as(AnyStrategy, data)
+assert data_model_ == data_model
+</code></pre></div>
+<p>Using this data model of a strategy, we can create an instance of a (functional) strategy:</p>
+<div class="highlight"><pre><span></span><code>import bofire.strategies.api as strategies
+strategy = strategies.RandomStrategy(data_model=data_model)
+</code></pre></div>
+<p>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</p>
+<div class="highlight"><pre><span></span><code>strategy = strategies.map(data_model)
+</code></pre></div>
 
 
 
@@ -611,10 +569,10 @@ When are multiple competing objectives, the task is again to find a suitable app
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": ".", "features": ["toc.integrate"], "search": "assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="assets/javascripts/bundle.efa0ade1.min.js"></script>
+      <script src="../assets/javascripts/bundle.efa0ade1.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
