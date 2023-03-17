@@ -16,6 +16,8 @@ def test_kernel_should_be_serializable(kernel_spec: Spec):
 def test_constraint_should_be_serializable(constraint_spec: Spec):
     spec = constraint_spec.typed_spec()
     obj = constraint_spec.cls(**spec)
+    print(obj.dict())
+    print(spec)
     assert obj.dict() == spec
 
 

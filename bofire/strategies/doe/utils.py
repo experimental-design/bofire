@@ -6,13 +6,15 @@ from typing import List, Optional, Union
 import numpy as np
 import pandas as pd
 from formulaic import Formula
-from scipy.optimize import LinearConstraint
+from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
@@ -250,25 +252,35 @@ def constraints_as_scipy_constraints(
 
             constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
-        # elif isinstance(c, opti.NonlinearEquality):
-        #     # write upper/lower bound as vector
-        #     lb = np.zeros(n_experiments) - tol
-        #     ub = np.zeros(n_experiments) + tol
+        elif isinstance(c, NonlinearEqualityConstraint):
+            # write upper/lower bound as vector
+            lb = np.zeros(n_experiments) - tol
+            ub = np.zeros(n_experiments) + tol
 
-        #     # define constraint evaluation
-        #     fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
+            # define constraint evaluation (and gradient if provided)
+            fun = ConstraintWrapper(
+                constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+            )
 
-        #     constraints.append(NonlinearConstraint(fun, lb, ub))
+            if c.jacobian_expression is not None:
+                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+            else:
+                constraints.append(NonlinearConstraint(fun, lb, ub))
 
-        # elif isinstance(c, opti.NonlinearInequality):
-        #     # write upper/lower bound as vector
-        #     lb = -np.inf * np.ones(n_experiments)
-        #     ub = np.zeros(n_experiments)
+        elif isinstance(c, NonlinearInequalityConstraint):
+            # write upper/lower bound as vector
+            lb = -np.inf * np.ones(n_experiments)
+            ub = np.zeros(n_experiments)
 
-        #     # define constraint evaluation
-        #     fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
+            # define constraint evaluation (and gradient if provided)
+            fun = ConstraintWrapper(
+                constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+            )
 
-        #     constraints.append(NonlinearConstraint(fun, lb, ub))
+            if c.jacobian_expression is not None:
+                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+            else:
+                constraints.append(NonlinearConstraint(fun, lb, ub))
 
         elif isinstance(c, NChooseKConstraint):
             pass
@@ -286,6 +298,7 @@ class ConstraintWrapper:
         self,
         constraint: Constraint,
         domain: Domain,
+        n_experiments: int = 0,
         tol: float = 1e-3,
     ) -> None:
         """
@@ -298,12 +311,25 @@ class ConstraintWrapper:
         self.tol = tol
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
+        self.n_experiments = n_experiments
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        "call constraint with flattened numpy array"
-        x[np.abs(x) < self.tol] = 0
+        """call constraint with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        return self.constraint(x).to_numpy()  # type: ignore
+        violation = self.constraint(x).to_numpy()
+        violation[np.abs(violation) < self.tol] = 0
+        return violation  # type: ignore
+
+    def jacobian(self, x: np.ndarray) -> np.ndarray:
+        """call constraint gradient with flattened numpy array."""
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)
+        gradient_compressed = self.constraint.jacobian(x).to_numpy()
+
+        gradient = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
+        rows = np.repeat(np.arange(self.n_experiments), self.D)
+        cols = np.arange(self.D * self.n_experiments)
+        gradient[rows, cols] = gradient_compressed.flatten()
+        return gradient
 
 
 def d_optimality(X: np.ndarray, tol=1e-9) -> float:

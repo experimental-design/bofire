@@ -50,17 +50,19 @@ class NChooseKConstraint(Constraint):
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         raise NotImplementedError
 
-    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         """Check if the concurrency constraint is fulfilled for all the rows of the provided dataframe.
 
         Args:
-            df_data (pd.DataFrame): Dataframe to evaluate constraint on.
+            experiments (pd.DataFrame): Dataframe to evaluate constraint on.
+            tol (float,optional): tolerance parameter. A constraint is considered as not fulfilled
+                if the violation is larger than tol. Defaults to 1e-6.
 
         Returns:
             bool: True if fulfilled else False.
         """
         cols = self.features
-        sums = (experiments[cols] > 0).sum(axis=1)
+        sums = (np.abs(experiments[cols]) > tol).sum(axis=1)
 
         lower = sums >= self.min_count
         upper = sums <= self.max_count
@@ -89,3 +91,6 @@ class NChooseKConstraint(Constraint):
         if self.none_also_valid:
             res += " (none is also ok)"
         return res
+
+    def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        NotImplementedError

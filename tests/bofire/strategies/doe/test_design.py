@@ -8,6 +8,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
@@ -408,3 +409,28 @@ def test_check_fixed_experiments():
 #     with warnings.catch_warnings():
 #         warnings.simplefilter("error")
 #         domain.validate_candidates(candidates=A, only_inputs=True)
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_find_local_max_ipopt_nonlinear_constraint():
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key="x1", lower_bound=-1, upper_bound=1),
+            ContinuousInput(key="x2", lower_bound=-1, upper_bound=1),
+            ContinuousInput(key="x3", lower_bound=0, upper_bound=1),
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NonlinearInequalityConstraint(
+                expression="x1**2 + x2**2 - x3",
+                features=["x1", "x2", "x3"],
+                jacobian_expression="[2*x1,2*x2,-1]",
+            )
+        ],
+    )
+
+    result = find_local_max_ipopt(
+        domain, "linear", tol=0, ipopt_options={"maxiter": 100}
+    )
+
+    assert np.allclose(domain.constraints(result), 0, atol=1e-6)

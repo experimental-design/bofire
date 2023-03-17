@@ -70,6 +70,15 @@ class LinearConstraint(Constraint):
             [f"{self.coefficients[i]} * {feat}" for i, feat in enumerate(self.features)]
         )
 
+    def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            np.tile(
+                self.coefficients / np.linalg.norm(self.coefficients),
+                [experiments.shape[0], 1],
+            ),
+            columns=["dg/d" + name for name in self.features],
+        )
+
 
 class LinearEqualityConstraint(LinearConstraint):
     """Linear equality constraint of the form `coefficients * x = rhs`.
@@ -97,8 +106,10 @@ class LinearEqualityConstraint(LinearConstraint):
     #     else:
     #         pd.Series(fulfilled, index=experiments.index)
 
-    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
-        return pd.Series(np.isclose(self(experiments), 0), index=experiments.index)
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+        return pd.Series(
+            np.isclose(self(experiments), 0, atol=tol), index=experiments.index
+        )
 
     def __str__(self) -> str:
         """Generate string representation of the constraint.
@@ -123,9 +134,8 @@ class LinearInequalityConstraint(LinearConstraint):
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
 
-    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
-        noise = 10e-6
-        return self(experiments) <= 0 + noise
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+        return self(experiments) <= 0 + tol
 
     def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
         """Return attributes in the smaller equal convention

@@ -25,12 +25,16 @@ specs.add_valid(
     constraints.NonlinearEqualityConstraint,
     lambda: {
         "expression": "f1*f2",
+        "jacobian_expression": None,
+        "features": None,
     },
 )
 specs.add_valid(
     constraints.NonlinearInequalityConstraint,
     lambda: {
         "expression": "f1*f2",
+        "jacobian_expression": None,
+        "features": None,
     },
 )
 specs.add_valid(

@@ -43,11 +43,13 @@ class Constraints(BaseModel):
         """
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
-    def is_fulfilled(self, experiments: pd.DataFrame) -> pd.Series:
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         """Check if all constraints are fulfilled on all rows of the provided dataframe
 
         Args:
-            df_data (pd.DataFrame): Dataframe with data, the constraint validity should be tested on
+            experiments (pd.DataFrame): Dataframe with data, the constraint validity should be tested on
+            tol (float, optional): tolerance parameter. A constraint is considered as not fulfilled if
+                the violation is larger than tol. Defaults to 0.
 
         Returns:
             Boolean: True if all constraints are fulfilled for all rows, false if not
@@ -55,7 +57,7 @@ class Constraints(BaseModel):
         if len(self.constraints) == 0:
             return pd.Series([True] * len(experiments), index=experiments.index)
         return pd.concat(
-            [c.is_fulfilled(experiments) for c in self.constraints], axis=1
+            [c.is_fulfilled(experiments, tol) for c in self.constraints], axis=1
         ).all(axis=1)
 
     def get(
