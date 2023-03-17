@@ -172,15 +172,14 @@ class Himmelblau(Benchmark):
         input_features = []
 
         input_features.append(
-            ContinuousInput(key="x_1", lower_bound=-4.0, upper_bound=4.0)
+            ContinuousInput(key="x_1", lower_bound=-6.0, upper_bound=6.0)
         )
         input_features.append(
-            ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=4.0)
+            ContinuousInput(key="x_2", lower_bound=-6.0, upper_bound=6.0)
         )
 
-        desirability_function = MinimizeObjective(w=1.0)
-        output_feature = ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
-
+        objective = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
         self._domain = Domain(
