@@ -4,18 +4,16 @@ from typing import List, Tuple, cast
 import numpy as np
 import pandas as pd
 
-from bofire.any.constraint import AnyConstraint
-from bofire.domain.constraint import (
+from bofire.data_models.constraints.api import (
+    AnyConstraint,
     Constraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.constraints import Constraints
-from bofire.domain.domain import Domain
-from bofire.domain.feature import ContinuousInput, InputFeature
-from bofire.domain.features import InputFeatures
+from bofire.data_models.domain.api import Constraints, Domain, Inputs
+from bofire.data_models.features.api import ContinuousInput, Input
 
 ### this module is based on the original implementation in basf/opti.
 
@@ -94,7 +92,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     continuous_inputs = [
         cast(ContinuousInput, f) for f in domain.get_features(ContinuousInput)
     ]
-    other_inputs = domain.inputs.get(InputFeature, excludes=[ContinuousInput])
+    other_inputs = domain.inputs.get(Input, excludes=[ContinuousInput])
 
     # assemble Matrix A from equality constraints
     N = len(linear_equalities)
@@ -143,7 +141,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         deepcopy(feat) for i, feat in enumerate(continuous_inputs) if i not in pivots
     ]
     all_inputs = _domain.inputs + new_inputs
-    assert isinstance(all_inputs, InputFeatures)
+    assert isinstance(all_inputs, Inputs)
     _domain.input_features = all_inputs
 
     constraints: List[AnyConstraint] = []
@@ -331,7 +329,6 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
             _coefficients = _coefficients[np.abs(_coefficients) > 1e-16]
             _c = None
             if isinstance(c, LinearEqualityConstraint):
-
                 if len(_features) > 1:
                     _c = LinearEqualityConstraint(
                         features=_features.tolist(),
@@ -420,7 +417,7 @@ def adjust_boundary(feature: ContinuousInput, coef: float, rhs: float):
     """Adjusts the boundaries of a feature.
 
     Args:
-        feature (ContinuousInputFeature): Feature to be adjusted.
+        feature (ContinuousInput): Feature to be adjusted.
         coef (float): Coefficient.
         rhs (float): Right-hand-side of the constraint.
     """

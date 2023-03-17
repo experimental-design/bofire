@@ -17,8 +17,10 @@ jobs:
           python-version: 3.9
       - name: Install Bofire
         run: pip install .[testing]
+      - name: Install ipopt
+        run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
+      - name: Install cyipopt
+        run: pip install cyipopt
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
-      #- name: Upload coverage
-      #  run: bash <(curl -s https://codecov.io/bash)
           

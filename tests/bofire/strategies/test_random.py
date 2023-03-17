@@ -2,22 +2,24 @@ import warnings
 
 import pytest
 
-from bofire.domain.constraint import (
+import bofire.data_models.strategies.api as data_models
+import bofire.strategies.api as strategies
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.feature import (
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.strategies.random import RandomStrategy
+from bofire.strategies.api import RandomStrategy
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
@@ -120,7 +122,8 @@ unsupported_domains = [
 
 @pytest.mark.parametrize("domain", supported_domains)
 def test_ask(domain):
-    strategy = RandomStrategy(domain=domain)
+    data_model = data_models.RandomStrategy(domain=domain)
+    strategy = strategies.map(data_model=data_model)
     candidates = strategy.ask(3)
     assert len(candidates) == 3
 
@@ -128,4 +131,5 @@ def test_ask(domain):
 @pytest.mark.parametrize("domain", unsupported_domains)
 def test_unsupported(domain):
     with pytest.raises(Exception):
-        RandomStrategy(domain=domain)
+        data_model = data_models.RandomStrategy(domain=domain)
+        RandomStrategy(data_model=data_model)

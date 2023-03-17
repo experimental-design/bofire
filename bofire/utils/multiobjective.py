@@ -6,8 +6,8 @@ import torch
 from botorch.utils.multi_objective import is_non_dominated
 from botorch.utils.multi_objective.hypervolume import Hypervolume
 
-from bofire.domain.domain import Domain
-from bofire.domain.objective import MaximizeObjective, MinimizeObjective
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
 
 def get_ref_point_mask(

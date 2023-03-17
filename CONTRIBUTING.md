@@ -24,18 +24,9 @@ pytest tests/
 ```
 ## Coding Style
 We format our code with [Black](https://github.com/psf/black).
-```
-pip install black
-``` 
 Our doc-strings are in [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html).
 Further, we use [Flake8](https://flake8.pycqa.org/en/latest/) for coding-style enforcement.
-```
-pip install flake8
-```
 Imports are sorted via [Isort](https://github.com/PyCQA/isort).
-```
-pip install isort
-```
 
 In our CI/CD pipeline we check if contributions are compliant to Black, Flake8, and Isort. To make contributors' lives easier,
 we have pre-commit hooks for Black, Flake8, and Isort configured in the versions corresponding to the pipeline. Pre-commit hooks can be installed via
