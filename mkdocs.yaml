@@ -6,7 +6,7 @@ repo_url: https://github.com/experimental-design/bofire
 nav:
   - index.md
   - Install: install.md
-  - Data Models: data_models.md
+  - Data Models vs Functional Components: data_models_functionals.md
   - API Reference:
     - Domain: ref-domain.md
     - Constraints: ref-constraints.md
