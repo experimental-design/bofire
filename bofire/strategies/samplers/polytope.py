@@ -15,9 +15,9 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     DiscreteInput,
 )
-from bofire.data_models.samplers.torch_tools import get_linear_constraints, tkwargs
 from bofire.data_models.strategies.api import PolytopeSampler as DataModel
 from bofire.strategies.samplers.sampler import SamplerStrategy
+from bofire.utils.torch_tools import get_linear_constraints, tkwargs
 
 
 class PolytopeSampler(SamplerStrategy):
