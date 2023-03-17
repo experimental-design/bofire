@@ -43,6 +43,17 @@ class Constraints(BaseModel):
         """
         return pd.concat([c(experiments) for c in self.constraints], axis=1)
 
+    def jacobian(self, experiments: pd.DataFrame) -> list:
+        """Numerically evaluate the jacobians of all constraints
+
+        Args:
+            experiments (pd.DataFrame): data to evaluate the constraint jacobians on
+
+        Returns:
+            list: A list containing the jacobians as pd.DataFrames
+        """
+        return [c.jacobian(experiments) for c in self.constraints]
+
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         """Check if all constraints are fulfilled on all rows of the provided dataframe
 
