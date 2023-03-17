@@ -1,6 +1,5 @@
 from typing import Union
 
-from bofire.data_models.objectives.contant import ConstantObjective
 from bofire.data_models.objectives.identity import (
     DeltaObjective,
     IdentityObjective,
@@ -27,7 +26,6 @@ AbstractObjective = Union[
 ]
 
 AnyObjective = Union[
-    ConstantObjective,
     DeltaObjective,
     MaximizeObjective,
     MinimizeObjective,
