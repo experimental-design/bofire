@@ -286,8 +286,12 @@ def test_constraints_as_scipy_constraints():
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
-            NonlinearEqualityConstraint(expression="x1**2 + x2**2 - 1"),
-            NonlinearInequalityConstraint(expression="x1**2 + x2**2 - 1"),
+            NonlinearEqualityConstraint(
+                expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
+            ),
+            NonlinearInequalityConstraint(
+                expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
+            ),
         ],
     )
 
