@@ -355,6 +355,11 @@ def test_ConstraintWrapper():
                 min_count=0,
                 none_also_valid=True,
             ),
+            NonlinearEqualityConstraint(
+                expression="x1**2 + x4**2 - 1",
+                features=["x1", "x4"],
+                jacobian_expression="[2*x1, 2*x4]",
+            ),
         ],
     )
 
@@ -422,6 +427,20 @@ def test_ConstraintWrapper():
     with pytest.raises(NotImplementedError):
         c = ConstraintWrapper(domain.constraints[4], domain, tol=0)
         assert np.allclose(c(x), np.array([1, 0.5, 0]))
+
+    # constraint not containing all inputs from domain
+    c = ConstraintWrapper(domain.constraints[5], domain, tol=0, n_experiments=3)
+    assert np.allclose(c(x), np.array([1, -0.5, 8]))
+    assert np.allclose(
+        c.jacobian(x),
+        np.array(
+            [
+                [2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0],
+            ]
+        ),
+    )
 
 
 def test_d_optimality():
