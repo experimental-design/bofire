@@ -15,9 +15,23 @@ from bofire.data_models.strategies.api import AnyStrategy
 
 
 class Benchmark:
+    """
+    A class for implementing benchmark functions and evaluating their performance.
+    """
+
     def f(
         self, candidates: pd.DataFrame, return_complete: bool = False
     ) -> pd.DataFrame:
+        """Evaluates the benchmark function on the input candidates and returns the output.
+
+        Args:
+            candidates (pd.DataFrame): The input candidates of the benchmark function that need to be evaluated.
+            return_complete (bool, optional): If return_complete is set to True, the function returns a concatenated DataFrame with input and output values.
+            Otherwise it returns the output values. Defaults to False.
+
+        Returns:
+            pd.DataFrame: A DataFrame with either the input and output values or just the output values.
+        """
         Y = self._f(candidates)
 
         if return_complete:
@@ -27,13 +41,36 @@ class Benchmark:
 
     @abstractmethod
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        """Abstract method to be implemented by derived classes.
+        Takes a DataFrame of input candidates and returns a DataFrame of corresponding function outputs.
+
+        Args:
+            candidates (pd.DataFrame): The input candidates of the benchmark function that need to be evaluated.
+
+        Returns:
+            pd.DataFrame: A DataFrame with either the input and output values or just the output values.
+        """
         pass
 
     def get_optima(self) -> pd.DataFrame:
+        """Raises a NotImplementedError. This method should be implemented by derived classes to return
+        the optimal set of input candidates and their corresponding function outputs.
+
+        Raises:
+            NotImplementedError: _description_
+
+        Returns:
+            pd.DataFrame: The optimal set of input candidates and their corresponding function outputs
+        """
         raise NotImplementedError()
 
     @property
     def domain(self) -> Domain:
+        """A read-only property that returns the domain of the benchmark function.
+
+        Returns:
+            Domain: The domain of the benchmark function.
+        """
         return self._domain  # type: ignore
 
 
@@ -52,8 +89,37 @@ def _single_run(
     safe_intervall: int,
     initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
 ) -> Tuple[pd.DataFrame, pd.Series]:
-    def autosafe_results(benchmark):
-        """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
+    """
+    Runs a single iteration of an optimization algorithm and returns the results.
+
+    Parameters:
+    -----------
+    run_idx: int
+        The index of the current run.
+    benchmark: Benchmark
+        A function that takes a set of input parameters and returns a set of output values that are supposed to be optimized.
+    strategy_factory: StrategyFactory
+        A function that creates an optimization strategy for the given benchmark function.
+    n_iterations: int
+        The number of iterations to run the optimization algorithm.
+    metric: Callable[[Domain, pd.DataFrame], float]
+        A function that takes the optimization domain and a dataframe of experiments and returns a scalar value representing the quality of the optimization results.
+    n_candidates_per_proposals: int
+        The number of candidate solutions to generate per proposal.
+    safe_intervall: int
+        The frequency at which to perform autosaving of results.
+    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None
+        An optional function that generates an initial set of input parameters for the optimization algorithm.
+
+    Returns:
+    --------
+    A tuple of two pandas objects:
+    - A dataframe representing the set of experiments performed during the optimization algorithm.
+    - A series representing the values of the optimization metric at each iteration.
+    """
+
+    def autosafe_results(benchmark: Benchmark):
+        """A function that safes results into a .json file to prevent data loss during time-expensive optimization runs.
         Autosave should operate every 10 iterations.
 
         Args:
@@ -130,6 +196,26 @@ def run(
     """
 
     def make_args(run_idx: int):
+        """
+        make_args - Function that takes in an integer run_idx and returns a tuple of arguments required to run a benchmark optimization algorithm.
+
+        Args:
+        run_idx (int): Integer index of the current run.
+
+        Returns:
+        A tuple of arguments required to run a benchmark optimization algorithm:
+        - run_idx (int): Integer index of the current run.
+        - benchmark (object): A deepcopy of the benchmark object that specifies the objective function to be optimized.
+        - strategy_factory (function): A function that returns an optimization strategy object that implements the optimization algorithm.
+        - n_iterations (int): Number of iterations to run the optimization algorithm.
+        - metric (str): Name of the metric used to evaluate the performance of the optimization algorithm.
+        - n_candidates_per_proposal (int): Number of candidate solutions proposed by the optimization algorithm at each iteration.
+        - safe_intervall (int): The minimum distance between consecutive solutions proposed by the optimization algorithm.
+        - initial_sampler (object): An object that implements the initial sampling strategy for the optimization algorithm.
+
+        Raises:
+        None
+        """
         return (
             run_idx,
             deepcopy(benchmark),
