@@ -485,6 +485,26 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.utils.doe" class="md-nav__link">
+    doe
+  </a>
+  
+    <nav class="md-nav" aria-label="doe">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.doe.get_confounding_matrix" class="md-nav__link">
+    get_confounding_matrix()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.utils.multiobjective" class="md-nav__link">
     multiobjective
   </a>
@@ -699,6 +719,164 @@
 
 
 
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.utils.doe" class="doc doc-heading">
+        <code>doe</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.doe.get_confounding_matrix" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">input_features</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="p">[],</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Analyzes the confounding of a design and returns the confounding matrix.</p>
+<p>Only takes continuous features into account.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>input_features</code></td>
+        <td><code>Inputs</code></td>
+        <td><p>Input features.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>design</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>Design matrix.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>powers</code></td>
+        <td><code>List[int]</code></td>
+        <td><p>List of powers of the individual factors/features that should be considered.
+Integers has to be larger than 1. Defaults to [].</p></td>
+        <td><code>[]</code></td>
+      </tr>
+      <tr>
+        <td><code>interactions</code></td>
+        <td><code>List[int]</code></td>
+        <td><p>List with interaction levels to be considered.
+Integers has to be larger than 1. Defaults to [2].</p></td>
+        <td><code>[2]</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>_type_</code></td>
+      <td><p><em>description</em></p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_confounding_matrix</span><span class="p">(</span>
+    <span class="n">input_features</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">,</span>
+    <span class="n">design</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">powers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
+    <span class="n">interactions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyzes the confounding of a design and returns the confounding matrix.</span>
+
+<span class="sd">    Only takes continuous features into account.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        input_features (Inputs): Input features.</span>
+<span class="sd">        design (pd.DataFrame): Design matrix.</span>
+<span class="sd">        powers (List[int], optional): List of powers of the individual factors/features that should be considered.</span>
+<span class="sd">            Integers has to be larger than 1. Defaults to [].</span>
+<span class="sd">        interactions (List[int], optional): List with interaction levels to be considered.</span>
+<span class="sd">            Integers has to be larger than 1. Defaults to [2].</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        _type_: _description_</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Categorical input features will be ignored.&quot;</span><span class="p">)</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">input_features</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+    <span class="n">scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">(</span><span class="n">feature_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">scaled_design</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="n">keys</span><span class="p">]),</span>
+        <span class="n">columns</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># add powers</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">powers</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Power has to be at least of degree two.&quot;</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">scaled_design</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">**</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">**</span> <span class="n">p</span>
+
+    <span class="c1"># add interactions</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">interactions</span><span class="p">:</span>
+        <span class="k">assert</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Interaction has to be at least of degree two.&quot;</span>
+        <span class="k">assert</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Interaction has to be smaller than </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="k">for</span> <span class="n">combi</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+            <span class="n">scaled_design</span><span class="p">[</span><span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scaled_design</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 
