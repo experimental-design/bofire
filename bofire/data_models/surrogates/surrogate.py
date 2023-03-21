@@ -6,6 +6,27 @@ from bofire.data_models.features.api import TInputTransformSpecs
 
 
 class Surrogate(BaseModel):
+    """A class to represent a Surrogate model that is a subclass of BaseModel.
+
+    Attributes:
+        type (str): A string representing the type of the model.
+
+        input_features (Inputs): An instance of the Inputs class that represents the input features of the model.
+        
+        output_features (Outputs): An instance of the Outputs class that represents the output features of the model.
+        
+        input_preprocessing_specs (TInputTransformSpecs): A dictionary that specifies the input preprocessing specifications.
+        
+    Methods:
+        validate_input_preprocessing_specs(v, values):
+            A validator method that validates the input preprocessing specifications. 
+            It raises a ValueError if there are no input features provided.
+        
+        validate_output_features(v, values):
+            A validator method that validates the output features. 
+            It raises a ValueError if there are no output features provided.
+    """
+
     type: str
 
     input_features: Inputs
