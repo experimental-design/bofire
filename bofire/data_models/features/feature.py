@@ -106,15 +106,19 @@ class Input(Feature):
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
-        """Returns the bounds of an input feature depending on the requested transform type.
+        """
+        A function that returns the lower and upper bounds for a feature based on the transform type.
 
         Args:
-            transform_type (Optional[TTransform], optional): The requested transform type. Defaults to None.
-            values (Optional[pd.Series], optional): If values are provided the bounds are returned taking
-                the most extreme values for the feature into account. Defaults to None.
+        self: An instance of a class representing a feature.
+        transform_type (CategoricalEncodingEnum): An enum indicating the type of transformation to be performed on the feature.
+        values (Optional[pd.Series]): A pandas series of values for the feature. Defaults to None.
 
         Returns:
-            Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
+        A tuple containing two lists of floats - lower and upper bounds.
+
+        Raises:
+        ValueError: If the transform_type provided is not valid for the feature or if the transform_type is descriptor but the feature is not continuous.
         """
         pass
 

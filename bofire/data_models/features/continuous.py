@@ -117,12 +117,24 @@ class ContinuousOutput(Output):
         label_options: Optional[Dict] = None,
         title_options: Optional[Dict] = None,
     ):
-        """Plot the assigned objective.
+        """
+        This function plots the assigned objective for a ContinuousOutputFeauture object within a specified range.
 
         Args:
-            lower (float): lower bound for the plot
-            upper (float): upper bound for the plot
-            experiments (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
+        self (ContinuousOutputFeauture): The ContinuousOutputFeauture object whose objective function is to be plotted.
+        lower (float): The lower limit of the range to plot.
+        upper (float): The upper limit of the range to plot.
+        experiments (Optional[pd.DataFrame], optional): A DataFrame of experiment data to be plotted on the graph. Defaults to None.
+        plot_details (bool, optional): A boolean flag indicating whether to plot the details of the objective function. Defaults to True.
+        line_options (Optional[Dict], optional): A dictionary of line options for the objective function plot. Defaults to None.
+        scatter_options (Optional[Dict], optional): A dictionary of scatter options for the experiment data plot. Defaults to None.
+        label_options (Optional[Dict], optional): A dictionary of label options for the x and y axes. Defaults to None.
+        title_options (Optional[Dict], optional): A dictionary of title options for the plot. Defaults to None.
+
+        Returns:
+        Tuple[matplotlib.figure.Figure, matplotlib.axes.Axes]: A tuple containing the matplotlib figure and axes objects.
+        Raises:
+        ValueError: If no objective function is assigned for the ContinuousOutputFeauture object.
         """
         if self.objective is None:
             raise ValueError(
