@@ -11,6 +11,14 @@ from bofire.data_models.features.api import Feature
 
 
 class Strategy(BaseModel):
+    """Represents a strategy for a machine learning model.
+
+    Attributes:
+        type (str): The type of the strategy.
+        domain (Domain): The domain to be used in the strategy.
+        seed (int, optional): The random seed to be used for the strategy. If None, a random seed will be generated.
+    """
+
     type: str
     domain: Domain
     seed: Optional[int] = None

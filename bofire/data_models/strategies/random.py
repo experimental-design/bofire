@@ -11,6 +11,14 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class RandomStrategy(Strategy):
+    """
+    A class representing a strategy for optimization problems that generates random input candidates.
+
+    Attributes:
+    type (Literal["RandomStrategy"]): A class-level attribute indicating the type of the strategy.
+
+    """
+
     type: Literal["RandomStrategy"] = "RandomStrategy"
 
     @classmethod
