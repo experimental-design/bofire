@@ -70,11 +70,14 @@ def find_local_max_ipopt(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
-    """Function computing a d-optimal design" for a given opti problem and model.
+    """Function computing a d-optimal design" for a given domain and model.
     Args:
-        problem (opti.Problem): problem containing the inputs and constraints.
+        domain (Domain): domain containing the inputs and constraints.
+        model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
+            are "lidomain (Domain): domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
             are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
+        near", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
         tol (float): Tolerance for linear/NChooseK constraint violation. Default value is 0.
@@ -252,8 +255,20 @@ def check_fixed_experiments(
 
 
 def get_n_experiments(
-    domain: Domain, model_type: Union[str, Formula], n_experiments: int
+    domain: Domain, model_type: Union[str, Formula], n_experiments: Optional[int] = None
 ):
+    """Determines a number of experiments which is appropriate for the model if no 
+    number is provided. Otherwise warns if the provided number of experiments is smaller than recommended.
+
+    Args:
+        domain (Domain): domain containing the model inputs.
+        model_type (str, Formula): keyword or formulaic Formula describing the model.
+        n_experiments (int, optional): number of experiments. Defaults to zero.
+
+    Returns:
+        n_experiments if an integer value for n_experiments is given. Number of model terms + 3 otherwise.
+    
+    """
     n_experiments_min = (
         len(
             get_formula_from_string(

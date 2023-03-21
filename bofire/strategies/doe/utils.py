@@ -196,7 +196,7 @@ def constraints_as_scipy_constraints(
     (these can be formulated as bounds).
 
     Args:
-        problem (opti.Problem): problem whose constraints should be formulated as scipy constraints.
+        domain (Domain): Domain whose constraints should be formulated as scipy constraints.
         n_experiments (int): Number of instances of inputs for problem that are evaluated together.
         tol (float): Tolerance for the computation of the constraint violation. Default value is 1e-3.
 
@@ -303,8 +303,8 @@ class ConstraintWrapper:
     ) -> None:
         """
         Args:
-            constraint (opti.constraint.Constraint): opti constraint to be called
-            problem (opti.Problem): problem the constraint belongs to
+            constraint (Constraint): constraint to be called
+            domain (Domain): Domain the constraint belongs to
             tol (float): tolerance for constraint violation. Default value is 1e-3.
         """
         self.constraint = constraint
@@ -453,10 +453,10 @@ def metrics(
 
 
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
-    """Checks if NChooseK constraints of problem can be formulated as bounds.
+    """Checks if NChooseK constraints of domain can be formulated as bounds.
 
     Args:
-        problem (opti.Problem): problem whose NChooseK constraints should be checked
+        domain (Domain): Domain whose NChooseK constraints should be checked
     """
     # collect NChooseK constraints
     if len(domain.cnstrs) == 0:
@@ -503,7 +503,7 @@ def nchoosek_constraints_as_bounds(
     """Determines the box bounds for the decision variables
 
     Args:
-        problem (opti.Problem): problem to find the bounds for.
+        domain (Domain): Domain to find the bounds for.
         n_experiments (int): number of experiments for the design to be determined.
 
     Returns:
