@@ -125,7 +125,6 @@ def test_constraints_get(constraints, ConstraintType, exact, expected):
 
 def test_constraints_plus():
     returned = constraints + constraints4 + constraints2
-    print(returned.constraints)
     assert returned.constraints == [c1, c2, c3, c4, c5]
 
 
