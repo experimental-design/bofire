@@ -257,7 +257,7 @@ def check_fixed_experiments(
 def get_n_experiments(
     domain: Domain, model_type: Union[str, Formula], n_experiments: Optional[int] = None
 ):
-    """Determines a number of experiments which is appropriate for the model if no 
+    """Determines a number of experiments which is appropriate for the model if no
     number is provided. Otherwise warns if the provided number of experiments is smaller than recommended.
 
     Args:
@@ -267,7 +267,7 @@ def get_n_experiments(
 
     Returns:
         n_experiments if an integer value for n_experiments is given. Number of model terms + 3 otherwise.
-    
+
     """
     n_experiments_min = (
         len(

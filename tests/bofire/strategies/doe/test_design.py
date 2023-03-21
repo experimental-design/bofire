@@ -15,6 +15,7 @@ from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     find_local_max_ipopt,
+    get_n_experiments,
     get_objective,
     logD,
 )
@@ -434,3 +435,24 @@ def test_find_local_max_ipopt_nonlinear_constraint():
     )
 
     assert np.allclose(domain.constraints(result), 0, atol=1e-6)
+
+
+def test_get_n_experiments():
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key="x1", lower_bound=-1, upper_bound=1),
+            ContinuousInput(key="x2", lower_bound=-1, upper_bound=1),
+            ContinuousInput(key="x3", lower_bound=0, upper_bound=1),
+        ],
+        output_features=[ContinuousOutput(key="y")],
+    )
+
+    # keyword
+    assert get_n_experiments(domain, "linear") == 7
+
+    # explicit formula
+    assert get_n_experiments(domain, "x1 + x2 + x3 + x1:x2 + {x2**2}") == 9
+
+    # user provided n_experiment
+    with pytest.warns(UserWarning):
+        assert get_n_experiments(domain, "linear", 4) == 4
