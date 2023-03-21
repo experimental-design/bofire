@@ -10,6 +10,10 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class PredictiveStrategy(Strategy):
+    """
+    A class for defining predictive strategies that validate the domain used in the strategy.
+    """
+
     @validator("domain")
     def validate_objectives(cls, domain: Domain):
         """Validator to ensure that all objectives defined in the domain are valid for the chosen strategy

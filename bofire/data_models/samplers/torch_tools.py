@@ -152,6 +152,22 @@ def get_output_constraints(
 def get_objective_callable(
     idx: int, objective: AnyObjective
 ) -> Callable[[Tensor], Tensor]:  # type: ignore
+    """
+    Returns a callable that computes the value of a given objective function
+    at a given index of a tensor input.
+
+    Args:
+        idx (int): Index of the tensor input to use for the computation.
+        objective (AnyObjective): An instance of an objective function.
+
+    Returns:
+        Callable[[Tensor], Tensor]: A callable that takes a tensor input and returns
+        a tensor with the value of the objective function evaluated at the given index.
+
+    Raises:
+        NotImplementedError: If the objective function is not implemented in this function.
+    """
+
     if isinstance(objective, MaximizeObjective):
         return lambda x: (
             (x[..., idx] - objective.lower_bound)
@@ -222,6 +238,20 @@ def get_objective_callable(
 def get_multiplicative_botorch_objective(
     output_features: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
+    """
+    Returns a callable object that computes the multiplicative objective function
+    for Bayesian optimization using BoTorch.
+
+    Args:
+        output_features (Outputs): An instance of the `Outputs` class that contains
+        information about the output features of the model.
+
+    Returns:
+        A callable object that takes two `torch.Tensor` objects as input and returns
+        a scalar `torch.Tensor` representing the multiplicative objective function
+        for Bayesian optimization using BoTorch.
+    """
+
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(output_features.get())
@@ -245,6 +275,19 @@ def get_multiplicative_botorch_objective(
 def get_additive_botorch_objective(
     output_features: Outputs, exclude_constraints: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
+    """
+    Creates an additive BoTorch objective function based on the given output features.
+
+    Args:
+        output_features (Outputs): The output features to use for creating the objective function.
+        exclude_constraints (bool, optional): Whether to exclude constraint objectives from the objective
+            function. Defaults to True.
+
+    Returns:
+        Callable[[Tensor, Tensor], Tensor]: An additive BoTorch objective function that takes as input
+            a `samples` tensor and an `X` tensor and returns a scalar tensor representing the objective value.
+    """
+
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(output_features.get())

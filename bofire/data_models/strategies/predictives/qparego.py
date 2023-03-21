@@ -16,6 +16,17 @@ from bofire.data_models.strategies.predictives.multiobjective import (
 
 
 class QparegoStrategy(MultiobjectiveStrategy):
+    """
+    This class defines a strategy for multi-objective optimization using the QParego algorithm.
+
+    Attributes:
+    type (Literal["QparegoStrategy"]): A literal indicating the type of strategy, which is "QparegoStrategy".
+
+    Methods:
+    is_constraint_implemented(my_type: Type[Constraint]) -> bool:
+    Checks if the given constraint type is implemented in this strategy.
+    """
+
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
 
     @classmethod

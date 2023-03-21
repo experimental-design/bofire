@@ -18,6 +18,33 @@ def is_power_of_two(n):
 
 
 class BotorchStrategy(PredictiveStrategy):
+    """
+    This is a class for a Botorch strategy that extends from the PredictiveStrategy class. This class is used for optimizing problems using Bayesian optimization.
+
+    Attributes:
+    num_sobol_samples (PositiveInt): The number of Sobol samples to be used for generating initial candidates.
+    num_restarts (PositiveInt): The number of restarts for generating candidates using optimization.
+    num_raw_samples (PositiveInt): The number of raw samples to be used for generating initial candidates.
+    descriptor_method (CategoricalMethodEnum): The method to be used for encoding categorical descriptor inputs.
+    categorical_method (CategoricalMethodEnum): The method to be used for encoding categorical inputs.
+    discrete_method (CategoricalMethodEnum): The method to be used for encoding discrete inputs.
+    surrogate_specs (Optional[BotorchSurrogates]): The specifications for the Botorch surrogates used for modeling the problem.
+
+    Methods:
+    validate_num_sobol_samples(cls, v): A validator method that ensures the number of Sobol samples is a power of 2.
+    validate_num_raw_samples(cls, v): A validator method that ensures the number of raw samples is a power of 2.
+    update_surrogate_specs_for_domain(cls, values): A root validator method that ensures that a prediction model is specified for each output feature and that the categorical method is compatible with the chosen models.
+    _generate_surrogate_specs(domain: Domain, surrogate_specs: Optional[BotorchSurrogates] = None) -> BotorchSurrogates: A static method that generates the specifications for the Botorch surrogates used for modeling the problem when no specifications are passed. The default specification used is a 5/2 Matern kernel with automated relevance detection and normalization of input features.
+
+    Raises:
+    ValueError: If the number of Sobol samples or raw samples is not a power of 2.
+    ValueError: If the categorical method is not compatible with the chosen models.
+    KeyError: If there is a model specification for an unknown output feature or an unknown input feature.
+
+    Returns:
+    None
+    """
+
     num_sobol_samples: PositiveInt = 512
     num_restarts: PositiveInt = 8
     num_raw_samples: PositiveInt = 1024

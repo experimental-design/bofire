@@ -5,6 +5,16 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class MultiobjectiveStrategy(BotorchStrategy):
+    """
+    The MultiobjectiveStrategy class is a subclass of the BotorchStrategy class. This class checks that the domain is multiobjective by validating that it has at least two output features with either a MaximizeObjective or a MinimizeObjective objective type, and that all objectives have a weight of 1. If these conditions are not met, a ValueError is raised.
+
+    Attributes:
+    - domain: An instance of the Domain class, which specifies the search space for optimization.
+
+    Methods:
+    - validate_domain_is_multiobjective: A method that validates whether the domain is multiobjective by checking the number of output features with MaximizeObjective or MinimizeObjective objective types and their weights.
+    """
+
     @validator("domain")
     def validate_domain_is_multiobjective(cls, v, values):
         """Validate that the domain is multiobjective."""
