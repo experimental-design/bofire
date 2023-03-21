@@ -86,7 +86,7 @@ def find_local_max_ipopt(
         jacobian_building_block (Callable): Only needed for models of higher order than 3. derivatives
             of each model term with respect to each input variable.
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
-        fixed_experiments (np.ndarray): numpy array containing experiments that will definitely part of the design.
+        fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a

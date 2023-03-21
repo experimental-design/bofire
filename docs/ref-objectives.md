@@ -1,3 +1,3 @@
 # Domain
 
-::: bofire.domain.objective
+::: bofire.data_models.objectives

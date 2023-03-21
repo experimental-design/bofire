@@ -1,3 +1,3 @@
 # Opti Mappers
 
-::: bofire.mappers.opti
+::: bofire.strategies.mapper
