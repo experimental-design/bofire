@@ -76,7 +76,7 @@ class LinearConstraint(Constraint):
                 self.coefficients / np.linalg.norm(self.coefficients),
                 [experiments.shape[0], 1],
             ),
-            columns=["dg/d" + name for name in self.features],
+            columns=[f"dg/d{name}" for name in self.features],
         )
 
 
