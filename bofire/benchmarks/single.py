@@ -92,7 +92,7 @@ class Ackley(Benchmark):
         for d in range(self.dim):
             input_feature_list.append(
                 ContinuousInput(
-                    key=f"x_{d+1}", lower_bound=self.lower, upper_bound=self.upper
+                    key=f"x_{d+1}", bounds=(self.lower, self.upper)
                 )
             )
 
@@ -172,10 +172,10 @@ class Himmelblau(Benchmark):
         input_features = []
 
         input_features.append(
-            ContinuousInput(key="x_1", lower_bound=-4.0, upper_bound=4.0)
+            ContinuousInput(key="x_1", bounds=(-4, 4))
         )
         input_features.append(
-            ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=4.0)
+            ContinuousInput(key="x_2", bounds=(-4, 4))
         )
 
         desirability_function = MinimizeObjective(w=1.0)

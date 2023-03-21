@@ -49,7 +49,7 @@ class DTLZ2(Benchmark):
         input_features = []
         for i in range(self.dim):
             input_features.append(
-                ContinuousInput(key="x_%i" % (i), lower_bound=0.0, upper_bound=1.0)
+                ContinuousInput(key="x_%i" % (i), bounds=(0, 1))
             )
         output_features = []
         self.k = self.dim - self.num_objectives + 1
@@ -187,13 +187,13 @@ class SnarBenchmark(Benchmark):
         # Decision variables
         # "residence time in minutes"
         input_features = [
-            ContinuousInput(key="tau", lower_bound=0.5, upper_bound=2.0),
+            ContinuousInput(key="tau", bounds=(0.5, 2)),
             # "equivalents of pyrrolidine"
-            ContinuousInput(key="equiv_pldn", lower_bound=1.0, upper_bound=5.0),
+            ContinuousInput(key="equiv_pldn", bounds=(1, 5)),
             # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
-            ContinuousInput(key="conc_dfnb", lower_bound=0.1, upper_bound=0.5),
+            ContinuousInput(key="conc_dfnb", bounds=(0.1, 0.5)),
             # "Reactor temperature in degress celsius"
-            ContinuousInput(key="temperature", lower_bound=30, upper_bound=120.0),
+            ContinuousInput(key="temperature", bounds=(30, 120)),
         ]
         # Objectives
         # "space time yield (kg/m^3/h)"
@@ -337,7 +337,7 @@ class ZDT1(Benchmark):
         """
         self.n_inputs = n_inputs
         input_features = [
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1))
             for i in range(n_inputs)
         ]
         inputs = Inputs(features=input_features)
@@ -443,11 +443,11 @@ class CrossCoupling(Benchmark):
                 ],
             ),
             # "base equivalents"
-            ContinuousInput(key="base_eq", lower_bound=1.0, upper_bound=2.5),
+            ContinuousInput(key="base_eq", bounds=(1, 2.5)),
             # "Reactor temperature in degrees celsius"
-            ContinuousInput(key="temperature", lower_bound=30, upper_bound=100.0),
+            ContinuousInput(key="temperature", bounds=(30, 100)),
             # "residence time in seconds (s)"
-            ContinuousInput(key="t_res", lower_bound=60, upper_bound=1800.0),
+            ContinuousInput(key="t_res", bounds=(60, 1800)),
         ]
 
         input_preprocessing_specs = {

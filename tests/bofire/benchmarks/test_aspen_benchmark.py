@@ -31,13 +31,12 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
         input_features=Inputs(
             features=[
                 ContinuousInput(
-                    key="A", type="ContinuousInput", lower_bound=0, upper_bound=10.0
+                    key="A", type="ContinuousInput", bounds=(0, 10)
                 ),
                 ContinuousInput(
                     key="B",
                     type="ContinuousInput",
-                    lower_bound=-45.0,
-                    upper_bound=12.0,
+                    bounds=(-45, 20),
                 ),
                 CategoricalDescriptorInput(
                     key="C",
@@ -57,8 +56,6 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
                     objective=MaximizeObjective(
                         type="MaximizeObjective",
                         w=1.0,
-                        lower_bound=0,
-                        upper_bound=1,
                     ),
                 )
             ]

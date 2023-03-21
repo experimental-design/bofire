@@ -54,14 +54,13 @@ def test_sample(spec: specs.Spec):
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
-        (ContinuousInput(key="k", lower_bound=1, upper_bound=1), True, [1]),
-        (ContinuousInput(key="k", lower_bound=1, upper_bound=2), False, None),
-        (ContinuousInput(key="k", lower_bound=2, upper_bound=3), False, None),
+        (ContinuousInput(key="k", bounds=(1, 1)), True, [1]),
+        (ContinuousInput(key="k", bounds=(1, 2)), False, None),
+        (ContinuousInput(key="k", bounds=(2, 3)), False, None),
         (
             ContinuousDescriptorInput(
                 key="k",
-                lower_bound=1,
-                upper_bound=1,
+                bounds=(1, 1),
                 descriptors=["a", "b"],
                 values=[1, 2],
             ),
@@ -71,8 +70,7 @@ def test_sample(spec: specs.Spec):
         (
             ContinuousDescriptorInput(
                 key="k",
-                lower_bound=1,
-                upper_bound=2,
+                bounds=(1, 2),
                 descriptors=["a", "b"],
                 values=[1, 2],
             ),
@@ -82,8 +80,7 @@ def test_sample(spec: specs.Spec):
         (
             ContinuousDescriptorInput(
                 key="k",
-                lower_bound=2,
-                upper_bound=3,
+                bounds=(2, 3),
                 descriptors=["a", "b"],
                 values=[1, 2],
             ),
@@ -101,12 +98,12 @@ def test_continuous_input_feature_is_fixed(input_feature, expected, expected_val
     "input_feature, expected",
     [
         (
-            ContinuousInput(key="if1", lower_bound=0.5, upper_bound=4.0),
+            ContinuousInput(key="if1", bounds=(0.5, 4)),
             (0.5, 4.0),
         ),
-        (ContinuousInput(key="if1", lower_bound=2.5, upper_bound=2.9), (1, 3.0)),
-        (ContinuousInput(key="if2", lower_bound=1.0, upper_bound=3.0), (1, 3.0)),
-        (ContinuousInput(key="if2", lower_bound=1.0, upper_bound=1.0), (1, 1.0)),
+        (ContinuousInput(key="if1", bounds=(2.5, 2.9)), (1, 3.0)),
+        (ContinuousInput(key="if2", bounds=(1, 3)), (1, 3.0)),
+        (ContinuousInput(key="if2", bounds=(1, 1)), (1, 1.0)),
     ],
 )
 def test_continuous_input_feature_get_bounds(input_feature, expected):
@@ -134,17 +131,17 @@ def test_continuous_input_feature_get_bounds(input_feature, expected):
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(lower_bound=3.0, upper_bound=3.0),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(lower_bound=3.0, upper_bound=3.0),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(lower_bound=3.0, upper_bound=3.0),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
             False,
         ),
@@ -168,7 +165,7 @@ def test_continuous_input_feature_validate_valid(input_feature, values, strict):
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(lower_bound=3, upper_bound=3),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
             True,
         ),
@@ -187,7 +184,7 @@ def test_continuous_input_feature_validate_invalid(input_feature, values, strict
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(lower_bound=3, upper_bound=3),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
         ),
     ],
@@ -212,7 +209,7 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
             pd.Series([4.0, 6]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(lower_bound=3, upper_bound=3),
+            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.1, 3.2, 3.4]),
         ),
     ],
@@ -226,12 +223,12 @@ def test_continuous_input_feature_validate_candidental_invalid(input_feature, va
     "feature, xt, expected",
     [
         (
-            ContinuousInput(key="a", lower_bound=0, upper_bound=10),
+            ContinuousInput(key="a", bounds=(0, 10)),
             pd.Series(np.linspace(0, 1, 11)),
             np.linspace(0, 10, 11),
         ),
         (
-            ContinuousInput(key="a", lower_bound=-10, upper_bound=20),
+            ContinuousInput(key="a", bounds=(10, 20)),
             pd.Series(np.linspace(0, 1)),
             np.linspace(-10, 20),
         ),
@@ -246,37 +243,37 @@ def test_continuous_input_feature_from_unit_range(feature, xt, expected):
     "feature, x, expected, real",
     [
         (
-            ContinuousInput(key="a", lower_bound=0, upper_bound=10),
+            ContinuousInput(key="a", bounds=(0, 10)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 1, 11),
             True,
         ),
         (
-            ContinuousInput(key="a", lower_bound=-10, upper_bound=20),
+            ContinuousInput(key="a", bounds=(-10, 20)),
             pd.Series(np.linspace(-10, 20)),
             np.linspace(0, 1),
             True,
         ),
         (
-            ContinuousInput(key="a", lower_bound=0, upper_bound=10),
+            ContinuousInput(key="a", bounds=(0, 10)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 1, 11),
             False,
         ),
         (
-            ContinuousInput(key="a", lower_bound=-10, upper_bound=20),
+            ContinuousInput(key="a", bounds=(-10, 20)),
             pd.Series(np.linspace(-10, 20)),
             np.linspace(0, 1),
             False,
         ),
         (
-            ContinuousInput(key="a", lower_bound=0, upper_bound=9),
+            ContinuousInput(key="a", bounds=(0, 9)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 1, 11),
             True,
         ),
         (
-            ContinuousInput(key="a", lower_bound=0, upper_bound=9),
+            ContinuousInput(key="a", bounds=(0, 9)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 10 / 9, 11),
             False,
@@ -1038,8 +1035,7 @@ def test_categorical_descriptor_input_feature_as_dataframe(
 def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
     f = ContinuousDescriptorInput(
         key="k",
-        lower_bound=1.0,
-        upper_bound=2.0,
+        bounds=(1, 2),
         descriptors=descriptors,
         values=values,
     )
@@ -1113,7 +1109,7 @@ def test_feature_sorting(unsorted_list, sorted_list):
 # test features container
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
-if3 = specs.features.valid(ContinuousInput).obj(key="if3", lower_bound=3, upper_bound=3)
+if3 = specs.features.valid(ContinuousInput).obj(key="if3", bounds=(3, 3))
 if4 = specs.features.valid(CategoricalInput).obj(
     key="if4", categories=["a", "b"], allowed=[True, False]
 )
@@ -1300,7 +1296,7 @@ def test_input_features_sample(features: Inputs, num_samples, method):
 def test_input_features_validate_transform_specs_invalid(specs):
     inps = Inputs(
         features=[
-            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana"]),
             CategoricalDescriptorInput(
                 key="x3",
@@ -1331,7 +1327,7 @@ def test_input_features_validate_transform_specs_invalid(specs):
 def test_input_features_validate_transform_valid(specs):
     inps = Inputs(
         features=[
-            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana"]),
             CategoricalDescriptorInput(
                 key="x3",
@@ -1421,7 +1417,7 @@ def test_input_features_get_transform_info(
 ):
     inps = Inputs(
         features=[
-            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
             CategoricalDescriptorInput(
                 key="x3",
@@ -1467,7 +1463,7 @@ def test_input_features_get_transform_info(
 def test_input_features_transform(specs):
     inps = Inputs(
         features=[
-            ContinuousInput(key="x1", lower_bound=0, upper_bound=1),
+            ContinuousInput(key="x1", bounds=(0, 1)),
             CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
             CategoricalDescriptorInput(
                 key="x3",
@@ -1485,7 +1481,7 @@ def test_input_features_transform(specs):
 
 
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
-if2 = specs.features.valid(ContinuousInput).obj(key="if2", lower_bound=3, upper_bound=3)
+if2 = specs.features.valid(ContinuousInput).obj(key="if2", bounds=(3, 3))
 if3 = specs.features.valid(CategoricalInput).obj(
     key="if3",
     categories=["c1", "c2", "c3"],
