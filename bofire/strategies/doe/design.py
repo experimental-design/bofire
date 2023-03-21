@@ -77,10 +77,7 @@ def find_local_max_ipopt(
     Args:
         domain (Domain): domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
-            are "lidomain (Domain): domain containing the inputs and constraints.
-        model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
             are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
-        near", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
         tol (float): Tolerance for linear/NChooseK constraint violation. Default value is 0.
