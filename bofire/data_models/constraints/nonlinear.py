@@ -39,7 +39,9 @@ class NonlinearConstraint(Constraint):
                     res, index=[f"dg/dx{i}" for i in range(experiments.shape[1])]
                 ).transpose()
 
-        raise ValueError("The jacobian of a nonlinear constraint cannot be evaluated if jacobian_expression is None.")
+        raise ValueError(
+            "The jacobian of a nonlinear constraint cannot be evaluated if jacobian_expression is None."
+        )
 
 
 class NonlinearEqualityConstraint(NonlinearConstraint):

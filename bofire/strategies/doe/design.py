@@ -9,6 +9,9 @@ from scipy.optimize._minimize import standardize_constraints
 from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.strategies.api import (
+    PolytopeSampler as PolytopeSamplerDataModel,
+)
 from bofire.strategies.api import PolytopeSampler
 from bofire.strategies.doe.jacobian import JacobianForLogdet
 from bofire.strategies.doe.utils import (
@@ -134,10 +137,12 @@ def find_local_max_ipopt(
         domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values
     else:
-        try:
-            sampler = PolytopeSampler(domain=domain)
+        if len(domain.cnstrs.get(NonlinearConstraint)) == 0:
+            sampler = PolytopeSampler(
+                data_model=PolytopeSamplerDataModel(domain=domain)
+            )
             x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
-        except Exception:
+        else:
             warnings.warn(
                 "Sampling failed. Falling back to uniform sampling on input domain.\
                           Providing a custom sampling strategy compatible with the problem can \
