@@ -40,6 +40,7 @@ class Constraint(BaseModel):
         """
         pass
 
+    @abstractmethod
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Numerically evaluates the jacobian of the constraint
         Args:
