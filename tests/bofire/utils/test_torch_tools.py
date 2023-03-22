@@ -257,10 +257,22 @@ def test_get_linear_constraints():
 
 def test_get_linear_constraints_unit_scaled():
     input_features = [
-        ContinuousInput(key="base_polymer", bounds=(0.3, 0.7),),
-        ContinuousInput(key="glas_fibre", bounds=(0.1, 0.7),),
-        ContinuousInput(key="additive", bounds=(0.1, 0.6),),
-        ContinuousInput(key="temperature", bounds=(30, 700),),
+        ContinuousInput(
+            key="base_polymer",
+            bounds=(0.3, 0.7),
+        ),
+        ContinuousInput(
+            key="glas_fibre",
+            bounds=(0.1, 0.7),
+        ),
+        ContinuousInput(
+            key="additive",
+            bounds=(0.1, 0.6),
+        ),
+        ContinuousInput(
+            key="temperature",
+            bounds=(30, 700),
+        ),
     ]
     constraints = [
         LinearEqualityConstraint(
@@ -315,10 +327,7 @@ def test_get_output_constraints(output_features):
 def test_get_nchoosek_constraints():
     domain = Domain(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"if{i+1}", bounds=(0, 1))
-                for i in range(8)
-            ]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)]
         ),
         constraints=Constraints(
             constraints=[
@@ -352,10 +361,7 @@ def test_get_nchoosek_constraints():
     assert torch.all(constraints[1](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
     domain = Domain(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"if{i+1}", bounds=(0, 1))
-                for i in range(8)
-            ]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)]
         ),
         constraints=Constraints(
             constraints=[
@@ -377,10 +383,7 @@ def test_get_nchoosek_constraints():
 
     domain = Domain(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"if{i+1}", bounds=(0, 1))
-                for i in range(8)
-            ]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(8)]
         ),
         constraints=Constraints(
             constraints=[

@@ -193,7 +193,10 @@ def test_mlp_ensemble_fit(scaler):
 def test_mlp_ensemble_fit_categorical(scaler):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
