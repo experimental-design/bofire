@@ -48,9 +48,7 @@ class DTLZ2(Benchmark):
 
         input_features = []
         for i in range(self.dim):
-            input_features.append(
-                ContinuousInput(key="x_%i" % (i), bounds=(0, 1))
-            )
+            input_features.append(ContinuousInput(key="x_%i" % (i), bounds=(0, 1)))
         output_features = []
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
@@ -337,8 +335,7 @@ class ZDT1(Benchmark):
         """
         self.n_inputs = n_inputs
         input_features = [
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1))
-            for i in range(n_inputs)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(n_inputs)
         ]
         inputs = Inputs(features=input_features)
         output_features = [
@@ -550,7 +547,7 @@ class CrossCoupling(Benchmark):
         )
         tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
         if len(tot_cost) == 1:
-            tot_cost = tot_cost[0]
+            tot_cost = tot_cost[0]  # type: ignore
         return tot_cost
 
     def _get_catalyst_cost(self, catalyst, catalyst_mmol):
