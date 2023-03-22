@@ -424,7 +424,7 @@ def adjust_boundary(feature: ContinuousInput, coef: float, rhs: float):
     boundary = rhs / coef
     if coef > 0:
         if boundary > feature.lower_bound:
-            feature.lower_bound = boundary
+            feature.bounds = (boundary, feature.upper_bound)
     else:
         if boundary < feature.upper_bound:
-            feature.upper_bound = boundary
+            feature.bounds = (feature.lower_bound, boundary)
