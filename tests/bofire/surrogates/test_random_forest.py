@@ -68,7 +68,7 @@ def test_random_forest():
     # test with categoricals
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]

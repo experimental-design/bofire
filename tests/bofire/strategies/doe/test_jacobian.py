@@ -15,7 +15,7 @@ def test_default_jacobian_building_block():
     # "small" model
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1),)
             for i in range(3)
         ],
         output_features=[ContinuousOutput(key="y")],
@@ -311,7 +311,7 @@ def test_JacobianForLogdet_instantiation():
     # default jacobian building block
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1),)
             for i in range(3)
         ],
         output_features=[ContinuousOutput(key="y")],
@@ -351,7 +351,7 @@ def test_JacobianForLogdet_instantiation():
 
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1),)
             for i in range(3)
         ],
         output_features=[ContinuousOutput(key="y")],
@@ -377,7 +377,7 @@ def test_JacobianForLogdet_jacobian():
 
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1),)
             for i in range(2)
         ],
         output_features=[ContinuousOutput(key="y")],

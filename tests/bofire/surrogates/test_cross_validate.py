@@ -15,7 +15,7 @@ from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 def test_model_cross_validate(folds):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(2)
         ]
     )
@@ -39,7 +39,7 @@ def test_model_cross_validate_descriptor():
     folds = 5
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(2)
         ]
         + [
@@ -78,7 +78,7 @@ def test_model_cross_validate_descriptor():
 def test_model_cross_validate_include_X(include_X):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(2)
         ]
     )
@@ -116,7 +116,7 @@ def test_model_cross_validate_hooks():
 
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(2)
         ]
     )
@@ -164,7 +164,7 @@ def test_model_cross_validate_hooks():
 def test_model_cross_validate_invalid(folds):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(2)
         ]
     )

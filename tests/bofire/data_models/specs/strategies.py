@@ -82,7 +82,7 @@ specs.add_valid(
         "domain": Domain(
             input_features=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1))
                     for i in range(2)
                 ]
             ),
@@ -97,7 +97,7 @@ specs.add_valid(
         "domain": Domain(
             input_features=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1))
                     for i in range(2)
                 ]
             )

@@ -52,7 +52,7 @@ def test_zero_input_features():
 def test_zero_output_features():
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(5)
         ]
     )
@@ -77,7 +77,7 @@ def test_predicted_value():
 def test_to_outputs(n_output_features):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(5)
         ]
     )
@@ -101,7 +101,7 @@ def test_to_outputs(n_output_features):
 def test_is_fitted():
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4),)
             for i in range(5)
         ]
     )
