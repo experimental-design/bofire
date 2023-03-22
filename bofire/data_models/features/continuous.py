@@ -101,6 +101,7 @@ class ContinuousOutput(Output):
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
     order_id: ClassVar[int] = 6
+    unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
