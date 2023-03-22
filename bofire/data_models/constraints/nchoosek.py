@@ -93,4 +93,4 @@ class NChooseKConstraint(Constraint):
         return res
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        NotImplementedError
+        raise NotImplementedError

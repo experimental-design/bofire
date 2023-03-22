@@ -9,7 +9,6 @@ from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
-    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -292,11 +291,11 @@ def constraints_as_scipy_constraints(
 
 
 class ConstraintWrapper:
-    """Wrapper for opti constraint calls using flattened numpy arrays instead of ."""
+    """Wrapper for nonlinear constraints."""
 
     def __init__(
         self,
-        constraint: Constraint,
+        constraint: NonlinearConstraint,
         domain: Domain,
         n_experiments: int = 0,
         tol: float = 1e-3,

@@ -73,7 +73,7 @@ class LinearConstraint(Constraint):
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             np.tile(
-                self.coefficients / np.linalg.norm(self.coefficients),
+                [np.array(self.coefficients) / np.linalg.norm(self.coefficients)],
                 [experiments.shape[0], 1],
             ),
             columns=[f"dg/d{name}" for name in self.features],
