@@ -1258,13 +1258,15 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)</span>
 <span class="sd">            only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.</span>
+<span class="sd">            tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation</span>
+<span class="sd">                is larger than tol. Defaults to 1e-6.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: when a column is missing for a defined input feature</span>
@@ -1280,7 +1282,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
         <span class="c1"># check if all constraints are fulfilled</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
         <span class="c1"># for each continuous output feature with an attached objective object</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
@@ -2328,7 +2330,7 @@ involved output features.</p>
 
 
 <h3 id="bofire.data_models.domain.domain.Domain.validate_candidates" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">only_inputs</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">validate_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">only_inputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-06</span><span class="p">)</span></code>
 
 
 </h3>
@@ -2359,6 +2361,13 @@ involved output features.</p>
         <td><code>bool,optional</code></td>
         <td><p>If True, only the input columns are validated. Defaults to False.</p></td>
         <td><code>False</code></td>
+      </tr>
+      <tr>
+        <td><code>tol</code></td>
+        <td><code>float,optional</code></td>
+        <td><p>tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation
+is larger than tol. Defaults to 1e-6.</p></td>
+        <td><code>1e-06</code></td>
       </tr>
   </tbody>
 </table>
@@ -2411,13 +2420,15 @@ involved output features.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)</span>
 <span class="sd">        only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.</span>
+<span class="sd">        tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation</span>
+<span class="sd">            is larger than tol. Defaults to 1e-6.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: when a column is missing for a defined input feature</span>
@@ -2433,7 +2444,7 @@ involved output features.</p>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">input_features</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
     <span class="c1"># check if all constraints are fulfilled</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Constraints not fulfilled.&quot;</span><span class="p">)</span>
     <span class="c1"># for each continuous output feature with an attached objective object</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
