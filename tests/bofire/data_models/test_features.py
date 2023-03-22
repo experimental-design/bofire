@@ -228,7 +228,7 @@ def test_continuous_input_feature_validate_candidental_invalid(input_feature, va
             np.linspace(0, 10, 11),
         ),
         (
-            ContinuousInput(key="a", bounds=(10, 20)),
+            ContinuousInput(key="a", bounds=(-10, 20)),
             pd.Series(np.linspace(0, 1)),
             np.linspace(-10, 20),
         ),

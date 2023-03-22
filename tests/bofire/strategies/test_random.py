@@ -27,9 +27,9 @@ warnings.filterwarnings("ignore", category=UserWarning, append=True)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
-if0 = ContinuousInput(key="if0", lower_bound=0, upper_bound=1)
-if1 = ContinuousInput(key="if1", lower_bound=0, upper_bound=2)
-if2 = ContinuousInput(key="if2", lower_bound=0, upper_bound=3)
+if0 = ContinuousInput(key="if0", bounds=(0, 1))
+if1 = ContinuousInput(key="if1", bounds=(0, 2))
+if2 = ContinuousInput(key="if2", bounds=(0, 3))
 if3 = CategoricalInput(key="if3", categories=["c1", "c2", "c3"])
 if4 = CategoricalInput(
     key="if4", categories=["A", "B", "C"], allowed=[True, True, False]

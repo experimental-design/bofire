@@ -6,7 +6,7 @@ from bofire.utils.doe import get_confounding_matrix
 
 input_features = Inputs(
     features=[
-        ContinuousInput(key=i, lower_bound=0, upper_bound=10) for i in ["a", "b", "c"]
+        ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]
     ]
 )
 

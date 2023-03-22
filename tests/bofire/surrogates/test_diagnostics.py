@@ -25,7 +25,7 @@ from bofire.surrogates.diagnostics import (
 
 
 def generate_cvresult(key, n_samples, include_labcodes=False, include_X=False):
-    feature = ContinuousInput(key=key, lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key=key, bounds=(10, 20),)
     observed = feature.sample(n_samples)
     predicted = observed + np.random.normal(0, 1, size=n_samples)
     if include_labcodes:
@@ -54,7 +54,7 @@ def generate_cvresult(key, n_samples, include_labcodes=False, include_X=False):
 )
 def test_sklearn_metrics(bofire, sklearn):
     n_samples = 20
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     observed = feature.sample(n_samples).values
     predicted = observed + np.random.normal(0, 1, size=n_samples)
     sd = np.random.normal(0, 1, size=n_samples)
@@ -71,7 +71,7 @@ def test_sklearn_metrics(bofire, sklearn):
 )
 def test_scipy_metrics(bofire, scipy):
     n_samples = 20
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     observed = feature.sample(n_samples).values
     predicted = observed + np.random.normal(0, 1, size=n_samples)
     sd = np.random.normal(0, 1, size=n_samples)
@@ -82,7 +82,7 @@ def test_scipy_metrics(bofire, scipy):
 
 def test_cvresult_not_numeric():
     n_samples = 10
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     feature2 = CategoricalInput(key="a", categories=["a", "b"])
     with pytest.raises(ValueError):
         CvResult(
@@ -106,7 +106,7 @@ def test_cvresult_not_numeric():
 
 
 def test_cvresult_shape_mismatch():
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     with pytest.raises(ValueError):
         CvResult(
             key=feature.key,
@@ -149,7 +149,7 @@ def test_cvresult_shape_mismatch():
 
 def test_cvresult_get_metric():
     n_samples = 10
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     observed = feature.sample(n=n_samples)
     predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
@@ -160,7 +160,7 @@ def test_cvresult_get_metric():
 
 def test_cvresult_get_metric_invalid():
     n_samples = 1
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     observed = feature.sample(n=n_samples)
     predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
@@ -175,7 +175,7 @@ def test_cvresults_invalid():
         CvResults(results=[])
     # test for wrong keys
     n_samples = 10
-    feature = ContinuousInput(key="a", lower_bound=10, upper_bound=20)
+    feature = ContinuousInput(key="a", bounds=(10, 20),)
     observed = feature.sample(n=n_samples)
     predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv1 = CvResult(key=feature.key, observed=observed, predicted=predicted)

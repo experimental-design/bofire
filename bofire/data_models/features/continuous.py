@@ -63,6 +63,7 @@ class ContinuousInput(NumericalInput):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
+
         noise = 10e-6
         super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():

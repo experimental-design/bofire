@@ -12,7 +12,7 @@ from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
 input_features = Inputs(
     features=[
-        ContinuousInput(key=f"if{i}", lower_bound=0, upper_bound=1) for i in range(1, 4)
+        ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)
     ]
 )
 constraints = Constraints(
@@ -58,23 +58,19 @@ def test_rejection_sampler_not_converged():
 
 
 if1 = ContinuousInput(
-    lower_bound=0.0,
-    upper_bound=1.0,
+    bounds=(0, 1),
     key="if1",
 )
 if2 = ContinuousInput(
-    lower_bound=0.0,
-    upper_bound=1.0,
+    bounds=(0, 1),
     key="if2",
 )
 if3 = ContinuousInput(
-    lower_bound=0.0,
-    upper_bound=1.0,
+    bounds=(0, 1),
     key="if3",
 )
 if4 = ContinuousInput(
-    lower_bound=0.1,
-    upper_bound=0.1,
+    bounds=(0.1, 0.1),
     key="if4",
 )
 if5 = CategoricalInput(
@@ -86,7 +82,7 @@ if6 = CategoricalInput(
     allowed=[False, True, False],
     key="if6",
 )
-If7 = ContinuousInput(lower_bound=1.0, upper_bound=1.0, key="If7")
+If7 = ContinuousInput(bounds=(1, 1), key="If7")
 c1 = LinearEqualityConstraint(
     features=["if1", "if2", "if3", "if4"], coefficients=[1.0, 1.0, 1.0, 1.0], rhs=1.0
 )

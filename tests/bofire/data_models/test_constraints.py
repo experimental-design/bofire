@@ -76,9 +76,9 @@ c6 = LinearInequalityConstraint.from_smaller_equal(
     features=["f1", "f2", "f3"], coefficients=[1, 1, 1], rhs=100.0
 )
 
-if1 = ContinuousInput(key="f1", lower_bound=0, upper_bound=2)
-if2 = ContinuousInput(key="f2", lower_bound=0, upper_bound=4)
-if3 = ContinuousInput(key="f3", lower_bound=3, upper_bound=8)
+if1 = ContinuousInput(key="f1", bounds=(0, 2))
+if2 = ContinuousInput(key="f2", bounds=(0, 4))
+if3 = ContinuousInput(key="f3", bounds=(3, 8))
 
 input_features = Inputs(features=[if1, if2, if3])
 
