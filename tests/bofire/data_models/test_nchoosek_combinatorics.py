@@ -193,10 +193,7 @@ def test_nchoosek_combinations_completeness(test_case):
 def test_nchoosek_combinations_nonexhaustive():
     domain = Domain(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"if{i+1}", bounds=(0, 1))
-                for i in range(6)
-            ]
+            features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(6)]
         ),
         constraints=Constraints(
             constraints=[

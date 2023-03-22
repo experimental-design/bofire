@@ -30,9 +30,7 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
     domain = Domain(
         input_features=Inputs(
             features=[
-                ContinuousInput(
-                    key="A", type="ContinuousInput", bounds=(0, 10)
-                ),
+                ContinuousInput(key="A", type="ContinuousInput", bounds=(0, 10)),
                 ContinuousInput(
                     key="B",
                     type="ContinuousInput",

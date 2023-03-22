@@ -5,10 +5,9 @@ from bofire.data_models.domain.features import ContinuousInput
 from bofire.utils.doe import get_confounding_matrix
 
 input_features = Inputs(
-    features=[
-        ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]
-    ]
+    features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]]
 )
+
 
 design = input_features.sample(20)
 

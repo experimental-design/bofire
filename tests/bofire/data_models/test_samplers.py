@@ -11,9 +11,7 @@ from bofire.data_models.domain.api import Constraints, Domain, Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
 input_features = Inputs(
-    features=[
-        ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)
-    ]
+    features=[ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)]
 )
 constraints = Constraints(
     constraints=[

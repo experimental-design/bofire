@@ -120,8 +120,14 @@ def test_reduce_1_independent_linear_equality_constraints():
     # define problem: irreducible problem
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", bounds=(1, 2),),
-            ContinuousInput(key="x2", bounds=(-1, 1),),
+            ContinuousInput(
+                key="x1",
+                bounds=(1, 2),
+            ),
+            ContinuousInput(
+                key="x2",
+                bounds=(-1, 1),
+            ),
             CategoricalInput(key="x3", categories=["A", "B"]),
         ],
         output_features=[ContinuousOutput(key="y1")],
@@ -131,8 +137,14 @@ def test_reduce_1_independent_linear_equality_constraints():
     # define problem: linear equality constraints can't be fulfilled inside the domain
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", bounds=(1, 2),),
-            ContinuousInput(key="x2", bounds=(-500, 500),),
+            ContinuousInput(
+                key="x1",
+                bounds=(1, 2),
+            ),
+            ContinuousInput(
+                key="x2",
+                bounds=(-500, 500),
+            ),
         ],
         output_features=[ContinuousOutput(key="y1")],
         constraints=[
@@ -149,9 +161,18 @@ def test_reduce_2_independent_linear_equality_constraints():
     # define problem: standard case
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", bounds=(-1, 1),),
-            ContinuousInput(key="x2", bounds=(-1, 1),),
-            ContinuousInput(key="x3", bounds=(-1, 1),),
+            ContinuousInput(
+                key="x1",
+                bounds=(-1, 1),
+            ),
+            ContinuousInput(
+                key="x2",
+                bounds=(-1, 1),
+            ),
+            ContinuousInput(
+                key="x3",
+                bounds=(-1, 1),
+            ),
         ],
         output_features=[ContinuousOutput(key="y1")],
         constraints=[
@@ -180,9 +201,18 @@ def test_reduce_3_independent_linear_equality_constraints():
     # define problem: standard case
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", bounds=(-1, 1),),
-            ContinuousInput(key="x2", bounds=(-1, 1),),
-            ContinuousInput(key="x3", bounds=(-1, 1),),
+            ContinuousInput(
+                key="x1",
+                bounds=(-1, 1),
+            ),
+            ContinuousInput(
+                key="x2",
+                bounds=(-1, 1),
+            ),
+            ContinuousInput(
+                key="x3",
+                bounds=(-1, 1),
+            ),
         ],
         output_features=[ContinuousOutput(key="y1")],
         constraints=[
@@ -204,9 +234,18 @@ def test_reduce_3_independent_linear_equality_constraints():
 def test_doc_simple():
     domain = Domain()
     input_features = [
-        ContinuousInput(key="x1", bounds=(0.1, 1),),
-        ContinuousInput(key="x2", bounds=(0, 0.8),),
-        ContinuousInput(key="x3", bounds=(0.3, 0.9),),
+        ContinuousInput(
+            key="x1",
+            bounds=(0.1, 1),
+        ),
+        ContinuousInput(
+            key="x2",
+            bounds=(0, 0.8),
+        ),
+        ContinuousInput(
+            key="x3",
+            bounds=(0.3, 0.9),
+        ),
     ]
     output_features = [ContinuousOutput(key="y")]
     domain = Domain(
@@ -246,13 +285,34 @@ def test_doc_complex():
     domain = Domain()
 
     input_features = [
-        ContinuousInput(key="A1", bounds=(0, 0.9),),
-        ContinuousInput(key="A2", bounds=(0, 0.8),),
-        ContinuousInput(key="A3", bounds=(0, 0.9),),
-        ContinuousInput(key="A4", bounds=(0, 0.9),),
-        ContinuousInput(key="B1", bounds=(0.3, 0.9),),
-        ContinuousInput(key="B2", bounds=(0, 0.8),),
-        ContinuousInput(key="B3", bounds=(0.1, 1),),
+        ContinuousInput(
+            key="A1",
+            bounds=(0, 0.9),
+        ),
+        ContinuousInput(
+            key="A2",
+            bounds=(0, 0.8),
+        ),
+        ContinuousInput(
+            key="A3",
+            bounds=(0, 0.9),
+        ),
+        ContinuousInput(
+            key="A4",
+            bounds=(0, 0.9),
+        ),
+        ContinuousInput(
+            key="B1",
+            bounds=(0.3, 0.9),
+        ),
+        ContinuousInput(
+            key="B2",
+            bounds=(0, 0.8),
+        ),
+        ContinuousInput(
+            key="B3",
+            bounds=(0.1, 1),
+        ),
         CategoricalInput(key="Process", categories=["p1", "p2", "p3"]),
         CategoricalInput(key="Discrete", categories=["a1", "a2", "a3"]),
     ]
@@ -413,10 +473,22 @@ def test_doc_complex():
 def test_reduce_large_problem():
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", bounds=(-1, 1),),
-            ContinuousInput(key="x2", bounds=(-5000, 1),),
-            ContinuousInput(key="x3", bounds=(-5000, 5000),),
-            ContinuousInput(key="x4", bounds=(-1, 1),),
+            ContinuousInput(
+                key="x1",
+                bounds=(-1, 1),
+            ),
+            ContinuousInput(
+                key="x2",
+                bounds=(-5000, 1),
+            ),
+            ContinuousInput(
+                key="x3",
+                bounds=(-5000, 5000),
+            ),
+            ContinuousInput(
+                key="x4",
+                bounds=(-1, 1),
+            ),
         ],
         output_features=[ContinuousOutput(key="y1")],
         constraints=[
