@@ -341,8 +341,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                     feat: ContinuousInput = ContinuousInput(
                         **domain.get_feature(_features[0]).dict()
                     )
-                    feat.lower_bound = _coefficients[0]
-                    feat.upper_bound = _coefficients[0]
+                    feat.bounds = (_coefficients[0], _coefficients[0])
                     totally_removed = True
             else:
                 if len(_features) > 1:
