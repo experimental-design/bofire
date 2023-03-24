@@ -50,6 +50,19 @@ def get_pareto_front(
     experiments: pd.DataFrame,
     output_feature_keys: Optional[list] = None,
 ) -> pd.DataFrame:
+    """
+    Compute the Pareto front for the given set of experiments and output features.
+
+    Args:
+        domain (Domain): The domain object of the optimization problem.
+        experiments (pd.DataFrame): A Pandas DataFrame containing the results of the experiments.
+        output_feature_keys (Optional[list]): A list of strings representing the output features to use.
+            If None, the output features are inferred from the domain using the MaximizeObjective and MinimizeObjective.
+
+    Returns:
+        pd.DataFrame: A Pandas DataFrame containing the Pareto front of the experiments.
+    """
+
     if output_feature_keys is None:
         output_feature_keys = domain.outputs.get_keys_by_objective(
             includes=[MaximizeObjective, MinimizeObjective]
