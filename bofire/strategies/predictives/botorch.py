@@ -45,6 +45,42 @@ class BotorchStrategy(PredictiveStrategy):
         data_model: DataModel,
         **kwargs,
     ):
+        """
+        BotorchStrategy is a PredictiveStrategy class that uses Botorch library to optimize the acquisition function.
+
+        Parameters:
+        data_model : DataModel
+            An object of DataModel class containing data and model specifications.
+        **kwargs:
+            Additional keyword arguments.
+
+        Attributes:
+        acqf : AcquisitionFunction
+            An optional AcquisitionFunction object.
+        model : GPyTorchModel
+            An optional GPyTorchModel object.
+        num_sobol_samples : int
+            Number of Sobol samples for acquisition function optimization.
+        num_restarts : int
+            Number of restarts for acquisition function optimization.
+        num_raw_samples : int
+            Number of raw samples for acquisition function optimization.
+        descriptor_method : str
+            Descriptor method used for continuous variables.
+        categorical_method : str
+            Method used for encoding categorical variables.
+        discrete_method : str
+            Method used for encoding discrete variables.
+
+        Properties:
+        input_preprocessing_specs : TInputTransformSpecs
+            Preprocessing specifications for input data.
+        _features2idx : Dict[str, Tuple[int]]
+            Dictionary mapping feature names to feature indices.
+        _features2names : Dict[str, Tuple[str]]
+            Dictionary mapping feature names to feature names after preprocessing.
+        """
+
         super().__init__(data_model=data_model, **kwargs)
         self.num_sobol_samples = data_model.num_sobol_samples
         self.num_restarts = data_model.num_restarts
@@ -89,6 +125,16 @@ class BotorchStrategy(PredictiveStrategy):
         )
 
     def _predict(self, transformed: pd.DataFrame):
+        """
+        Predicts the mean and standard deviation of the Gaussian Process for a given input.
+
+        Args:
+            transformed: A pandas DataFrame containing the input values transformed according to the input preprocessing specifications.
+
+        Returns:
+            A tuple containing the mean and standard deviation of the Gaussian Process for the given input.
+        """
+
         # we are using self.model here for this purpose we have to take the transformed
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
@@ -143,13 +189,17 @@ class BotorchStrategy(PredictiveStrategy):
         ]
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
-        """[summary]
+        """Optimizes the acquisition function to find the next set of candidate solutions to evaluate.
 
         Args:
-            candidate_count (int, optional): [description]. Defaults to 1.
+            candidate_count (int, optional): The number of candidate solutions to generate. Defaults to 1.
 
         Returns:
-            pd.DataFrame: [description]
+            pd.DataFrame: A Pandas DataFrame object containing the candidate solutions and their associated metrics.
+
+        Raises:
+            AssertionError: Raised when candidate_count is not larger than zero.
+            IOError: Raised when none of the optimization scenarios are met.
         """
 
         assert candidate_count > 0, "candidate_count has to be larger than zero."
@@ -444,6 +494,10 @@ class BotorchStrategy(PredictiveStrategy):
         return fixed_values_list_cc
 
     def get_fixed_values_list(self):
+        """
+        Returns a list of all possible combinations of fixed values from categorical and nchoosek constraints.
+        """
+
         # CARTESIAN PRODUCTS: fixed values from categorical combinations X fixed values from nchoosek constraints
         fixed_values_full = []
 
@@ -458,6 +512,13 @@ class BotorchStrategy(PredictiveStrategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
+        """
+        Checks whether the number of experiments is sufficient for the model to be fit.
+
+        Returns:
+            bool: True if the number of experiments is greater than degrees of freedom plus one, False otherwise.
+        """
+
         if self.experiments is None:
             return False
         degrees_of_freedom = len(self.domain.get_features(Input)) - len(
@@ -472,6 +533,20 @@ class BotorchStrategy(PredictiveStrategy):
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
+        """
+        Returns the training and pending input tensors needed for the acquisition function.
+
+        Args:
+            self (obj): The current instance of the class.
+
+        Returns:
+            tuple: A tuple of two PyTorch tensors. The first tensor contains the transformed training inputs and 
+                the second tensor contains the transformed pending inputs. If no pending inputs are provided, 
+                the second tensor will be None.
+
+        Raises:
+            None
+        """
 
         # TODO: should this be selectable?
         clean_experiments = experiments.drop_duplicates(
@@ -498,6 +573,17 @@ class BotorchStrategy(PredictiveStrategy):
     def get_infeasible_cost(
         self, objective: Callable[[Tensor, Tensor], Tensor], n_samples=128
     ) -> Tensor:
+        """
+        Compute the cost of infeasible samples using the given objective function.
+
+        Args:
+            objective (callable): A function that takes two tensors (inputs and model outputs) as input and returns a tensor as output.
+            n_samples (int): The number of infeasible samples to generate. Defaults to 128.
+
+        Returns:
+            Tensor: A tensor of shape (n_samples,) containing the cost of each infeasible sample.
+        """
+
         X_train, X_pending = self.get_acqf_input_tensors()
         sampler = PolytopeSampler(
             data_model=PolytopeSamplerDataModel(domain=self.domain)

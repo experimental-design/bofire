@@ -21,6 +21,22 @@ from bofire.utils.torch_tools import tkwargs
 
 
 class QehviStrategy(BotorchStrategy):
+    """A Bayesian optimization strategy that uses the qExpectedHypervolumeImprovement (qEHVI) acquisition function to maximize the expected hypervolume improvement (EHI).
+
+    The QehviStrategy class is a subclass of the BotorchStrategy class and inherits all its attributes and methods. This class requires a DataModel object as input and optionally accepts any additional keyword arguments that are accepted by the parent class.
+
+    Attributes:
+        ref_point (Optional[dict]): A dictionary specifying the reference point for the hypervolume calculation. Defaults to None.
+        objective (Optional[MCMultiOutputObjective]): The objective function to optimize. Defaults to None.
+
+    Methods:
+        _init_acqf(): Initializes the qEHVI acquisition function.
+        _get_objective(): Returns the weighted MCMultiOutputObjective used in the qEHVI acquisition function.
+        get_adjusted_refpoint(): Returns the adjusted reference point for the hypervolume calculation.
+
+    See the Botorch documentation for more information on the BotorchStrategy and qEHVI acquisition function.
+    """
+
     def __init__(
         self,
         data_model: DataModel,

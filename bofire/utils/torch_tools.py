@@ -245,10 +245,10 @@ def get_multiplicative_botorch_objective(
     - X (a `torch.Tensor` of shape `n x d`): the input data for the underlying model.
 
     Parameters:
-    - output_features (an instance of `Outputs`): the output features for which to construct the objective function.
+    output_features (an instance of `Outputs`): the output features for which to construct the objective function.
 
     Returns:
-    - a callable: the multiplicative botorch objective function. The function takes two arguments and returns a scalar `torch.Tensor`.
+    a callable: the multiplicative botorch objective function. The function takes two arguments and returns a scalar `torch.Tensor`.
       The first argument is a `torch.Tensor` of shape `batch_size x q x m`, where `batch_size` is the number of independent batches to evaluate,
       `q` is the number of fantasy points to generate, and `m` is the dimensionality of the outcome space.
       The second argument is a `torch.Tensor` of shape `n x d`, where `n` is the number of training examples and `d` is the dimensionality of the input space.
@@ -277,6 +277,18 @@ def get_multiplicative_botorch_objective(
 def get_additive_botorch_objective(
     output_features: Outputs, exclude_constraints: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
+    """Creates a callable function that computes the additive Botorch objective function.
+
+    Args:
+        output_features (Outputs): The output features to be used in the objective function.
+        exclude_constraints (bool, optional): Whether to exclude constraints from the objective function. Defaults to True.
+
+    Returns:
+        Callable[[Tensor, Tensor], Tensor]: A callable function that takes in two Tensor inputs, samples and X, and returns a Tensor output.
+
+    Raises:
+        TypeError: If the output features object does not contain valid feature objective."""
+
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(output_features.get())
