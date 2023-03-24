@@ -150,6 +150,24 @@ def get_output_constraints(
 def get_objective_callable(
     idx: int, objective: AnyObjective
 ) -> Callable[[Tensor], Tensor]:  # type: ignore
+    """Return a callable function for the given objective and index.
+
+    The returned function is used to compute the objective value for a given set of inputs.
+    The input index corresponds to the position of the variable for which the objective
+    is being computed.
+
+    Parameters:
+        idx (int): The index of the input variable.
+        objective (AnyObjective): An instance of the `AnyObjective` class.
+
+    Returns:
+        Callable[[Tensor], Tensor]: A callable function that takes in a tensor as input
+        and returns the objective value as a tensor.
+
+    Raises:
+        NotImplementedError: If the objective type is not implemented.
+    """
+
     if isinstance(objective, MaximizeObjective):
         return lambda x: (
             (x[..., idx] - objective.lower_bound)
@@ -220,6 +238,22 @@ def get_objective_callable(
 def get_multiplicative_botorch_objective(
     output_features: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
+    """
+    Returns a multiplicative botorch objective function that can be used for optimization.
+    The returned function is a callable that takes two arguments:
+    - samples (a `torch.Tensor` of shape `batch_size x q x m`): the samples at which to evaluate the objective.
+    - X (a `torch.Tensor` of shape `n x d`): the input data for the underlying model.
+
+    Parameters:
+    - output_features (an instance of `Outputs`): the output features for which to construct the objective function.
+
+    Returns:
+    - a callable: the multiplicative botorch objective function. The function takes two arguments and returns a scalar `torch.Tensor`.
+      The first argument is a `torch.Tensor` of shape `batch_size x q x m`, where `batch_size` is the number of independent batches to evaluate,
+      `q` is the number of fantasy points to generate, and `m` is the dimensionality of the outcome space.
+      The second argument is a `torch.Tensor` of shape `n x d`, where `n` is the number of training examples and `d` is the dimensionality of the input space.
+    """
+
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(output_features.get())

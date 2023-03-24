@@ -86,7 +86,7 @@ def compute_hypervolume(
     domain: Domain, optimal_experiments: pd.DataFrame, ref_point: dict
 ) -> float:
     """
-    Compute the hypervolume of the given set of experiments with respect to the reference point.
+    Computes the hypervolume of the given set of experiments with respect to the reference point.
 
     Args:
         domain (Domain): The search domain object for the optimization problem.
@@ -96,7 +96,7 @@ def compute_hypervolume(
     Returns:
         float: The hypervolume of the experiments with respect to the reference point.
     """
-    
+
     ref_point_mask = get_ref_point_mask(domain)
     hv = Hypervolume(
         ref_point=torch.from_numpy(
@@ -126,6 +126,18 @@ def compute_hypervolume(
 def infer_ref_point(
     domain: Domain, experiments: pd.DataFrame, return_masked: bool = False
 ):
+    """
+    Infers the reference point for the given set of experiments in the output feature space.
+
+    Args:
+        domain (Domain): The search domain object for the optimization problem.
+        experiments (pd.DataFrame): A Pandas DataFrame containing the results of the experiments.
+        return_masked (bool): Whether to return the reference point in masked or unmasked form. Defaults to False.
+
+    Returns:
+        dict: A dictionary representing the reference point in the output feature space.
+    """
+
     keys = domain.outputs.get_keys_by_objective(
         includes=[MaximizeObjective, MinimizeObjective]
     )
