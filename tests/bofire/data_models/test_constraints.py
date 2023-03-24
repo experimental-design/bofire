@@ -1,3 +1,5 @@
+import numpy as np
+import pandas as pd
 import pytest
 from pydantic.error_wrappers import ValidationError
 
@@ -8,6 +10,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
@@ -82,9 +85,10 @@ if3 = ContinuousInput(key="f3", lower_bound=3, upper_bound=8)
 
 input_features = Inputs(features=[if1, if2, if3])
 
-constraints = Constraints(constraints=[c1, c2, c3])
+constraints = Constraints(constraints=[c1, c2])
 constraints2 = Constraints(constraints=[c4, c5])
 constraints3 = Constraints(constraints=[c6])
+constraints4 = Constraints(constraints=[c3])
 
 
 @pytest.mark.parametrize(
@@ -106,10 +110,10 @@ def test_constraints_invalid_constraint(constraints):
 @pytest.mark.parametrize(
     "constraints, ConstraintType, exact, expected",
     [
-        (constraints, LinearConstraint, True, []),
-        (constraints, LinearConstraint, False, [c1, c2]),
-        (constraints, Constraint, False, [c1, c2, c3]),
-        (constraints, NChooseKConstraint, False, [c3]),
+        (constraints + constraints4, LinearConstraint, True, []),
+        (constraints + constraints4, LinearConstraint, False, [c1, c2]),
+        (constraints + constraints4, Constraint, False, [c1, c2, c3]),
+        (constraints + constraints4, NChooseKConstraint, False, [c3]),
     ],
 )
 def test_constraints_get(constraints, ConstraintType, exact, expected):
@@ -120,7 +124,7 @@ def test_constraints_get(constraints, ConstraintType, exact, expected):
 
 
 def test_constraints_plus():
-    returned = constraints + constraints2
+    returned = constraints + constraints4 + constraints2
     assert returned.constraints == [c1, c2, c3, c4, c5]
 
 
@@ -149,3 +153,41 @@ def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
     assert returned.shape == (num_candidates,)
     assert returned.dtype == bool
     assert returned.all() == fulfilled
+
+
+@pytest.mark.parametrize(
+    "constraints, num_candidates",
+    [
+        (constraints, 2),
+        (constraints2, 2),
+    ],
+)
+def test_constraints_jacobian(constraints, num_candidates):
+    candidates = input_features.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    returned = constraints.jacobian(candidates)
+    assert np.all(
+        [
+            returned[i].columns == ["dg/df1", "dg/df2", "dg/df3"]
+            for i, c in enumerate(constraints)
+        ]
+    )
+    assert np.all(
+        [
+            returned[i].shape == (num_candidates, len(input_features))
+            for i, c in enumerate(constraints)
+        ]
+    )
+    for i, c in enumerate(constraints):
+        if isinstance(c, LinearConstraint):
+            assert np.allclose(
+                returned[i],
+                np.tile(
+                    c.coefficients / np.linalg.norm(c.coefficients), (num_candidates, 1)
+                ),
+            )
+        if isinstance(c, NonlinearConstraint):
+            res = candidates.eval(c.jacobian_expression)
+            for j, col in enumerate(res):
+                if not hasattr(col, "__iter__"):
+                    res[j] = pd.Series(np.repeat(col, candidates.shape[0]))
+            assert np.allclose(returned[i], pd.DataFrame(res).transpose())

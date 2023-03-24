@@ -2,12 +2,14 @@ import sys
 
 import numpy as np
 import pytest
-from scipy.optimize import LinearConstraint
+from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -271,34 +273,35 @@ def test_constraints_as_scipy_constraints():
     assert np.allclose(constraints[0].lb, lb)
     assert np.allclose(constraints[0].ub, ub)
 
-    # lb = -np.inf * np.ones(n_experiments)
-    # ub = -0.1 * np.ones(n_experiments)
-    # assert np.allclose(constraints[1].lb, lb)
-    # assert np.allclose(constraints[1].ub, ub)
-
-    # TODO? Reimplement nonlinear constrains?
-    # where they ever funtional?
+    lb = -np.inf * np.ones(n_experiments)
+    ub = 3.9 / np.linalg.norm([5, 4]) * np.ones(n_experiments)
+    assert np.allclose(constraints[1].lb, lb)
+    assert np.allclose(constraints[1].ub, ub)
 
     # domain with nonlinear constraints
-    # domain = Domain(
-    #     input_features=[
-    #         ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
-    #         for i in range(3)
-    #     ],
-    #     output_features=[ContinuousOutput(key="y")],
-    #     constraints=[
-    #         opti.NonlinearEquality("x1**2 + x2**2 - 1"),
-    #         opti.NonlinearInequality("x1**2 + x2**2 - 1"),
-    #     ],
-    # )
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
+            for i in range(3)
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NonlinearEqualityConstraint(
+                expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
+            ),
+            NonlinearInequalityConstraint(
+                expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
+            ),
+        ],
+    )
 
-    # constraints = constraints_as_scipy_constraints(domain, n_experiments)
+    constraints = constraints_as_scipy_constraints(domain, n_experiments)
 
-    # for c in constraints:
-    #     assert isinstance(c, NonlinearConstraint)
-    #     assert len(c.lb) == n_experiments
-    #     assert len(c.ub) == n_experiments
-    #     assert np.allclose(c.fun(np.array([1, 1, 1, 1, 1, 1])), [1, 1])
+    for c in constraints:
+        assert isinstance(c, NonlinearConstraint)
+        assert len(c.lb) == n_experiments
+        assert len(c.ub) == n_experiments
+        assert np.allclose(c.fun(np.array([1, 1, 1, 1, 1, 1])), [1, 1])
 
     # TODO NChooseKConstraint requires input lower_bounds to be 0.
     # can we lift this requirment?
@@ -340,15 +343,26 @@ def test_ConstraintWrapper():
             LinearInequalityConstraint(
                 features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
             ),
-            # TODO? Reimplement nonlinear constrains?
-            # where they ever funtional?
-            # opti.NonlinearEquality("x1**2 + x2**2 + x3**2 + x4**2 - 1"),
-            # opti.NonlinearInequality("x1**2 + x2**2 + x3**2 + x4**2 - 1"),
+            NonlinearEqualityConstraint(
+                expression="x1**2 + x2**2 + x3**2 + x4**2 - 1",
+                features=["x1", "x2", "x3", "x4"],
+                jacobian_expression="[2*x1, 2*x2, 2*x3, 2*x4]",
+            ),
+            NonlinearInequalityConstraint(
+                expression="x1**2 + x2**2 + x3**2 + x4**2 - 1",
+                features=["x1", "x2", "x3", "x4"],
+                jacobian_expression="[2*x1, 2*x2, 2*x3, 2*x4]",
+            ),
             NChooseKConstraint(
                 features=["x1", "x2", "x3", "x4"],
                 max_count=3,
                 min_count=0,
                 none_also_valid=True,
+            ),
+            NonlinearEqualityConstraint(
+                expression="x1**2 + x4**2 - 1",
+                features=["x1", "x4"],
+                jacobian_expression="[2*x1, 2*x4]",
             ),
         ],
     )
@@ -356,25 +370,81 @@ def test_ConstraintWrapper():
     x = np.array([[1, 1, 1, 1], [0.5, 0.5, 0.5, 0.5], [3, 2, 1, 0]]).flatten()
 
     # linear equality
-    c = ConstraintWrapper(domain.constraints[0], domain, tol=0)
+    c = ConstraintWrapper(domain.constraints[0], domain, tol=0, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
+    assert np.allclose(
+        c.jacobian(x),
+        0.5
+        * np.array(
+            [
+                [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+            ]
+        ),
+    )
 
     # linear inequaity
-    c = ConstraintWrapper(domain.constraints[1], domain, tol=0)
+    c = ConstraintWrapper(domain.constraints[1], domain, tol=0, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
+    assert np.allclose(
+        c.jacobian(x),
+        0.5
+        * np.array(
+            [
+                [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
+            ]
+        ),
+    )
 
-    # # nonlinear equality
-    # c = ConstraintWrapper(domain.constraints[2], domain, tol=0)
-    # assert np.allclose(c(x), np.array([3, 0, 13]))
+    # nonlinear equality
+    c = ConstraintWrapper(domain.constraints[2], domain, tol=0, n_experiments=3)
+    assert np.allclose(c(x), np.array([3, 0, 13]))
+    assert np.allclose(
+        c.jacobian(x),
+        np.array(
+            [
+                [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 6, 4, 2, 0],
+            ]
+        ),
+    )
 
-    # # nonlinear inequality
-    # c = ConstraintWrapper(domain.constraints[3], domain, tol=0)
-    # assert np.allclose(c(x), np.array([3, 0, 13]))
+    # nonlinear inequality
+    c = ConstraintWrapper(domain.constraints[3], domain, tol=0, n_experiments=3)
+    assert np.allclose(c(x), np.array([3, 0, 13]))
+    assert np.allclose(
+        c.jacobian(x),
+        np.array(
+            [
+                [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 6, 4, 2, 0],
+            ]
+        ),
+    )
 
     # nchoosek constraint
     with pytest.raises(NotImplementedError):
-        c = ConstraintWrapper(domain.constraints[2], domain, tol=0)
+        c = ConstraintWrapper(domain.constraints[4], domain, tol=0)
         assert np.allclose(c(x), np.array([1, 0.5, 0]))
+
+    # constraint not containing all inputs from domain
+    c = ConstraintWrapper(domain.constraints[5], domain, tol=0, n_experiments=3)
+    assert np.allclose(c(x), np.array([1, -0.5, 8]))
+    assert np.allclose(
+        c.jacobian(x),
+        np.array(
+            [
+                [2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
+                [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
+                [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0],
+            ]
+        ),
+    )
 
 
 def test_d_optimality():
