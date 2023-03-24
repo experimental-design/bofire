@@ -85,6 +85,18 @@ def get_pareto_front(
 def compute_hypervolume(
     domain: Domain, optimal_experiments: pd.DataFrame, ref_point: dict
 ) -> float:
+    """
+    Compute the hypervolume of the given set of experiments with respect to the reference point.
+
+    Args:
+        domain (Domain): The search domain object for the optimization problem.
+        optimal_experiments (pd.DataFrame): A Pandas DataFrame containing the optimal results of the experiments.
+        ref_point (dict): A dictionary representing the reference point in the output feature space.
+
+    Returns:
+        float: The hypervolume of the experiments with respect to the reference point.
+    """
+    
     ref_point_mask = get_ref_point_mask(domain)
     hv = Hypervolume(
         ref_point=torch.from_numpy(
