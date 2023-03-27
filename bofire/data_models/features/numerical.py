@@ -9,6 +9,8 @@ from bofire.data_models.features.feature import Input, TTransform, is_numeric
 class NumericalInput(Input):
     """Abstract base class for all numerical (ordinal) input features."""
 
+    unit: Optional[str] = None
+
     def to_unit_range(
         self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
     ) -> Union[pd.Series, np.ndarray]:

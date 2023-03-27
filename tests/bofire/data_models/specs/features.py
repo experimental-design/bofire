@@ -13,6 +13,7 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "values": [random.random(), random.random() + 3],
+        "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
 )
 
@@ -21,6 +22,7 @@ specs.add_invalid(
     lambda: {
         "key": str(uuid.uuid4()),
         "values": [1.0],
+        "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
 )
 
@@ -29,6 +31,7 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "bounds": (3, 5.3),
+        "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
 )
 specs.add_valid(
@@ -38,6 +41,7 @@ specs.add_valid(
         "bounds": (3, 5.3),
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
+        "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
 )
 specs.add_valid(
@@ -67,5 +71,6 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "objective": objectives.valid(MaximizeObjective).typed_spec(),
+        "unit": random.choice(["%", "area %", None]),
     },
 )
