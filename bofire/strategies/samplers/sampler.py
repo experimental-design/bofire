@@ -54,8 +54,7 @@ class SamplerStrategy(Strategy):
                 for key in u:
                     feat = domain.inputs.get_by_key(key=key)
                     assert isinstance(feat, ContinuousInput)
-                    feat.lower_bound = 0.0
-                    feat.upper_bound = 0.0
+                    feat.bounds = (0, 0)
                 # setup then sampler for this situation
                 sampler: SamplerStrategy = self.duplicate(domain=domain)
                 samples.append(sampler.ask(n=n))

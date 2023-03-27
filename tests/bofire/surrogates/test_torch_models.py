@@ -40,7 +40,10 @@ CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
 def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(5)
         ]
         + [
@@ -102,7 +105,10 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
 ):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(5)
         ]
         + [
@@ -127,20 +133,14 @@ def test_BotorchModel_validate_invalid_input_preprocessing_steps(
 def test_BotorchSurrogates_invalid_output_features():
     data_model1 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
-                for i in range(3)
-            ]
+            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)]
         ),
         output_features=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
-                for i in range(2)
-            ]
+            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)]
         ),
         output_features=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
@@ -152,20 +152,14 @@ def test_BotorchSurrogates_invalid_output_features():
 def test_BotorchSurrogates_invalid_input_features():
     data_model1 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
-                for i in range(3)
-            ]
+            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(3)]
         ),
         output_features=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
-            features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
-                for i in range(2)
-            ]
+            features=[ContinuousInput(key=f"x_{i+1}", bounds=(-4, 4)) for i in range(2)]
             + [CategoricalInput(key="x_3", categories=["apple", "banana"])]
         ),
         output_features=Outputs(features=[ContinuousOutput(key="y")]),
@@ -179,7 +173,10 @@ def test_BotorchSurrogates_invalid_preprocessing():
     data_model1 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+                ContinuousInput(
+                    key=f"x_{i+1}",
+                    bounds=(-4, 4),
+                )
                 for i in range(3)
             ]
             + [
@@ -198,7 +195,10 @@ def test_BotorchSurrogates_invalid_preprocessing():
     data_model2 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+                ContinuousInput(
+                    key=f"x_{i+1}",
+                    bounds=(-4, 4),
+                )
                 for i in range(2)
             ]
             + [
@@ -227,7 +227,8 @@ def test_BotorchSurrogates_invalid_preprocessing():
                     input_features=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}", lower_bound=-4, upper_bound=4
+                                key=f"x_{i+1}",
+                                bounds=(-4, 4),
                             )
                             for i in range(3)
                         ]
@@ -248,7 +249,8 @@ def test_BotorchSurrogates_invalid_preprocessing():
                     input_features=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}", lower_bound=-4, upper_bound=4
+                                key=f"x_{i+1}",
+                                bounds=(-4, 4),
                             )
                             for i in range(2)
                         ]
@@ -288,7 +290,8 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     input_features=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}", lower_bound=-4, upper_bound=4
+                                key=f"x_{i+1}",
+                                bounds=(-4, 4),
                             )
                             for i in range(3)
                         ]
@@ -309,7 +312,8 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     input_features=Inputs(
                         features=[
                             ContinuousInput(
-                                key=f"x_{i+1}", lower_bound=-4, upper_bound=4
+                                key=f"x_{i+1}",
+                                bounds=(-4, 4),
                             )
                             for i in range(2)
                         ]
@@ -339,7 +343,10 @@ def test_botorch_models_check_compatibility():
     data_model1 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+                ContinuousInput(
+                    key=f"x_{i+1}",
+                    bounds=(-4, 4),
+                )
                 for i in range(3)
             ]
             + [
@@ -358,7 +365,10 @@ def test_botorch_models_check_compatibility():
     data_model2 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+                ContinuousInput(
+                    key=f"x_{i+1}",
+                    bounds=(-4, 4),
+                )
                 for i in range(2)
             ]
             + [
@@ -379,7 +389,10 @@ def test_botorch_models_check_compatibility():
     # check too less input features
     inp = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(3)
         ]
     )
@@ -389,7 +402,10 @@ def test_botorch_models_check_compatibility():
     # check unused input features
     inp = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(4)
         ]
         + [
@@ -407,10 +423,18 @@ def test_botorch_models_check_compatibility():
     # check wrong input feature
     inp = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(4)
         ]
-        + [ContinuousInput(key="cat", lower_bound=-4, upper_bound=4)]
+        + [
+            ContinuousInput(
+                key="cat",
+                bounds=(-4, 4),
+            )
+        ]
     )
     out = Outputs(features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")])
     with pytest.raises(ValueError):
@@ -418,7 +442,10 @@ def test_botorch_models_check_compatibility():
     # check too less output features
     inp = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(3)
         ]
         + [
@@ -455,7 +482,10 @@ def test_botorch_models_check_compatibility():
     # check valid
     inp = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(3)
         ]
         + [
@@ -475,7 +505,10 @@ def test_botorch_models_input_preprocessing_specs():
     data_model1 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+                ContinuousInput(
+                    key=f"x_{i+1}",
+                    bounds=(-4, 4),
+                )
                 for i in range(3)
             ]
             + [
@@ -494,7 +527,10 @@ def test_botorch_models_input_preprocessing_specs():
     data_model2 = data_models.SingleTaskGPSurrogate(
         input_features=Inputs(
             features=[
-                ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+                ContinuousInput(
+                    key=f"x_{i+1}",
+                    bounds=(-4, 4),
+                )
                 for i in range(2)
             ]
             + [
@@ -520,7 +556,10 @@ def test_botorch_models_fit_and_compatibilize():
     # model 1
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
     )
@@ -536,7 +575,10 @@ def test_botorch_models_fit_and_compatibilize():
     # model 2
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
@@ -575,7 +617,10 @@ def test_botorch_models_fit_and_compatibilize():
     # make compatible
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
@@ -640,7 +685,10 @@ class HimmelblauModel(DeterministicModel):
 def test_empirical_model():
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
     )
@@ -659,7 +707,10 @@ def test_empirical_model():
     # test usage of empirical model in a modellist
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
@@ -697,7 +748,10 @@ def test_empirical_model():
     # make compatible
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
@@ -736,7 +790,10 @@ def test_empirical_model():
 def test_empirical_model_io():
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
     )
