@@ -463,9 +463,9 @@ def test_check_fixed_experiments():
 def test_find_local_max_ipopt_nonlinear_constraint():
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", lower_bound=-1, upper_bound=1),
-            ContinuousInput(key="x2", lower_bound=-1, upper_bound=1),
-            ContinuousInput(key="x3", lower_bound=0, upper_bound=1),
+            ContinuousInput(key="x1", bounds=(-1, 1)),
+            ContinuousInput(key="x2", bounds=(-1, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
@@ -487,9 +487,9 @@ def test_find_local_max_ipopt_nonlinear_constraint():
 def test_get_n_experiments():
     domain = Domain(
         input_features=[
-            ContinuousInput(key="x1", lower_bound=-1, upper_bound=1),
-            ContinuousInput(key="x2", lower_bound=-1, upper_bound=1),
-            ContinuousInput(key="x3", lower_bound=0, upper_bound=1),
+            ContinuousInput(key="x1", bounds=(-1, 1)),
+            ContinuousInput(key="x2", bounds=(-1, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
         ],
         output_features=[ContinuousOutput(key="y")],
     )

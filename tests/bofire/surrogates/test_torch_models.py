@@ -28,6 +28,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.api import BotorchSurrogates
+from bofire.surrogates.random_forest import _RandomForest
 from bofire.utils.torch_tools import tkwargs
 
 CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
@@ -596,7 +597,6 @@ def test_botorch_models_fit_and_compatibilize():
         output_features=output_features,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=ScalerEnum.STANDARDIZE,
-        constraints=Constraints(),
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -646,6 +646,119 @@ def test_botorch_models_fit_and_compatibilize():
     assert isinstance(combined.models[1].input_transform, ChainedInputTransform)
     assert isinstance(combined.models[1].input_transform.tf1, InputStandardize)
     assert isinstance(combined.models[1].input_transform.tf2, OneHotToNumeric)
+    # check predictions
+    # transform experiments to torch
+    trX = input_features.transform(
+        experiments=experiments, specs={"x_cat": CategoricalEncodingEnum.ONE_HOT}
+    )
+    X = torch.from_numpy(trX.values).to(**tkwargs)
+    with torch.no_grad():
+        preds = combined.posterior(X).mean.detach().numpy()
+
+    assert np.allclose(preds1.y_pred.values, preds[:, 0])
+    assert np.allclose(preds2.y2_pred.values, preds[:, 1])
+    ## now decompatibilize the models again
+    botorch_surrogates.surrogates[0].decompatibilize()
+    botorch_surrogates.surrogates[1].decompatibilize()
+    assert botorch_surrogates.surrogates[0].is_compatibilized is False
+    assert botorch_surrogates.surrogates[1].is_compatibilized is False
+    # check again the predictions
+    preds11 = botorch_surrogates.surrogates[0].predict(experiments1)
+    preds22 = botorch_surrogates.surrogates[1].predict(experiments2)
+    assert_frame_equal(preds1, preds11)
+    assert_frame_equal(preds2, preds22)
+    assert isinstance(botorch_surrogates.surrogates[0].model.input_transform, Normalize)
+
+
+def test_botorch_models_rf_fit_and_compatibilize():
+    # model 1
+    input_features = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+    )
+    output_features = Outputs(features=[ContinuousOutput(key="y")])
+    experiments1 = input_features.sample(n=10)
+    experiments1.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments1["valid_y"] = 1
+    data_model1 = data_models.SingleTaskGPSurrogate(
+        input_features=input_features,
+        output_features=output_features,
+        scaler=ScalerEnum.NORMALIZE,
+    )
+    # model 2
+    input_features = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+    )
+    output_features = Outputs(features=[ContinuousOutput(key="y2")])
+    experiments2 = pd.concat(
+        [experiments1, input_features.get_by_key("x_cat").sample(10)], axis=1
+    )
+    experiments2.eval("y2=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments2.loc[experiments2.x_cat == "mama", "y2"] *= 5.0
+    experiments2.loc[experiments2.x_cat == "papa", "y2"] /= 2.0
+    experiments2["valid_y2"] = 1
+    data_model2 = data_models.RandomForestSurrogate(
+        input_features=input_features,
+        output_features=output_features,
+        input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
+    )
+    # create models
+    data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
+    botorch_surrogates = BotorchSurrogates(data_model=data_model)
+    # unite experiments
+    experiments = pd.concat(
+        [experiments1, experiments2[["x_cat", "y2", "valid_y2"]]],
+        axis=1,
+        ignore_index=False,
+    )
+    # fit the models
+    botorch_surrogates.fit(experiments=experiments)
+    assert botorch_surrogates.surrogates[0].is_compatibilized is False
+    assert botorch_surrogates.surrogates[1].is_compatibilized is False
+    # make and store predictions for later comparison
+    preds1 = botorch_surrogates.surrogates[0].predict(experiments1)
+    preds2 = botorch_surrogates.surrogates[1].predict(experiments2)
+    # make compatible
+    input_features = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+    )
+    output_features = Outputs(
+        features=[ContinuousOutput(key="y"), ContinuousOutput(key="y2")]
+    )
+    combined = botorch_surrogates.compatibilize(
+        input_features=input_features, output_features=output_features
+    )
+    assert botorch_surrogates.surrogates[0].is_compatibilized is True
+    assert botorch_surrogates.surrogates[1].is_compatibilized is False
+    # check combined
+    assert isinstance(combined.models[0], SingleTaskGP)
+    assert isinstance(combined.models[1], _RandomForest)
+    assert isinstance(combined.models[0].input_transform, ChainedInputTransform)
+    assert isinstance(combined.models[0].input_transform.tcompatibilize, FilterFeatures)
+    assert torch.eq(
+        combined.models[0].input_transform.tcompatibilize.feature_indices,
+        torch.tensor([0, 1], dtype=torch.int64),
+    ).all()
+    assert isinstance(combined.models[0].input_transform.tf2, Normalize)
     # check predictions
     # transform experiments to torch
     trX = input_features.transform(

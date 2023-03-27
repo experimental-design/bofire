@@ -276,8 +276,7 @@ def test_constraints_as_scipy_constraints():
     # domain with nonlinear constraints
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
-            for i in range(3)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[
