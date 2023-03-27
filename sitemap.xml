@@ -2,52 +2,52 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://experimental-design.github.io/bofire/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/data_models_functionals/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/install/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-constraints/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-domain-util/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-domain/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-features/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-mappers/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-objectives/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://experimental-design.github.io/bofire/ref-utils/</loc>
-         <lastmod>2023-03-23</lastmod>
+         <lastmod>2023-03-27</lastmod>
          <changefreq>daily</changefreq>
     </url>
 </urlset>
