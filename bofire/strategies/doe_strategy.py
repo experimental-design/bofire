@@ -1,9 +1,9 @@
 import pandas as pd
 from pydantic.types import PositiveInt
 
-from bofire.strategies.strategy import Strategy
 import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe.design import find_local_max_ipopt
+from bofire.strategies.strategy import Strategy
 
 
 class DoEStrategy(Strategy):

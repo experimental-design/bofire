@@ -1,5 +1,5 @@
-from typing import Literal, Union, Type
-from bofire.data_models.strategies.strategy import Strategy
+from typing import Literal, Type, Union
+
 from bofire.data_models.constraints.api import (
     Constraint,
     NChooseKConstraint,
@@ -7,6 +7,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import Objective
+from bofire.data_models.strategies.strategy import Strategy
 
 
 class DoEStrategy(Strategy):

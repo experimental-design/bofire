@@ -1,15 +1,14 @@
-import pytest
+import numpy as np
+import pandas as pd
+
 import bofire.data_models.strategies.api as data_models
-from bofire.strategies.api import DoEStrategy
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-import numpy as np
-import pandas as pd
+from bofire.strategies.api import DoEStrategy
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
