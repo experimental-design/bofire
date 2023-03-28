@@ -52,9 +52,9 @@ obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
 
 if_ = CategoricalInput(key="if", categories=["a", "b"])
 of_ = ContinuousOutput(key="of", objective=obj)
-if1 = ContinuousInput(key="f1", upper_bound=10, lower_bound=0)
-if1_ = ContinuousInput(key="f1", upper_bound=10, lower_bound=1)
-if2 = ContinuousInput(key="f2", upper_bound=10, lower_bound=0)
+if1 = ContinuousInput(key="f1", bounds=(0, 10))
+if1_ = ContinuousInput(key="f1", bounds=(0, 1))
+if2 = ContinuousInput(key="f2", bounds=(0, 10))
 of1 = ContinuousOutput(key="f1", objective=obj)
 of1_ = ContinuousOutput(key="f1", objective=obj)
 of2 = ContinuousOutput(key="f2", objective=obj)
@@ -103,7 +103,7 @@ def test_invalid_domain_arg_types(input_features, output_features, constraints):
     [
         (
             [
-                ContinuousInput(key="if1", lower_bound=0, upper_bound=1),
+                ContinuousInput(key="if1", bounds=(0, 1)),
                 DiscreteInput(key="if2", values=[0.2, 0.7, 1.0]),
             ],
             [
@@ -385,8 +385,8 @@ data = pd.DataFrame.from_dict(
     }
 )
 
-if1 = ContinuousInput(key="x1", upper_bound=10, lower_bound=1)
-if2 = ContinuousInput(key="x2", upper_bound=10, lower_bound=1)
+if1 = ContinuousInput(key="x1", bounds=(1, 10))
+if2 = ContinuousInput(key="x2", bounds=(1, 10))
 
 of1 = ContinuousOutput(key="out1", objective=obj)
 of2 = ContinuousOutput(key="out2", objective=obj)

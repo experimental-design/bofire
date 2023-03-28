@@ -1,4 +1,4 @@
-from typing import ClassVar, Dict, Literal, Optional
+from typing import ClassVar, Dict, Literal, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -14,15 +14,21 @@ class ContinuousInput(NumericalInput):
     """Base class for all continuous input features.
 
     Attributes:
-        lower_bound (float): Lower bound of the feature in the optimization.
-        upper_bound (float): Upper bound of the feature in the optimization.
+        bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
-    lower_bound: float
-    upper_bound: float
+    bounds: Tuple[float, float]
+
+    @property
+    def lower_bound(self) -> float:
+        return self.bounds[0]
+
+    @property
+    def upper_bound(self) -> float:
+        return self.bounds[1]
 
     @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
@@ -37,7 +43,7 @@ class ContinuousInput(NumericalInput):
         Returns:
             Dict: The attributes as dictionary
         """
-        if values["lower_bound"] > values["upper_bound"]:
+        if values["bounds"][0] > values["bounds"][1]:
             raise ValueError(
                 f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
             )
@@ -57,6 +63,7 @@ class ContinuousInput(NumericalInput):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
+
         noise = 10e-6
         super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
@@ -101,6 +108,7 @@ class ContinuousOutput(Output):
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
     order_id: ClassVar[int] = 6
+    unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)

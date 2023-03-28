@@ -91,9 +91,7 @@ class Ackley(Benchmark):
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(
-                    key=f"x_{d+1}", lower_bound=self.lower, upper_bound=self.upper
-                )
+                ContinuousInput(key=f"x_{d+1}", bounds=(self.lower, self.upper))
             )
 
         # Objective
@@ -171,12 +169,8 @@ class Himmelblau(Benchmark):
         self.use_constraints = use_constraints
         input_features = []
 
-        input_features.append(
-            ContinuousInput(key="x_1", lower_bound=-6.0, upper_bound=6.0)
-        )
-        input_features.append(
-            ContinuousInput(key="x_2", lower_bound=-6.0, upper_bound=6.0)
-        )
+        input_features.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        input_features.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
         objective = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", objective=objective)

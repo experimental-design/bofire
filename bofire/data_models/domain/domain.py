@@ -597,13 +597,15 @@ class Domain(BaseModel):
         )
 
     def validate_candidates(
-        self, candidates: pd.DataFrame, only_inputs: bool = False
+        self, candidates: pd.DataFrame, only_inputs: bool = False, tol: float = 1e-6
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
         Args:
             candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)
             only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.
+            tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation
+                is larger than tol. Defaults to 1e-6.
 
         Raises:
             ValueError: when a column is missing for a defined input feature
@@ -619,7 +621,7 @@ class Domain(BaseModel):
         assert isinstance(self.input_features, Inputs)
         self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
-        if not self.cnstrs.is_fulfilled(candidates).all():
+        if not self.cnstrs.is_fulfilled(candidates, tol=tol).all():
             raise ValueError("Constraints not fulfilled.")
         # for each continuous output feature with an attached objective object
         if not only_inputs:

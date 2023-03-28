@@ -6,8 +6,9 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.data_models.constraints.api import NChooseKConstraint
+from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -72,10 +73,9 @@ def find_local_max_ipopt(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
-    """Function computing a d-optimal design" for a given opti problem and model.
-
+    """Function computing a d-optimal design" for a given domain and model.
     Args:
-        problem (opti.Problem): problem containing the inputs and constraints.
+        domain (Domain): domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
             are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
         n_experiments (int): Number of experiments. By default the value corresponds to
@@ -86,15 +86,18 @@ def find_local_max_ipopt(
         jacobian_building_block (Callable): Only needed for models of higher order than 3. derivatives
             of each model term with respect to each input variable.
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
-        fixed_experiments (np.ndarray): numpy array containing experiments that will definitely part of the design.
+        fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
-
     Returns:
-        A pd.DataFrame object containing the best found input for the experiments. This is only a
+        A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.
-
     """
 
+    #
+    # Checks and preparation steps
+    #
+
+    # warn user if IPOPT scipy interface is not available
     try:
         from cyipopt import minimize_ipopt  # type: ignore
     except ImportError as e:
@@ -104,44 +107,58 @@ def find_local_max_ipopt(
         )
         raise e
 
+    # warn user about usage of nonlinear constraints
+    if domain.constraints:
+        if np.any([isinstance(c, NonlinearConstraint) for c in domain.constraints]):
+            warnings.warn(
+                "Nonlinear constraints were detected. Not all features and checks are supported for this type of constraints. \
+                Using them can lead to unexpected behaviour. Please make sure to provide jacobians for nonlinear constraints.",
+                UserWarning,
+            )
+
+    # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
     assert all(
         [c.min_count == 0 for c in domain.cnstrs if isinstance(c, NChooseKConstraint)]
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
-    # determine number of experiments
-    n_experiments_min = (
-        len(
-            get_formula_from_string(
-                model_type=model_type, rhs_only=True, domain=domain
-            ).terms
-        )
-        + 3
+    # determine number of experiments (only relevant if n_experiments is not provided by the user)
+    n_experiments = get_n_experiments(
+        domain=domain, model_type=model_type, n_experiments=n_experiments
     )
 
-    D = len(domain.inputs)
-    model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
-    )
+    #
+    # Sampling initital values
+    #
 
-    if n_experiments is None:
-        n_experiments = n_experiments_min
-    elif n_experiments < n_experiments_min:
-        warnings.warn(
-            f"The minimum number of experiments is {n_experiments_min}, but the current setting is n_experiments={n_experiments}."
-        )
-
-    # initital values
     if sampling is not None:
         domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values
     else:
-        sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
-        x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
+        if len(domain.cnstrs.get(NonlinearConstraint)) == 0:
+            sampler = PolytopeSampler(
+                data_model=PolytopeSamplerDataModel(domain=domain)
+            )
+            x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
+        else:
+            warnings.warn(
+                "Sampling failed. Falling back to uniform sampling on input domain.\
+                          Providing a custom sampling strategy compatible with the problem can \
+                          possibly improve performance."
+            )
+            x0 = (
+                domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+                .to_numpy()
+                .flatten()
+            )
 
     # get objective function
     objective = get_objective(domain, model_type, delta=delta)
 
     # get jacobian
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
+    )
+
     J = JacobianForLogdet(
         domain,
         model_formula,
@@ -171,7 +188,10 @@ def find_local_max_ipopt(
     if _ipopt_options["disp"] > 12:
         _ipopt_options["disp"] = 0
 
-    # do the optimization
+    #
+    # Do the optimization
+    #
+
     result = minimize_ipopt(
         objective,
         x0=x0,
@@ -183,7 +203,7 @@ def find_local_max_ipopt(
     )
 
     design = pd.DataFrame(
-        result["x"].reshape(n_experiments, D),
+        result["x"].reshape(n_experiments, len(domain.inputs)),
         columns=domain.inputs.get_keys(),
         index=[f"exp{i}" for i in range(n_experiments)],
     )
@@ -197,9 +217,18 @@ def find_local_max_ipopt(
         print("metrics:", d)
 
     # check if all points respect the domain and the constraint
-    domain.validate_candidates(
-        candidates=design.apply(lambda x: np.round(x, 8)), only_inputs=True
-    )
+    try:
+        domain.validate_candidates(
+            candidates=design.apply(lambda x: np.round(x, 8)),
+            only_inputs=True,
+            tol=1e-4,
+        )
+    except ValueError:
+        warnings.warn(
+            "Some points do not lie inside the domain or violate constraints. Please check if the \
+                results lie within your tolerance.",
+            UserWarning,
+        )
 
     return design
 
@@ -225,3 +254,37 @@ def check_fixed_experiments(
         raise ValueError(
             f"Invalid shape of fixed_experiments. Length along axis 1 is {D}, but must be {len(domain.inputs)}"
         )
+
+
+def get_n_experiments(
+    domain: Domain, model_type: Union[str, Formula], n_experiments: Optional[int] = None
+):
+    """Determines a number of experiments which is appropriate for the model if no
+    number is provided. Otherwise warns if the provided number of experiments is smaller than recommended.
+
+    Args:
+        domain (Domain): domain containing the model inputs.
+        model_type (str, Formula): keyword or formulaic Formula describing the model.
+        n_experiments (int, optional): number of experiments. Defaults to zero.
+
+    Returns:
+        n_experiments if an integer value for n_experiments is given. Number of model terms + 3 otherwise.
+
+    """
+    n_experiments_min = (
+        len(
+            get_formula_from_string(
+                model_type=model_type, rhs_only=True, domain=domain
+            ).terms
+        )
+        + 3
+    )
+
+    if n_experiments is None:
+        n_experiments = n_experiments_min
+    elif n_experiments < n_experiments_min:
+        warnings.warn(
+            f"The minimum number of experiments is {n_experiments_min}, but the current setting is n_experiments={n_experiments}."
+        )
+
+    return n_experiments

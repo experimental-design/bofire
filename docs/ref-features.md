@@ -1,3 +1,3 @@
 # Domain
 
-::: bofire.domain.features
+::: bofire.data_models.features
