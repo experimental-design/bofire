@@ -42,3 +42,12 @@ class DoEStrategy(Strategy):
             bool: True if number of passed experiments is sufficient, False otherwise
         """
         return True
+
+    def set_candidates(self, candidates: pd.DataFrame):
+        """Set candidates of the strategy. Overwrites existing ones.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe with candidates.
+        """
+        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
+        self._candidates = candidates
