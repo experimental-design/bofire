@@ -1,12 +1,26 @@
 import itertools
-from typing import List
+from typing import List, Union
 
 from pydantic import validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import TInputTransformSpecs
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
+from bofire.data_models.surrogates.mixed_single_task_gp import (
+    MixedSingleTaskGPSurrogate,
+)
+from bofire.data_models.surrogates.mlp import MLPEnsemble
+from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+
+AnyBotorchSurrogate = Union[
+    EmpiricalSurrogate,
+    RandomForestSurrogate,
+    SingleTaskGPSurrogate,
+    MixedSingleTaskGPSurrogate,
+    MLPEnsemble,
+]
 
 
 class BotorchSurrogates(BaseModel):
@@ -14,7 +28,7 @@ class BotorchSurrogates(BaseModel):
 
     Behaves similar to a Surrogate."""
 
-    surrogates: List[BotorchSurrogate]
+    surrogates: List[AnyBotorchSurrogate]
 
     @property
     def input_preprocessing_specs(self) -> TInputTransformSpecs:

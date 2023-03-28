@@ -2,6 +2,7 @@ from typing import Union
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (  # noqa: F401
+    AnyBotorchSurrogate,
     BotorchSurrogates,
 )
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
@@ -16,13 +17,6 @@ from bofire.data_models.surrogates.surrogate import Surrogate
 
 AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
 
-
-AnyBotorchSurrogate = Union[
-    RandomForestSurrogate,
-    SingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
-    MLPEnsemble,
-]
 
 AnySurrogate = Union[
     EmpiricalSurrogate,
