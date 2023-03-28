@@ -51,6 +51,18 @@ def get_objective(
 
     # define objective function
     def objective(x):
+        """
+        This function calculates the objective value for a given set of inputs x.
+
+        Args:
+            x (numpy.ndarray): A 1-D array representing the inputs to the objective function.
+
+        Returns:
+            objective (function): A function that takes a 1-D array of inputs and returns the objective value.
+
+        Raises:
+            None
+        """
         # evaluate model terms
         A = pd.DataFrame(x.reshape(len(x) // D, D), columns=domain.inputs.get_keys())
         A = model_formula.get_model_matrix(A)

@@ -91,6 +91,22 @@ class QehviStrategy(BotorchStrategy):
         return
 
     def _get_objective(self) -> WeightedMCMultiOutputObjective:
+        """
+        This private method returns a WeightedMCMultiOutputObjective object for use in multi-objective optimization.
+
+        Args:
+        self: The instance of the class.
+
+        Returns:
+        WeightedMCMultiOutputObjective: A WeightedMCMultiOutputObjective object.
+
+        Raises:
+        None
+
+        Notes:
+        The method loops through the output features of the domain and appends their weights to a list, along with their indices. If an output feature has an objective that is not a BotorchConstrainedObjective, its weight is added to the list of weights, and its index is added to the list of indices. The ref_point_mask attribute is used to set non-objective dimensions to zero.
+        """
+
         weights, indices = [], []
         for idx, feat in enumerate(self.domain.outputs.get()):
             if feat.objective is not None and not isinstance(  # type: ignore
@@ -106,6 +122,19 @@ class QehviStrategy(BotorchStrategy):
         )
 
     def get_adjusted_refpoint(self):
+        """
+        This method returns the adjusted reference point to be used in multi-objective optimization.
+
+        Args:
+        self: The instance of the class.
+
+        Returns:
+        list: A list containing the adjusted reference point values.
+
+        Raises:
+        None
+        """
+
         if self.ref_point is not None:
             return (
                 self.ref_point_mask

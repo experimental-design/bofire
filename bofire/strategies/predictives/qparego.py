@@ -31,6 +31,9 @@ from bofire.utils.torch_tools import (
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class QparegoStrategy(BotorchStrategy):
+    """A strategy for Bayesian Optimization that uses the qParEGO (pareto efficient global optimization) algorithm.
+    """
+
     def __init__(
         self,
         data_model: DataModel,
@@ -98,7 +101,19 @@ class QparegoStrategy(BotorchStrategy):
             )
         return GenericMCObjective(scalarization)
 
-    def _ask(self, candidate_count: int):
+    def _ask(self, candidate_count: int) -> pd.DataFrame:
+        """Finds a optimum in the acquisition function to suggest the next set of input vectors.
+
+        Args:
+            candidate_count (int): Number of input vectors to be returned.
+
+        Raises:
+            IOError: Raised when none of the optimization scenarios are met.
+
+        Returns:
+            pd.DataFrame: A Pandas DataFrame object containing the candidate solutions and their associated metrics.
+        """
+
         assert candidate_count > 0, "candidate_count has to be larger than zero."
 
         acqf_list = []

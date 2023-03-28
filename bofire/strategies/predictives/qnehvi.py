@@ -10,6 +10,26 @@ from bofire.utils.torch_tools import get_output_constraints, tkwargs
 
 
 class QnehviStrategy(QehviStrategy):
+    """
+    A strategy for batch Bayesian optimization that uses the noisy expected hypervolume improvement acquisition function
+    to select the next batch of points to evaluate.
+
+    Parameters
+    data_model : DataModel
+        A model of the data, which includes the observations made so far.
+    **kwargs
+        Additional keyword arguments to be passed to the parent class constructor.
+
+    Attributes
+    alpha : float
+        A scaling factor that determines the trade-off between exploitation and exploration.
+
+    Methods
+    _init_acqf() -> None
+        Initializes the acquisition function for this strategy.
+
+    """
+
     def __init__(
         self,
         data_model: DataModel,

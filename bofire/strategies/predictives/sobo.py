@@ -22,11 +22,15 @@ from bofire.utils.torch_tools import (
 
 
 class SoboStrategy(BotorchStrategy):
+    """The SoboStrategy class is a subclass of BotorchStrategy and represents a strategy that uses Sobol sequence sampling to select new points to evaluate in order to optimize a Bayesian optimization model.
+    """
+
     def __init__(
         self,
         data_model: DataModel,
         **kwargs,
     ):
+
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
 
