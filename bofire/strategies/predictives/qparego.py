@@ -31,7 +31,8 @@ from bofire.utils.torch_tools import (
 # main difference to the multiobjective strategies is that we have a randomized list of acqfs, this has to be bring into accordance
 # with the other strategies
 class QparegoStrategy(BotorchStrategy):
-    """A strategy for Bayesian Optimization that uses the qParEGO (pareto efficient global optimization) algorithm.
+    """A strategy for Bayesian Optimization that uses the qParEGO
+    (pareto efficient global optimization) algorithm.
     """
 
     def __init__(
