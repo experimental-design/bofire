@@ -63,7 +63,9 @@ def test_SingleTaskGPModel(kernel, scaler):
     # dump the model
     dump = model.dumps()
     # make predictions
-    preds = model.predict(samples)
+    samples2 = samples.copy()
+    samples2 = samples2.astype({"x_1": "object"})
+    preds = model.predict(samples2)
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
