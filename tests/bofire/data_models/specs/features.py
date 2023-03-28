@@ -30,8 +30,7 @@ specs.add_valid(
     features.ContinuousInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "lower_bound": 3.0,
-        "upper_bound": 5.3,
+        "bounds": (3, 5.3),
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
 )
@@ -39,8 +38,7 @@ specs.add_valid(
     features.ContinuousDescriptorInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "lower_bound": 3,
-        "upper_bound": 5.3,
+        "bounds": (3, 5.3),
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),

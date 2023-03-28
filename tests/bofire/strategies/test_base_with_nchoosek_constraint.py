@@ -41,7 +41,7 @@ cc3 = NChooseKConstraint(
 # input features
 continuous_input_features = []
 for i in range(6):
-    f = ContinuousInput(key=str(i), lower_bound=0, upper_bound=1)
+    f = ContinuousInput(key=str(i), bounds=(0, 1))
     continuous_input_features.append(f)
 categorical_feature = CategoricalInput(
     key="categorical_feature", categories=["c1", "c2"]
