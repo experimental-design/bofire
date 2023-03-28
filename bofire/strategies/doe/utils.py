@@ -179,7 +179,7 @@ def n_zero_eigvals(
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
-    N = len(model_formula.terms) + 3
+    N = len(model_formula) + 3
 
     sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
     X = sampler.ask(N)
@@ -482,7 +482,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
                 or isinstance(input, ContinuousOutput)
                 or isinstance(input, MolecularInput)
             ):
-                if input.lower_bound > 0 or input.upper_bound < 0:
+                if input.bounds[0] > 0 or input.bounds[1] < 0:
                     raise ValueError(
                         f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
                         domain of the affected decision variables."
@@ -519,7 +519,7 @@ def nchoosek_constraints_as_bounds(
     # bounds without NChooseK constraints
     bounds = np.array(
         [
-            (p.lower_bound, p.upper_bound)
+            p.bounds
             for p in domain.inputs
             if not (
                 isinstance(p, CategoricalInput)

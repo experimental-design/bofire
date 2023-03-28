@@ -5,13 +5,10 @@ from formulaic import Formula
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-from bofire.strategies.doe.jacobian import (
-    JacobianForLogdet,
-    default_jacobian_building_block,
-)
+from bofire.strategies.doe.jacobian import JacobianForLogdet, get_model_jacobian_t
 
 
-def test_default_jacobian_building_block():
+def test_get_model_jacobian_t():
     # "small" model
     domain = Domain(
         input_features=[
@@ -25,32 +22,27 @@ def test_default_jacobian_building_block():
     )
 
     vars = domain.inputs.get_keys()
-    model_terms = np.array(Formula("x1 + x2 + x3 + x1:x2 + {x3**2}").terms, dtype=str)
-    x = [1, 2, 3]
+    f = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
+    x = [[1, 2, 3]]
 
-    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
+    model_jacobian_t = get_model_jacobian_t(vars, f)
 
     B = np.zeros(shape=(3, 6))
     B[:, 1:4] = np.eye(3)
     B[:, 4] = np.array([0, 0, 6])
     B[:, 5] = np.array([2, 1, 0])
 
-    assert np.allclose(B, jacobian_building_block(x))
+    assert np.allclose(B, model_jacobian_t(x))
 
     # fully quadratic model
-    model_terms = np.array(
-        Formula(
-            "x1 + x2 + x3 + x1:x2 + x1:x3 + x2:x3 + {x1**2} + {x2**2} + {x3**2}"
-        ).terms,
-        dtype=str,
-    )
-    x = [1, 2, 3]
+    f = Formula("x1 + x2 + x3 + x1:x2 + x1:x3 + x2:x3 + {x1**2} + {x2**2} + {x3**2}")
+    model_terms = np.array(f, dtype=str)
+    x = [[1, 2, 3]]
 
-    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
-
+    model_jacobian_t = get_model_jacobian_t(vars, f)
     B = np.zeros(shape=(3, 10))
     B[:, 1:4] = np.eye(3)
-    B[:, 4:7] = 2 * np.diag(x)
+    B[:, 4:7] = 2 * np.diag(x[0])
     B[:, 7:] = np.array([[2, 1, 0], [3, 0, 1], [0, 3, 2]]).T
     B = pd.DataFrame(
         B,
@@ -69,20 +61,11 @@ def test_default_jacobian_building_block():
     )
     B = B[model_terms].to_numpy()
 
-    assert np.allclose(B, jacobian_building_block(x))
-
-    # unsupported model
-    model_terms = np.array(Formula("{x1**4} - 1").terms, dtype=str)
-    x = [1, 2, 3]
-
-    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
-
-    with pytest.raises(KeyError):
-        jacobian_building_block(x)
+    assert np.allclose(B, model_jacobian_t(x)[0])
 
     # fully cubic model
     vars = ["x1", "x2", "x3", "x4", "x5"]
-    n_vars = 5
+    n_vars = len(vars)
 
     formula = ""
     for name in vars:
@@ -92,7 +75,7 @@ def test_default_jacobian_building_block():
         formula += "{" + name + "**2} + "
     for i in range(n_vars):
         for j in range(i + 1, n_vars):
-            term = str(Formula(vars[j] + ":" + vars[i] + "-1").terms[0]) + " + "
+            term = str(Formula(vars[j] + ":" + vars[i] + "-1")) + " + "
             formula += term
 
     for name in vars:
@@ -101,16 +84,12 @@ def test_default_jacobian_building_block():
         for j in range(i + 1, n_vars):
             for k in range(j + 1, n_vars):
                 term = (
-                    str(
-                        Formula(vars[k] + ":" + vars[j] + ":" + vars[i] + "-1").terms[0]
-                    )
-                    + " + "
+                    str(Formula(vars[k] + ":" + vars[j] + ":" + vars[i] + "-1")) + " + "
                 )
                 formula += term
-    formula = Formula(formula[:-3])
-    model_terms = np.array(formula.terms, dtype=str)
-    x = [1, 2, 3, 4, 5]
-    jacobian_building_block = default_jacobian_building_block(vars, list(model_terms))
+    f = Formula(formula[:-3])
+    x = [[1, 2, 3, 4, 5]]
+    model_jacobian_t = get_model_jacobian_t(vars, f)
 
     B = np.array(
         [
@@ -307,7 +286,7 @@ def test_default_jacobian_building_block():
         ]
     )
 
-    assert np.allclose(B, jacobian_building_block(x))
+    assert np.allclose(B, model_jacobian_t(x)[0])
 
 
 def test_JacobianForLogdet_instantiation():
@@ -337,24 +316,21 @@ def test_JacobianForLogdet_instantiation():
     assert all(np.array(J.domain.outputs.get_keys()) == np.array(["y"]))
 
     assert isinstance(J.model, Formula)
-    assert all(J.model.terms == np.array(["1", "x1", "x2", "x3", "x3**2", "x1:x2"]))
+    assert all(
+        np.array(J.model, dtype=str)
+        == np.array(["1", "x1", "x2", "x3", "x3**2", "x1:x2"])
+    )
 
-    x = [1, 2, 3]
+    x = [[1, 2, 3]]
     B = np.zeros(shape=(3, 6))
     B[:, 1:4] = np.eye(3)
     B[:, 4] = np.array([0, 0, 6])
     B[:, 5] = np.array([2, 1, 0])
 
-    assert np.allclose(B, J.jacobian_building_block(x))
+    assert np.allclose(B, J.model_jacobian_t(x))
     assert np.shape(J.jacobian(np.array([[1, 1, 1], [2, 2, 2]]))) == (6,)
 
-    # custom jacobian building block: 5th order model
-    def custom_jacobian_building_block(x: np.ndarray) -> np.ndarray:
-        x = np.array(x)
-        B = np.zeros(shape=(3, 4))
-        B[:, 1:] = 5 * np.diag(x**4)
-        return B
-
+    # 5th order model
     domain = Domain(
         input_features=[
             ContinuousInput(
@@ -369,13 +345,13 @@ def test_JacobianForLogdet_instantiation():
     model = Formula("{x1**5} + {x2**5} + {x3**5}")
     n_experiments = 3
 
-    J = JacobianForLogdet(domain, model, n_experiments, custom_jacobian_building_block)
+    J = JacobianForLogdet(domain, model, n_experiments)
 
-    x = np.array([1, 2, 3])
+    x = np.array([[1, 2, 3]])
     B = np.zeros(shape=(3, 4))
-    B[:, 1:] = 5 * np.diag(x**4)
+    B[:, 1:] = 5 * np.diag(x[0] ** 4)
 
-    assert np.allclose(B, J.jacobian_building_block(x))
+    assert np.allclose(B, J.model_jacobian_t(x))
     assert np.shape(J.jacobian(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]))) == (9,)
 
 

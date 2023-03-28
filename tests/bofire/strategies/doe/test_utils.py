@@ -46,8 +46,8 @@ def get_formula_from_string_recursion_limit():
     terms.append("1")
 
     for i in range(351):
-        assert model.terms[i] in terms
-        assert terms[i] in model.terms
+        assert np.array(model, dtype=str)[i] in terms
+        assert terms[i] in model
 
     assert recursion_limit == sys.getrecursionlimit()
 
@@ -61,24 +61,24 @@ def test_get_formula_from_string():
     # linear model
     terms = ["1", "x0", "x1", "x2"]
     model_formula = get_formula_from_string(domain=domain, model_type="linear")
-    assert all(term in terms for term in model_formula.terms)
-    assert all(term in model_formula.terms for term in terms)
+    assert all(term in terms for term in model_formula)
+    assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # linear and interaction
     terms = ["1", "x0", "x1", "x2", "x0:x1", "x0:x2", "x1:x2"]
     model_formula = get_formula_from_string(
         domain=domain, model_type="linear-and-interactions"
     )
-    assert all(term in terms for term in model_formula.terms)
-    assert all(term in model_formula.terms for term in terms)
+    assert all(term in terms for term in model_formula)
+    assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # linear and quadratic
     terms = ["1", "x0", "x1", "x2", "x0**2", "x1**2", "x2**2"]
     model_formula = get_formula_from_string(
         domain=domain, model_type="linear-and-quadratic"
     )
-    assert all(term in terms for term in model_formula.terms)
-    assert all(term in model_formula.terms for term in terms)
+    assert all(term in terms for term in model_formula)
+    assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # fully quadratic
     terms = [
@@ -94,8 +94,8 @@ def test_get_formula_from_string():
         "x2**2",
     ]
     model_formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
-    assert all(term in terms for term in model_formula.terms)
-    assert all(term in model_formula.terms for term in terms)
+    assert all(term in terms for term in model_formula)
+    assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # custom model
     terms_lhs = ["y"]
@@ -105,10 +105,10 @@ def test_get_formula_from_string():
         model_type="y ~ 1 + x0 + x0:x1 + {x0**2}",
         rhs_only=False,
     )
-    assert all(term in terms_lhs for term in model_formula.terms.lhs)
-    assert all(term in model_formula.terms.lhs for term in terms_lhs)
-    assert all(term in terms_rhs for term in model_formula.terms.rhs)
-    assert all(term in model_formula.terms.rhs for term in terms_rhs)
+    assert all(term in terms_lhs for term in model_formula.lhs)
+    assert all(term in str(model_formula.lhs) for term in terms_lhs)
+    assert all(term in terms_rhs for term in model_formula.rhs)
+    assert all(term in np.array(model_formula.rhs, dtype=str) for term in terms_rhs)
 
     # get formula without model: valid input
     model = "x1 + x2 + x3"
@@ -130,8 +130,8 @@ def test_get_formula_from_string():
     terms.append("1")
 
     for i in range(351):
-        assert model.terms[i] in terms
-        assert terms[i] in model.terms
+        assert list(model)[i] in terms
+        assert terms[i] in np.array(model, dtype=str)
 
 
 def test_n_zero_eigvals_unconstrained():
@@ -187,18 +187,18 @@ def test_number_of_model_terms():
     )
 
     formula = get_formula_from_string(domain=domain, model_type="linear")
-    assert len(formula.terms) == 6
+    assert len(formula) == 6
 
     formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
-    assert len(formula.terms) == 11
+    assert len(formula) == 11
 
     formula = get_formula_from_string(
         domain=domain, model_type="linear-and-interactions"
     )
-    assert len(formula.terms) == 16
+    assert len(formula) == 16
 
     formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
-    assert len(formula.terms) == 21
+    assert len(formula) == 21
 
     # 3 continuous & 2 discrete input_features
     domain = Domain(
@@ -213,18 +213,18 @@ def test_number_of_model_terms():
     )
 
     formula = get_formula_from_string(domain=domain, model_type="linear")
-    assert len(formula.terms) == 6
+    assert len(formula) == 6
 
     formula = get_formula_from_string(domain=domain, model_type="linear-and-quadratic")
-    assert len(formula.terms) == 11
+    assert len(formula) == 11
 
     formula = get_formula_from_string(
         domain=domain, model_type="linear-and-interactions"
     )
-    assert len(formula.terms) == 16
+    assert len(formula) == 16
 
     formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
-    assert len(formula.terms) == 21
+    assert len(formula) == 21
 
 
 def test_constraints_as_scipy_constraints():

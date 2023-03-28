@@ -50,7 +50,6 @@ class JacobianForLogdet:
         domain: Domain,
         model: Formula,
         n_experiments: int,
-        jacobian_building_block: Optional[Callable] = None,
         delta: float = 1e-7,
     ) -> None:
         """
@@ -58,9 +57,6 @@ class JacobianForLogdet:
             domain (Domain): An opti domain defining the DoE domain together with model_type.
             model_type (str or Formula): A formula containing all model terms.
             n_experiments (int): Number of experiments
-            jacobian_building_block (Callable): A function that returns the jacobian building block for
-                the given model. By default the default_jacobian_building_block is chosen. For models of
-                higher than quadratic order one needs to provide an own jacobian.
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
 
         """
@@ -73,15 +69,10 @@ class JacobianForLogdet:
         self.vars = self.domain.inputs.get_keys()
         self.n_vars = len(self.domain.inputs)
 
-        self.model_terms = list(np.array(model.terms, dtype=str))
+        self.model_terms = list(np.array(model, dtype=str))
         self.n_model_terms = len(self.model_terms)
 
-        if jacobian_building_block is not None:
-            self.jacobian_building_block = jacobian_building_block
-        else:
-            self.jacobian_building_block = default_jacobian_building_block(
-                self.vars, self.model_terms
-            )
+        self.model_jacobian_t = get_model_jacobian_t(self.vars, model)
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the full jacobian for the given input."""
@@ -104,9 +95,7 @@ class JacobianForLogdet:
         )
 
         # second part of jacobian
-        J2 = np.empty(shape=(self.n_experiments, self.n_vars, self.n_model_terms))
-        for i in range(self.n_experiments):
-            J2[i, :, :] = self.jacobian_building_block(x[i, :])
+        J2 = self.model_jacobian_t(x)
 
         # combine both parts
         J = J1 * J2
@@ -139,7 +128,7 @@ def default_jacobian_building_block(
         terms.append(name + "**2")
     for i in range(n_vars):
         for j in range(i + 1, n_vars):
-            term = str(Formula(vars[j] + ":" + vars[i] + "-1").terms[0])
+            term = str(Formula(vars[j] + ":" + vars[i] + "-1"))
             terms.append(term)
 
     for name in vars:
@@ -147,9 +136,7 @@ def default_jacobian_building_block(
     for i in range(n_vars):
         for j in range(i + 1, n_vars):
             for k in range(j + 1, n_vars):
-                term = str(
-                    Formula(vars[k] + ":" + vars[j] + ":" + vars[i] + "-1").terms[0]
-                )
+                term = str(Formula(vars[k] + ":" + vars[j] + ":" + vars[i] + "-1"))
                 terms.append(term)
 
     def jacobian_building_block(x: np.ndarray) -> np.ndarray:
@@ -189,3 +176,36 @@ def default_jacobian_building_block(
         return pd.DataFrame(B, columns=terms)[model_terms].to_numpy()
 
     return jacobian_building_block
+
+
+def get_model_jacobian_t(vars: List[str], formula: Formula) -> Callable:
+    """Returns a function that computes the transpose of the jacobian of the model
+    where each term of the model is viewed as one component of a vector valued function.
+
+    Args:
+        vars (List[str]): List of variable names of the model
+        model_terms (List[str]): List of model terms saved as string.
+
+    Returns:
+        A function that returns a jacobian building block for a given model
+    """
+
+    """Computes the jacobian building blocks for all experiments in x."""
+
+    terms_jacobian_t = []
+    for var in vars:
+        terms_jacobian_t.append(
+            [
+                str(term).replace(":", "*") + f" + 0 * {vars[0]}"
+                for term in formula.differentiate(var, use_sympy=True)
+            ]
+        )  # 0*vars[0] added to make sure terms are evaluated as series, not as number
+
+    def model_jacobian_t(x: np.ndarray) -> np.ndarray:
+        """Computes the transpose of the model jacobian for each experiment in input x."""
+        X = pd.DataFrame(x, columns=vars)
+        X.eval(terms_jacobian_t)
+        jacobians = np.swapaxes(X.eval(terms_jacobian_t), 0, 2)
+        return np.swapaxes(jacobians, 1, 2)
+
+    return model_jacobian_t

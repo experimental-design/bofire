@@ -69,7 +69,6 @@ def find_local_max_ipopt(
     tol: float = 0.0,
     delta: float = 1e-7,
     ipopt_options: Dict = {},
-    jacobian_building_block: Optional[Callable] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
 ) -> pd.DataFrame:
@@ -83,8 +82,6 @@ def find_local_max_ipopt(
         tol (float): Tolerance for linear/NChooseK constraint violation. Default value is 0.
         delta (float): Regularization parameter. Default value is 1e-3.
         ipopt_options (Dict): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
-        jacobian_building_block (Callable): Only needed for models of higher order than 3. derivatives
-            of each model term with respect to each input variable.
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
         fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
@@ -164,7 +161,6 @@ def find_local_max_ipopt(
         model_formula,
         n_experiments,
         delta=delta,
-        jacobian_building_block=jacobian_building_block,
     )
 
     # write constraints as scipy constraints
@@ -273,9 +269,7 @@ def get_n_experiments(
     """
     n_experiments_min = (
         len(
-            get_formula_from_string(
-                model_type=model_type, rhs_only=True, domain=domain
-            ).terms
+            get_formula_from_string(model_type=model_type, rhs_only=True, domain=domain)
         )
         + 3
     )

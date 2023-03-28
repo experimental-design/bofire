@@ -71,7 +71,7 @@ def test_find_local_max_ipopt_no_constraint():
     dim_input = len(domain.inputs.get_keys())
 
     num_exp = (
-        len(get_formula_from_string(model_type="linear", domain=domain).terms)
+        len(get_formula_from_string(model_type="linear", domain=domain))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
@@ -106,7 +106,7 @@ def test_find_local_max_ipopt_nchoosek():
     D = len(domain.inputs)
 
     N = (
-        len(get_formula_from_string(model_type="linear", domain=domain).terms)
+        len(get_formula_from_string(model_type="linear", domain=domain))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
@@ -138,7 +138,7 @@ def test_find_local_max_ipopt_mixture():
 
     D = len(domain.inputs)
 
-    N = len(get_formula_from_string(domain=domain, model_type="linear").terms) + 3
+    N = len(get_formula_from_string(domain=domain, model_type="linear")) + 3
     A = find_local_max_ipopt(domain, "linear")
     assert A.shape == (N, D)
 
