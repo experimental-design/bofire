@@ -18,6 +18,7 @@ from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.strategies.doe import DoEStrategy
 
 AbstractStrategy = Union[
     Strategy,
@@ -37,6 +38,7 @@ AnyStrategy = Union[
     PolytopeSampler,
     RejectionSampler,
     RandomStrategy,
+    DoEStrategy,
 ]
 
 AnyPredictive = Union[

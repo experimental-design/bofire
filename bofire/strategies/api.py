@@ -14,3 +14,4 @@ from bofire.strategies.samplers.polytope import PolytopeSampler  # noqa: F401
 from bofire.strategies.samplers.rejection import RejectionSampler  # noqa: F401
 from bofire.strategies.samplers.sampler import SamplerStrategy  # noqa: F401
 from bofire.strategies.strategy import Strategy  # noqa: F401
+from bofire.strategies.doe_strategy import DoEStrategy  # noqa: F401
