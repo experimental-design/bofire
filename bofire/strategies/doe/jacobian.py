@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 import numpy as np
 import pandas as pd
@@ -138,44 +138,6 @@ def default_jacobian_building_block(
             for k in range(j + 1, n_vars):
                 term = str(Formula(vars[k] + ":" + vars[j] + ":" + vars[i] + "-1"))
                 terms.append(term)
-
-    def jacobian_building_block(x: np.ndarray) -> np.ndarray:
-        """Computes the jacobian building block for a single experiment with inputs x."""
-        x = np.array(x)
-        B = np.zeros(shape=(n_vars, len(terms)))
-
-        # derivatives of intercept term are zero
-
-        # derivatives of linear terms
-        B[:, 1 : n_vars + 1] = np.eye(n_vars)
-
-        # derivatives of quadratic terms
-        B[:, n_vars + 1 : 2 * n_vars + 1] = 2 * np.diag(x)
-
-        # derivatives of second order interaction terms
-        col = 2 * n_vars + 1
-        for i, _ in enumerate(vars[:-1]):
-            n_terms = len(vars[i + 1 :])
-            B[i, col : col + n_terms] = x[i + 1 :]
-            B[i + 1 :, col : col + n_terms] = x[i] * np.eye(n_terms)
-            col += n_terms
-
-        # derivatives of third order terms
-        B[:, col : col + n_vars] = 3 * np.diag(x**2)
-        col += n_vars
-
-        # derivatives of third order interaction terms
-        for i, _ in enumerate(vars[:-2]):
-            for j in range(i + 1, n_vars - 1):
-                n_terms = len(vars[j + 1 :])
-                B[i, col : col + n_terms] = x[j] * x[j + 1 :]
-                B[j, col : col + n_terms] = x[i] * x[j + 1 :]
-                B[j + 1 :, col : col + n_terms] = x[i] * x[j] * np.eye(n_terms)
-                col += n_terms
-
-        return pd.DataFrame(B, columns=terms)[model_terms].to_numpy()
-
-    return jacobian_building_block
 
 
 def get_model_jacobian_t(vars: List[str], formula: Formula) -> Callable:

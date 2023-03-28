@@ -1,6 +1,5 @@
 import numpy as np
 import pandas as pd
-import pytest
 from formulaic import Formula
 
 from bofire.data_models.domain.api import Domain
