@@ -540,8 +540,8 @@ class BotorchStrategy(PredictiveStrategy):
             self (obj): The current instance of the class.
 
         Returns:
-            tuple: A tuple of two PyTorch tensors. The first tensor contains the transformed training inputs and 
-                the second tensor contains the transformed pending inputs. If no pending inputs are provided, 
+            tuple: A tuple of two PyTorch tensors. The first tensor contains the transformed training inputs and
+                the second tensor contains the transformed pending inputs. If no pending inputs are provided,
                 the second tensor will be None.
 
         Raises:
