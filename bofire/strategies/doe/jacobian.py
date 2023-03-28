@@ -95,13 +95,9 @@ class JacobianForLogdet:
         # first part of jacobian
         J1 = (
             -2
-            * X
-            @ sp.linalg.solve(
-                X.T @ X + self.delta * np.eye(self.n_model_terms),
-                np.eye(self.n_model_terms),
-                sym_pos=True,
-                overwrite_b=True,
-            )
+            * sp.linalg.solve(
+                X.T @ X + self.delta * np.eye(self.n_model_terms), X.T, assume_a="pos"
+            ).T
         )
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
             self.n_experiments, self.n_vars, self.n_model_terms

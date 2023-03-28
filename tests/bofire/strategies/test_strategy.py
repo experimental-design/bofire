@@ -35,10 +35,10 @@ from tests.bofire.strategies.specs import (
 )
 
 if1 = ContinuousInput(
-    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "lower_bound": 0.0}
+    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "bounds": (0, 5.3)}
 )
 if2 = ContinuousInput(
-    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if2", "lower_bound": 0.0}
+    **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if2", "bounds": (0, 5.3)}
 )
 if3 = CategoricalInput(
     **{
