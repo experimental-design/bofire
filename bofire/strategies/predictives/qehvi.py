@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 
 import numpy as np
 import torch
@@ -6,8 +6,8 @@ from botorch.acquisition.multi_objective.monte_carlo import (
     qExpectedHypervolumeImprovement,
 )
 from botorch.acquisition.multi_objective.objective import (
+    GenericMCMultiOutputObjective,
     MCMultiOutputObjective,
-    WeightedMCMultiOutputObjective,
 )
 from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
@@ -16,8 +16,8 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
 from bofire.data_models.objectives.api import BotorchConstrainedObjective
 from bofire.data_models.strategies.api import QehviStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
-from bofire.utils.multiobjective import get_ref_point_mask
-from bofire.utils.torch_tools import tkwargs
+from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
+from bofire.utils.torch_tools import get_multiobjective_objective
 
 
 class QehviStrategy(BotorchStrategy):
@@ -74,47 +74,28 @@ class QehviStrategy(BotorchStrategy):
         self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
         return
 
-    def _get_objective(self) -> WeightedMCMultiOutputObjective:
-        weights, indices = [], []
-        for idx, feat in enumerate(self.domain.outputs.get()):
-            if feat.objective is not None and not isinstance(  # type: ignore
-                feat.objective, BotorchConstrainedObjective  # type: ignore
-            ):
-                weights.append(feat.objective.w)  # type: ignore
-                indices.append(idx)
+    def _get_objective(self) -> GenericMCMultiOutputObjective:
+        objective = get_multiobjective_objective(output_features=self.domain.outputs)
+        return GenericMCMultiOutputObjective(objective=objective)
 
-        weights = np.array(weights) * self.ref_point_mask
-        return WeightedMCMultiOutputObjective(
-            outcomes=indices,
-            weights=torch.from_numpy(weights).to(**tkwargs),
-        )
-
-    def get_adjusted_refpoint(self):
-        if self.ref_point is not None:
-            return (
-                self.ref_point_mask
-                * np.array(
-                    [
-                        self.ref_point[feat]
-                        for feat in self.domain.outputs.get_keys_by_objective(
-                            excludes=BotorchConstrainedObjective
-                        )
-                    ]
-                )
-            ).tolist()
-        # we have to push all results through the objective functions and then take the min values
-        df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments
-        )
+    def get_adjusted_refpoint(self) -> List[float]:
+        if self.ref_point is None:
+            df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                self.experiments
+            )
+            ref_point = infer_ref_point(
+                self.domain, experiments=df, return_masked=False
+            )
+        else:
+            ref_point = self.ref_point
         return (
-            (
-                df[
-                    self.domain.outputs.get_keys_by_objective(
+            self.ref_point_mask
+            * np.array(
+                [
+                    ref_point[feat]
+                    for feat in self.domain.outputs.get_keys_by_objective(
                         excludes=BotorchConstrainedObjective
                     )
-                ].values
-                * self.ref_point_mask
+                ]
             )
-            .min(axis=0)
-            .tolist()
-        )
+        ).tolist()

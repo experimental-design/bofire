@@ -271,3 +271,30 @@ def get_additive_botorch_objective(
         return val  # type: ignore
 
     return objective
+
+
+def get_multiobjective_objective(
+    output_features: Outputs,
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+    """Returns
+
+    Args:
+        output_features (Outputs): _description_
+
+    Returns:
+        Callable[[Tensor], Tensor]: _description_
+    """
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+        and isinstance(
+            feat.objective,  # type: ignore
+            (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
+        )
+    ]
+
+    def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        return torch.stack([c(samples, None) for c in callables], dim=-1)
+
+    return objective
