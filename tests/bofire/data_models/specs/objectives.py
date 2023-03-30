@@ -11,17 +11,6 @@ specs.add_valid(
         "w": 1.0,
     },
 )
-
-specs.add_valid(
-    objectives.DeltaObjective,
-    lambda: {
-        "w": 1.0,
-        "lower_bound": 0.1,
-        "upper_bound": 0.9,
-        "ref_point": 1,
-        "scale": 2,
-    },
-)
 specs.add_valid(
     objectives.MaximizeObjective,
     lambda: {

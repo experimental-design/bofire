@@ -18,7 +18,6 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
-    DeltaObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -75,7 +74,6 @@ c3 = LinearInequalityConstraint(
 @pytest.mark.parametrize(
     "objective",
     [
-        DeltaObjective(w=0.5, ref_point=1.0, scale=0.8),
         MaximizeObjective(w=0.5),
         MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
         MinimizeObjective(w=0.5),
@@ -100,7 +98,6 @@ def test_get_objective_callable(objective):
 def test_get_multiplicative_botorch_objective():
     (obj1, obj2) = random.choices(
         [
-            DeltaObjective(w=0.5, ref_point=10.0),
             MaximizeObjective(w=0.5),
             MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
             MinimizeObjective(w=1),
@@ -141,7 +138,8 @@ def test_get_additive_botorch_objective(exclude_constraints):
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective(w=0.5)
     obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
-    obj3 = DeltaObjective(w=0.5, ref_point=10.0)
+    obj3 = CloseToTargetObjective(w=0.5, target_value=2, exponent=1)
+    # obj3 = MaximizeObjective(w=0.7)
     output_features = Outputs(
         features=[
             ContinuousOutput(
@@ -158,7 +156,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
             ),
         ]
     )
-    objective = get_additive_botorch_objective(output_features, exclude_constraints)
+    objective = get_additive_botorch_objective(
+        output_features, exclude_constraints=exclude_constraints
+    )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
 
@@ -184,7 +184,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
         )
         objective_forward = generic_objective.forward(samples)
         assert np.allclose(
-            (reward1 * obj1.w + reward3 * obj3.w) * reward2,
+            np.clip((reward1 * obj1.w + reward3 * obj3.w) * reward2, 0, None),
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )

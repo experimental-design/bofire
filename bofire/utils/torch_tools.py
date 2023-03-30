@@ -14,7 +14,6 @@ from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     BotorchConstrainedObjective,
     CloseToTargetObjective,
-    DeltaObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -209,8 +208,6 @@ def get_objective_callable(
                 )
             )
         )
-    if isinstance(objective, DeltaObjective):
-        return lambda y, X=None: (objective.ref_point - y[..., idx]) * objective.scale
     else:
         raise NotImplementedError(
             f"Objective {objective.__class__.__name__} not implemented."
