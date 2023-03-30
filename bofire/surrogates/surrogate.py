@@ -38,6 +38,9 @@ class Surrogate(ABC):
         X = self.input_features.validate_experiments(X, strict=False)
         # transform
         Xt = self.input_features.transform(X, self.input_preprocessing_specs)
+        # make sure that all is float64
+        for c in Xt.columns:
+            Xt[c] = pd.to_numeric(Xt[c], errors="raise")
         # predict
         preds, stds = self._predict(Xt)
         # postprocess
