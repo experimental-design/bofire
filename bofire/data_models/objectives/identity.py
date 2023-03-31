@@ -86,28 +86,3 @@ class MinimizeObjective(IdentityObjective):
             np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds
         """
         return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
-
-
-class DeltaObjective(IdentityObjective):
-    """Class returning the difference between a reference value and identity as reward
-
-    Attributes:
-        w (float): float between zero and one for weighting the objective
-        ref_point (float): Reference value.
-        scale (float, optional): Scaling factor for the difference. Defaults to one.
-    """
-
-    type: Literal["DeltaObjective"] = "DeltaObjective"
-    ref_point: float
-    scale: float = 1
-
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
-        """The call function returning a reward for passed x values
-
-        Args:
-            x (np.ndarray): An array of x values
-
-        Returns:
-            np.ndarray: The difference between reference and the x value as reward, might be scaled with a passed scaling value
-        """
-        return (self.ref_point - x) * self.scale

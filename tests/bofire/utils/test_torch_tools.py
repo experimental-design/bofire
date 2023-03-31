@@ -18,8 +18,6 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
-    ConstantObjective,
-    DeltaObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -29,6 +27,7 @@ from bofire.data_models.objectives.api import (
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_linear_constraints,
+    get_multiobjective_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_objective_callable,
@@ -75,7 +74,6 @@ c3 = LinearInequalityConstraint(
 @pytest.mark.parametrize(
     "objective",
     [
-        DeltaObjective(w=0.5, ref_point=1.0, scale=0.8),
         MaximizeObjective(w=0.5),
         MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
         MinimizeObjective(w=0.5),
@@ -97,15 +95,9 @@ def test_get_objective_callable(objective):
     )
 
 
-def test_get_objective_callable_not_implemented():
-    with pytest.raises(NotImplementedError):
-        get_objective_callable(idx=1, objective=ConstantObjective(w=0.5, value=1.0))
-
-
 def test_get_multiplicative_botorch_objective():
     (obj1, obj2) = random.choices(
         [
-            DeltaObjective(w=0.5, ref_point=10.0),
             MaximizeObjective(w=0.5),
             MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
             MinimizeObjective(w=1),
@@ -146,7 +138,8 @@ def test_get_additive_botorch_objective(exclude_constraints):
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective(w=0.5)
     obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
-    obj3 = DeltaObjective(w=0.5, ref_point=10.0)
+    obj3 = CloseToTargetObjective(w=0.5, target_value=2, exponent=1)
+    # obj3 = MaximizeObjective(w=0.7)
     output_features = Outputs(
         features=[
             ContinuousOutput(
@@ -163,7 +156,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
             ),
         ]
     )
-    objective = get_additive_botorch_objective(output_features, exclude_constraints)
+    objective = get_additive_botorch_objective(
+        output_features, exclude_constraints=exclude_constraints
+    )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
 
@@ -189,7 +184,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
         )
         objective_forward = generic_objective.forward(samples)
         assert np.allclose(
-            (reward1 * obj1.w + reward3 * obj3.w) * reward2,
+            np.clip((reward1 * obj1.w + reward3 * obj3.w) * reward2, 0, None),
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )
@@ -400,3 +395,48 @@ def test_get_nchoosek_constraints():
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
     assert torch.all(constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
+
+
+def test_get_multiobjective_objective():
+    samples = (torch.rand(30, 4, requires_grad=True) * 5).to(**tkwargs)
+    samples2 = (torch.rand(30, 512, 4, requires_grad=True) * 5).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    obj1 = MaximizeObjective()
+    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5)
+    obj3 = MinimizeObjective()
+    obj4 = CloseToTargetObjective(target_value=2.5, exponent=1)
+    output_features = Outputs(
+        features=[
+            ContinuousOutput(
+                key="alpha",
+                objective=obj1,
+            ),
+            ContinuousOutput(
+                key="beta",
+                objective=obj2,
+            ),
+            ContinuousOutput(
+                key="gamma",
+                objective=obj3,
+            ),
+            ContinuousOutput(
+                key="omega",
+                objective=obj4,
+            ),
+        ]
+    )
+    objective = get_multiobjective_objective(output_features=output_features)
+    generic_objective = GenericMCObjective(objective=objective)
+    # check the shape
+    objective_forward = generic_objective.forward(samples2)
+    assert objective_forward.shape == torch.Size((30, 512, 3))
+    objective_forward = generic_objective.forward(samples)
+    assert objective_forward.shape == torch.Size((30, 3))
+    # check what is in
+    # calc with numpy
+    reward1 = obj1(a_samples[:, 0])
+    reward3 = obj3(a_samples[:, 2])
+    reward4 = obj4(a_samples[:, 3])
+    assert np.allclose(objective_forward[..., 0].detach().numpy(), reward1)
+    assert np.allclose(objective_forward[..., 1].detach().numpy(), reward3)
+    assert np.allclose(objective_forward[..., 2].detach().numpy(), reward4)

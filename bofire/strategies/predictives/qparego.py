@@ -16,12 +16,17 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.enum import CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalInput
-from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.data_models.objectives.api import (
+    CloseToTargetObjective,
+    MaximizeObjective,
+    MinimizeObjective,
+)
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import (
     get_linear_constraints,
+    get_multiobjective_objective,
     get_output_constraints,
     tkwargs,
 )
@@ -63,30 +68,26 @@ class QparegoStrategy(BotorchStrategy):
             sample_simplex(
                 len(
                     self.domain.outputs.get_keys_by_objective(
-                        includes=[MaximizeObjective, MinimizeObjective]
+                        includes=[
+                            MaximizeObjective,
+                            MinimizeObjective,
+                            CloseToTargetObjective,
+                        ]
                     )
                 ),
                 **tkwargs,
             ).squeeze()
             * ref_point_mask
         )
-        key2indices = {key: i for i, key in enumerate(self.domain.outputs.get_keys())}
-        indices = torch.tensor(
-            [
-                key2indices[key]
-                for key in self.domain.outputs.get_keys_by_objective(
-                    includes=[MaximizeObjective, MinimizeObjective]
-                )
-            ],
-            dtype=torch.int64,
-        )
+
+        obj_callable = get_multiobjective_objective(output_features=self.domain.outputs)
 
         scalarization = get_chebyshev_scalarization(
-            weights=weights, Y=pred[..., indices]
+            weights=weights, Y=obj_callable(pred, None) * ref_point_mask
         )
 
         def objective(Z, X=None):
-            return scalarization(Z[..., indices], X)
+            return scalarization(obj_callable(Z, None) * ref_point_mask, X)
 
         if len(weights) != len(self.domain.outputs):
             constraints, etas = get_output_constraints(self.domain.outputs)

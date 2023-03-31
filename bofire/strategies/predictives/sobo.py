@@ -11,11 +11,12 @@ from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDa
 from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
-from bofire.data_models.strategies.api import SoboStrategy as DataModel
+from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_multiplicative_botorch_objective,
+    get_objective_callable,
     get_output_constraints,
     tkwargs,
 )
@@ -55,11 +56,31 @@ class SoboStrategy(BotorchStrategy):
         return
 
     def _get_objective(self) -> GenericMCObjective:
-        return GenericMCObjective(
-            objective=get_multiplicative_botorch_objective(  # type: ignore
+        # TODO: test this
+        # here we get the actual objective
+        target_feature = self.domain.outputs.get_by_objective(
+            excludes=BotorchConstrainedObjective
+        )[0]
+        target_index = self.domain.outputs.get_keys().index(target_feature.key)
+        objective_callable = get_objective_callable(
+            idx=target_index, objective=target_feature.objective
+        )
+
+        # in case that constraints are present we return a constrained botorch objective
+        if len(self.domain.outputs.get_by_objective(BotorchConstrainedObjective)) > 0:
+            constraints, etas = get_output_constraints(
                 output_features=self.domain.outputs
             )
-        )
+
+            return ConstrainedMCObjective(
+                objective=objective_callable,
+                constraints=constraints,
+                eta=torch.tensor(etas).to(**tkwargs),
+                infeasible_cost=self.get_infeasible_cost(objective=objective_callable),
+            )
+
+        # else the generic one
+        return GenericMCObjective(objective=objective_callable)
 
 
 class AdditiveSoboStrategy(SoboStrategy):
@@ -104,3 +125,10 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
+
+    def _get_objective(self) -> GenericMCObjective:
+        return GenericMCObjective(
+            objective=get_multiplicative_botorch_objective(  # type: ignore
+                output_features=self.domain.outputs
+            )
+        )

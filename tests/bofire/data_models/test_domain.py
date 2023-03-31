@@ -7,6 +7,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
+from bofire.data_models.api import Outputs
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -23,7 +24,13 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
-from bofire.data_models.objectives.api import Objective, TargetObjective
+from bofire.data_models.objectives.api import (
+    BotorchConstrainedObjective,
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    Objective,
+    TargetObjective,
+)
 from bofire.utils.subdomain import get_subdomain
 
 
@@ -642,6 +649,25 @@ def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, exp
             exact=exact,
         ).features
         == expected
+    )
+
+
+def test_get_outputs_by_objective_none():
+    outputs = Outputs(
+        features=[
+            ContinuousOutput(key="a", objective=None),
+            ContinuousOutput(
+                key="b", objective=MaximizeSigmoidObjective(w=1, steepness=1, tp=0)
+            ),
+            ContinuousOutput(key="c", objective=MaximizeObjective()),
+        ]
+    )
+    keys = outputs.get_keys_by_objective(excludes=BotorchConstrainedObjective)
+    assert keys == ["c"]
+    assert outputs.get_keys().index("c") == 2
+    assert outputs.get_keys_by_objective(excludes=Objective, includes=None) == ["a"]
+    assert outputs.get_by_objective(excludes=Objective, includes=None) == Outputs(
+        features=[ContinuousOutput(key="a", objective=None)]
     )
 
 

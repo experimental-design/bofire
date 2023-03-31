@@ -85,6 +85,18 @@ class Features(BaseModel):
         """
         return {f.key: f for f in self.features}[key]
 
+    def get_by_keys(self, keys: Sequence[str]) -> Features:
+        """Get features of the domain specified by its keys.
+
+        Args:
+            keys (Sequence[str]): List of the keys of the features that should be
+                returned.
+
+        Returns:
+            Features: Features object with the requested features.
+        """
+        return self.__class__(features=sorted([self.get_by_key(key) for key in keys]))
+
     def get(
         self,
         includes: Union[Type, List[Type]] = AnyFeature,

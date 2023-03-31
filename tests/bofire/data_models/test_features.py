@@ -1223,6 +1223,13 @@ def test_features_get_by_key(features, key, expected):
     assert id(returned) == id(expected)
 
 
+def test_features_get_by_keys():
+    keys = ["of2", "if1"]
+    feats = features.get_by_keys(keys)
+    assert feats[0].key == "if1"
+    assert feats[1].key == "of2"
+
+
 @pytest.mark.parametrize(
     "features, key",
     [

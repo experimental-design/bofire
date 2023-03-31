@@ -1,4 +1,4 @@
-from typing import Callable, List, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -14,7 +14,6 @@ from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     BotorchConstrainedObjective,
     CloseToTargetObjective,
-    DeltaObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -149,51 +148,51 @@ def get_output_constraints(
 
 def get_objective_callable(
     idx: int, objective: AnyObjective
-) -> Callable[[Tensor], Tensor]:  # type: ignore
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:  # type: ignore
     if isinstance(objective, MaximizeObjective):
-        return lambda x: (
-            (x[..., idx] - objective.lower_bound)
+        return lambda y, X=None: (
+            (y[..., idx] - objective.lower_bound)
             / (objective.upper_bound - objective.lower_bound)
         )
     if isinstance(objective, MinimizeObjective):
-        return lambda x: -1.0 * (
-            (x[..., idx] - objective.lower_bound)
+        return lambda y, X=None: -1.0 * (
+            (y[..., idx] - objective.lower_bound)
             / (objective.upper_bound - objective.lower_bound)
         )
     if isinstance(objective, CloseToTargetObjective):
-        return lambda x: -1.0 * (
-            torch.abs(x[..., idx] - objective.target_value) ** objective.exponent
+        return lambda y, X=None: -1.0 * (
+            torch.abs(y[..., idx] - objective.target_value) ** objective.exponent
         )
     if isinstance(objective, MinimizeSigmoidObjective):
-        return lambda x: (
+        return lambda y, X=None: (
             (
                 1.0
                 - 1.0
                 / (
                     1.0
                     + torch.exp(
-                        -1.0 * objective.steepness * (x[..., idx] - objective.tp)
+                        -1.0 * objective.steepness * (y[..., idx] - objective.tp)
                     )
                 )
             )
         )
     if isinstance(objective, MaximizeSigmoidObjective):
-        return lambda x: (
+        return lambda y, X=None: (
             1.0
             / (
                 1.0
-                + torch.exp(-1.0 * objective.steepness * ((x[..., idx] - objective.tp)))
+                + torch.exp(-1.0 * objective.steepness * ((y[..., idx] - objective.tp)))
             )
         )
     if isinstance(objective, TargetObjective):
-        return lambda x: (
+        return lambda y, X=None: (
             1.0
             / (
                 1.0
                 + torch.exp(
                     -1
                     * objective.steepness
-                    * (x[..., idx] - (objective.target_value - objective.tolerance))
+                    * (y[..., idx] - (objective.target_value - objective.tolerance))
                 )
             )
             * (
@@ -204,13 +203,11 @@ def get_objective_callable(
                     + torch.exp(
                         -1.0
                         * objective.steepness
-                        * (x[..., idx] - (objective.target_value + objective.tolerance))
+                        * (y[..., idx] - (objective.target_value + objective.tolerance))
                     )
                 )
             )
         )
-    if isinstance(objective, DeltaObjective):
-        return lambda x: (objective.ref_point - x[..., idx]) * objective.scale
     else:
         raise NotImplementedError(
             f"Objective {objective.__class__.__name__} not implemented."
@@ -234,7 +231,7 @@ def get_multiplicative_botorch_objective(
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         val = 1.0
         for c, w in zip(callables, weights):
-            val *= c(samples) ** w
+            val *= c(samples, None) ** w
         return val  # type: ignore
 
     return objective
@@ -267,7 +264,34 @@ def get_additive_botorch_objective(
     def objective(samples: Tensor, X: Tensor) -> Tensor:
         val = 0.0
         for c, w in zip(callables, weights):
-            val += c(samples) * w
+            val += c(samples, None) * w
         return val  # type: ignore
+
+    return objective
+
+
+def get_multiobjective_objective(
+    output_features: Outputs,
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+    """Returns
+
+    Args:
+        output_features (Outputs): _description_
+
+    Returns:
+        Callable[[Tensor], Tensor]: _description_
+    """
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+        and isinstance(
+            feat.objective,  # type: ignore
+            (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
+        )
+    ]
+
+    def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        return torch.stack([c(samples, None) for c in callables], dim=-1)
 
     return objective
