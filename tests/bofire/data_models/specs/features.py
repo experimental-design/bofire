@@ -67,6 +67,12 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    features.MolecularInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+    },
+)
+specs.add_valid(
     features.ContinuousOutput,
     lambda: {
         "key": str(uuid.uuid4()),

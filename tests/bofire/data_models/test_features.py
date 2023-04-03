@@ -17,7 +17,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    Input,
+    MolecularInput,
     Output,
 )
 from bofire.data_models.objectives.api import (
@@ -31,23 +31,17 @@ objective = MinimizeObjective(w=1)
 
 
 @pytest.mark.parametrize(
-    "cls, spec, n",
-    [(spec.cls, spec.spec(), n) for spec in specs.features.valids for n in [1, 5]],
+    "spec, n",
+    [
+        (spec, n)
+        for spec in specs.features.valids
+        if (spec.cls != ContinuousOutput) and (spec.cls != MolecularInput)
+        for n in [1, 5]
+    ],
 )
-def test_input_feature_sample(cls, spec, n):
-    feature = cls(**spec)
-    if isinstance(feature, Input):
-        samples = feature.sample(n)
-        feature.validate_candidental(samples)
-
-
-@pytest.mark.parametrize(
-    "spec",
-    [spec for spec in specs.features.valids if spec.cls != ContinuousOutput],
-)
-def test_sample(spec: specs.Spec):
+def test_sample(spec: specs.Spec, n: int):
     feat = spec.obj()
-    samples = feat.sample(n=100)
+    samples = feat.sample(n=n)
     feat.validate_candidental(samples)
 
 
