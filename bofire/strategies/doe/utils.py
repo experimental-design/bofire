@@ -16,7 +16,11 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousOutput,
+    MolecularInput,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -476,6 +480,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
             if not (
                 isinstance(input, CategoricalInput)
                 or isinstance(input, ContinuousOutput)
+                or isinstance(input, MolecularInput)
             ):
                 if input.lower_bound > 0 or input.upper_bound < 0:
                     raise ValueError(
