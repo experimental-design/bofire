@@ -1,5 +1,5 @@
 import warnings
-from typing import Callable, Dict, Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -13,53 +13,13 @@ from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.strategies.api import PolytopeSampler
-from bofire.strategies.doe.jacobian import DOptimality, JacobianForLogdet
+from bofire.strategies.doe.jacobian import DOptimality
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
     get_formula_from_string,
     metrics,
     nchoosek_constraints_as_bounds,
 )
-
-
-def logD(A: np.ndarray, delta: float = 1e-7) -> float:
-    """Computes the sum of the log of A.T @ A ignoring the smallest num_ignore_eigvals eigenvalues."""
-    X = A.T @ A + delta * np.eye(A.shape[1])
-    return np.linalg.slogdet(X)[1]
-
-
-def get_objective(
-    domain: Domain,
-    model_type: Union[str, Formula],
-    delta: float = 1e-7,
-) -> Callable:
-    """Returns a function that computes the objective value.
-
-    Args:
-        domain (Domain): A domain defining the DoE problem together with model_type.
-        model_type (str or Formula): A formula containing all model terms.
-        delta (float): Regularization parameter for information matrix. Default value is 1e-3.
-
-    Returns:
-        A function computing the objective -logD for a given input vector x
-
-    """
-    D = len(domain.inputs)
-    model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
-    )
-
-    # define objective function
-    def objective(x):
-        # evaluate model terms
-        A = pd.DataFrame(x.reshape(len(x) // D, D), columns=domain.inputs.get_keys())
-        A = model_formula.get_model_matrix(A)
-
-        # compute objective value
-        obj = -logD(A.to_numpy(), delta=delta)
-        return obj
-
-    return objective
 
 
 def find_local_max_ipopt(
@@ -148,19 +108,9 @@ def find_local_max_ipopt(
                 .flatten()
             )
 
-    # get objective function
-    objective = get_objective(domain, model_type, delta=delta)
-
-    # get jacobian
+    # get objective function and its jacobian
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
-    )
-
-    J = JacobianForLogdet(
-        domain,
-        model_formula,
-        n_experiments,
-        delta=delta,
     )
 
     d_optimality = DOptimality(
