@@ -521,7 +521,11 @@ def nchoosek_constraints_as_bounds(
         [
             (p.lower_bound, p.upper_bound)
             for p in domain.inputs
-            if not (isinstance(p, CategoricalInput) or isinstance(p, ContinuousOutput))
+            if not (
+                isinstance(p, CategoricalInput)
+                or isinstance(p, ContinuousOutput)
+                or isinstance(p, MolecularInput)
+            )
         ]
         * n_experiments
     )
