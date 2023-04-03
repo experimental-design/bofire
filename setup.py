@@ -50,6 +50,7 @@ setup(
     install_requires=install_requires,
     extras_require={
         "testing": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov"],
+        "cheminfo": ["rdkit"],
         "docs": [
             "mkdocs",
             "mkdocs-material",
