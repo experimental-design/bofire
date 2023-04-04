@@ -13,7 +13,7 @@ from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.strategies.api import PolytopeSampler
-from bofire.strategies.doe.jacobian import DOptimality
+from bofire.strategies.doe.objective import DOptimality
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
     get_formula_from_string,
