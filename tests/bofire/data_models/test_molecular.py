@@ -8,7 +8,7 @@ from bofire.data_models.features.molecular import MolecularInput
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
-VALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1"])
+VALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "[CH3][CH2][OH]", "C-C-O", "OCC", "N[C@](C)(F)C(=O)O"])
 INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
 
 
