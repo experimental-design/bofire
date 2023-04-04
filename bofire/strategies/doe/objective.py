@@ -9,7 +9,6 @@ from torch import Tensor
 from bofire.data_models.domain.api import Domain
 
 
-# TODO: test
 class DOptimality:
     """A class implementing the evaluation of logdet(X.T@X + delta) and its jacobian w.r.t. the inputs.
     The Jacobian can be divided into two parts, one for logdet(X.T@ + delta) w.r.t. X (there is a simple
@@ -137,7 +136,7 @@ class DOptimality:
 
     def _convert_input_to_model_tensor(self, x: np.ndarray) -> Tensor:
         X = pd.DataFrame(
-            x.reshape(len(x) // self.n_vars, self.n_vars), columns=self.vars
+            x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
         )
         X = self.model.get_model_matrix(X)
         return torch.tensor(
@@ -147,7 +146,5 @@ class DOptimality:
     def _model_jacobian_t(self, x: np.ndarray) -> np.ndarray:
         """Computes the transpose of the model jacobian for each experiment in input x."""
         X = pd.DataFrame(x.reshape(self.n_experiments, self.n_vars), columns=self.vars)
-        # print("X",X.shape)
-        # print(len(self.terms_jacobian_t[0]))
         jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)
         return np.swapaxes(jacobians, 1, 2)
