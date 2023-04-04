@@ -217,7 +217,11 @@ class Inputs(Features):
                 idx = np.digitize(X[:, i], bins) - 1
                 x = np.array(levels)[idx]
             else:
-                raise (ValueError(f"Unknown input feature with key {feat.key}"))
+                raise (
+                    ValueError(
+                        f"Unknown input feature with key {feat.key} of type {feat.type}"
+                    )
+                )
             res.append(pd.Series(x, name=feat.key))
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
