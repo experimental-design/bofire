@@ -8,7 +8,16 @@ from bofire.data_models.features.molecular import MolecularInput
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
-VALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "[CH3][CH2][OH]", "C-C-O", "OCC", "N[C@](C)(F)C(=O)O"])
+VALID_SMILES = pd.Series(
+    [
+        "CC(=O)Oc1ccccc1C(=O)O",
+        "c1ccccc1",
+        "[CH3][CH2][OH]",
+        "C-C-O",
+        "OCC",
+        "N[C@](C)(F)C(=O)O",
+    ]
+)
 INVALID_SMILES = pd.Series(["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"])
 
 
@@ -41,7 +50,7 @@ def test_molecular_input_fixed():
 def test_to_fingerprints():
     m = MolecularInput(key="molecules")
     data = m.to_fingerprints(VALID_SMILES)
-    assert data.shape[0] == 2
+    assert data.shape[0] == 6
     with pytest.raises(ValueError):
         m.to_fingerprints(INVALID_SMILES)
 
@@ -50,7 +59,7 @@ def test_to_fingerprints():
 def test_to_bag_of_characters():
     m = MolecularInput(key="molecules")
     data = m.to_bag_of_characters(VALID_SMILES)
-    assert data.shape[0] == 2
+    assert data.shape[0] == 6
     with pytest.raises(ValueError):
         m.to_bag_of_characters(INVALID_SMILES)
 
@@ -59,6 +68,6 @@ def test_to_bag_of_characters():
 def test_to_fragments():
     m = MolecularInput(key="molecules")
     data = m.to_fragments(VALID_SMILES)
-    assert data.shape[0] == 2
+    assert data.shape[0] == 6
     with pytest.raises(ValueError):
         m.to_fragments(INVALID_SMILES)
