@@ -1033,6 +1033,81 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular" class="md-nav__link">
+    molecular
+  </a>
+  
+    <nav class="md-nav" aria-label="molecular">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput" class="md-nav__link">
+    MolecularInput
+  </a>
+  
+    <nav class="md-nav" aria-label="MolecularInput">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.__json_encoder__" class="md-nav__link">
+    __json_encoder__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.fixed_value" class="md-nav__link">
+    fixed_value()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.get_bounds" class="md-nav__link">
+    get_bounds()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.is_fixed" class="md-nav__link">
+    is_fixed()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.sample" class="md-nav__link">
+    sample()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.validate_candidental" class="md-nav__link">
+    validate_candidental()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.validate_experimental" class="md-nav__link">
+    validate_experimental()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.data_models.features.numerical" class="md-nav__link">
     numerical
   </a>
@@ -6839,6 +6914,524 @@ of the given arguments and keywords.</p>
   </div>
 
 
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.data_models.features.molecular" class="doc doc-heading">
+        <code>molecular</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h3 id="bofire.data_models.features.molecular.MolecularInput" class="doc doc-heading">
+        <code>
+MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.data_models.features.feature.Input" href="#bofire.data_models.features.feature.Input">Input</a>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">MolecularInput</span><span class="p">(</span><span class="n">Input</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MolecularInput&quot;</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
+
+    <span class="k">def</span> <span class="nf">validate_experimental</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span>
+
+    <span class="k">def</span> <span class="nf">validate_candidental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+            <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">values</span>
+
+    <span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># TODO: model descriptors as pydantic class</span>
+    <span class="k">def</span> <span class="nf">to_fingerprints</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">bond_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="c1"># validate it</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">smiles2fingerprints</span><span class="p">(</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span> <span class="n">bond_radius</span><span class="o">=</span><span class="n">bond_radius</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="n">n_bits</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_bag_of_characters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">max_ngram</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+        <span class="c1"># todo: add selfies later</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">smiles2bag_of_characters</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span> <span class="n">max_ngram</span><span class="o">=</span><span class="n">max_ngram</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">to_fragments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">smiles2fragments</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`.&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">TTransform</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="c1"># TODO: this is only needed for optimization for which we need also</span>
+        <span class="c1"># MolecularCategorical, this will be added later.</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;`get_bounds` not yet implemented.&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.__json_encoder__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
+of the given arguments and keywords.</p>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.fixed_value" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Method to return the fixed value in case of a fixed feature.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Union[None,str,float]</code></td>
+      <td><p>None in case the feature is not fixed, else the fixed value.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">None</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.get_bounds" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns the bounds of an input feature depending on the requested transform type.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>transform_type</code></td>
+        <td><code>Optional[TTransform]</code></td>
+        <td><p>The requested transform type. Defaults to None.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>Optional[pd.Series]</code></td>
+        <td><p>If values are provided the bounds are returned taking
+the most extreme values for the feature into account. Defaults to None.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[float], List[float]]</code></td>
+      <td><p>List of lower bound values, list of upper bound values.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">TTransform</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+    <span class="c1"># TODO: this is only needed for optimization for which we need also</span>
+    <span class="c1"># MolecularCategorical, this will be added later.</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;`get_bounds` not yet implemented.&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.is_fixed" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Indicates if a variable is set to a fixed value.</p>
+
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>bool</code></td>
+      <td><p>True if fixed, els False.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">return</span> <span class="kc">False</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.sample" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Sample a series of allowed values.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>n</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of samples</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p>Sampled values.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`.&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.validate_candidental" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_candidental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Abstract method to validate the suggested candidates</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.Series</code></td>
+        <td><p>A dataFrame with candidates</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p>The passed dataFrame with candidates</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_candidental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">values</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.validate_experimental" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_experimental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Abstract method to validate the experimental dataFrame</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.Series</code></td>
+        <td><p>A dataFrame with experiments</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>strict</code></td>
+        <td><code>bool</code></td>
+        <td><p>Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.</p></td>
+        <td><code>False</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p>The passed dataFrame with experiments</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_experimental</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
+        <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">values</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 

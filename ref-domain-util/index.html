@@ -459,6 +459,47 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.utils.cheminformatics" class="md-nav__link">
+    cheminformatics
+  </a>
+  
+    <nav class="md-nav" aria-label="cheminformatics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.cheminformatics.smiles2bag_of_characters" class="md-nav__link">
+    smiles2bag_of_characters()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.cheminformatics.smiles2fingerprints" class="md-nav__link">
+    smiles2fingerprints()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.cheminformatics.smiles2fragments" class="md-nav__link">
+    smiles2fragments()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.cheminformatics.smiles2mol" class="md-nav__link">
+    smiles2mol()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.utils.doe" class="md-nav__link">
     doe
   </a>
@@ -728,6 +769,379 @@
 
 
 
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.utils.cheminformatics" class="doc doc-heading">
+        <code>cheminformatics</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.cheminformatics.smiles2bag_of_characters" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">smiles2bag_of_characters</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">max_ngram</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Transforms list of smiles to bag of characters.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>smiles</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of smiles</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>max_ngram</code></td>
+        <td><code>int</code></td>
+        <td><p>Maximal ngram value. Defaults to 5.</p></td>
+        <td><code>5</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>Array holding the bag of characters.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2bag_of_characters</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_ngram</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms list of smiles to bag of characters.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        smiles (List[str]): List of smiles</span>
+<span class="sd">        max_ngram (int, optional): Maximal ngram value. Defaults to 5.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Array holding the bag of characters.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">:</span>
+        <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+    <span class="n">cv</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_ngram</span><span class="p">),</span> <span class="n">analyzer</span><span class="o">=</span><span class="s2">&quot;char&quot;</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cv</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.cheminformatics.smiles2fingerprints" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">smiles2fingerprints</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">bond_radius</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Transforms a list of smiles to an array of morgan fingerprints.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>smiles</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of smiles</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>bond_radius</code></td>
+        <td><code>int</code></td>
+        <td><p>Bond radius to use. Defaults to 5.</p></td>
+        <td><code>5</code></td>
+      </tr>
+      <tr>
+        <td><code>n_bits</code></td>
+        <td><code>int</code></td>
+        <td><p>Number of bits. Defaults to 2048.</p></td>
+        <td><code>2048</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>Numpy array holding the fingerprints</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fingerprints</span><span class="p">(</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">bond_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms a list of smiles to an array of morgan fingerprints.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        smiles (List[str]): List of smiles</span>
+<span class="sd">        bond_radius (int, optional): Bond radius to use. Defaults to 5.</span>
+<span class="sd">        n_bits (int, optional): Number of bits. Defaults to 2048.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Numpy array holding the fingerprints</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">rdkit_mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">smiles2mol</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
+    <span class="n">fps</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">AllChem</span><span class="o">.</span><span class="n">GetMorganFingerprintAsBitVect</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
+            <span class="n">mol</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">bond_radius</span><span class="p">,</span> <span class="n">nBits</span><span class="o">=</span><span class="n">n_bits</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">rdkit_mols</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.cheminformatics.smiles2fragments" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">smiles2fragments</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Transforms smiles to an array of fragments.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>smiles</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of smiles</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>Array holding the fragment information.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fragments</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms smiles to an array of fragments.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        smiles (List[str]): List of smiles</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Array holding the fragment information.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># descList[115:] contains fragment-based features only</span>
+    <span class="c1"># (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)</span>
+    <span class="c1"># Update: in the new RDKit version the indices are [124:]</span>
+    <span class="n">fragments</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span><span class="p">[</span><span class="mi">124</span><span class="p">:]}</span>
+    <span class="n">frags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">smiles</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">fragments</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">smiles</span><span class="p">)):</span>
+        <span class="n">mol</span> <span class="o">=</span> <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smiles</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="n">fragments</span><span class="p">[</span><span class="n">d</span><span class="p">](</span><span class="n">mol</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">fragments</span><span class="p">]</span>
+        <span class="n">frags</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">features</span>
+
+    <span class="k">return</span> <span class="n">frags</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.cheminformatics.smiles2mol" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">smiles2mol</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Transforms a smiles string to an rdkit mol object.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>smiles</code></td>
+        <td><code>str</code></td>
+        <td><p>Smiles string.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>If string is not a valid smiles.</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>rdkit.Mol</code></td>
+      <td><p>rdkit.mol object</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2mol</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms a smiles string to an rdkit mol object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        smiles (str): Smiles string.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If string is not a valid smiles.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        rdkit.Mol: rdkit.mol object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">smiles</span><span class="si">}</span><span class="s2"> is not a valid smiles string.&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">mol</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 
