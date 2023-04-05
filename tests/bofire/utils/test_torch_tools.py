@@ -5,13 +5,16 @@ import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 
+import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -24,8 +27,10 @@ from bofire.data_models.objectives.api import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
+from bofire.data_models.strategies.api import PolytopeSampler
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
+    get_initial_conditions_generator,
     get_linear_constraints,
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
@@ -440,3 +445,35 @@ def test_get_multiobjective_objective():
     assert np.allclose(objective_forward[..., 0].detach().numpy(), reward1)
     assert np.allclose(objective_forward[..., 1].detach().numpy(), reward3)
     assert np.allclose(objective_forward[..., 2].detach().numpy(), reward4)
+
+
+def test_get_initial_conditions_generator():
+    input_features = Inputs(
+        features=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            CategoricalDescriptorInput(
+                key="b",
+                categories=["alpha", "beta", "gamma"],
+                descriptors=["omega"],
+                values=[[0], [1], [3]],
+            ),
+        ]
+    )
+    domain = Domain(input_features=input_features)
+    strategy = strategies.map(PolytopeSampler(domain=domain))
+    # test with one hot encoding
+    generator = get_initial_conditions_generator(
+        strategy=strategy,
+        transform_specs={"b": CategoricalEncodingEnum.ONE_HOT},
+        ask_options={},
+    )
+    initial_conditions = generator(n=3, q=2, seed=42)
+    assert initial_conditions.shape == torch.Size((3, 2, 4))
+    # test with descriptor encoding
+    generator = get_initial_conditions_generator(
+        strategy=strategy,
+        transform_specs={"b": CategoricalEncodingEnum.DESCRIPTOR},
+        ask_options={},
+    )
+    initial_conditions = generator(n=3, q=2, seed=42)
+    assert initial_conditions.shape == torch.Size((3, 2, 2))

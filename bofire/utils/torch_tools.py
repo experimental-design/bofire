@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -20,6 +20,7 @@ from bofire.data_models.objectives.api import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
+from bofire.strategies.strategy import Strategy
 
 tkwargs = {
     "dtype": torch.double,
@@ -295,3 +296,39 @@ def get_multiobjective_objective(
         return torch.stack([c(samples, None) for c in callables], dim=-1)
 
     return objective
+
+
+def get_initial_conditions_generator(
+    strategy: Strategy, transform_specs: Dict, ask_options: Dict = {}
+) -> Callable[[int, int, int], Tensor]:
+    """Takes a strategy object and returns a callable which uses this
+    strategy to return a generator callable which can be used in botorch`s
+    `gen_batch_initial_conditions` to generate samples.
+
+    Args:
+        strategy (Strategy): Strategy that should be used to generate samples.
+        transform_specs (Dict): Dictionary indicating how the samples should be
+            transformed.
+        ask_options (Dict, optional): Dictionary of keyword arguments that are
+            passed to the `ask` method of the strategy. Defaults to {}.
+
+    Returns:
+        Callable[[int, int, int], Tensor]: Callable that can be passed to
+            `batch_initial_conditions`.
+    """
+
+    def generator(n: int, q: int, seed: int) -> Tensor:
+        initial_conditions = []
+        for _ in range(n):
+            candidates = strategy.ask(q, **ask_options)
+            # transform it
+            transformed_candidates = strategy.domain.inputs.transform(
+                candidates, transform_specs
+            )
+            # transform to tensor
+            initial_conditions.append(
+                torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+            )
+        return torch.stack(initial_conditions, dim=0)
+
+    return generator
