@@ -2,6 +2,7 @@ from typing import Dict, Type
 
 from bofire.data_models.surrogates import api as data_models
 from bofire.surrogates.empirical import EmpiricalSurrogate
+from bofire.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate
 from bofire.surrogates.mlp import MLPEnsemble
 from bofire.surrogates.random_forest import RandomForestSurrogate
@@ -14,6 +15,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.SingleTaskGPSurrogate: SingleTaskGPSurrogate,
     data_models.MixedSingleTaskGPSurrogate: MixedSingleTaskGPSurrogate,
     data_models.MLPEnsemble: MLPEnsemble,
+    data_models.SaasSingleTaskGPSurrogate: SaasSingleTaskGPSurrogate,
 }
 
 
