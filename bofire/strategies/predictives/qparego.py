@@ -1,6 +1,5 @@
 from typing import Union
 
-import numpy as np
 import pandas as pd
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
@@ -12,10 +11,7 @@ from botorch.utils.sampling import sample_simplex
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    NChooseKConstraint,
 )
-from bofire.data_models.enum import CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     MaximizeObjective,
@@ -102,6 +98,7 @@ class QparegoStrategy(BotorchStrategy):
     def _ask(self, candidate_count: int):
         assert candidate_count > 0, "candidate_count has to be larger than zero."
 
+        # get the list acqfs
         acqf_list = []
         with torch.no_grad():
             clean_experiments = self.domain.outputs.preprocess_experiments_any_valid_output(
@@ -138,40 +135,18 @@ class QparegoStrategy(BotorchStrategy):
             acqf_list.append(acqf)
 
         # optimize
-        lower, upper = self.domain.inputs.get_bounds(self.input_preprocessing_specs)
-
-        num_categorical_features = len(self.domain.get_features(CategoricalInput))
-        num_categorical_combinations = len(
-            self.domain.inputs.get_categorical_combinations()
-        )
-
-        fixed_features = None
-        fixed_features_list = None
-
-        if (
-            (num_categorical_features == 0)
-            or (num_categorical_combinations == 1)
-            or (
-                (self.categorical_method == CategoricalMethodEnum.FREE)
-                and (self.descriptor_method == CategoricalMethodEnum.FREE)
-            )
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            fixed_features = self.get_fixed_features()
-
-        elif (
-            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
-            or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            fixed_features_list = self.get_categorical_combinations()
-
-        elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
-            fixed_features_list = self.get_fixed_values_list()
-        else:
-            raise IOError()
+        (
+            bounds,
+            ic_generator,
+            ic_gen_kwargs,
+            nchooseks,
+            fixed_features,
+            fixed_features_list,
+        ) = self._setup_ask()
 
         candidates, _ = optimize_acqf_list(
             acq_function_list=acqf_list,
-            bounds=torch.tensor([lower, upper]).to(**tkwargs),
+            bounds=bounds,
             num_restarts=self.num_restarts,
             raw_samples=self.num_raw_samples,
             equality_constraints=get_linear_constraints(
@@ -180,32 +155,11 @@ class QparegoStrategy(BotorchStrategy):
             inequality_constraints=get_linear_constraints(
                 domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
             ),
+            nonlinear_inequality_constraints=nchooseks,
             fixed_features=fixed_features,
             fixed_features_list=fixed_features_list,
+            ic_gen_kwargs=ic_gen_kwargs,
+            ic_generator=ic_generator,
             options={"batch_limit": 5, "maxiter": 200},
         )
-
-        preds = self.model.posterior(X=candidates).mean.detach().numpy()  # type: ignore
-        stds = np.sqrt(self.model.posterior(X=candidates).variance.detach().numpy())  # type: ignore
-
-        input_feature_keys = [
-            item
-            for key in self.domain.inputs.get_keys()
-            for item in self._features2names[key]
-        ]
-
-        df_candidates = pd.DataFrame(
-            data=candidates.detach().numpy(),
-            columns=input_feature_keys,
-        )
-
-        df_candidates = self.domain.inputs.inverse_transform(
-            df_candidates, self.input_preprocessing_specs
-        )
-
-        for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
-            df_candidates[feat.key + "_pred"] = preds[:, i]
-            df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
-
-        return df_candidates
+        return self._postprocess_candidates(candidates=candidates)

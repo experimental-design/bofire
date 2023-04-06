@@ -1,22 +1,26 @@
+import itertools
 import unittest
 import warnings
 from typing import Literal, Type
 
 import pandas as pd
 import pytest
+import torch
+from botorch.optim.initializers import gen_batch_initial_conditions
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
 import bofire.strategies.api as strategies
 import tests.bofire.data_models.specs.api as specs
+from bofire.benchmarks.single import Hartmann
 from bofire.data_models.constraints.api import (
     Constraint,
-    LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -27,6 +31,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.utils.torch_tools import get_nchoosek_constraints, tkwargs
 from tests.bofire.data_models.test_domain_validators import generate_experiments
 from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
@@ -63,9 +68,9 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return my_type in [
-            LinearConstraint,
             LinearEqualityConstraint,
             LinearInequalityConstraint,
+            NChooseKConstraint,
         ]
 
     @classmethod
@@ -733,3 +738,127 @@ def test_base_predict(domain, data, acquisition_function):
     predictions = myStrategy.predict(data)
     assert len(predictions.columns.tolist()) == 3 * len(domain.get_feature_keys(Output))
     assert data.index[-1] == predictions.index[-1]
+
+
+@pytest.mark.parametrize(
+    "categorical_method, descriptor_method, discrete_method",
+    list(
+        itertools.product(
+            [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
+            [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
+            [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
+        )
+    ),
+)
+def test_base_setup_ask_fixed_features(
+    categorical_method, descriptor_method, discrete_method
+):
+    # test for fixed features list
+    data_model = DummyStrategyDataModel(
+        domain=domains[0],
+        acquisition_function=specs.acquisition_functions.valid().obj(),
+        categorical_method=categorical_method,
+        descriptor_method=descriptor_method,
+        discrete_method=discrete_method,
+        surrogate_specs=surrogate_data_models.BotorchSurrogates(
+            surrogates=[
+                surrogate_data_models.SingleTaskGPSurrogate(
+                    input_features=domains[0].input_features,
+                    output_features=domains[0].output_features,
+                    # input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
+                )
+            ]
+        ),
+    )
+    myStrategy = DummyStrategy(data_model=data_model)
+    (
+        bounds,
+        ic_generator,
+        ic_gen_kwargs,
+        nchooseks,
+        fixed_features,
+        fixed_features_list,
+    ) = myStrategy._setup_ask()
+    if any(
+        enc == CategoricalMethodEnum.EXHAUSTIVE
+        for enc in [
+            categorical_method,
+            descriptor_method,
+            discrete_method,
+        ]
+    ):
+        assert fixed_features is None
+        assert fixed_features_list is not None
+    else:
+        assert fixed_features == {}
+        assert fixed_features_list is None
+
+    data_model = DummyStrategyDataModel(
+        domain=domains[3],
+        acquisition_function=specs.acquisition_functions.valid().obj(),
+        categorical_method=categorical_method,
+        descriptor_method=descriptor_method,
+        discrete_method=discrete_method,
+    )
+    myStrategy = DummyStrategy(data_model=data_model)
+    (
+        bounds,
+        ic_generator,
+        ic_gen_kwargs,
+        nchooseks,
+        fixed_features,
+        fixed_features_list,
+    ) = myStrategy._setup_ask()
+    assert fixed_features == {1: 3.0}
+    assert fixed_features_list is None
+
+
+def test_base_setup_ask():
+    # test for no nchooseks
+    benchmark = Hartmann()
+    data_model = DummyStrategyDataModel(
+        domain=benchmark.domain,
+        acquisition_function=specs.acquisition_functions.valid().obj(),
+    )
+    myStrategy = DummyStrategy(data_model=data_model)
+    (
+        bounds,
+        ic_generator,
+        ic_gen_kwargs,
+        nchooseks,
+        fixed_features,
+        fixed_features_list,
+    ) = myStrategy._setup_ask()
+    assert torch.allclose(
+        bounds,
+        torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
+    )
+    assert ic_generator is None
+    assert ic_gen_kwargs == {}
+    assert nchooseks is None
+    assert fixed_features == {}
+    assert fixed_features_list is None
+    # test for nchooseks
+    benchmark = Hartmann(dim=6, allowed_k=3)
+    data_model = DummyStrategyDataModel(
+        domain=benchmark.domain,
+        acquisition_function=specs.acquisition_functions.valid().obj(),
+    )
+    myStrategy = DummyStrategy(data_model=data_model)
+    (
+        bounds,
+        ic_generator,
+        ic_gen_kwargs,
+        nchooseks,
+        fixed_features,
+        fixed_features_list,
+    ) = myStrategy._setup_ask()
+    assert torch.allclose(
+        bounds,
+        torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
+    )
+    assert ic_generator == gen_batch_initial_conditions
+    assert list(ic_gen_kwargs.keys()) == ["generator"]
+    assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))
+    assert fixed_features == {}
+    assert fixed_features_list is None
