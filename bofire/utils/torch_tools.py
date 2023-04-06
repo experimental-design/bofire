@@ -102,6 +102,16 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     def narrow_gaussian(x, ell=1e-3):
         return torch.exp(-0.5 * (x / ell) ** 2)
 
+    def max_constraint(indices: Tensor, num_features: int, max_count: int):
+        return lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1) - (
+            num_features - max_count
+        )
+
+    def min_constraint(indices: Tensor, num_features: int, min_count: int):
+        return lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1) + (
+            num_features - min_count
+        )
+
     constraints = []
     # ignore none also valid for the start
     for c in domain.cnstrs.get(NChooseKConstraint):
@@ -112,13 +122,15 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
         )
         if c.max_count != len(c.features):
             constraints.append(
-                lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1)
-                - (len(c.features) - c.max_count)  # type: ignore
+                max_constraint(
+                    indices=indices, num_features=len(c.features), max_count=c.max_count
+                )
             )
         if c.min_count > 0:
             constraints.append(
-                lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1)
-                + (len(c.features) - c.min_count)  # type: ignore
+                min_constraint(
+                    indices=indices, num_features=len(c.features), min_count=c.min_count
+                )
             )
     return constraints
 
