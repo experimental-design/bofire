@@ -50,7 +50,7 @@ class NChooseKConstraint(Constraint):
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         raise NotImplementedError
 
-    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-5) -> pd.Series:
         """Check if the concurrency constraint is fulfilled for all the rows of the provided dataframe.
 
         Args:
