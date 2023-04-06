@@ -447,7 +447,8 @@ def test_get_multiobjective_objective():
     assert np.allclose(objective_forward[..., 2].detach().numpy(), reward4)
 
 
-def test_get_initial_conditions_generator():
+@pytest.mark.parametrize("sequential", [True, False])
+def test_get_initial_conditions_generator(sequential: bool):
     input_features = Inputs(
         features=[
             ContinuousInput(key="a", bounds=(0, 1)),
@@ -466,6 +467,7 @@ def test_get_initial_conditions_generator():
         strategy=strategy,
         transform_specs={"b": CategoricalEncodingEnum.ONE_HOT},
         ask_options={},
+        sequential=sequential,
     )
     initial_conditions = generator(n=3, q=2, seed=42)
     assert initial_conditions.shape == torch.Size((3, 2, 4))
@@ -474,6 +476,7 @@ def test_get_initial_conditions_generator():
         strategy=strategy,
         transform_specs={"b": CategoricalEncodingEnum.DESCRIPTOR},
         ask_options={},
+        sequential=sequential,
     )
     initial_conditions = generator(n=3, q=2, seed=42)
     assert initial_conditions.shape == torch.Size((3, 2, 2))

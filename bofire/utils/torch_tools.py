@@ -299,7 +299,10 @@ def get_multiobjective_objective(
 
 
 def get_initial_conditions_generator(
-    strategy: Strategy, transform_specs: Dict, ask_options: Dict = {}
+    strategy: Strategy,
+    transform_specs: Dict,
+    ask_options: Dict = {},
+    sequential: bool = True,
 ) -> Callable[[int, int, int], Tensor]:
     """Takes a strategy object and returns a callable which uses this
     strategy to return a generator callable which can be used in botorch`s
@@ -311,6 +314,9 @@ def get_initial_conditions_generator(
             transformed.
         ask_options (Dict, optional): Dictionary of keyword arguments that are
             passed to the `ask` method of the strategy. Defaults to {}.
+        sequential (bool, optional): If True, samples for every q-batch are
+            generate indepenent from each other. If False, the `n x q` samples
+            are generated at once.
 
     Returns:
         Callable[[int, int, int], Tensor]: Callable that can be passed to
@@ -318,17 +324,29 @@ def get_initial_conditions_generator(
     """
 
     def generator(n: int, q: int, seed: int) -> Tensor:
-        initial_conditions = []
-        for _ in range(n):
-            candidates = strategy.ask(q, **ask_options)
+        if sequential:
+            initial_conditions = []
+            for _ in range(n):
+                candidates = strategy.ask(q, **ask_options)
+                # transform it
+                transformed_candidates = strategy.domain.inputs.transform(
+                    candidates, transform_specs
+                )
+                # transform to tensor
+                initial_conditions.append(
+                    torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+                )
+            return torch.stack(initial_conditions, dim=0)
+        else:
+            candidates = strategy.ask(n * q, **ask_options)
             # transform it
             transformed_candidates = strategy.domain.inputs.transform(
                 candidates, transform_specs
             )
-            # transform to tensor
-            initial_conditions.append(
-                torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+            return (
+                torch.from_numpy(transformed_candidates.values)
+                .to(**tkwargs)
+                .reshape(n, q, transformed_candidates.shape[1])
             )
-        return torch.stack(initial_conditions, dim=0)
 
     return generator
