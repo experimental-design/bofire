@@ -83,9 +83,9 @@ def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
 
-    experiments = benchmark.f(random_strategy.ask(n=20), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
     experiments_test = benchmark.f(
-        random_strategy._ask(n=num_test_candidates), return_complete=True
+        random_strategy.ask(num_test_candidates), return_complete=True
     )
 
     data_model = data_models.SoboStrategy(
