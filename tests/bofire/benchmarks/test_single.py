@@ -1,7 +1,19 @@
 import numpy as np
 import pytest
 
-from bofire.benchmarks.single import Ackley, Himmelblau
+from bofire.benchmarks.single import Ackley, Hartmann, Himmelblau
+
+
+def test_hartmann():
+    with pytest.raises(ValueError):
+        Hartmann(8)
+    h = Hartmann(dim=6, allowed_k=3)
+    assert h.dim == 6
+    assert h.domain.constraints[0].max_count == 3
+    with pytest.raises(ValueError):
+        h.get_optima()
+    h = Hartmann(dim=6, allowed_k=None)
+    assert len(h.domain.constraints) == 0
 
 
 @pytest.mark.parametrize(
@@ -11,6 +23,8 @@ from bofire.benchmarks.single import Ackley, Himmelblau
         (Ackley, False, {}),
         (Himmelblau, True, {}),
         (Ackley, True, {}),
+        (Hartmann, True, {}),
+        (Hartmann, False, {})
         # TO DO: Implement feature that tests Ackley for categorical and descriptive inputs.
         # (Ackley, {"categorical": True}),
         # (Ackley, {"descriptor": True}),

@@ -1,9 +1,14 @@
+from typing import Optional
+
 import numpy as np
 import pandas as pd
+import torch
+from botorch.test_functions import Hartmann as botorch_hartmann
 from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.constraints.api import NChooseKConstraint
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -148,6 +153,60 @@ class Ackley(Benchmark):
         return pd.DataFrame(
             np.c_[x, y],
             columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
+        )
+
+
+class Hartmann(Benchmark):
+    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None) -> None:
+        super().__init__()
+        self._domain = Domain(
+            input_features=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                ]
+            ),
+            output_features=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    NChooseKConstraint(
+                        features=[f"x_{i}" for i in range(dim)],
+                        min_count=0,
+                        max_count=allowed_k,
+                        none_also_valid=True,
+                    )
+                ]
+            )
+            if allowed_k
+            else Constraints(),
+        )
+        self._hartmann = botorch_hartmann(dim=dim)
+
+    @property
+    def dim(self) -> int:
+        return len(self.domain.inputs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "y": self._hartmann(
+                    torch.from_numpy(
+                        candidates[[f"x_{i}" for i in range(self.dim)]].values
+                    )
+                ),
+                "valid_y": [1 for _ in range(len(candidates))],
+            }
+        )
+
+    def get_optima(self) -> pd.DataFrame:
+        if self.dim != 6:
+            raise ValueError("Only available for dim==6.")
+        if len(self.domain.constraints) > 0:
+            raise ValueError("Not defined for NChooseK use case.")
+        return pd.DataFrame(
+            columns=[f"x_{i}" for i in range(self.dim)] + ["y"],
+            data=[[0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, -3.32237]],
         )
 
 
