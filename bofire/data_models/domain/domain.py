@@ -597,7 +597,7 @@ class Domain(BaseModel):
         )
 
     def validate_candidates(
-        self, candidates: pd.DataFrame, only_inputs: bool = False, tol: float = 1e-6
+        self, candidates: pd.DataFrame, only_inputs: bool = False, tol: float = 1e-5
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
@@ -622,7 +622,7 @@ class Domain(BaseModel):
         self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
         if not self.cnstrs.is_fulfilled(candidates, tol=tol).all():
-            raise ValueError("Constraints not fulfilled.")
+            raise ValueError(f"Constraints not fulfilled: {candidates}")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.output_features, Outputs)
