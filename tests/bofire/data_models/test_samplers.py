@@ -149,3 +149,16 @@ def test_PolytopeSampler_all_fixed():
     sampler = strategies.PolytopeSampler(data_model=data_model)
     with pytest.warns(UserWarning):
         sampler.ask(2)
+
+
+def test_PolytopeSampler_nchoosek():
+    domain = Domain(
+        input_features=[if1, if2, if3, if4, if6, If7],
+        constraints=[c6, c2],
+    )
+    data_model = data_models.PolytopeSampler(domain=domain)
+    sampler = strategies.PolytopeSampler(data_model=data_model)
+    samples = sampler.ask(5, return_all=True)
+    assert len(samples) == 15
+    samples = sampler.ask(50, return_all=False)
+    assert len(samples) == 50
