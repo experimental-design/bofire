@@ -194,14 +194,15 @@ def constraints_as_scipy_constraints(
     domain: Domain,
     n_experiments: int,
     tol: float = 1e-3,
+    ignore_nchoosek: bool = True,
 ) -> List:
-    """Formulates opti constraints as scipy constraints. Ignores NchooseK constraints
-    (these can be formulated as bounds).
+    """Formulates opti constraints as scipy constraints.
 
     Args:
         domain (Domain): Domain whose constraints should be formulated as scipy constraints.
         n_experiments (int): Number of instances of inputs for problem that are evaluated together.
         tol (float): Tolerance for the computation of the constraint violation. Default value is 1e-3.
+        ingore_nchoosek (bool): NChooseK constraints are ignored if set to true. Defaults to True.
 
     Returns:
         A list of scipy constraints corresponding to the constraints of the given opti problem.
@@ -286,7 +287,19 @@ def constraints_as_scipy_constraints(
                 constraints.append(NonlinearConstraint(fun, lb, ub))
 
         elif isinstance(c, NChooseKConstraint):
-            pass
+            if ignore_nchoosek:
+                pass
+            else:
+                # write upper/lower bound as vector
+                lb = -np.inf * np.ones(n_experiments)
+                ub = np.zeros(n_experiments)
+
+                # define constraint evaluation (and gradient if provided)
+                fun = ConstraintWrapper(
+                    constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+                )
+
+                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
 
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")

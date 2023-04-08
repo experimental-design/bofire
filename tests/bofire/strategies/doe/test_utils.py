@@ -316,8 +316,19 @@ def test_constraints_as_scipy_constraints():
     )
     n_experiments = 1
 
-    constraints = constraints_as_scipy_constraints(domain, n_experiments)
+    constraints = constraints_as_scipy_constraints(
+        domain, n_experiments, ignore_nchoosek=True
+    )
     assert len(constraints) == 0
+
+    constraints = constraints_as_scipy_constraints(
+        domain, n_experiments, ignore_nchoosek=False
+    )
+    assert len(constraints) == 1
+    assert isinstance(constraints[0], NonlinearConstraint)
+    assert np.allclose(
+        constraints[0].fun(np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])), [2, 0, 0]
+    )
 
 
 def test_ConstraintWrapper():
@@ -375,7 +386,7 @@ def test_ConstraintWrapper():
         ),
     )
 
-    # linear inequaity
+    # linear inequality
     c = ConstraintWrapper(domain.constraints[1], domain, tol=0, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
     assert np.allclose(
@@ -419,9 +430,9 @@ def test_ConstraintWrapper():
     )
 
     # nchoosek constraint
-    with pytest.raises(NotImplementedError):
-        c = ConstraintWrapper(domain.constraints[4], domain, tol=0)
-        assert np.allclose(c(x), np.array([1, 0.5, 0]))
+    c = ConstraintWrapper(domain.constraints[4], domain, tol=0)
+    assert np.allclose(c(x), np.array([1, 0.5, 0]))
+    assert np.allclose(c.jacobian(x), np.zeros(shape=(3,12)))
 
     # constraint not containing all inputs from domain
     c = ConstraintWrapper(domain.constraints[5], domain, tol=0, n_experiments=3)
