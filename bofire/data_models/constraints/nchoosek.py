@@ -152,6 +152,6 @@ class NChooseKConstraint(Constraint):
 
         violation.backward(torch.ones(experiments_tensor.shape[0]))
 
-        jacobian = experiments_tensor.grad.detach().numpy()
+        jacobian = experiments_tensor.grad.detach().numpy()  # type: ignore
 
         return pd.DataFrame(jacobian, columns=[f"dg/d{name}" for name in self.features])

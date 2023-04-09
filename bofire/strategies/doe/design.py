@@ -7,9 +7,13 @@ from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
-from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousOutput,
+    DiscreteInput,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -134,7 +138,11 @@ def find_local_max_ipopt(
             [
                 p.bounds
                 for p in domain.inputs
-                if not (isinstance(p, CategoricalInput) or isinstance(p, ContinuousOutput))
+                if not (
+                    isinstance(p, CategoricalInput)
+                    or isinstance(p, ContinuousOutput)
+                    or isinstance(p, DiscreteInput)
+                )
             ]
             * n_experiments
         )

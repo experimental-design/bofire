@@ -14,7 +14,6 @@ from bofire.data_models.constraints.api import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.data_models.constraints.nchoosek import narrow_gaussian
 from bofire.data_models.domain.api import Constraints, Inputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput

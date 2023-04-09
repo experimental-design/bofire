@@ -430,9 +430,9 @@ def test_ConstraintWrapper():
     )
 
     # nchoosek constraint
-    c = ConstraintWrapper(domain.constraints[4], domain, tol=0)
-    assert np.allclose(c(x), np.array([1, 0.5, 0]))
-    assert np.allclose(c.jacobian(x), np.zeros(shape=(3,12)))
+    c = ConstraintWrapper(domain.constraints[4], domain, tol=0, n_experiments=3)
+    assert np.allclose(c(x), np.array([1, 1, 0]))
+    assert np.allclose(c.jacobian(x), np.zeros(shape=(3, 12)))
 
     # constraint not containing all inputs from domain
     c = ConstraintWrapper(domain.constraints[5], domain, tol=0, n_experiments=3)
@@ -447,6 +447,9 @@ def test_ConstraintWrapper():
             ]
         ),
     )
+
+
+test_ConstraintWrapper()
 
 
 def test_d_optimality():

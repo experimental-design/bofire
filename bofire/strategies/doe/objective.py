@@ -101,8 +101,11 @@ class DOptimality:
 
         """
         X = self._convert_input_to_model_tensor(x)
-        return -1 * torch.logdet(
-            X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
+        return float(
+            -1
+            * torch.logdet(
+                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
+            )
         )
 
     def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -120,7 +123,7 @@ class DOptimality:
 
         # first part of jacobian
         torch.logdet(X.T @ X + self.delta * torch.eye(self.n_model_terms)).backward()
-        J1 = -1 * X.grad.detach().numpy()
+        J1 = -1 * X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
             self.n_experiments, self.n_vars, self.n_model_terms
         )
