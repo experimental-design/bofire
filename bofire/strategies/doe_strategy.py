@@ -25,13 +25,21 @@ class DoEStrategy(Strategy):
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         _fixed_experiments = self.candidates
         _domain = self.domain
+
+        if _fixed_experiments is not None:
+            _fixed_experiments_count = len(_fixed_experiments)
+            _candidate_count = candidate_count + len(_fixed_experiments)
+        else:
+            _fixed_experiments_count = 0
+            _candidate_count = candidate_count
+
         design = find_local_max_ipopt(
             _domain,
             self.formula,
-            n_experiments=candidate_count,
+            n_experiments=_candidate_count,
             fixed_experiments=_fixed_experiments,
         )
-        return design  # type: ignore
+        return design.iloc[_fixed_experiments_count:, :]  # type: ignore
 
     def has_sufficient_experiments(
         self,

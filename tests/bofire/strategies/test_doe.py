@@ -72,24 +72,6 @@ def test_doe_strategy_ask_with_candidates():
     assert candidates.shape == (12, 3)
 
 
-def test_doe_strategy_ask_with_all_candidates_fixed():
-    candidates_fixed = pd.DataFrame(
-        np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
-        columns=["x1", "x2", "x3"],
-    )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
-    strategy = DoEStrategy(data_model=data_model)
-    strategy.set_candidates(candidates_fixed)
-    candidates = strategy.ask(candidate_count=4)
-    for row in candidates.to_numpy():
-        assert any(
-            [np.allclose(row, o, atol=1e-2) for o in candidates_fixed.to_numpy()]
-        )
-    for o in candidates_fixed.to_numpy()[:-1]:
-        assert any([np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy()])
-    assert candidates.shape == (4, 3)
-
-
 def test_doe_categoricals_not_implemented():
     categorical_inputs = [
         CategoricalInput(key=f"x{i+1}", categories=["a", "b", "c"]) for i in range(3)
@@ -138,16 +120,18 @@ def test_nchoosek_implemented():
 
 def test_formulas_implemented():
 
-    for formula in [
-        "linear",
-        "linear-and-quadratic",
-        "linear-and-interactions",
-        "fully-quadratic",
-    ]:
+    expected_num_candidates = {
+        "linear": 7,  # 1+a+b+c+3
+        "linear-and-quadratic": 10,  # 1+a+b+c+a**2+b**2+c**2+3
+        "linear-and-interactions": 10,  # 1+a+b+c+ab+ac+bc+3
+        "fully-quadratic": 13,  # 1+a+b+c+a**2+b**2+c**2+ab+ac+bc+3
+    }
+
+    for formula, num_candidates in expected_num_candidates.items():
         data_model = data_models.DoEStrategy(domain=domain, formula=formula)
         strategy = DoEStrategy(data_model=data_model)
-        candidates = strategy.ask(candidate_count=12)
-        assert candidates.shape == (12, 3)
+        candidates = strategy.ask()
+        assert candidates.shape == (num_candidates, 3)
 
 
 def test_doe_strategy_correctness():
@@ -183,3 +167,14 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
+
+
+if __name__ == "__main__":
+    test_doe_strategy_ask()
+    test_doe_strategy_ask_with_candidates()
+    test_doe_categoricals_not_implemented()
+    test_doe_discrete_not_implemented()
+    test_nchoosek_implemented()
+    test_formulas_implemented()
+    test_doe_strategy_correctness()
+    test_doe_strategy_amount_of_candidates()
