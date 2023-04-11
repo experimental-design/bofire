@@ -4,19 +4,14 @@ import botorch
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.transforms.input import (
-    ChainedInputTransform,
-    InputStandardize,
-    Normalize,
-    OneHotToNumeric,
-)
+from botorch.models.transforms.input import ChainedInputTransform, OneHotToNumeric
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
-from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
+from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
 
@@ -39,7 +34,15 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        # get transform meta information
+        scaler = get_scaler(
+            self.input_features, self.input_preprocessing_specs, self.scaler, X
+        )
+        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+
+        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
+            Y.values
+        ).to(**tkwargs)
+
         features2idx, _ = self.input_features._get_transform_info(
             self.input_preprocessing_specs
         )
@@ -48,57 +51,26 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             for key, value in self.input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
         ]
-        # transform X
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
-
-        # transform from pandas to torch
-        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
-            Y.values
-        ).to(**tkwargs)
-
-        if tX.dim() == 2:
-            batch_shape = torch.Size()
-        else:
-            batch_shape = torch.Size([tX.shape[0]])
-
-        # get indices of the continuous and categorical dims
-        d = tX.shape[-1]
 
         ord_dims = []
         for feat in self.input_features.get():
             if feat.key not in non_numerical_features:
                 ord_dims += features2idx[feat.key]
+
+        # these are the categorical dimesions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(len(ord_dims), len(ord_dims) + len(non_numerical_features))
         )
+        # these are the categorical features within the the OneHotToNumeric transform
         categorical_features = {
             features2idx[feat][0]: len(features2idx[feat])
             for feat in non_numerical_features
         }
 
-        # first get the scaler
-        if self.scaler == ScalerEnum.NORMALIZE:
-            # TODO: take the real bounds here
-            lower, upper = self.input_features.get_bounds(
-                specs=self.input_preprocessing_specs, experiments=X
-            )
-            scaler = Normalize(
-                d=d,
-                bounds=torch.tensor([lower, upper]).to(**tkwargs),
-                indices=ord_dims,
-                batch_shape=batch_shape,
-            )
-        elif self.scaler == ScalerEnum.STANDARDIZE:
-            scaler = InputStandardize(
-                d=d,
-                indices=ord_dims,
-                batch_shape=batch_shape,
-            )
-        else:
-            raise ValueError("Scaler enum not known.")
-
         o2n = OneHotToNumeric(
-            dim=d, categorical_features=categorical_features, transform_on_train=False
+            dim=tX.shape[1],
+            categorical_features=categorical_features,
+            transform_on_train=False,
         )
         tf = ChainedInputTransform(tf1=scaler, tf2=o2n)
 

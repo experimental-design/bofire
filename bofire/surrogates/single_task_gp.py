@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, Optional, Union
 
 import botorch
 import pandas as pd
@@ -8,6 +8,7 @@ from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -16,32 +17,62 @@ from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
 
 
-def get_dim_subsets(d: int, active_dims: List[int], cat_dims: List[int]):
-    def check_indices(d, indices):
-        if len(set(indices)) != len(indices):
-            raise ValueError("Elements of `indices` list must be unique!")
-        if any([i > d - 1 for i in indices]):
-            raise ValueError("Elements of `indices` have to be smaller than `d`!")
-        if len(indices) > d:
-            raise ValueError("Can provide at most `d` indices!")
-        if any([i < 0 for i in indices]):
-            raise ValueError("Elements of `indices` have to be smaller than `d`!")
-        return indices
+def get_scaler(
+    input_features: Inputs,
+    input_preprocessing_specs: Dict[str, CategoricalEncodingEnum],
+    scaler: ScalerEnum,
+    X: pd.DataFrame,
+) -> Union[InputStandardize, Normalize]:
+    """Returns the instanitated scaler object for a set of input features and
+    input_preprocessing_specs.
 
-    if len(active_dims) == 0:
-        raise ValueError("At least one active dim has to be provided!")
 
-    # check validity of indices
-    active_dims = check_indices(d, active_dims)
-    cat_dims = check_indices(d, cat_dims)
+    Args:
+        input_features (Inputs): Input features.
+        input_preprocessing_specs (Dict[str, CategoricalEncodingEnum]): Dictionary how to treat
+            the categoricals.
+        scaler (ScalerEnum): Enum indicating the scaler of interest.
+        X (pd.DataFrame): The dataset of interest.
 
-    # compute subsets
-    ord_dims = sorted(set(range(d)) - set(cat_dims))
-    ord_active_dims = sorted(
-        set(active_dims) - set(cat_dims)
-    )  # includes also descriptors
-    cat_active_dims = sorted([i for i in cat_dims if i in active_dims])
-    return ord_dims, ord_active_dims, cat_active_dims
+    Returns:
+        Union[InputStandardize, Normalize]: The instantiated scaler class
+    """
+    features2idx, _ = input_features._get_transform_info(input_preprocessing_specs)
+
+    d = 0
+    for indices in features2idx.values():
+        d += len(indices)
+
+    non_numerical_features = [
+        key
+        for key, value in input_preprocessing_specs.items()
+        if value != CategoricalEncodingEnum.DESCRIPTOR
+    ]
+
+    ord_dims = []
+    for feat in input_features.get():
+        if feat.key not in non_numerical_features:
+            ord_dims += features2idx[feat.key]
+
+    if scaler == ScalerEnum.NORMALIZE:
+        lower, upper = input_features.get_bounds(
+            specs=input_preprocessing_specs, experiments=X
+        )
+        scaler_transform = Normalize(
+            d=d,
+            bounds=torch.tensor([lower, upper]).to(**tkwargs),
+            indices=ord_dims,
+            batch_shape=torch.Size(),
+        )
+    elif scaler == ScalerEnum.STANDARDIZE:
+        scaler_transform = InputStandardize(
+            d=d,
+            indices=ord_dims,
+            batch_shape=torch.Size(),
+        )
+    else:
+        raise ValueError("Scaler enum not known.")
+    return scaler_transform
 
 
 class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
@@ -59,63 +90,22 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        # get transform meta information
-        features2idx, _ = self.input_features._get_transform_info(
-            self.input_preprocessing_specs
+        scaler = get_scaler(
+            self.input_features, self.input_preprocessing_specs, self.scaler, X
         )
-        non_numerical_features = [
-            key
-            for key, value in self.input_preprocessing_specs.items()
-            if value != CategoricalEncodingEnum.DESCRIPTOR
-        ]
-        # transform X
         transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
 
-        # transform from pandas to torch
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values
         ).to(**tkwargs)
-
-        if tX.dim() == 2:
-            batch_shape = torch.Size()
-        else:
-            batch_shape = torch.Size([tX.shape[0]])
-
-        d = tX.shape[-1]
-
-        cat_dims = []
-        for feat in non_numerical_features:
-            cat_dims += features2idx[feat]
-
-        ord_dims, _, _ = get_dim_subsets(
-            d=d, active_dims=list(range(d)), cat_dims=cat_dims
-        )
-        # first get the scaler
-        # TODO use here the real bounds
-        if self.scaler == ScalerEnum.NORMALIZE:
-            lower, upper = self.input_features.get_bounds(
-                specs=self.input_preprocessing_specs, experiments=X
-            )
-
-            scaler = Normalize(
-                d=d,
-                bounds=torch.tensor([lower, upper]).to(**tkwargs),
-                batch_shape=batch_shape,
-            )
-        elif self.scaler == ScalerEnum.STANDARDIZE:
-            scaler = InputStandardize(
-                d=d,
-                indices=ord_dims if len(ord_dims) != d else None,
-                batch_shape=batch_shape,
-            )
-        else:
-            raise ValueError("Scaler enum not known.")
 
         self.model = botorch.models.SingleTaskGP(  # type: ignore
             train_X=tX,
             train_Y=tY,
             covar_module=self.kernel.to_gpytorch(
-                batch_shape=batch_shape, active_dims=list(range(d)), ard_num_dims=1
+                batch_shape=torch.Size(),
+                active_dims=list(range(tX.shape[1])),
+                ard_num_dims=1,  # this keyword is ingored
             ),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=scaler,
