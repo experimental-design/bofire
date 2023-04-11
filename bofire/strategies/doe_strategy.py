@@ -25,10 +25,11 @@ class DoEStrategy(Strategy):
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         _fixed_experiments = self.candidates
         _domain = self.domain
+
         design = find_local_max_ipopt(
             _domain,
             self.formula,
-            n_experiments=candidate_count + len(_fixed_experiments),
+            n_experiments=candidate_count,
             fixed_experiments=_fixed_experiments,
         )
         return design  # type: ignore
