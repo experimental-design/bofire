@@ -183,7 +183,3 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
-
-
-if __name__ == "__main__":
-    test_doe_strategy_amount_of_candidates()
