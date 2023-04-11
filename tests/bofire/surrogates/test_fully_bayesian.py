@@ -31,11 +31,10 @@ def test_SaasSingleTaskGPSurrogate():
     )
     gp = surrogates.map(data_model)
     gp.fit(experiments=experiments)
-    preds = gp.predict(experiments)
-    assert preds.shape == (10, 2)
-    #
     dump = gp.dumps()
     gp2 = surrogates.map(data_model=data_model)
     gp2.loads(dump)
+    preds = gp.predict(experiments)
+    assert preds.shape == (10, 2)
     preds2 = gp.predict(experiments)
     assert_frame_equal(preds, preds2)
