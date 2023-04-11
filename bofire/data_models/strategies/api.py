@@ -1,5 +1,6 @@
 from typing import Union
 
+from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -18,7 +19,6 @@ from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.strategies.doe import DoEStrategy
 
 AbstractStrategy = Union[
     Strategy,
