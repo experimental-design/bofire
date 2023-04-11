@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pandas as pd
 
@@ -12,10 +14,16 @@ from bofire.strategies.api import DoEStrategy
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=UserWarning, append=True)
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+
 input_features = [
-    ContinuousInput(key=f"x{1}", lower_bound=0, upper_bound=1),
-    ContinuousInput(key=f"x{2}", lower_bound=0.1, upper_bound=1),
-    ContinuousInput(key=f"x{3}", lower_bound=0, upper_bound=0.6),
+    ContinuousInput(key=f"x{1}", lower_bound=0.0, upper_bound=1.0),
+    ContinuousInput(key=f"x{2}", lower_bound=0.1, upper_bound=1.0),
+    ContinuousInput(key=f"x{3}", lower_bound=0.0, upper_bound=0.6),
 ]
 domain = Domain(
     input_features=input_features,
