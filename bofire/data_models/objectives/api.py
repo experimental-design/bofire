@@ -1,8 +1,6 @@
 from typing import Union
 
-from bofire.data_models.objectives.contant import ConstantObjective
 from bofire.data_models.objectives.identity import (
-    DeltaObjective,
     IdentityObjective,
     MaximizeObjective,
     MinimizeObjective,
@@ -26,9 +24,15 @@ AbstractObjective = Union[
     BotorchConstrainedObjective,
 ]
 
+AnyConstraintObjective = Union[
+    MaximizeSigmoidObjective,
+    MinimizeSigmoidObjective,
+    TargetObjective,
+]
+
+AnyRealObjective = Union[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
+
 AnyObjective = Union[
-    ConstantObjective,
-    DeltaObjective,
     MaximizeObjective,
     MinimizeObjective,
     MaximizeSigmoidObjective,

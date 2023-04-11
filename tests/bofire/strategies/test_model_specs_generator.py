@@ -9,7 +9,7 @@ from tests.bofire.strategies.specs import (
     VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
     VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
 )
-from tests.bofire.strategies.test_sobo import VALID_BOTORCH_SOBO_STRATEGY_SPEC
+from tests.bofire.strategies.test_qehvi import VALID_BOTORCH_QEHVI_STRATEGY_SPEC
 
 if1 = ContinuousInput(
     **{
@@ -31,24 +31,24 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"}
     "strategy, expected_count",
     [
         (
-            data_models.SoboStrategy(
-                **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
+            data_models.QnehviStrategy(
+                **VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
             ),
             2,
         ),
         (
-            data_models.SoboStrategy(
+            data_models.QnehviStrategy(
                 **{
-                    **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
+                    **VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
                     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
                         surrogates=[
                             surrogate_data_models.SingleTaskGPSurrogate(
-                                input_features=VALID_BOTORCH_SOBO_STRATEGY_SPEC[
+                                input_features=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
                                 ].input_features,
                                 output_features=Outputs(
                                     features=[
-                                        VALID_BOTORCH_SOBO_STRATEGY_SPEC[
+                                        VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                             "domain"
                                         ].output_features.get_by_key("of1")
                                     ]
@@ -74,8 +74,8 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
     "strategy, specs",
     [
         (
-            data_models.SoboStrategy(
-                **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
+            data_models.QnehviStrategy(
+                **VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
             ),
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
@@ -83,7 +83,7 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
                         input_features=Inputs(features=[if1, if2]),
                         output_features=Outputs(
                             features=[
-                                VALID_BOTORCH_SOBO_STRATEGY_SPEC[
+                                VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
                                 ].output_features.get_by_key("of1")
                             ]
@@ -93,13 +93,13 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
             ),
         ),
         (
-            data_models.SoboStrategy(
-                **VALID_BOTORCH_SOBO_STRATEGY_SPEC,
+            data_models.QnehviStrategy(
+                **VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
             ),
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=VALID_BOTORCH_SOBO_STRATEGY_SPEC[
+                        input_features=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                             "domain"
                         ].input_features,
                         output_features=Outputs(features=[of1]),

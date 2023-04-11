@@ -25,7 +25,10 @@ if3 = specs.features.valid(CategoricalDescriptorInput).obj(key="cat_")
 if4 = specs.features.valid(CategoricalInput).obj(
     key="cat2", allowed=[True, True, False]
 )
-if5 = specs.features.valid(ContinuousInput).obj(key="if5", lower_bound=3, upper_bound=3)
+if5 = specs.features.valid(ContinuousInput).obj(
+    key="if5",
+    bounds=(3, 3),
+)
 if6 = specs.features.valid(CategoricalInput).obj(
     key="if6", categories=["c1", "c2", "c3"], allowed=[True, False, False]
 )

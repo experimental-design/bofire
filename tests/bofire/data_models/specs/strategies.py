@@ -1,4 +1,5 @@
 import bofire.data_models.strategies.api as strategies
+from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qPI
 from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
@@ -46,7 +47,7 @@ specs.add_valid(
 specs.add_valid(
     strategies.SoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": Himmelblau().domain.dict(),
         **strategy_commons,
         "acquisition_function": qPI(tau=0.1).dict(),
     },
@@ -82,8 +83,7 @@ specs.add_valid(
         "domain": Domain(
             input_features=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
-                    for i in range(2)
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
                 ]
             ),
         ),
@@ -97,8 +97,7 @@ specs.add_valid(
         "domain": Domain(
             input_features=Inputs(
                 features=[
-                    ContinuousInput(key=f"x_{i}", lower_bound=0, upper_bound=1)
-                    for i in range(2)
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
                 ]
             )
         ),

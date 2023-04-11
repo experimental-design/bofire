@@ -1,5 +1,3 @@
-import random
-
 import bofire.data_models.objectives.api as objectives
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -11,23 +9,6 @@ specs.add_valid(
         "target_value": 42,
         "exponent": 2,
         "w": 1.0,
-    },
-)
-specs.add_valid(
-    objectives.ConstantObjective,
-    lambda: {
-        "value": random.random(),
-        "w": 1.0,
-    },
-)
-specs.add_valid(
-    objectives.DeltaObjective,
-    lambda: {
-        "w": 1.0,
-        "lower_bound": 0.1,
-        "upper_bound": 0.9,
-        "ref_point": 1,
-        "scale": 2,
     },
 )
 specs.add_valid(

@@ -63,7 +63,6 @@ class BotorchStrategy(PredictiveStrategy):
             for k in keys:
                 if m.input_preprocessing_specs[k] == CategoricalEncodingEnum.ONE_HOT:
                     if values["categorical_method"] != values["descriptor_method"]:
-                        print(values["categorical_method"], values["descriptor_method"])
                         raise ValueError(
                             "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals."
                         )

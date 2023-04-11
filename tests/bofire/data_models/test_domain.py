@@ -7,6 +7,7 @@ import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
 
+from bofire.data_models.api import Outputs
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -23,7 +24,13 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
-from bofire.data_models.objectives.api import Objective, TargetObjective
+from bofire.data_models.objectives.api import (
+    BotorchConstrainedObjective,
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    Objective,
+    TargetObjective,
+)
 from bofire.utils.subdomain import get_subdomain
 
 
@@ -45,9 +52,9 @@ obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
 
 if_ = CategoricalInput(key="if", categories=["a", "b"])
 of_ = ContinuousOutput(key="of", objective=obj)
-if1 = ContinuousInput(key="f1", upper_bound=10, lower_bound=0)
-if1_ = ContinuousInput(key="f1", upper_bound=10, lower_bound=1)
-if2 = ContinuousInput(key="f2", upper_bound=10, lower_bound=0)
+if1 = ContinuousInput(key="f1", bounds=(0, 10))
+if1_ = ContinuousInput(key="f1", bounds=(0, 1))
+if2 = ContinuousInput(key="f2", bounds=(0, 10))
 of1 = ContinuousOutput(key="f1", objective=obj)
 of1_ = ContinuousOutput(key="f1", objective=obj)
 of2 = ContinuousOutput(key="f2", objective=obj)
@@ -96,7 +103,7 @@ def test_invalid_domain_arg_types(input_features, output_features, constraints):
     [
         (
             [
-                ContinuousInput(key="if1", lower_bound=0, upper_bound=1),
+                ContinuousInput(key="if1", bounds=(0, 1)),
                 DiscreteInput(key="if2", values=[0.2, 0.7, 1.0]),
             ],
             [
@@ -378,8 +385,8 @@ data = pd.DataFrame.from_dict(
     }
 )
 
-if1 = ContinuousInput(key="x1", upper_bound=10, lower_bound=1)
-if2 = ContinuousInput(key="x2", upper_bound=10, lower_bound=1)
+if1 = ContinuousInput(key="x1", bounds=(1, 10))
+if2 = ContinuousInput(key="x2", bounds=(1, 10))
 
 of1 = ContinuousOutput(key="out1", objective=obj)
 of2 = ContinuousOutput(key="out2", objective=obj)
@@ -642,6 +649,25 @@ def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, exp
             exact=exact,
         ).features
         == expected
+    )
+
+
+def test_get_outputs_by_objective_none():
+    outputs = Outputs(
+        features=[
+            ContinuousOutput(key="a", objective=None),
+            ContinuousOutput(
+                key="b", objective=MaximizeSigmoidObjective(w=1, steepness=1, tp=0)
+            ),
+            ContinuousOutput(key="c", objective=MaximizeObjective()),
+        ]
+    )
+    keys = outputs.get_keys_by_objective(excludes=BotorchConstrainedObjective)
+    assert keys == ["c"]
+    assert outputs.get_keys().index("c") == 2
+    assert outputs.get_keys_by_objective(excludes=Objective, includes=None) == ["a"]
+    assert outputs.get_by_objective(excludes=Objective, includes=None) == Outputs(
+        features=[ContinuousOutput(key="a", objective=None)]
     )
 
 

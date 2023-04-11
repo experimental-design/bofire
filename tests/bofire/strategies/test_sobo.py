@@ -13,7 +13,7 @@ from botorch.acquisition import (
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
-from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -24,7 +24,7 @@ from tests.bofire.strategies.test_base import domains
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
-    "domain": domains[2],
+    "domain": domains[1],
     "acquisition_function": specs.acquisition_functions.valid().obj(),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
@@ -43,7 +43,7 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
         {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "acquisition_function": None},
         {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "descriptor_method": None},
         {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "categorical_method": None},
-        # {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "seed": -1},
+        {**VALID_BOTORCH_SOBO_STRATEGY_SPEC, "seed": -1},
     ],
 }
 
@@ -77,7 +77,7 @@ def test_SOBO_not_fitted(domain, acqf):
 )
 def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
     # generate data
-    benchmark = DTLZ2(dim=6)
+    benchmark = Himmelblau()
 
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
@@ -105,7 +105,7 @@ def test_SOBO_init_qUCB():
     acqf = qUCB(beta=beta)
 
     # generate data
-    benchmark = DTLZ2(dim=6)
+    benchmark = Himmelblau()
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
@@ -131,7 +131,7 @@ def test_SOBO_init_qUCB():
 @pytest.mark.slow
 def test_get_acqf_input(acqf, num_experiments, num_candidates):
     # generate data
-    benchmark = DTLZ2(dim=6)
+    benchmark = Himmelblau()
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )

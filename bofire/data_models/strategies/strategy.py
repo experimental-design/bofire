@@ -18,7 +18,7 @@ class Strategy(BaseModel):
     @validator("seed", always=True)
     def validate_seed(cls, v, values):
         if v is None:
-            return np.random.default_rng().integers(1000)
+            return int(np.random.default_rng().integers(1000))
         else:
             if v < 0:
                 raise ValueError("Seed has to be greater or equal than zero.")

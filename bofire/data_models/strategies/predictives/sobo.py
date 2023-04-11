@@ -1,14 +1,19 @@
 from typing import Literal, Type
 
+from pydantic import validator
+
 from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction
-from bofire.data_models.constraints.api import Constraint
+from bofire.data_models.constraints.api import (
+    Constraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
 from bofire.data_models.features.api import Feature
-from bofire.data_models.objectives.api import Objective
+from bofire.data_models.objectives.api import BotorchConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
-class SoboStrategy(BotorchStrategy):
-    type: Literal["SoboStrategy"] = "SoboStrategy"
+class SoboBaseStrategy(BotorchStrategy):
     acquisition_function: AnyAcquisitionFunction
 
     @classmethod
@@ -21,6 +26,8 @@ class SoboStrategy(BotorchStrategy):
         Returns:
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
         """
+        if my_type in [NonlinearInequalityConstraint, NonlinearEqualityConstraint]:
+            return False
         return True
 
     @classmethod
@@ -48,10 +55,27 @@ class SoboStrategy(BotorchStrategy):
         return True
 
 
-class AdditiveSoboStrategy(SoboStrategy):
+class SoboStrategy(SoboBaseStrategy):
+    type: Literal["SoboStrategy"] = "SoboStrategy"
+
+    @validator("domain")
+    def validate_is_singleobjective(cls, v, values):
+        if len(v.outputs) == 1:
+            return v
+        if (
+            len(v.outputs.get_by_objective(excludes=BotorchConstrainedObjective))
+            - len(v.outputs.get_by_objective(includes=None, excludes=Objective))
+        ) > 1:
+            raise ValueError(
+                "SOBO strategy can only deal with one no-constraint objective."
+            )
+        return v
+
+
+class AdditiveSoboStrategy(SoboBaseStrategy):
     type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
     use_output_constraints: bool = True
 
 
-class MultiplicativeSoboStrategy(SoboStrategy):
+class MultiplicativeSoboStrategy(SoboBaseStrategy):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"

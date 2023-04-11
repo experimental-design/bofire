@@ -1,3 +1,3 @@
 # Domain
 
-::: bofire.domain.util
+::: bofire.utils

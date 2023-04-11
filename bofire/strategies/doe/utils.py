@@ -6,16 +6,21 @@ from typing import List, Optional, Union
 import numpy as np
 import pandas as pd
 from formulaic import Formula
-from scipy.optimize import LinearConstraint
+from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
-    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousOutput,
+    MolecularInput,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -194,7 +199,7 @@ def constraints_as_scipy_constraints(
     (these can be formulated as bounds).
 
     Args:
-        problem (opti.Problem): problem whose constraints should be formulated as scipy constraints.
+        domain (Domain): Domain whose constraints should be formulated as scipy constraints.
         n_experiments (int): Number of instances of inputs for problem that are evaluated together.
         tol (float): Tolerance for the computation of the constraint violation. Default value is 1e-3.
 
@@ -250,25 +255,35 @@ def constraints_as_scipy_constraints(
 
             constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
-        # elif isinstance(c, opti.NonlinearEquality):
-        #     # write upper/lower bound as vector
-        #     lb = np.zeros(n_experiments) - tol
-        #     ub = np.zeros(n_experiments) + tol
+        elif isinstance(c, NonlinearEqualityConstraint):
+            # write upper/lower bound as vector
+            lb = np.zeros(n_experiments) - tol
+            ub = np.zeros(n_experiments) + tol
 
-        #     # define constraint evaluation
-        #     fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
+            # define constraint evaluation (and gradient if provided)
+            fun = ConstraintWrapper(
+                constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+            )
 
-        #     constraints.append(NonlinearConstraint(fun, lb, ub))
+            if c.jacobian_expression is not None:
+                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+            else:
+                constraints.append(NonlinearConstraint(fun, lb, ub))
 
-        # elif isinstance(c, opti.NonlinearInequality):
-        #     # write upper/lower bound as vector
-        #     lb = -np.inf * np.ones(n_experiments)
-        #     ub = np.zeros(n_experiments)
+        elif isinstance(c, NonlinearInequalityConstraint):
+            # write upper/lower bound as vector
+            lb = -np.inf * np.ones(n_experiments)
+            ub = np.zeros(n_experiments)
 
-        #     # define constraint evaluation
-        #     fun = ConstraintWrapper(constraint=c, problem=problem, tol=tol)
+            # define constraint evaluation (and gradient if provided)
+            fun = ConstraintWrapper(
+                constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+            )
 
-        #     constraints.append(NonlinearConstraint(fun, lb, ub))
+            if c.jacobian_expression is not None:
+                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+            else:
+                constraints.append(NonlinearConstraint(fun, lb, ub))
 
         elif isinstance(c, NChooseKConstraint):
             pass
@@ -280,30 +295,58 @@ def constraints_as_scipy_constraints(
 
 
 class ConstraintWrapper:
-    """Wrapper for opti constraint calls using flattened numpy arrays instead of ."""
+    """Wrapper for nonlinear constraints."""
 
     def __init__(
         self,
-        constraint: Constraint,
+        constraint: NonlinearConstraint,
         domain: Domain,
+        n_experiments: int = 0,
         tol: float = 1e-3,
     ) -> None:
         """
         Args:
-            constraint (opti.constraint.Constraint): opti constraint to be called
-            problem (opti.Problem): problem the constraint belongs to
+            constraint (Constraint): constraint to be called
+            domain (Domain): Domain the constraint belongs to
             tol (float): tolerance for constraint violation. Default value is 1e-3.
         """
         self.constraint = constraint
         self.tol = tol
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
+        self.n_experiments = n_experiments
+        if constraint.features is None:
+            raise ValueError(
+                f"The features attribute of constraint {constraint} is not set, but has to be set."
+            )
+        self.constraint_feature_indices = np.searchsorted(
+            self.names, self.constraint.features
+        )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        "call constraint with flattened numpy array"
-        x[np.abs(x) < self.tol] = 0
+        """call constraint with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        return self.constraint(x).to_numpy()  # type: ignore
+        violation = self.constraint(x).to_numpy()
+        violation[np.abs(violation) < self.tol] = 0
+        return violation  # type: ignore
+
+    def jacobian(self, x: np.ndarray) -> np.ndarray:
+        """call constraint gradient with flattened numpy array."""
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)
+        gradient_compressed = self.constraint.jacobian(x).to_numpy()
+
+        jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
+        rows = np.repeat(
+            np.arange(self.n_experiments), len(self.constraint_feature_indices)
+        )
+        cols = np.repeat(
+            self.D * np.arange(self.n_experiments), len(self.constraint_feature_indices)
+        ).reshape((self.n_experiments, len(self.constraint_feature_indices)))
+        cols = (cols + self.constraint_feature_indices).flatten()
+
+        jacobian[rows, cols] = gradient_compressed.flatten()
+
+        return jacobian
 
 
 def d_optimality(X: np.ndarray, tol=1e-9) -> float:
@@ -413,10 +456,10 @@ def metrics(
 
 
 def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
-    """Checks if NChooseK constraints of problem can be formulated as bounds.
+    """Checks if NChooseK constraints of domain can be formulated as bounds.
 
     Args:
-        problem (opti.Problem): problem whose NChooseK constraints should be checked
+        domain (Domain): Domain whose NChooseK constraints should be checked
     """
     # collect NChooseK constraints
     if len(domain.cnstrs) == 0:
@@ -437,6 +480,7 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
             if not (
                 isinstance(input, CategoricalInput)
                 or isinstance(input, ContinuousOutput)
+                or isinstance(input, MolecularInput)
             ):
                 if input.lower_bound > 0 or input.upper_bound < 0:
                     raise ValueError(
@@ -463,7 +507,7 @@ def nchoosek_constraints_as_bounds(
     """Determines the box bounds for the decision variables
 
     Args:
-        problem (opti.Problem): problem to find the bounds for.
+        domain (Domain): Domain to find the bounds for.
         n_experiments (int): number of experiments for the design to be determined.
 
     Returns:
@@ -477,7 +521,11 @@ def nchoosek_constraints_as_bounds(
         [
             (p.lower_bound, p.upper_bound)
             for p in domain.inputs
-            if not (isinstance(p, CategoricalInput) or isinstance(p, ContinuousOutput))
+            if not (
+                isinstance(p, CategoricalInput)
+                or isinstance(p, ContinuousOutput)
+                or isinstance(p, MolecularInput)
+            )
         ]
         * n_experiments
     )

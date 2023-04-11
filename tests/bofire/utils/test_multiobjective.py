@@ -6,6 +6,7 @@ import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import (
+    CloseToTargetObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -45,6 +46,10 @@ of6 = ContinuousOutput(
     objective=MinimizeSigmoidObjective(w=1, tp=1, steepness=1),
     key="of6",
 )
+of7 = ContinuousOutput(
+    objective=CloseToTargetObjective(w=1, target_value=5, exponent=1),
+    key="of7",
+)
 
 valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2]),
@@ -52,6 +57,7 @@ valid_domains = [
     Domain(input_features=[if1, if2], output_features=[of1, of2, of3, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of4]),
     Domain(input_features=[if1, if2], output_features=[of2, of1, of3, of4]),
+    Domain(input_features=[if1, if2], output_features=[of1, of2, of7]),
 ]
 
 valid_constrained_domains = [
@@ -126,6 +132,48 @@ dfs = [
             ],
         }
     ),
+    pd.DataFrame.from_dict(
+        {
+            "if1": [3.0, 4.0, 5.0, 6.0],
+            "if2": [10.0, 7.0, 8.0, 12.0],
+            "of1": [
+                1.0,
+                10.0,
+                4.0,
+                5.0,
+            ],
+            "of2": [
+                5.0,
+                3.0,
+                2.0,
+                5.0,
+            ],
+            "of7": [
+                10.0,
+                0.0,
+                30.0,
+                6.0,
+            ],
+            "valid_of1": [
+                1,
+                1,
+                1,
+                1,
+            ],
+            "valid_of2": [
+                1,
+                1,
+                1,
+                1,
+            ],
+            "valid_of7": [
+                1,
+                1,
+                1,
+                1,
+            ],
+        }
+    ),
 ]
 
 
@@ -138,6 +186,7 @@ dfs = [
         (valid_domains[2], np.array([1.0, -1.0, 1.0, -1.0])),
         (valid_domains[3], np.array([-1.0, -1.0])),
         (valid_domains[4], np.array([1.0, -1.0, 1.0, -1.0])),
+        (valid_domains[5], np.array([1.0, -1.0, -1.0])),
     ],
 )
 def test_get_ref_point_mask(domain, expected):
@@ -150,6 +199,7 @@ def test_get_ref_point_mask(domain, expected):
         (valid_domains[2], ["of1", "of2"], np.array([1.0, -1.0])),
         (valid_domains[2], ["of1", "of2", "of3"], np.array([1.0, -1.0, 1.0])),
         (valid_domains[2], ["of1", "of3"], np.array([1.0, 1.0])),
+        (valid_domains[5], ["of1", "of7"], np.array([1.0, -1.0])),
     ],
 )
 def test_get_ref_point_mask_subset(domain, subset, expected):
@@ -168,6 +218,7 @@ def test_invalid_get_ref_point_mask(domain):
         (valid_domains[0], dfs[0], np.array([1, 2], dtype="int64")),
         (valid_constrained_domains[0], dfs[0], np.array([1, 2], dtype="int64")),
         (valid_domains[1], dfs[1], np.array([1, 3], dtype="int64")),
+        (valid_domains[5], dfs[2], np.array([1, 2, 3], dtype="int64")),
     ],
 )
 def test_get_pareto_front(domain, experiments, expected_indices):
@@ -181,6 +232,7 @@ def test_get_pareto_front(domain, experiments, expected_indices):
         (valid_domains[0], dfs[0], {"of1": 0.0, "of2": 20.0}),
         (valid_constrained_domains[0], dfs[0], {"of1": 0.0, "of2": 20.0}),
         (valid_domains[1], dfs[1], {"of1": 0.0, "of3": 0.0}),
+        (valid_domains[5], dfs[2], {"of1": 0.0, "of2": 20.0, "of7": 25.0}),
     ],
 )
 def test_compute_hypervolume(domain, experiments, ref_point):
@@ -198,6 +250,8 @@ def test_compute_hypervolume(domain, experiments, ref_point):
         (valid_domains[1], dfs[1], False, {"of1": 1.0, "of3": 2.0}),
         (valid_constrained_domains[0], dfs[0], True, {"of1": 1.0, "of2": -5.0}),
         (valid_constrained_domains[0], dfs[0], False, {"of1": 1.0, "of2": 5.0}),
+        (valid_domains[5], dfs[2], True, {"of1": 1.0, "of2": -5.0, "of7": -25.0}),
+        (valid_domains[5], dfs[2], False, {"of1": 1.0, "of2": 5.0, "of7": 25.0}),
     ],
 )
 def test_infer_ref_point(domain, experiments, return_masked, expected):

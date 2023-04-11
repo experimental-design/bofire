@@ -8,7 +8,7 @@ from botorch.acquisition.multi_objective import (
     qExpectedHypervolumeImprovement,
     qNoisyExpectedHypervolumeImprovement,
 )
-from botorch.acquisition.multi_objective.objective import WeightedMCMultiOutputObjective
+from botorch.acquisition.multi_objective.objective import GenericMCMultiOutputObjective
 
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
@@ -157,7 +157,7 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     )
     my_strategy = strategies.map(data_model)
     my_strategy.tell(experiments)
-    assert isinstance(my_strategy.acqf.objective, WeightedMCMultiOutputObjective)
+    assert isinstance(my_strategy.acqf.objective, GenericMCMultiOutputObjective)
     assert isinstance(
         my_strategy.acqf,
         qExpectedHypervolumeImprovement
@@ -181,16 +181,10 @@ def test_qnehvi_constraints():
     print("data model:", data_model)
     my_strategy = strategies.map(data_model)
     my_strategy.tell(experiments)
-    assert isinstance(my_strategy.acqf.objective, WeightedMCMultiOutputObjective)
+    assert isinstance(my_strategy.acqf.objective, GenericMCMultiOutputObjective)
     assert isinstance(my_strategy.acqf, qNoisyExpectedHypervolumeImprovement)
     assert my_strategy.acqf.eta == torch.tensor(1e-3)
     assert len(my_strategy.acqf.constraints) == 1
-    assert torch.allclose(
-        my_strategy.acqf.objective.outcomes, torch.tensor([0, 1], dtype=torch.int64)
-    )
-    assert torch.allclose(
-        my_strategy.acqf.objective.weights, torch.tensor([-1, -1], dtype=torch.double)
-    )
     assert torch.allclose(
         my_strategy.acqf.ref_point,
         torch.tensor([-1.1, -1.1], dtype=torch.double),

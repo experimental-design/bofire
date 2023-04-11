@@ -37,7 +37,10 @@ from bofire.data_models.surrogates.api import (
 def test_SingleTaskGPModel(kernel, scaler):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
     )
@@ -60,7 +63,9 @@ def test_SingleTaskGPModel(kernel, scaler):
     # dump the model
     dump = model.dumps()
     # make predictions
-    preds = model.predict(samples)
+    samples2 = samples.copy()
+    samples2 = samples2.astype({"x_1": "object"})
+    preds = model.predict(samples2)
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
@@ -86,7 +91,10 @@ def test_SingleTaskGPModel(kernel, scaler):
 def test_MixedGPModel_invalid_preprocessing():
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
     )
@@ -111,7 +119,10 @@ def test_MixedGPModel_invalid_preprocessing():
 def test_MixedGPModel(kernel, scaler):
     input_features = Inputs(
         features=[
-            ContinuousInput(key=f"x_{i+1}", lower_bound=-4, upper_bound=4)
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
             for i in range(2)
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
