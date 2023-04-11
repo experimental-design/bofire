@@ -13,6 +13,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousOutput,
     DiscreteInput,
+    MolecularInput,
 )
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -140,6 +141,7 @@ def find_local_max_ipopt(
                 if not (
                     isinstance(p, CategoricalInput)
                     or isinstance(p, ContinuousOutput)
+                    or isinstance(p, MolecularInput)
                     or isinstance(p, DiscreteInput)
                 )
             ]
