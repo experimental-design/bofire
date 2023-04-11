@@ -11,7 +11,6 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler
 from bofire.strategies.doe.jacobian import JacobianForLogdet
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -19,6 +18,7 @@ from bofire.strategies.doe.utils import (
     metrics,
     nchoosek_constraints_as_bounds,
 )
+from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
 def logD(A: np.ndarray, delta: float = 1e-7) -> float:
