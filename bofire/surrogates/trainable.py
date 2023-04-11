@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 import pandas as pd
 from sklearn.model_selection import KFold
@@ -12,7 +12,7 @@ from bofire.surrogates.surrogate import Surrogate
 class TrainableSurrogate(ABC):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
 
-    def fit(self, experiments: pd.DataFrame):
+    def fit(self, experiments: pd.DataFrame, options: Optional[Dict] = None):
         # preprocess
         experiments = self._preprocess_experiments(experiments)
         # validate
@@ -23,7 +23,8 @@ class TrainableSurrogate(ABC):
         # TODO: output feature validation
         Y = experiments[self.output_features.get_keys()]  # type: ignore
         # fit
-        self._fit(X=X, Y=Y)  # type: ignore
+        options = options or {}
+        self._fit(X=X, Y=Y, **options)  # type: ignore
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self._output_filtering is None:
@@ -42,7 +43,7 @@ class TrainableSurrogate(ABC):
             raise ValueError("Unknown output filtering option requested.")
 
     @abstractmethod
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
         pass
 
     def cross_validate(

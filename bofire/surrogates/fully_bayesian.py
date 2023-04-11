@@ -33,7 +33,7 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, disable_progbar: bool = True):
         # get transform meta information
         features2idx, _ = self.input_features._get_transform_info(
             self.input_preprocessing_specs
@@ -99,7 +99,7 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             warmup_steps=self.warmup_steps,
             num_samples=self.num_samples,
             thinning=self.thinning,
-            disable_progbar=False,
+            disable_progbar=disable_progbar,
         )
 
     def _predict(self, transformed_X: pd.DataFrame):
