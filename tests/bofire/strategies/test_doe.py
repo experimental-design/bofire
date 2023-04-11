@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -11,13 +12,12 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
-    CategoricalInput,
     DiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
-import pytest
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
