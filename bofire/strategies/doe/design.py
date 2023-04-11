@@ -27,7 +27,6 @@ from bofire.strategies.doe.utils import (
 )
 
 
-# TODO: test changes
 def find_local_max_ipopt(
     domain: Domain,
     model_type: Union[str, Formula],
