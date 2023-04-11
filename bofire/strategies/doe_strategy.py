@@ -28,7 +28,7 @@ class DoEStrategy(Strategy):
         design = find_local_max_ipopt(
             _domain,
             self.formula,
-            n_experiments=candidate_count,
+            n_experiments=candidate_count + len(_fixed_experiments),
             fixed_experiments=_fixed_experiments,
         )
         return design  # type: ignore
