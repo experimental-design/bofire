@@ -28,9 +28,18 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
 input_features = [
-    ContinuousInput(key=f"x{1}", lower_bound=0.0, upper_bound=1.0),
-    ContinuousInput(key=f"x{2}", lower_bound=0.1, upper_bound=1.0),
-    ContinuousInput(key=f"x{3}", lower_bound=0.0, upper_bound=0.6),
+    ContinuousInput(
+        key=f"x{1}",
+        bounds=(0.0, 1.0),
+    ),
+    ContinuousInput(
+        key=f"x{2}",
+        bounds=(0.1, 1.0),
+    ),
+    ContinuousInput(
+        key=f"x{3}",
+        bounds=(0.0, 0.6),
+    ),
 ]
 domain = Domain(
     input_features=input_features,
@@ -105,9 +114,7 @@ def test_nchoosek_implemented():
     )
     domain = Domain(
         input_features=[
-            ContinuousInput(key=f"x{1}", lower_bound=0.0, upper_bound=1.0),
-            ContinuousInput(key=f"x{2}", lower_bound=0.0, upper_bound=1.0),
-            ContinuousInput(key=f"x{3}", lower_bound=0.0, upper_bound=0.6),
+            ContinuousInput(key=f"x{i+1}", bounds=(0.0, 1.0)) for i in range(3)
         ],
         output_features=[ContinuousOutput(key="y")],
         constraints=[nchoosek_constraint],
@@ -169,12 +176,12 @@ def test_doe_strategy_amount_of_candidates():
     assert len(candidates) == num_candidates_expected
 
 
-if __name__ == "__main__":
-    test_doe_strategy_ask()
-    test_doe_strategy_ask_with_candidates()
-    test_doe_categoricals_not_implemented()
-    test_doe_discrete_not_implemented()
-    test_nchoosek_implemented()
-    test_formulas_implemented()
-    test_doe_strategy_correctness()
-    test_doe_strategy_amount_of_candidates()
+# if __name__ == "__main__":
+#     test_doe_strategy_ask()
+#     test_doe_strategy_ask_with_candidates()
+#     test_doe_categoricals_not_implemented()
+#     test_doe_discrete_not_implemented()
+#     test_nchoosek_implemented()
+#     test_formulas_implemented()
+#     test_doe_strategy_correctness()
+#     test_doe_strategy_amount_of_candidates()
