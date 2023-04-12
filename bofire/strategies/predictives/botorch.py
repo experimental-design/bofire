@@ -94,14 +94,20 @@ class BotorchStrategy(PredictiveStrategy):
             output_features=self.domain.output_features,  # type: ignore
         )
 
-    def _predict(self, transformed: pd.DataFrame):
+    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         # we are using self.model here for this purpose we have to take the transformed
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
-            preds = self.model.posterior(X=X).mean.cpu().detach().numpy()  # type: ignore
-            # TODO: add a option to return the real uncertainty including the data uncertainty
-            stds = np.sqrt(self.model.posterior(X=X).variance.cpu().detach().numpy())  # type: ignore
+            posterior = self.model.posterior(X=X)  # type: ignore
+        if len(posterior.mean.shape) == 2:
+            preds = posterior.mean.cpu().detach().numpy()
+            stds = np.sqrt(posterior.variance.cpu().detach().numpy())
+        elif len(posterior.mean.shape) == 3:
+            preds = posterior.mean.mean(dim=0).cpu().detach().numpy()
+            stds = np.sqrt(posterior.variance.mean(dim=0).cpu().detach().numpy())
+        else:
+            raise ValueError("Wrong dimension of posterior mean. Expecting 2 or 3.")
         return preds, stds
 
     # TODO: test this
@@ -214,12 +220,6 @@ class BotorchStrategy(PredictiveStrategy):
         Returns:
             pd.DataFrame: Dataframe with candidates.
         """
-        # TODO: in case of free we have to transform back the candidates first and then compute the metrics
-        # otherwise the prediction holds only for the infeasible solution, this solution should then also be
-        # applicable for >1d descriptors
-        preds = self.model.posterior(X=candidates).mean.detach().numpy()  # type: ignore
-        stds = np.sqrt(self.model.posterior(X=candidates).variance.detach().numpy())  # type: ignore
-
         input_feature_keys = [
             item
             for key in self.domain.inputs.get_keys()
@@ -229,6 +229,10 @@ class BotorchStrategy(PredictiveStrategy):
         df_candidates = pd.DataFrame(
             data=candidates.detach().numpy(), columns=input_feature_keys
         )
+        # TODO: in case of free we have to transform back the candidates first and then compute the metrics
+        # otherwise the prediction holds only for the infeasible solution, this solution should then also be
+        # applicable for >1d descriptors
+        preds, stds = self._predict(df_candidates)
 
         df_candidates = self.domain.inputs.inverse_transform(
             df_candidates, self.input_preprocessing_specs

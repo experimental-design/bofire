@@ -5,15 +5,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from botorch.models.ensemble import EnsembleModel
-from botorch.models.transforms.input import InputStandardize, Normalize
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
+from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import MLPEnsemble as DataModel
-from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.single_task_gp import get_dim_subsets
+from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
 
@@ -178,47 +176,10 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     model: Optional[_MLPEnsemble] = None
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        # TODO: this is very similar to the GPs, this has to be tidied up
-
-        # get transform meta information
-        features2idx, _ = self.input_features._get_transform_info(
-            self.input_preprocessing_specs
+        scaler = get_scaler(
+            self.input_features, self.input_preprocessing_specs, self.scaler, X
         )
-        non_numerical_features = [
-            key
-            for key, value in self.input_preprocessing_specs.items()
-            if value != CategoricalEncodingEnum.DESCRIPTOR
-        ]
-
         transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
-
-        d = transformed_X.shape[-1]
-
-        cat_dims = []
-        for feat in non_numerical_features:
-            cat_dims += features2idx[feat]
-
-        ord_dims, _, _ = get_dim_subsets(
-            d=d, active_dims=list(range(d)), cat_dims=cat_dims
-        )
-
-        if self.scaler == ScalerEnum.NORMALIZE:
-            lower, upper = self.input_features.get_bounds(
-                specs=self.input_preprocessing_specs, experiments=X
-            )
-            scaler = Normalize(
-                d=d,
-                bounds=torch.tensor([lower, upper]).to(**tkwargs),
-                batch_shape=torch.Size(),
-            )
-        elif self.scaler == ScalerEnum.STANDARDIZE:
-            scaler = InputStandardize(
-                d=d,
-                indices=ord_dims if len(ord_dims) != d else None,
-                batch_shape=torch.Size(),
-            )
-        else:
-            raise ValueError("Scaler enum not known.")
 
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])

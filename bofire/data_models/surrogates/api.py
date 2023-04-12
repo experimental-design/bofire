@@ -6,6 +6,7 @@ from bofire.data_models.surrogates.botorch_surrogates import (  # noqa: F401
     BotorchSurrogates,
 )
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
+from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (  # noqa: F401
     MixedSingleTaskGPSurrogate,
 )
@@ -24,4 +25,5 @@ AnySurrogate = Union[
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
     MLPEnsemble,
+    SaasSingleTaskGPSurrogate,
 ]
