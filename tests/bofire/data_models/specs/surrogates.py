@@ -39,6 +39,7 @@ specs.add_valid(
         "thinning": 2,
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "dump": None,
     },
 )
 
@@ -60,6 +61,7 @@ specs.add_valid(
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "dump": None,
     },
 )
 specs.add_valid(
@@ -83,6 +85,7 @@ specs.add_valid(
         ),
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {},
+        "dump": None,
     },
 )
 specs.add_valid(
@@ -113,6 +116,7 @@ specs.add_valid(
         "random_state": None,
         "ccp_alpha": 0.0,
         "max_samples": None,
+        "dump": None,
     },
 )
 specs.add_valid(
@@ -140,5 +144,6 @@ specs.add_valid(
         "shuffle": True,
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {},
+        "dump": None,
     },
 )
