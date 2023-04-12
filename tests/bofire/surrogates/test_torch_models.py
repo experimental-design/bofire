@@ -553,6 +553,44 @@ def test_botorch_models_input_preprocessing_specs():
     }
 
 
+def test_botorch_models_invalid_compatibilize():
+    # model 1
+    input_features = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+    )
+    output_features = Outputs(features=[ContinuousOutput(key="y")])
+    experiments1 = input_features.sample(n=10)
+    experiments1.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
+    experiments1["valid_y"] = 1
+    data_model1 = data_models.SingleTaskGPSurrogate(
+        input_features=input_features,
+        output_features=output_features,
+        scaler=ScalerEnum.NORMALIZE,
+    )
+    data_model2 = data_models.EmpiricalSurrogate(
+        input_features=input_features,
+        output_features=Outputs(features=[ContinuousOutput(key="y2")]),
+    )
+    # create models
+    data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
+    botorch_surrogates = BotorchSurrogates(data_model=data_model)
+    botorch_surrogates.fit(experiments=experiments1)
+    # try to make compatible
+    with pytest.raises(ValueError):
+        botorch_surrogates.compatibilize(
+            input_features=input_features,
+            output_features=Outputs(
+                features=[ContinuousOutput(key="y2"), ContinuousOutput(key="y")]
+            ),
+        )
+
+
 def test_botorch_models_fit_and_compatibilize():
     # model 1
     input_features = Inputs(
@@ -929,3 +967,8 @@ def test_empirical_model_io():
     surrogate2.loads(dump)
     preds2 = surrogate2.predict(samples)
     assert_frame_equal(preds, preds2)
+    # test with dump in datamodel
+    data_model.dump = dump
+    surrogate3 = surrogates.map(data_model)
+    preds3 = surrogate3.predict(samples)
+    assert_frame_equal(preds, preds3)

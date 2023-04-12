@@ -1,3 +1,5 @@
+from typing import Optional
+
 from pydantic import Field, validator
 
 from bofire.data_models.base import BaseModel
@@ -11,6 +13,7 @@ class Surrogate(BaseModel):
     input_features: Inputs
     output_features: Outputs
     input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=dict)
+    dump: Optional[str] = None
 
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
