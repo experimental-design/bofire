@@ -458,11 +458,14 @@ class BotorchStrategy(PredictiveStrategy):
     ) -> bool:
         if self.experiments is None:
             return False
-        degrees_of_freedom = len(self.domain.get_features(Input)) - len(
-            self.get_fixed_features()
-        )
-        # degrees_of_freedom = len(self.domain.get_features(Input)) + 1
-        if self.experiments.shape[0] > degrees_of_freedom + 1:
+        if (
+            len(
+                self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                    experiments=self.experiments
+                )
+            )
+            > 1
+        ):
             return True
         return False
 
