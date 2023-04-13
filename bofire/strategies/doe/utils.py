@@ -24,7 +24,7 @@ from bofire.data_models.features.api import (
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler
+from bofire.strategies.samplers.polytope import PolytopeSampler
 
 CAT_TOL = 0.1
 DISCRETE_TOL = 0.1

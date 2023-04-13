@@ -8,8 +8,6 @@ from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.surrogates.api import Surrogate as DataModel
 from bofire.surrogates.values import PredictedValue
 
-# from bofire.models.diagnostics import CvResult, CvResults
-
 
 class Surrogate(ABC):
     def __init__(
@@ -19,7 +17,10 @@ class Surrogate(ABC):
         self.input_features = data_model.input_features
         self.output_features = data_model.output_features
         self.input_preprocessing_specs = data_model.input_preprocessing_specs
-        self.model = None
+        if data_model.dump is not None:
+            self.loads(data_model.dump)
+        else:
+            self.model = None
 
     @classmethod
     def from_spec(cls, data_model: DataModel) -> "Surrogate":
