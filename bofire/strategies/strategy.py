@@ -193,7 +193,7 @@ class Strategy(ABC):
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates)
+        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
         self._candidates = candidates
 
     def add_candidates(self, candidates: pd.DataFrame):
