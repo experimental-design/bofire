@@ -16,12 +16,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import (
-    CategoricalInput,
-    ContinuousOutput,
-    DiscreteInput,
-    MolecularInput,
-)
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -484,21 +479,15 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     if len(nchoosek_constraints) == 0:
         return
 
-    # check if the domains of all NCHooseK constraints are compatible to linearization
+    # check if the domains of all NChooseK constraints are compatible to linearization
     for c in nchoosek_constraints:
         for name in np.unique(c.features):
             input = domain.inputs.get_by_key(name)
-            if not (
-                isinstance(input, CategoricalInput)
-                or isinstance(input, ContinuousOutput)
-                or isinstance(input, MolecularInput)
-                or isinstance(input, DiscreteInput)
-            ):
-                if input.bounds[0] > 0 or input.bounds[1] < 0:
-                    raise ValueError(
-                        f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
-                        domain of the affected decision variables."
-                    )
+            if input.bounds[0] > 0 or input.bounds[1] < 0:  # type: ignore
+                raise ValueError(
+                    f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
+                    domain of the affected decision variables."
+                )
 
     # check if the parameter names of two nchoose overlap
     for c in nchoosek_constraints:
@@ -530,17 +519,7 @@ def nchoosek_constraints_as_bounds(
 
     # bounds without NChooseK constraints
     bounds = np.array(
-        [
-            p.bounds
-            for p in domain.inputs
-            if not (
-                isinstance(p, CategoricalInput)
-                or isinstance(p, ContinuousOutput)
-                or isinstance(p, MolecularInput)
-                or isinstance(p, DiscreteInput)
-            )
-        ]
-        * n_experiments
+        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments  # type: ignore
     )
 
     if len(domain.cnstrs) > 0:
