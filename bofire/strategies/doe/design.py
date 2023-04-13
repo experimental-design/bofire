@@ -21,6 +21,7 @@ from bofire.strategies.doe.utils import (
     nchoosek_constraints_as_bounds,
 )
 
+
 def find_local_max_ipopt(
     domain: Domain,
     model_type: Union[str, Formula],
