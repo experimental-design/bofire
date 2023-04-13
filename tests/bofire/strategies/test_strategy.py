@@ -225,6 +225,35 @@ def test_strategy_tell_initial(
     assert strategy.experiments.equals(experiments)
 
 
+def test_strategy_no_variance():
+    domain = Domain(
+        input_features=[
+            ContinuousInput(
+                key="a",
+                bounds=(0, 1),
+            ),
+            ContinuousInput(key="b", bounds=(1, 1)),
+        ],
+        output_features=[of1],
+    )
+    experiments = domain.inputs.sample(5)
+    experiments["of1"] = [1, 2, 3, 4, 5]
+    experiments["valid_of1"] = 1
+    strategy = dummy.DummyStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    with pytest.raises(ValueError):
+        strategy.tell(experiments)
+    # introduce variance but in an invalid experiment
+    experiments.loc[0, "valid_of1"] = 0
+    experiments.loc[0, "b"] = 0.7
+    with pytest.raises(ValueError):
+        strategy.tell(experiments)
+    # introduce variance
+    experiments["b"] = 0
+    strategy.tell(experiments)
+
+
 def test_strategy_set_experiments():
     strategy = dummy.DummyStrategy(
         data_model=dummy.DummyStrategyDataModel(domain=domain)
