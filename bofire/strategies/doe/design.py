@@ -12,7 +12,6 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler
 from bofire.strategies.doe.objective import DOptimality
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -20,6 +19,7 @@ from bofire.strategies.doe.utils import (
     metrics,
     nchoosek_constraints_as_bounds,
 )
+from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
 def find_local_max_ipopt(
