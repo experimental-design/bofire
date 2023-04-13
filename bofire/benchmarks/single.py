@@ -1,5 +1,9 @@
+import math
+
 import numpy as np
 import pandas as pd
+import torch
+from botorch.test_functions.synthetic import Branin as torchBranin
 from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
@@ -11,6 +15,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.utils.torch_tools import tkwargs
 
 
 class Ackley(Benchmark):
@@ -148,6 +153,77 @@ class Ackley(Benchmark):
         return pd.DataFrame(
             np.c_[x, y],
             columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
+        )
+
+
+class Branin(Benchmark):
+    def __init__(self) -> None:
+        self._domain = Domain(
+            input_features=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=(-5.0, 10)),
+                    ContinuousInput(key="x_2", bounds=(0.0, 15.0)),
+                ]
+            ),
+            output_features=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+        )
+        self.branin = torchBranin().to(**tkwargs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+            **tkwargs
+        )
+        return pd.DataFrame(
+            {
+                "y": self.branin(c).detach().numpy(),
+                "valid_y": np.ones(len(candidates)),
+            }
+        )
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            data=np.array(
+                [
+                    [-math.pi, 12.275, 0.397887],
+                    [math.pi, 2.275, 0.397887],
+                    [9.42478, 2.475, 0.397887],
+                ]
+            ),
+            columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
+        )
+
+
+class Branin30(Benchmark):
+    """Thirty dimensional Branin function in which only the first two dimensions are used to
+    evaluate the actual Branin. Source: https://github.com/pytorch/botorch/blob/main/tutorials/saasbo.ipynb.
+    """
+
+    def __init__(self) -> None:
+        self._domain = Domain(
+            input_features=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i+1:02d}", bounds=(0, 1))
+                    for i in range(30)
+                ]
+            ),
+            output_features=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+        )
+        self.branin = torchBranin().to(**tkwargs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        lb, ub = self.branin.bounds  # type: ignore
+        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+            **tkwargs
+        )
+        return pd.DataFrame(
+            {
+                "y": self.branin(lb + (ub - lb) * c[..., :2]).detach().numpy(),
+                "valid_y": np.ones(len(candidates)),
+            }
         )
 
 

@@ -15,6 +15,7 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -25,6 +26,97 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
     SingleTaskGPSurrogate,
 )
+from bofire.surrogates.single_task_gp import get_scaler
+from bofire.utils.torch_tools import tkwargs
+
+
+@pytest.mark.parametrize(
+    "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices, expected_offset, expected_coefficient",
+    [
+        (
+            ScalerEnum.NORMALIZE,
+            {
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+            },
+            Normalize,
+            torch.tensor([0, 1], dtype=torch.int64),
+            torch.tensor([-4.0, -4.0]).to(**tkwargs),
+            torch.tensor([8.0, 8.0]).to(**tkwargs),
+        ),
+        (
+            ScalerEnum.NORMALIZE,
+            {
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            Normalize,
+            torch.tensor([0, 1, 2], dtype=torch.int64),
+            torch.tensor([-4.0, -4.0, 1.0]).to(**tkwargs),
+            torch.tensor([8.0, 8.0, 5.0]).to(**tkwargs),
+        ),
+        (
+            ScalerEnum.STANDARDIZE,
+            {
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+            },
+            InputStandardize,
+            torch.tensor([0, 1], dtype=torch.int64),
+            None,
+            None,
+        ),
+        (
+            ScalerEnum.STANDARDIZE,
+            {
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            InputStandardize,
+            torch.tensor([0, 1, 2], dtype=torch.int64),
+            None,
+            None,
+        ),
+    ],
+)
+def test_get_scaler(
+    scaler_enum,
+    input_preprocessing_specs,
+    expected_scaler,
+    expected_indices,
+    expected_offset,
+    expected_coefficient,
+):
+    input_features = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [
+            CategoricalInput(key="x_cat", categories=["mama", "papa"]),
+            CategoricalDescriptorInput(
+                key="x_desc",
+                categories=["alpha", "beta"],
+                descriptors=["oskar"],
+                values=[[1], [6]],
+            ),
+        ]
+    )
+    experiments = input_features.sample(n=10)
+    scaler = get_scaler(
+        input_features=input_features,
+        input_preprocessing_specs=input_preprocessing_specs,
+        scaler=scaler_enum,
+        X=experiments[input_features.get_keys()],
+    )
+    assert isinstance(scaler, expected_scaler)
+    assert (scaler.indices == expected_indices).all()
+    if expected_offset is not None:
+        assert torch.allclose(scaler.offset, expected_offset)
+        assert torch.allclose(scaler.coefficient, expected_coefficient)
 
 
 @pytest.mark.parametrize(
@@ -166,7 +258,7 @@ def test_MixedGPModel(kernel, scaler):
     assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
-    model2 = SingleTaskGPSurrogate(
+    model2 = MixedSingleTaskGPSurrogate(
         input_features=input_features,
         output_features=output_features,
         kernel=kernel,

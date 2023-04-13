@@ -21,6 +21,29 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
+    models.SaasSingleTaskGPSurrogate,
+    lambda: {
+        "input_features": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
+        ),
+        "output_features": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "warmup_steps": 16,
+        "num_samples": 4,
+        "thinning": 2,
+        "scaler": ScalerEnum.NORMALIZE,
+        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "dump": None,
+    },
+)
+
+specs.add_valid(
     models.MixedSingleTaskGPSurrogate,
     lambda: {
         "input_features": Inputs(
@@ -38,6 +61,7 @@ specs.add_valid(
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "dump": None,
     },
 )
 specs.add_valid(
@@ -61,6 +85,7 @@ specs.add_valid(
         ),
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {},
+        "dump": None,
     },
 )
 specs.add_valid(
@@ -91,6 +116,7 @@ specs.add_valid(
         "random_state": None,
         "ccp_alpha": 0.0,
         "max_samples": None,
+        "dump": None,
     },
 )
 specs.add_valid(
@@ -118,5 +144,6 @@ specs.add_valid(
         "shuffle": True,
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {},
+        "dump": None,
     },
 )

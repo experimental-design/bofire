@@ -20,7 +20,7 @@ from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler
+from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
 def get_formula_from_string(
