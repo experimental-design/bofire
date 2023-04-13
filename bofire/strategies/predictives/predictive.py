@@ -36,14 +36,12 @@ class PredictiveStrategy(Strategy):
         self,
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
-        candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
-            candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided, pool independent candidates are provided. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -51,13 +49,7 @@ class PredictiveStrategy(Strategy):
         candidates = super().ask(
             candidate_count=candidate_count,
             add_pending=add_pending,
-            candidate_pool=candidate_pool,
         )
-        # we have to generate predictions for the candidate pool candidates
-        if candidate_pool is not None:
-            pred = self.predict(candidates)
-            pred.index = candidates.index
-            candidates = pd.concat([candidates, pred], axis=1)
         self.domain.validate_candidates(candidates=candidates)
         return candidates
 
@@ -173,20 +165,3 @@ class PredictiveStrategy(Strategy):
             )
             for _, row in candidates.iterrows()
         ]
-
-    @abstractmethod
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[PositiveInt] = None,
-    ) -> pd.DataFrame:
-        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
-
-        Args:
-            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The chosen set of candidates.
-        """
-        pass

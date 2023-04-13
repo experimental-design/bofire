@@ -89,7 +89,7 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
 
 
 class DummyStrategy(strategies.BotorchStrategy):
-    def _init_acqf(
+    def _get_acqfs(
         self,
     ) -> None:
         pass

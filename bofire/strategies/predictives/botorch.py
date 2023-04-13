@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -9,8 +9,11 @@ from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.initializers import gen_batch_initial_conditions
-from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
-from pydantic.types import NonNegativeInt
+from botorch.optim.optimize import (
+    optimize_acqf,
+    optimize_acqf_list,
+    optimize_acqf_mixed,
+)
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -61,7 +64,6 @@ class BotorchStrategy(PredictiveStrategy):
         self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
         torch.manual_seed(self.seed)
 
-    acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
 
     @property
@@ -110,7 +112,6 @@ class BotorchStrategy(PredictiveStrategy):
             raise ValueError("Wrong dimension of posterior mean. Expecting 2 or 3.")
         return preds, stds
 
-    # TODO: test this
     def calc_acquisition(
         self, candidates: pd.DataFrame, combined: bool = False
     ) -> np.ndarray:
@@ -124,35 +125,19 @@ class BotorchStrategy(PredictiveStrategy):
         Returns:
             np.ndarray: Dataframe with the acquisition values.
         """
+        acqf = self._get_acqfs(1)[0]
+
         transformed = self.domain.inputs.transform(
             candidates, self.input_preprocessing_specs
         )
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         if combined is False:
             X = X.unsqueeze(-2)
-        return self.acqf.forward(X).cpu().detach().numpy()  # type: ignore
 
-    # TODO: test this
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[NonNegativeInt] = None,
-    ) -> pd.DataFrame:
-        """Method to choose a set of candidates from a candidate pool.
+        with torch.no_grad():
+            vals = acqf.forward(X).cpu().detach().numpy()
 
-        Args:
-            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[NonNegativeInt], optional): Number of candidates to choose. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The chosen set of candidates.
-        """
-
-        acqf_values = self.calc_acquisition(candidate_pool)
-
-        return candidate_pool.iloc[
-            np.argpartition(acqf_values, -1 * candidate_count)[-candidate_count:]  # type: ignore
-        ]
+        return vals
 
     def _setup_ask(self):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
@@ -255,7 +240,6 @@ class BotorchStrategy(PredictiveStrategy):
         """
 
         assert candidate_count > 0, "candidate_count has to be larger than zero."
-        assert self.acqf is not None
 
         (
             bounds,
@@ -266,11 +250,12 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features_list,
         ) = self._setup_ask()
 
-        if fixed_features_list:
-            candidates, _ = optimize_acqf_mixed(
-                acq_function=self.acqf,
+        acqfs = self._get_acqfs(candidate_count)
+
+        if len(acqfs) > 1:
+            candidates, _ = optimize_acqf_list(
+                acq_function_list=acqfs,
                 bounds=bounds,
-                q=candidate_count,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
                 equality_constraints=get_linear_constraints(
@@ -280,42 +265,57 @@ class BotorchStrategy(PredictiveStrategy):
                     domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
                 ),
                 nonlinear_inequality_constraints=nchooseks,
+                fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
-                ic_generator=ic_generator,
                 ic_gen_kwargs=ic_gen_kwargs,
+                ic_generator=ic_generator,
+                options={"batch_limit": 5, "maxiter": 200},
             )
         else:
-            candidates, _ = optimize_acqf(
-                acq_function=self.acqf,
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                ),
-                fixed_features=fixed_features,
-                nonlinear_inequality_constraints=nchooseks,
-                return_best_only=True,
-                ic_generator=ic_generator,
-                **ic_gen_kwargs,
-            )
+            if fixed_features_list:
+                candidates, _ = optimize_acqf_mixed(
+                    acq_function=acqfs[0],
+                    bounds=bounds,
+                    q=candidate_count,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.num_raw_samples,
+                    equality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                    ),
+                    inequality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                    ),
+                    nonlinear_inequality_constraints=nchooseks,
+                    fixed_features_list=fixed_features_list,
+                    ic_generator=ic_generator,
+                    ic_gen_kwargs=ic_gen_kwargs,
+                )
+            else:
+                candidates, _ = optimize_acqf(
+                    acq_function=acqfs[0],
+                    bounds=bounds,
+                    q=candidate_count,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.num_raw_samples,
+                    equality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                    ),
+                    inequality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                    ),
+                    fixed_features=fixed_features,
+                    nonlinear_inequality_constraints=nchooseks,
+                    return_best_only=True,
+                    ic_generator=ic_generator,
+                    **ic_gen_kwargs,
+                )
         return self._postprocess_candidates(candidates=candidates)
 
     def _tell(self) -> None:
-        self.init_acqf()
-
-    def init_acqf(self) -> None:
-        self._init_acqf()
-        return
+        pass
 
     @abstractmethod
-    def _init_acqf(
-        self,
-    ) -> None:
+    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         pass
 
     def get_fixed_features(self):

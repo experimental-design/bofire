@@ -1,17 +1,12 @@
-from typing import Union
+from typing import List, Union
 
-import pandas as pd
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.acquisition.utils import get_acquisition_function
-from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
 
-from bofire.data_models.constraints.api import (
-    LinearEqualityConstraint,
-    LinearInequalityConstraint,
-)
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     MaximizeObjective,
@@ -21,7 +16,6 @@ from bofire.data_models.strategies.api import QparegoStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import (
-    get_linear_constraints,
     get_multiobjective_objective,
     get_output_constraints,
     tkwargs,
@@ -39,20 +33,10 @@ class QparegoStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
 
-    def _init_acqf(self) -> None:
-        pass
-
-    def calc_acquisition(self, experiments: pd.DataFrame, combined: bool = False):
-        raise ValueError("ACQF calc not implemented for qparego")
-
-    def get_objective(
-        self, pred: torch.Tensor
+    def _get_objective(
+        self,
     ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
         """Returns the scalarized objective.
-
-        Args:
-            pred (torch.Tensor): Predictions for the training data from the
-                trained model.
 
         Returns:
             Union[GenericMCObjective, ConstrainedMCObjective]: the botorch objective.
@@ -78,8 +62,18 @@ class QparegoStrategy(BotorchStrategy):
 
         obj_callable = get_multiobjective_objective(output_features=self.domain.outputs)
 
+        df_preds = self.predict(
+            self.domain.outputs.preprocess_experiments_any_valid_output(
+                experiments=self.experiments
+            )
+        )
+
+        preds = torch.from_numpy(
+            df_preds[[f"{key}_pred" for key in self.domain.outputs.get_keys()]].values
+        ).to(**tkwargs)
+
         scalarization = get_chebyshev_scalarization(
-            weights=weights, Y=obj_callable(pred, None) * ref_point_mask
+            weights=weights, Y=obj_callable(preds, None) * ref_point_mask
         )
 
         def objective(Z, X=None):
@@ -95,71 +89,24 @@ class QparegoStrategy(BotorchStrategy):
             )
         return GenericMCObjective(scalarization)
 
-    def _ask(self, candidate_count: int):
-        assert candidate_count > 0, "candidate_count has to be larger than zero."
+    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
+        assert self.is_fitted is True, "Model not trained."
 
-        # get the list acqfs
-        acqf_list = []
-        with torch.no_grad():
-            clean_experiments = self.domain.outputs.preprocess_experiments_any_valid_output(
-                self.experiments  # type: ignore
-            )
-            transformed = self.domain.inputs.transform(
-                clean_experiments, self.input_preprocessing_specs
-            )
+        acqfs = []
 
-            train_x = torch.from_numpy(transformed.values).to(**tkwargs)
+        X_train, X_pending = self.get_acqf_input_tensors()
 
-            pred = self.model.posterior(train_x).mean  # type: ignore
-
-        clean_experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments  # type: ignore
-        )
-        transformed = self.domain.inputs.transform(
-            clean_experiments, self.input_preprocessing_specs
-        )
-        observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
-
-        # TODO: unite it with SOBO and also add the other acquisition functions
-        for i in range(candidate_count):
-            assert self.model is not None
+        assert self.model is not None
+        for i in range(n):
             acqf = get_acquisition_function(
                 acquisition_function_name="qNEI",
                 model=self.model,
-                objective=self.get_objective(pred),
-                X_observed=observed_x,
+                objective=self._get_objective(),
+                X_observed=X_train,
+                X_pending=X_pending if i == 0 else None,
                 mc_samples=self.num_sobol_samples,
                 qmc=True,
                 prune_baseline=True,
             )
-            acqf_list.append(acqf)
-
-        # optimize
-        (
-            bounds,
-            ic_generator,
-            ic_gen_kwargs,
-            nchooseks,
-            fixed_features,
-            fixed_features_list,
-        ) = self._setup_ask()
-
-        candidates, _ = optimize_acqf_list(
-            acq_function_list=acqf_list,
-            bounds=bounds,
-            num_restarts=self.num_restarts,
-            raw_samples=self.num_raw_samples,
-            equality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-            ),
-            inequality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-            ),
-            nonlinear_inequality_constraints=nchooseks,
-            fixed_features=fixed_features,
-            fixed_features_list=fixed_features_list,
-            ic_gen_kwargs=ic_gen_kwargs,
-            ic_generator=ic_generator,
-            options={"batch_limit": 5, "maxiter": 200},
-        )
-        return self._postprocess_candidates(candidates=candidates)
+            acqfs.append(acqf)
+        return acqfs

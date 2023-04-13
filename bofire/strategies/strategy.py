@@ -87,7 +87,6 @@ class Strategy(ABC):
         self,
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
-        candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
@@ -95,8 +94,7 @@ class Strategy(ABC):
             candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number
                 of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
-            candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided,
-                pool independent candidates are provided. Defaults to None.
+
 
         Raises:
             ValueError: if candidate count is smaller than 1
@@ -115,15 +113,7 @@ class Strategy(ABC):
                 "Not enough experiments available to execute the strategy."
             )
 
-        if candidate_pool is None:
-            candidates = self._ask(candidate_count=candidate_count)
-        else:
-            self.domain.validate_candidates(candidate_pool, only_inputs=True)
-            if candidate_count is not None:
-                assert candidate_count <= len(
-                    candidate_pool
-                ), "Number of requested candidates is larger than the pool from which they should be chosen."
-            candidates = self._choose_from_pool(candidate_pool, candidate_count)
+        candidates = self._ask(candidate_count=candidate_count)
 
         self.domain.validate_candidates(candidates=candidates, only_inputs=True)
 
@@ -137,23 +127,6 @@ class Strategy(ABC):
             self.add_candidates(candidates)
 
         return candidates
-
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[PositiveInt] = None,
-    ) -> pd.DataFrame:
-        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
-
-        Args:
-            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The chosen set of candidates.
-        """
-        # TODO: change inheritence hierarchy to make this an optional feature of a strategy provided by inheritence
-        raise NotImplementedError
 
     @abstractmethod
     def has_sufficient_experiments(
