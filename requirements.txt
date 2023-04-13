@@ -5,7 +5,7 @@ scikit-learn
 matplotlib
 pytest
 torch>=1.12
-botorch @ git+ssh://git@github.com/pytorch/botorch.git
+botorch @ git+https://github.com/experimental-design/bofire.git#egg=botorch
 multiprocess
 plotly
 formulaic==0.3.4
