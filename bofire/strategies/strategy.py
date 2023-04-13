@@ -66,6 +66,17 @@ class Strategy(ABC):
             self.set_experiments(experiments=experiments)
         else:
             self.add_experiments(experiments=experiments)
+        # we check here that the experiments do not have completely fixed columns
+        cleaned_experiments = (
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                experiments=experiments
+            )
+        )
+        for feature in self.domain.inputs.get_fixed():
+            if (cleaned_experiments[feature.key] == feature.fixed_value()[0]).all():  # type: ignore
+                raise ValueError(
+                    f"No variance in experiments for fixed feature {feature.key}"
+                )
         self._tell()
 
     def _tell(self) -> None:
@@ -193,7 +204,7 @@ class Strategy(ABC):
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates)
+        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
         self._candidates = candidates
 
     def add_candidates(self, candidates: pd.DataFrame):

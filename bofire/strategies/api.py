@@ -1,3 +1,4 @@
+from bofire.strategies.doe_strategy import DoEStrategy  # noqa: F401
 from bofire.strategies.mapper import map  # noqa: F401
 from bofire.strategies.predictives.botorch import BotorchStrategy  # noqa: F401
 from bofire.strategies.predictives.predictive import PredictiveStrategy  # noqa: F401

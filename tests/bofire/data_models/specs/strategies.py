@@ -109,3 +109,11 @@ specs.add_valid(
         "seed": 42,
     },
 )
+specs.add_valid(
+    strategies.DoEStrategy,
+    lambda: {
+        "domain": domain.valid().obj().dict(),
+        "formula": "linear",
+        "seed": 42,
+    },
+)

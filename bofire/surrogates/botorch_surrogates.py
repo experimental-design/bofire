@@ -97,6 +97,10 @@ class BotorchSurrogates(ABC):
             model = {model.output_features[0].key: model for model in self.surrogates}[
                 output_feature_key
             ]
+            if model.model is None:
+                raise ValueError(
+                    f"Surrogate for output feature {output_feature_key} not fitted."
+                )
             # in case that inputs are complete we do not need to adjust anything
             if len(model.input_features) == len(input_features):
                 botorch_models.append(model.model)
