@@ -214,20 +214,13 @@ class BotorchStrategy(PredictiveStrategy):
         df_candidates = pd.DataFrame(
             data=candidates.detach().numpy(), columns=input_feature_keys
         )
-        # TODO: in case of free we have to transform back the candidates first and then compute the metrics
-        # otherwise the prediction holds only for the infeasible solution, this solution should then also be
-        # applicable for >1d descriptors
-        preds, stds = self._predict(df_candidates)
 
         df_candidates = self.domain.inputs.inverse_transform(
             df_candidates, self.input_preprocessing_specs
         )
 
-        for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
-            df_candidates[feat.key + "_pred"] = preds[:, i]
-            df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
-        return df_candidates
+        preds = self.predict(df_candidates)
+        return pd.concat((df_candidates, preds), axis=1)
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         """[summary]

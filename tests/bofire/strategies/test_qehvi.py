@@ -234,3 +234,18 @@ def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
         num_candidates,
         len(set(chain(*names.values()))),
     )
+
+
+def test_no_objective():
+    domain = DTLZ2(dim=6).domain
+    experiments = DTLZ2(dim=6).f(domain.inputs.sample(10), return_complete=True)
+    domain.outputs.features.append(ContinuousOutput(key="ignore", objective=None))
+    experiments["ignore"] = experiments["f_0"] + 6
+    experiments["valid_ignore"] = 1
+    data_model = data_models.QehviStrategy(
+        domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+    )
+    recommender = strategies.map(data_model=data_model)
+    recommender.tell(experiments=experiments)
+    candidates = recommender.ask(candidate_count=1)
+    recommender.to_candidates(candidates)

@@ -6,7 +6,6 @@ import pandas as pd
 from pydantic import PositiveInt
 
 from bofire.data_models.features.api import TInputTransformSpecs
-from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
@@ -97,22 +96,13 @@ class PredictiveStrategy(Strategy):
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)),
-                columns=[
-                    "%s_pred" % feat.key
-                    for feat in self.domain.outputs.get_by_objective(Objective)
-                ]
-                + [
-                    "%s_sd" % feat.key
-                    for feat in self.domain.outputs.get_by_objective(Objective)
-                ],
+                columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()]
+                + ["%s_sd" % feat.key for feat in self.domain.outputs.get()],
             )
         else:
             predictions = pd.DataFrame(
                 data=preds,
-                columns=[
-                    "%s_pred" % feat.key
-                    for feat in self.domain.outputs.get_by_objective(Objective)
-                ],
+                columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()],
             )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
@@ -155,12 +145,14 @@ class PredictiveStrategy(Strategy):
                     for key in self.domain.inputs.get_keys()
                 },
                 outputValues={
-                    key: OutputValue(
-                        predictedValue=row[f"{key}_pred"],
-                        standardDeviation=row[f"{key}_sd"],
-                        objective=row[f"{key}_des"],
+                    feat.key: OutputValue(
+                        predictedValue=row[f"{feat.key}_pred"],
+                        standardDeviation=row[f"{feat.key}_sd"],
+                        objective=row[f"{feat.key}_des"]
+                        if feat.objective is not None  # type: ignore
+                        else 1.0,
                     )
-                    for key in self.domain.outputs.get_keys()
+                    for feat in self.domain.outputs.get()
                 },
             )
             for _, row in candidates.iterrows()
