@@ -1,8 +1,8 @@
-from typing import Optional, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import Field, root_validator, validator
 from scipy.stats import fisher_exact, pearsonr, spearmanr
 from sklearn.metrics import (
     mean_absolute_error,
@@ -402,3 +402,36 @@ class CvResults(BaseModel):
             pd.DataFrame: Dataframe containing the metric values for all folds.
         """
         return pd.concat([self.get_metric(m, combine_folds) for m in metrics], axis=1)
+
+
+# the following methods tranform a CvResults object to a CrossValidationValues object
+# in which the metrics are stored and not computed on the fly, moreover the field types
+# are more backend friendly. It should be used to store CvResults in a backend system
+class CrossValidationValues(BaseModel):
+    observed: List[float] = Field(description="actual output values")
+    predicted: List[float] = Field(description="predicted output values")
+    standardDeviation: Optional[List[float]] = Field(
+        description="standard deviation of predicted values", default=None
+    )
+    metrics: Optional[Dict[str, float]] = Field(
+        description="metrics per cv fold. Key is the metric type", default=None
+    )
+
+
+def CvResults2CrossValidationValues(
+    cv: CvResults,
+) -> Dict[str, List[CrossValidationValues]]:
+    cvResults = {cv.key: []}
+    metrics = cv.get_metrics(combine_folds=False)
+    for i, fold in enumerate(cv.results):
+        cvResults[cv.key].append(
+            CrossValidationValues(
+                observed=fold.observed.tolist(),
+                predicted=fold.predicted.tolist(),
+                standardDeviation=fold.standard_deviation.tolist()
+                if fold.standard_deviation is not None
+                else None,
+                metrics=metrics.loc[i].to_dict(),
+            )
+        )
+    return cvResults

@@ -290,8 +290,8 @@ def test_strategy_set_candidates():
     assert strategy.num_candidates == 0
     candidates = generate_candidates(domain, 2)
     strategy.set_candidates(candidates=candidates)
-    assert_frame_equal(strategy.candidates, candidates)
-    assert_frame_equal(strategy._candidates, candidates)
+    assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
+    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
     assert strategy.num_candidates == 2
 
 
@@ -302,13 +302,16 @@ def test_strategy_add_candidates():
     assert strategy.num_candidates == 0
     candidates = generate_candidates(domain, 2)
     strategy.add_candidates(candidates=candidates)
-    assert_frame_equal(strategy.candidates, candidates)
+    assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
     assert strategy.num_candidates == 2
     candidates2 = generate_candidates(domain, 5)
     strategy.add_candidates(candidates=candidates2)
     assert strategy.num_candidates == 7
     assert_frame_equal(
-        strategy.candidates, pd.concat((candidates, candidates2), ignore_index=True)
+        strategy.candidates,
+        pd.concat((candidates, candidates2), ignore_index=True)[
+            domain.inputs.get_keys()
+        ],
     )
 
 

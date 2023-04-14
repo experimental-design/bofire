@@ -205,7 +205,7 @@ class Strategy(ABC):
             experiments (pd.DataFrame): Dataframe with candidates.
         """
         candidates = self.domain.validate_candidates(candidates, only_inputs=True)
-        self._candidates = candidates
+        self._candidates = candidates[self.domain.inputs.get_keys()]
 
     def add_candidates(self, candidates: pd.DataFrame):
         """Add candidates to the strategy. Appends to existing ones.
@@ -213,12 +213,13 @@ class Strategy(ABC):
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates)
+        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
         if self.candidates is None:
-            self._candidates = candidates
+            self._candidates = candidates[self.domain.inputs.get_keys()]
         else:
             self._candidates = pd.concat(
-                (self.candidates, candidates), ignore_index=True
+                (self.candidates, candidates[self.domain.inputs.get_keys()]),
+                ignore_index=True,
             )
 
     @property

@@ -14,6 +14,7 @@ from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 from bofire.surrogates.diagnostics import (
     CvResult,
     CvResults,
+    CvResults2CrossValidationValues,
     _mean_absolute_error,
     _mean_absolute_percentage_error,
     _mean_squared_error,
@@ -24,7 +25,13 @@ from bofire.surrogates.diagnostics import (
 )
 
 
-def generate_cvresult(key, n_samples, include_labcodes=False, include_X=False):
+def generate_cvresult(
+    key,
+    n_samples,
+    include_labcodes=False,
+    include_X=False,
+    include_standard_deviation=False,
+):
     feature = ContinuousInput(
         key=key,
         bounds=(10, 20),
@@ -41,8 +48,17 @@ def generate_cvresult(key, n_samples, include_labcodes=False, include_X=False):
         )
     else:
         X = None
+    if include_standard_deviation:
+        standard_deviation = pd.Series(np.random.normal(0, 0.2, size=n_samples))
+    else:
+        standard_deviation = None
     return CvResult(
-        key=key, observed=observed, predicted=predicted, labcodes=labcodes, X=X
+        key=key,
+        observed=observed,
+        predicted=predicted,
+        labcodes=labcodes,
+        X=X,
+        standard_deviation=standard_deviation,
     )
 
 
@@ -369,3 +385,39 @@ def test_cvresults_get_metrics_loo(cv_results):
 )
 def test_cvresults_is_loo(cv_results, expected):
     assert cv_results.is_loo == expected
+
+
+@pytest.mark.parametrize(
+    "cv_results",
+    [
+        CvResults(results=[generate_cvresult(key="a", n_samples=4) for _ in range(10)]),
+        CvResults(
+            results=[
+                generate_cvresult(key="a", n_samples=6, include_standard_deviation=True)
+                for _ in range(4)
+            ]
+        ),
+    ],
+)
+def test_CvResults2CrossValidationValues(cv_results):
+    metrics = cv_results.get_metrics(combine_folds=False)
+    transformed = CvResults2CrossValidationValues(cv_results)
+    assert isinstance(transformed, dict)
+    assert list(transformed.keys()) == ["a"]
+    assert len(transformed["a"]) == len(cv_results)
+    for i in range(len(cv_results)):
+        assert np.allclose(
+            cv_results.results[i].predicted.values, transformed["a"][i].predicted
+        )
+        assert np.allclose(
+            cv_results.results[i].observed.values, transformed["a"][i].observed
+        )
+        if cv_results.results[i].standard_deviation is not None:
+            assert np.allclose(
+                cv_results.results[i].standard_deviation.values,
+                transformed["a"][i].standardDeviation,
+            )
+        else:
+            assert transformed["a"][i].standardDeviation is None
+        for m in metrics.columns:
+            assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
