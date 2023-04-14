@@ -293,6 +293,8 @@ def test_strategy_set_candidates():
     assert_frame_equal(strategy.candidates, candidates)
     assert_frame_equal(strategy._candidates, candidates)
     assert strategy.num_candidates == 2
+    strategy.reset_candidates()
+    assert strategy.num_candidates == 0
 
 
 def test_strategy_add_candidates():

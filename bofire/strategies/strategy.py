@@ -194,6 +194,10 @@ class Strategy(ABC):
                 (self.candidates, candidates), ignore_index=True
             )
 
+    def reset_candidates(self):
+        """Resets the pending candidates of the strategy."""
+        self._candidates = None
+
     @property
     def num_candidates(self) -> int:
         """Returns number of (pending) candidates"""
