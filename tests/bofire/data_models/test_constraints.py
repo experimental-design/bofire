@@ -132,6 +132,7 @@ def test_constraints_plus():
     "constraints, num_candidates",
     [
         (constraints2, 5),
+        (constraints4, 5),
     ],
 )
 def test_constraints_call(constraints, num_candidates):
@@ -160,6 +161,7 @@ def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
     [
         (constraints, 2),
         (constraints2, 2),
+        (constraints4, 5),
     ],
 )
 def test_constraints_jacobian(constraints, num_candidates):
@@ -167,7 +169,7 @@ def test_constraints_jacobian(constraints, num_candidates):
     returned = constraints.jacobian(candidates)
     assert np.all(
         [
-            returned[i].columns == ["dg/df1", "dg/df2", "dg/df3"]
+            list(returned[i].columns) == ["dg/df1", "dg/df2", "dg/df3"]
             for i, c in enumerate(constraints)
         ]
     )
@@ -191,3 +193,25 @@ def test_constraints_jacobian(constraints, num_candidates):
                 if not hasattr(col, "__iter__"):
                     res[j] = pd.Series(np.repeat(col, candidates.shape[0]))
             assert np.allclose(returned[i], pd.DataFrame(res).transpose())
+        if isinstance(c, NChooseKConstraint):
+            candidates.iloc[0] = [0, 0, 0]
+            candidates.iloc[1] = [1, 0, 0]
+            candidates.iloc[2] = [1, 1, 1]
+            candidates.iloc[3] = [0, 1e-4, -1e-4]
+            candidates.iloc[4] = [0, 0, 1e-4]
+
+            returned = constraints.jacobian(candidates)
+
+            def narrow_gaussian_gradient(x, ell=1e-3):
+                return np.exp(-0.5 * (x / ell) ** 2) * (-x / ell**2)
+
+            assert np.allclose(returned[0].iloc[0], 0)
+            assert np.allclose(returned[0].iloc[1], 0)
+            assert np.allclose(returned[0].iloc[2], 0)
+            assert np.allclose(
+                returned[0].iloc[3],
+                narrow_gaussian_gradient(np.array([0, 1e-4, -1e-4])),
+            )
+            assert np.allclose(
+                returned[0].iloc[4], narrow_gaussian_gradient(np.array([0, 0, 1e-4]))
+            )

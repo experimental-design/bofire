@@ -16,18 +16,11 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import (
-    CategoricalInput,
-    ContinuousOutput,
-    MolecularInput,
-)
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.strategies.samplers.polytope import PolytopeSampler
-
-CAT_TOL = 0.1
-DISCRETE_TOL = 0.1
 
 
 def get_formula_from_string(
@@ -179,7 +172,7 @@ def n_zero_eigvals(
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
-    N = len(model_formula.terms) + 3
+    N = len(model_formula) + 3
 
     sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
     X = sampler.ask(N)
@@ -194,14 +187,15 @@ def constraints_as_scipy_constraints(
     domain: Domain,
     n_experiments: int,
     tol: float = 1e-3,
+    ignore_nchoosek: bool = True,
 ) -> List:
-    """Formulates opti constraints as scipy constraints. Ignores NchooseK constraints
-    (these can be formulated as bounds).
+    """Formulates opti constraints as scipy constraints.
 
     Args:
         domain (Domain): Domain whose constraints should be formulated as scipy constraints.
         n_experiments (int): Number of instances of inputs for problem that are evaluated together.
         tol (float): Tolerance for the computation of the constraint violation. Default value is 1e-3.
+        ingore_nchoosek (bool): NChooseK constraints are ignored if set to true. Defaults to True.
 
     Returns:
         A list of scipy constraints corresponding to the constraints of the given opti problem.
@@ -286,7 +280,19 @@ def constraints_as_scipy_constraints(
                 constraints.append(NonlinearConstraint(fun, lb, ub))
 
         elif isinstance(c, NChooseKConstraint):
-            pass
+            if ignore_nchoosek:
+                pass
+            else:
+                # write upper/lower bound as vector
+                lb = -np.inf * np.ones(n_experiments)
+                ub = np.zeros(n_experiments)
+
+                # define constraint evaluation (and gradient if provided)
+                fun = ConstraintWrapper(
+                    constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+                )
+
+                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
 
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
@@ -473,20 +479,15 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
     if len(nchoosek_constraints) == 0:
         return
 
-    # check if the domains of all NCHooseK constraints are compatible to linearization
+    # check if the domains of all NChooseK constraints are compatible to linearization
     for c in nchoosek_constraints:
         for name in np.unique(c.features):
             input = domain.inputs.get_by_key(name)
-            if not (
-                isinstance(input, CategoricalInput)
-                or isinstance(input, ContinuousOutput)
-                or isinstance(input, MolecularInput)
-            ):
-                if input.lower_bound > 0 or input.upper_bound < 0:
-                    raise ValueError(
-                        f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
-                        domain of the affected decision variables."
-                    )
+            if input.bounds[0] > 0 or input.bounds[1] < 0:  # type: ignore
+                raise ValueError(
+                    f"Constraint {c} cannot be formulated as bounds. 0 must be inside the \
+                    domain of the affected decision variables."
+                )
 
     # check if the parameter names of two nchoose overlap
     for c in nchoosek_constraints:
@@ -518,16 +519,7 @@ def nchoosek_constraints_as_bounds(
 
     # bounds without NChooseK constraints
     bounds = np.array(
-        [
-            (p.lower_bound, p.upper_bound)
-            for p in domain.inputs
-            if not (
-                isinstance(p, CategoricalInput)
-                or isinstance(p, ContinuousOutput)
-                or isinstance(p, MolecularInput)
-            )
-        ]
-        * n_experiments
+        [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments  # type: ignore
     )
 
     if len(domain.cnstrs) > 0:

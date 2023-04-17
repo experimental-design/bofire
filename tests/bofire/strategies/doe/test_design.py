@@ -16,8 +16,6 @@ from bofire.strategies.doe.design import (
     check_fixed_experiments,
     find_local_max_ipopt,
     get_n_experiments,
-    get_objective,
-    logD,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 
@@ -27,32 +25,6 @@ CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 @pytest.mark.skipif(CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_raise_error_if_cyipopt_not_available():
     pytest.raises(ImportError)
-
-
-def test_logD():
-    design = np.ones(shape=(10, 5))
-    design[0, 0] = 2
-
-    log_d_true = np.linalg.slogdet(design.T @ design + 1e-7 * np.eye(5))[1]
-
-    assert np.allclose(logD(design), log_d_true)
-
-
-def test_get_objective():
-    domain = Domain(
-        input_features=[
-            ContinuousInput(
-                key=f"x{i+1}",
-                bounds=(0, 1),
-            )
-            for i in range(3)
-        ],
-        output_features=[ContinuousOutput(key="y")],
-    )
-    objective = get_objective(domain=domain, model_type="linear")
-
-    x = np.array([1, 0, 0, 0, 1, 0, 0, 0, 1])
-    assert np.allclose(objective(x), -np.log(4) - np.log(1e-7))
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
@@ -71,7 +43,7 @@ def test_find_local_max_ipopt_no_constraint():
     dim_input = len(domain.inputs.get_keys())
 
     num_exp = (
-        len(get_formula_from_string(model_type="linear", domain=domain).terms)
+        len(get_formula_from_string(model_type="linear", domain=domain))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
@@ -106,7 +78,7 @@ def test_find_local_max_ipopt_nchoosek():
     D = len(domain.inputs)
 
     N = (
-        len(get_formula_from_string(model_type="linear", domain=domain).terms)
+        len(get_formula_from_string(model_type="linear", domain=domain))
         - n_zero_eigvals(domain=domain, model_type="linear")
         + 3
     )
@@ -138,7 +110,7 @@ def test_find_local_max_ipopt_mixture():
 
     D = len(domain.inputs)
 
-    N = len(get_formula_from_string(domain=domain, model_type="linear").terms) + 3
+    N = len(get_formula_from_string(domain=domain, model_type="linear")) + 3
     A = find_local_max_ipopt(domain, "linear")
     assert A.shape == (N, D)
 
