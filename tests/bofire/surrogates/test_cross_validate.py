@@ -80,8 +80,8 @@ def test_model_cross_validate_descriptor():
         assert len(test_cv.results) == efolds
 
 
-@pytest.mark.parametrize("include_X", [True, False])
-def test_model_cross_validate_include_X(include_X):
+@pytest.mark.parametrize("include_X, include_labcodes", [[True, False], [False, True]])
+def test_model_cross_validate_include_X(include_X, include_labcodes):
     input_features = Inputs(
         features=[
             ContinuousInput(
@@ -93,6 +93,7 @@ def test_model_cross_validate_include_X(include_X):
     )
     output_features = Outputs(features=[ContinuousOutput(key="y")])
     experiments = input_features.sample(n=10)
+    experiments["labcode"] = [str(i) for i in range(10)]
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
@@ -101,7 +102,7 @@ def test_model_cross_validate_include_X(include_X):
     )
     model = surrogates.map(model)
     train_cv, test_cv, _ = model.cross_validate(
-        experiments, folds=5, include_X=include_X
+        experiments, folds=5, include_X=include_X, include_labcodes=include_labcodes
     )
     if include_X:
         assert train_cv.results[0].X.shape == (8, 2)
@@ -109,6 +110,12 @@ def test_model_cross_validate_include_X(include_X):
     if include_X is False:
         assert train_cv.results[0].X is None
         assert test_cv.results[0].X is None
+    if include_labcodes:
+        assert train_cv.results[0].labcodes.shape == (8,)
+        assert test_cv.results[0].labcodes.shape == (2,)
+    else:
+        assert train_cv.results[0].labcodes is None
+        assert train_cv.results[0].labcodes is None
 
 
 def test_model_cross_validate_hooks():

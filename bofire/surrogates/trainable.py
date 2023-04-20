@@ -50,6 +50,7 @@ class TrainableSurrogate(ABC):
         experiments: pd.DataFrame,
         folds: int = -1,
         include_X: bool = False,
+        include_labcodes: bool = False,
         hooks: Dict[
             str,
             Callable[
@@ -82,6 +83,8 @@ class TrainableSurrogate(ABC):
             Tuple[CvResults, CvResults, Dict[str, List[Any]]]: First CvResults object reflects the training data,
                 second CvResults object the test data, dictionary object holds the return values of the applied hooks.
         """
+        if include_labcodes and "labcode" not in experiments.columns:
+            raise ValueError("No labcodes available for the provided experiments.")
 
         if len(self.output_features) > 1:  # type: ignore
             raise NotImplementedError(
@@ -113,6 +116,8 @@ class TrainableSurrogate(ABC):
             X_test = experiments.iloc[test_index][self.input_features.get_keys()]  # type: ignore
             y_train = experiments.iloc[train_index][self.output_features.get_keys()]  # type: ignore
             y_test = experiments.iloc[test_index][self.output_features.get_keys()]  # type: ignore
+            train_labcodes = experiments.iloc[train_index]["labcode"] if include_labcodes else None
+            test_labcodes = experiments.iloc[test_index]["labcode"] if include_labcodes else None
             # now fit the model
             self._fit(X_train, y_train)
             # now do the scoring
@@ -126,6 +131,7 @@ class TrainableSurrogate(ABC):
                     predicted=y_train_pred[key + "_pred"],
                     standard_deviation=y_train_pred[key + "_sd"],
                     X=X_train if include_X else None,
+                    labcodes=train_labcodes
                 )
             )
             test_results.append(
@@ -135,6 +141,7 @@ class TrainableSurrogate(ABC):
                     predicted=y_test_pred[key + "_pred"],
                     standard_deviation=y_test_pred[key + "_sd"],
                     X=X_test if include_X else None,
+                    labcodes=test_labcodes
                 )
             )
             # now call the hooks if available
