@@ -116,8 +116,12 @@ class TrainableSurrogate(ABC):
             X_test = experiments.iloc[test_index][self.input_features.get_keys()]  # type: ignore
             y_train = experiments.iloc[train_index][self.output_features.get_keys()]  # type: ignore
             y_test = experiments.iloc[test_index][self.output_features.get_keys()]  # type: ignore
-            train_labcodes = experiments.iloc[train_index]["labcode"] if include_labcodes else None
-            test_labcodes = experiments.iloc[test_index]["labcode"] if include_labcodes else None
+            train_labcodes = (
+                experiments.iloc[train_index]["labcode"] if include_labcodes else None
+            )
+            test_labcodes = (
+                experiments.iloc[test_index]["labcode"] if include_labcodes else None
+            )
             # now fit the model
             self._fit(X_train, y_train)
             # now do the scoring
@@ -131,7 +135,7 @@ class TrainableSurrogate(ABC):
                     predicted=y_train_pred[key + "_pred"],
                     standard_deviation=y_train_pred[key + "_sd"],
                     X=X_train if include_X else None,
-                    labcodes=train_labcodes
+                    labcodes=train_labcodes,
                 )
             )
             test_results.append(
@@ -141,7 +145,7 @@ class TrainableSurrogate(ABC):
                     predicted=y_test_pred[key + "_pred"],
                     standard_deviation=y_test_pred[key + "_sd"],
                     X=X_test if include_X else None,
-                    labcodes=test_labcodes
+                    labcodes=test_labcodes,
                 )
             )
             # now call the hooks if available
