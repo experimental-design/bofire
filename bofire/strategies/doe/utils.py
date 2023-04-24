@@ -615,5 +615,8 @@ def smart_round(
     cp_input_bounds = _bounds_to_cp_constraints(precision_scaling_matrix @ x, bounds)
     prob = cp.Problem(objective=objective, constraints=cp_constraints + cp_input_bounds)
     prob.solve()
+
+    # TODO Warning if rounding changes candidates strongly
+
     candidates_rounded = (x.value * precision).reshape(candidates.values.shape)
     return pd.DataFrame(candidates_rounded, columns=candidates.columns)
