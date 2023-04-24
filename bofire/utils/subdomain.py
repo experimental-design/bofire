@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import List
 
-from bofire.data_models.domain.api import Inputs
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import Input
 
@@ -41,6 +41,7 @@ def get_subdomain(
     assert len(outputs) > 0, "At least one output feature has to be provided."
     assert len(inputs) > 0, "At least one input feature has to be provided."
     inputs = Inputs(features=inputs)
+    outputs = Outputs(features=outputs)
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
         for key in c.features:  # type: ignore
