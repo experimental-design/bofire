@@ -1,22 +1,25 @@
-from collections import OrderedDict
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-from botorch.models.transforms.input import InputTransform
 from torch import Tensor
-from torch.nn import Module
-from torch.nn.functional import one_hot
 
-from bofire.domain.constraint import (
+from bofire.data_models.api import AnyObjective, Domain, Outputs
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.feature import ContinuousInput, InputFeature
-from bofire.domain.features import OutputFeatures
-from bofire.domain.objective import BotorchConstrainedObjective
+from bofire.data_models.features.api import ContinuousInput, Input
+from bofire.data_models.objectives.api import (
+    BotorchConstrainedObjective,
+    CloseToTargetObjective,
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
+    MinimizeObjective,
+    MinimizeSigmoidObjective,
+    TargetObjective,
+)
 
 tkwargs = {
     "dtype": torch.double,
@@ -47,7 +50,7 @@ def get_linear_constraints(
         upper = []
         rhs = 0.0
         for i, featkey in enumerate(c.features):  # type: ignore
-            idx = domain.get_feature_keys(InputFeature).index(featkey)
+            idx = domain.get_feature_keys(Input).index(featkey)
             feat = domain.get_feature(featkey)
             if feat.is_fixed():  # type: ignore
                 rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
@@ -120,13 +123,13 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 
 
 def get_output_constraints(
-    output_features: OutputFeatures,
+    output_features: Outputs,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
 
     Args:
-        output_features (OutputFeatures): Output feature object that should
+        output_features (Outputs): Output feature object that should
             be processed.
 
     Returns:
@@ -143,111 +146,152 @@ def get_output_constraints(
     return constraints, etas
 
 
-# this is copied from https://github.com/pytorch/botorch/pull/1534, will be removed as soon as it is in botorch
-# official
-
-
-class OneHotToNumeric(InputTransform, Module):
-    r"""Transform categorical parameters from a one-hot to a numeric representation.
-    This assumes that the categoricals are the trailing dimensions.
-    """
-
-    def __init__(
-        self,
-        dim: int,
-        categorical_features: Optional[Dict[int, int]] = None,
-        transform_on_train: bool = True,
-        transform_on_eval: bool = True,
-        transform_on_fantasize: bool = True,
-    ) -> None:
-        r"""Initialize.
-        Args:
-            dim: The dimension of the one-hot-encoded input.
-            categorical_features: A dictionary mapping the starting index of each
-                categorical feature to its cardinality. This assumes that categoricals
-                are one-hot encoded.
-            transform_on_train: A boolean indicating whether to apply the
-                transforms in train() mode. Default: False.
-            transform_on_eval: A boolean indicating whether to apply the
-                transform in eval() mode. Default: True.
-            transform_on_fantasize: A boolean indicating whether to apply the
-                transform when called from within a `fantasize` call. Default: False.
-        Returns:
-            A `batch_shape x n x d'`-dim tensor of where the one-hot encoded
-            categoricals are transformed to integer representation.
-        """
-        super().__init__()
-        self.transform_on_train = transform_on_train
-        self.transform_on_eval = transform_on_eval
-        self.transform_on_fantasize = transform_on_fantasize
-        categorical_features = categorical_features or {}
-        # sort by starting index
-        self.categorical_features = OrderedDict(
-            sorted(categorical_features.items(), key=lambda x: x[0])
+def get_objective_callable(
+    idx: int, objective: AnyObjective
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:  # type: ignore
+    if isinstance(objective, MaximizeObjective):
+        return lambda y, X=None: (
+            (y[..., idx] - objective.lower_bound)
+            / (objective.upper_bound - objective.lower_bound)
         )
-        if len(self.categorical_features) > 0:
-            self.categorical_start_idx = min(self.categorical_features.keys())
-            # check that the trailing dimensions are categoricals
-            end = self.categorical_start_idx
-            err_msg = (
-                f"{self.__class__.__name__} requires that the categorical "
-                "parameters are the rightmost elements."
-            )
-            for start, card in self.categorical_features.items():
-                # the end of one one-hot representation should be followed
-                # by the start of the next
-                if end != start:
-                    raise ValueError(err_msg)
-                end = start + card
-            if end != dim:
-                # check end
-                raise ValueError(err_msg)
-            # the numeric representation dimension is the total number of parameters
-            # (continuous, integer, and categorical)
-            self.numeric_dim = self.categorical_start_idx + len(categorical_features)
-
-    def transform(self, X: Tensor) -> Tensor:
-        r"""Transform the categorical inputs into integer representation.
-        Args:
-            X: A `batch_shape x n x d`-dim tensor of inputs.
-        Returns:
-            A `batch_shape x n x d'`-dim tensor of where the one-hot encoded
-            categoricals are transformed to integer representation.
-        """
-        if len(self.categorical_features) > 0:
-            X_numeric = X[..., : self.numeric_dim].clone()
-            idx = self.categorical_start_idx
-            for start, card in self.categorical_features.items():
-                X_numeric[..., idx] = X[..., start : start + card].argmax(dim=-1)
-                idx += 1
-            return X_numeric
-        return X
-
-    def untransform(self, X: Tensor) -> Tensor:
-        r"""Transform the categoricals from integer representation to one-hot.
-        Args:
-            X: A `batch_shape x n x d'`-dim tensor of transformed inputs, where
-                the categoricals are represented as integers.
-        Returns:
-            A `batch_shape x n x d`-dim tensor of inputs, where the categoricals
-            have been transformed to one-hot representation.
-        """
-        if len(self.categorical_features) > 0:
-            self.numeric_dim
-            one_hot_categoricals = [
-                # note that self.categorical_features is sorted by the starting index
-                # in one-hot representation
-                one_hot(
-                    X[..., idx - len(self.categorical_features)].long(),
-                    num_classes=cardinality,
+    if isinstance(objective, MinimizeObjective):
+        return lambda y, X=None: -1.0 * (
+            (y[..., idx] - objective.lower_bound)
+            / (objective.upper_bound - objective.lower_bound)
+        )
+    if isinstance(objective, CloseToTargetObjective):
+        return lambda y, X=None: -1.0 * (
+            torch.abs(y[..., idx] - objective.target_value) ** objective.exponent
+        )
+    if isinstance(objective, MinimizeSigmoidObjective):
+        return lambda y, X=None: (
+            (
+                1.0
+                - 1.0
+                / (
+                    1.0
+                    + torch.exp(
+                        -1.0 * objective.steepness * (y[..., idx] - objective.tp)
+                    )
                 )
-                for idx, cardinality in enumerate(self.categorical_features.values())
-            ]
-            X = torch.cat(
-                [
-                    X[..., : self.categorical_start_idx],
-                    *one_hot_categoricals,
-                ],
-                dim=-1,
             )
-        return X
+        )
+    if isinstance(objective, MaximizeSigmoidObjective):
+        return lambda y, X=None: (
+            1.0
+            / (
+                1.0
+                + torch.exp(-1.0 * objective.steepness * ((y[..., idx] - objective.tp)))
+            )
+        )
+    if isinstance(objective, TargetObjective):
+        return lambda y, X=None: (
+            1.0
+            / (
+                1.0
+                + torch.exp(
+                    -1
+                    * objective.steepness
+                    * (y[..., idx] - (objective.target_value - objective.tolerance))
+                )
+            )
+            * (
+                1.0
+                - 1.0
+                / (
+                    1.0
+                    + torch.exp(
+                        -1.0
+                        * objective.steepness
+                        * (y[..., idx] - (objective.target_value + objective.tolerance))
+                    )
+                )
+            )
+        )
+    else:
+        raise NotImplementedError(
+            f"Objective {objective.__class__.__name__} not implemented."
+        )
+
+
+def get_multiplicative_botorch_objective(
+    output_features: Outputs,
+) -> Callable[[Tensor, Tensor], Tensor]:
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+    ]
+    weights = [
+        feat.objective.w  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+    ]
+
+    def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+        val = 1.0
+        for c, w in zip(callables, weights):
+            val *= c(samples, None) ** w
+        return val  # type: ignore
+
+    return objective
+
+
+def get_additive_botorch_objective(
+    output_features: Outputs, exclude_constraints: bool = True
+) -> Callable[[Tensor, Tensor], Tensor]:
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+        and (
+            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            if exclude_constraints
+            else True
+        )
+    ]
+    weights = [
+        feat.objective.w  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+        and (
+            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            if exclude_constraints
+            else True
+        )
+    ]
+
+    def objective(samples: Tensor, X: Tensor) -> Tensor:
+        val = 0.0
+        for c, w in zip(callables, weights):
+            val += c(samples, None) * w
+        return val  # type: ignore
+
+    return objective
+
+
+def get_multiobjective_objective(
+    output_features: Outputs,
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
+    """Returns
+
+    Args:
+        output_features (Outputs): _description_
+
+    Returns:
+        Callable[[Tensor], Tensor]: _description_
+    """
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(output_features.get())
+        if feat.objective is not None  # type: ignore
+        and isinstance(
+            feat.objective,  # type: ignore
+            (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
+        )
+    ]
+
+    def objective(samples: Tensor, X: Optional[Tensor] = None) -> Tensor:
+        return torch.stack([c(samples, None) for c in callables], dim=-1)
+
+    return objective

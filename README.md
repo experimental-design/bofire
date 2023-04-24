@@ -1,9 +1,10 @@
+# BoFire
 
 [![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
 [![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
 [![Docs](https://github.com/experimental-design/bofire/workflows/Docs/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ADocs)
 [![PyPI](https://img.shields.io/pypi/v/bofire.svg)](https://pypi.org/project/bofire)
-# BoFire
+
 BoFire is a **B**ayesian **O**ptimization **F**ramework **I**ntended for **R**eal **E**xperiments. 
 
 Why BoFire?
@@ -21,6 +22,13 @@ BoFire ...
 ## Installation
 
 BoFire has BoTorch as its main dependency which depends on PyTorch. In the following you find different options to install BoFire and its dependencies.
+
+### Optional dependencies
+
+BoFire has functionality to create D-optimal experimental designs via the doe module. To use this module please install cyipopt. The most comfortable way to do this is via `conda`
+```
+conda install -c conda-forge cyipopt
+```
 
 ### Latest stable release
 
@@ -47,7 +55,7 @@ Documentation including a section on how to get started can be found under https
 
 ## Contributing
 
-> TL;DR of the [Contributing](./CONTRIBUTING.md) guidelines.
+See our [Contributing](./CONTRIBUTING.md) guidelines.
 
 ### Release roadmap
 

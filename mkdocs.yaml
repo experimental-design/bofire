@@ -7,6 +7,8 @@ nav:
   - index.md
   - Install: install.md
   - Getting started: start.md
+  - Package Architecture:
+    - Data Models vs Functional Components: data_models_functionals.md
   - API Reference:
     - Domain: ref-domain.md
     - Constraints: ref-constraints.md

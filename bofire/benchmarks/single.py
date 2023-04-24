@@ -1,17 +1,21 @@
+import math
+
 import numpy as np
 import pandas as pd
+import torch
+from botorch.test_functions.synthetic import Branin as torchBranin
 from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain.domain import Domain
-from bofire.domain.feature import (
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objective import MaximizeObjective, MinimizeObjective
+from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
+from bofire.utils.torch_tools import tkwargs
 
 
 class Ackley(Benchmark):
@@ -92,17 +96,15 @@ class Ackley(Benchmark):
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(
-                    key=f"x_{d+1}", lower_bound=self.lower, upper_bound=self.upper
-                )
+                ContinuousInput(key=f"x_{d+1}", bounds=(self.lower, self.upper))
             )
 
         # Objective
         output_feature = ContinuousOutput(key="y", objective=MaximizeObjective(w=1))
 
         self._domain = Domain(
-            input_features=InputFeatures(features=input_feature_list),
-            output_features=OutputFeatures(features=[output_feature]),
+            input_features=Inputs(features=input_feature_list),
+            output_features=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -154,6 +156,77 @@ class Ackley(Benchmark):
         )
 
 
+class Branin(Benchmark):
+    def __init__(self) -> None:
+        self._domain = Domain(
+            input_features=Inputs(
+                features=[
+                    ContinuousInput(key="x_1", bounds=(-5.0, 10)),
+                    ContinuousInput(key="x_2", bounds=(0.0, 15.0)),
+                ]
+            ),
+            output_features=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+        )
+        self.branin = torchBranin().to(**tkwargs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+            **tkwargs
+        )
+        return pd.DataFrame(
+            {
+                "y": self.branin(c).detach().numpy(),
+                "valid_y": np.ones(len(candidates)),
+            }
+        )
+
+    def get_optima(self) -> pd.DataFrame:
+        return pd.DataFrame(
+            data=np.array(
+                [
+                    [-math.pi, 12.275, 0.397887],
+                    [math.pi, 2.275, 0.397887],
+                    [9.42478, 2.475, 0.397887],
+                ]
+            ),
+            columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
+        )
+
+
+class Branin30(Benchmark):
+    """Thirty dimensional Branin function in which only the first two dimensions are used to
+    evaluate the actual Branin. Source: https://github.com/pytorch/botorch/blob/main/tutorials/saasbo.ipynb.
+    """
+
+    def __init__(self) -> None:
+        self._domain = Domain(
+            input_features=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i+1:02d}", bounds=(0, 1))
+                    for i in range(30)
+                ]
+            ),
+            output_features=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+        )
+        self.branin = torchBranin().to(**tkwargs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        lb, ub = self.branin.bounds  # type: ignore
+        c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
+            **tkwargs
+        )
+        return pd.DataFrame(
+            {
+                "y": self.branin(lb + (ub - lb) * c[..., :2]).detach().numpy(),
+                "valid_y": np.ones(len(candidates)),
+            }
+        )
+
+
 class Himmelblau(Benchmark):
     """Himmelblau function for testing optimization algorithms
     Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
@@ -172,21 +245,16 @@ class Himmelblau(Benchmark):
         self.use_constraints = use_constraints
         input_features = []
 
-        input_features.append(
-            ContinuousInput(key="x_1", lower_bound=-4.0, upper_bound=4.0)
-        )
-        input_features.append(
-            ContinuousInput(key="x_2", lower_bound=-4.0, upper_bound=4.0)
-        )  # ToDo, check for correct bounds
+        input_features.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        input_features.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
-        desirability_function = MinimizeObjective(w=1.0)
-        output_feature = ContinuousOutput(key="y", desirability_function=desirability_function)  # type: ignore
-
+        objective = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
         self._domain = Domain(
-            input_features=InputFeatures(features=input_features),
-            output_features=OutputFeatures(features=[output_feature]),
+            input_features=Inputs(features=input_features),
+            output_features=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:

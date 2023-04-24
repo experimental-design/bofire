@@ -1,13 +1,16 @@
-import uuid
+# TODO: remove this and use tests.bofire.data_models.specs instead
 
-from bofire.domain.constraint import (
+import uuid
+from typing import List
+
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.feature import (
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousDescriptorInput,
@@ -15,23 +18,35 @@ from bofire.domain.feature import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.domain.objective import MinimizeObjective
-from tests.bofire.domain.utils import INVALID_SPECS, get_invalids
+from bofire.data_models.objectives.api import MinimizeObjective
+
+
+def get_invalids(valid: dict) -> List[dict]:
+    return [
+        {k: v for k, v in valid.items() if k != k_}
+        for k_ in valid.keys()
+        if k_ != "type"
+    ]
+
+
+INVALID_SPECS = [
+    [1, 2, 3],
+    {"a": "qwe"},
+]
+
 
 objective = MinimizeObjective(w=1)
 
 VALID_CONTINUOUS_INPUT_FEATURE_SPEC = {
     "type": "ContinuousInput",
     "key": str(uuid.uuid4()),
-    "lower_bound": 3,
-    "upper_bound": 5.3,
+    "bounds": (3, 5.3),
 }
 
 VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC = {
     "type": "ContinuousInput",
     "key": str(uuid.uuid4()),
-    "lower_bound": 3.0,
-    "upper_bound": 3.0,
+    "bounds": (3, 3),
 }
 
 VALID_DISCRETE_INPUT_FEATURE_SPEC = {
@@ -49,8 +64,7 @@ VALID_FIXED_DISCRETE_INPUT_FEATURE_SPEC = {
 VALID_CONTINUOUS_DESCRIPTOR_INPUT_FEATURE_SPEC = {
     "type": "ContinuousDescriptorInput",
     "key": str(uuid.uuid4()),
-    "lower_bound": 3,
-    "upper_bound": 5.3,
+    "bounds": (3, 5.3),
     "descriptors": ["d1", "d2"],
     "values": [1.0, 2.0],
 }

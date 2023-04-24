@@ -2,22 +2,24 @@ import warnings
 
 import pytest
 
-from bofire.domain.constraint import (
+import bofire.data_models.strategies.api as data_models
+import bofire.strategies.api as strategies
+from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.domain.domain import Domain
-from bofire.domain.feature import (
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.strategies.random import RandomStrategy
+from bofire.strategies.api import RandomStrategy
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
@@ -25,9 +27,9 @@ warnings.filterwarnings("ignore", category=UserWarning, append=True)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
-if0 = ContinuousInput(key="if0", lower_bound=0, upper_bound=1)
-if1 = ContinuousInput(key="if1", lower_bound=0, upper_bound=2)
-if2 = ContinuousInput(key="if2", lower_bound=0, upper_bound=3)
+if0 = ContinuousInput(key="if0", bounds=(0, 1))
+if1 = ContinuousInput(key="if1", bounds=(0, 2))
+if2 = ContinuousInput(key="if2", bounds=(0, 3))
 if3 = CategoricalInput(key="if3", categories=["c1", "c2", "c3"])
 if4 = CategoricalInput(
     key="if4", categories=["A", "B", "C"], allowed=[True, True, False]
@@ -120,7 +122,8 @@ unsupported_domains = [
 
 @pytest.mark.parametrize("domain", supported_domains)
 def test_ask(domain):
-    strategy = RandomStrategy(domain=domain)
+    data_model = data_models.RandomStrategy(domain=domain)
+    strategy = strategies.map(data_model=data_model)
     candidates = strategy.ask(3)
     assert len(candidates) == 3
 
@@ -128,4 +131,5 @@ def test_ask(domain):
 @pytest.mark.parametrize("domain", unsupported_domains)
 def test_unsupported(domain):
     with pytest.raises(Exception):
-        RandomStrategy(domain=domain)
+        data_model = data_models.RandomStrategy(domain=domain)
+        RandomStrategy(data_model=data_model)

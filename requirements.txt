@@ -4,7 +4,9 @@ pandas
 scikit-learn
 matplotlib
 pytest
-torch
-botorch>=0.8.1
+torch>=1.12
+botorch>=0.8.2
 multiprocess
 plotly
+formulaic>=0.5.2
+mock

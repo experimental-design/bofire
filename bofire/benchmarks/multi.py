@@ -1,5 +1,5 @@
+import json
 import math
-import os
 from typing import Optional
 
 import numpy as np
@@ -10,22 +10,25 @@ from pydantic.types import PositiveInt
 from scipy.integrate import solve_ivp
 from scipy.special import gamma
 
+import bofire.surrogates.api as surrogates
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.domain.domain import Domain
-from bofire.domain.feature import (
+from bofire.benchmarks.data.aniline_cn_crosscoupling import (
+    EXPERIMENTS as ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS,
+)
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
-    InputFeature,
+    Input,
 )
-from bofire.domain.features import InputFeatures, OutputFeatures
-from bofire.domain.objective import (
+from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
 )
-from bofire.models.gps.gps import SingleTaskGPModel
-from bofire.utils.enum import CategoricalEncodingEnum
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
 
 class DTLZ2(Benchmark):
@@ -45,9 +48,7 @@ class DTLZ2(Benchmark):
 
         input_features = []
         for i in range(self.dim):
-            input_features.append(
-                ContinuousInput(key="x_%i" % (i), lower_bound=0.0, upper_bound=1.0)
-            )
+            input_features.append(ContinuousInput(key="x_%i" % (i), bounds=(0, 1)))
         output_features = []
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
@@ -55,8 +56,8 @@ class DTLZ2(Benchmark):
                 ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
             )
         domain = Domain(
-            input_features=InputFeatures(features=input_features),
-            output_features=OutputFeatures(features=output_features),
+            input_features=Inputs(features=input_features),
+            output_features=Outputs(features=output_features),
         )
         self.ref_point = {
             feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
@@ -93,7 +94,7 @@ class DTLZ2(Benchmark):
         Returns:
             pd.DataFrame: Function values in output vector. Columns are f0 and f1.
         """
-        X = candidates[self.domain.get_feature_keys(InputFeature)].values  # type: ignore
+        X = candidates[self.domain.get_feature_keys(Input)].values  # type: ignore
         X_m = X[..., -self.k :]  # type: ignore
         g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
         g_X_plus1 = 1 + g_X
@@ -184,13 +185,13 @@ class SnarBenchmark(Benchmark):
         # Decision variables
         # "residence time in minutes"
         input_features = [
-            ContinuousInput(key="tau", lower_bound=0.5, upper_bound=2.0),
+            ContinuousInput(key="tau", bounds=(0.5, 2)),
             # "equivalents of pyrrolidine"
-            ContinuousInput(key="equiv_pldn", lower_bound=1.0, upper_bound=5.0),
+            ContinuousInput(key="equiv_pldn", bounds=(1, 5)),
             # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
-            ContinuousInput(key="conc_dfnb", lower_bound=0.1, upper_bound=0.5),
+            ContinuousInput(key="conc_dfnb", bounds=(0.1, 0.5)),
             # "Reactor temperature in degress celsius"
-            ContinuousInput(key="temperature", lower_bound=30, upper_bound=120.0),
+            ContinuousInput(key="temperature", bounds=(30, 120)),
         ]
         # Objectives
         # "space time yield (kg/m^3/h)"
@@ -204,8 +205,8 @@ class SnarBenchmark(Benchmark):
         ]
         self.ref_point = {"e_factor": 10.7, "sty": 2957.0}
         self._domain = Domain(
-            input_features=InputFeatures(features=input_features),
-            output_features=OutputFeatures(features=output_features),
+            input_features=Inputs(features=input_features),
+            output_features=Outputs(features=output_features),
         )
 
     @property
@@ -334,15 +335,14 @@ class ZDT1(Benchmark):
         """
         self.n_inputs = n_inputs
         input_features = [
-            ContinuousInput(key=f"x{i+1}", lower_bound=0, upper_bound=1)
-            for i in range(n_inputs)
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(n_inputs)
         ]
-        inputs = InputFeatures(features=input_features)
+        inputs = Inputs(features=input_features)
         output_features = [
             ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
-        outputs = OutputFeatures(features=output_features)
+        outputs = Outputs(features=output_features)
         self._domain = Domain(input_features=inputs, output_features=outputs)
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
@@ -395,7 +395,6 @@ class CrossCoupling(Benchmark):
         self,
         **kwargs,
     ):
-
         # "residence time in minutes"
         input_features = [
             CategoricalDescriptorInput(
@@ -441,11 +440,11 @@ class CrossCoupling(Benchmark):
                 ],
             ),
             # "base equivalents"
-            ContinuousInput(key="base_eq", lower_bound=1.0, upper_bound=2.5),
+            ContinuousInput(key="base_eq", bounds=(1, 2.5)),
             # "Reactor temperature in degrees celsius"
-            ContinuousInput(key="temperature", lower_bound=30, upper_bound=100.0),
+            ContinuousInput(key="temperature", bounds=(30, 100)),
             # "residence time in seconds (s)"
-            ContinuousInput(key="t_res", lower_bound=60, upper_bound=1800.0),
+            ContinuousInput(key="t_res", bounds=(60, 1800)),
         ]
 
         input_preprocessing_specs = {
@@ -467,27 +466,23 @@ class CrossCoupling(Benchmark):
         self.ref_point = {"yield": 0.0, "cost": 1.0}
 
         self._domain = Domain(
-            input_features=InputFeatures(features=input_features),
-            output_features=OutputFeatures(features=output_features),
+            input_features=Inputs(features=input_features),
+            output_features=Outputs(features=output_features),
         )
 
-        data = pd.read_csv(
-            os.path.dirname(os.path.abspath(__file__))
-            + "/data/aniline_cn_crosscoupling.csv",
-            index_col=0,
-            skiprows=[1],
-        )
+        data = pd.DataFrame.from_dict(json.loads(ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS))
 
         data = data.rename(columns={"base_equivalents": "base_eq", "yld": "yield"})
         data["valid_yield"] = 1
 
-        ground_truth_yield = SingleTaskGPModel(
-            input_features=InputFeatures(features=input_features),
-            output_features=OutputFeatures(features=[output_features[0]]),
+        data_model = SingleTaskGPSurrogate(
+            input_features=Inputs(features=input_features),
+            output_features=Outputs(features=[output_features[0]]),
             input_preprocessing_specs=input_preprocessing_specs,
         )
+        ground_truth_yield = surrogates.map(data_model)
 
-        ground_truth_yield.fit(experiments=data)
+        ground_truth_yield.fit(experiments=data)  # type: ignore
         self.ground_truth_yield = ground_truth_yield
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
@@ -552,7 +547,7 @@ class CrossCoupling(Benchmark):
         )
         tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
         if len(tot_cost) == 1:
-            tot_cost = tot_cost[0]
+            tot_cost = tot_cost[0]  # type: ignore
         return tot_cost
 
     def _get_catalyst_cost(self, catalyst, catalyst_mmol):
