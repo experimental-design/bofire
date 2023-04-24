@@ -5,23 +5,26 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 import pandas as pd
-import papermill
 
 
 def run_script(
-    tutorial: Path, timeout_minutes: int = 5, env: Optional[Dict[str, str]] = None
+    tutorial: Path, timeout_minutes: int = 10, env: Optional[Dict[str, str]] = None
 ):
+    utils_path = {"PYTHONPATH": str(tutorial.parent)}
     if env is not None:
-        env = {**os.environ, **env}
+        env = {**os.environ, **env, **utils_path}
+    else:
+        env = {**os.environ, **utils_path}
 
     run_out = subprocess.run(
-        ["papermill", tutorial, "temp.out"],  # , "|"
+        ["papermill", tutorial, "temp.ipynb"],  # , "|"
         capture_output=True,
         text=True,
         env=env,
+        encoding="utf-8",
         timeout=timeout_minutes * 60,
     )
     return run_out
@@ -71,6 +74,9 @@ def run_tutorials(
                 f"Running tutorial {tutorial.name} took " f"{elapsed_time:.2f} seconds."
             )
             df.loc[tutorial.name, "ran_successfully"] = True
+
+    # delete temporal notebook
+    os.remove("temp.ipynb")
 
     if num_errors > 0:
         raise RuntimeError(
