@@ -1,6 +1,7 @@
 import sys
 
 import numpy as np
+import pandas as pd
 import pytest
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
@@ -28,7 +29,16 @@ from bofire.strategies.doe.utils import (
     metrics,
     n_zero_eigvals,
     nchoosek_constraints_as_bounds,
+    smart_round,
 )
+
+
+def smart_round_test():
+    candidates = pd.DataFrame([[0.00001, 0.1, 9.999999], [0.9999997, 0.567, 9.99991]])
+    rounded_candidates = smart_round(candidates=candidates)
+    assert rounded_candidates == pd.DataFrame(
+        [[0.00, 0.10, 10.00], [1.00, 0.57, 10.00]]
+    )
 
 
 def get_formula_from_string_recursion_limit():
@@ -809,3 +819,7 @@ def test_nchoosek_constraints_as_bounds():
     # assert len(bounds) == 20
     # for i in range(20):
     #     assert _bounds[i] == bounds[i]
+
+
+if __name__ == "__main__":
+    smart_round_test()

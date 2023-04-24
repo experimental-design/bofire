@@ -3,6 +3,7 @@ import warnings
 from itertools import combinations
 from typing import List, Optional, Union
 
+import cvxpy as cp
 import numpy as np
 import pandas as pd
 from formulaic import Formula
@@ -549,3 +550,15 @@ def nchoosek_constraints_as_bounds(
     bounds = [(b[0], b[1]) for b in bounds]
 
     return bounds
+
+
+def smart_round(candidates: pd.DataFrame, precision=10**-2) -> pd.DataFrame:
+    b = candidates.values.flatten()
+    x = cp.Variable(len(b), integer=True)
+    I = np.eye(N=len(b)) * precision
+
+    objective = cp.Minimize(cp.sum_squares(I @ x - b))
+    prob = cp.Problem(objective)
+    prob.solve()
+    candidates_rounded = x.value.reshape(candidates.values.shape) * precision
+    return pd.DataFrame(candidates_rounded, columns=candidates.columns)
