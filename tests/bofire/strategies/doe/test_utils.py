@@ -631,7 +631,7 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -647,14 +647,14 @@ def test_check_nchoosek_constraints_as_bounds():
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key=f"x{1}", bounds=(-1, -0.1)),
             ContinuousInput(key=f"x{2}", bounds=(-1, -0.1)),
             ContinuousInput(key=f"x{3}", bounds=(-1, -0.1)),
             ContinuousInput(key=f"x{4}", bounds=(-1, -0.1)),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
                 features=["x1", "x2"],
@@ -669,7 +669,7 @@ def test_check_nchoosek_constraints_as_bounds():
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # Not allowed: names parameters of two NChooseK overlap
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
