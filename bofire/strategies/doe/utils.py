@@ -559,7 +559,7 @@ def smart_round(
     n_experiments, n_vars = candidates.shape
     b = candidates.values.flatten()
     x = cp.Variable(len(b), integer=True)
-    I = np.eye(N=len(b)) * precision
+    precision_scaling_matrix = np.eye(N=len(b)) * precision
 
     def _to_cp_constraint(x, constraint):
         if isinstance(constraint, LinearEqualityConstraint):
@@ -600,12 +600,15 @@ def smart_round(
         return _constraints
 
     constraints = standardize_constraints(domain.constraints, b, "SLSQP")
-    objective = cp.Minimize(cp.sum_squares(I @ x - b))
+    objective = cp.Minimize(cp.sum_squares(precision_scaling_matrix @ x - b))
 
     prob = cp.Problem(
         objective=objective,
-        constraints=[_to_cp_constraint(I @ x, constraint) for constraint in constraints]
-        + inputs_to_constraints(I @ x, domain),
+        constraints=[
+            _to_cp_constraint(precision_scaling_matrix @ x, constraint)
+            for constraint in constraints
+        ]
+        + inputs_to_constraints(precision_scaling_matrix @ x, domain),
     )
     prob.solve()
     candidates_rounded = (x.value * precision).reshape(candidates.values.shape)
