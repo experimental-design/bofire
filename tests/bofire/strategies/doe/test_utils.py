@@ -45,10 +45,18 @@ def smart_round_test():
             )
         ],
     )
-    candidates = pd.DataFrame([[0.00001, 0.1, 9.999999], [0.9999997, 0.567, 9.99991]])
-    rounded_candidates = smart_round(domain=domain, candidates=candidates)
+    candidates = pd.DataFrame(
+        [
+            [0.00001, 0.1, 9.999999],
+            [0.9999997, 0.567, 9.99991],
+            [-0.0, 0.567, 0.55991],
+        ]
+    )
+    rounded_candidates = smart_round(
+        domain=domain, candidates=candidates, precision=10**-2
+    )
     rounded_candidates_expected = pd.DataFrame(
-        [[0.00, 0.10, 10.00], [1.00, 0.57, 10.00]]
+        [[0.00, 0.00, 1.00], [0.00, 0.00, 1.00], [0.00, 0.50, 0.50]]
     )
 
     for row in rounded_candidates.to_numpy():

@@ -600,13 +600,13 @@ def smart_round(
         return _constraints
 
     constraints = standardize_constraints(domain.constraints, b, "SLSQP")
-    objective = cp.Minimize(cp.sum_squares(x - I @ b))
+    objective = cp.Minimize(cp.sum_squares(I @ x - b))
 
     prob = cp.Problem(
         objective=objective,
-        constraints=[_to_cp_constraint(x, constraint) for constraint in constraints]
-        + inputs_to_constraints(x, domain),
+        constraints=[_to_cp_constraint(I @ x, constraint) for constraint in constraints]
+        + inputs_to_constraints(I @ x, domain),
     )
     prob.solve()
-    candidates_rounded = x.value.reshape(candidates.values.shape)
+    candidates_rounded = (x.value * precision).reshape(candidates.values.shape)
     return pd.DataFrame(candidates_rounded, columns=candidates.columns)
