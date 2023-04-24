@@ -10,8 +10,8 @@ from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 from scipy.optimize._minimize import standardize_constraints
 
+from bofire.data_models.constraints.api import LinearConstraint as boLinearConstraint
 from bofire.data_models.constraints.api import (
-    LinearConstraint as boLinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -606,14 +606,12 @@ def smart_round(
     constraints = standardize_constraints(domain.constraints, b, "SLSQP")
     objective = cp.Minimize(cp.sum_squares(precision_scaling_matrix @ x - b))
 
-    prob = cp.Problem(
-        objective=objective,
-        constraints=[
-            _to_cp_constraint(precision_scaling_matrix @ x, constraint)
-            for constraint in constraints
-        ]
-        + _inputs_to_cp_constraints(precision_scaling_matrix @ x),
-    )
+    cp_constraints = [
+        _to_cp_constraint(precision_scaling_matrix @ x, constraint)
+        for constraint in constraints
+    ]
+    cp_input_bounds = _inputs_to_cp_constraints(precision_scaling_matrix @ x)
+    prob = cp.Problem(objective=objective, constraints=cp_constraints + cp_input_bounds)
     prob.solve()
     candidates_rounded = (x.value * precision).reshape(candidates.values.shape)
     return pd.DataFrame(candidates_rounded, columns=candidates.columns)
