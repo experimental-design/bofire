@@ -9,10 +9,10 @@ from bofire.utils.cheminformatics import (
     smiles2mol,
 )
 
-CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_smiles2mol():
     # invalid
     with pytest.raises(ValueError):
@@ -21,13 +21,14 @@ def test_smiles2mol():
     smiles2mol("CC(=O)Oc1ccccc1C(=O)O")
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_smiles2bag_of_characters():
     smiles = ["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1"]
     desc = smiles2bag_of_characters(smiles=smiles)
     assert desc.shape[0] == 2
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_smiles2fingerprints():
     smiles = ["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1"]
     desc = smiles2fingerprints(smiles=smiles, n_bits=512)
@@ -35,7 +36,7 @@ def test_smiles2fingerprints():
     assert desc.shape[1] == 512
 
 
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_smiles2fragments():
     smiles = ["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1"]
     desc = smiles2fragments(smiles=smiles)
