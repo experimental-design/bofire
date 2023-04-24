@@ -49,18 +49,13 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     return s.apply(lambda s: pd.to_numeric(s, errors="coerce").notnull().all()).all()  # type: ignore
 
 
-# TODO: rename field input/ouput_features -> inputs/outputs
 class Domain(BaseModel):
     type: Literal["Domain"] = "Domain"
-    # The types describe what we expect to be passed as arguments.
-    # They will be converted to Inputs and Outputs, respectively.
+
     inputs: Inputs = Field(default_factory=lambda: Inputs())
     outputs: Outputs = Field(default_factory=lambda: Outputs())
 
     constraints: Constraints = Field(default_factory=lambda: Constraints())
-
-    # experiments: Optional[ValidatedDataFrame] = None
-    # candidates: Optional[ValidatedDataFrame] = None
 
     """Representation of the optimization problem/domain
 

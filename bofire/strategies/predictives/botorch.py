@@ -152,7 +152,7 @@ class BotorchStrategy(PredictiveStrategy):
         )
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
         # setup nchooseks
-        if len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
+        if len(self.domain.constraints.get(NChooseKConstraint)) == 0:
             ic_generator = None
             ic_gen_kwargs = {}
             nchooseks = None

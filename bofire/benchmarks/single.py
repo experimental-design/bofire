@@ -163,12 +163,12 @@ class Hartmann(Benchmark):
     def __init__(self, dim: int = 6, allowed_k: Optional[int] = None) -> None:
         super().__init__()
         self._domain = Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
                 ]
             ),
-            output_features=Outputs(
+            outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
             constraints=Constraints(
