@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.utils.objective import soft_eval_constraint
 
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
@@ -29,6 +30,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import PolytopeSampler
 from bofire.utils.torch_tools import (
+    constrained_objective2botorch,
     get_additive_botorch_objective,
     get_initial_conditions_generator,
     get_linear_constraints,
@@ -577,3 +579,24 @@ def test_get_initial_conditions_generator(sequential: bool):
     )
     initial_conditions = generator(n=3, q=2, seed=42)
     assert initial_conditions.shape == torch.Size((3, 2, 2))
+
+
+@pytest.mark.parametrize(
+    "objective",
+    [
+        (MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
+        (MinimizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
+        (TargetObjective(w=1, target_value=15, steepness=2, tolerance=5)),
+    ],
+)
+def test_constrained_objective2botorch(objective):
+    cs, etas = constrained_objective2botorch(idx=0, objective=objective)
+
+    x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
+    y = torch.ones([500])
+
+    for c, eta in zip(cs, etas):
+        xtt = c(x)
+        y *= soft_eval_constraint(xtt, eta)
+
+    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), y.numpy().ravel())

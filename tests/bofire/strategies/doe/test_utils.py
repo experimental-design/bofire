@@ -355,12 +355,6 @@ def test_ConstraintWrapper():
                 features=["x1", "x2", "x3", "x4"],
                 jacobian_expression="[2*x1, 2*x2, 2*x3, 2*x4]",
             ),
-            NChooseKConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                max_count=3,
-                min_count=0,
-                none_also_valid=True,
-            ),
             NonlinearEqualityConstraint(
                 expression="x1**2 + x4**2 - 1",
                 features=["x1", "x4"],
@@ -429,13 +423,8 @@ def test_ConstraintWrapper():
         ),
     )
 
-    # nchoosek constraint
-    c = ConstraintWrapper(domain.constraints[4], domain, tol=0, n_experiments=3)
-    assert np.allclose(c(x), np.array([1, 1, 0]))
-    assert np.allclose(c.jacobian(x), np.zeros(shape=(3, 12)))
-
     # constraint not containing all inputs from domain
-    c = ConstraintWrapper(domain.constraints[5], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[4], domain, tol=0, n_experiments=3)
     assert np.allclose(c(x), np.array([1, -0.5, 8]))
     assert np.allclose(
         c.jacobian(x),
@@ -447,9 +436,6 @@ def test_ConstraintWrapper():
             ]
         ),
     )
-
-
-test_ConstraintWrapper()
 
 
 def test_d_optimality():

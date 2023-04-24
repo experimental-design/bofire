@@ -12,8 +12,8 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
-    BotorchConstrainedObjective,
     CloseToTargetObjective,
+    ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -135,6 +135,40 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     return constraints
 
 
+def constrained_objective2botorch(
+    idx: int,
+    objective: ConstrainedObjective,
+) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
+    """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
+    to setup ouput constrained optimizations.
+
+    Args:
+        idx (int): Index of the constraint objective in the list of outputs.
+        objective (BotorchConstrainedObjective): The objective that should be transformed.
+
+    Returns:
+        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+            list of the corresponding botorch eta values.
+    """
+    assert isinstance(
+        objective, ConstrainedObjective
+    ), "Objective is not a `ConstrainedObjective`."
+    if isinstance(objective, MaximizeSigmoidObjective):
+        return [lambda Z: (Z[..., idx] - objective.tp) * -1.0], [
+            1.0 / objective.steepness
+        ]
+    elif isinstance(objective, MinimizeSigmoidObjective):
+        return [lambda Z: (Z[..., idx] - objective.tp)], [1.0 / objective.steepness]
+    elif isinstance(objective, TargetObjective):
+        return [
+            lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
+            * -1.0,
+            lambda Z: (Z[..., idx] - (objective.target_value + objective.tolerance)),
+        ], [1.0 / objective.steepness, 1.0 / objective.steepness]
+    else:
+        raise ValueError(f"Objective {objective.__class__.__name__} not known.")
+
+
 def get_output_constraints(
     output_features: Outputs,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
@@ -152,8 +186,10 @@ def get_output_constraints(
     constraints = []
     etas = []
     for idx, feat in enumerate(output_features.get()):
-        if isinstance(feat.objective, BotorchConstrainedObjective):  # type: ignore
-            iconstraints, ietas = feat.objective.to_constraints(idx=idx)  # type: ignore
+        if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
+            iconstraints, ietas = constrained_objective2botorch(
+                idx, objective=feat.objective  # type: ignore
+            )
             constraints += iconstraints
             etas += ietas
     return constraints, etas
@@ -258,7 +294,7 @@ def get_additive_botorch_objective(
         for i, feat in enumerate(output_features.get())
         if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
@@ -268,7 +304,7 @@ def get_additive_botorch_objective(
         for i, feat in enumerate(output_features.get())
         if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
