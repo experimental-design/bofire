@@ -663,6 +663,13 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bofire.utils.torch_tools.constrained_objective2botorch" class="md-nav__link">
+    constrained_objective2botorch()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.utils.torch_tools.get_initial_conditions_generator" class="md-nav__link">
     get_initial_conditions_generator()
   </a>
@@ -2684,6 +2691,104 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
 
 
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.torch_tools.constrained_objective2botorch" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">constrained_objective2botorch</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code>
+to setup ouput constrained optimizations.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>idx</code></td>
+        <td><code>int</code></td>
+        <td><p>Index of the constraint objective in the list of outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>objective</code></td>
+        <td><code>BotorchConstrainedObjective</code></td>
+        <td><p>The objective that should be transformed.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective, and
+    list of the corresponding botorch eta values.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">constrained_objective2botorch</span><span class="p">(</span>
+    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">ConstrainedObjective</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints`</span>
+<span class="sd">    to setup ouput constrained optimizations.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
+<span class="sd">        objective (BotorchConstrainedObjective): The objective that should be transformed.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
+<span class="sd">            list of the corresponding botorch eta values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span>
+    <span class="p">),</span> <span class="s2">&quot;Objective is not a `ConstrainedObjective`.&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeSigmoidObjective</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span>
+            <span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span>
+        <span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeSigmoidObjective</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">TargetObjective</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span>
+            <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)),</span>
+        <span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective </span><span class="si">{</span><span class="n">objective</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not known.&quot;</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
 
   <div class="doc doc-object doc-function">
 
@@ -3209,8 +3314,10 @@ be processed.</p></td>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">etas</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">output_features</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">BotorchConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
-            <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">to_constraints</span><span class="p">(</span><span class="n">idx</span><span class="o">=</span><span class="n">idx</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
+                <span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span>  <span class="c1"># type: ignore</span>
+            <span class="p">)</span>
             <span class="n">constraints</span> <span class="o">+=</span> <span class="n">iconstraints</span>
             <span class="n">etas</span> <span class="o">+=</span> <span class="n">ietas</span>
     <span class="k">return</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">etas</span>
