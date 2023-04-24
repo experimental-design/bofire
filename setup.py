@@ -49,7 +49,15 @@ setup(
     include_package_data=True,
     install_requires=install_requires,
     extras_require={
-        "testing": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov"],
+        "testing": [
+            "mock",
+            "mopti",
+            "pyright",
+            "pytest",
+            "multiprocess",
+            "pytest-cov",
+            "papermill",
+        ],
         "cheminfo": ["rdkit"],
         "docs": [
             "mkdocs",

@@ -23,4 +23,6 @@ jobs:
         run: pip install cyipopt
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
+      - name: Run notebooks
+        run: python scripts/run_tutorials.py -p "$(pwd)"
           
