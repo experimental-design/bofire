@@ -597,7 +597,7 @@ class Domain(BaseModel):
         )
 
     def validate_candidates(
-        self, candidates: pd.DataFrame, only_inputs: bool = False, tol: float = 1e-6
+        self, candidates: pd.DataFrame, only_inputs: bool = False, tol: float = 1e-5
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
@@ -622,26 +622,41 @@ class Domain(BaseModel):
         self.input_features.validate_inputs(candidates)
         # check if all constraints are fulfilled
         if not self.cnstrs.is_fulfilled(candidates, tol=tol).all():
-            raise ValueError("Constraints not fulfilled.")
+            raise ValueError(f"Constraints not fulfilled: {candidates}")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.output_features, Outputs)
-            for key in self.output_features.get_keys_by_objective(Objective):
-                # check that pred, sd, and des cols are specified and numerical
-                for col in [f"{key}_pred", f"{key}_sd", f"{key}_des"]:
-                    if col not in candidates:
-                        raise ValueError(f"missing column {col}")
-                    if (not is_numeric(candidates[col])) and (
-                        not candidates[col].isnull().to_numpy().all()
-                    ):
-                        raise ValueError(
-                            f"not all values of output feature `{key}` are numerical"
+
+            cols = list(
+                itertools.chain.from_iterable(
+                    [
+                        [f"{key}_pred", f"{key}_sd", f"{key}_des"]
+                        for key in self.output_features.get_keys_by_objective(Objective)
+                    ]
+                    + [
+                        [f"{key}_pred", f"{key}_sd"]
+                        for key in self.output_features.get_keys_by_objective(
+                            excludes=Objective, includes=None  # type: ignore
                         )
+                    ]
+                )
+            )
+
+            # check that pred, sd, and des cols are specified and numerical
+            for col in cols:
+                if col not in candidates:
+                    raise ValueError(f"missing column {col}")
+                if (not is_numeric(candidates[col])) and (
+                    not candidates[col].isnull().to_numpy().all()
+                ):
+                    raise ValueError(f"not all values of column `{col}` are numerical")
+
             # validate no additional cols exist
             if_count = len(self.get_features(Input))
-            of_count = len(self.output_features.get_keys_by_objective(Objective))
+            of_count = len(self.outputs.get_by_objective(includes=Objective))
+            of_count_w = len(self.outputs.get_by_objective(excludes=Objective, includes=None))  # type: ignore
             # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
-            if len(candidates.columns) != if_count + 3 * of_count:
+            if len(candidates.columns) != if_count + 3 * of_count + 2 * of_count_w:
                 raise ValueError("additional columns found")
         return candidates
 

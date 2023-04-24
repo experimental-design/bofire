@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -8,8 +8,12 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.utils import get_infeasible_cost
 from botorch.models.gpytorch import GPyTorchModel
-from botorch.optim.optimize import optimize_acqf, optimize_acqf_mixed
-from pydantic.types import NonNegativeInt
+from botorch.optim.initializers import gen_batch_initial_conditions
+from botorch.optim.optimize import (
+    optimize_acqf,
+    optimize_acqf_list,
+    optimize_acqf_mixed,
+)
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -32,7 +36,12 @@ from bofire.data_models.strategies.api import (
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_initial_conditions_generator,
+    get_linear_constraints,
+    get_nchoosek_constraints,
+    tkwargs,
+)
 
 
 def is_power_of_two(n):
@@ -55,7 +64,6 @@ class BotorchStrategy(PredictiveStrategy):
         self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
         torch.manual_seed(self.seed)
 
-    acqf: Optional[AcquisitionFunction] = None
     model: Optional[GPyTorchModel] = None
 
     @property
@@ -104,7 +112,6 @@ class BotorchStrategy(PredictiveStrategy):
             raise ValueError("Wrong dimension of posterior mean. Expecting 2 or 3.")
         return preds, stds
 
-    # TODO: test this
     def calc_acquisition(
         self, candidates: pd.DataFrame, combined: bool = False
     ) -> np.ndarray:
@@ -118,68 +125,49 @@ class BotorchStrategy(PredictiveStrategy):
         Returns:
             np.ndarray: Dataframe with the acquisition values.
         """
+        acqf = self._get_acqfs(1)[0]
+
         transformed = self.domain.inputs.transform(
             candidates, self.input_preprocessing_specs
         )
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         if combined is False:
             X = X.unsqueeze(-2)
-        return self.acqf.forward(X).cpu().detach().numpy()  # type: ignore
 
-    # TODO: test this
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[NonNegativeInt] = None,
-    ) -> pd.DataFrame:
-        """Method to choose a set of candidates from a candidate pool.
+        with torch.no_grad():
+            vals = acqf.forward(X).cpu().detach().numpy()
 
-        Args:
-            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[NonNegativeInt], optional): Number of candidates to choose. Defaults to None.
+        return vals
 
-        Returns:
-            pd.DataFrame: The chosen set of candidates.
-        """
-
-        acqf_values = self.calc_acquisition(candidate_pool)
-
-        return candidate_pool.iloc[
-            np.argpartition(acqf_values, -1 * candidate_count)[-candidate_count:]  # type: ignore
-        ]
-
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
-        """[summary]
-
-        Args:
-            candidate_count (int, optional): [description]. Defaults to 1.
-
-        Returns:
-            pd.DataFrame: [description]
-        """
-
-        assert candidate_count > 0, "candidate_count has to be larger than zero."
-
-        # optimize
-        # we have to distuinguish the following scenarios
-        # - no categoricals - check
-        # - categoricals with one hot and free variables
-        # - categoricals with one hot and exhaustive screening, could be in combination with garrido merchan - check
-        # - categoricals with one hot and OEN, could be in combination with garrido merchan - OEN not implemented
-        # - descriptized categoricals not yet implemented
+    def _setup_ask(self):
+        """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
         num_categorical_features = len(
             self.domain.get_features([CategoricalInput, DiscreteInput])
         )
         num_categorical_combinations = len(
             self.domain.inputs.get_categorical_combinations()
         )
-        assert self.acqf is not None
-
         lower, upper = self.domain.inputs.get_bounds(
             specs=self.input_preprocessing_specs
         )
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
-
+        # setup nchooseks
+        if len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
+            ic_generator = None
+            ic_gen_kwargs = {}
+            nchooseks = None
+        else:
+            ic_generator = gen_batch_initial_conditions
+            ic_gen_kwargs = {
+                "generator": get_initial_conditions_generator(
+                    strategy=PolytopeSampler(
+                        data_model=PolytopeSamplerDataModel(domain=self.domain),
+                    ),
+                    transform_specs=self.input_preprocessing_specs,
+                )
+            }
+            nchooseks = get_nchoosek_constraints(self.domain)
+        # setup fixed features
         if (
             (num_categorical_features == 0)
             or (num_categorical_combinations == 1)
@@ -193,68 +181,30 @@ class BotorchStrategy(PredictiveStrategy):
                     ]
                 )
             )
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            candidates = optimize_acqf(
-                acq_function=self.acqf,
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                ),
-                fixed_features=self.get_fixed_features(),
-                return_best_only=True,
-            )
-
-        elif (
-            CategoricalMethodEnum.EXHAUSTIVE
-            in [self.categorical_method, self.descriptor_method, self.discrete_method]
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            candidates = optimize_acqf_mixed(
-                acq_function=self.acqf,
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                ),
-                fixed_features_list=self.get_categorical_combinations(),
-            )
-
-        elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
-            candidates = optimize_acqf_mixed(
-                acq_function=self.acqf,
-                bounds=bounds,
-                q=candidate_count,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                ),
-                fixed_features_list=self.get_fixed_values_list(),
-            )
-
+        ):
+            fixed_features = self.get_fixed_features()
+            fixed_features_list = None
         else:
-            raise IOError()
+            fixed_features = None
+            fixed_features_list = self.get_categorical_combinations()
+        return (
+            bounds,
+            ic_generator,
+            ic_gen_kwargs,
+            nchooseks,
+            fixed_features,
+            fixed_features_list,
+        )
 
-        # postprocess the results
-        # TODO: in case of free we have to transform back the candidates first and then compute the metrics
-        # otherwise the prediction holds only for the infeasible solution, this solution should then also be
-        # applicable for >1d descriptors
-        # preds = self.model.posterior(X=candidates[0]).mean.detach().numpy()  # type: ignore
-        # stds = np.sqrt(self.model.posterior(X=candidates[0]).variance.detach().numpy())  # type: ignore
+    def _postprocess_candidates(self, candidates: Tensor) -> pd.DataFrame:
+        """Converts a tensor of candidates to a pandas Dataframe.
 
+        Args:
+            candidates (Tensor): Tensor of candidates returned from `optimize_acqf`.
+
+        Returns:
+            pd.DataFrame: Dataframe with candidates.
+        """
         input_feature_keys = [
             item
             for key in self.domain.inputs.get_keys()
@@ -262,33 +212,103 @@ class BotorchStrategy(PredictiveStrategy):
         ]
 
         df_candidates = pd.DataFrame(
-            data=candidates[0].detach().numpy(), columns=input_feature_keys
+            data=candidates.detach().numpy(), columns=input_feature_keys
         )
-
-        preds, stds = self._predict(df_candidates)
 
         df_candidates = self.domain.inputs.inverse_transform(
             df_candidates, self.input_preprocessing_specs
         )
 
-        for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
-            df_candidates[feat.key + "_pred"] = preds[:, i]
-            df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
+        preds = self.predict(df_candidates)
+        return pd.concat((df_candidates, preds), axis=1)
 
-        return df_candidates
+    def _ask(self, candidate_count: int) -> pd.DataFrame:
+        """[summary]
+
+        Args:
+            candidate_count (int, optional): [description]. Defaults to 1.
+
+        Returns:
+            pd.DataFrame: [description]
+        """
+
+        assert candidate_count > 0, "candidate_count has to be larger than zero."
+
+        (
+            bounds,
+            ic_generator,
+            ic_gen_kwargs,
+            nchooseks,
+            fixed_features,
+            fixed_features_list,
+        ) = self._setup_ask()
+
+        acqfs = self._get_acqfs(candidate_count)
+
+        if len(acqfs) > 1:
+            candidates, _ = optimize_acqf_list(
+                acq_function_list=acqfs,
+                bounds=bounds,
+                num_restarts=self.num_restarts,
+                raw_samples=self.num_raw_samples,
+                equality_constraints=get_linear_constraints(
+                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                ),
+                inequality_constraints=get_linear_constraints(
+                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                ),
+                nonlinear_inequality_constraints=nchooseks,
+                fixed_features=fixed_features,
+                fixed_features_list=fixed_features_list,
+                ic_gen_kwargs=ic_gen_kwargs,
+                ic_generator=ic_generator,
+                options={"batch_limit": 5, "maxiter": 200},
+            )
+        else:
+            if fixed_features_list:
+                candidates, _ = optimize_acqf_mixed(
+                    acq_function=acqfs[0],
+                    bounds=bounds,
+                    q=candidate_count,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.num_raw_samples,
+                    equality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                    ),
+                    inequality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                    ),
+                    nonlinear_inequality_constraints=nchooseks,
+                    fixed_features_list=fixed_features_list,
+                    ic_generator=ic_generator,
+                    ic_gen_kwargs=ic_gen_kwargs,
+                )
+            else:
+                candidates, _ = optimize_acqf(
+                    acq_function=acqfs[0],
+                    bounds=bounds,
+                    q=candidate_count,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.num_raw_samples,
+                    equality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                    ),
+                    inequality_constraints=get_linear_constraints(
+                        domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                    ),
+                    fixed_features=fixed_features,
+                    nonlinear_inequality_constraints=nchooseks,
+                    return_best_only=True,
+                    ic_generator=ic_generator,
+                    **ic_gen_kwargs,
+                )
+        return self._postprocess_candidates(candidates=candidates)
 
     def _tell(self) -> None:
-        self.init_acqf()
-
-    def init_acqf(self) -> None:
-        self._init_acqf()
-        return
+        pass
 
     @abstractmethod
-    def _init_acqf(
-        self,
-    ) -> None:
+    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         pass
 
     def get_fixed_features(self):
@@ -426,53 +446,19 @@ class BotorchStrategy(PredictiveStrategy):
                 list_of_fixed_features.append(fixed_features)
         return list_of_fixed_features
 
-    def get_nchoosek_combinations(self):
-        """
-        generate a list of fixed values dictionaries from n-choose-k constraints
-        """
-
-        # generate botorch-friendly fixed values
-        features2idx = self._features2idx
-        used_features, unused_features = self.domain.get_nchoosek_combinations(
-            exhaustive=True
-        )
-        fixed_values_list_cc = []
-        for used, unused in zip(used_features, unused_features):
-            fixed_values = {}
-
-            # sets unused features to zero
-            for f_key in unused:
-                fixed_values[features2idx[f_key][0]] = 0.0
-
-            fixed_values_list_cc.append(fixed_values)
-
-        if len(fixed_values_list_cc) == 0:
-            fixed_values_list_cc.append({})  # any better alternative here?
-
-        return fixed_values_list_cc
-
-    def get_fixed_values_list(self):
-        # CARTESIAN PRODUCTS: fixed values from categorical combinations X fixed values from nchoosek constraints
-        fixed_values_full = []
-
-        for ff1 in self.get_categorical_combinations():
-            for ff2 in self.get_nchoosek_combinations():
-                ff = ff1.copy()
-                ff.update(ff2)
-                fixed_values_full.append(ff)
-
-        return fixed_values_full
-
     def has_sufficient_experiments(
         self,
     ) -> bool:
         if self.experiments is None:
             return False
-        degrees_of_freedom = len(self.domain.get_features(Input)) - len(
-            self.get_fixed_features()
-        )
-        # degrees_of_freedom = len(self.domain.get_features(Input)) + 1
-        if self.experiments.shape[0] > degrees_of_freedom + 1:
+        if (
+            len(
+                self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                    experiments=self.experiments
+                )
+            )
+            > 1
+        ):
             return True
         return False
 
@@ -511,7 +497,7 @@ class BotorchStrategy(PredictiveStrategy):
             data_model=PolytopeSamplerDataModel(domain=self.domain)
         )
         samples = torch.from_numpy(
-            sampler.ask(n=n_samples, return_all=False).values
+            sampler.ask(candidate_count=n_samples, return_all=False).values
         ).to(**tkwargs)
         X = (
             torch.cat((X_train, X_pending, samples))

@@ -1,7 +1,12 @@
-from typing import Optional
+from typing import Optional, Type
 
 from pydantic import PositiveInt, root_validator, validator
 
+from bofire.data_models.constraints.api import (
+    Constraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
+)
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
@@ -25,6 +30,20 @@ class BotorchStrategy(PredictiveStrategy):
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     surrogate_specs: Optional[BotorchSurrogates] = None
+
+    @classmethod
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
+        """Method to check if a specific constraint type is implemented for the strategy
+
+        Args:
+            my_type (Type[Constraint]): Constraint class
+
+        Returns:
+            bool: True if the constraint type is valid for the strategy chosen, False otherwise
+        """
+        if my_type in [NonlinearInequalityConstraint, NonlinearEqualityConstraint]:
+            return False
+        return True
 
     @validator("num_sobol_samples")
     def validate_num_sobol_samples(cls, v):
