@@ -22,6 +22,7 @@ from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.strategies.samplers.polytope import PolytopeSampler
+from scipy.optimize._minimize import standardize_constraints
 
 
 def get_formula_from_string(
@@ -552,13 +553,60 @@ def nchoosek_constraints_as_bounds(
     return bounds
 
 
-def smart_round(candidates: pd.DataFrame, precision=10**-2) -> pd.DataFrame:
+def smart_round(
+    domain: Domain, candidates: pd.DataFrame, precision=10**-2
+) -> pd.DataFrame:
+    n_experiments, n_vars = candidates.shape
     b = candidates.values.flatten()
     x = cp.Variable(len(b), integer=True)
     I = np.eye(N=len(b)) * precision
 
-    objective = cp.Minimize(cp.sum_squares(I @ x - b))
-    prob = cp.Problem(objective)
+    def _to_cp_constraint(x, constraint):
+        if isinstance(constraint, LinearEqualityConstraint):
+            _coefs = constraint.coefficients
+            A = []
+            for n in range(n_experiments):
+                a = np.zeros(n_experiments * n_vars)
+                a[n * n_vars : (n + 1) * (n_vars)] = _coefs
+                A.append(a)
+            A = np.array(A)
+            b = np.repeat(constraint.rhs, n_experiments)
+            return A @ x == b
+        if isinstance(constraint, LinearInequalityConstraint):
+            _coefs = constraint.coefficients
+            A = []
+            for n in range(n_experiments):
+                a = np.zeros(n_experiments * n_vars)
+                a[n * n_vars : (n + 1) * (n_vars)] = _coefs
+                A.append(a)
+            A = np.array(A)
+            b = np.repeat(constraint.rhs, n_experiments)
+            return A @ x <= b
+        else:
+            warnings.warn("Only linear contraints implemented for smart round!")
+
+    def inputs_to_constraints(x, domain: Domain):
+        _constraints = []
+
+        lower = []
+        for i in domain.inputs:
+            lower.append(i.bounds[0])
+        _constraints.append(x >= np.repeat(np.array(lower), n_experiments))
+
+        upper = []
+        for i in domain.inputs:
+            upper.append(i.bounds[1])
+        _constraints.append(x <= np.repeat(np.array(upper), n_experiments))
+        return _constraints
+
+    constraints = standardize_constraints(domain.constraints, b, "SLSQP")
+    objective = cp.Minimize(cp.sum_squares(x - I @ b))
+
+    prob = cp.Problem(
+        objective=objective,
+        constraints=[_to_cp_constraint(x, constraint) for constraint in constraints]
+        + inputs_to_constraints(x, domain),
+    )
     prob.solve()
-    candidates_rounded = x.value.reshape(candidates.values.shape) * precision
+    candidates_rounded = x.value.reshape(candidates.values.shape)
     return pd.DataFrame(candidates_rounded, columns=candidates.columns)

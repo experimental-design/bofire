@@ -34,8 +34,19 @@ from bofire.strategies.doe.utils import (
 
 
 def smart_round_test():
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
+            )
+        ],
+    )
     candidates = pd.DataFrame([[0.00001, 0.1, 9.999999], [0.9999997, 0.567, 9.99991]])
-    rounded_candidates = smart_round(candidates=candidates)
+    rounded_candidates = smart_round(domain=domain, candidates=candidates)
     rounded_candidates_expected = pd.DataFrame(
         [[0.00, 0.10, 10.00], [1.00, 0.57, 10.00]]
     )
