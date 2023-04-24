@@ -23,7 +23,6 @@ from bofire.strategies.doe.utils import (
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
     d_optimality,
-    g_efficiency,
     get_formula_from_string,
     metrics,
     n_zero_eigvals,
@@ -480,49 +479,6 @@ def test_a_optimality():
     assert np.allclose(a_optimality(X), np.sum(1 / (np.linalg.eigvalsh(X.T @ X)[1:])))
 
 
-def test_g_efficiency():
-    # define model matrix and domain: no constraints
-    X = np.array(
-        [
-            [1, 0, 0, 0],
-            [0, 0.1, 0, 0],
-            [0, 0, 0.1, 0],
-            [0, 0, 0, 0.1],
-        ]
-    )
-
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-    )
-    assert np.allclose(g_efficiency(X, domain), 0.333, atol=5e-3)
-
-    # define domain: sampling not implemented
-    # update: now it is implemented
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(
-                features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
-            ),
-            LinearInequalityConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                coefficients=[-1, -1, -1, -1],
-                rhs=-0.95,
-            ),
-            NChooseKConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    # with pytest.raises(Exception):
-    g_efficiency(X, domain, n_samples=1)
-
-
 def test_metrics():
     # define model matrix
     X = np.array(
@@ -542,15 +498,9 @@ def test_metrics():
     np.random.seed(1)
     d = metrics(X, domain)
     np.random.seed(1)
-    g_eff = g_efficiency(X, domain)
     assert d.index[0] == "D-optimality"
     assert d.index[1] == "A-optimality"
-    assert d.index[2] == "G-efficiency"
-    assert np.allclose(
-        d,
-        np.array([d_optimality(X), a_optimality(X), g_eff]),
-        rtol=0.05,
-    )
+    assert np.allclose(d, np.array([d_optimality(X), a_optimality(X)]), rtol=0.05)
 
     # define domain: sampling not implemented
     # update: now it is implemented
@@ -578,8 +528,7 @@ def test_metrics():
     d = metrics(X, domain, n_samples=1)
     assert d.index[0] == "D-optimality"
     assert d.index[1] == "A-optimality"
-    assert d.index[2] == "G-efficiency"
-    assert np.allclose(d, np.array([d_optimality(X), a_optimality(X), 5.0e01]))
+    assert np.allclose(d, np.array([d_optimality(X), a_optimality(X)]))
 
 
 def test_check_nchoosek_constraints_as_bounds():
@@ -665,7 +614,6 @@ def test_check_nchoosek_constraints_as_bounds():
         ],
     )
     with pytest.raises(ValueError):
-
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # Not allowed: names parameters of two NChooseK overlap

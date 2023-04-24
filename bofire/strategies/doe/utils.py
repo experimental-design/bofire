@@ -1,5 +1,4 @@
 import sys
-import warnings
 from itertools import combinations
 from typing import List, Optional, Union
 
@@ -380,36 +379,6 @@ def a_optimality(X: np.ndarray, tol=1e-9) -> float:
     return np.sum(1.0 / eigenvalues)  # type: ignore
 
 
-# type: ignore
-def g_efficiency(
-    X: np.ndarray,
-    domain: Domain,
-    delta: float = 1e-9,
-    n_samples: int = int(1e4),
-) -> float:
-    """Compute the G-efficiency for a model matrix X.
-    G-efficiency is proportional to p/(n*d) where p is the number of model terms,
-    n is the number of runs and d is the maximum relative prediction variance over
-    the set of runs.
-    """
-
-    # number of runs and model terms
-    n, p = X.shape
-
-    # take large sample from the design space
-    sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
-    Y = sampler.ask(n_samples).to_numpy()
-
-    # variance over set of runs
-    D = Y @ np.linalg.inv(X.T @ X + delta * np.eye(p)) @ Y.T
-    d = np.max(np.diag(D))
-    if d:
-        G_eff = float(100 * p / (n * d))
-    else:
-        G_eff = np.inf
-    return G_eff
-
-
 def metrics(
     X: np.ndarray,
     domain: Domain,
@@ -432,31 +401,10 @@ def metrics(
     Returns:
         A pd.Series containing the values for the three metrics.
     """
-
-    # X has to contain numerical values for metrics
-    # thus transform to one-hot-encoded matrix
-    # with properly transformed problem
-    # try to determine G-efficiency
-    try:
-        g_eff = g_efficiency(
-            X,
-            domain,
-            delta,
-            n_samples,
-        )
-
-    except Exception:
-        warnings.warn(
-            "Sampling of points fulfilling this problem's constraints is not implemented. \
-            G-efficiency can't be determined."
-        )
-        g_eff = 0
-
     return pd.Series(
         {
             "D-optimality": d_optimality(X, tol),
             "A-optimality": a_optimality(X, tol),
-            "G-efficiency": g_eff,
         }
     )
 
