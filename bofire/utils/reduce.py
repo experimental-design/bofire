@@ -132,9 +132,9 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
 
     # build up reduced domain
     _domain = Domain.construct(
-        # _fields_set = {"input_features", "output_features", "constraints"}
-        input_features=deepcopy(other_inputs),
-        output_features=deepcopy(domain.outputs),
+        # _fields_set = {"inputs", "outputs", "constraints"}
+        inputs=deepcopy(other_inputs),
+        outputs=deepcopy(domain.outputs),
         constraints=deepcopy(other_constraints),
     )
     new_inputs = [
@@ -142,7 +142,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     ]
     all_inputs = _domain.inputs + new_inputs
     assert isinstance(all_inputs, Inputs)
-    _domain.input_features = all_inputs
+    _domain.inputs = all_inputs
 
     constraints: List[AnyConstraint] = []
     for i in pivots:

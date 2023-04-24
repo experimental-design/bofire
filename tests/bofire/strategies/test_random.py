@@ -113,8 +113,8 @@ unsupported_domains = [
     ),
     # Domain(
     #     # n-choose-k
-    #     input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-    #     output_features=[of1],
+    #     inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+    #     outputs=[of1],
     #     constraints=[c5],
     # ),
 ]

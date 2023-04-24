@@ -23,16 +23,12 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
         surrogates=[
             surrogate_data_models.SingleTaskGPSurrogate(
-                input_features=domains[6].inputs,
-                output_features=Outputs(
-                    features=[domains[6].outputs.get_by_key("of1")]
-                ),
+                inputs=domains[6].inputs,
+                outputs=Outputs(features=[domains[6].outputs.get_by_key("of1")]),
             ),
             surrogate_data_models.SingleTaskGPSurrogate(
-                input_features=domains[6].inputs,
-                output_features=Outputs(
-                    features=[domains[6].outputs.get_by_key("of2")]
-                ),
+                inputs=domains[6].inputs,
+                outputs=Outputs(features=[domains[6].outputs.get_by_key("of2")]),
             ),
         ]
     ),
@@ -44,8 +40,8 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
 # BotorchSurrogates(
 #                models=[
 #                    SingleTaskGPSurrogate(
-#                        input_features=domains[1].input_features,
-#                        output_features=domains[1].output_features,
+#                        inputs=domains[1].inputs,
+#                        outputs=domains[1].outputs,
 #                        input_preprocessing_specs={
 #                            "if5": CategoricalEncodingEnum.ONE_HOT,
 #                            "if6": CategoricalEncodingEnum.ONE_HOT,
@@ -63,15 +59,15 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
             "surrogate_specs": surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
-                        input_features=domains[2].inputs,
-                        output_features=Outputs(
+                        inputs=domains[2].inputs,
+                        outputs=Outputs(
                             features=[domains[2].outputs.get_by_key("of1")]
                         ),
                         constraints=[],
                     ),
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
-                        input_features=domains[2].inputs,
-                        output_features=Outputs(
+                        inputs=domains[2].inputs,
+                        outputs=Outputs(
                             features=[domains[2].outputs.get_by_key("of2")]
                         ),
                         constraints=[],

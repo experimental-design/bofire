@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore", category=UserWarning, append=True)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
-input_features = [
+inputs = [
     ContinuousInput(
         key=f"x{1}",
         bounds=(0.0, 1.0),
@@ -42,7 +42,7 @@ input_features = [
     ),
 ]
 domain = Domain.from_lists(
-    inputs=input_features,
+    inputs=inputs,
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(

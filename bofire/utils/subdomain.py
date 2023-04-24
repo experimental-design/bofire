@@ -27,28 +27,28 @@ def get_subdomain(
         Domain: A new domain containing only parts of the original domain
     """
     assert len(feature_keys) >= 2, "At least two features have to be provided."
-    output_features = []
-    input_features = []
+    outputs = []
+    inputs = []
     for key in feature_keys:
         try:
             feat = domain.get_feature(key)
         except KeyError:
             raise ValueError(f"Feature {key} not present in domain.")
         if isinstance(feat, Input):
-            input_features.append(feat)
+            inputs.append(feat)
         else:
-            output_features.append(feat)
-    assert len(output_features) > 0, "At least one output feature has to be provided."
-    assert len(input_features) > 0, "At least one input feature has to be provided."
-    input_features = Inputs(features=input_features)
+            outputs.append(feat)
+    assert len(outputs) > 0, "At least one output feature has to be provided."
+    assert len(inputs) > 0, "At least one input feature has to be provided."
+    inputs = Inputs(features=inputs)
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
         for key in c.features:  # type: ignore
-            if key not in input_features.get_keys():
+            if key not in inputs.get_keys():
                 raise ValueError(
                     f"Removed input feature {key} is used in a constraint."
                 )
     subdomain = deepcopy(domain)
-    subdomain.input_features = input_features
-    subdomain.output_features = output_features
+    subdomain.inputs = inputs
+    subdomain.outputs = outputs
     return subdomain

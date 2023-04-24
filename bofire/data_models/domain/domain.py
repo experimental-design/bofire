@@ -83,7 +83,7 @@ class Domain(BaseModel):
         )
 
     @validator("inputs", always=True, pre=True)
-    def validate_input_features_list(cls, v, values):
+    def validate_inputs_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
             return v
@@ -93,7 +93,7 @@ class Domain(BaseModel):
             return v
 
     @validator("outputs", always=True, pre=True)
-    def validate_output_features_list(cls, v, values):
+    def validate_outputs_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
         if isinstance_or_union(v, AnyOutput):
@@ -175,18 +175,16 @@ class Domain(BaseModel):
             return v
 
         # gather continuous inputs in dictionary
-        continuous_input_features_dict = {}
+        continuous_inputs_dict = {}
         for f in values["inputs"]:
             if type(f) is ContinuousInput:
-                continuous_input_features_dict[f.key] = f
+                continuous_inputs_dict[f.key] = f
 
         # check if non continuous input features appear in linear constraints
         for c in v:
             if isinstance(c, LinearConstraint):
                 for f in c.features:
-                    assert (
-                        f in continuous_input_features_dict
-                    ), f"{f} must be continuous."
+                    assert f in continuous_inputs_dict, f"{f} must be continuous."
         return v
 
     @validator("constraints", always=True)
@@ -201,20 +199,18 @@ class Domain(BaseModel):
             List[Constraint]: List of constraints defined for the domain
         """
         # gather continuous inputs in dictionary
-        continuous_input_features_dict = {}
+        continuous_inputs_dict = {}
         for f in values["inputs"]:
             if type(f) is ContinuousInput:
-                continuous_input_features_dict[f.key] = f
+                continuous_inputs_dict[f.key] = f
 
         # check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0
         for c in v:
             if isinstance(c, NChooseKConstraint):
                 for f in c.features:
+                    assert f in continuous_inputs_dict, f"{f} must be continuous."
                     assert (
-                        f in continuous_input_features_dict
-                    ), f"{f} must be continuous."
-                    assert (
-                        continuous_input_features_dict[f].lower_bound == 0
+                        continuous_inputs_dict[f].lower_bound == 0
                     ), f"lower bound of {f} must be 0 for NChooseK constraint."
         return v
 

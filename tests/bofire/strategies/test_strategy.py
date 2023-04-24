@@ -144,12 +144,12 @@ def test_strategy_init_domain_invalid_constraints(
     [
         (
             Domain.from_lists(
-                inputs=input_features,
+                inputs=inputs,
                 outputs=[of1],
                 constraints=[],
             )
         )
-        for input_features in [[if3], [if1, if3]]
+        for inputs in [[if3], [if1, if3]]
     ],
 )
 def test_strategy_init_domain_invalid_input(domain: Domain):
@@ -163,11 +163,11 @@ def test_strategy_init_domain_invalid_input(domain: Domain):
         (
             Domain.from_lists(
                 inputs=[if1, if2],
-                outputs=output_features,
+                outputs=outputs,
                 constraints=[],
             )
         )
-        for output_features in [[of1, of4], [of4]]
+        for outputs in [[of1, of4], [of4]]
     ],
 )
 def test_strategy_init_domain_invalid_objective(domain: Domain):

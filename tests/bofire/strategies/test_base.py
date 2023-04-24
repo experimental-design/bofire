@@ -219,8 +219,8 @@ domains = [
         constraints=[],
     )
     # Domain(
-    #     input_features=[if1, if7], # unknown dummy feature
-    #     output_features=[of1],
+    #     inputs=[if1, if7], # unknown dummy feature
+    #     outputs=[of1],
     #     constraints=[],
     # )
 ]
@@ -302,8 +302,8 @@ def test_base_invalid_descriptor_method():
             domain=domains[0],
             surrogate_specs=[
                 surrogate_data_models.SingleTaskGPSurrogate(
-                    input_features=domains[0].input_features,
-                    output_features=domains[0].output_features,
+                    inputs=domains[0].inputs,
+                    outputs=domains[0].outputs,
                     input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 )
             ],
@@ -329,8 +329,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[1].inputs,
-                        output_features=domains[1].outputs,
+                        inputs=domains[1].inputs,
+                        outputs=domains[1].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                             "if6": CategoricalEncodingEnum.ONE_HOT,
@@ -347,8 +347,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[1].inputs,
-                        output_features=domains[1].outputs,
+                        inputs=domains[1].inputs,
+                        outputs=domains[1].outputs,
                     )
                 ]
             ),
@@ -361,8 +361,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[1].inputs,
-                        output_features=domains[1].outputs,
+                        inputs=domains[1].inputs,
+                        outputs=domains[1].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                             "if6": CategoricalEncodingEnum.ONE_HOT,
@@ -380,8 +380,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[5].inputs,
-                        output_features=domains[5].outputs,
+                        inputs=domains[5].inputs,
+                        outputs=domains[5].outputs,
                         input_preprocessing_specs={
                             "if8": CategoricalEncodingEnum.ONE_HOT,
                         },
@@ -471,8 +471,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].inputs,
-                        output_features=domains[0].outputs,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
@@ -508,8 +508,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].inputs,
-                        output_features=domains[0].outputs,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
@@ -536,8 +536,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].inputs,
-                        output_features=domains[0].outputs,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                     )
                 ]
             ),
@@ -551,8 +551,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].inputs,
-                        output_features=domains[0].outputs,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                     )
                 ]
             ),
@@ -566,8 +566,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].inputs,
-                        output_features=domains[0].outputs,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                     )
                 ]
             ),
@@ -588,8 +588,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].inputs,
-                        output_features=domains[0].outputs,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT
                         },
@@ -763,8 +763,8 @@ def test_base_setup_ask_fixed_features(
         surrogate_specs=surrogate_data_models.BotorchSurrogates(
             surrogates=[
                 surrogate_data_models.SingleTaskGPSurrogate(
-                    input_features=domains[0].inputs,
-                    output_features=domains[0].outputs,
+                    inputs=domains[0].inputs,
+                    outputs=domains[0].outputs,
                     # input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 )
             ]

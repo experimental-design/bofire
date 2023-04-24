@@ -32,10 +32,8 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, disable_progbar: bool = True):
-        scaler = get_scaler(
-            self.input_features, self.input_preprocessing_specs, self.scaler, X
-        )
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values

@@ -41,29 +41,29 @@ class BotorchSurrogates(BaseModel):
         }
 
     @property
-    def output_features(self) -> Outputs:
+    def outputs(self) -> Outputs:
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.output_features.get() for model in self.surrogates]  # type: ignore
+                    [model.outputs.get() for model in self.surrogates]  # type: ignore
                 )
             )
         )
 
-    def _check_compability(self, input_features: Inputs, output_features: Outputs):
+    def _check_compability(self, inputs: Inputs, outputs: Outputs):
         # TODO: add sync option
-        used_output_feature_keys = self.output_features.get_keys()
-        if sorted(used_output_feature_keys) != sorted(output_features.get_keys()):
+        used_output_feature_keys = self.outputs.get_keys()
+        if sorted(used_output_feature_keys) != sorted(outputs.get_keys()):
             raise ValueError("Output features do not match.")
         used_feature_keys = []
         for i, model in enumerate(self.surrogates):
-            if len(model.input_features) > len(input_features):
+            if len(model.inputs) > len(inputs):
                 raise ValueError(
                     f"Model with index {i} has more features than acceptable."
                 )
-            for feat in model.input_features:
+            for feat in model.inputs:
                 try:
-                    other_feat = input_features.get_by_key(feat.key)
+                    other_feat = inputs.get_by_key(feat.key)
                 except KeyError:
                     raise ValueError(f"Feature {feat.key} not found.")
                 # now compare the features
@@ -74,7 +74,7 @@ class BotorchSurrogates(BaseModel):
                     raise ValueError(f"Features with key {feat.key} are incompatible.")
                 if feat.key not in used_feature_keys:
                     used_feature_keys.append(feat.key)
-        if len(used_feature_keys) != len(input_features):
+        if len(used_feature_keys) != len(inputs):
             raise ValueError("Unused features are present.")
 
     @validator("surrogates")
@@ -82,28 +82,26 @@ class BotorchSurrogates(BaseModel):
         # validate that all surrogates are single output surrogates
         # TODO: this restriction has to be removed at some point
         for model in v:
-            if len(model.output_features) != 1:
+            if len(model.outputs) != 1:
                 raise ValueError("Only single output surrogates allowed.")
         # check that the output feature keys are distinctw
         used_output_feature_keys = list(
-            itertools.chain.from_iterable(
-                [model.output_features.get_keys() for model in v]
-            )
+            itertools.chain.from_iterable([model.outputs.get_keys() for model in v])
         )
         if len(set(used_output_feature_keys)) != len(used_output_feature_keys):
             raise ValueError("Output feature keys are not unique across surrogates.")
         # get the feature keys present in all surrogates
         used_feature_keys = []
         for model in v:
-            for key in model.input_features.get_keys():
+            for key in model.inputs.get_keys():
                 if key not in used_feature_keys:
                     used_feature_keys.append(key)
         # check that the features and preprocessing steps are equal trough the surrogates
         for key in used_feature_keys:
             features = [
-                model.input_features.get_by_key(key)
+                model.inputs.get_by_key(key)
                 for model in v
-                if key in model.input_features.get_keys()
+                if key in model.inputs.get_keys()
             ]
             preproccessing = [
                 model.input_preprocessing_specs[key]

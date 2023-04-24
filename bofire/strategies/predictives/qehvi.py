@@ -75,7 +75,7 @@ class QehviStrategy(BotorchStrategy):
         return [acqf]
 
     def _get_objective(self) -> GenericMCMultiOutputObjective:
-        objective = get_multiobjective_objective(output_features=self.domain.outputs)
+        objective = get_multiobjective_objective(outputs=self.domain.outputs)
         return GenericMCMultiOutputObjective(objective=objective)
 
     def get_adjusted_refpoint(self) -> List[float]:

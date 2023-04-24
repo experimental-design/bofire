@@ -69,9 +69,7 @@ class SoboStrategy(BotorchStrategy):
 
         # in case that constraints are present we return a constrained botorch objective
         if len(self.domain.outputs.get_by_objective(BotorchConstrainedObjective)) > 0:
-            constraints, etas = get_output_constraints(
-                output_features=self.domain.outputs
-            )
+            constraints, etas = get_output_constraints(outputs=self.domain.outputs)
 
             return ConstrainedMCObjective(
                 objective=objective_callable,
@@ -100,11 +98,9 @@ class AdditiveSoboStrategy(SoboStrategy):
             and len(self.domain.outputs.get_by_objective(BotorchConstrainedObjective))
             > 0
         ):
-            constraints, etas = get_output_constraints(
-                output_features=self.domain.outputs
-            )
+            constraints, etas = get_output_constraints(outputs=self.domain.outputs)
             objective = get_additive_botorch_objective(
-                output_features=self.domain.outputs, exclude_constraints=True
+                outputs=self.domain.outputs, exclude_constraints=True
             )
             return ConstrainedMCObjective(
                 objective=objective,  # type: ignore
@@ -114,7 +110,7 @@ class AdditiveSoboStrategy(SoboStrategy):
             )
         return GenericMCObjective(
             objective=get_additive_botorch_objective(  # type: ignore
-                output_features=self.domain.outputs, exclude_constraints=False
+                outputs=self.domain.outputs, exclude_constraints=False
             )
         )
 
@@ -130,6 +126,6 @@ class MultiplicativeSoboStrategy(SoboStrategy):
     def _get_objective(self) -> GenericMCObjective:
         return GenericMCObjective(
             objective=get_multiplicative_botorch_objective(  # type: ignore
-                output_features=self.domain.outputs
+                outputs=self.domain.outputs
             )
         )

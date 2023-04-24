@@ -16,12 +16,12 @@ class TrainableSurrogate(ABC):
         # preprocess
         experiments = self._preprocess_experiments(experiments)
         # validate
-        experiments = self.input_features.validate_experiments(  # type: ignore
+        experiments = self.inputs.validate_experiments(  # type: ignore
             experiments, strict=False
         )
-        X = experiments[self.input_features.get_keys()]  # type: ignore
+        X = experiments[self.inputs.get_keys()]  # type: ignore
         # TODO: output feature validation
-        Y = experiments[self.output_features.get_keys()]  # type: ignore
+        Y = experiments[self.outputs.get_keys()]  # type: ignore
         # fit
         options = options or {}
         self._fit(X=X, Y=Y, **options)  # type: ignore
@@ -30,14 +30,14 @@ class TrainableSurrogate(ABC):
         if self._output_filtering is None:
             return experiments
         elif self._output_filtering == OutputFilteringEnum.ALL:
-            return self.output_features.preprocess_experiments_all_valid_outputs(  # type: ignore
+            return self.outputs.preprocess_experiments_all_valid_outputs(  # type: ignore
                 experiments=experiments,
-                output_feature_keys=self.output_features.get_keys(),  # type: ignore
+                output_feature_keys=self.outputs.get_keys(),  # type: ignore
             )
         elif self._output_filtering == OutputFilteringEnum.ANY:
-            return self.output_features.preprocess_experiments_any_valid_outputs(  # type: ignore
+            return self.outputs.preprocess_experiments_any_valid_outputs(  # type: ignore
                 experiments=experiments,
-                output_feature_keys=self.output_features.get_keys(),  # type: ignore
+                output_feature_keys=self.outputs.get_keys(),  # type: ignore
             )
         else:
             raise ValueError("Unknown output filtering option requested.")
@@ -87,7 +87,7 @@ class TrainableSurrogate(ABC):
         if include_labcodes and "labcode" not in experiments.columns:
             raise ValueError("No labcodes available for the provided experiments.")
 
-        if len(self.output_features) > 1:  # type: ignore
+        if len(self.outputs) > 1:  # type: ignore
             raise NotImplementedError(
                 "Cross validation not implemented for multi-output models"
             )
@@ -106,17 +106,17 @@ class TrainableSurrogate(ABC):
         hook_results = {key: [] for key in hooks.keys()}
         # instantiate kfold object
         cv = KFold(n_splits=folds, shuffle=True)
-        key = self.output_features.get_keys()[0]  # type: ignore
+        key = self.outputs.get_keys()[0]  # type: ignore
         # first filter the experiments based on the model setting
         experiments = self._preprocess_experiments(experiments)
         train_results = []
         test_results = []
         # now get the indices for the split
         for train_index, test_index in cv.split(experiments):
-            X_train = experiments.iloc[train_index][self.input_features.get_keys()]  # type: ignore
-            X_test = experiments.iloc[test_index][self.input_features.get_keys()]  # type: ignore
-            y_train = experiments.iloc[train_index][self.output_features.get_keys()]  # type: ignore
-            y_test = experiments.iloc[test_index][self.output_features.get_keys()]  # type: ignore
+            X_train = experiments.iloc[train_index][self.inputs.get_keys()]  # type: ignore
+            X_test = experiments.iloc[test_index][self.inputs.get_keys()]  # type: ignore
+            y_train = experiments.iloc[train_index][self.outputs.get_keys()]  # type: ignore
+            y_test = experiments.iloc[test_index][self.outputs.get_keys()]  # type: ignore
             train_labcodes = (
                 experiments.iloc[train_index]["labcode"] if include_labcodes else None
             )

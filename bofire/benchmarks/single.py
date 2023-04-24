@@ -300,17 +300,17 @@ class Himmelblau(Benchmark):
             ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
         """
         self.use_constraints = use_constraints
-        input_features = []
+        inputs = []
 
-        input_features.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
-        input_features.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
         objective = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
         self._domain = Domain(
-            inputs=Inputs(features=input_features),
+            inputs=Inputs(features=inputs),
             outputs=Outputs(features=[output_feature]),
         )
 

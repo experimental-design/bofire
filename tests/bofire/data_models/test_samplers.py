@@ -10,7 +10,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Constraints, Domain, Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
-input_features = Inputs(
+inputs = Inputs(
     features=[ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)]
 )
 constraints = Constraints(
@@ -25,7 +25,7 @@ constraints = Constraints(
 @pytest.mark.parametrize(
     "features, constraints, sampling_method, num_samples",
     [
-        (input_features, constraints, sampling_method, num_samples)
+        (inputs, constraints, sampling_method, num_samples)
         for sampling_method in ["SOBOL", "UNIFORM", "LHS"]
         for num_samples in [1, 2, 64, 128]
     ],
@@ -44,7 +44,7 @@ def test_rejection_sampler(features, constraints, sampling_method, num_samples):
 
 def test_rejection_sampler_not_converged():
     domain = Domain(
-        inputs=input_features,
+        inputs=inputs,
         constraints=constraints,
     )
     data_model = data_models.RejectionSampler(
