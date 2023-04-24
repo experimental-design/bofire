@@ -54,67 +54,67 @@ c5 = NChooseKConstraint(
 )
 
 supported_domains = [
-    Domain(
+    Domain.from_lists(
         # continuous features
-        input_features=[if0, if1],
-        output_features=[of1],
+        inputs=[if0, if1],
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
+    Domain.from_lists(
         # continuous features incl. with fixed values
-        input_features=[if0, if1, if2],
-        output_features=[of1],
+        inputs=[if0, if1, if2],
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
+    Domain.from_lists(
         # all feature types
-        input_features=[if1, if3, if6, if7],
-        output_features=[of1],
+        inputs=[if1, if3, if6, if7],
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
+    Domain.from_lists(
         # all feature types incl. with fixed values
-        input_features=[if1, if2, if3, if4, if5, if6, if7],
-        output_features=[of1],
+        inputs=[if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
+    Domain.from_lists(
         # all feature types, linear equality
-        input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-        output_features=[of1],
+        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
         constraints=[c1],
     ),
-    Domain(
+    Domain.from_lists(
         # all feature types, linear inequality
-        input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-        output_features=[of1],
+        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
         constraints=[c2],
     ),
-    Domain(
+    Domain.from_lists(
         # all feature types, nonlinear inequality
-        input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-        output_features=[of1],
+        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
         constraints=[c4],
     ),
 ]
 
 unsupported_domains = [
-    Domain(
+    Domain.from_lists(
         # nonlinear equality
-        input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-        output_features=[of1],
+        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
         constraints=[c3],
     ),
-    Domain(
+    Domain.from_lists(
         # combination of linear equality and nonlinear inequality
-        input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-        output_features=[of1],
+        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
         constraints=[c1, c4],
     ),
     # Domain(
     #     # n-choose-k
-    #     input_features=[if0, if1, if2, if3, if4, if5, if6, if7],
-    #     output_features=[of1],
+    #     inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+    #     outputs=[of1],
     #     constraints=[c5],
     # ),
 ]

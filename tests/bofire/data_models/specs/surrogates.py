@@ -23,13 +23,13 @@ specs = Specs([])
 specs.add_valid(
     models.SaasSingleTaskGPSurrogate,
     lambda: {
-        "input_features": Inputs(
+        "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
             + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
         ),
-        "output_features": Outputs(
+        "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
@@ -46,13 +46,13 @@ specs.add_valid(
 specs.add_valid(
     models.MixedSingleTaskGPSurrogate,
     lambda: {
-        "input_features": Inputs(
+        "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
             + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
         ),
-        "output_features": Outputs(
+        "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
@@ -67,12 +67,12 @@ specs.add_valid(
 specs.add_valid(
     models.SingleTaskGPSurrogate,
     lambda: {
-        "input_features": Inputs(
+        "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
         ),
-        "output_features": Outputs(
+        "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
@@ -91,12 +91,12 @@ specs.add_valid(
 specs.add_valid(
     models.RandomForestSurrogate,
     lambda: {
-        "input_features": Inputs(
+        "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
         ),
-        "output_features": Outputs(
+        "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
@@ -122,12 +122,12 @@ specs.add_valid(
 specs.add_valid(
     models.MLPEnsemble,
     lambda: {
-        "input_features": Inputs(
+        "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
         ),
-        "output_features": Outputs(
+        "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]

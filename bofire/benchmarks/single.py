@@ -106,8 +106,8 @@ class Ackley(Benchmark):
         output_feature = ContinuousOutput(key="y", objective=MaximizeObjective(w=1))
 
         self._domain = Domain(
-            input_features=Inputs(features=input_feature_list),
-            output_features=Outputs(features=[output_feature]),
+            inputs=Inputs(features=input_feature_list),
+            outputs=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -163,12 +163,12 @@ class Hartmann(Benchmark):
     def __init__(self, dim: int = 6, allowed_k: Optional[int] = None) -> None:
         super().__init__()
         self._domain = Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
                 ]
             ),
-            output_features=Outputs(
+            outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
             constraints=Constraints(
@@ -216,13 +216,13 @@ class Hartmann(Benchmark):
 class Branin(Benchmark):
     def __init__(self) -> None:
         self._domain = Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key="x_1", bounds=(-5.0, 10)),
                     ContinuousInput(key="x_2", bounds=(0.0, 15.0)),
                 ]
             ),
-            output_features=Outputs(
+            outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
@@ -259,13 +259,13 @@ class Branin30(Benchmark):
 
     def __init__(self) -> None:
         self._domain = Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i+1:02d}", bounds=(0, 1))
                     for i in range(30)
                 ]
             ),
-            output_features=Outputs(
+            outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
@@ -300,18 +300,18 @@ class Himmelblau(Benchmark):
             ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
         """
         self.use_constraints = use_constraints
-        input_features = []
+        inputs = []
 
-        input_features.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
-        input_features.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
         objective = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
         self._domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=[output_feature]),
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:

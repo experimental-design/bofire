@@ -204,9 +204,9 @@ def constraints_as_scipy_constraints(
 
     # reformulate constraints
     constraints = []
-    if len(domain.cnstrs) == 0:
+    if len(domain.constraints) == 0:
         return constraints
-    for c in domain.cnstrs:
+    for c in domain.constraints:
         if isinstance(c, LinearEqualityConstraint):
             # write lower/upper bound as vector
             lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients) - tol)
@@ -468,11 +468,11 @@ def check_nchoosek_constraints_as_bounds(domain: Domain) -> None:
         domain (Domain): Domain whose NChooseK constraints should be checked
     """
     # collect NChooseK constraints
-    if len(domain.cnstrs) == 0:
+    if len(domain.constraints) == 0:
         return
 
     nchoosek_constraints = []
-    for c in domain.cnstrs:
+    for c in domain.constraints:
         if isinstance(c, NChooseKConstraint):
             nchoosek_constraints.append(c)
 
@@ -522,8 +522,8 @@ def nchoosek_constraints_as_bounds(
         [p.bounds for p in domain.inputs.get(ContinuousInput)] * n_experiments  # type: ignore
     )
 
-    if len(domain.cnstrs) > 0:
-        for constraint in domain.cnstrs:
+    if len(domain.constraints) > 0:
+        for constraint in domain.constraints:
             if isinstance(constraint, NChooseKConstraint):
                 n_inactive = len(constraint.features) - constraint.max_count
 

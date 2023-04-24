@@ -83,7 +83,7 @@ if1 = ContinuousInput(key="f1", bounds=(0, 2))
 if2 = ContinuousInput(key="f2", bounds=(0, 4))
 if3 = ContinuousInput(key="f3", bounds=(3, 8))
 
-input_features = Inputs(features=[if1, if2, if3])
+inputs = Inputs(features=[if1, if2, if3])
 
 constraints = Constraints(constraints=[c1, c2])
 constraints2 = Constraints(constraints=[c4, c5])
@@ -136,7 +136,7 @@ def test_constraints_plus():
     ],
 )
 def test_constraints_call(constraints, num_candidates):
-    candidates = input_features.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
     returned = constraints(candidates)
     assert returned.shape == (num_candidates, len(constraints))
 
@@ -149,7 +149,7 @@ def test_constraints_call(constraints, num_candidates):
     ],
 )
 def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
-    candidates = input_features.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
     returned = constraints.is_fulfilled(candidates)
     assert returned.shape == (num_candidates,)
     assert returned.dtype == bool
@@ -164,7 +164,7 @@ def test_constraints_is_fulfilled(constraints, num_candidates, fulfilled):
     ],
 )
 def test_constraints_jacobian(constraints, num_candidates):
-    candidates = input_features.sample(num_candidates, SamplingMethodEnum.UNIFORM)
+    candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
     returned = constraints.jacobian(candidates)
     assert np.all(
         [
@@ -174,7 +174,7 @@ def test_constraints_jacobian(constraints, num_candidates):
     )
     assert np.all(
         [
-            returned[i].shape == (num_candidates, len(input_features))
+            returned[i].shape == (num_candidates, len(inputs))
             for i, c in enumerate(constraints)
         ]
     )

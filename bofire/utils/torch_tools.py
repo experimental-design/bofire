@@ -44,7 +44,7 @@ def get_linear_constraints(
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
-    for c in domain.cnstrs.get(constraint):
+    for c in domain.constraints.get(constraint):
         indices = []
         coefficients = []
         lower = []
@@ -114,7 +114,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 
     constraints = []
     # ignore none also valid for the start
-    for c in domain.cnstrs.get(NChooseKConstraint):
+    for c in domain.constraints.get(NChooseKConstraint):
         assert isinstance(c, NChooseKConstraint)
         indices = torch.tensor(
             [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
@@ -170,13 +170,13 @@ def constrained_objective2botorch(
 
 
 def get_output_constraints(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
 
     Args:
-        output_features (Outputs): Output feature object that should
+        outputs (Outputs): Output feature object that should
             be processed.
 
     Returns:
@@ -185,7 +185,7 @@ def get_output_constraints(
     """
     constraints = []
     etas = []
-    for idx, feat in enumerate(output_features.get()):
+    for idx, feat in enumerate(outputs.get()):
         if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
             iconstraints, ietas = constrained_objective2botorch(
                 idx, objective=feat.objective  # type: ignore
@@ -264,16 +264,16 @@ def get_objective_callable(
 
 
 def get_multiplicative_botorch_objective(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
     ]
     weights = [
         feat.objective.w  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
     ]
 
@@ -287,11 +287,11 @@ def get_multiplicative_botorch_objective(
 
 
 def get_additive_botorch_objective(
-    output_features: Outputs, exclude_constraints: bool = True
+    outputs: Outputs, exclude_constraints: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and (
             not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
@@ -301,7 +301,7 @@ def get_additive_botorch_objective(
     ]
     weights = [
         feat.objective.w  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and (
             not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
@@ -320,19 +320,19 @@ def get_additive_botorch_objective(
 
 
 def get_multiobjective_objective(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     """Returns
 
     Args:
-        output_features (Outputs): _description_
+        outputs (Outputs): _description_
 
     Returns:
         Callable[[Tensor], Tensor]: _description_
     """
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and isinstance(
             feat.objective,  # type: ignore

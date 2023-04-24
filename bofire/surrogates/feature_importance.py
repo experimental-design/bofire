@@ -28,7 +28,7 @@ def permutation_importance(
         Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
             with the feature keys as columns and the mean and std of the respective permutation importances as rows.
     """
-    assert len(model.output_features) == 1, "Only single output model supported so far."
+    assert len(model.outputs) == 1, "Only single output model supported so far."
     assert n_repeats > 1, "Number of repeats has to be larger than 1."
     assert seed > 0, "Seed has to be larger than zero."
 
@@ -42,11 +42,10 @@ def permutation_importance(
         RegressionMetricsEnum.SPEARMAN: 1.0,
     }
 
-    output_key = model.output_features[0].key
+    output_key = model.outputs[0].key
     rng = np.random.default_rng(seed)
     prelim_results = {
-        k.name: {feature.key: [] for feature in model.input_features}
-        for k in metrics.keys()
+        k.name: {feature.key: [] for feature in model.inputs} for k in metrics.keys()
     }
     pred = model.predict(X)
     original_metrics = {
@@ -54,7 +53,7 @@ def permutation_importance(
         for k in metrics.keys()
     }
 
-    for feature in model.input_features:
+    for feature in model.inputs:
         for _ in range(n_repeats):
             # shuffle
             X_i = X.copy()
@@ -77,7 +76,7 @@ def permutation_importance(
                     - np.mean(prelim_results[k.name][feature.key]),
                     np.std(prelim_results[k.name][feature.key]),
                 ]
-                for feature in model.input_features
+                for feature in model.inputs
             },
             index=["mean", "std"],
         )

@@ -25,10 +25,10 @@ class Dummy(Surrogate):
 
     def _predict(self, transformed_X: pd.DataFrame):
         preds = np.random.normal(
-            loc=5, scale=1, size=(len(transformed_X), len(self.output_features))
+            loc=5, scale=1, size=(len(transformed_X), len(self.outputs))
         )
         stds = np.random.uniform(
-            low=0.0, high=1.0, size=(len(transformed_X), len(self.output_features))
+            low=0.0, high=1.0, size=(len(transformed_X), len(self.outputs))
         )
         return preds, stds
 
@@ -39,18 +39,16 @@ class Dummy(Surrogate):
         pass
 
 
-def test_zero_input_features():
-    input_features = Inputs(features=[])
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
+def test_zero_inputs():
+    inputs = Inputs(features=[])
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
     with pytest.raises(ValueError):
-        data_model = DummyDataModel(
-            input_features=input_features, output_features=output_features
-        )
+        data_model = DummyDataModel(inputs=inputs, outputs=outputs)
         Dummy(data_model=data_model)
 
 
-def test_zero_output_features():
-    input_features = Inputs(
+def test_zero_outputs():
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -59,11 +57,9 @@ def test_zero_output_features():
             for i in range(5)
         ]
     )
-    output_features = Outputs(features=[])
+    outputs = Outputs(features=[])
     with pytest.raises(ValueError):
-        data_model = DummyDataModel(
-            input_features=input_features, output_features=output_features
-        )
+        data_model = DummyDataModel(inputs=inputs, outputs=outputs)
         Dummy(data_model=data_model)
 
 
@@ -76,9 +72,9 @@ def test_predicted_value():
         PredictedValue(predictedValue=5.0, standardDeviation=-0.1)
 
 
-@pytest.mark.parametrize("n_output_features", [1, 2])
-def test_to_outputs(n_output_features):
-    input_features = Inputs(
+@pytest.mark.parametrize("n_outputs", [1, 2])
+def test_to_outputs(n_outputs):
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -87,25 +83,23 @@ def test_to_outputs(n_output_features):
             for i in range(5)
         ]
     )
-    output_features = Outputs(
-        features=[ContinuousOutput(key=f"y_{i+1}") for i in range(n_output_features)]
+    outputs = Outputs(
+        features=[ContinuousOutput(key=f"y_{i+1}") for i in range(n_outputs)]
     )
-    data_model = DummyDataModel(
-        input_features=input_features, output_features=output_features
-    )
+    data_model = DummyDataModel(inputs=inputs, outputs=outputs)
     model = Dummy(data_model=data_model)
 
     model.model = "dummymodel"
-    preds = model.predict(input_features.sample(10))
+    preds = model.predict(inputs.sample(10))
     output = model.to_predictions(preds)
-    assert len(output) == n_output_features
-    assert sorted(output.keys()) == [f"y_{i+1}" for i in range(n_output_features)]
-    for key in [f"y_{i+1}" for i in range(n_output_features)]:
+    assert len(output) == n_outputs
+    assert sorted(output.keys()) == [f"y_{i+1}" for i in range(n_outputs)]
+    for key in [f"y_{i+1}" for i in range(n_outputs)]:
         assert len(output[key]) == 10
 
 
 def test_is_fitted():
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -115,10 +109,8 @@ def test_is_fitted():
         ]
     )
 
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    data_model = DummyDataModel(
-        input_features=input_features, output_features=output_features
-    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    data_model = DummyDataModel(inputs=inputs, outputs=outputs)
     d = Dummy(data_model=data_model)
     assert d.is_fitted is False
     d.model = "dummymodel"

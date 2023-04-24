@@ -53,9 +53,9 @@ def get_formula_from_string_recursion_limit():
 
 
 def test_get_formula_from_string():
-    domain = Domain(
-        input_features=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     # linear model
@@ -136,11 +136,9 @@ def test_get_formula_from_string():
 
 def test_n_zero_eigvals_unconstrained():
     # 5 continous
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     assert n_zero_eigvals(domain=domain, model_type="linear") == 0
@@ -150,16 +148,16 @@ def test_n_zero_eigvals_unconstrained():
 
 
 def test_n_zero_eigvals_constrained():
-    # 3 continuous & 2 discrete input_features, 1 mixture constraint
-    domain = Domain(
-        input_features=[
+    # 3 continuous & 2 discrete inputs, 1 mixture constraint
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key="x1", bounds=(0, 100)),
             ContinuousInput(key="x2", bounds=(0, 100)),
             ContinuousInput(key="x3", bounds=(0, 100)),
             DiscreteInput(key="discrete1", values=[0, 1, 5]),
             DiscreteInput(key="discrete2", values=[0, 1]),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
@@ -180,10 +178,10 @@ def test_n_zero_eigvals_constrained():
 
 
 def test_number_of_model_terms():
-    # 5 continous input_features
-    domain = Domain(
-        input_features=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(5)],
-        output_features=[ContinuousOutput(key="y")],
+    # 5 continous inputs
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(5)],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     formula = get_formula_from_string(domain=domain, model_type="linear")
@@ -200,16 +198,16 @@ def test_number_of_model_terms():
     formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
     assert len(formula) == 21
 
-    # 3 continuous & 2 discrete input_features
-    domain = Domain(
-        input_features=[
+    # 3 continuous & 2 discrete inputs
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key="x1", bounds=(0, 100)),
             ContinuousInput(key="x2", bounds=(0, 100)),
             ContinuousInput(key="x3", bounds=(0, 100)),
             DiscreteInput(key="discrete1", values=[0, 1, 5]),
             DiscreteInput(key="discrete2", values=[0, 1]),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     formula = get_formula_from_string(domain=domain, model_type="linear")
@@ -231,13 +229,13 @@ def test_constraints_as_scipy_constraints():
     # test domains from the paper "The construction of D- and I-optimal designs for
     # mixture experiments with linear constraints on the components" by R. Coetzer and
     # L. M. Haines.
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key=f"x{1}", bounds=(0, 1)),
             ContinuousInput(key=f"x{2}", bounds=(0.1, 1)),
             ContinuousInput(key=f"x{3}", bounds=(0, 0.6)),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
@@ -274,11 +272,9 @@ def test_constraints_as_scipy_constraints():
     assert np.allclose(constraints[1].ub, ub)
 
     # domain with nonlinear constraints
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NonlinearEqualityConstraint(
                 expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
@@ -300,14 +296,14 @@ def test_constraints_as_scipy_constraints():
     # TODO NChooseKConstraint requires input lower_bounds to be 0.
     # can we lift this requirment?
 
-    input_features = [ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(4)]
+    inputs = [ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(4)]
 
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
-                features=[i.key for i in input_features],
+                features=[i.key for i in inputs],
                 max_count=2,
                 min_count=0,
                 none_also_valid=True,
@@ -333,11 +329,9 @@ def test_constraints_as_scipy_constraints():
 
 def test_ConstraintWrapper():
     # define domain with all types of constraints
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
@@ -497,21 +491,17 @@ def test_g_efficiency():
         ]
     )
 
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
     )
     assert np.allclose(g_efficiency(X, domain), 0.333, atol=5e-3)
 
     # define domain: sampling not implemented
     # update: now it is implemented
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
@@ -544,11 +534,9 @@ def test_metrics():
         ]
     )
 
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     np.random.seed(1)
@@ -566,11 +554,9 @@ def test_metrics():
 
     # define domain: sampling not implemented
     # update: now it is implemented
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
@@ -598,28 +584,22 @@ def test_metrics():
 
 def test_check_nchoosek_constraints_as_bounds():
     # define domain: possible to formulate as bounds, no NChooseK constraints
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(-1, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-1, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(-np.inf, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-np.inf, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0)
         ],
@@ -627,14 +607,14 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     # n-choose-k constraints when variables can be negative
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key=f"x{1}", bounds=(0, 1)),
             ContinuousInput(key=f"x{2}", bounds=(-1, 1)),
             ContinuousInput(key=f"x{3}", bounds=(-2, 1)),
             ContinuousInput(key=f"x{4}", bounds=(-3, 1)),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
             LinearInequalityConstraint(
@@ -651,11 +631,9 @@ def test_check_nchoosek_constraints_as_bounds():
     check_nchoosek_constraints_as_bounds(domain)
 
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
                 features=["x1", "x2"],
@@ -669,14 +647,14 @@ def test_check_nchoosek_constraints_as_bounds():
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key=f"x{1}", bounds=(-1, -0.1)),
             ContinuousInput(key=f"x{2}", bounds=(-1, -0.1)),
             ContinuousInput(key=f"x{3}", bounds=(-1, -0.1)),
             ContinuousInput(key=f"x{4}", bounds=(-1, -0.1)),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
                 features=["x1", "x2"],
@@ -687,14 +665,13 @@ def test_check_nchoosek_constraints_as_bounds():
         ],
     )
     with pytest.raises(ValueError):
+
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # Not allowed: names parameters of two NChooseK overlap
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
                 features=["x1", "x2"],
@@ -716,21 +693,21 @@ def test_check_nchoosek_constraints_as_bounds():
 
 def test_nchoosek_constraints_as_bounds():
     # define domain: no NChooseK constraints
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(-1, 1),
             )
             for i in range(5)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     bounds = nchoosek_constraints_as_bounds(domain, n_experiments=4)
     assert len(bounds) == 20
     _bounds = [
         (p.lower_bound, p.upper_bound)
-        for p in domain.input_features
+        for p in domain.inputs
         if isinstance(p, ContinuousInput)
     ] * 4
     for i in range(20):
@@ -739,11 +716,11 @@ def test_nchoosek_constraints_as_bounds():
     # define domain: with NChooseK constraints
     # define domain: no NChooseK constraints
     # domain = Domain(
-    #     input_features=[
+    #     inputs=[
     #         ContinuousInput(key=f"x{i+1}", bounds=(-1, 1),)
     #         for i in range(5)
     #     ],
-    #     output_features=[ContinuousOutput(key="y")],
+    #     outputs=[ContinuousOutput(key="y")],
     #     constraints=[opti.NChooseK(["x1", "x2", "x3"], max_active=1)],
     # )
     # np.random.seed(1)

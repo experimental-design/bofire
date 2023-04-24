@@ -12,11 +12,9 @@ from bofire.data_models.surrogates.surrogate import Surrogate
 class BotorchSurrogate(Surrogate):
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
-        input_features = values["input_features"]
-        categorical_keys = input_features.get_keys(CategoricalInput, exact=True)
-        descriptor_keys = input_features.get_keys(
-            CategoricalDescriptorInput, exact=True
-        )
+        inputs = values["inputs"]
+        categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
+        descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)
         for key in categorical_keys:
             if (
                 v.get(key, CategoricalEncodingEnum.ONE_HOT)
@@ -38,7 +36,7 @@ class BotorchSurrogate(Surrogate):
                 )
             elif v.get(key) is None:
                 v[key] = CategoricalEncodingEnum.DESCRIPTOR
-        for key in input_features.get_keys(NumericalInput):
+        for key in inputs.get_keys(NumericalInput):
             if v.get(key) is not None:
                 raise ValueError(
                     "Botorch based models have to use internal transforms to preprocess numerical features."

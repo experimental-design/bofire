@@ -7,14 +7,14 @@ specs = Specs([])
 specs.add_valid(
     Domain,
     lambda: {
-        "input_features": Inputs(
+        "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(key="i1"),
                 features.valid(ContinuousInput).obj(key="i2"),
                 features.valid(ContinuousInput).obj(key="i3"),
             ]
         ),
-        "output_features": Outputs(
+        "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(key="o1"),
                 features.valid(ContinuousOutput).obj(key="o2"),

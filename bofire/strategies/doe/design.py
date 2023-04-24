@@ -75,7 +75,11 @@ def find_local_max_ipopt(
 
     # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
     assert all(
-        [c.min_count == 0 for c in domain.cnstrs if isinstance(c, NChooseKConstraint)]
+        [
+            c.min_count == 0
+            for c in domain.constraints
+            if isinstance(c, NChooseKConstraint)
+        ]
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     # determine number of experiments (only relevant if n_experiments is not provided by the user)
@@ -91,7 +95,7 @@ def find_local_max_ipopt(
         domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values
     else:
-        if len(domain.cnstrs.get(NonlinearConstraint)) == 0:
+        if len(domain.constraints.get(NonlinearConstraint)) == 0:
             sampler = PolytopeSampler(
                 data_model=PolytopeSamplerDataModel(domain=domain)
             )
