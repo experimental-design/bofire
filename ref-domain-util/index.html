@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-mappers/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.6">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.7">
     
     
       
@@ -63,7 +63,7 @@
     
     
     
-    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent="">
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
   
     
     
@@ -124,7 +124,9 @@
       <form class="md-header__option" data-md-component="palette">
         
           
-          <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
           
             <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_3" hidden>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9h-1.9M20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69m-9.15 3.96h2.3L12 9l-1.15 3.65Z"/></svg>
@@ -132,7 +134,9 @@
           
         
           
-          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_2">
           
             <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
@@ -140,7 +144,9 @@
           
         
           
-          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="" data-md-color-accent=""  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_3">
+          
+          
+          <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_3">
           
             <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_2" hidden>
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
@@ -655,6 +661,13 @@
   
     <nav class="md-nav" aria-label="torch_tools">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.torch_tools.get_initial_conditions_generator" class="md-nav__link">
+    get_initial_conditions_generator()
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#bofire.utils.torch_tools.get_linear_constraints" class="md-nav__link">
@@ -2676,6 +2689,140 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
 
 
+<h3 id="bofire.utils.torch_tools.get_initial_conditions_generator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_initial_conditions_generator</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">transform_specs</span><span class="p">,</span> <span class="n">ask_options</span><span class="o">=</span><span class="p">{},</span> <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Takes a strategy object and returns a callable which uses this
+strategy to return a generator callable which can be used in botorch<code>s</code>gen_batch_initial_conditions` to generate samples.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>strategy</code></td>
+        <td><code>Strategy</code></td>
+        <td><p>Strategy that should be used to generate samples.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>transform_specs</code></td>
+        <td><code>Dict</code></td>
+        <td><p>Dictionary indicating how the samples should be
+transformed.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>ask_options</code></td>
+        <td><code>Dict</code></td>
+        <td><p>Dictionary of keyword arguments that are
+passed to the <code>ask</code> method of the strategy. Defaults to {}.</p></td>
+        <td><code>{}</code></td>
+      </tr>
+      <tr>
+        <td><code>sequential</code></td>
+        <td><code>bool</code></td>
+        <td><p>If True, samples for every q-batch are
+generate indepenent from each other. If False, the <code>n x q</code> samples
+are generated at once.</p></td>
+        <td><code>True</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Callable[[int, int, int], Tensor]</code></td>
+      <td><p>Callable that can be passed to
+    <code>batch_initial_conditions</code>.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_initial_conditions_generator</span><span class="p">(</span>
+    <span class="n">strategy</span><span class="p">:</span> <span class="n">Strategy</span><span class="p">,</span>
+    <span class="n">transform_specs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+    <span class="n">ask_options</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Takes a strategy object and returns a callable which uses this</span>
+<span class="sd">    strategy to return a generator callable which can be used in botorch`s</span>
+<span class="sd">    `gen_batch_initial_conditions` to generate samples.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        strategy (Strategy): Strategy that should be used to generate samples.</span>
+<span class="sd">        transform_specs (Dict): Dictionary indicating how the samples should be</span>
+<span class="sd">            transformed.</span>
+<span class="sd">        ask_options (Dict, optional): Dictionary of keyword arguments that are</span>
+<span class="sd">            passed to the `ask` method of the strategy. Defaults to {}.</span>
+<span class="sd">        sequential (bool, optional): If True, samples for every q-batch are</span>
+<span class="sd">            generate indepenent from each other. If False, the `n x q` samples</span>
+<span class="sd">            are generated at once.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Callable[[int, int, int], Tensor]: Callable that can be passed to</span>
+<span class="sd">            `batch_initial_conditions`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">sequential</span><span class="p">:</span>
+            <span class="n">initial_conditions</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">ask_options</span><span class="p">)</span>
+                <span class="c1"># transform it</span>
+                <span class="n">transformed_candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+                    <span class="n">candidates</span><span class="p">,</span> <span class="n">transform_specs</span>
+                <span class="p">)</span>
+                <span class="c1"># transform to tensor</span>
+                <span class="n">initial_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transformed_candidates</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">ask_options</span><span class="p">)</span>
+            <span class="c1"># transform it</span>
+            <span class="n">transformed_candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+                <span class="n">candidates</span><span class="p">,</span> <span class="n">transform_specs</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transformed_candidates</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">transformed_candidates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">generator</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h3 id="bofire.utils.torch_tools.get_linear_constraints" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_linear_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="n">constraint</span><span class="p">,</span> <span class="n">unit_scaled</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
@@ -2952,6 +3099,16 @@ at zero.</p>
     <span class="k">def</span> <span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">ell</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">max_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="n">num_features</span> <span class="o">-</span> <span class="n">max_count</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">min_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">num_features</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_count</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="n">num_features</span> <span class="o">-</span> <span class="n">min_count</span>
+        <span class="p">)</span>
+
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># ignore none also valid for the start</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
@@ -2962,13 +3119,15 @@ at zero.</p>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">max_count</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-                <span class="o">-</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">)</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">max_count</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="n">max_constraint</span><span class="p">(</span>
+                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span> <span class="n">max_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_count</span>
+                <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">min_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="n">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="n">x</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">indices</span><span class="p">])</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-                <span class="o">+</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">)</span> <span class="o">-</span> <span class="n">c</span><span class="o">.</span><span class="n">min_count</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+                <span class="n">min_constraint</span><span class="p">(</span>
+                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span> <span class="n">min_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">min_count</span>
+                <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>
