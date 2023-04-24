@@ -1193,7 +1193,7 @@
 
 
 <h3 id="bofire.utils.doe.get_confounding_matrix" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">input_features</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="p">[],</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></code>
+<code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="p">[],</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></code>
 
 
 </h3>
@@ -1215,7 +1215,7 @@
   </thead>
   <tbody>
       <tr>
-        <td><code>input_features</code></td>
+        <td><code>inputs</code></td>
         <td><code>Inputs</code></td>
         <td><p>Input features.</p></td>
         <td><em>required</em></td>
@@ -1260,7 +1260,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_confounding_matrix</span><span class="p">(</span>
-    <span class="n">input_features</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">,</span>
     <span class="n">design</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">powers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
     <span class="n">interactions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
@@ -1270,7 +1270,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 <span class="sd">    Only takes continuous features into account.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        input_features (Inputs): Input features.</span>
+<span class="sd">        inputs (Inputs): Input features.</span>
 <span class="sd">        design (pd.DataFrame): Design matrix.</span>
 <span class="sd">        powers (List[int], optional): List of powers of the individual factors/features that should be considered.</span>
 <span class="sd">            Integers has to be larger than 1. Defaults to [].</span>
@@ -1280,10 +1280,10 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        _type_: _description_</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_features</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Categorical input features will be ignored.&quot;</span><span class="p">)</span>
 
-    <span class="n">keys</span> <span class="o">=</span> <span class="n">input_features</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
     <span class="n">scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">(</span><span class="n">feature_range</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
     <span class="n">scaled_design</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
         <span class="n">data</span><span class="o">=</span><span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="n">keys</span><span class="p">]),</span>
@@ -1919,12 +1919,12 @@ are the corresponding coefficients.</p></td>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there any linear equality constraints?</span>
-    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
+    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">linear_equalities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there no NChooseKConstraint constraints?</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="n">NChooseKConstraint</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">([</span><span class="n">NChooseKConstraint</span><span class="p">]))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
     <span class="c1"># are there continuous inputs</span>
@@ -2059,8 +2059,8 @@ are the corresponding coefficients.</p></td>
         <span class="k">return</span> <span class="n">domain</span><span class="p">,</span> <span class="n">AffineTransform</span><span class="p">([])</span>
 
     <span class="c1"># find linear equality constraints</span>
-    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
-    <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
+    <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
+    <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
         <span class="n">Constraint</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">]</span>
     <span class="p">)</span>
 
@@ -2108,9 +2108,9 @@ are the corresponding coefficients.</p></td>
 
     <span class="c1"># build up reduced domain</span>
     <span class="n">_domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">construct</span><span class="p">(</span>
-        <span class="c1"># _fields_set = {&quot;input_features&quot;, &quot;output_features&quot;, &quot;constraints&quot;}</span>
-        <span class="n">input_features</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">other_inputs</span><span class="p">),</span>
-        <span class="n">output_features</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">output_features</span><span class="p">),</span>
+        <span class="c1"># _fields_set = {&quot;inputs&quot;, &quot;outputs&quot;, &quot;constraints&quot;}</span>
+        <span class="n">inputs</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">other_inputs</span><span class="p">),</span>
+        <span class="n">outputs</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="p">),</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">other_constraints</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="n">new_inputs</span> <span class="o">=</span> <span class="p">[</span>
@@ -2118,7 +2118,7 @@ are the corresponding coefficients.</p></td>
     <span class="p">]</span>
     <span class="n">all_inputs</span> <span class="o">=</span> <span class="n">_domain</span><span class="o">.</span><span class="n">inputs</span> <span class="o">+</span> <span class="n">new_inputs</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">all_inputs</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
-    <span class="n">_domain</span><span class="o">.</span><span class="n">input_features</span> <span class="o">=</span> <span class="n">all_inputs</span>
+    <span class="n">_domain</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">all_inputs</span>
 
     <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pivots</span><span class="p">:</span>
@@ -2163,7 +2163,7 @@ are the corresponding coefficients.</p></td>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">_domain</span><span class="o">.</span><span class="n">_set_constraints_unvalidated</span><span class="p">(</span><span class="n">_domain</span><span class="o">.</span><span class="n">cnstrs</span> <span class="o">+</span> <span class="n">constraints</span><span class="p">)</span>
+        <span class="n">_domain</span><span class="o">.</span><span class="n">_set_constraints_unvalidated</span><span class="p">(</span><span class="n">_domain</span><span class="o">.</span><span class="n">constraints</span> <span class="o">+</span> <span class="n">constraints</span><span class="p">)</span>
 
     <span class="c1"># assemble equalities</span>
     <span class="n">_equalities</span> <span class="o">=</span> <span class="p">[]</span>
@@ -2293,7 +2293,7 @@ are the corresponding coefficients.</p></td>
         <span class="n">coeffs_dict</span><span class="p">[</span><span class="n">e</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="n">coeffs</span>
 
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="c1"># Nonlinear constraints not supported</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -2619,30 +2619,31 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 <span class="sd">        Domain: A new domain containing only parts of the original domain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_keys</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;At least two features have to be provided.&quot;</span>
-    <span class="n">output_features</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="n">input_features</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">feature_keys</span><span class="p">:</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">get_feature</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not present in domain.&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">Input</span><span class="p">):</span>
-            <span class="n">input_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">output_features</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one output feature has to be provided.&quot;</span>
-    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one input feature has to be provided.&quot;</span>
-    <span class="n">input_features</span> <span class="o">=</span> <span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">input_features</span><span class="p">)</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one output feature has to be provided.&quot;</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;At least one input feature has to be provided.&quot;</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">inputs</span><span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">outputs</span><span class="p">)</span>
     <span class="c1"># loop over constraints and make sure that all features used in constraints are in the input_feature_keys</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">input_features</span><span class="o">.</span><span class="n">get_keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Removed input feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is used in a constraint.&quot;</span>
                 <span class="p">)</span>
     <span class="n">subdomain</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
-    <span class="n">subdomain</span><span class="o">.</span><span class="n">input_features</span> <span class="o">=</span> <span class="n">input_features</span>
-    <span class="n">subdomain</span><span class="o">.</span><span class="n">output_features</span> <span class="o">=</span> <span class="n">output_features</span>
+    <span class="n">subdomain</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span>
+    <span class="n">subdomain</span><span class="o">.</span><span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span>
     <span class="k">return</span> <span class="n">subdomain</span>
 </code></pre></div>
         </details>
@@ -3000,7 +3001,7 @@ are generated at once.</p></td>
 <span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">constraint</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">constraint</span><span class="p">):</span>
         <span class="n">indices</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">coefficients</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">lower</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3052,7 +3053,7 @@ are generated at once.</p></td>
 
 
 <h3 id="bofire.utils.torch_tools.get_multiobjective_objective" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_multiobjective_objective</span><span class="p">(</span><span class="n">output_features</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_multiobjective_objective</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></code>
 
 
 </h3>
@@ -3073,7 +3074,7 @@ are generated at once.</p></td>
   </thead>
   <tbody>
       <tr>
-        <td><code>output_features</code></td>
+        <td><code>outputs</code></td>
         <td><code>Outputs</code></td>
         <td><p><em>description</em></p></td>
         <td><em>required</em></td>
@@ -3098,19 +3099,19 @@ are generated at once.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_multiobjective_objective</span><span class="p">(</span>
-    <span class="n">output_features</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        output_features (Outputs): _description_</span>
+<span class="sd">        outputs (Outputs): _description_</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Callable[[Tensor], Tensor]: _description_</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">callables</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">get_objective_callable</span><span class="p">(</span><span class="n">idx</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">output_features</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
         <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
             <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
@@ -3214,7 +3215,7 @@ at zero.</p>
 
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="c1"># ignore none also valid for the start</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">cnstrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
         <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
             <span class="p">[</span><span class="n">domain</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">],</span>
@@ -3247,7 +3248,7 @@ at zero.</p>
 
 
 <h3 id="bofire.utils.torch_tools.get_output_constraints" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_output_constraints</span><span class="p">(</span><span class="n">output_features</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_output_constraints</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></code>
 
 
 </h3>
@@ -3269,7 +3270,7 @@ callables and list of etas for use in botorch.</p>
   </thead>
   <tbody>
       <tr>
-        <td><code>output_features</code></td>
+        <td><code>outputs</code></td>
         <td><code>Outputs</code></td>
         <td><p>Output feature object that should
 be processed.</p></td>
@@ -3296,13 +3297,13 @@ be processed.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_constraints</span><span class="p">(</span>
-    <span class="n">output_features</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to translate output constraint objectives into a list of</span>
 <span class="sd">    callables and list of etas for use in botorch.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        output_features (Outputs): Output feature object that should</span>
+<span class="sd">        outputs (Outputs): Output feature object that should</span>
 <span class="sd">            be processed.</span>
 
 <span class="sd">    Returns:</span>
@@ -3311,7 +3312,7 @@ be processed.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">etas</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">output_features</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
             <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
                 <span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span>  <span class="c1"># type: ignore</span>
