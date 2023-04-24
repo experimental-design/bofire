@@ -543,13 +543,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.domain.domain.Domain.validate_lower_bounds_in_nchoosek_constraints" class="md-nav__link">
-    validate_lower_bounds_in_nchoosek_constraints()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.domain.domain.Domain.validate_unique_feature_keys" class="md-nav__link">
     validate_unique_feature_keys()
   </a>
@@ -863,35 +856,6 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                     <span class="k">assert</span> <span class="p">(</span>
                         <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_input_features_dict</span>
                     <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-        <span class="k">return</span> <span class="n">v</span>
-
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_lower_bounds_in_nchoosek_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate the lower bound as well if the chosen number of allowed features is continuous.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            v (List[Constraint]): List of all constraints defined for the domain</span>
-<span class="sd">            values (List[Input]): _description_</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[Constraint]: List of constraints defined for the domain</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># gather continuous input_features in dictionary</span>
-        <span class="n">continuous_input_features_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
-                <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
-
-        <span class="c1"># check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
-                    <span class="k">assert</span> <span class="p">(</span>
-                        <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_input_features_dict</span>
-                    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-                    <span class="k">assert</span> <span class="p">(</span>
-                        <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">==</span> <span class="mi">0</span>
-                    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;lower bound of </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be 0 for NChooseK constraint.&quot;</span>
         <span class="k">return</span> <span class="n">v</span>
 
     <span class="k">def</span> <span class="nf">get_feature_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -2900,101 +2864,6 @@ is larger than tol. Defaults to 1e-6.</p></td>
                 <span class="k">assert</span> <span class="p">(</span>
                     <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_input_features_dict</span>
                 <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-    <span class="k">return</span> <span class="n">v</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.data_models.domain.domain.Domain.validate_lower_bounds_in_nchoosek_constraints" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_lower_bounds_in_nchoosek_constraints</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Validate the lower bound as well if the chosen number of allowed features is continuous.</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>v</code></td>
-        <td><code>List[Constraint]</code></td>
-        <td><p>List of all constraints defined for the domain</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>values</code></td>
-        <td><code>List[Input]</code></td>
-        <td><p><em>description</em></p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[Constraint]</code></td>
-      <td><p>List of constraints defined for the domain</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_lower_bounds_in_nchoosek_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate the lower bound as well if the chosen number of allowed features is continuous.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        v (List[Constraint]): List of all constraints defined for the domain</span>
-<span class="sd">        values (List[Input]): _description_</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[Constraint]: List of constraints defined for the domain</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># gather continuous input_features in dictionary</span>
-    <span class="n">continuous_input_features_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;input_features&quot;</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
-            <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
-
-    <span class="c1"># check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="p">(</span>
-                    <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_input_features_dict</span>
-                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-                <span class="k">assert</span> <span class="p">(</span>
-                    <span class="n">continuous_input_features_dict</span><span class="p">[</span><span class="n">f</span><span class="p">]</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">==</span> <span class="mi">0</span>
-                <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;lower bound of </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be 0 for NChooseK constraint.&quot;</span>
     <span class="k">return</span> <span class="n">v</span>
 </code></pre></div>
         </details>
