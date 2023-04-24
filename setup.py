@@ -47,10 +47,24 @@ setup(
     python_requires=">=3.9",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=install_requires,
+    install_requires=[
+        "pydantic",
+        "pandas",
+        "numpy",
+        "scipy>=1.7",
+        "matplotlib",
+        "scikit-learn",
+    ],
     extras_require={
-        "testing": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov"],
+        "optimization": [
+            "torch>=1.12",
+            "botorch @ git+https://github.com/pytorch/botorch.git#egg=botorch",
+            "multiprocess",
+            "plotly",
+            "formulaic>=0.5.2",
+        ],
         "cheminfo": ["rdkit"],
+        "tests": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov"],
         "docs": [
             "mkdocs",
             "mkdocs-material",

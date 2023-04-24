@@ -33,6 +33,6 @@ jobs:
           python-version: 3.9
       - name: pyright
         run: |
-          pip install ".[testing, cheminfo]"
+          pip install ".[optimization, cheminfo]"
           pyright
           
