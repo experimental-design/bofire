@@ -102,7 +102,9 @@ print(X)
 
 The search space can be further defined by constraints on the input features. BoFire supports linear equality and inequality constraints, as well as non-linear equality and inequality constraints.
 
-**Linear constraints** (`LinearEqualityConstraint` and `LinearInequalityConstraint`) are expressions of the form $\sum_i a_i x_i = b$ or $\leq b$ for equality and inequality constraints respectively.
+### Linear constraints
+
+`LinearEqualityConstraint` and `LinearInequalityConstraint` are expressions of the form $\sum_i a_i x_i = b$ or $\leq b$ for equality and inequality constraints respectively.
 They take a list of names of the input features they are operating on, a list of left-hand-side coefficients $a_i$ and a right-hand-side constant $b$.
 
 <!-- TODO: Check if LIC also allows x > y -->
@@ -118,7 +120,9 @@ constr2 = LinearInequalityConstraint(features=["x1", "x3"], coefficients=[1, 2],
 ```
 Because of the product $a_i x_i$, linear constraints cannot operate on categorical parameters.
 
-**Nonlinear constraints** (`NonlinearEqualityConstraint` and `NonlinearInequalityConstraint`) take any expression that can be evaluated by [pandas.eval](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.eval.html), including mathematical operators such as `sin`, `exp`, `log10` or exponentiation.
+### Nonlinear constraints
+
+`NonlinearEqualityConstraint` and `NonlinearInequalityConstraint` take any expression that can be evaluated by [pandas.eval](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.eval.html), including mathematical operators such as `sin`, `exp`, `log10` or exponentiation.
 
 ```python
 from bofire.domain.constraints import NonlinearEqualityConstraint, NonlinearInequalityConstraint
@@ -135,7 +139,9 @@ constr4 = NonlinearInequalityConstraint(expression="(x1 - 0.5) * (x5 =='A')")
 
 <!-- TODO: Change NchooseK once (0, min, max) available -->
 
-Finally, there is a **combinatorial constraint** (`NChooseKConstraint`) to express that we only want to have $k$ out of the $n$ parameters to take positive values.
+### Combinatorial constraint
+
+Use `NChooseKConstraint` to express that we only want to have $k$ out of the $n$ parameters to take positive values.
 Think of a mixture, where we have long list of possible ingredients, but want to limit number of ingredients in any given recipe.
 
 ```python
@@ -173,13 +179,17 @@ y3= ContinuousOutput(key="y3", objective=output_constraint)
 
 output_features = OutputFeatures(features=[y1, y2, y3])
 ```
+
 The shape of the output features can be plotted:
+
 ```python
 _ = y3.plot(lower=0, upper=1)
 ```
 
 ## The domain
-Finally, the domain can be instanciated:
+
+Finally, the domain can be instantiated:
+
 ```python
 from bofire.domain.domain import Domain
 
@@ -189,7 +199,9 @@ domain = Domain(
     constraints=constraints
     )
 ```
-A summary of the defined features and constraints can be obtained by the methods get_feature_reps_df() and get_constraint_reps_df():
+
+A summary of the defined features and constraints can be obtained by the methods `get_feature_reps_df()` and `get_constraint_reps_df()`:
+
 ```python
 domain.get_feature_reps_df()
 domain.get_constraint_reps_df()
@@ -197,11 +209,12 @@ domain.get_constraint_reps_df()
 
 
 ## Set up a strategy
+
 To solve the optimization problem, we further need a solving strategy. BoFire supports strategies without a prediction model such as a random strategy and predictive strategies which are based on a prediction model.
 
 All strategies contain an ask method returning a defined number of candidate experiments. 
 
-**Random strategy**
+### Random strategy
 
 ```python
 from bofire.strategies.random import RandomStrategy
@@ -215,7 +228,7 @@ random_candidates
 1	0.341934	0.525235	0.132830	2.0	c3	A
 ```
 
-**Single objective Bayesian Optimization strategy**
+### Single objective Bayesian Optimization strategy
 
 Since a predictive strategy includes a prediction model, we need to generate some historical data, which we can afterwards pass as training data to the strategy via the tell method.
 
