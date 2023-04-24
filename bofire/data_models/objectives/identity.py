@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -19,8 +19,15 @@ class IdentityObjective(Objective):
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
     w: TWeight = 1
-    lower_bound: float = 0
-    upper_bound: float = 1
+    bounds: Tuple[float, float] = (0, 1)
+
+    @property
+    def lower_bound(self) -> float:
+        return self.bounds[0]
+
+    @property
+    def upper_bound(self) -> float:
+        return self.bounds[1]
 
     @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
@@ -35,7 +42,7 @@ class IdentityObjective(Objective):
         Returns:
             Dict: The attributes of the class
         """
-        if values["lower_bound"] > values["upper_bound"]:
+        if values["bounds"][0] > values["bounds"][1]:
             raise ValueError(
                 f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
             )
