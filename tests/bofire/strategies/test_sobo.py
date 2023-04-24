@@ -164,7 +164,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
 
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
-    _, names = strategy.domain.input_features._get_transform_info(
+    _, names = strategy.domain.inputs._get_transform_info(
         specs=strategy.surrogate_specs.input_preprocessing_specs
     )
 

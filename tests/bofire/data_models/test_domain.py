@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
+from pytest import fixture
 
 from bofire.data_models.api import Outputs
 from bofire.data_models.base import BaseModel
@@ -59,6 +60,44 @@ of1 = ContinuousOutput(key="f1", objective=obj)
 of1_ = ContinuousOutput(key="f1", objective=obj)
 of2 = ContinuousOutput(key="f2", objective=obj)
 of3 = ContinuousOutput(key="of3", objective=obj)
+
+
+@fixture
+def input_list():
+    return [
+        ContinuousInput(key="ci1", bounds=(0, 1)),
+        ContinuousInput(key="ci2", bounds=(0, 1)),
+    ]
+
+
+@fixture
+def output_list():
+    objective = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
+    return [
+        ContinuousOutput(key="co1", objective=objective),
+        ContinuousOutput(key="co2", objective=objective),
+    ]
+
+
+@fixture
+def constraint_list(input_list):
+    return [
+        LinearEqualityConstraint(
+            features=[inp.key for inp in input_list],
+            coefficients=[1.0] * len(input_list),
+            rhs=11,
+        )
+    ]
+
+
+def test_from_lists(input_list, output_list, constraint_list):
+    assert Domain.from_lists(
+        inputs=input_list, outputs=output_list, constraints=constraint_list
+    ) == Domain(
+        inputs=Inputs(features=input_list),
+        outputs=Outputs(features=output_list),
+        constraints=Constraints(constraints=constraint_list),
+    )
 
 
 @pytest.mark.parametrize(

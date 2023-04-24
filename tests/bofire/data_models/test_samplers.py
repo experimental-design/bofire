@@ -32,7 +32,7 @@ constraints = Constraints(
 )
 def test_rejection_sampler(features, constraints, sampling_method, num_samples):
     domain = Domain(
-        input_features=features,
+        inputs=features,
         constraints=constraints,
     )
     data_model = data_models.RejectionSampler(
@@ -44,7 +44,7 @@ def test_rejection_sampler(features, constraints, sampling_method, num_samples):
 
 def test_rejection_sampler_not_converged():
     domain = Domain(
-        input_features=input_features,
+        inputs=input_features,
         constraints=constraints,
     )
     data_model = data_models.RejectionSampler(
@@ -104,24 +104,26 @@ c6 = NChooseKConstraint(
 )
 
 domains = [
-    Domain(input_features=[if1, if2, if3], constraints=[c2]),
-    Domain(input_features=[if1, if2, if3, if4], constraints=[c1, c2]),
-    Domain(input_features=[if1, if2, if3, if4], constraints=[c1, c2, c3]),
-    Domain(input_features=[if1, if2, if3, if5], constraints=[c2]),
-    Domain(input_features=[if1, if2, if3, if4, if5], constraints=[c1, c2]),
-    Domain(input_features=[if1, if2, if3, if4, if5], constraints=[c1, c2, c3]),
-    Domain(input_features=[if1, if2, if3, if6], constraints=[c2]),
-    Domain(input_features=[if1, if2, if3, if4, if6], constraints=[c1, c2]),
-    Domain(input_features=[if1, if2, if3, if4, if6], constraints=[c1, c2, c3]),
-    Domain(input_features=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3]),
-    Domain(input_features=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3, c4]),
-    Domain(input_features=[if1, if2, if3, if4], constraints=[c5]),
-    Domain(
-        input_features=[if1, if2, if3, if4, if6, If7],
+    Domain.from_lists(inputs=[if1, if2, if3], constraints=[c2]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4], constraints=[c1, c2]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4], constraints=[c1, c2, c3]),
+    Domain.from_lists(inputs=[if1, if2, if3, if5], constraints=[c2]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4, if5], constraints=[c1, c2]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4, if5], constraints=[c1, c2, c3]),
+    Domain.from_lists(inputs=[if1, if2, if3, if6], constraints=[c2]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4, if6], constraints=[c1, c2]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4, if6], constraints=[c1, c2, c3]),
+    Domain.from_lists(inputs=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3]),
+    Domain.from_lists(
+        inputs=[if1, if2, if3, if4, if6, If7], constraints=[c1, c2, c3, c4]
+    ),
+    Domain.from_lists(inputs=[if1, if2, if3, if4], constraints=[c5]),
+    Domain.from_lists(
+        inputs=[if1, if2, if3, if4, if6, If7],
         constraints=[c6, c2],
     ),
-    Domain(
-        input_features=[if1, if2, if3, if4, if6, If7],
+    Domain.from_lists(
+        inputs=[if1, if2, if3, if4, if6, If7],
         constraints=[c6, c2, c1],
     ),
 ]
@@ -144,7 +146,7 @@ def test_PolytopeSampler(domain, candidate_count):
 
 
 def test_PolytopeSampler_all_fixed():
-    domain = Domain(input_features=[if1, if4], constraints=[c5])
+    domain = Domain.from_lists(inputs=[if1, if4], constraints=[c5])
     data_model = data_models.PolytopeSampler(domain=domain)
     sampler = strategies.PolytopeSampler(data_model=data_model)
     with pytest.warns(UserWarning):
@@ -152,8 +154,8 @@ def test_PolytopeSampler_all_fixed():
 
 
 def test_PolytopeSampler_nchoosek():
-    domain = Domain(
-        input_features=[if1, if2, if3, if4, if6, If7],
+    domain = Domain.from_lists(
+        inputs=[if1, if2, if3, if4, if6, If7],
         constraints=[c6, c2],
     )
     data_model = data_models.PolytopeSampler(domain=domain)

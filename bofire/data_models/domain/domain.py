@@ -5,6 +5,7 @@ from typing import (
     Dict,
     List,
     Literal,
+    Optional,
     Sequence,
     Tuple,
     Type,
@@ -64,6 +65,22 @@ class Domain(BaseModel):
         outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
     """
+
+    @classmethod
+    def from_lists(
+        cls,
+        inputs: Optional[Sequence[AnyInput]] = None,
+        outputs: Optional[Sequence[AnyOutput]] = None,
+        constraints: Optional[Sequence[AnyConstraint]] = None,
+    ):
+        inputs = [] if inputs is None else inputs
+        outputs = [] if outputs is None else outputs
+        constraints = [] if constraints is None else constraints
+        return cls(
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=outputs),
+            constraints=Constraints(constraints=constraints),
+        )
 
     @validator("inputs", always=True, pre=True)
     def validate_input_features_list(cls, v, values):

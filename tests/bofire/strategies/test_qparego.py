@@ -23,15 +23,15 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
         surrogates=[
             surrogate_data_models.SingleTaskGPSurrogate(
-                input_features=domains[6].input_features,
+                input_features=domains[6].inputs,
                 output_features=Outputs(
-                    features=[domains[6].output_features.get_by_key("of1")]
+                    features=[domains[6].outputs.get_by_key("of1")]
                 ),
             ),
             surrogate_data_models.SingleTaskGPSurrogate(
-                input_features=domains[6].input_features,
+                input_features=domains[6].inputs,
                 output_features=Outputs(
-                    features=[domains[6].output_features.get_by_key("of2")]
+                    features=[domains[6].outputs.get_by_key("of2")]
                 ),
             ),
         ]
@@ -63,16 +63,16 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
             "surrogate_specs": surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
-                        input_features=domains[2].input_features,
+                        input_features=domains[2].inputs,
                         output_features=Outputs(
-                            features=[domains[2].output_features.get_by_key("of1")]
+                            features=[domains[2].outputs.get_by_key("of1")]
                         ),
                         constraints=[],
                     ),
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
-                        input_features=domains[2].input_features,
+                        input_features=domains[2].inputs,
                         output_features=Outputs(
-                            features=[domains[2].output_features.get_by_key("of2")]
+                            features=[domains[2].outputs.get_by_key("of2")]
                         ),
                         constraints=[],
                     ),
@@ -195,7 +195,7 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
 
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
-    _, names = strategy.domain.input_features._get_transform_info(
+    _, names = strategy.domain.inputs._get_transform_info(
         specs=strategy.surrogate_specs.input_preprocessing_specs
     )
 

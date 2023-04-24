@@ -45,12 +45,12 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"}
                             surrogate_data_models.SingleTaskGPSurrogate(
                                 input_features=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
-                                ].input_features,
+                                ].inputs,
                                 output_features=Outputs(
                                     features=[
                                         VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                             "domain"
-                                        ].output_features.get_by_key("of1")
+                                        ].outputs.get_by_key("of1")
                                     ]
                                 ),
                             ),
@@ -85,7 +85,7 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
                             features=[
                                 VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
-                                ].output_features.get_by_key("of1")
+                                ].outputs.get_by_key("of1")
                             ]
                         ),
                     ),
@@ -101,7 +101,7 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
                     surrogate_data_models.SingleTaskGPSurrogate(
                         input_features=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                             "domain"
-                        ].input_features,
+                        ].inputs,
                         output_features=Outputs(features=[of1]),
                     ),
                 ]
