@@ -56,8 +56,8 @@ class DTLZ2(Benchmark):
                 ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
             )
         domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=output_features),
+            inputs=Inputs(features=input_features),
+            outputs=Outputs(features=output_features),
         )
         self.ref_point = {
             feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
@@ -205,8 +205,8 @@ class SnarBenchmark(Benchmark):
         ]
         self.ref_point = {"e_factor": 10.7, "sty": 2957.0}
         self._domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=output_features),
+            inputs=Inputs(features=input_features),
+            outputs=Outputs(features=output_features),
         )
 
     @property
@@ -343,7 +343,7 @@ class ZDT1(Benchmark):
             for i in range(2)
         ]
         outputs = Outputs(features=output_features)
-        self._domain = Domain(input_features=inputs, output_features=outputs)
+        self._domain = Domain(inputs=inputs, outputs=outputs)
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
@@ -466,8 +466,8 @@ class CrossCoupling(Benchmark):
         self.ref_point = {"yield": 0.0, "cost": 1.0}
 
         self._domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=output_features),
+            inputs=Inputs(features=input_features),
+            outputs=Outputs(features=output_features),
         )
 
         data = pd.DataFrame.from_dict(json.loads(ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS))

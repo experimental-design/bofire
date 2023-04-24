@@ -9,7 +9,6 @@ from typing import (
     Tuple,
     Type,
     Union,
-    cast,
     get_args,
     get_origin,
 )
@@ -55,16 +54,10 @@ class Domain(BaseModel):
     type: Literal["Domain"] = "Domain"
     # The types describe what we expect to be passed as arguments.
     # They will be converted to Inputs and Outputs, respectively.
-    input_features: Union[Sequence[AnyInput], Inputs] = Field(
-        default_factory=lambda: Inputs()
-    )
-    output_features: Union[Sequence[AnyOutput], Outputs] = Field(
-        default_factory=lambda: Outputs()
-    )
+    inputs: Inputs = Field(default_factory=lambda: Inputs())
+    outputs: Outputs = Field(default_factory=lambda: Outputs())
 
-    constraints: Union[Sequence[AnyConstraint], Constraints] = Field(
-        default_factory=lambda: Constraints()
-    )
+    constraints: Constraints = Field(default_factory=lambda: Constraints())
 
     # experiments: Optional[ValidatedDataFrame] = None
     # candidates: Optional[ValidatedDataFrame] = None
@@ -72,26 +65,12 @@ class Domain(BaseModel):
     """Representation of the optimization problem/domain
 
     Attributes:
-        input_features (List[Input], optional): List of input features. Defaults to [].
-        output_features (List[Output], optional): List of output features. Defaults to [].
+        inputs (List[Input], optional): List of input features. Defaults to [].
+        outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
     """
 
-    @property
-    def outputs(self) -> Outputs:
-        """Returns output features as Outputs"""
-        return cast(Outputs, self.output_features)
-
-    @property
-    def inputs(self) -> Inputs:
-        """Returns input features as Inputs"""
-        return cast(Inputs, self.input_features)
-
-    @property
-    def cnstrs(self) -> Constraints:
-        return cast(Constraints, self.constraints)
-
-    @validator("input_features", always=True, pre=True)
+    @validator("inputs", always=True, pre=True)
     def validate_input_features_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
@@ -101,7 +80,7 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("output_features", always=True, pre=True)
+    @validator("outputs", always=True, pre=True)
     def validate_output_features_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
@@ -119,7 +98,7 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("output_features", always=True)
+    @validator("outputs", always=True)
     def validate_unique_feature_keys(cls, v: Outputs, values) -> Outputs:
         """Validates if provided input and output feature keys are unique
 
@@ -133,9 +112,9 @@ class Domain(BaseModel):
         Returns:
             Outputs: Keeps output features as given.
         """
-        if "input_features" not in values:
+        if "inputs" not in values:
             return v
-        features = v + values["input_features"]
+        features = v + values["inputs"]
         keys = [f.key for f in features]
         if len(set(keys)) != len(keys):
             raise ValueError("feature keys are not unique")
@@ -155,9 +134,9 @@ class Domain(BaseModel):
         Returns:
             List[Constraint]: List of constraints defined for the domain
         """
-        if "input_features" not in values:
+        if "inputs" not in values:
             return v
-        keys = [f.key for f in values["input_features"]]
+        keys = [f.key for f in values["inputs"]]
         for c in v:
             if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
                 for f in c.features:
@@ -180,12 +159,12 @@ class Domain(BaseModel):
         Returns:
            List[Constraint]: List of constraints defined for the domain
         """
-        if "input_features" not in values:
+        if "inputs" not in values:
             return v
 
-        # gather continuous input_features in dictionary
+        # gather continuous inputs in dictionary
         continuous_input_features_dict = {}
-        for f in values["input_features"]:
+        for f in values["inputs"]:
             if type(f) is ContinuousInput:
                 continuous_input_features_dict[f.key] = f
 
@@ -209,9 +188,9 @@ class Domain(BaseModel):
         Returns:
             List[Constraint]: List of constraints defined for the domain
         """
-        # gather continuous input_features in dictionary
+        # gather continuous inputs in dictionary
         continuous_input_features_dict = {}
-        for f in values["input_features"]:
+        for f in values["inputs"]:
             if type(f) is ContinuousInput:
                 continuous_input_features_dict[f.key] = f
 
@@ -276,8 +255,8 @@ class Domain(BaseModel):
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
         """
-        assert isinstance(self.input_features, Inputs)
-        features = self.input_features + self.output_features
+        assert isinstance(self.inputs, Inputs)
+        features = self.inputs + self.outputs
         return features.get(includes, excludes, exact)
 
     def get_feature_keys(
@@ -314,8 +293,8 @@ class Domain(BaseModel):
         Returns:
             Feature: The feature with the passed key
         """
-        assert isinstance(self.input_features, Inputs)
-        return {f.key: f for f in self.input_features + self.output_features}[key]
+        assert isinstance(self.inputs, Inputs)
+        return {f.key: f for f in self.inputs + self.outputs}[key]
 
     # TODO: tidy this up
     def get_nchoosek_combinations(self, exhaustive: bool = False):  # noqa: C901
@@ -329,14 +308,14 @@ class Domain(BaseModel):
                 unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
 
-        if len(self.cnstrs.get(NChooseKConstraint)) == 0:
+        if len(self.constraints.get(NChooseKConstraint)) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
 
         # loops through each NChooseK constraint
-        for con in self.cnstrs.get(NChooseKConstraint):
+        for con in self.constraints.get(NChooseKConstraint):
             assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
@@ -384,7 +363,7 @@ class Domain(BaseModel):
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.cnstrs.get(NChooseKConstraint):
+            for con in self.constraints.get(NChooseKConstraint):
                 assert isinstance(con, NChooseKConstraint)
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
@@ -403,7 +382,7 @@ class Domain(BaseModel):
 
         # features unused
         features_in_cc = []
-        for con in self.cnstrs.get(NChooseKConstraint):
+        for con in self.constraints.get(NChooseKConstraint):
             assert isinstance(con, NChooseKConstraint)
             features_in_cc.extend(con.features)
         features_in_cc = list(set(features_in_cc))
@@ -618,24 +597,24 @@ class Domain(BaseModel):
             pd.DataFrame: dataframe with suggested experiments (candidates)
         """
         # check that each input feature has a col and is valid in itself
-        assert isinstance(self.input_features, Inputs)
-        self.input_features.validate_inputs(candidates)
+        assert isinstance(self.inputs, Inputs)
+        self.inputs.validate_inputs(candidates)
         # check if all constraints are fulfilled
-        if not self.cnstrs.is_fulfilled(candidates, tol=tol).all():
+        if not self.constraints.is_fulfilled(candidates, tol=tol).all():
             raise ValueError(f"Constraints not fulfilled: {candidates}")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
-            assert isinstance(self.output_features, Outputs)
+            assert isinstance(self.outputs, Outputs)
 
             cols = list(
                 itertools.chain.from_iterable(
                     [
                         [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                        for key in self.output_features.get_keys_by_objective(Objective)
+                        for key in self.outputs.get_keys_by_objective(Objective)
                     ]
                     + [
                         [f"{key}_pred", f"{key}_sd"]
-                        for key in self.output_features.get_keys_by_objective(
+                        for key in self.outputs.get_keys_by_objective(
                             excludes=Objective, includes=None  # type: ignore
                         )
                     ]
@@ -679,26 +658,20 @@ class Domain(BaseModel):
         Returns:
             List[str]: List of columns in the candidate dataframe (input feature keys + input feature keys_pred, input feature keys_sd, input feature keys_des)
         """
-        assert isinstance(self.output_features, Outputs)
+        assert isinstance(self.outputs, Outputs)
         return (
             self.get_feature_keys(Input)
             + [
                 f"{output_feature_key}_pred"
-                for output_feature_key in self.output_features.get_keys_by_objective(
-                    Objective
-                )
+                for output_feature_key in self.outputs.get_keys_by_objective(Objective)
             ]
             + [
                 f"{output_feature_key}_sd"
-                for output_feature_key in self.output_features.get_keys_by_objective(
-                    Objective
-                )
+                for output_feature_key in self.outputs.get_keys_by_objective(Objective)
             ]
             + [
                 f"{output_feature_key}_des"
-                for output_feature_key in self.output_features.get_keys_by_objective(
-                    Objective
-                )
+                for output_feature_key in self.outputs.get_keys_by_objective(Objective)
             ]
         )
 

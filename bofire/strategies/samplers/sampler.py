@@ -45,7 +45,7 @@ class SamplerStrategy(Strategy):
         """
         # n = candidate_count
         # handle here NChooseK
-        if len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
+        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
             _, unused = self.domain.get_nchoosek_combinations()
 
             if return_all:
@@ -68,7 +68,7 @@ class SamplerStrategy(Strategy):
             for u in sampled_combinations:
                 # create new domain without the nchoosekconstraints
                 domain = deepcopy(self.domain)
-                domain.constraints = domain.cnstrs.get(excludes=NChooseKConstraint)
+                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
                 # fix the unused features
                 for key in u:
                     feat = domain.inputs.get_by_key(key=key)

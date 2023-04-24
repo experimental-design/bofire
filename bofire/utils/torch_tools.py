@@ -44,7 +44,7 @@ def get_linear_constraints(
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
-    for c in domain.cnstrs.get(constraint):
+    for c in domain.constraints.get(constraint):
         indices = []
         coefficients = []
         lower = []
@@ -114,7 +114,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 
     constraints = []
     # ignore none also valid for the start
-    for c in domain.cnstrs.get(NChooseKConstraint):
+    for c in domain.constraints.get(NChooseKConstraint):
         assert isinstance(c, NChooseKConstraint)
         indices = torch.tensor(
             [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
