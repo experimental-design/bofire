@@ -17,13 +17,13 @@ in3 = dm_features.ContinuousInput(key="in3", lower_bound=0.0, upper_bound=3.0)
 
 out1 = dm_features.ContinuousOutput(key="out1")
 
-input_features = dm_domain.Inputs(features=[in1, in2, in3])
-output_features = dm_domain.Outputs(features=[out1])
+inputs = dm_domain.Inputs(features=[in1, in2, in3])
+outputs = dm_domain.Outputs(features=[out1])
 constraints = dm_domain.Constraints()
 
 domain = dm_domain.Domain(
-    input_features=input_features,
-    output_features=output_features,
+    inputs=inputs,
+    outputs=outputs,
     constraints=constraints,
 )
 

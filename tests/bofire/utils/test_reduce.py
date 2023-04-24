@@ -33,13 +33,13 @@ of2 = ContinuousOutput(key="of2")
 
 def test_check_domain_for_reduction():
     # no constraints
-    domain = Domain(input_features=[if1, cif1], output_features=[of1, of2])
+    domain = Domain(inputs=[if1, cif1], outputs=[of1, of2])
     assert not check_domain_for_reduction(domain)
 
     # no linear equality constraints
     domain = Domain(
-        input_features=[if1, if2],
-        output_features=[of1, of2],
+        inputs=[if1, if2],
+        outputs=[of1, of2],
         constraints=[
             LinearInequalityConstraint.from_greater_equal(
                 features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.9
@@ -49,13 +49,13 @@ def test_check_domain_for_reduction():
     assert not check_domain_for_reduction(domain)
 
     # no continuous input
-    domain = Domain(input_features=[cif1, cif2], output_features=[of1, of2])
+    domain = Domain(inputs=[cif1, cif2], outputs=[of1, of2])
     assert not check_domain_for_reduction(domain)
 
     # everything okay
     domain = Domain(
-        input_features=[if1, if2],
-        output_features=[of1, of2],
+        inputs=[if1, if2],
+        outputs=[of1, of2],
         constraints=[
             LinearEqualityConstraint(
                 features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=1.0
@@ -93,13 +93,13 @@ def test_reduce_1_independent_linear_equality_constraints():
     # define problem: standard case
     # this is not allowed in bofire as it produces one dime constraints
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(key="x1", bounds=(1, 2)),
             ContinuousInput(key="x2", bounds=(-1, 1)),
             CategoricalInput(key="x3", categories=["A", "B"]),
             CategoricalInput(key="x4", categories=["A", "B"]),
         ],
-        output_features=[ContinuousOutput(key="y1")],
+        outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
             LinearEqualityConstraint(
@@ -112,14 +112,14 @@ def test_reduce_1_independent_linear_equality_constraints():
     )
     _domain, transform = reduce_domain(domain)
 
-    assert len(_domain.input_features) == 3
+    assert len(_domain.inputs) == 3
     assert len(_domain.constraints) == 0
     assert _domain.get_feature("x2").lower_bound == -1.0
     assert _domain.get_feature("x2").upper_bound == -1.0
 
     # define problem: irreducible problem
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key="x1",
                 bounds=(1, 2),
@@ -130,13 +130,13 @@ def test_reduce_1_independent_linear_equality_constraints():
             ),
             CategoricalInput(key="x3", categories=["A", "B"]),
         ],
-        output_features=[ContinuousOutput(key="y1")],
+        outputs=[ContinuousOutput(key="y1")],
     )
     assert domain == reduce_domain(domain)[0]
 
     # define problem: linear equality constraints can't be fulfilled inside the domain
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key="x1",
                 bounds=(1, 2),
@@ -146,7 +146,7 @@ def test_reduce_1_independent_linear_equality_constraints():
                 bounds=(-500, 500),
             ),
         ],
-        output_features=[ContinuousOutput(key="y1")],
+        outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2"], coefficients=[1.0, 0.0], rhs=0
@@ -160,7 +160,7 @@ def test_reduce_1_independent_linear_equality_constraints():
 def test_reduce_2_independent_linear_equality_constraints():
     # define problem: standard case
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key="x1",
                 bounds=(-1, 1),
@@ -174,7 +174,7 @@ def test_reduce_2_independent_linear_equality_constraints():
                 bounds=(-1, 1),
             ),
         ],
-        output_features=[ContinuousOutput(key="y1")],
+        outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
@@ -189,8 +189,8 @@ def test_reduce_2_independent_linear_equality_constraints():
     )
     _domain, transform = reduce_domain(domain)
 
-    assert len(_domain.input_features) == 1
-    assert _domain.input_features[0].key == "x3"
+    assert len(_domain.inputs) == 1
+    assert _domain.inputs[0].key == "x3"
     assert _domain.get_feature("x3").lower_bound == -1.0
     assert _domain.get_feature("x3").upper_bound == 1.0
 
@@ -200,7 +200,7 @@ def test_reduce_2_independent_linear_equality_constraints():
 def test_reduce_3_independent_linear_equality_constraints():
     # define problem: standard case
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key="x1",
                 bounds=(-1, 1),
@@ -214,7 +214,7 @@ def test_reduce_3_independent_linear_equality_constraints():
                 bounds=(-1, 1),
             ),
         ],
-        output_features=[ContinuousOutput(key="y1")],
+        outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
@@ -233,7 +233,7 @@ def test_reduce_3_independent_linear_equality_constraints():
 
 def test_doc_simple():
     domain = Domain()
-    input_features = [
+    inputs = [
         ContinuousInput(
             key="x1",
             bounds=(0.1, 1),
@@ -247,10 +247,10 @@ def test_doc_simple():
             bounds=(0.3, 0.9),
         ),
     ]
-    output_features = [ContinuousOutput(key="y")]
+    outputs = [ContinuousOutput(key="y")]
     domain = Domain(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
@@ -284,7 +284,7 @@ def test_doc_simple():
 def test_doc_complex():
     domain = Domain()
 
-    input_features = [
+    inputs = [
         ContinuousInput(
             key="A1",
             bounds=(0, 0.9),
@@ -329,7 +329,7 @@ def test_doc_complex():
             features=["A1", "A2"], coefficients=[-1.0, -2.0], rhs=-0.8
         ),
     ]
-    domain = Domain(input_features=input_features, constraints=constraints)
+    domain = Domain(inputs=inputs, constraints=constraints)
     _domain, transform = reduce_domain(domain)
 
     assert len(_domain.get_features()) == 7
@@ -472,7 +472,7 @@ def test_doc_complex():
 
 def test_reduce_large_problem():
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key="x1",
                 bounds=(-1, 1),
@@ -490,7 +490,7 @@ def test_reduce_large_problem():
                 bounds=(-1, 1),
             ),
         ],
-        output_features=[ContinuousOutput(key="y1")],
+        outputs=[ContinuousOutput(key="y1")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x4"], coefficients=[1.0, -1.0, 1.0], rhs=-1.0

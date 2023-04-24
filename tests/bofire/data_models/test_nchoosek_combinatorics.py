@@ -37,10 +37,10 @@ cc3 = [
 ]
 
 # input features
-continuous_input_features = []
+continuous_inputs = []
 for i in range(6):
     f = ContinuousInput(key=str(i), bounds=(0, 1))
-    continuous_input_features.append(f)
+    continuous_inputs.append(f)
 categorical_feature = CategoricalInput(
     key="categorical_feature", categories=["c1", "c2"]
 )
@@ -52,7 +52,7 @@ categorical_descriptor_feature = CategoricalDescriptorInput(
 )
 
 # output feature
-output_features = [ContinuousOutput(key="y")]
+outputs = [ContinuousOutput(key="y")]
 
 
 """
@@ -147,9 +147,9 @@ test_cases = []
 
 # CASE 1
 test_case = {}
-domain = Domain(
-    input_features=continuous_input_features,
-    output_features=output_features,
+domain = Domain.from_lists(
+    inputs=continuous_inputs,
+    outputs=outputs,
     constraints=[cc1a, cc2a],
 )
 test_case["domain"] = domain
@@ -164,9 +164,9 @@ test_cases.append(test_case)
 
 # CASE 2
 test_case = {}
-domain = Domain(
-    input_features=continuous_input_features,
-    output_features=output_features,
+domain = Domain.from_lists(
+    continuous_inputs,
+    outputs,
     constraints=[cc1b, cc2b],
 )
 test_case["domain"] = domain
@@ -192,7 +192,7 @@ def test_nchoosek_combinations_completeness(test_case):
 
 def test_nchoosek_combinations_nonexhaustive():
     domain = Domain(
-        input_features=Inputs(
+        inputs=Inputs(
             features=[ContinuousInput(key=f"if{i+1}", bounds=(0, 1)) for i in range(6)]
         ),
         constraints=Constraints(

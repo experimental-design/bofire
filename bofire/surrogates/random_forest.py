@@ -109,7 +109,7 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
             X (pd.DataFrame): Dataframe with X values.
             Y (pd.DataFrame): Dataframe with Y values.
         """
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         rf = RandomForestRegressor(
             n_estimators=self.n_estimators,
             criterion=self.criterion,

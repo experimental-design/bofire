@@ -50,7 +50,7 @@ def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
     # Calculating corresponding y values
     Y = benchmark_function.f(X_samples, return_complete=return_complete)
     # Check, whether shape of output dataframe matches the expected shape.
-    expected_output_variables = len(benchmark_function.domain.output_features) * 2
+    expected_output_variables = len(benchmark_function.domain.outputs) * 2
 
     if return_complete:
         assert Y.shape == (

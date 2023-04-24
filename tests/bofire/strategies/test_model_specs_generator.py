@@ -43,14 +43,14 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"}
                     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
                         surrogates=[
                             surrogate_data_models.SingleTaskGPSurrogate(
-                                input_features=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
+                                inputs=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
-                                ].input_features,
-                                output_features=Outputs(
+                                ].inputs,
+                                outputs=Outputs(
                                     features=[
                                         VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                             "domain"
-                                        ].output_features.get_by_key("of1")
+                                        ].outputs.get_by_key("of1")
                                     ]
                                 ),
                             ),
@@ -80,12 +80,12 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=Inputs(features=[if1, if2]),
-                        output_features=Outputs(
+                        inputs=Inputs(features=[if1, if2]),
+                        outputs=Outputs(
                             features=[
                                 VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
-                                ].output_features.get_by_key("of1")
+                                ].outputs.get_by_key("of1")
                             ]
                         ),
                     ),
@@ -99,10 +99,8 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
-                            "domain"
-                        ].input_features,
-                        output_features=Outputs(features=[of1]),
+                        inputs=VALID_BOTORCH_QEHVI_STRATEGY_SPEC["domain"].inputs,
+                        outputs=Outputs(features=[of1]),
                     ),
                 ]
             ),

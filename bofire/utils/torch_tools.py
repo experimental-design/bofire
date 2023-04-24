@@ -12,8 +12,8 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
-    BotorchConstrainedObjective,
     CloseToTargetObjective,
+    ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -44,7 +44,7 @@ def get_linear_constraints(
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
-    for c in domain.cnstrs.get(constraint):
+    for c in domain.constraints.get(constraint):
         indices = []
         coefficients = []
         lower = []
@@ -114,7 +114,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 
     constraints = []
     # ignore none also valid for the start
-    for c in domain.cnstrs.get(NChooseKConstraint):
+    for c in domain.constraints.get(NChooseKConstraint):
         assert isinstance(c, NChooseKConstraint)
         indices = torch.tensor(
             [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
@@ -135,14 +135,48 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     return constraints
 
 
+def constrained_objective2botorch(
+    idx: int,
+    objective: ConstrainedObjective,
+) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
+    """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
+    to setup ouput constrained optimizations.
+
+    Args:
+        idx (int): Index of the constraint objective in the list of outputs.
+        objective (BotorchConstrainedObjective): The objective that should be transformed.
+
+    Returns:
+        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+            list of the corresponding botorch eta values.
+    """
+    assert isinstance(
+        objective, ConstrainedObjective
+    ), "Objective is not a `ConstrainedObjective`."
+    if isinstance(objective, MaximizeSigmoidObjective):
+        return [lambda Z: (Z[..., idx] - objective.tp) * -1.0], [
+            1.0 / objective.steepness
+        ]
+    elif isinstance(objective, MinimizeSigmoidObjective):
+        return [lambda Z: (Z[..., idx] - objective.tp)], [1.0 / objective.steepness]
+    elif isinstance(objective, TargetObjective):
+        return [
+            lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
+            * -1.0,
+            lambda Z: (Z[..., idx] - (objective.target_value + objective.tolerance)),
+        ], [1.0 / objective.steepness, 1.0 / objective.steepness]
+    else:
+        raise ValueError(f"Objective {objective.__class__.__name__} not known.")
+
+
 def get_output_constraints(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
 
     Args:
-        output_features (Outputs): Output feature object that should
+        outputs (Outputs): Output feature object that should
             be processed.
 
     Returns:
@@ -151,9 +185,11 @@ def get_output_constraints(
     """
     constraints = []
     etas = []
-    for idx, feat in enumerate(output_features.get()):
-        if isinstance(feat.objective, BotorchConstrainedObjective):  # type: ignore
-            iconstraints, ietas = feat.objective.to_constraints(idx=idx)  # type: ignore
+    for idx, feat in enumerate(outputs.get()):
+        if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
+            iconstraints, ietas = constrained_objective2botorch(
+                idx, objective=feat.objective  # type: ignore
+            )
             constraints += iconstraints
             etas += ietas
     return constraints, etas
@@ -228,16 +264,16 @@ def get_objective_callable(
 
 
 def get_multiplicative_botorch_objective(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
     ]
     weights = [
         feat.objective.w  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
     ]
 
@@ -251,24 +287,24 @@ def get_multiplicative_botorch_objective(
 
 
 def get_additive_botorch_objective(
-    output_features: Outputs, exclude_constraints: bool = True
+    outputs: Outputs, exclude_constraints: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
     ]
     weights = [
         feat.objective.w  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
@@ -284,19 +320,19 @@ def get_additive_botorch_objective(
 
 
 def get_multiobjective_objective(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     """Returns
 
     Args:
-        output_features (Outputs): _description_
+        outputs (Outputs): _description_
 
     Returns:
         Callable[[Tensor], Tensor]: _description_
     """
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and isinstance(
             feat.objective,  # type: ignore

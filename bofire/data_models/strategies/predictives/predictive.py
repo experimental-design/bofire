@@ -59,7 +59,7 @@ class PredictiveStrategy(Strategy):
         Returns:
             Domain: the domain
         """
-        if len(domain.output_features) == 0:
+        if len(domain.outputs) == 0:
             raise ValueError("no output feature specified")
         if len(domain.outputs.get_by_objective(Objective)) == 0:
             raise ValueError("no output feature with objective specified")

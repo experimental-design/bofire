@@ -42,7 +42,7 @@ def test_multi_objective_benchmarks(cls_benchmark, return_complete, kwargs):
     Y = benchmark_function.f(X_samples, return_complete=return_complete)
 
     # Define expected number of output variables
-    expected_output_variables = len(benchmark_function.domain.output_features) * 2
+    expected_output_variables = len(benchmark_function.domain.outputs) * 2
     # Check, whether expected number of output variables match the actual number
     if return_complete:
         assert Y.shape == (

@@ -4,12 +4,12 @@ from bofire.data_models.domain.api import Inputs
 from bofire.data_models.domain.features import ContinuousInput
 from bofire.utils.doe import get_confounding_matrix
 
-input_features = Inputs(
+inputs = Inputs(
     features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]]
 )
 
 
-design = input_features.sample(20)
+design = inputs.sample(20)
 
 
 @pytest.mark.parametrize(
@@ -19,7 +19,7 @@ design = input_features.sample(20)
 def test_get_confounding_matrix_invalid(powers, interactions):
     with pytest.raises(AssertionError):
         get_confounding_matrix(
-            input_features=input_features,
+            inputs=inputs,
             design=design,
             powers=powers,
             interactions=interactions,
@@ -32,7 +32,7 @@ def test_get_confounding_matrix_invalid(powers, interactions):
 )
 def test_get_confounding_matrix_valid(powers, interactions):
     get_confounding_matrix(
-        input_features=input_features,
+        inputs=inputs,
         design=design,
         powers=powers,
         interactions=interactions,

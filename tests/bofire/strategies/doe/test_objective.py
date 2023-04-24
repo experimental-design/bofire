@@ -10,15 +10,15 @@ from bofire.strategies.doe.utils import get_formula_from_string
 
 def test_DOptimality_model_jacobian_t():
     # "small" model
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     vars = domain.inputs.get_keys()
@@ -74,15 +74,15 @@ def test_DOptimality_model_jacobian_t():
     assert np.allclose(B, model_jacobian_t(x)[0])
 
     # fully cubic model
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(5)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     vars = ["x1", "x2", "x3", "x4", "x5"]
     n_vars = len(vars)
@@ -316,15 +316,15 @@ def test_DOptimality_model_jacobian_t():
 
 def test_DOptimality_instantiation():
     # default jacobian building block
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     model = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
@@ -363,15 +363,15 @@ def test_DOptimality_instantiation():
     ) == (6,)
 
     # 5th order model
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     model = Formula("{x1**5} + {x2**5} + {x3**5}")
@@ -397,15 +397,15 @@ def test_DOptimality_evaluate_jacobian():
     def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(2)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     model = Formula("x1 + x2 - 1")
@@ -534,15 +534,15 @@ def test_DOptimality_evaluate_jacobian():
 
 
 def test_DOptimality_evaluate():
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -552,15 +552,15 @@ def test_DOptimality_evaluate():
 
 
 def test_DOptimality_convert_input_to_model_tensor():
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 

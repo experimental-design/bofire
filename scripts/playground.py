@@ -36,8 +36,8 @@ feature_out_1 = ContinuousOutput(key="y1", objective=MaximizeObjective(w=1))
 feature_out_2 = ContinuousOutput(key="y2", objective=MaximizeObjective(w=1))
 
 
-input_features = [feature1, feature2, feature3, feature4]
-output_features = [feature_out_1, feature_out_2]
+inputs = [feature1, feature2, feature3, feature4]
+outputs = [feature_out_1, feature_out_2]
 
 con1 = LinearInequalityConstraint(
     features=["x1", "x2"], coefficients=[-1, -1], rhs=-0.2
@@ -49,8 +49,8 @@ con2 = LinearEqualityConstraint(
 constraints = [con1, con2]
 
 domain = Domain(
-    input_features=input_features,
-    output_features=output_features,
+    inputs=inputs,
+    outputs=outputs,
     constraints=constraints,
 )
 

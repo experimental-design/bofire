@@ -60,7 +60,7 @@ class QparegoStrategy(BotorchStrategy):
             * ref_point_mask
         )
 
-        obj_callable = get_multiobjective_objective(output_features=self.domain.outputs)
+        obj_callable = get_multiobjective_objective(outputs=self.domain.outputs)
 
         df_preds = self.predict(
             self.domain.outputs.preprocess_experiments_any_valid_output(

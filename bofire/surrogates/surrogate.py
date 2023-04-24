@@ -14,8 +14,8 @@ class Surrogate(ABC):
         self,
         data_model: DataModel,
     ):
-        self.input_features = data_model.input_features
-        self.output_features = data_model.output_features
+        self.inputs = data_model.inputs
+        self.outputs = data_model.outputs
         self.input_preprocessing_specs = data_model.input_preprocessing_specs
         if data_model.dump is not None:
             self.loads(data_model.dump)
@@ -36,9 +36,9 @@ class Surrogate(ABC):
         if not self.is_fitted:
             raise ValueError("Model is not fitted/available yet.")
         # validate
-        X = self.input_features.validate_experiments(X, strict=False)
+        X = self.inputs.validate_experiments(X, strict=False)
         # transform
-        Xt = self.input_features.transform(X, self.input_preprocessing_specs)
+        Xt = self.inputs.transform(X, self.input_preprocessing_specs)
         # make sure that all is float64
         for c in Xt.columns:
             Xt[c] = pd.to_numeric(Xt[c], errors="raise")
@@ -47,8 +47,8 @@ class Surrogate(ABC):
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
-            columns=["%s_pred" % featkey for featkey in self.output_features.get_keys()]
-            + ["%s_sd" % featkey for featkey in self.output_features.get_keys()],
+            columns=["%s_pred" % featkey for featkey in self.outputs.get_keys()]
+            + ["%s_sd" % featkey for featkey in self.outputs.get_keys()],
         )
         # validate
         self.validate_predictions(predictions=predictions)
@@ -57,9 +57,7 @@ class Surrogate(ABC):
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
         expected_cols = [
-            f"{key}_{t}"
-            for key in self.output_features.get_keys()
-            for t in ["pred", "sd"]
+            f"{key}_{t}" for key in self.outputs.get_keys() for t in ["pred", "sd"]
         ]
         if sorted(list(predictions.columns)) != sorted(expected_cols):
             raise ValueError(
@@ -73,9 +71,9 @@ class Surrogate(ABC):
     def to_predictions(
         self, predictions: pd.DataFrame
     ) -> Dict[str, List[PredictedValue]]:
-        outputs = {key: [] for key in self.output_features.get_keys()}
+        outputs = {key: [] for key in self.outputs.get_keys()}
         for _, row in predictions.iterrows():
-            for key in self.output_features.get_keys():
+            for key in self.outputs.get_keys():
                 outputs[key].append(
                     PredictedValue(
                         predictedValue=row[f"{key}_pred"],

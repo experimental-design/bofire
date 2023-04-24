@@ -81,7 +81,7 @@ specs.add_valid(
     strategies.PolytopeSampler,
     lambda: {
         "domain": Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
                 ]
@@ -95,7 +95,7 @@ specs.add_valid(
     strategies.RejectionSampler,
     lambda: {
         "domain": Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
                 ]
