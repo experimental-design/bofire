@@ -51,7 +51,7 @@ setup(
         "numpy",
         "matplotlib",
         "pandas",
-        "pydantic",
+        "pydantic>=1.0,<2.0",
         "scipy>=1.7",
         "scikit-learn",
     ],
