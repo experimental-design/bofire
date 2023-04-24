@@ -8,8 +8,10 @@ import numpy as np
 import pandas as pd
 from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
+from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import (
+    LinearConstraint as boLinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -22,7 +24,6 @@ from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.strategies.samplers.polytope import PolytopeSampler
-from scipy.optimize._minimize import standardize_constraints
 
 
 def get_formula_from_string(
@@ -562,8 +563,13 @@ def smart_round(
     precision_scaling_matrix = np.eye(N=len(b)) * precision
 
     def _to_cp_constraint(x, constraint):
-        if isinstance(constraint, LinearEqualityConstraint):
-            _coefs = constraint.coefficients
+        if isinstance(constraint, boLinearConstraint):
+            _coef_dict = {}
+            for feature in domain.input_features:
+                _coef_dict[feature.key] = 0
+            for coef, feature in zip(constraint.coefficients, constraint.features):
+                _coef_dict[feature] = coef
+            _coefs = list(_coef_dict.values())
             A = []
             for n in range(n_experiments):
                 a = np.zeros(n_experiments * n_vars)
@@ -571,21 +577,19 @@ def smart_round(
                 A.append(a)
             A = np.array(A)
             b = np.repeat(constraint.rhs, n_experiments)
-            return A @ x == b
-        if isinstance(constraint, LinearInequalityConstraint):
-            _coefs = constraint.coefficients
-            A = []
-            for n in range(n_experiments):
-                a = np.zeros(n_experiments * n_vars)
-                a[n * n_vars : (n + 1) * (n_vars)] = _coefs
-                A.append(a)
-            A = np.array(A)
-            b = np.repeat(constraint.rhs, n_experiments)
-            return A @ x <= b
-        else:
-            warnings.warn("Only linear contraints implemented for smart round!")
 
-    def inputs_to_constraints(x, domain: Domain):
+            if isinstance(constraint, LinearEqualityConstraint):
+                return A @ x == b
+            if isinstance(constraint, LinearInequalityConstraint):
+                return A @ x <= b
+            else:
+                warnings.warn(
+                    "Type of linear contraint is not implemented for smart round!"
+                )
+        else:
+            warnings.warn("Only linear contraint is implemented for smart round!")
+
+    def _inputs_to_cp_constraints(x):
         _constraints = []
 
         lower = []
@@ -608,7 +612,7 @@ def smart_round(
             _to_cp_constraint(precision_scaling_matrix @ x, constraint)
             for constraint in constraints
         ]
-        + inputs_to_constraints(precision_scaling_matrix @ x, domain),
+        + _inputs_to_cp_constraints(precision_scaling_matrix @ x),
     )
     prob.solve()
     candidates_rounded = (x.value * precision).reshape(candidates.values.shape)
