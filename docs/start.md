@@ -2,8 +2,18 @@
 
 In BoFire, an optimization problem is defined by defining a domain containing input and output features as well as constraints (optional). 
 
+<!-- 
+TODO:
+
+- [ ] Update after Notebooks fixed
+- [ ] Add APIs
+- [ ] Add Data models
+- [ ] 
+ -->
+
 ## Features
-Input features can be continuous, categorical, or categorical with descriptors:
+
+Input features can be continuous, discrete, categorical, or categorical with descriptors:
 
 ```python
 from bofire.domain.features import ContinuousInput, DiscreteInput, CategoricalInput, CategoricalDescriptorInput
@@ -16,7 +26,7 @@ x5 = CategoricalInput(key="x5", categories=["A", "B", "C"], allowed=[True,True,F
 x6 = CategoricalDescriptorInput(key="x6", categories=["c1", "c2", "c3"], descriptors=["d1", "d2"], values = [[1,2],[2,5],[1,7]])
 ```
 
-As output features, currently only continuous output features are supported. Each ouput feature has to have an objective, which can be a minimize or maximize objective. Furthermore, we can define weights between 0 and 1 in case the objectives should not be weighted euqally.
+As output features, currently only continuous output features are supported. Each output feature has to have an objective, which can be a minimize or maximize objective. Furthermore, we can define weights between 0 and 1 in case the objectives should not be weighted equally.
 
 ```python
 from bofire.domain.features import ContinuousOutput
@@ -44,12 +54,15 @@ output_features = OutputFeatures(features=[y1, y2])
 ```
 
 Individual features can be retrieved by name.
+
 ```python
 x5 = input_features.get_by_key('x5')
 >>> CategoricalInput(key='x5', type='CategoricalInput', categories=['A', 'B', 'C'], allowed=[True, True, False])
 ```
+
 All feature keys of the input or output features can be returned by the get_keys() method.
-```
+
+```python
 input_features.get_keys()
 >>> ["x1", "x2", "x3", "x4", "x5"]
 
@@ -58,12 +71,14 @@ output_features.get_keys()
 ```
 
 The input feature container further provides methods to return a feature container with only all fixed or all free features.
+
 ```python
 free_inputs = input_features.get_free()
 fixed_inputs = input_features.get_fixed()
 ```
 
 We can sample from individual input features or input feature containers:
+
 ```python
 samples_x5 = x5.sample(2)
 samples_x5
@@ -84,10 +99,15 @@ print(X)
 
 
 ## Constraints
+
 The search space can be further defined by constraints on the input features. BoFire supports linear equality and inequality constraints, as well as non-linear equality and inequality constraints.
-s
-**Linear constraints** (`LinearEquality` and `LinearInequality`) are expressions of the form $\sum_i a_i x_i = b$ or $\leq b$ for equality and inequality constraints respectively.
+
+### Linear constraints
+
+`LinearEqualityConstraint` and `LinearInequalityConstraint` are expressions of the form $\sum_i a_i x_i = b$ or $\leq b$ for equality and inequality constraints respectively.
 They take a list of names of the input features they are operating on, a list of left-hand-side coefficients $a_i$ and a right-hand-side constant $b$.
+
+<!-- TODO: Check if LIC also allows x > y -->
 
 ```python
 from bofire.domain.constraints import LinearEqualityConstraint, LinearInequalityConstraint
@@ -100,7 +120,10 @@ constr2 = LinearInequalityConstraint(features=["x1", "x3"], coefficients=[1, 2],
 ```
 Because of the product $a_i x_i$, linear constraints cannot operate on categorical parameters.
 
-**Nonlinear constraints** (`NonlinearEquality` and `NonlinearInequality`) take any expression that can be evaluated by [pandas.eval](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.eval.html), including mathematical operators such as `sin`, `exp`, `log10` or exponentiation.
+### Nonlinear constraints
+
+`NonlinearEqualityConstraint` and `NonlinearInequalityConstraint` take any expression that can be evaluated by [pandas.eval](https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.eval.html), including mathematical operators such as `sin`, `exp`, `log10` or exponentiation.
+
 ```python
 from bofire.domain.constraints import NonlinearEqualityConstraint, NonlinearInequalityConstraint
 
@@ -108,13 +131,19 @@ from bofire.domain.constraints import NonlinearEqualityConstraint, NonlinearIneq
 constr3 = NonlinearEqualityConstraint(expression="x1**2 + x2**2 - 1")
 ```
 Nonlinear constraints can also operate on categorical parameters and support conditional statements.
+
 ```python
 # Require x1 < 0.5 if x5 == "A"
 constr4 = NonlinearInequalityConstraint(expression="(x1 - 0.5) * (x5 =='A')")
 ```
 
-Finally, there is a **combinatorical constraint** (`NChooseK`) to express that we only want to have $k$ out of the $n$ parameters to take positive values.
+<!-- TODO: Change NchooseK once (0, min, max) available -->
+
+### Combinatorial constraint
+
+Use `NChooseKConstraint` to express that we only want to have $k$ out of the $n$ parameters to take positive values.
 Think of a mixture, where we have long list of possible ingredients, but want to limit number of ingredients in any given recipe.
+
 ```python
 from bofire.domain.constraints import NChooseKConstraint
 
@@ -150,13 +179,17 @@ y3= ContinuousOutput(key="y3", objective=output_constraint)
 
 output_features = OutputFeatures(features=[y1, y2, y3])
 ```
+
 The shape of the output features can be plotted:
+
 ```python
 _ = y3.plot(lower=0, upper=1)
 ```
 
 ## The domain
-Finally, the domain can be instanciated:
+
+Finally, the domain can be instantiated:
+
 ```python
 from bofire.domain.domain import Domain
 
@@ -166,7 +199,9 @@ domain = Domain(
     constraints=constraints
     )
 ```
-A summary of the defined features and constraints can be obtained by the methods get_feature_reps_df() and get_constraint_reps_df():
+
+A summary of the defined features and constraints can be obtained by the methods `get_feature_reps_df()` and `get_constraint_reps_df()`:
+
 ```python
 domain.get_feature_reps_df()
 domain.get_constraint_reps_df()
@@ -174,11 +209,12 @@ domain.get_constraint_reps_df()
 
 
 ## Set up a strategy
+
 To solve the optimization problem, we further need a solving strategy. BoFire supports strategies without a prediction model such as a random strategy and predictive strategies which are based on a prediction model.
 
 All strategies contain an ask method returning a defined number of candidate experiments. 
 
-**Random strategy**
+### Random strategy
 
 ```python
 from bofire.strategies.random import RandomStrategy
@@ -192,7 +228,7 @@ random_candidates
 1	0.341934	0.525235	0.132830	2.0	c3	A
 ```
 
-**Single objective Bayesian Optimization strategy**
+### Single objective Bayesian Optimization strategy
 
 Since a predictive strategy includes a prediction model, we need to generate some historical data, which we can afterwards pass as training data to the strategy via the tell method.
 
