@@ -23,6 +23,6 @@ jobs:
         run: python3 -m pip install --upgrade pip
 
       - name: Install dependencies
-        run: pip install .[optimization, cheminfo, docs]
+        run: pip install .[optimization,cheminfo,docs]
       - name: Build docs
         run: mkdocs build

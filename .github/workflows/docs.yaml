@@ -24,7 +24,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install .[optimization, cheminfo, docs]
+          pip install .[optimization,cheminfo,docs]
       - run: mkdocs build
 
       - name: Deploy
