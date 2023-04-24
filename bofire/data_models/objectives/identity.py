@@ -13,8 +13,7 @@ class IdentityObjective(Objective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
+        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
@@ -65,8 +64,7 @@ class MaximizeObjective(IdentityObjective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
+        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
     """
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
@@ -77,8 +75,7 @@ class MinimizeObjective(IdentityObjective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
+        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
