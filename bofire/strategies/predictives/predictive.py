@@ -6,7 +6,6 @@ import pandas as pd
 from pydantic import PositiveInt
 
 from bofire.data_models.features.api import TInputTransformSpecs
-from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
@@ -36,14 +35,12 @@ class PredictiveStrategy(Strategy):
         self,
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
-        candidate_pool: Optional[pd.DataFrame] = None,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
-            candidate_pool (pd.DataFrame, optional): Pool of candidates from which a final set of candidates should be chosen. If not provided, pool independent candidates are provided. Defaults to None.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -51,13 +48,7 @@ class PredictiveStrategy(Strategy):
         candidates = super().ask(
             candidate_count=candidate_count,
             add_pending=add_pending,
-            candidate_pool=candidate_pool,
         )
-        # we have to generate predictions for the candidate pool candidates
-        if candidate_pool is not None:
-            pred = self.predict(candidates)
-            pred.index = candidates.index
-            candidates = pd.concat([candidates, pred], axis=1)
         self.domain.validate_candidates(candidates=candidates)
         return candidates
 
@@ -105,22 +96,13 @@ class PredictiveStrategy(Strategy):
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)),
-                columns=[
-                    "%s_pred" % feat.key
-                    for feat in self.domain.outputs.get_by_objective(Objective)
-                ]
-                + [
-                    "%s_sd" % feat.key
-                    for feat in self.domain.outputs.get_by_objective(Objective)
-                ],
+                columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()]
+                + ["%s_sd" % feat.key for feat in self.domain.outputs.get()],
             )
         else:
             predictions = pd.DataFrame(
                 data=preds,
-                columns=[
-                    "%s_pred" % feat.key
-                    for feat in self.domain.outputs.get_by_objective(Objective)
-                ],
+                columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()],
             )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
@@ -163,30 +145,15 @@ class PredictiveStrategy(Strategy):
                     for key in self.domain.inputs.get_keys()
                 },
                 outputValues={
-                    key: OutputValue(
-                        predictedValue=row[f"{key}_pred"],
-                        standardDeviation=row[f"{key}_sd"],
-                        objective=row[f"{key}_des"],
+                    feat.key: OutputValue(
+                        predictedValue=row[f"{feat.key}_pred"],
+                        standardDeviation=row[f"{feat.key}_sd"],
+                        objective=row[f"{feat.key}_des"]
+                        if feat.objective is not None  # type: ignore
+                        else 1.0,
                     )
-                    for key in self.domain.outputs.get_keys()
+                    for feat in self.domain.outputs.get()
                 },
             )
             for _, row in candidates.iterrows()
         ]
-
-    @abstractmethod
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[PositiveInt] = None,
-    ) -> pd.DataFrame:
-        """Abstract method to implement how a strategy chooses a set of candidates from a candidate pool.
-
-        Args:
-            candidate_pool (pd.DataFrame): The pool of candidates from which the candidates should be chosen.
-            candidate_count (Optional[PositiveInt], optional): Number of candidates to choose. Defaults to None.
-
-        Returns:
-            pd.DataFrame: The chosen set of candidates.
-        """
-        pass

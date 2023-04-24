@@ -147,9 +147,6 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
-    experiments_test = benchmark.f(
-        random_strategy._ask(n=num_test_candidates), return_complete=True
-    )
     # init strategy
     data_model = strategy(
         domain=benchmark.domain,
@@ -157,16 +154,19 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     )
     my_strategy = strategies.map(data_model)
     my_strategy.tell(experiments)
-    assert isinstance(my_strategy.acqf.objective, GenericMCMultiOutputObjective)
+
+    acqf = my_strategy._get_acqfs(2)[0]
+
+    assert isinstance(acqf.objective, GenericMCMultiOutputObjective)
     assert isinstance(
-        my_strategy.acqf,
+        acqf,
         qExpectedHypervolumeImprovement
         if strategy == data_models.QehviStrategy
         else qNoisyExpectedHypervolumeImprovement,
     )
     # test acqf calc
-    acqf_vals = my_strategy._choose_from_pool(experiments_test, num_test_candidates)
-    assert acqf_vals.shape[0] == num_test_candidates
+    # acqf_vals = my_strategy._choose_from_pool(experiments_test, num_test_candidates)
+    # assert acqf_vals.shape[0] == num_test_candidates
 
 
 def test_qnehvi_constraints():
@@ -178,15 +178,15 @@ def test_qnehvi_constraints():
     data_model = data_models.QnehviStrategy(
         domain=benchmark.domain, ref_point={"f_0": 1.1, "f_1": 1.1}
     )
-    print("data model:", data_model)
     my_strategy = strategies.map(data_model)
     my_strategy.tell(experiments)
-    assert isinstance(my_strategy.acqf.objective, GenericMCMultiOutputObjective)
-    assert isinstance(my_strategy.acqf, qNoisyExpectedHypervolumeImprovement)
-    assert my_strategy.acqf.eta == torch.tensor(1e-3)
-    assert len(my_strategy.acqf.constraints) == 1
+    acqf = my_strategy._get_acqfs(2)[0]
+    assert isinstance(acqf.objective, GenericMCMultiOutputObjective)
+    assert isinstance(acqf, qNoisyExpectedHypervolumeImprovement)
+    assert acqf.eta == torch.tensor(1e-3)
+    assert len(acqf.constraints) == 1
     assert torch.allclose(
-        my_strategy.acqf.ref_point,
+        acqf.ref_point,
         torch.tensor([-1.1, -1.1], dtype=torch.double),
     )
 
@@ -234,3 +234,18 @@ def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
         num_candidates,
         len(set(chain(*names.values()))),
     )
+
+
+def test_no_objective():
+    domain = DTLZ2(dim=6).domain
+    experiments = DTLZ2(dim=6).f(domain.inputs.sample(10), return_complete=True)
+    domain.outputs.features.append(ContinuousOutput(key="ignore", objective=None))
+    experiments["ignore"] = experiments["f_0"] + 6
+    experiments["valid_ignore"] = 1
+    data_model = data_models.QehviStrategy(
+        domain=domain, ref_point={"f_0": 1.1, "f_1": 1.1}
+    )
+    recommender = strategies.map(data_model=data_model)
+    recommender.tell(experiments=experiments)
+    candidates = recommender.ask(candidate_count=1)
+    recommender.to_candidates(candidates)

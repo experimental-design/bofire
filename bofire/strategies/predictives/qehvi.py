@@ -33,7 +33,7 @@ class QehviStrategy(BotorchStrategy):
     ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
-    def _init_acqf(self) -> None:
+    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
@@ -62,7 +62,7 @@ class QehviStrategy(BotorchStrategy):
 
         assert self.model is not None
         # setup the acqf
-        self.acqf = qExpectedHypervolumeImprovement(
+        acqf = qExpectedHypervolumeImprovement(
             model=self.model,
             ref_point=ref_point,  # use known reference point
             partitioning=partitioning,
@@ -71,8 +71,8 @@ class QehviStrategy(BotorchStrategy):
             objective=self._get_objective(),
             X_pending=X_pending,
         )
-        self.acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
-        return
+        acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
+        return [acqf]
 
     def _get_objective(self) -> GenericMCMultiOutputObjective:
         objective = get_multiobjective_objective(output_features=self.domain.outputs)

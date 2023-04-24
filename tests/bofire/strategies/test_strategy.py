@@ -293,6 +293,8 @@ def test_strategy_set_candidates():
     assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
     assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
     assert strategy.num_candidates == 2
+    strategy.reset_candidates()
+    assert strategy.num_candidates == 0
 
 
 def test_strategy_add_candidates():
@@ -414,41 +416,6 @@ def test_strategy_ask_valid(
 
     with mock.patch.object(dummy.DummyStrategy, "_ask", new=test_ask):
         strategy.ask(candidate_count=1)
-
-
-@pytest.mark.parametrize(
-    "domain, experiments, candidate_pool, candidate_count",
-    [
-        [domain, e3, generate_candidates(domain, 3), 2],
-        [domain, e3, generate_candidates(domain, 5), 3],
-    ],
-)
-def test_strategy_ask_valid_candidate_pool(
-    domain, experiments, candidate_pool, candidate_count
-):
-    strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
-    )
-    strategy.tell(experiments)
-    strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
-
-
-@pytest.mark.parametrize(
-    "domain, experiments, candidate_pool, candidate_count",
-    [
-        [domain, e3, generate_candidates(domain, 3), -1],
-        [domain, e3, generate_candidates(domain, 3), 4],
-    ],
-)
-def test_ask_invalid_candidate_count_request_pool(
-    domain, experiments, candidate_pool, candidate_count
-):
-    strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
-    )
-    strategy.tell(experiments)
-    with pytest.raises((AssertionError, ValueError)):
-        strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
 
 
 def test_ask_invalid_candidate_count_request():

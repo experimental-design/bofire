@@ -58,7 +58,7 @@ def test_SOBO_not_fitted(domain, acqf):
 
     msg = "Model not trained."
     with pytest.raises(AssertionError, match=msg):
-        strategy._init_acqf()
+        strategy._get_acqfs(2)
 
 
 @pytest.mark.parametrize(
@@ -75,7 +75,7 @@ def test_SOBO_not_fitted(domain, acqf):
         for num_test_candidates in range(1, 3)
     ],
 )
-def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
+def test_SOBO_get_acqf(acqf, expected, num_test_candidates):
     # generate data
     benchmark = Himmelblau()
 
@@ -83,10 +83,7 @@ def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
 
-    experiments = benchmark.f(random_strategy.ask(n=20), return_complete=True)
-    experiments_test = benchmark.f(
-        random_strategy._ask(n=num_test_candidates), return_complete=True
-    )
+    experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
 
     data_model = data_models.SoboStrategy(
         domain=benchmark.domain, acquisition_function=acqf
@@ -94,10 +91,26 @@ def test_SOBO_init_acqf(acqf, expected, num_test_candidates):
     strategy = SoboStrategy(data_model=data_model)
 
     strategy.tell(experiments)
-    assert isinstance(strategy.acqf, expected)
-    # test acqf calc
-    acqf_vals = strategy._choose_from_pool(experiments_test, num_test_candidates)
-    assert acqf_vals.shape[0] == num_test_candidates
+
+    acqfs = strategy._get_acqfs(2)
+    assert len(acqfs) == 1
+
+    assert isinstance(acqfs[0], expected)
+
+
+def test_SOBO_calc_acquisition():
+    benchmark = Himmelblau()
+    experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
+    samples = benchmark.domain.inputs.sample(2)
+    data_model = data_models.SoboStrategy(
+        domain=benchmark.domain, acquisition_function=qEI()
+    )
+    strategy = SoboStrategy(data_model=data_model)
+    strategy.tell(experiments=experiments)
+    vals = strategy.calc_acquisition(samples)
+    assert len(vals) == 2
+    vals = strategy.calc_acquisition(samples, combined=True)
+    assert len(vals) == 1
 
 
 def test_SOBO_init_qUCB():
@@ -116,7 +129,9 @@ def test_SOBO_init_qUCB():
     )
     strategy = SoboStrategy(data_model=data_model)
     strategy.tell(experiments)
-    assert strategy.acqf.beta_prime == math.sqrt(beta * math.pi / 2)
+
+    acqf = strategy._get_acqfs(2)[0]
+    assert acqf.beta_prime == math.sqrt(beta * math.pi / 2)
 
 
 @pytest.mark.parametrize(

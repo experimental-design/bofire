@@ -1,8 +1,8 @@
 from typing import Literal, Type
 
-from bofire.data_models.constraints.api import Constraint, NChooseKConstraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import (
+    CloseToTargetObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -19,12 +19,6 @@ class QparegoStrategy(MultiobjectiveStrategy):
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
 
     @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
-        if my_type == NChooseKConstraint:
-            return False
-        return True
-
-    @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
         return True
 
@@ -36,6 +30,7 @@ class QparegoStrategy(MultiobjectiveStrategy):
             TargetObjective,
             MinimizeSigmoidObjective,
             MaximizeSigmoidObjective,
+            CloseToTargetObjective,
         ]:
             return False
         return True

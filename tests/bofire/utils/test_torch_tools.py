@@ -5,13 +5,16 @@ import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 
+import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -24,8 +27,10 @@ from bofire.data_models.objectives.api import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
+from bofire.data_models.strategies.api import PolytopeSampler
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
+    get_initial_conditions_generator,
     get_linear_constraints,
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
@@ -395,6 +400,103 @@ def test_get_nchoosek_constraints():
     assert len(constraints) == 1
     samples = domain.inputs.sample(5)
     assert torch.all(constraints[0](torch.from_numpy(samples.values).to(**tkwargs)) < 0)
+    # test with two max nchoosek constraints
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[0, 1]),
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=0,
+                max_count=1,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
+    constraints = get_nchoosek_constraints(domain=domain)
+    assert torch.allclose(
+        constraints[0](samples), torch.tensor([0.0, -1.0, -2.0]).to(**tkwargs)
+    )
+    assert torch.allclose(
+        constraints[1](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
+    )
+    # test with two min nchoosek constraints
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[0, 1]),
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=1,
+                max_count=3,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=2,
+                max_count=3,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
+    constraints = get_nchoosek_constraints(domain=domain)
+    assert torch.allclose(
+        constraints[0](samples), torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs)
+    )
+    assert torch.allclose(
+        constraints[1](samples), torch.tensor([-1.0, 0.0, 1.0]).to(**tkwargs)
+    )
+    # test with min/max and max constraint
+    # test with two min nchoosek constraints
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[0, 1]),
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=1,
+                max_count=2,
+                none_also_valid=False,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    samples = torch.tensor([[1, 0, 0], [1, 1, 0], [1, 1, 1]]).to(**tkwargs)
+    constraints = get_nchoosek_constraints(domain=domain)
+    assert torch.allclose(
+        constraints[0](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
+    )
+    assert torch.allclose(
+        constraints[1](samples), torch.tensor([0.0, 1.0, 2.0]).to(**tkwargs)
+    )
+    assert torch.allclose(
+        constraints[2](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
+    )
 
 
 def test_get_multiobjective_objective():
@@ -440,3 +542,38 @@ def test_get_multiobjective_objective():
     assert np.allclose(objective_forward[..., 0].detach().numpy(), reward1)
     assert np.allclose(objective_forward[..., 1].detach().numpy(), reward3)
     assert np.allclose(objective_forward[..., 2].detach().numpy(), reward4)
+
+
+@pytest.mark.parametrize("sequential", [True, False])
+def test_get_initial_conditions_generator(sequential: bool):
+    input_features = Inputs(
+        features=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            CategoricalDescriptorInput(
+                key="b",
+                categories=["alpha", "beta", "gamma"],
+                descriptors=["omega"],
+                values=[[0], [1], [3]],
+            ),
+        ]
+    )
+    domain = Domain(input_features=input_features)
+    strategy = strategies.map(PolytopeSampler(domain=domain))
+    # test with one hot encoding
+    generator = get_initial_conditions_generator(
+        strategy=strategy,
+        transform_specs={"b": CategoricalEncodingEnum.ONE_HOT},
+        ask_options={},
+        sequential=sequential,
+    )
+    initial_conditions = generator(n=3, q=2, seed=42)
+    assert initial_conditions.shape == torch.Size((3, 2, 4))
+    # test with descriptor encoding
+    generator = get_initial_conditions_generator(
+        strategy=strategy,
+        transform_specs={"b": CategoricalEncodingEnum.DESCRIPTOR},
+        ask_options={},
+        sequential=sequential,
+    )
+    initial_conditions = generator(n=3, q=2, seed=42)
+    assert initial_conditions.shape == torch.Size((3, 2, 2))
