@@ -48,11 +48,11 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        "pydantic",
-        "pandas",
         "numpy",
-        "scipy>=1.7",
         "matplotlib",
+        "pandas",
+        "pydantic",
+        "scipy>=1.7",
         "scikit-learn",
     ],
     extras_require={
@@ -64,7 +64,7 @@ setup(
             "formulaic>=0.5.2",
         ],
         "cheminfo": ["rdkit"],
-        "tests": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov"],
+        "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov"],
         "docs": [
             "mkdocs",
             "mkdocs-material",
