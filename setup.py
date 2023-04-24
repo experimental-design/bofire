@@ -16,11 +16,6 @@ root_dir = os.path.dirname(__file__)
 with open(os.path.join(root_dir, "README.md"), "r") as f:
     long_description = f.read()
 
-with open(os.path.join(root_dir, "requirements.txt"), "r") as f:
-    stripped_lines = (line.strip() for line in f)
-    install_requires = [
-        line for line in stripped_lines if not line.startswith("#") and len(line) > 0
-    ]
 
 setup(
     name="bofire",
