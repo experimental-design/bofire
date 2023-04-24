@@ -586,21 +586,20 @@ def smart_round(
                 warnings.warn(
                     "Type of linear contraint is not implemented for smart round!"
                 )
+        if isinstance(constraint, NChooseKConstraint):
+            pass
         else:
             warnings.warn("Only linear contraint is implemented for smart round!")
 
-    def _inputs_to_cp_constraints(x):
+    def _bounds_to_cp_constraints(x, bounds):
         _constraints = []
-
         lower = []
-        for i in domain.inputs:
-            lower.append(i.bounds[0])
-        _constraints.append(x >= np.repeat(np.array(lower), n_experiments))
-
         upper = []
-        for i in domain.inputs:
-            upper.append(i.bounds[1])
-        _constraints.append(x <= np.repeat(np.array(upper), n_experiments))
+        for bound in bounds:
+            lower.append(bound[0])
+            upper.append(bound[1])
+        _constraints.append(x >= np.array(lower))
+        _constraints.append(x <= np.array(upper))
         return _constraints
 
     constraints = standardize_constraints(domain.constraints, b, "SLSQP")
@@ -609,8 +608,11 @@ def smart_round(
     cp_constraints = [
         _to_cp_constraint(precision_scaling_matrix @ x, constraint)
         for constraint in constraints
+        if isinstance(constraint, boLinearConstraint)
     ]
-    cp_input_bounds = _inputs_to_cp_constraints(precision_scaling_matrix @ x)
+
+    bounds = nchoosek_constraints_as_bounds(domain=domain, n_experiments=n_experiments)
+    cp_input_bounds = _bounds_to_cp_constraints(precision_scaling_matrix @ x, bounds)
     prob = cp.Problem(objective=objective, constraints=cp_constraints + cp_input_bounds)
     prob.solve()
     candidates_rounded = (x.value * precision).reshape(candidates.values.shape)

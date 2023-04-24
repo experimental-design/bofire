@@ -34,6 +34,8 @@ from bofire.strategies.doe.utils import (
 
 
 def smart_round_test():
+    np.random.seed(1)
+
     domain = Domain(
         input_features=[
             ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)
@@ -43,8 +45,11 @@ def smart_round_test():
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
             ),
-            LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[1, 1], rhs=0.6
+            NChooseKConstraint(
+                features=["x1", "x2", "x3"],
+                min_count=0,
+                max_count=2,
+                none_also_valid=True,
             ),
         ],
     )
@@ -54,13 +59,20 @@ def smart_round_test():
             [0.9999997, 0.567, 9.99991],
             [-0.0, 0.567, 0.55991],
             [0.7, 0.0, 0.0],
+            [0.4, 0.2, 0.4],
         ]
     )
     rounded_candidates = smart_round(
         domain=domain, candidates=candidates, precision=10**-2
     )
     rounded_candidates_expected = pd.DataFrame(
-        [[0.00, 0.00, 1.00], [0.00, 0.00, 1.00], [0.00, 0.50, 0.50], [0.60, 0.00, 0.40]]
+        [
+            [0.00, 0.00, 1.00],
+            [0.72, 0.28, 0.00],
+            [0.22, 0.00, 0.78],
+            [0.00, 0.50, 0.05],
+            [0.60, 0.40, 0.00],
+        ]
     )
 
     for row in rounded_candidates.to_numpy():
@@ -857,3 +869,7 @@ def test_nchoosek_constraints_as_bounds():
     # assert len(bounds) == 20
     # for i in range(20):
     #     assert _bounds[i] == bounds[i]
+
+
+if __name__ == "__main__":
+    smart_round_test()
