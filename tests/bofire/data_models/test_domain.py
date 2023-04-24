@@ -28,7 +28,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import (
-    BotorchConstrainedObjective,
+    ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     Objective,
@@ -712,7 +712,7 @@ def test_get_outputs_by_objective_none():
             ContinuousOutput(key="c", objective=MaximizeObjective()),
         ]
     )
-    keys = outputs.get_keys_by_objective(excludes=BotorchConstrainedObjective)
+    keys = outputs.get_keys_by_objective(excludes=ConstrainedObjective)
     assert keys == ["c"]
     assert outputs.get_keys().index("c") == 2
     assert outputs.get_keys_by_objective(excludes=Objective, includes=[]) == ["a"]

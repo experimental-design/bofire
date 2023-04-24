@@ -349,12 +349,6 @@ def test_ConstraintWrapper():
                 features=["x1", "x2", "x3", "x4"],
                 jacobian_expression="[2*x1, 2*x2, 2*x3, 2*x4]",
             ),
-            NChooseKConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                max_count=3,
-                min_count=0,
-                none_also_valid=True,
-            ),
             NonlinearEqualityConstraint(
                 expression="x1**2 + x4**2 - 1",
                 features=["x1", "x4"],
@@ -423,13 +417,8 @@ def test_ConstraintWrapper():
         ),
     )
 
-    # nchoosek constraint
-    c = ConstraintWrapper(domain.constraints[4], domain, tol=0, n_experiments=3)
-    assert np.allclose(c(x), np.array([1, 1, 0]))
-    assert np.allclose(c.jacobian(x), np.zeros(shape=(3, 12)))
-
     # constraint not containing all inputs from domain
-    c = ConstraintWrapper(domain.constraints[5], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[4], domain, tol=0, n_experiments=3)
     assert np.allclose(c(x), np.array([1, -0.5, 8]))
     assert np.allclose(
         c.jacobian(x),
@@ -441,9 +430,6 @@ def test_ConstraintWrapper():
             ]
         ),
     )
-
-
-test_ConstraintWrapper()
 
 
 def test_d_optimality():
@@ -620,91 +606,70 @@ def test_check_nchoosek_constraints_as_bounds():
     )
     check_nchoosek_constraints_as_bounds(domain)
 
-    # define domain: possible to formulate as bounds, with NChooseK and other constraints
-    with pytest.raises(ValueError):
-        domain = Domain.from_lists(
-            inputs=[
-                ContinuousInput(key=f"x{1}", bounds=(0, 1)),
-                ContinuousInput(key=f"x{2}", bounds=(-1, 1)),
-                ContinuousInput(key=f"x{3}", bounds=(-2, 1)),
-                ContinuousInput(key=f"x{4}", bounds=(-3, 1)),
-            ],
-            outputs=[ContinuousOutput(key="y")],
-            constraints=[
-                LinearEqualityConstraint(
-                    features=["x1", "x2"], coefficients=[1, 1], rhs=0
-                ),
-                LinearInequalityConstraint(
-                    features=["x3", "x4"], coefficients=[1, 1], rhs=0
-                ),
-                NChooseKConstraint(
-                    features=["x1", "x2"],
-                    max_count=1,
-                    min_count=0,
-                    none_also_valid=True,
-                ),
-                NChooseKConstraint(
-                    features=["x3", "x4"],
-                    max_count=1,
-                    min_count=0,
-                    none_also_valid=True,
-                ),
-            ],
-        )
-        check_nchoosek_constraints_as_bounds(domain)
-
-    # define domain: not possible to formulate as bounds, invalid bounds
-    with pytest.raises(ValueError):
-        domain = Domain.from_lists(
-            inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
-            outputs=[ContinuousOutput(key="y")],
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2"],
-                    max_count=1,
-                    min_count=0,
-                    none_also_valid=True,
-                ),
-            ],
-        )
-        with pytest.raises(ValueError):
-            check_nchoosek_constraints_as_bounds(domain)
-
-    with pytest.raises(ValueError):
-        domain = Domain.from_lists(
-            inputs=[
-                ContinuousInput(
-                    key=f"x{1}",
-                    bounds=(-1, -0.1),
-                ),
-                ContinuousInput(
-                    key=f"x{2}",
-                    bounds=(-1, -0.1),
-                ),
-                ContinuousInput(
-                    key=f"x{3}",
-                    bounds=(-1, -0.1),
-                ),
-                ContinuousInput(
-                    key=f"x{4}",
-                    bounds=(-1, -0.1),
-                ),
-            ],
-            outputs=[ContinuousOutput(key="y")],
-            constraints=[
-                NChooseKConstraint(
-                    features=["x1", "x2"],
-                    max_count=1,
-                    min_count=0,
-                    none_also_valid=True,
-                ),
-            ],
-        )
-        with pytest.raises(ValueError):
-            check_nchoosek_constraints_as_bounds(domain)
-
-    # define domain: not possible to formulate as bounds, names parameters of two NChooseK overlap
+    # n-choose-k constraints when variables can be negative
     domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(key=f"x{1}", bounds=(0, 1)),
+            ContinuousInput(key=f"x{2}", bounds=(-1, 1)),
+            ContinuousInput(key=f"x{3}", bounds=(-2, 1)),
+            ContinuousInput(key=f"x{4}", bounds=(-3, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
+            LinearInequalityConstraint(
+                features=["x3", "x4"], coefficients=[1, 1], rhs=0
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"], max_count=1, min_count=0, none_also_valid=True
+            ),
+            NChooseKConstraint(
+                features=["x3", "x4"], max_count=1, min_count=0, none_also_valid=True
+            ),
+        ],
+    )
+    check_nchoosek_constraints_as_bounds(domain)
+
+    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
+    domain = Domain(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.1, 1)) for i in range(4)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                max_count=1,
+                min_count=0,
+                none_also_valid=True,
+            ),
+        ],
+    )
+    with pytest.raises(ValueError):
+        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
+
+    # It should be allowed to have n-choose-k constraints when 0 is not in the bounds.
+    domain = Domain(
+        input_features=[
+            ContinuousInput(key=f"x{1}", bounds=(-1, -0.1)),
+            ContinuousInput(key=f"x{2}", bounds=(-1, -0.1)),
+            ContinuousInput(key=f"x{3}", bounds=(-1, -0.1)),
+            ContinuousInput(key=f"x{4}", bounds=(-1, -0.1)),
+        ],
+        output_features=[ContinuousOutput(key="y")],
+        constraints=[
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                max_count=1,
+                min_count=0,
+                none_also_valid=True,
+            ),
+        ],
+    )
+    with pytest.raises(ValueError):
+
+        check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
+
+    # Not allowed: names parameters of two NChooseK overlap
+    domain = Domain(
         inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[

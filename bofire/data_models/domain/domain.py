@@ -187,33 +187,6 @@ class Domain(BaseModel):
                     assert f in continuous_inputs_dict, f"{f} must be continuous."
         return v
 
-    @validator("constraints", always=True)
-    def validate_lower_bounds_in_nchoosek_constraints(cls, v, values):
-        """Validate the lower bound as well if the chosen number of allowed features is continuous.
-
-        Args:
-            v (List[Constraint]): List of all constraints defined for the domain
-            values (List[Input]): _description_
-
-        Returns:
-            List[Constraint]: List of constraints defined for the domain
-        """
-        # gather continuous inputs in dictionary
-        continuous_inputs_dict = {}
-        for f in values["inputs"]:
-            if type(f) is ContinuousInput:
-                continuous_inputs_dict[f.key] = f
-
-        # check if unfixed continuous features appearing in NChooseK constraints have lower bound of 0
-        for c in v:
-            if isinstance(c, NChooseKConstraint):
-                for f in c.features:
-                    assert f in continuous_inputs_dict, f"{f} must be continuous."
-                    assert (
-                        continuous_inputs_dict[f].lower_bound == 0
-                    ), f"lower bound of {f} must be 0 for NChooseK constraint."
-        return v
-
     def get_feature_reps_df(self) -> pd.DataFrame:
         """Returns a pandas dataframe describing the features contained in the optimization domain."""
         df = pd.DataFrame(
