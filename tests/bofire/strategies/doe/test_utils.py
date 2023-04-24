@@ -853,7 +853,3 @@ def test_nchoosek_constraints_as_bounds():
     # assert len(bounds) == 20
     # for i in range(20):
     #     assert _bounds[i] == bounds[i]
-
-
-if __name__ == "__main__":
-    smart_round_test()
