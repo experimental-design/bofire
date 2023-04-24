@@ -36,9 +36,24 @@ from bofire.strategies.doe.utils import (
 def smart_round_test():
     candidates = pd.DataFrame([[0.00001, 0.1, 9.999999], [0.9999997, 0.567, 9.99991]])
     rounded_candidates = smart_round(candidates=candidates)
-    assert rounded_candidates == pd.DataFrame(
+    rounded_candidates_expected = pd.DataFrame(
         [[0.00, 0.10, 10.00], [1.00, 0.57, 10.00]]
     )
+
+    for row in rounded_candidates.to_numpy():
+        assert any(
+            [
+                np.allclose(row, row_, atol=1e-8)
+                for row_ in rounded_candidates_expected.to_numpy()
+            ]
+        )
+    for row in rounded_candidates_expected.to_numpy():
+        assert any(
+            [
+                np.allclose(row, row_, atol=1e-8)
+                for row_ in rounded_candidates.to_numpy()
+            ]
+        )
 
 
 def get_formula_from_string_recursion_limit():
