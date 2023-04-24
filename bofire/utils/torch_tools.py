@@ -188,7 +188,7 @@ def get_output_constraints(
     for idx, feat in enumerate(output_features.get()):
         if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
             iconstraints, ietas = constrained_objective2botorch(
-                idx, objective=feat.objective
+                idx, objective=feat.objective  # type: ignore
             )
             constraints += iconstraints
             etas += ietas
