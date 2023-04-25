@@ -44,7 +44,6 @@ setup(
     include_package_data=True,
     install_requires=[
         "numpy",
-        "matplotlib",
         "pandas",
         "pydantic>=1.0,<2.0",
         "scipy>=1.7",
@@ -53,7 +52,7 @@ setup(
     extras_require={
         "optimization": [
             "torch>=1.12",
-            "botorch @ git+https://github.com/pytorch/botorch.git#egg=botorch",
+            "botorch>=0.8.4",
             "multiprocess",
             "plotly",
             "formulaic>=0.5.2",
