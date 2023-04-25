@@ -93,4 +93,3 @@ def test_prior(prior, expected_prior):
         if key == "type":
             continue
         assert value == getattr(gprior, key)
-    prior.plot_pdf(lower=-5, upper=5)

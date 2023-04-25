@@ -43,6 +43,7 @@ def plot_objective_plotly(
     else:
         fig = fig1
 
-    fig.update_layout(layout_options)
+    if len(layout_options) > 0:
+        fig.update_layout(layout_options)
 
     return fig

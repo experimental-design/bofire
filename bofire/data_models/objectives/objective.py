@@ -25,16 +25,6 @@ class Objective(BaseModel):
         """
         pass
 
-    def plot_details(self, ax):
-        """
-        Args:
-            ax (matplotlib.axes.Axes): Matplotlib axes object
-
-        Returns:
-            matplotlib.axes.Axes: The object to be plotted
-        """
-        return ax
-
 
 # TODO: should this inherit from Objective?
 class ConstrainedObjective:
