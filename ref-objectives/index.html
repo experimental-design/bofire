@@ -569,13 +569,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.objective.Objective.plot_details" class="md-nav__link">
-    plot_details()
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -719,13 +712,6 @@
           <li class="md-nav__item">
   <a href="#bofire.data_models.objectives.target.TargetObjective.__json_encoder__" class="md-nav__link">
     __json_encoder__()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.target.TargetObjective.plot_details" class="md-nav__link">
-    plot_details()
   </a>
   
 </li>
@@ -1598,16 +1584,6 @@ Objective            (<span title="bofire.data_models.base.BaseModel">BaseModel<
 <span class="sd">            np.ndarray: The desirability of the passed x values</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span>
-
-    <span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Args:</span>
-<span class="sd">            ax (matplotlib.axes.Axes): Matplotlib axes object</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            matplotlib.axes.Axes: The object to be plotted</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">ax</span>
 </code></pre></div>
         </details>
 
@@ -1716,72 +1692,6 @@ Objective            (<span title="bofire.data_models.base.BaseModel">BaseModel<
       <p>partial(func, <em>args, </em>*keywords) - new function with partial application
 of the given arguments and keywords.</p>
 
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.objective.Objective.plot_details" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></code>
-
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ax</code></td>
-        <td><code>matplotlib.axes.Axes</code></td>
-        <td><p>Matplotlib axes object</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>matplotlib.axes.Axes</code></td>
-      <td><p>The object to be plotted</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/objectives/objective.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Args:</span>
-<span class="sd">        ax (matplotlib.axes.Axes): Matplotlib axes object</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        matplotlib.axes.Axes: The object to be plotted</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">ax</span>
-</code></pre></div>
-        </details>
     </div>
 
   </div>
@@ -2591,24 +2501,6 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            ax (matplotlib.axes.Axes): Matplotlib axes object</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            matplotlib.axes.Axes: The object to be plotted</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
-        <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-            <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
-            <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">ax</span>
 </code></pre></div>
         </details>
 
@@ -2737,81 +2629,6 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
       <p>partial(func, <em>args, </em>*keywords) - new function with partial application
 of the given arguments and keywords.</p>
 
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.target.TargetObjective.plot_details" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">)</span></code>
-
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>Plot function highlighting the tolerance area of the objective</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ax</code></td>
-        <td><code>matplotlib.axes.Axes</code></td>
-        <td><p>Matplotlib axes object</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>matplotlib.axes.Axes</code></td>
-      <td><p>The object to be plotted</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/objectives/target.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">plot_details</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Plot function highlighting the tolerance area of the objective</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        ax (matplotlib.axes.Axes): Matplotlib axes object</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        matplotlib.axes.Axes: The object to be plotted</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;black&quot;</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">axvspan</span><span class="p">(</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tolerance</span><span class="p">,</span>
-        <span class="n">color</span><span class="o">=</span><span class="s2">&quot;gray&quot;</span><span class="p">,</span>
-        <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">ax</span>
-</code></pre></div>
-        </details>
     </div>
 
   </div>
