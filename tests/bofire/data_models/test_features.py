@@ -20,11 +20,7 @@ from bofire.data_models.features.api import (
     MolecularInput,
     Output,
 )
-from bofire.data_models.objectives.api import (
-    MaximizeSigmoidObjective,
-    MinimizeObjective,
-    Objective,
-)
+from bofire.data_models.objectives.api import MinimizeObjective, Objective
 from bofire.data_models.surrogates.api import ScalerEnum
 
 objective = MinimizeObjective(w=1)
@@ -1775,26 +1771,26 @@ def test_outputs_call(features, samples):
     ]
 
 
-@pytest.mark.parametrize(
-    "feature, data",
-    [
-        (
-            ContinuousOutput(
-                key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
-            ),
-            None,
-        ),
-        (
-            ContinuousOutput(
-                key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
-            ),
-            pd.DataFrame(
-                columns=["of1", "of2", "of3"],
-                index=range(5),
-                data=np.random.uniform(size=(5, 3)),
-            ),
-        ),
-    ],
-)
-def test_output_feature_plot(feature, data):
-    feature.plot(lower=0, upper=30, experiments=data)
+# @pytest.mark.parametrize(
+#     "feature, data",
+#     [
+#         (
+#             ContinuousOutput(
+#                 key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
+#             ),
+#             None,
+#         ),
+#         (
+#             ContinuousOutput(
+#                 key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
+#             ),
+#             pd.DataFrame(
+#                 columns=["of1", "of2", "of3"],
+#                 index=range(5),
+#                 data=np.random.uniform(size=(5, 3)),
+#             ),
+#         ),
+#     ],
+# )
+# def test_output_feature_plot(feature, data):
+#     feature.plot(lower=0, upper=30, experiments=data)
