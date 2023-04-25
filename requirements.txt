@@ -2,10 +2,9 @@ pydantic
 scipy>=1.7
 pandas
 scikit-learn
-matplotlib
 pytest
 torch>=1.12
-botorch @ git+https://github.com/pytorch/botorch.git#egg=botorch
+botorch>=0.8.4
 multiprocess
 plotly
 formulaic>=0.5.2
