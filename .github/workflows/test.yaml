@@ -18,7 +18,18 @@ jobs:
       - name: Minimal Bofire
         run: pip install "." pytest
       - name: Run domain-only test
-        run: pytest tests/bofire/data_models/test_domain.py
+        run: |
+          pytest tests/bofire/data_models/test_domain.py \
+            tests/bofire/data_models/test_base.py \
+            tests/bofire/data_models/test_constraint_fulfillment.py \
+            tests/bofire/data_models/test_constrints.py \
+            tests/bofire/data_models/test_domain_validators.py \
+            tests/bofire/data_models/test_features.py \
+            tests/bofire/data_models/test_filters.py \
+            tests/bofire/data_models/test_nchoosek_combinatorics.py \
+            tests/bofire/data_models/test_numeric.py \
+            tests/bofire/data_models/test_unions.py \
+            tests/bofire/data_models/test_util.py
 
   testing:
     runs-on: ubuntu-latest
