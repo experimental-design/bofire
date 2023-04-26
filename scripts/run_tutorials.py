@@ -11,7 +11,7 @@ import pandas as pd
 
 
 def run_script(
-    tutorial: Path, timeout_minutes: int = 10, env: Optional[Dict[str, str]] = None
+    tutorial: Path, timeout_minutes: int = 1, env: Optional[Dict[str, str]] = None
 ):
     utils_path = {"PYTHONPATH": str(tutorial.parent)}
     if env is not None:
@@ -63,7 +63,10 @@ def run_tutorials(
         t1 = time.time()
         run_out = run_script(tutorial)
         elapsed_time = time.time() - t1
-        print(run_out.stdout)
+        print(50*'#', tutorial)
+        print(f'time elapsed:{elapsed_time:.2f}')
+        print(f'statuscode: {run_out.returncode}')
+        # print(run_out.stdout)
 
         if run_out.returncode != 0:
             num_errors += 1
@@ -74,8 +77,9 @@ def run_tutorials(
                 f"Running tutorial {tutorial.name} took " f"{elapsed_time:.2f} seconds."
             )
             df.loc[tutorial.name, "ran_successfully"] = True
-
-    # delete temporal notebook
+        
+        
+    # delete temporary test notebook file
     os.remove("temp.ipynb")
 
     if num_errors > 0:
@@ -85,14 +89,21 @@ def run_tutorials(
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run the tutorials.")
+    parser = argparse.ArgumentParser(description="Runs tutorials.")
 
     parser.add_argument(
         "-n",
         "--name",
-        help="Run a specific tutorial by name. The name should include the "
-        ".ipynb extension. If the tutorial is on the ignore list, you still need "
-        "to specify --include-ignored.",
+        help="Run a specific tutorial by name.",
+    )
+    parser.add_argument(
+        '-l',
+        '--long',
+
+    )
+
+    parser.add_argument(
+        "-p", "--path", metavar="path", required=False, help="bofire repo directory."
     )
     args = parser.parse_args()
     run_tutorials(
