@@ -2,6 +2,8 @@ import os.path
 
 from setuptools import find_packages, setup
 
+sklearn_dependency = "scikit-learn>=1.0.0"
+
 
 def get_version():
     here = os.path.abspath(os.path.dirname(__file__))
@@ -44,21 +46,21 @@ setup(
     include_package_data=True,
     install_requires=[
         "numpy",
-        "matplotlib",
         "pandas",
         "pydantic>=1.0,<2.0",
         "scipy>=1.7",
-        "scikit-learn",
     ],
     extras_require={
         "optimization": [
             "torch>=1.12",
-            "botorch @ git+https://github.com/pytorch/botorch.git#egg=botorch",
+            "botorch>=0.8.4",
             "multiprocess",
             "plotly",
             "formulaic>=0.5.2",
+            "cloudpickle>=2.0.0",
+            sklearn_dependency,
         ],
-        "cheminfo": ["rdkit"],
+        "cheminfo": ["rdkit", sklearn_dependency],
         "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov", "papermill"],
         "docs": [
             "mkdocs",

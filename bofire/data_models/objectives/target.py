@@ -76,21 +76,3 @@ class TargetObjective(Objective, ConstrainedObjective):
                 )
             )
         )
-
-    def plot_details(self, ax):
-        """Plot function highlighting the tolerance area of the objective
-
-        Args:
-            ax (matplotlib.axes.Axes): Matplotlib axes object
-
-        Returns:
-            matplotlib.axes.Axes: The object to be plotted
-        """
-        ax.axvline(self.target_value, color="black")
-        ax.axvspan(
-            self.target_value - self.tolerance,
-            self.target_value + self.tolerance,
-            color="gray",
-            alpha=0.5,
-        )
-        return ax

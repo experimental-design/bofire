@@ -1,6 +1,5 @@
-from typing import ClassVar, Dict, Literal, Optional, Tuple
+from typing import ClassVar, Literal, Optional, Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from pydantic import Field, root_validator
@@ -113,56 +112,6 @@ class ContinuousOutput(Output):
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
-
-    def plot(
-        self,
-        lower: float,
-        upper: float,
-        experiments: Optional[pd.DataFrame] = None,
-        plot_details: bool = True,
-        line_options: Optional[Dict] = None,
-        scatter_options: Optional[Dict] = None,
-        label_options: Optional[Dict] = None,
-        title_options: Optional[Dict] = None,
-    ):
-        """Plot the assigned objective.
-
-        Args:
-            lower (float): lower bound for the plot
-            upper (float): upper bound for the plot
-            experiments (Optional[pd.DataFrame], optional): If provided, scatter also the historical data in the plot. Defaults to None.
-        """
-        if self.objective is None:
-            raise ValueError(
-                f"No objective assigned for ContinuousOutputFeauture with key {self.key}."
-            )
-
-        line_options = line_options or {}
-        scatter_options = scatter_options or {}
-        label_options = label_options or {}
-        title_options = title_options or {}
-
-        line_options["color"] = line_options.get("color", "black")
-        scatter_options["color"] = scatter_options.get("color", "red")
-
-        x = pd.Series(np.linspace(lower, upper, 5000))
-        reward = self.objective.__call__(x)
-        fig, ax = plt.subplots()
-        ax.plot(x, reward, **line_options)
-        # TODO: validate dataframe
-        if experiments is not None:
-            x_data = experiments.loc[experiments[self.key].notna(), self.key].values
-            ax.scatter(
-                x_data,  # type: ignore
-                self.objective.__call__(x_data),  # type: ignore
-                **scatter_options,
-            )
-        ax.set_title("Objective %s" % self.key, **title_options)
-        ax.set_ylabel("Objective", **label_options)
-        ax.set_xlabel(self.key, **label_options)
-        if plot_details:
-            ax = self.objective.plot_details(ax=ax)
-        return fig, ax
 
     def __str__(self) -> str:
         return "ContinuousOutputFeature"
