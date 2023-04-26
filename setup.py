@@ -61,7 +61,7 @@ setup(
             sklearn_dependency,
         ],
         "cheminfo": ["rdkit", sklearn_dependency],
-        "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov", "papermill", "ipython"],
+        "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov", "papermill", "jupyter"],
         "docs": [
             "mkdocs",
             "mkdocs-material",
