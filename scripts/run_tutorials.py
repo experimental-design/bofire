@@ -11,7 +11,7 @@ import pandas as pd
 
 
 def run_script(
-    tutorial: Path, timeout_minutes: int = 1, env: Optional[Dict[str, str]] = None
+    tutorial: Path, timeout_minutes: int = 5, env: Optional[Dict[str, str]] = None
 ):
     utils_path = {"PYTHONPATH": str(tutorial.parent)}
     if env is not None:
@@ -20,7 +20,7 @@ def run_script(
         env = {**os.environ, **utils_path}
 
     run_out = subprocess.run(
-        ["papermill", tutorial, "temp.ipynb"],  # , "|"
+        ["papermill", str(tutorial.absolute()) , "temp.ipynb"],  # , "|"
         capture_output=True,
         text=True,
         env=env,
