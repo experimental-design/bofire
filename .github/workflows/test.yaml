@@ -16,7 +16,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Minimal Bofire
-        run: pip install "."
+        run: pip install "." pytest
       - name: Run domain-only test
         run: pytest tests/bofire/data_models/test_domain.py
       - name: Uninstall minimal Bofire
