@@ -2,6 +2,8 @@ import os.path
 
 from setuptools import find_packages, setup
 
+sklearn_dependency = "scikit-learn>=1.0.0"
+
 
 def get_version():
     here = os.path.abspath(os.path.dirname(__file__))
@@ -47,7 +49,6 @@ setup(
         "pandas",
         "pydantic>=1.0,<2.0",
         "scipy>=1.7",
-        "scikit-learn",
     ],
     extras_require={
         "optimization": [
@@ -56,8 +57,9 @@ setup(
             "multiprocess",
             "plotly",
             "formulaic>=0.5.2",
+            sklearn_dependency,
         ],
-        "cheminfo": ["rdkit"],
+        "cheminfo": ["rdkit", sklearn_dependency],
         "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov"],
         "docs": [
             "mkdocs",

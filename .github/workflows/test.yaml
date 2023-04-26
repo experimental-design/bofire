@@ -15,6 +15,12 @@ jobs:
       - uses: actions/setup-python@v2
         with:
           python-version: 3.9
+      - name: Minimal Bofire
+        run: pip install "."
+      - Name: Run domain-only test
+        run: pytest tests/bofire/data_models/test_domain.py
+      - Name: Uninstall Bofire
+        run: pip uninstall . -y
       - name: Install Bofire
         run: pip install ".[optimization,tests,cheminfo]"
       - name: Install ipopt
