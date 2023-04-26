@@ -57,6 +57,7 @@ setup(
             "multiprocess",
             "plotly",
             "formulaic>=0.5.2",
+            "cloudpickle>=2.0.0",
             sklearn_dependency,
         ],
         "cheminfo": ["rdkit", sklearn_dependency],
