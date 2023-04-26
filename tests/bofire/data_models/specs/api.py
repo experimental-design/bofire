@@ -10,7 +10,7 @@ from tests.bofire.data_models.specs.objectives import specs as objectives  # noq
 from tests.bofire.data_models.specs.specs import Spec, Specs  # noqa: F401
 
 try:
-    # in case of the minimal installation these tests are not available
+    # in case of the minimal installation these import are not available
     from tests.bofire.data_models.specs.kernels import specs as kernels  # noqa: F401
     from tests.bofire.data_models.specs.priors import specs as priors  # noqa: F401
     from tests.bofire.data_models.specs.strategies import (  # noqa: F401

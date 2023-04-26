@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  testing:
+  testing_minimal:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,8 +19,14 @@ jobs:
         run: pip install "." pytest
       - name: Run domain-only test
         run: pytest tests/bofire/data_models/test_domain.py
-      - name: Uninstall minimal Bofire
-        run: pip uninstall . -y
+
+  testing:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
       - name: Install Bofire
         run: pip install ".[optimization,tests,cheminfo]"
       - name: Install ipopt
