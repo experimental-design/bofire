@@ -10,7 +10,7 @@ from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 
 
 def get_confounding_matrix(
-    input_features: Inputs,
+    inputs: Inputs,
     design: pd.DataFrame,
     powers: List[int] = [],
     interactions: List[int] = [2],
@@ -20,7 +20,7 @@ def get_confounding_matrix(
     Only takes continuous features into account.
 
     Args:
-        input_features (Inputs): Input features.
+        inputs (Inputs): Input features.
         design (pd.DataFrame): Design matrix.
         powers (List[int], optional): List of powers of the individual factors/features that should be considered.
             Integers has to be larger than 1. Defaults to [].
@@ -30,10 +30,10 @@ def get_confounding_matrix(
     Returns:
         _type_: _description_
     """
-    if len(input_features.get(CategoricalInput)) > 0:
+    if len(inputs.get(CategoricalInput)) > 0:
         warnings.warn("Categorical input features will be ignored.")
 
-    keys = input_features.get_keys(ContinuousInput)
+    keys = inputs.get_keys(ContinuousInput)
     scaler = MinMaxScaler(feature_range=(-1, 1))
     scaled_design = pd.DataFrame(
         data=scaler.fit_transform(design[keys]),

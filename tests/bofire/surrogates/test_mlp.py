@@ -168,8 +168,8 @@ def test_mlp_ensemble_fit(scaler):
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     ens = MLPEnsemble(
-        input_features=bench.domain.input_features,
-        output_features=bench.domain.output_features,
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
         n_estimators=2,
         n_epochs=5,
         scaler=scaler,
@@ -191,7 +191,7 @@ def test_mlp_ensemble_fit(scaler):
 
 @pytest.mark.parametrize("scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE])
 def test_mlp_ensemble_fit_categorical(scaler):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -201,16 +201,16 @@ def test_mlp_ensemble_fit_categorical(scaler):
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
 
     ens = MLPEnsemble(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         n_estimators=2,
         n_epochs=5,
         scaler=ScalerEnum.STANDARDIZE,

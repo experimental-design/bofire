@@ -1,13 +1,16 @@
 import math
+from typing import Optional
 
 import numpy as np
 import pandas as pd
 import torch
+from botorch.test_functions import Hartmann as botorch_hartmann
 from botorch.test_functions.synthetic import Branin as torchBranin
 from pydantic.types import PositiveInt
 
 from bofire.benchmarks.benchmark import Benchmark
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.constraints.api import NChooseKConstraint
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -103,8 +106,8 @@ class Ackley(Benchmark):
         output_feature = ContinuousOutput(key="y", objective=MaximizeObjective(w=1))
 
         self._domain = Domain(
-            input_features=Inputs(features=input_feature_list),
-            output_features=Outputs(features=[output_feature]),
+            inputs=Inputs(features=input_feature_list),
+            outputs=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
@@ -156,16 +159,70 @@ class Ackley(Benchmark):
         )
 
 
+class Hartmann(Benchmark):
+    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None) -> None:
+        super().__init__()
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    NChooseKConstraint(
+                        features=[f"x_{i}" for i in range(dim)],
+                        min_count=0,
+                        max_count=allowed_k,
+                        none_also_valid=True,
+                    )
+                ]
+            )
+            if allowed_k
+            else Constraints(),
+        )
+        self._hartmann = botorch_hartmann(dim=dim)
+
+    def get_optima(self) -> pd.DataFrame:
+        if self.dim != 6:
+            raise ValueError("Only available for dim==6.")
+        if len(self.domain.constraints) > 0:
+            raise ValueError("Not defined for NChooseK use case.")
+        return pd.DataFrame(
+            columns=[f"x_{i}" for i in range(self.dim)] + ["y"],
+            data=[[0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, -3.32237]],
+        )
+
+    @property
+    def dim(self) -> int:
+        return len(self.domain.inputs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "y": self._hartmann(
+                    torch.from_numpy(
+                        candidates[[f"x_{i}" for i in range(self.dim)]].values
+                    )
+                ),
+                "valid_y": [1 for _ in range(len(candidates))],
+            }
+        )
+
+
 class Branin(Benchmark):
     def __init__(self) -> None:
         self._domain = Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key="x_1", bounds=(-5.0, 10)),
                     ContinuousInput(key="x_2", bounds=(0.0, 15.0)),
                 ]
             ),
-            output_features=Outputs(
+            outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
@@ -202,13 +259,13 @@ class Branin30(Benchmark):
 
     def __init__(self) -> None:
         self._domain = Domain(
-            input_features=Inputs(
+            inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i+1:02d}", bounds=(0, 1))
                     for i in range(30)
                 ]
             ),
-            output_features=Outputs(
+            outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
         )
@@ -243,18 +300,18 @@ class Himmelblau(Benchmark):
             ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
         """
         self.use_constraints = use_constraints
-        input_features = []
+        inputs = []
 
-        input_features.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
-        input_features.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
         objective = MinimizeObjective(w=1.0)
         output_feature = ContinuousOutput(key="y", objective=objective)
         if self.use_constraints:
             raise ValueError("Not implemented yet!")
         self._domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=[output_feature]),
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[output_feature]),
         )
 
     def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:

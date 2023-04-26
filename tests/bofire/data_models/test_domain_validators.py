@@ -132,48 +132,47 @@ def generate_invalid_candidates_bounds(domain, row_count: int = 5, error="lower"
     return candidates
 
 
-domain0 = Domain(
-    input_features=[if1, if2, if3],
-    output_features=[of1, of2],
+domain0 = Domain.from_lists(
+    inputs=[if1, if2, if3],
+    outputs=[of1, of2],
     constraints=[],
 )
 
-domain1 = Domain(
-    input_features=[if1, if2],
-    output_features=[of1],
+domain1 = Domain.from_lists(
+    inputs=[if1, if2],
+    outputs=[of1],
     constraints=[],
 )
 
-domain2 = Domain(
-    input_features=[if1, if2, if3],
-    output_features=[of1],
+domain2 = Domain.from_lists(
+    inputs=[if1, if2, if3],
+    outputs=[of1],
     constraints=[],
 )
 
-domain3 = Domain(
-    input_features=[if1, if2],
-    output_features=[of1, of2],
-    constraints=[],
+domain3 = Domain.from_lists(
+    [if1, if2],
+    [of1, of2],
+    [],
 )
 
-domain4 = Domain(
-    input_features=[if1, if2, if3, if4],
-    output_features=[of1, of2],
-    constraints=[],
+domain4 = Domain.from_lists(
+    [if1, if2, if3, if4],
+    [of1, of2],
+    [],
 )
-domain5 = Domain(
-    input_features=[if1, if5],
-    output_features=[of1, of2],
-    constraints=[],
+domain5 = Domain.from_lists(
+    [if1, if5],
+    [of1, of2],
+    [],
 )
-domain6 = Domain(
-    input_features=[if1, if6],
-    output_features=[of1, of2],
-    constraints=[],
+domain6 = Domain.from_lists(
+    [if1, if6],
+    [of1, of2],
 )
-domain7 = Domain(
-    input_features=[if1, if5],
-    output_features=[of1, of2],
+domain7 = Domain.from_lists(
+    [if1, if5],
+    [of1, of2],
     constraints=[
         LinearEqualityConstraint(features=["cont", "if5"], coefficients=[1, 1], rhs=500)
     ],

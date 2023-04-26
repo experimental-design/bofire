@@ -46,18 +46,18 @@ class DTLZ2(Benchmark):
         self.num_objectives = num_objectives
         self.dim = dim
 
-        input_features = []
+        inputs = []
         for i in range(self.dim):
-            input_features.append(ContinuousInput(key="x_%i" % (i), bounds=(0, 1)))
-        output_features = []
+            inputs.append(ContinuousInput(key="x_%i" % (i), bounds=(0, 1)))
+        outputs = []
         self.k = self.dim - self.num_objectives + 1
         for i in range(self.num_objectives):
-            output_features.append(
+            outputs.append(
                 ContinuousOutput(key=f"f_{i}", objective=MinimizeObjective(w=1.0))
             )
         domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=output_features),
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=outputs),
         )
         self.ref_point = {
             feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
@@ -108,13 +108,13 @@ class DTLZ2(Benchmark):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
 
-        col_names = self.domain.output_features.get_keys_by_objective(includes=MinimizeObjective)  # type: ignore
+        col_names = self.domain.outputs.get_keys_by_objective(includes=MinimizeObjective)  # type: ignore
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
+                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
                     includes=MinimizeObjective
                 )
             ]
@@ -184,7 +184,7 @@ class SnarBenchmark(Benchmark):
 
         # Decision variables
         # "residence time in minutes"
-        input_features = [
+        inputs = [
             ContinuousInput(key="tau", bounds=(0.5, 2)),
             # "equivalents of pyrrolidine"
             ContinuousInput(key="equiv_pldn", bounds=(1, 5)),
@@ -195,7 +195,7 @@ class SnarBenchmark(Benchmark):
         ]
         # Objectives
         # "space time yield (kg/m^3/h)"
-        output_features = [
+        outputs = [
             ContinuousOutput(key="sty", objective=MaximizeObjective(w=1.0)),
             # "E-factor"
             ContinuousOutput(
@@ -205,8 +205,8 @@ class SnarBenchmark(Benchmark):
         ]
         self.ref_point = {"e_factor": 10.7, "sty": 2957.0}
         self._domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=output_features),
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=outputs),
         )
 
     @property
@@ -240,7 +240,7 @@ class SnarBenchmark(Benchmark):
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
+                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
                     excludes=None
                 )
             ]
@@ -334,16 +334,16 @@ class ZDT1(Benchmark):
             n_inputs (int, optional): Number of inputs. Defaults to 30.
         """
         self.n_inputs = n_inputs
-        input_features = [
+        inputs = [
             ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(n_inputs)
         ]
-        inputs = Inputs(features=input_features)
-        output_features = [
+        inputs = Inputs(features=inputs)
+        outputs = [
             ContinuousOutput(key=f"y{i+1}", objective=MinimizeObjective(w=1))
             for i in range(2)
         ]
-        outputs = Outputs(features=output_features)
-        self._domain = Domain(input_features=inputs, output_features=outputs)
+        outputs = Outputs(features=outputs)
+        self._domain = Domain(inputs=inputs, outputs=outputs)
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
@@ -396,7 +396,7 @@ class CrossCoupling(Benchmark):
         **kwargs,
     ):
         # "residence time in minutes"
-        input_features = [
+        inputs = [
             CategoricalDescriptorInput(
                 key="catalyst",
                 categories=["tBuXPhos", "tBuBrettPhos", "AlPhos"],
@@ -453,7 +453,7 @@ class CrossCoupling(Benchmark):
         }
 
         # Objectives: yield and cost
-        output_features = [
+        outputs = [
             ContinuousOutput(
                 key="yield",
                 objective=MaximizeObjective(w=1.0, lower_bound=0.0, upper_bound=1.0),
@@ -466,8 +466,8 @@ class CrossCoupling(Benchmark):
         self.ref_point = {"yield": 0.0, "cost": 1.0}
 
         self._domain = Domain(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=output_features),
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=outputs),
         )
 
         data = pd.DataFrame.from_dict(json.loads(ANNILINE_CN_CROSSCOUPLING_EXPERIMENTS))
@@ -476,8 +476,8 @@ class CrossCoupling(Benchmark):
         data["valid_yield"] = 1
 
         data_model = SingleTaskGPSurrogate(
-            input_features=Inputs(features=input_features),
-            output_features=Outputs(features=[output_features[0]]),
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[outputs[0]]),
             input_preprocessing_specs=input_preprocessing_specs,
         )
         ground_truth_yield = surrogates.map(data_model)
@@ -504,7 +504,7 @@ class CrossCoupling(Benchmark):
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.output_features.get_keys_by_objective(  # type: ignore
+                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
                     excludes=None
                 )
             ]

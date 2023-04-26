@@ -3,6 +3,7 @@ from itertools import chain
 
 import pytest
 import torch
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
@@ -22,16 +23,12 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
         surrogates=[
             surrogate_data_models.SingleTaskGPSurrogate(
-                input_features=domains[6].input_features,
-                output_features=Outputs(
-                    features=[domains[6].output_features.get_by_key("of1")]
-                ),
+                inputs=domains[6].inputs,
+                outputs=Outputs(features=[domains[6].outputs.get_by_key("of1")]),
             ),
             surrogate_data_models.SingleTaskGPSurrogate(
-                input_features=domains[6].input_features,
-                output_features=Outputs(
-                    features=[domains[6].output_features.get_by_key("of2")]
-                ),
+                inputs=domains[6].inputs,
+                outputs=Outputs(features=[domains[6].outputs.get_by_key("of2")]),
             ),
         ]
     ),
@@ -43,8 +40,8 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
 # BotorchSurrogates(
 #                models=[
 #                    SingleTaskGPSurrogate(
-#                        input_features=domains[1].input_features,
-#                        output_features=domains[1].output_features,
+#                        inputs=domains[1].inputs,
+#                        outputs=domains[1].outputs,
 #                        input_preprocessing_specs={
 #                            "if5": CategoricalEncodingEnum.ONE_HOT,
 #                            "if6": CategoricalEncodingEnum.ONE_HOT,
@@ -62,16 +59,16 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
             "surrogate_specs": surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
-                        input_features=domains[2].input_features,
-                        output_features=Outputs(
-                            features=[domains[2].output_features.get_by_key("of1")]
+                        inputs=domains[2].inputs,
+                        outputs=Outputs(
+                            features=[domains[2].outputs.get_by_key("of1")]
                         ),
                         constraints=[],
                     ),
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
-                        input_features=domains[2].input_features,
-                        output_features=Outputs(
-                            features=[domains[2].output_features.get_by_key("of2")]
+                        inputs=domains[2].inputs,
+                        outputs=Outputs(
+                            features=[domains[2].outputs.get_by_key("of2")]
                         ),
                         constraints=[],
                     ),
@@ -118,6 +115,11 @@ def test_qparego(num_test_candidates):
     data_model = data_models.QparegoStrategy(domain=benchmark.domain)
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
+    # test get objective
+    objective = my_strategy._get_objective()
+    assert isinstance(objective, GenericMCObjective)
+    acqfs = my_strategy._get_acqfs(2)
+    assert len(acqfs) == 2
     # ask
     candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates
@@ -138,6 +140,9 @@ def test_qparego_constraints(num_test_candidates):
     data_model = data_models.QparegoStrategy(domain=benchmark.domain)
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
+    # test get objective
+    objective = my_strategy._get_objective()
+    assert isinstance(objective, ConstrainedMCObjective)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates
@@ -186,7 +191,7 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
 
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
-    _, names = strategy.domain.input_features._get_transform_info(
+    _, names = strategy.domain.inputs._get_transform_info(
         specs=strategy.surrogate_specs.input_preprocessing_specs
     )
 
@@ -200,25 +205,3 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
         num_candidates,
         len(set(chain(*names.values()))),
     )
-
-
-# def test_qparego_constraints():
-#     benchmark = C2DTLZ2(dim=4)
-#     random_strategy = PolytopeSampler(domain=benchmark.domain)
-#     experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
-#     my_strategy = QparegoStrategy(domain=benchmark.domain)
-#     my_strategy.tell(experiments)
-#     assert isinstance(my_strategy.objective, WeightedMCMultiOutputObjective)
-#     assert isinstance(my_strategy.acqf, qNoisyExpectedHypervolumeImprovement)
-#     assert my_strategy.acqf.eta == torch.tensor(1e-3)
-#     assert len(my_strategy.acqf.constraints) == 1
-#     assert torch.allclose(
-#         my_strategy.acqf.objective.outcomes, torch.tensor([0, 1], dtype=torch.int64)
-#     )
-#     assert torch.allclose(
-#         my_strategy.acqf.objective.weights, torch.tensor([-1, -1], dtype=torch.double)
-#     )
-#     assert torch.allclose(
-#         my_strategy.acqf.ref_point,
-#         torch.tensor([-1.1, -1.1], dtype=torch.double),
-#     )

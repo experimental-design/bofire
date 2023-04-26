@@ -1,5 +1,3 @@
-from typing import Optional
-
 import pandas as pd
 from pydantic.error_wrappers import ValidationError
 from pydantic.types import PositiveInt
@@ -42,13 +40,6 @@ class RandomStrategy(Strategy):
 
     def has_sufficient_experiments(self) -> bool:
         return True
-
-    def _choose_from_pool(
-        self,
-        candidate_pool: pd.DataFrame,
-        candidate_count: Optional[PositiveInt] = None,
-    ) -> pd.DataFrame:
-        return candidate_pool.sample(n=candidate_count)
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         return self.sampler.ask(candidate_count)  # type: ignore

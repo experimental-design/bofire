@@ -2,6 +2,8 @@ import os.path
 
 from setuptools import find_packages, setup
 
+sklearn_dependency = "scikit-learn>=1.0.0"
+
 
 def get_version():
     here = os.path.abspath(os.path.dirname(__file__))
@@ -16,11 +18,6 @@ root_dir = os.path.dirname(__file__)
 with open(os.path.join(root_dir, "README.md"), "r") as f:
     long_description = f.read()
 
-with open(os.path.join(root_dir, "requirements.txt"), "r") as f:
-    stripped_lines = (line.strip() for line in f)
-    install_requires = [
-        line for line in stripped_lines if not line.startswith("#") and len(line) > 0
-    ]
 
 setup(
     name="bofire",
@@ -47,10 +44,24 @@ setup(
     python_requires=">=3.9",
     packages=find_packages(),
     include_package_data=True,
-    install_requires=install_requires,
+    install_requires=[
+        "numpy",
+        "pandas",
+        "pydantic>=1.0,<2.0",
+        "scipy>=1.7",
+    ],
     extras_require={
-        "testing": ["mock", "mopti", "pyright", "pytest", "multiprocess", "pytest-cov"],
-        "cheminfo": ["rdkit"],
+        "optimization": [
+            "torch>=1.12",
+            "botorch>=0.8.4",
+            "multiprocess",
+            "plotly",
+            "formulaic>=0.5.2",
+            "cloudpickle>=2.0.0",
+            sklearn_dependency,
+        ],
+        "cheminfo": ["rdkit", sklearn_dependency],
+        "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov"],
         "docs": [
             "mkdocs",
             "mkdocs-material",

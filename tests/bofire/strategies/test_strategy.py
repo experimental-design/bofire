@@ -91,9 +91,9 @@ c3 = NChooseKConstraint(
 @fixture
 def strategy():
     data_model = dummy.DummyStrategyDataModel(
-        domain=Domain(
-            input_features=[if1, if2],
-            output_features=[of1, of2],
+        domain=Domain.from_lists(
+            inputs=[if1, if2],
+            outputs=[of1, of2],
             constraints=[],
         )
     )
@@ -104,9 +104,9 @@ def strategy():
     "domain",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1],
                 constraints=constraints,
             )
         )
@@ -123,9 +123,9 @@ def test_strategy_constructor(
     "domain",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1],
                 constraints=constraints,
             )
         )
@@ -143,13 +143,13 @@ def test_strategy_init_domain_invalid_constraints(
     "domain",
     [
         (
-            Domain(
-                input_features=input_features,
-                output_features=[of1],
+            Domain.from_lists(
+                inputs=inputs,
+                outputs=[of1],
                 constraints=[],
             )
         )
-        for input_features in [[if3], [if1, if3]]
+        for inputs in [[if3], [if1, if3]]
     ],
 )
 def test_strategy_init_domain_invalid_input(domain: Domain):
@@ -161,13 +161,13 @@ def test_strategy_init_domain_invalid_input(domain: Domain):
     "domain",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=output_features,
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=outputs,
                 constraints=[],
             )
         )
-        for output_features in [[of1, of4], [of4]]
+        for outputs in [[of1, of4], [of4]]
     ],
 )
 def test_strategy_init_domain_invalid_objective(domain: Domain):
@@ -176,18 +176,18 @@ def test_strategy_init_domain_invalid_objective(domain: Domain):
 
 
 def test_strategy_init_domain_noobjective():
-    domain = Domain(
-        input_features=[if1, if2],
-        output_features=[of3],
+    domain = Domain.from_lists(
+        inputs=[if1, if2],
+        outputs=[of3],
         constraints=[],
     )
     with pytest.raises(ValidationError):
         dummy.DummyStrategyDataModel(domain=domain)
 
 
-domain = Domain(
-    input_features=[if1, if2],
-    output_features=[of1, of2],
+domain = Domain.from_lists(
+    inputs=[if1, if2],
+    outputs=[of1, of2],
     constraints=[],
 )
 e1 = generate_experiments(domain, 1)
@@ -200,9 +200,9 @@ e4 = generate_experiments(domain, 4)
     "domain, experiments, replace",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1, of2],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1, of2],
                 constraints=[],
             ),
             experiments,
@@ -226,15 +226,15 @@ def test_strategy_tell_initial(
 
 
 def test_strategy_no_variance():
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key="a",
                 bounds=(0, 1),
             ),
             ContinuousInput(key="b", bounds=(1, 1)),
         ],
-        output_features=[of1],
+        outputs=[of1],
     )
     experiments = domain.inputs.sample(5)
     experiments["of1"] = [1, 2, 3, 4, 5]
@@ -293,6 +293,8 @@ def test_strategy_set_candidates():
     assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
     assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
     assert strategy.num_candidates == 2
+    strategy.reset_candidates()
+    assert strategy.num_candidates == 0
 
 
 def test_strategy_add_candidates():
@@ -319,9 +321,9 @@ def test_strategy_add_candidates():
     "domain, experimentss",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1, of2],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1, of2],
                 constraints=[],
             ),
             experimentss,
@@ -416,41 +418,6 @@ def test_strategy_ask_valid(
         strategy.ask(candidate_count=1)
 
 
-@pytest.mark.parametrize(
-    "domain, experiments, candidate_pool, candidate_count",
-    [
-        [domain, e3, generate_candidates(domain, 3), 2],
-        [domain, e3, generate_candidates(domain, 5), 3],
-    ],
-)
-def test_strategy_ask_valid_candidate_pool(
-    domain, experiments, candidate_pool, candidate_count
-):
-    strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
-    )
-    strategy.tell(experiments)
-    strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
-
-
-@pytest.mark.parametrize(
-    "domain, experiments, candidate_pool, candidate_count",
-    [
-        [domain, e3, generate_candidates(domain, 3), -1],
-        [domain, e3, generate_candidates(domain, 3), 4],
-    ],
-)
-def test_ask_invalid_candidate_count_request_pool(
-    domain, experiments, candidate_pool, candidate_count
-):
-    strategy = dummy.DummyStrategy(
-        data_model=dummy.DummyStrategyDataModel(domain=domain)
-    )
-    strategy.tell(experiments)
-    with pytest.raises((AssertionError, ValueError)):
-        strategy.ask(candidate_count=candidate_count, candidate_pool=candidate_pool)
-
-
 def test_ask_invalid_candidate_count_request():
     strategy = dummy.DummyStrategy(
         data_model=dummy.DummyStrategyDataModel(domain=domain)
@@ -465,9 +432,9 @@ def test_ask_invalid_candidate_count_request():
     "domain, experiments",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1, of2],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1, of2],
                 constraints=[],
             ),
             e,
@@ -493,9 +460,9 @@ def test_predictive_strategy_ask_valid(
 
 
 def test_predictivestrategy_to_candidates():
-    domain = Domain(
-        input_features=[if1, if2],
-        output_features=[of1, of2],
+    domain = Domain.from_lists(
+        inputs=[if1, if2],
+        outputs=[of1, of2],
         constraints=[],
     )
     strategy = dummy.DummyPredictiveStrategy(
@@ -516,9 +483,9 @@ def test_predictive_strategy_ask_invalid():
     """Test that PretictiveStrategy also checks if candidates contain output columns."""
     strategy = dummy.DummyPredictiveStrategy(
         data_model=dummy.DummyPredictiveStrategyDataModel(
-            domain=Domain(
-                input_features=[if1, if2],
-                output_features=[of1, of2],
+            domain=Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1, of2],
                 constraints=[],
             )
         )
@@ -538,9 +505,9 @@ def test_predictive_strategy_ask_invalid():
     "domain, experiments",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1, of2],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1, of2],
                 constraints=[],
             ),
             e,
@@ -570,9 +537,9 @@ def test_predictive_strategy_predict(domain, experiments):
     "domain",
     [
         (
-            Domain(
-                input_features=[if1, if2],
-                output_features=[of1, of2],
+            Domain.from_lists(
+                inputs=[if1, if2],
+                outputs=[of1, of2],
                 constraints=[],
             )
         )
