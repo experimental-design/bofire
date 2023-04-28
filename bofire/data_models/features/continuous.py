@@ -33,14 +33,18 @@ class ContinuousInput(NumericalInput):
 
     @validator("stepsize")
     def validate_step_size(cls, v, values):
+        if v is None:
+            return v
         lower, upper = values["bounds"]
         if lower == upper and v is not None:
             raise ValueError(
                 "Stepsize cannot be provided for a fixed continuous input."
             )
         range = upper - lower
-        if range % v != 0:
-            raise ValueError("Stepsize does not match the provided interval.")
+        if np.arange(lower, upper + v, v)[-1] != upper:
+            raise ValueError(
+                f"Stepsize of {v} does not match the provided interval [{lower},{upper}]."
+            )
         if range // v == 1:
             raise ValueError("Stepsize is too big, only one value allowed.")
         return v

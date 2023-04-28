@@ -99,6 +99,8 @@ def test_continuous_input_round():
     assert_series_equal(values, feature.round(values))
     feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.25)
     assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
+    feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.1)
+    assert_series_equal(pd.Series([1.0, 1.3, 0.5]), feature.round(values))
 
 
 @pytest.mark.parametrize(
