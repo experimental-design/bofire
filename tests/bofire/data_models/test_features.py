@@ -84,6 +84,23 @@ def test_continuous_input_feature_is_fixed(input_feature, expected, expected_val
     assert input_feature.fixed_value() == expected_value
 
 
+def test_continuous_input_invalid_stepsize():
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(1, 1), stepsize=0)
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(0, 5), stepsize=0.3)
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(0, 1), stepsize=1)
+
+
+def test_continuous_input_round():
+    feature = ContinuousInput(key="a", bounds=(0, 5))
+    values = pd.Series([1.0, 1.3, 0.55])
+    assert_series_equal(values, feature.round(values))
+    feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.25)
+    assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
+
+
 @pytest.mark.parametrize(
     "input_feature, expected",
     [
