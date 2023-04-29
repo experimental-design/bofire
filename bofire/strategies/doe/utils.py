@@ -186,7 +186,6 @@ def n_zero_eigvals(
 def constraints_as_scipy_constraints(
     domain: Domain,
     n_experiments: int,
-    tol: float = 1e-3,
     ignore_nchoosek: bool = True,
 ) -> List:
     """Formulates opti constraints as scipy constraints.
@@ -194,7 +193,6 @@ def constraints_as_scipy_constraints(
     Args:
         domain (Domain): Domain whose constraints should be formulated as scipy constraints.
         n_experiments (int): Number of instances of inputs for problem that are evaluated together.
-        tol (float): Tolerance for the computation of the constraint violation. Default value is 1e-3.
         ingore_nchoosek (bool): NChooseK constraints are ignored if set to true. Defaults to True.
 
     Returns:
@@ -209,8 +207,8 @@ def constraints_as_scipy_constraints(
     for c in domain.constraints:
         if isinstance(c, LinearEqualityConstraint):
             # write lower/upper bound as vector
-            lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients) - tol)
-            ub = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients) + tol)
+            lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients))
+            ub = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients))
 
             # write constraint as matrix
             lhs = {
@@ -251,12 +249,12 @@ def constraints_as_scipy_constraints(
 
         elif isinstance(c, NonlinearEqualityConstraint):
             # write upper/lower bound as vector
-            lb = np.zeros(n_experiments) - tol
-            ub = np.zeros(n_experiments) + tol
+            lb = np.zeros(n_experiments)
+            ub = np.zeros(n_experiments)
 
             # define constraint evaluation (and gradient if provided)
             fun = ConstraintWrapper(
-                constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+                constraint=c, domain=domain, n_experiments=n_experiments
             )
 
             if c.jacobian_expression is not None:
@@ -271,7 +269,7 @@ def constraints_as_scipy_constraints(
 
             # define constraint evaluation (and gradient if provided)
             fun = ConstraintWrapper(
-                constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+                constraint=c, domain=domain, n_experiments=n_experiments
             )
 
             if c.jacobian_expression is not None:
@@ -289,7 +287,7 @@ def constraints_as_scipy_constraints(
 
                 # define constraint evaluation (and gradient if provided)
                 fun = ConstraintWrapper(
-                    constraint=c, domain=domain, n_experiments=n_experiments, tol=tol
+                    constraint=c, domain=domain, n_experiments=n_experiments
                 )
 
                 constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
@@ -304,20 +302,14 @@ class ConstraintWrapper:
     """Wrapper for nonlinear constraints."""
 
     def __init__(
-        self,
-        constraint: NonlinearConstraint,
-        domain: Domain,
-        n_experiments: int = 0,
-        tol: float = 1e-3,
+        self, constraint: NonlinearConstraint, domain: Domain, n_experiments: int = 0
     ) -> None:
         """
         Args:
             constraint (Constraint): constraint to be called
             domain (Domain): Domain the constraint belongs to
-            tol (float): tolerance for constraint violation. Default value is 1e-3.
         """
         self.constraint = constraint
-        self.tol = tol
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
@@ -333,7 +325,7 @@ class ConstraintWrapper:
         """call constraint with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
         violation = self.constraint(x).to_numpy()
-        violation[np.abs(violation) < self.tol] = 0
+        violation[np.abs(violation) < 0] = 0
         return violation  # type: ignore
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
