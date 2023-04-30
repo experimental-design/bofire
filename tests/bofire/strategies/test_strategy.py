@@ -227,14 +227,14 @@ def test_strategy_tell_initial(
 
 def test_strategy_no_variance():
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key="a",
                 bounds=(0, 1),
             ),
             ContinuousInput(key="b", bounds=(1, 1)),
         ],
-        output_features=[of1],
+        outputs=[of1],
     )
     experiments = domain.inputs.sample(5)
     experiments["of1"] = [1, 2, 3, 4, 5]

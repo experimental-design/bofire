@@ -18,14 +18,14 @@ from bofire.strategies.doe.utils import get_formula_from_string
 def test_Objective_model_jacobian_t():
     # "small" model
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     vars = domain.inputs.get_keys()
@@ -82,14 +82,14 @@ def test_Objective_model_jacobian_t():
 
     # fully cubic model
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(5)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     vars = ["x1", "x2", "x3", "x4", "x5"]
     n_vars = len(vars)
@@ -367,19 +367,20 @@ def test_Objective_model_jacobian_t():
 
 def test_Objective_convert_input_to_model_tensor():
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
     d_optimality = DOptimality(domain=domain, model=model, n_experiments=3)
     x = np.array([1, 0, 0, 0, 2, 0, 0, 0, 3])
+    print(domain.inputs)
     X = d_optimality._convert_input_to_model_tensor(x).detach().numpy()
     assert np.allclose(X, np.array([[1, 1, 0, 0], [1, 0, 2, 0], [1, 0, 0, 3]]))
 
@@ -387,14 +388,14 @@ def test_Objective_convert_input_to_model_tensor():
 def test_DOptimality_instantiation():
     # default jacobian building block
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     model = Formula("x1 + x2 + x3 + x1:x2 + {x3**2}")
@@ -434,14 +435,14 @@ def test_DOptimality_instantiation():
 
     # 5th order model
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     model = Formula("{x1**5} + {x2**5} + {x3**5}")
@@ -468,14 +469,14 @@ def test_DOptimality_evaluate_jacobian():
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(2)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     model = Formula("x1 + x2 - 1")
@@ -605,14 +606,14 @@ def test_DOptimality_evaluate_jacobian():
 
 def test_DOptimality_evaluate():
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -623,14 +624,14 @@ def test_DOptimality_evaluate():
 
 def test_AOptimality_evaluate():
     domain = Domain(
-        input_features=[
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(3)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -642,8 +643,8 @@ def test_AOptimality_evaluate():
 
 def test_AOptimality_evaluate_jacobian():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -663,8 +664,8 @@ def test_AOptimality_evaluate_jacobian():
 
 def test_EOptimality_evaluate():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -686,8 +687,8 @@ def test_EOptimality_evaluate():
 
 def test_EOptimality_evaluate_jacobian():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -711,8 +712,8 @@ def test_EOptimality_evaluate_jacobian():
 
 def test_GOptimality_evaluate():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -727,8 +728,8 @@ def test_GOptimality_evaluate():
 
 def test_GOptimality_evaluate_jacobian():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -744,8 +745,8 @@ def test_GOptimality_evaluate_jacobian():
 
 def test_SpaceFilling_evaluate():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
@@ -758,8 +759,8 @@ def test_SpaceFilling_evaluate():
 
 def test_SpaceFilling_evaluate_jacobian():
     domain = Domain(
-        input_features=[ContinuousInput(key="x1", bounds=(0, 1))],
-        output_features=[ContinuousOutput(key="y")],
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
     )
     model = get_formula_from_string("linear", domain=domain)
 
