@@ -114,6 +114,6 @@ def filter_by_class(
     return [
         d
         for d in data
-        if isinstance(key(d), tuple(includes))
-        and not isinstance(key(d), tuple(excludes))
+        if isinstance(key(d), tuple(includes))  # type: ignore
+        and not isinstance(key(d), tuple(excludes))  # type: ignore
     ]
