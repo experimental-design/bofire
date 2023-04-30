@@ -171,8 +171,7 @@ def find_local_max_ipopt(
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
         X = model_formula.get_model_matrix(design).to_numpy()
-        d = metrics(X, domain, n_samples=1000)
-        print("metrics:", d)
+        print("metrics:", metrics(X))
 
     # check if all points respect the domain and the constraint
     try:
