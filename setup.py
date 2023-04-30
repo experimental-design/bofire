@@ -56,7 +56,7 @@ setup(
             "botorch>=0.8.4",
             "multiprocess",
             "plotly",
-            "formulaic>=0.5.2",
+            "formulaic>=0.6.0",
             "cloudpickle>=2.0.0",
             sklearn_dependency,
         ],
