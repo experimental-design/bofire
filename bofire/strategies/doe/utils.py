@@ -1,5 +1,4 @@
 import sys
-import warnings
 from itertools import combinations
 from typing import List, Optional, Union
 
@@ -347,7 +346,7 @@ class ConstraintWrapper:
         return jacobian
 
 
-def d_optimality(X: np.ndarray, tol=1e-9) -> float:
+def d_optimality(X: np.ndarray, delta=1e-9) -> float:
     """Compute ln(1/|X^T X|) for a model matrix X (smaller is better).
     The covariance of the estimated model parameters for $y = X beta + epsilon $is
     given by $Var(beta) ~ (X^T X)^{-1}$.
@@ -355,100 +354,48 @@ def d_optimality(X: np.ndarray, tol=1e-9) -> float:
     be minimized.
     """
     eigenvalues = np.linalg.eigvalsh(X.T @ X)
-    eigenvalues = eigenvalues[np.abs(eigenvalues) > tol]
+    eigenvalues = eigenvalues[np.abs(eigenvalues) > delta]
     return np.sum(np.log(eigenvalues))
 
 
-def a_optimality(X: np.ndarray, tol=1e-9) -> float:
+def a_optimality(X: np.ndarray, delta=1e-9) -> float:
     """Compute the A-optimality for a model matrix X (smaller is better).
     A-optimality is the sum of variances of the estimated model parameters, which is
     the trace of the covariance matrix $X.T @ X^-1$.
 
     F is symmetric positive definite, hence the trace of (X.T @ X)^-1 is equal to the
-    the sum of inverse eigenvalues
+    the sum of inverse eigenvalues.
     """
     eigenvalues = np.linalg.eigvalsh(X.T @ X)
-    eigenvalues = eigenvalues[np.abs(eigenvalues) > tol]
+    eigenvalues = eigenvalues[np.abs(eigenvalues) > delta]
     return np.sum(1.0 / eigenvalues)  # type: ignore
 
 
-# type: ignore
-def g_efficiency(
-    X: np.ndarray,
-    domain: Domain,
-    delta: float = 1e-9,
-    n_samples: int = int(1e4),
-) -> float:
-    """Compute the G-efficiency for a model matrix X.
-    G-efficiency is proportional to p/(n*d) where p is the number of model terms,
-    n is the number of runs and d is the maximum relative prediction variance over
-    the set of runs.
+def g_optimality(X: np.ndarray, delta: float = 1e-9) -> float:
+    """Compute the G-optimality for a model matrix X (smaller is better).
+    G-optimality is the maximum entry in the diagonal of the hat matrix
+    H = X (X.T X)^-1 X.T which relates to the maximum variance of the predicted values.
     """
-
-    # number of runs and model terms
-    n, p = X.shape
-
-    # take large sample from the design space
-    sampler = PolytopeSampler(data_model=PolytopeSamplerDataModel(domain=domain))
-    Y = sampler.ask(n_samples).to_numpy()
-
-    # variance over set of runs
-    D = Y @ np.linalg.inv(X.T @ X + delta * np.eye(p)) @ Y.T
-    d = np.max(np.diag(D))
-    if d:
-        G_eff = float(100 * p / (n * d))
-    else:
-        G_eff = np.inf
-    return G_eff
+    H = X @ np.linalg.inv(X.T @ X + delta * np.eye(len(X))) @ X.T
+    return np.max(np.diag(H))
 
 
-def metrics(
-    X: np.ndarray,
-    domain: Domain,
-    tol: float = 1e-9,
-    delta: float = 1e-9,
-    n_samples: int = int(1e4),
-) -> pd.Series:
+def metrics(X: np.ndarray, delta: float = 1e-9) -> pd.Series:
     """Returns a series containing D-optimality, A-optimality and G-efficiency
     for a model matrix X
 
     Args:
         X (np.ndarray): model matrix for which the metrics are determined
-        domain (Domain): domain definition containing the constraints of the design space.
-        tol (float): cutoff value for eigenvalues of the information matrix in
-            D- and A- optimality computation. Default value is 1e-9.
-        delta (float): regularization parameter in G-efficiency computation.
-            Default value is 1e-9
-        n_samples (int): number of samples used to determine G-efficiency. Default value is 1e4.
+        delta (float): cutoff value for eigenvalues of the information matrix. Default value is 1e-9.
 
     Returns:
         A pd.Series containing the values for the three metrics.
     """
-
-    # X has to contain numerical values for metrics
-    # thus transform to one-hot-encoded matrix
-    # with properly transformed problem
-    # try to determine G-efficiency
-    try:
-        g_eff = g_efficiency(
-            X,
-            domain,
-            delta,
-            n_samples,
-        )
-
-    except Exception:
-        warnings.warn(
-            "Sampling of points fulfilling this problem's constraints is not implemented. \
-            G-efficiency can't be determined."
-        )
-        g_eff = 0
-
     return pd.Series(
         {
-            "D-optimality": d_optimality(X, tol),
-            "A-optimality": a_optimality(X, tol),
-            "G-efficiency": g_eff,
+            "D-optimality": d_optimality(X, delta),
+            "A-optimality": a_optimality(X, delta),
+            "G-optimality": g_optimality(X, delta),
         }
     )
 
