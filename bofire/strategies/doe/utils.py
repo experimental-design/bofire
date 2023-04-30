@@ -377,7 +377,7 @@ def g_optimality(X: np.ndarray, delta: float = 1e-9) -> float:
     H = X (X.T X)^-1 X.T which relates to the maximum variance of the predicted values.
     """
     H = X @ np.linalg.inv(X.T @ X + delta * np.eye(len(X))) @ X.T
-    return np.max(np.diag(H))
+    return np.max(np.diag(H))  # type: ignore
 
 
 def metrics(X: np.ndarray, delta: float = 1e-9) -> pd.Series:
