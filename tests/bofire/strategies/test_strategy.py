@@ -226,7 +226,7 @@ def test_strategy_tell_initial(
 
 
 def test_strategy_no_variance():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key="a",
