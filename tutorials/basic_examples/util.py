@@ -52,15 +52,15 @@ def calc_Tfact(T):
 
 # this can be used to create a dataframe of experiments including yields
 def create_experiments(domain, nsamples=100, A=25, B=90, candidates=None):
-    Tf = domain.input_features.get_by_key("Temperature")
-    Vf = domain.input_features.get_by_key("Solvent Volume")
-    typef = domain.input_features.get_by_key("Solvent Type")
-    yf = domain.output_features.get_by_key("Yield")
+    Tf = domain.inputs.get_by_key("Temperature")
+    Vf = domain.inputs.get_by_key("Solvent Volume")
+    typef = domain.inputs.get_by_key("Solvent Type")
+    yf = domain.outputs.get_by_key("Yield")
     if candidates is None:
         T = np.random.uniform(low=Tf.lower_bound, high=Tf.upper_bound, size=(nsamples,))
         V = np.random.uniform(low=Vf.lower_bound, high=Vf.upper_bound, size=(nsamples,))
         solvent_types = [
-            domain.input_features.get_by_key("Solvent Type").categories[
+            domain.inputs.get_by_key("Solvent Type").categories[
                 np.random.randint(0, 3)
             ]
             for i in range(nsamples)
