@@ -32,6 +32,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "bounds": (3, 5.3),
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "stepsize": None,
     },
 )
 specs.add_valid(
@@ -42,6 +43,7 @@ specs.add_valid(
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "stepsize": None,
     },
 )
 specs.add_valid(
