@@ -606,6 +606,40 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.categorical.CategoricalOutput" class="md-nav__link">
+    CategoricalOutput
+  </a>
+  
+    <nav class="md-nav" aria-label="CategoricalOutput">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.categorical.CategoricalOutput.__json_encoder__" class="md-nav__link">
+    __json_encoder__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.categorical.CategoricalOutput.to_dict" class="md-nav__link">
+    to_dict()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.categorical.CategoricalOutput.validate_categories_unique" class="md-nav__link">
+    validate_categories_unique()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -3114,6 +3148,247 @@ that can be used in the optimization</p>
 
 
 
+  <div class="doc doc-object doc-class">
+
+
+
+<h3 id="bofire.data_models.features.categorical.CategoricalOutput" class="doc doc-heading">
+        <code>
+CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofire.data_models.features.feature.Output" href="#bofire.data_models.features.feature.Output">Output</a>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalOutput</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalOutput&quot;</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+
+    <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="nb">type</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span> <span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)]],</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_items</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+    <span class="p">]</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_categories_unique</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            categories (List[str]): List of category names</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: when categories have non-unique names</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]: List of the categories</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">categories</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must be unique&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">categories</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;objective&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_objective</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">objective</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;categories&quot;</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Length of objectives and categories do not match.&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="n">objective</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">o</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Objective values has to be smaller equal than 1.&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">o</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Objective values has to be larger equal than zero&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">objective</span>
+
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the catergories and corresponding objective values as dictionary&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">cat</span><span class="p">:</span> <span class="n">obj</span> <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">)}</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.categorical.CategoricalOutput.__json_encoder__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
+of the given arguments and keywords.</p>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.categorical.CategoricalOutput.to_dict" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns the catergories and corresponding objective values as dictionary</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the catergories and corresponding objective values as dictionary&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">cat</span><span class="p">:</span> <span class="n">obj</span> <span class="k">for</span> <span class="n">cat</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">)}</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.categorical.CategoricalOutput.validate_categories_unique" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_categories_unique</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>validates that categories have unique names</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>categories</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of category names</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>when categories have non-unique names</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[str]</code></td>
+      <td><p>List of the categories</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_categories_unique</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        categories (List[str]): List of category names</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: when categories have non-unique names</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: List of the categories</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">categories</span> <span class="o">=</span> <span class="p">[</span><span class="n">name</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must be unique&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">categories</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
 
 
 
@@ -3826,12 +4101,21 @@ ContinuousOutput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousOutput&quot;</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span>
     <span class="n">unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">MaximizeObjective</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
     <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))],</span>
+                <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot;ContinuousOutputFeature&quot;</span>
@@ -3841,6 +4125,8 @@ ContinuousOutput            (<a class="autorefs autorefs-internal" title="bofire
 
 
   <div class="doc doc-children">
+
+
 
 
 
@@ -6843,7 +7129,9 @@ Output            (<a class="autorefs autorefs-internal" title="bofire.data_mode
 <span class="sd">        key(str): Key of the Feature.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyObjective</span><span class="p">]</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+        <span class="k">pass</span>
 </code></pre></div>
         </details>
 
