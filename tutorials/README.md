@@ -17,3 +17,15 @@ The notebooks in this folder demonstrate the usage of bofire.  Below you find a 
 ### Basic Examples
 
 Additionally, the basic functionality such as setting up the reaction domain, defining objectives and running a bayesian optimization loop is shown in a variety of noteboooks by example. 
+
+## Notebook testing
+
+Notebooks should execute fast, once the `SMOKE_TEST` environment variable is present. It'll be set to true during testing a PR. Use this to check wheter it is present:
+
+```python
+SMOKE_TEST = os.environ.get("SMOKE_TEST")
+if SMOKE_TEST:
+    # The entire Notebook should not run longer than 120 seconds. Otherwise an Error is thrown during testing 
+else:
+    # original notebook code can run arbitrarily long
+```
