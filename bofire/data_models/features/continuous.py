@@ -106,12 +106,21 @@ class ContinuousOutput(Output):
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
-    order_id: ClassVar[int] = 6
+    order_id: ClassVar[int] = 7
     unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
+
+    def __call__(self, values: pd.Series) -> pd.Series:
+        if self.objective is None:
+            return pd.Series(
+                data=[np.nan for _ in range(len(values))],
+                index=values.index,
+                name=values.name,
+            )
+        return self.objective(values)  # type: ignore
 
     def __str__(self) -> str:
         return "ContinuousOutputFeature"

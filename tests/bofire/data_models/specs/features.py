@@ -80,3 +80,12 @@ specs.add_valid(
         "unit": random.choice(["%", "area %", None]),
     },
 )
+
+specs.add_valid(
+    features.CategoricalOutput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["a", "b", "c"],
+        "objective": [0.0, 1.0, 0.0],
+    },
+)

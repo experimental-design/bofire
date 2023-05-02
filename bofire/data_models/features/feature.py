@@ -6,7 +6,6 @@ from pydantic import Field
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.objectives.api import AnyObjective
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
 TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
@@ -126,7 +125,9 @@ class Output(Feature):
         key(str): Key of the Feature.
     """
 
-    objective: Optional[AnyObjective]
+    @abstractmethod
+    def __call__(self, values: pd.Series) -> pd.Series:
+        pass
 
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
