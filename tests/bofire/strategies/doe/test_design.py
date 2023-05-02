@@ -449,9 +449,7 @@ def test_find_local_max_ipopt_nonlinear_constraint():
         ],
     )
 
-    result = find_local_max_ipopt(
-        domain, "linear", tol=0, ipopt_options={"maxiter": 100}
-    )
+    result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100})
 
     assert np.allclose(domain.constraints(result), 0, atol=1e-6)
 

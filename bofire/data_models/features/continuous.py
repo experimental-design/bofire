@@ -2,7 +2,7 @@ from typing import ClassVar, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator
+from pydantic import Field, root_validator, validator
 
 from bofire.data_models.features.feature import Output
 from bofire.data_models.features.numerical import NumericalInput
@@ -14,12 +14,14 @@ class ContinuousInput(NumericalInput):
 
     Attributes:
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
+        stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
     bounds: Tuple[float, float]
+    stepsize: Optional[float] = None
 
     @property
     def lower_bound(self) -> float:
@@ -28,6 +30,45 @@ class ContinuousInput(NumericalInput):
     @property
     def upper_bound(self) -> float:
         return self.bounds[1]
+
+    @validator("stepsize")
+    def validate_step_size(cls, v, values):
+        if v is None:
+            return v
+        lower, upper = values["bounds"]
+        if lower == upper and v is not None:
+            raise ValueError(
+                "Stepsize cannot be provided for a fixed continuous input."
+            )
+        range = upper - lower
+        if np.arange(lower, upper + v, v)[-1] != upper:
+            raise ValueError(
+                f"Stepsize of {v} does not match the provided interval [{lower},{upper}]."
+            )
+        if range // v == 1:
+            raise ValueError("Stepsize is too big, only one value allowed.")
+        return v
+
+    def round(self, values: pd.Series) -> pd.Series:
+        """Round values to the stepsize of the feature. If no stepsize is provided return the
+        provided values.
+
+        Args:
+            values (pd.Series): The values that should be rounded.
+
+        Returns:
+            pd.Series: The rounded values
+        """
+        if self.stepsize is None:
+            return values
+        self.validate_candidental(values=values)
+        allowed_values = np.arange(
+            self.lower_bound, self.upper_bound + self.stepsize, self.stepsize
+        )
+        idx = abs(values.values.reshape([3, 1]) - allowed_values).argmin(axis=1)  # type: ignore
+        return pd.Series(
+            data=self.lower_bound + idx * self.stepsize, index=values.index
+        )
 
     @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
@@ -106,12 +147,21 @@ class ContinuousOutput(Output):
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
-    order_id: ClassVar[int] = 6
+    order_id: ClassVar[int] = 7
     unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
+
+    def __call__(self, values: pd.Series) -> pd.Series:
+        if self.objective is None:
+            return pd.Series(
+                data=[np.nan for _ in range(len(values))],
+                index=values.index,
+                name=values.name,
+            )
+        return self.objective(values)  # type: ignore
 
     def __str__(self) -> str:
         return "ContinuousOutputFeature"

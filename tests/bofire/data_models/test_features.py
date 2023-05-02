@@ -12,6 +12,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalOutput,
     ContinuousDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
@@ -31,7 +32,9 @@ objective = MinimizeObjective(w=1)
     [
         (spec, n)
         for spec in specs.features.valids
-        if (spec.cls != ContinuousOutput) and (spec.cls != MolecularInput)
+        if (spec.cls != ContinuousOutput)
+        and (spec.cls != MolecularInput)
+        and (spec.cls != CategoricalOutput)
         for n in [1, 5]
     ],
 )
@@ -82,6 +85,25 @@ def test_sample(spec: specs.Spec, n: int):
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
+
+def test_continuous_input_invalid_stepsize():
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(1, 1), stepsize=0)
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(0, 5), stepsize=0.3)
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(0, 1), stepsize=1)
+
+
+def test_continuous_input_round():
+    feature = ContinuousInput(key="a", bounds=(0, 5))
+    values = pd.Series([1.0, 1.3, 0.55])
+    assert_series_equal(values, feature.round(values))
+    feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.25)
+    assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
+    feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.1)
+    assert_series_equal(pd.Series([1.0, 1.3, 0.5]), feature.round(values))
 
 
 @pytest.mark.parametrize(
@@ -1742,6 +1764,14 @@ def test_inputs_get_bounds_fit():
     assert fit_bounds[1][-2] == 1
 
 
+mixed_data = pd.DataFrame(
+    columns=["of1", "of2", "of3"],
+    index=range(5),
+    data=np.random.uniform(size=(5, 3)),
+)
+mixed_data["of4"] = ["a", "a", "b", "b", "a"]
+
+
 @pytest.mark.parametrize(
     "features, samples",
     [
@@ -1761,11 +1791,40 @@ def test_inputs_get_bounds_fit():
                 data=np.random.uniform(size=(5, 3)),
             ),
         ),
+        (
+            Outputs(
+                features=[
+                    of1,
+                    of2,
+                    of3,
+                    CategoricalOutput(
+                        key="of4", categories=["a", "b"], objective=[1.0, 0.0]
+                    ),
+                ]
+            ),
+            mixed_data,
+        ),
     ],
 )
 def test_outputs_call(features, samples):
     o = features(samples)
-    assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
+    assert o.shape == (
+        len(samples),
+        len(features.get_keys_by_objective(Objective))
+        + len(features.get_keys(CategoricalOutput)),
+    )
     assert list(o.columns) == [
-        f"{key}_des" for key in features.get_keys_by_objective(Objective)
+        f"{key}_des"
+        for key in features.get_keys_by_objective(Objective)
+        + features.get_keys(CategoricalOutput)
     ]
+
+
+def test_categorical_output():
+    feature = CategoricalOutput(
+        key="a", categories=["alpha", "beta", "gamma"], objective=[1.0, 0.0, 0.1]
+    )
+
+    assert feature.to_dict() == {"alpha": 1.0, "beta": 0.0, "gamma": 0.1}
+    data = pd.Series(data=["alpha", "beta", "beta", "gamma"], name="a")
+    assert_series_equal(feature(data), pd.Series(data=[1.0, 0.0, 0.0, 0.1], name="a"))

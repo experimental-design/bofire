@@ -1,13 +1,14 @@
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import Field, root_validator, validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
     _CAT_SEP,
     Input,
+    Output,
     TAllowedVals,
     TCategoryVals,
     TTransform,
@@ -343,3 +344,49 @@ class CategoricalInput(Input):
             str: Number of categories
         """
         return f"{len(self.categories)} categories"
+
+
+class CategoricalOutput(Output):
+    type: Literal["CategoricalOutput"] = "CategoricalOutput"
+    order_id: ClassVar[int] = 8
+
+    categories: TCategoryVals
+    objective: Annotated[
+        List[Annotated[float, Field(type=float, ge=0, le=1)]], Field(min_items=2)
+    ]
+
+    @validator("categories")
+    def validate_categories_unique(cls, categories):
+        """validates that categories have unique names
+
+        Args:
+            categories (List[str]): List of category names
+
+        Raises:
+            ValueError: when categories have non-unique names
+
+        Returns:
+            List[str]: List of the categories
+        """
+        categories = [name for name in categories]
+        if len(categories) != len(set(categories)):
+            raise ValueError("categories must be unique")
+        return categories
+
+    @validator("objective")
+    def validate_objective(cls, objective, values):
+        if len(objective) != len(values["categories"]):
+            raise ValueError("Length of objectives and categories do not match.")
+        for o in objective:
+            if o > 1:
+                raise ValueError("Objective values has to be smaller equal than 1.")
+            if o < 0:
+                raise ValueError("Objective values has to be larger equal than zero")
+        return objective
+
+    def to_dict(self) -> Dict:
+        """Returns the catergories and corresponding objective values as dictionary"""
+        return {cat: obj for cat, obj in zip(self.categories, self.objective)}
+
+    def __call__(self, values: pd.Series) -> pd.Series:
+        return values.map(self.to_dict()).astype(float)
