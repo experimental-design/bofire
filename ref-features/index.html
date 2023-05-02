@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-domain-util/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.8">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.1.9">
     
     
       
@@ -25,10 +25,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.ded33207.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.85bb2934.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.a0c5b2b5.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.a6bdf11c.min.css">
       
       
 
@@ -637,6 +637,13 @@
           <li class="md-nav__item">
   <a href="#bofire.data_models.features.continuous.ContinuousInput.__str__" class="md-nav__link">
     __str__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.continuous.ContinuousInput.round" class="md-nav__link">
+    round()
   </a>
   
 </li>
@@ -3178,6 +3185,11 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
         <td><code>Tuple[float, float]</code></td>
         <td><p>A tuple that stores the lower and upper bound of the feature.</p></td>
       </tr>
+      <tr>
+        <td><code>stepsize</code></td>
+        <td><code>float</code></td>
+        <td><p>Float indicating the allowed stepsize between lower and upper. Defaults to None.</p></td>
+      </tr>
   </tbody>
 </table>
         <details class="quote">
@@ -3187,12 +3199,14 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.</span>
+<span class="sd">        stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousInput&quot;</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="n">stepsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">lower_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -3201,6 +3215,45 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;stepsize&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_step_size</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">v</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">v</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">lower</span> <span class="o">==</span> <span class="n">upper</span> <span class="ow">and</span> <span class="n">v</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Stepsize cannot be provided for a fixed continuous input.&quot;</span>
+            <span class="p">)</span>
+        <span class="nb">range</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">-</span> <span class="n">lower</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">+</span> <span class="n">v</span><span class="p">,</span> <span class="n">v</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">upper</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Stepsize of </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2"> does not match the provided interval [</span><span class="si">{</span><span class="n">lower</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="n">upper</span><span class="si">}</span><span class="s2">].&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="nb">range</span> <span class="o">//</span> <span class="n">v</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Stepsize is too big, only one value allowed.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v</span>
+
+    <span class="k">def</span> <span class="nf">round</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Round values to the stepsize of the feature. If no stepsize is provided return the</span>
+<span class="sd">        provided values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values (pd.Series): The values that should be rounded.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series: The rounded values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">values</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">allowed_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span>
+        <span class="p">)</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">allowed_values</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">+</span> <span class="n">idx</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span>
+        <span class="p">)</span>
 
     <span class="nd">@root_validator</span><span class="p">(</span><span class="n">pre</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_on_failure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_lower_upper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
@@ -3289,6 +3342,7 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
@@ -3355,6 +3409,85 @@ of the given arguments and keywords.</p>
 <span class="sd">        str: String of a list with lower and upper bound</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="si">}</span><span class="s2">,</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="si">}</span><span class="s2">]&quot;</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.continuous.ContinuousInput.round" class="doc doc-heading">
+<code class="highlight language-python"><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Round values to the stepsize of the feature. If no stepsize is provided return the
+provided values.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.Series</code></td>
+        <td><p>The values that should be rounded.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p>The rounded values</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/continuous.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">round</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Round values to the stepsize of the feature. If no stepsize is provided return the</span>
+<span class="sd">    provided values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        values (pd.Series): The values that should be rounded.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.Series: The rounded values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">values</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">validate_candidental</span><span class="p">(</span><span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+    <span class="n">allowed_values</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span>
+    <span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">-</span> <span class="n">allowed_values</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">+</span> <span class="n">idx</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">stepsize</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span>
+    <span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -3632,6 +3765,7 @@ of the given arguments and keywords.</p>
     </div>
 
   </div>
+
 
 
 
@@ -8150,7 +8284,7 @@ Defaults to False.</p></td>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.208ed371.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.51198bba.min.js"></script>
+      <script src="../assets/javascripts/bundle.fac441b0.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
