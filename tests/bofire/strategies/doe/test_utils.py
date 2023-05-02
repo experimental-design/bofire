@@ -23,7 +23,7 @@ from bofire.strategies.doe.utils import (
     check_nchoosek_constraints_as_bounds,
     constraints_as_scipy_constraints,
     d_optimality,
-    g_efficiency,
+    g_optimality,
     get_formula_from_string,
     metrics,
     n_zero_eigvals,
@@ -260,8 +260,8 @@ def test_constraints_as_scipy_constraints():
         assert len(c.ub) == n_experiments
 
     A = np.array([[1, 1, 1, 0, 0, 0], [0, 0, 0, 1, 1, 1]]) / np.sqrt(3)
-    lb = np.array([1, 1]) / np.sqrt(3) - 0.001
-    ub = np.array([1, 1]) / np.sqrt(3) + 0.001
+    lb = np.array([1, 1]) / np.sqrt(3)
+    ub = np.array([1, 1]) / np.sqrt(3)
     assert np.allclose(constraints[0].A, A)
     assert np.allclose(constraints[0].lb, lb)
     assert np.allclose(constraints[0].ub, ub)
@@ -360,7 +360,7 @@ def test_ConstraintWrapper():
     x = np.array([[1, 1, 1, 1], [0.5, 0.5, 0.5, 0.5], [3, 2, 1, 0]]).flatten()
 
     # linear equality
-    c = ConstraintWrapper(domain.constraints[0], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[0], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
     assert np.allclose(
         c.jacobian(x),
@@ -375,7 +375,7 @@ def test_ConstraintWrapper():
     )
 
     # linear inequality
-    c = ConstraintWrapper(domain.constraints[1], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[1], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([1.5, 0.5, 2.5]))
     assert np.allclose(
         c.jacobian(x),
@@ -390,7 +390,7 @@ def test_ConstraintWrapper():
     )
 
     # nonlinear equality
-    c = ConstraintWrapper(domain.constraints[2], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[2], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([3, 0, 13]))
     assert np.allclose(
         c.jacobian(x),
@@ -404,7 +404,7 @@ def test_ConstraintWrapper():
     )
 
     # nonlinear inequality
-    c = ConstraintWrapper(domain.constraints[3], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[3], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([3, 0, 13]))
     assert np.allclose(
         c.jacobian(x),
@@ -418,7 +418,7 @@ def test_ConstraintWrapper():
     )
 
     # constraint not containing all inputs from domain
-    c = ConstraintWrapper(domain.constraints[4], domain, tol=0, n_experiments=3)
+    c = ConstraintWrapper(domain.constraints[4], domain, n_experiments=3)
     assert np.allclose(c(x), np.array([1, -0.5, 8]))
     assert np.allclose(
         c.jacobian(x),
@@ -480,7 +480,7 @@ def test_a_optimality():
     assert np.allclose(a_optimality(X), np.sum(1 / (np.linalg.eigvalsh(X.T @ X)[1:])))
 
 
-def test_g_efficiency():
+def test_g_optimality():
     # define model matrix and domain: no constraints
     X = np.array(
         [
@@ -490,37 +490,7 @@ def test_g_efficiency():
             [0, 0, 0, 0.1],
         ]
     )
-
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-    )
-    assert np.allclose(g_efficiency(X, domain), 0.333, atol=5e-3)
-
-    # define domain: sampling not implemented
-    # update: now it is implemented
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(
-                features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
-            ),
-            LinearInequalityConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                coefficients=[-1, -1, -1, -1],
-                rhs=-0.95,
-            ),
-            NChooseKConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    # with pytest.raises(Exception):
-    g_efficiency(X, domain, n_samples=1)
+    assert np.allclose(g_optimality(X), 1)
 
 
 def test_metrics():
@@ -534,52 +504,10 @@ def test_metrics():
         ]
     )
 
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.95, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-    )
-
-    np.random.seed(1)
-    d = metrics(X, domain)
-    np.random.seed(1)
-    g_eff = g_efficiency(X, domain)
-    assert d.index[0] == "D-optimality"
-    assert d.index[1] == "A-optimality"
-    assert d.index[2] == "G-efficiency"
-    assert np.allclose(
-        d,
-        np.array([d_optimality(X), a_optimality(X), g_eff]),
-        rtol=0.05,
-    )
-
-    # define domain: sampling not implemented
-    # update: now it is implemented
-    domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(4)],
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            LinearEqualityConstraint(
-                features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
-            ),
-            LinearInequalityConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                coefficients=[-1, -1, -1, -1],
-                rhs=-0.95,
-            ),
-            NChooseKConstraint(
-                features=["x1", "x2", "x3", "x4"],
-                max_count=1,
-                min_count=0,
-                none_also_valid=True,
-            ),
-        ],
-    )
-    # with pytest.warns(UserWarning):
-    d = metrics(X, domain, n_samples=1)
-    assert d.index[0] == "D-optimality"
-    assert d.index[1] == "A-optimality"
-    assert d.index[2] == "G-efficiency"
-    assert np.allclose(d, np.array([d_optimality(X), a_optimality(X), 5.0e01]))
+    m = metrics(X)
+    assert np.allclose(m["A-optimality"], a_optimality(X))
+    assert np.allclose(m["D-optimality"], d_optimality(X))
+    assert np.allclose(m["G-optimality"], g_optimality(X))
 
 
 def test_check_nchoosek_constraints_as_bounds():
