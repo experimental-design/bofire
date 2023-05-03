@@ -37,10 +37,12 @@ def smart_round_test():
     np.random.seed(1)
 
     domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(3)
+        inputs=[
+            ContinuousInput(key=f"x{1}", bounds=(0, 1), stepsize=0.1),
+            ContinuousInput(key=f"x{2}", bounds=(0, 1), stepsize=0.01),
+            ContinuousInput(key=f"x{3}", bounds=(0, 1), stepsize=0.25),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
@@ -68,27 +70,17 @@ def smart_round_test():
     rounded_candidates_expected = pd.DataFrame(
         [
             [0.00, 0.00, 1.00],
-            [0.72, 0.28, 0.00],
-            [0.22, 0.00, 0.78],
-            [0.00, 0.50, 0.05],
+            [0.70, 0.30, 0.00],
+            [0.00, 0.00, 1.00],
+            [0.00, 0.50, 0.50],
             [0.60, 0.40, 0.00],
         ]
     )
 
-    for row in rounded_candidates.to_numpy():
-        assert any(
-            [
-                np.allclose(row, row_, atol=1e-8)
-                for row_ in rounded_candidates_expected.to_numpy()
-            ]
-        )
-    for row in rounded_candidates_expected.to_numpy():
-        assert any(
-            [
-                np.allclose(row, row_, atol=1e-8)
-                for row_ in rounded_candidates.to_numpy()
-            ]
-        )
+    for expected_row, row in zip(
+        rounded_candidates_expected.to_numpy(), rounded_candidates.to_numpy()
+    ):
+        assert np.allclose(row, expected_row, atol=1e-8)
 
 
 def get_formula_from_string_recursion_limit():
@@ -653,7 +645,6 @@ def test_check_nchoosek_constraints_as_bounds():
         ],
     )
     with pytest.raises(ValueError):
-
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # Not allowed: names parameters of two NChooseK overlap
@@ -740,5 +731,5 @@ def test_nchoosek_constraints_as_bounds():
     #     assert _bounds[i] == bounds[i]
 
 
-if __name__ == "__main__":
-    smart_round_test()
+# if __name__ == "__main__":
+#     smart_round_test()

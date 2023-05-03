@@ -1,4 +1,5 @@
 import sys
+import warnings
 from itertools import combinations
 from typing import List, Optional, Union
 
@@ -499,12 +500,25 @@ def smart_round(
     n_experiments, n_vars = candidates.shape
     b = candidates.values.flatten()
     x = cp.Variable(len(b), integer=True)
-    precision_scaling_matrix = np.eye(N=len(b)) * precision
+
+    def _get_scaling_matrix(domain, precision):
+        _step_sizes = []
+        for input in domain.inputs.get(ContinuousInput):
+            if input.stepsize is not None:
+                _step_sizes.append(input.stepsize)
+            else:
+                _step_sizes.append(precision)
+        scaling_matrix_diagonal = np.repeat(
+            np.array(_step_sizes).reshape(-1, 1),
+            n_experiments,
+            axis=1,
+        ).T
+        return np.eye(len(b)) * scaling_matrix_diagonal.flatten()
 
     def _to_cp_constraint(x, constraint):
         if isinstance(constraint, boLinearConstraint):
             _coef_dict = {}
-            for feature in domain.input_features:
+            for feature in domain.inputs:
                 _coef_dict[feature.key] = 0
             for coef, feature in zip(constraint.coefficients, constraint.features):
                 _coef_dict[feature] = coef
@@ -541,6 +555,7 @@ def smart_round(
         _constraints.append(x <= np.array(upper))
         return _constraints
 
+    precision_scaling_matrix = _get_scaling_matrix(domain, precision)
     constraints = standardize_constraints(domain.constraints, b, "SLSQP")
     objective = cp.Minimize(cp.sum_squares(precision_scaling_matrix @ x - b))
 
@@ -557,5 +572,7 @@ def smart_round(
 
     # TODO Warning if rounding changes candidates strongly
 
-    candidates_rounded = (x.value * precision).reshape(candidates.values.shape)
+    candidates_rounded = (precision_scaling_matrix @ x.value).reshape(
+        candidates.values.shape
+    )
     return pd.DataFrame(candidates_rounded, columns=candidates.columns)
