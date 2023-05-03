@@ -1,0 +1,10 @@
+from enum import Enum
+
+
+class OptimalityCriterionEnum(Enum):
+    D_OPTIMALITY = "D_OPTIMALITY"
+    E_OPTIMALITY = "E_OPTIMALITY"
+    A_OPTIMALITY = "A_OPTIMALITY"
+    G_OPTIMALITY = "G_OPTIMALITY"
+    K_OPTIMALITY = "K_OPTIMALITY"
+    SPACE_FILLING = "SPACE_FILLING"

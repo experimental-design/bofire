@@ -34,16 +34,14 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        scaler = get_scaler(
-            self.input_features, self.input_preprocessing_specs, self.scaler, X
-        )
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values
         ).to(**tkwargs)
 
-        features2idx, _ = self.input_features._get_transform_info(
+        features2idx, _ = self.inputs._get_transform_info(
             self.input_preprocessing_specs
         )
         non_numerical_features = [
@@ -53,7 +51,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         ]
 
         ord_dims = []
-        for feat in self.input_features.get():
+        for feat in self.inputs.get():
             if feat.key not in non_numerical_features:
                 ord_dims += features2idx[feat.key]
 

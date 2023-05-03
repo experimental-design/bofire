@@ -61,7 +61,7 @@ of2 = ContinuousOutput(
 )
 
 VALID_BOTORCH_QEHVI_STRATEGY_SPEC = {
-    "domain": Domain(input_features=[if1, if2, if3], output_features=[of1, of2]),
+    "domain": Domain.from_lists(inputs=[if1, if2, if3], outputs=[of1, of2]),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
@@ -220,7 +220,7 @@ def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
 
     X_train, X_pending = strategy.get_acqf_input_tensors()
 
-    _, names = strategy.domain.input_features._get_transform_info(
+    _, names = strategy.domain.inputs._get_transform_info(
         specs=strategy.surrogate_specs.input_preprocessing_specs
     )
 

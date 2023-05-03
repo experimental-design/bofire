@@ -40,29 +40,29 @@ class BotorchSurrogates(ABC):
                 model.fit(experiments)
 
     @property
-    def output_features(self) -> Outputs:
+    def outputs(self) -> Outputs:
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.output_features.get() for model in self.surrogates]  # type: ignore
+                    [model.outputs.get() for model in self.surrogates]  # type: ignore
                 )
             )
         )
 
     # TODO: is this really neede here, code duplication with functional model
-    def _check_compability(self, input_features: Inputs, output_features: Outputs):
-        used_output_feature_keys = self.output_features.get_keys()
-        if sorted(used_output_feature_keys) != sorted(output_features.get_keys()):
+    def _check_compability(self, inputs: Inputs, outputs: Outputs):
+        used_output_feature_keys = self.outputs.get_keys()
+        if sorted(used_output_feature_keys) != sorted(outputs.get_keys()):
             raise ValueError("Output features do not match.")
         used_feature_keys = []
         for i, model in enumerate(self.surrogates):
-            if len(model.input_features) > len(input_features):
+            if len(model.inputs) > len(inputs):
                 raise ValueError(
                     f"Model with index {i} has more features than acceptable."
                 )
-            for feat in model.input_features:
+            for feat in model.inputs:
                 try:
-                    other_feat = input_features.get_by_key(feat.key)
+                    other_feat = inputs.get_by_key(feat.key)
                 except KeyError:
                     raise ValueError(f"Feature {feat.key} not found.")
                 # now compare the features
@@ -73,28 +73,22 @@ class BotorchSurrogates(ABC):
                     raise ValueError(f"Features with key {feat.key} are incompatible.")
                 if feat.key not in used_feature_keys:
                     used_feature_keys.append(feat.key)
-        if len(used_feature_keys) != len(input_features):
+        if len(used_feature_keys) != len(inputs):
             raise ValueError("Unused features are present.")
 
-    def compatibilize(
-        self, input_features: Inputs, output_features: Outputs
-    ) -> ModelList:
+    def compatibilize(self, inputs: Inputs, outputs: Outputs) -> ModelList:
         # TODO: add sync option
         # check if models are compatible to provided inputs and outputs
         # of the optimization domain
-        self._check_compability(
-            input_features=input_features, output_features=output_features
-        )
-        features2idx, _ = input_features._get_transform_info(
-            self.input_preprocessing_specs
-        )
+        self._check_compability(inputs=inputs, outputs=outputs)
+        features2idx, _ = inputs._get_transform_info(self.input_preprocessing_specs)
         #
         all_gp = True
         botorch_models = []
-        # we sort the models by sorting them with their occurence in output_features
-        for output_feature_key in output_features.get_keys():
+        # we sort the models by sorting them with their occurence in outputs
+        for output_feature_key in outputs.get_keys():
             # get the corresponding model
-            model = {model.output_features[0].key: model for model in self.surrogates}[
+            model = {model.outputs[0].key: model for model in self.surrogates}[
                 output_feature_key
             ]
             if model.model is None:
@@ -102,12 +96,12 @@ class BotorchSurrogates(ABC):
                     f"Surrogate for output feature {output_feature_key} not fitted."
                 )
             # in case that inputs are complete we do not need to adjust anything
-            if len(model.input_features) == len(input_features):
+            if len(model.inputs) == len(inputs):
                 botorch_models.append(model.model)
             # in this case we have to care for the indices
-            if len(model.input_features) < len(input_features):
+            if len(model.inputs) < len(inputs):
                 indices = []
-                for key in model.input_features.get_keys():
+                for key in model.inputs.get_keys():
                     indices += features2idx[key]
                 features_filter = FilterFeatures(
                     feature_indices=torch.tensor(indices, dtype=torch.int64),

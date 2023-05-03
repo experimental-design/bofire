@@ -52,23 +52,23 @@ of7 = ContinuousOutput(
 )
 
 valid_domains = [
-    Domain(input_features=[if1, if2], output_features=[of1, of2]),
-    Domain(input_features=[if1, if2], output_features=[of1, of3]),
-    Domain(input_features=[if1, if2], output_features=[of1, of2, of3, of4]),
-    Domain(input_features=[if1, if2], output_features=[of2, of4]),
-    Domain(input_features=[if1, if2], output_features=[of2, of1, of3, of4]),
-    Domain(input_features=[if1, if2], output_features=[of1, of2, of7]),
+    Domain(inputs=[if1, if2], outputs=[of1, of2]),
+    Domain(inputs=[if1, if2], outputs=[of1, of3]),
+    Domain(inputs=[if1, if2], outputs=[of1, of2, of3, of4]),
+    Domain(inputs=[if1, if2], outputs=[of2, of4]),
+    Domain(inputs=[if1, if2], outputs=[of2, of1, of3, of4]),
+    Domain(inputs=[if1, if2], outputs=[of1, of2, of7]),
 ]
 
 valid_constrained_domains = [
-    Domain(input_features=[if1, if2], output_features=[of1, of2, of5]),
-    Domain(input_features=[if1, if2], output_features=[of1, of2, of6]),
-    Domain(input_features=[if1, if2], output_features=[of1, of2, of5, of6]),
+    Domain(inputs=[if1, if2], outputs=[of1, of2, of5]),
+    Domain(inputs=[if1, if2], outputs=[of1, of2, of6]),
+    Domain(inputs=[if1, if2], outputs=[of1, of2, of5, of6]),
 ]
 
 invalid_domains = [
-    Domain(input_features=[if1, if2], output_features=[of1]),
-    Domain(input_features=[if1, if2], output_features=[of1, of5]),
+    Domain(inputs=[if1, if2], outputs=[of1]),
+    Domain(inputs=[if1, if2], outputs=[of1, of5]),
 ]
 
 dfs = [

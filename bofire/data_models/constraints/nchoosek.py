@@ -2,14 +2,13 @@ from typing import List, Literal
 
 import numpy as np
 import pandas as pd
-import torch
 from pydantic import root_validator, validator
 
 from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
 
 
 def narrow_gaussian(x, ell=1e-3):
-    return torch.exp(-0.5 * (x / ell) ** 2)
+    return np.exp(-0.5 * (x / ell) ** 2)
 
 
 class NChooseKConstraint(Constraint):
@@ -62,20 +61,24 @@ class NChooseKConstraint(Constraint):
         Returns:
             pd.Series containing the constraint violation for each experiment (row in experiments argument).
         """
-        indices = torch.tensor(
-            [i for i, name in enumerate(experiments.columns) if name in self.features],
-            dtype=torch.int64,
-        )
-        experiments_tensor = torch.tensor(experiments.to_numpy(), requires_grad=False)
 
-        max_count_violation = torch.zeros(experiments_tensor.shape[0])
-        min_count_violation = torch.zeros(experiments_tensor.shape[0])
+        def relu(x):
+            return np.maximum(0, x)
+
+        indices = np.array(
+            [i for i, name in enumerate(experiments.columns) if name in self.features],
+            dtype=np.int64,
+        )
+        experiments_tensor = np.array(experiments.to_numpy())
+
+        max_count_violation = np.zeros(experiments_tensor.shape[0])
+        min_count_violation = np.zeros(experiments_tensor.shape[0])
 
         if self.max_count != len(self.features):
-            max_count_violation = torch.relu(-1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(dim=-1) + (len(self.features) - self.max_count))  # type: ignore
+            max_count_violation = relu(-1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1) + (len(self.features) - self.max_count))  # type: ignore
 
         if self.min_count > 0:
-            min_count_violation = torch.relu(narrow_gaussian(x=experiments_tensor[..., indices]).sum(dim=-1) - (len(self.features) - self.min_count))  # type: ignore
+            min_count_violation = relu(narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1) - (len(self.features) - self.min_count))  # type: ignore
 
         return pd.Series(max_count_violation + min_count_violation)
 
@@ -122,36 +125,4 @@ class NChooseKConstraint(Constraint):
         return res
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        """Smooth relaxation of NChooseK constraint jacobian by countig the number of zeros in a candidate by a sum of
-        narrow gaussians centered at zero.
-
-        Args:
-            experiments (pd.DataFrame): Data to evaluate the constraint jacobian on.
-
-        Returns:
-            pd.DataFrame containing the constraint violation jacobian for each experiment (row in experiments argument).
-        """
-        indices = torch.tensor(
-            [i for i, name in enumerate(experiments.columns) if name in self.features],
-            dtype=torch.int64,
-        )
-        experiments_tensor = torch.tensor(
-            experiments.to_numpy()[:, indices], requires_grad=True
-        )
-
-        max_count_violation = torch.zeros(experiments_tensor.shape[0])
-        min_count_violation = torch.zeros(experiments_tensor.shape[0])
-
-        if self.max_count != len(self.features):
-            max_count_violation = torch.relu(-1 * narrow_gaussian(x=experiments_tensor).sum(dim=-1) + (len(self.features) - self.max_count))  # type: ignore
-
-        if self.min_count > 0:
-            min_count_violation = torch.relu(narrow_gaussian(x=experiments_tensor).sum(dim=-1) - (len(self.features) - self.min_count))  # type: ignore
-
-        violation = max_count_violation + min_count_violation
-
-        violation.backward(torch.ones(experiments_tensor.shape[0]))
-
-        jacobian = experiments_tensor.grad.detach().numpy()  # type: ignore
-
-        return pd.DataFrame(jacobian, columns=[f"dg/d{name}" for name in self.features])
+        raise NotImplementedError("Jacobian not implemented for NChooseK constraints.")

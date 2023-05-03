@@ -12,8 +12,8 @@ from bofire.data_models.objectives.sigmoid import (
     SigmoidObjective,
 )
 from bofire.data_models.objectives.target import (
-    BotorchConstrainedObjective,
     CloseToTargetObjective,
+    ConstrainedObjective,
     TargetObjective,
 )
 
@@ -21,7 +21,7 @@ AbstractObjective = Union[
     Objective,
     IdentityObjective,
     SigmoidObjective,
-    BotorchConstrainedObjective,
+    ConstrainedObjective,
 ]
 
 AnyConstraintObjective = Union[

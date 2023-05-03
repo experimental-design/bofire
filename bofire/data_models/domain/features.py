@@ -576,7 +576,7 @@ class Outputs(Features):
         """
         desis = pd.concat(
             [
-                feat.objective(experiments[[f"{feat.key}_pred" if predictions else feat.key]])  # type: ignore
+                feat(experiments[f"{feat.key}_pred" if predictions else feat.key])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
             ],
