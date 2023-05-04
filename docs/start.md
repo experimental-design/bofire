@@ -205,8 +205,8 @@ Finally, the domain can be instantiated:
 from bofire.data_models.domain.api import Domain
 
 domain = Domain(
-    input_features=input_features, 
-    output_features=output_features, 
+    inputs=input_features, 
+    outputs=output_features, 
     constraints=constraints
     )
 ```
@@ -217,8 +217,8 @@ Alternatively, a single objective Domain may also be instantiated, for example f
 
 ```python
 domain_single_objective = Domain.from_list(
-    input_features=[x1, x2, x3, x4, x5, x6], 
-    output_features=[y1], 
+    inputs=[x1, x2, x3, x4, x5, x6], 
+    outputs=[y1], 
     constraints=[]
     )
 ```

@@ -11,9 +11,9 @@ import bofire.data_models.domain.api as dm_domain
 import bofire.data_models.features.api as dm_features
 import bofire.data_models.strategies.api as dm_strategies
 
-in1 = dm_features.ContinuousInput(key="in1", lower_bound=0.0, upper_bound=1.0)
-in2 = dm_features.ContinuousInput(key="in2", lower_bound=0.0, upper_bound=2.0)
-in3 = dm_features.ContinuousInput(key="in3", lower_bound=0.0, upper_bound=3.0)
+in1 = dm_features.ContinuousInput(key="in1", bounds=(0.0,1.0))
+in2 = dm_features.ContinuousInput(key="in2", bounds=(0.0,2.0))
+in3 = dm_features.ContinuousInput(key="in3", bounds=(0.0,3.0))
 
 out1 = dm_features.ContinuousOutput(key="out1")
 
