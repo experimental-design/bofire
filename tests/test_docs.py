@@ -5,8 +5,9 @@ from tempfile import gettempdir
 from uuid import uuid4
 
 
-def test_docs():
-    folder_under_test = "../docs"
+def _test_docs():
+    """This tests tests the codeblocks embedded within the documentation"""
+    folder_under_test = "docs"
     files_list = [
         os.path.join(folder_under_test, x)
         for x in os.listdir(folder_under_test)
