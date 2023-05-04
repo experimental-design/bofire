@@ -5,9 +5,11 @@ import os
 import subprocess
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Dict, Optional
 
 import pandas as pd
+
+# This script is based on the corresponding one from botorch: https://github.com/pytorch/botorch/blob/main/scripts/run_tutorials.py
 
 
 def run_script(
@@ -42,10 +44,6 @@ def run_tutorials(
     to a directory.
     """
 
-    print(
-        "WARNING, currently only a single notebook is being tested, since it is the only one reacting to the SMOKE_TEST environment variable by a faster run."
-    )
-
     timeout_minutes = 30 if smoke_test is False else 2
 
     print(f"Running Tutorials, smoke_test_flag = {smoke_test}")
@@ -72,10 +70,10 @@ def run_tutorials(
 
     for tutorial in tutorials:
         print(42 * "#", tutorial)
-        # for now we skip all tutorials but the one for which we have implemented SMOKE_TEST. This will change soon!
-        if str(tutorial).count("Reaction_Optimization_Example.ipynb") == 0:
-            print("Skipping", str(tutorial))
-            continue
+        # # for now we skip all tutorials but the one for which we have implemented SMOKE_TEST. This will change soon!
+        # if str(tutorial).split("/")[-1] not in running_tutorials:
+        #     print("Skipping", str(tutorial))
+        #     continue
         num_runs += 1
         t1 = time.time()
         run_out = run_script(tutorial, env=env, timeout_minutes=timeout_minutes)
@@ -101,8 +99,8 @@ def run_tutorials(
     df.to_csv("notebook_test_stats.csv")
 
     # delete temporary test notebook file
-    if os.path.exists('temp.ipynb'):
-        os.remove('temp.ipynb')
+    if os.path.exists("temp.ipynb"):
+        os.remove("temp.ipynb")
 
     if num_errors > 0:
         raise RuntimeError(
