@@ -47,7 +47,7 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
-        "pydantic>=1.0,<2.0",
+        "pydantic>=1.10.0,<2.0",
         "scipy>=1.7",
     ],
     extras_require={
@@ -61,7 +61,7 @@ setup(
             sklearn_dependency,
         ],
         "cheminfo": ["rdkit", sklearn_dependency],
-        "tests": ["mock", "mopti", "pyright", "pytest", "pytest-cov"],
+        "tests": ["mock", "mopti", "pyright==1.1.305", "pytest", "pytest-cov"],
         "docs": [
             "mkdocs",
             "mkdocs-material",
