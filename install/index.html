@@ -286,9 +286,68 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Install
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         Install
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#domain-and-optimization-algorithms" class="md-nav__link">
+    Domain and Optimization Algorithms
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#design-of-experiments" class="md-nav__link">
+    Design of Experiments
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#just-domain" class="md-nav__link">
+    Just Domain
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cheminformatics" class="md-nav__link">
+    Cheminformatics
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#development-installation" class="md-nav__link">
+    Development Installation
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -510,11 +569,33 @@
 
 
 <h1 id="installation">Installation</h1>
-<p>For the latest stable release install
-<div class="highlight"><pre><span></span><code>pip install bofire
+<p>In Bofire we have several optional depencies.</p>
+<h3 id="domain-and-optimization-algorithms">Domain and Optimization Algorithms</h3>
+<p>To install Bofire with optimization tools you can use
+<div class="highlight"><pre><span></span><code>pip install bofire[optimization]
 </code></pre></div>
-To live at head you can use
-<div class="highlight"><pre><span></span><code>pip install git+https://github.com/experimental-design/bofire.git
+This will also install <a href="https://botorch.org/">Botorch</a> that depends on <a href="https://pytorch.org/">Pytorch</a>.</p>
+<h3 id="design-of-experiments">Design of Experiments</h3>
+<p>BoFire has functionality to create D-optimal experimental designs via the <code>doe</code> module. This module is depends on 
+<a href="https://cyipopt.readthedocs.io/en/stable/">Cyipopt</a>. A comfortable way to install Cyipopt and the dependencies is via
+<div class="highlight"><pre><span></span><code>conda install -c conda-forge cyipopt
+</code></pre></div>
+You have to install Cyipopt manually.</p>
+<h3 id="just-domain">Just Domain</h3>
+<p>If you just want a data structure that represents the domain of an optimization problem you can
+<div class="highlight"><pre><span></span><code>pip install bofire
+</code></pre></div></p>
+<h3 id="cheminformatics">Cheminformatics</h3>
+<p>Some features related to molecules and their representation depend on <a href="https://www.rdkit.org/">Rdkit</a>.
+<div class="highlight"><pre><span></span><code>pip install bofire[optimization,cheminfo]
+</code></pre></div></p>
+<h3 id="development-installation">Development Installation</h3>
+<p>If you want to <a href="CONTRIBUTING.md">contribute</a> to BoFire, you might want to install in editable mode including the test dependencies.
+After cloning the repository via
+<div class="highlight"><pre><span></span><code>git clone https://github.com/experimental-design/bofire.git
+</code></pre></div>
+and cd <code>bofire</code>, you can proceed with
+<div class="highlight"><pre><span></span><code>pip install -e .[optimization,cheminfo,docs,testing]
 </code></pre></div></p>
 
 
