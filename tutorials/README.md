@@ -7,12 +7,17 @@ The notebooks in this folder demonstrate the usage of bofire.  Below you find a 
 | GettingStarted 	| Feature Introduction 	| Cotninuous Inputs<br>Discrete Inputs<br>Categorical Inputs<br>Constraints<br>Strategies 	| The introductory GH Pages code example. 	|
 | basic_examples/Reaction_Optimization_Example.ipynb 	| Optimization 	| Single Objective<br>Continuous Inputs<br>Categorical Inputs<br>Bayesian Optimization 	| An example of how to optmize reaction conditions.  	|
 | basic_examples/Model_Fitting_and_analysis.ipynb 	| Regression Model<br> + Validation 	| SingleTask Gaussian Process<br>Model Cross-Validation<br>Feature Importance<br>Bayesian Optimization 	| A model fitting example. 	|
+| benchmarks/001-Himmelbau.ipynb 	| Singleobjective Optimization<br><br>Benchmark 	| Continuous Inputs<br>SOBO 	| An example of how to use the built-in benchmark functionality	|
 | benchmarks/002-DTLZ2.ipynb 	| Multiobjective Optimization<br><br>Benchmark 	| Continuous Inputs<br>QEHVI<br>Custom Model Setup 	| An example of how to use the built-in benchmark functionality 	|
 | benchmarks/003-CrossCoupling.ipynb 	| Multiobjective Optimization<br><br>Benchmark 	| Continuous Inputs<br>Categorical Inputs<br>Descriptors For Categorical Inputs<br>QPAREGO 	| An example of how to use the built-in benchmark functionality 	|
+| benchmarks/004-Aspen_benchmark.ipynb 	| Multiobjective Optimization<br><br>Benchmark 	| Continuous Inputs<br>Categorical Inputs<br>Aspen<br>QNEHVI 	| An example of how to use the built-in Aspen runner to optimize digital twins	|
+| benchmarks/005-Hartmann_with_nchoosek.ipynb 	| Singleobjective Optimization<br><br>Benchmark 	| Continuous Inputs<br>NChooseK constraints	| An example of how to optimize problems including NChooseK constraints	|
+| benchmarks/006-30dimBranin.ipynb 	| Singleobjective Optimization<br><br>Benchmark 	| Continuous Inputs<br>Fully Bayesian	| An example of how to optimize high-dim problems with fully bayesian GPs.	|
+
 
 ### Getting Started
 
-`GettingStarted.ipynb` contains the python code of the getting started section of the  [GH pages getting started](https://experimental-design.github.io/bofire/start)
+`getting_started.ipynb` contains the python code of the getting started section of the  [GH pages getting started](https://experimental-design.github.io/bofire/start)
 
 ### Basic Examples
 
