@@ -27,5 +27,5 @@ jobs:
       - name: Build docs
         run: |
           ln -s tutorials/getting_started.ipynb docs/getting_started.ipynb
-          ls -l tutorials/*
+          ls -l docs/*
           mkdocs build
