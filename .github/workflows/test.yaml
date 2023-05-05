@@ -46,6 +46,8 @@ jobs:
         run: pip install cyipopt
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
+      - name: Run pip freeze
+        run: pip freeze
 
 
   testing_tutorials:
