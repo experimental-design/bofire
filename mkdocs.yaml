@@ -6,6 +6,7 @@ repo_url: https://github.com/experimental-design/bofire
 nav:
   - index.md
   - Install: install.md
+  - Notebook page: getting_started.ipynb
   - Package Architecture:
     - Data Models vs Functional Components: data_models_functionals.md
   - API Reference:
@@ -45,6 +46,7 @@ watch:
 
 plugins:
   - search
+  - mkdocs-jupyter
   # https://mkdocstrings.github.io/
   - mkdocstrings:
   # https://github.com/jimporter/mike

@@ -1,11 +1,14 @@
 # Introduction
 
 BoFire is a framework to define and solve black-box optimization problems. 
-These problems can arise in a number of closely related fields including experimental design, multiobjective optimization and active learning.
+These problems can arise in a number of closely related fields including experimental design, multi-objective optimization and active learning.
 
 BoFire problem specifications are json serializable for use in RESTful APIs and are to a large extent agnostic to the specific methods and frameworks in which the problems are solved.
 
+You can find code-examples in the Getting Started section of this document, as well as full worked-out examples of code-usage in the /tutorials section of this repository!
+
 ## Experimental design
+
 In the context of experimental design BoFire allows to define a design space
 
 $$
@@ -25,8 +28,9 @@ and a set of equations define additional experimental constraints, e.g.
 * non-linear inequality: $\sum x_i^2 \leq 1$
 * n-choose-k: only $k$ out of $n$ parameters can take non-zero values.
 
-## Multiobjective optimization
-In the context of multiobjective optimization BoFire allows to define a vector-valued optimization problem
+## Multi-objective optimization
+
+In the context of multi-objective optimization BoFire allows to define a vector-valued optimization problem
 
 $$
 \min_{x \in \mathbb{X}} s(y(x))
@@ -38,18 +42,21 @@ where
 * $y = \{y_1, \ldots y_M\}$ are known functions describing your experimental outputs and
 * $s = \{s_1, \ldots s_M\}$ are the objectives to be minimized, e.g. $s_1$ is the identity function if $y_1$ is to be minimized.
 
-Since the objectives are in general conflicting, there is no point $x$ that simulataneously optimizes all objectives.
+Since the objectives are in general conflicting, there is no point $x$ that simultaneously optimizes all objectives.
 Instead the goal is to find the Pareto front of all optimal compromises.
+
 A decision maker can then explore these compromises to get a deep understanding of the problem and make the best informed decision.
 
 ## Bayesian optimization
+
 In the context of Bayesian optimization we want to simultaneously learn the unknown function $y(x)$ (exploration), while focusing the experimental effort on promising regions (exploitation).
-This is done by using the experimental data to fit a probabilistic model $p(y|x, {data})$ that estimates the distribution of posible outcomes for $y$.
+This is done by using the experimental data to fit a probabilistic model $p(y|x, {data})$ that estimates the distribution of possible outcomes for $y$.
 An acquisition function $a$ then formulates the desired trade-off between exploration and exploitation
 
 $$
 \min_{x \in \mathbb{X}} a(s(p_y(x)))
 $$
 
-and the minimizer $x_\mathrm{opt}$ of this acquisition function. determines the next experiment $y(x)$ to run.
-When are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.
+and the minimizer $x_\mathrm{opt}$ of this acquisition function determines the next experiment $y(x)$ to run.
+
+When there are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.

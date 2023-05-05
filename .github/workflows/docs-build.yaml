@@ -25,4 +25,6 @@ jobs:
       - name: Install dependencies
         run: pip install .[optimization,cheminfo,docs]
       - name: Build docs
-        run: mkdocs build
+        run: |
+          ls -l docs/*
+          mkdocs build
