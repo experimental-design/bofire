@@ -24,7 +24,8 @@ jobs:
 
       - name: Install dependencies
         run: pip install .[optimization,cheminfo,docs]
-      - name: Create softlinks for notebooks
-        run: ln -s tutorials/getting_started.ipynb docs/getting_started.ipynb
       - name: Build docs
-        run: mkdocs build
+        run: |
+          ln -s tutorials/getting_started.ipynb docs/getting_started.ipynb
+          ls -l tutorials/*
+          mkdocs build
