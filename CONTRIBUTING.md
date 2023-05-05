@@ -39,7 +39,7 @@ we have pre-commit hooks for Black, Flake8, and Isort configured in the versions
 pip install pre-commit
 pre-commit install
 ```
-in you local project root folder.
+in you local project root folder, if you want to use `pre-commit`.
 
 ## Type checks
 
