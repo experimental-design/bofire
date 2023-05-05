@@ -74,6 +74,7 @@ setup(
         "docs": [
             "mkdocs",
             "mkdocs-material",
+            "mkdocs-jupyter",
             "mkdocstrings>=0.18",
             "mkdocstrings-python-legacy",
             "mike",
