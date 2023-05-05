@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://experimental-design.github.io/bofire/data_models_functionals/">
       
       
-        <link rel="prev" href="../install/">
+        <link rel="prev" href="../getting_started/">
       
       
         <link rel="next" href="../ref-domain/">
@@ -290,6 +290,21 @@
 
   
   
+  
+    <li class="md-nav__item">
+      <a href="../getting_started/" class="md-nav__link">
+        Getting started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
     
   
   
@@ -299,17 +314,17 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
       
       
       
-        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
           Package Architecture
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
-        <label class="md-nav__title" for="__nav_3">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+        <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Package Architecture
         </label>
@@ -358,17 +373,17 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
       
       
       
-        <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_4">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_5">
           <span class="md-nav__icon md-icon"></span>
           API Reference
         </label>
@@ -497,48 +512,48 @@
 
 
 <h1 id="data-models-vs-functional-components">Data Models vs. Functional Components</h1>
-<p>Data models in bofire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</p>
+<p>Data models in BoFire hold static data of an optimization problem. These are input and output features as well as constraints making up the domain. They further include possible optimization objectives, acquisition functions, and kernels.</p>
 <p>All data models in <code>bofire.data_models</code>, are specified as pydantic models and inherit from <code>bofire.data_models.base.BaseModel</code>. These data models can be (de)serialized via <code>.dict()</code> and <code>.json()</code> (provided by pydantic). A json schema of each data model can be obtained using <code>.schema()</code>.</p>
 <p>For surrogates and strategies, all functional parts are located in <code>bofire.surrogates</code> and <code>bofire.strategies</code>. These functionalities include the <code>ask</code> and <code>tell</code> as well as <code>fit</code> and <code>predict</code> methods. All class attributes (used by these method) are also removed from the data models. Each functional entity is initialized using the corresponding data model. As an example, consider the following data model of a <code>RandomStrategy</code>:</p>
-<div class="highlight"><pre><span></span><code>import bofire.data_models.domain.api as dm_domain
-import bofire.data_models.features.api as dm_features
-import bofire.data_models.strategies.api as dm_strategies
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">bofire.data_models.domain.api</span> <span class="k">as</span> <span class="nn">dm_domain</span>
+<span class="kn">import</span> <span class="nn">bofire.data_models.features.api</span> <span class="k">as</span> <span class="nn">dm_features</span>
+<span class="kn">import</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="k">as</span> <span class="nn">dm_strategies</span>
 
-in1 = dm_features.ContinuousInput(key=&quot;in1&quot;, lower_bound=0.0, upper_bound=1.0)
-in2 = dm_features.ContinuousInput(key=&quot;in2&quot;, lower_bound=0.0, upper_bound=2.0)
-in3 = dm_features.ContinuousInput(key=&quot;in3&quot;, lower_bound=0.0, upper_bound=3.0)
+<span class="n">in1</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in1&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">))</span>
+<span class="n">in2</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in2&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">2.0</span><span class="p">))</span>
+<span class="n">in3</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;in3&quot;</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">3.0</span><span class="p">))</span>
 
-out1 = dm_features.ContinuousOutput(key=&quot;out1&quot;)
+<span class="n">out1</span> <span class="o">=</span> <span class="n">dm_features</span><span class="o">.</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;out1&quot;</span><span class="p">)</span>
 
-inputs = dm_domain.Inputs(features=[in1, in2, in3])
-outputs = dm_domain.Outputs(features=[out1])
-constraints = dm_domain.Constraints()
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">dm_domain</span><span class="o">.</span><span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">in1</span><span class="p">,</span> <span class="n">in2</span><span class="p">,</span> <span class="n">in3</span><span class="p">])</span>
+<span class="n">outputs</span> <span class="o">=</span> <span class="n">dm_domain</span><span class="o">.</span><span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">out1</span><span class="p">])</span>
+<span class="n">constraints</span> <span class="o">=</span> <span class="n">dm_domain</span><span class="o">.</span><span class="n">Constraints</span><span class="p">()</span>
 
-domain = dm_domain.Domain(
-    inputs=inputs,
-    outputs=outputs,
-    constraints=constraints,
-)
+<span class="n">domain</span> <span class="o">=</span> <span class="n">dm_domain</span><span class="o">.</span><span class="n">Domain</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">,</span>
+<span class="p">)</span>
 
-data_model = dm_strategies.RandomStrategy(domain=domain)
+<span class="n">data_model</span> <span class="o">=</span> <span class="n">dm_strategies</span><span class="o">.</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">)</span>
 </code></pre></div>
 <p>Such a data model can be (de)serialized as follows:</p>
-<div class="highlight"><pre><span></span><code>import json
-from pydantic import parse_obj_as
-from bofire.data_models.strategies.api import AnyStrategy
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">parse_obj_as</span>
+<span class="kn">from</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="kn">import</span> <span class="n">AnyStrategy</span>
 
-serialized = data_model.json()
-data = json.loads(serialized)
-# alternative: data = data_model.dict()
-data_model_ = parse_obj_as(AnyStrategy, data)
-assert data_model_ == data_model
+<span class="n">serialized</span> <span class="o">=</span> <span class="n">data_model</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">serialized</span><span class="p">)</span>
+<span class="c1"># alternative: data = data_model.dict()</span>
+<span class="n">data_model_</span> <span class="o">=</span> <span class="n">parse_obj_as</span><span class="p">(</span><span class="n">AnyStrategy</span><span class="p">,</span> <span class="n">data</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">data_model_</span> <span class="o">==</span> <span class="n">data_model</span>
 </code></pre></div>
 <p>Using this data model of a strategy, we can create an instance of a (functional) strategy:</p>
-<div class="highlight"><pre><span></span><code>import bofire.strategies.api as strategies
-strategy = strategies.RandomStrategy(data_model=data_model)
+<div class="highlight"><pre><span></span><code><span class="kn">import</span> <span class="nn">bofire.strategies.api</span> <span class="k">as</span> <span class="nn">strategies</span>
+<span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">RandomStrategy</span><span class="p">(</span><span class="n">data_model</span><span class="o">=</span><span class="n">data_model</span><span class="p">)</span>
 </code></pre></div>
 <p>As each strategy data model should be mapped to a specific (functional) strategy, we provide such a mapping:</p>
-<div class="highlight"><pre><span></span><code>strategy = strategies.map(data_model)
+<div class="highlight"><pre><span></span><code><span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">data_model</span><span class="p">)</span>
 </code></pre></div>
 
 

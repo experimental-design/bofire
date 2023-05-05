@@ -301,8 +301,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#multiobjective-optimization" class="md-nav__link">
-    Multiobjective optimization
+  <a href="#multi-objective-optimization" class="md-nav__link">
+    Multi-objective optimization
   </a>
   
 </li>
@@ -344,23 +344,38 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="getting_started/" class="md-nav__link">
+        Getting started
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
     
     <li class="md-nav__item md-nav__item--nested">
       
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
       
       
       
-        <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
           Package Architecture
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_3">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_4">
           <span class="md-nav__icon md-icon"></span>
           Package Architecture
         </label>
@@ -399,17 +414,17 @@
       
       
       
-      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+      <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
       
       
       
-        <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
           API Reference
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_4">
+      <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_5">
           <span class="md-nav__icon md-icon"></span>
           API Reference
         </label>
@@ -539,8 +554,9 @@
 
 <h1 id="introduction">Introduction</h1>
 <p>BoFire is a framework to define and solve black-box optimization problems. 
-These problems can arise in a number of closely related fields including experimental design, multiobjective optimization and active learning.</p>
+These problems can arise in a number of closely related fields including experimental design, multi-objective optimization and active learning.</p>
 <p>BoFire problem specifications are json serializable for use in RESTful APIs and are to a large extent agnostic to the specific methods and frameworks in which the problems are solved.</p>
+<p>You can find code-examples in the Getting Started section of this document, as well as full worked-out examples of code-usage in the /tutorials section of this repository!</p>
 <h2 id="experimental-design">Experimental design</h2>
 <p>In the context of experimental design BoFire allows to define a design space</p>
 <div class="arithmatex">\[
@@ -559,8 +575,8 @@ These problems can arise in a number of closely related fields including experim
 <li>non-linear inequality: <span class="arithmatex">\(\sum x_i^2 \leq 1\)</span></li>
 <li>n-choose-k: only <span class="arithmatex">\(k\)</span> out of <span class="arithmatex">\(n\)</span> parameters can take non-zero values.</li>
 </ul>
-<h2 id="multiobjective-optimization">Multiobjective optimization</h2>
-<p>In the context of multiobjective optimization BoFire allows to define a vector-valued optimization problem</p>
+<h2 id="multi-objective-optimization">Multi-objective optimization</h2>
+<p>In the context of multi-objective optimization BoFire allows to define a vector-valued optimization problem</p>
 <div class="arithmatex">\[
 \min_{x \in \mathbb{X}} s(y(x))
 \]</div>
@@ -570,18 +586,18 @@ These problems can arise in a number of closely related fields including experim
 <li><span class="arithmatex">\(y = \{y_1, \ldots y_M\}\)</span> are known functions describing your experimental outputs and</li>
 <li><span class="arithmatex">\(s = \{s_1, \ldots s_M\}\)</span> are the objectives to be minimized, e.g. <span class="arithmatex">\(s_1\)</span> is the identity function if <span class="arithmatex">\(y_1\)</span> is to be minimized.</li>
 </ul>
-<p>Since the objectives are in general conflicting, there is no point <span class="arithmatex">\(x\)</span> that simulataneously optimizes all objectives.
-Instead the goal is to find the Pareto front of all optimal compromises.
-A decision maker can then explore these compromises to get a deep understanding of the problem and make the best informed decision.</p>
+<p>Since the objectives are in general conflicting, there is no point <span class="arithmatex">\(x\)</span> that simultaneously optimizes all objectives.
+Instead the goal is to find the Pareto front of all optimal compromises.</p>
+<p>A decision maker can then explore these compromises to get a deep understanding of the problem and make the best informed decision.</p>
 <h2 id="bayesian-optimization">Bayesian optimization</h2>
 <p>In the context of Bayesian optimization we want to simultaneously learn the unknown function <span class="arithmatex">\(y(x)\)</span> (exploration), while focusing the experimental effort on promising regions (exploitation).
-This is done by using the experimental data to fit a probabilistic model <span class="arithmatex">\(p(y|x, {data})\)</span> that estimates the distribution of posible outcomes for <span class="arithmatex">\(y\)</span>.
+This is done by using the experimental data to fit a probabilistic model <span class="arithmatex">\(p(y|x, {data})\)</span> that estimates the distribution of possible outcomes for <span class="arithmatex">\(y\)</span>.
 An acquisition function <span class="arithmatex">\(a\)</span> then formulates the desired trade-off between exploration and exploitation</p>
 <div class="arithmatex">\[
 \min_{x \in \mathbb{X}} a(s(p_y(x)))
 \]</div>
-<p>and the minimizer <span class="arithmatex">\(x_\mathrm{opt}\)</span> of this acquisition function. determines the next experiment <span class="arithmatex">\(y(x)\)</span> to run.
-When are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.</p>
+<p>and the minimizer <span class="arithmatex">\(x_\mathrm{opt}\)</span> of this acquisition function determines the next experiment <span class="arithmatex">\(y(x)\)</span> to run.</p>
+<p>When there are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.</p>
 
 
 
