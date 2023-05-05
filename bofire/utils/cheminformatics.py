@@ -2,14 +2,18 @@ import warnings
 from typing import List
 
 import numpy as np
+import pandas as pd
 
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
-    from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
     )
+from sklearn.feature_extraction.text import CountVectorizer
+
+from rdkit import Chem
+from mordred import Calculator, descriptors
 
 # This code is based on GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/data_featuriser/featurisation.py
 
@@ -92,3 +96,35 @@ def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarra
         smiles2mol(smi)
     cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
     return cv.fit_transform(smiles).toarray()
+
+
+def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> pd.DataFrame:
+# def smiles2mordred(smiles: List[str], descriptors_list: List[str], drop_nan: bool = True) -> pd.DataFrame:
+
+    mols = [smiles2mol(smi) for smi in smiles]
+
+    calc = Calculator(descriptors, ignore_3D=True)
+    calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
+
+    descriptors_df = calc.pandas(mols)
+    nan_list = [pd.to_numeric(descriptors_df[col], errors='coerce').isnull().values.any() for col in descriptors_df.columns]
+    if any(nan_list):
+        # if drop_nan:
+        #     nan_row_mask = (~np.isnan(descriptors_df.values.astype(float)).any(axis=1))
+        #     descriptors_df = descriptors_df[nan_row_mask]
+        #     print(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])} for {(np.array(smiles)[~nan_row_mask]).tolist()}. Dropped these molecules')
+        # else:
+        #     raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
+        raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
+
+    return descriptors_df.astype(float)
+
+def smiles2fragments_fingerprints(smiles: List[str]) -> np.ndarray:
+
+    fingerprints = smiles2fingerprints(smiles)
+    fragments = smiles2fragments(smiles)
+
+    return np.hstack((fingerprints, fragments))
+
+if __name__ == '__main__':
+    smiles2mordred(["c1ccccc1", "c1ccccc1Cl", "c1ccccc1C"], ['ABC','ABCGG','SpAbs_A','SpMax_A'])

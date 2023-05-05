@@ -14,6 +14,7 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
 from bofire.data_models.surrogates.mlp import MLPEnsemble
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
@@ -22,6 +23,7 @@ AnyBotorchSurrogate = Union[
     MixedSingleTaskGPSurrogate,
     MLPEnsemble,
     SaasSingleTaskGPSurrogate,
+    TanimotoGPSurrogate,
 ]
 
 

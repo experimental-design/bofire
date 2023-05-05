@@ -7,7 +7,8 @@ from bofire.data_models.kernels.aggregation import (
 )
 from bofire.data_models.kernels.categorical import (
     CategoricalKernel,
-    HammondDistanceKernel,
+    HammingDistanceKernel,
+    TanimotoKernel,
 )
 from bofire.data_models.kernels.continuous import (
     ContinuousKernel,
@@ -29,13 +30,14 @@ AnyContinuousKernel = Union[
     RBFKernel,
 ]
 
-AnyCategoricalKernal = HammondDistanceKernel
+AnyCategoricalKernal = Union[HammingDistanceKernel, TanimotoKernel]
 
 AnyKernel = Union[
     AdditiveKernel,
     MultiplicativeKernel,
     ScaleKernel,
-    HammondDistanceKernel,
+    HammingDistanceKernel,
+    TanimotoKernel,
     LinearKernel,
     MaternKernel,
     RBFKernel,

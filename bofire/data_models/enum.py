@@ -43,3 +43,15 @@ class RegressionMetricsEnum(Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+
+
+class CategoricalMolecularEncodingEnum(Enum):
+    """Enumeration class of implemented categorical encodings
+    Currently, one-hot and ordinal encoding are implemented.
+    """
+
+    FINGERPRINTS = "FINGERPRINTS"
+    FRAGMENTS = "FRAGMENTS"
+    FINGERPRINTS_FRAGMENTS = "FINGERPRINTS_FRAGMENTS"
+    BAG_CHAR = "BAG_CHAR"
+    MOL_DESCRIPTOR = "MOL_DESCRIPTOR"

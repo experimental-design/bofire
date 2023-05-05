@@ -3,7 +3,7 @@ from typing import List, Literal, Optional, Sequence, Union
 import gpytorch
 import torch
 
-from bofire.data_models.kernels.categorical import HammondDistanceKernel
+from bofire.data_models.kernels.categorical import HammingDistanceKernel, TanimotoKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior
@@ -16,7 +16,8 @@ class AdditiveKernel(Kernel):
             RBFKernel,
             MaternKernel,
             LinearKernel,
-            HammondDistanceKernel,
+            HammingDistanceKernel,
+            TanimotoKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
             "ScaleKernel",
@@ -46,7 +47,8 @@ class MultiplicativeKernel(Kernel):
             RBFKernel,
             MaternKernel,
             LinearKernel,
-            HammondDistanceKernel,
+            HammingDistanceKernel,
+            TanimotoKernel,
             AdditiveKernel,
             "MultiplicativeKernel",
             "ScaleKernel",
@@ -74,7 +76,8 @@ class ScaleKernel(Kernel):
         RBFKernel,
         MaternKernel,
         LinearKernel,
-        HammondDistanceKernel,
+        HammingDistanceKernel,
+        TanimotoKernel,
         AdditiveKernel,
         MultiplicativeKernel,
         "ScaleKernel",

@@ -14,7 +14,7 @@ from bofire.data_models.features.feature import (  # noqa: F401
     Output,
     TInputTransformSpecs,
 )
-from bofire.data_models.features.molecular import MolecularInput
+from bofire.data_models.features.molecular import MolecularInput, CategoricalMolecularDescriptorInput
 from bofire.data_models.features.numerical import NumericalInput
 
 AbstractFeature = Union[
@@ -33,6 +33,7 @@ AnyFeature = Union[
     CategoricalDescriptorInput,
     MolecularInput,
     CategoricalOutput,
+    CategoricalMolecularDescriptorInput,
 ]
 
 AnyInput = Union[
@@ -42,6 +43,7 @@ AnyInput = Union[
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     MolecularInput,
+    CategoricalMolecularDescriptorInput,
 ]
 
 AnyOutput = Union[ContinuousOutput, CategoricalOutput]

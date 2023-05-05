@@ -6,7 +6,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernal,
     AnyContinuousKernel,
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
@@ -19,7 +19,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate):
         default_factory=lambda: MaternKernel(ard=True, nu=2.5)
     )
     categorical_kernel: AnyCategoricalKernal = Field(
-        default_factory=lambda: HammondDistanceKernel(ard=True)
+        default_factory=lambda: HammingDistanceKernel(ard=True)
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
