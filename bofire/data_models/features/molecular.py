@@ -21,19 +21,17 @@ class MolecularInput(CategoricalInput):
 
     @validator("smiles")
     def validate_smiles(cls, v, values):
-        """validates the compatability of passed values for the descriptors and the defined categories
+        """validates the compatability of the smiles and the categories
 
         Args:
-            v (List[List[float]]): Nested list with descriptor values
+            v (List[str]): List with SMILES strings
             values (Dict): Dictionary with attributes
 
         Raises:
-            ValueError: when values have different length than categories
-            ValueError: when rows in values have different length than descriptors
-            ValueError: when a descriptor shows no variance in the data
+            ValueError: when smiles have different length than categories
 
         Returns:
-            List[List[float]]: Nested list with descriptor values
+            List[str]: List with SMILES strings
         """
         if len(v) != len(values["categories"]):
             raise ValueError("smiles must have same length as categories")
