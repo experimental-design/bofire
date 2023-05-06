@@ -20,7 +20,7 @@ class MolecularInput(CategoricalInput):
     order: ClassVar[int] = 6
 
     @validator("smiles")
-    def validate_values(cls, v, values):
+    def validate_smiles(cls, v, values):
         """validates the compatability of passed values for the descriptors and the defined categories
 
         Args:
