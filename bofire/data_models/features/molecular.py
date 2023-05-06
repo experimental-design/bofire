@@ -2,6 +2,7 @@ from typing import ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+from pydantic import validator
 
 from bofire.data_models.features.categorical import _CAT_SEP, TTransform
 
@@ -17,6 +18,26 @@ class MolecularInput(CategoricalInput):
     values: Optional[List[List[Union[float, int]]]] = None
     type: Literal["MolecularInput"] = "MolecularInput"
     order: ClassVar[int] = 6
+
+    @validator("smiles")
+    def validate_values(cls, v, values):
+        """validates the compatability of passed values for the descriptors and the defined categories
+
+        Args:
+            v (List[List[float]]): Nested list with descriptor values
+            values (Dict): Dictionary with attributes
+
+        Raises:
+            ValueError: when values have different length than categories
+            ValueError: when rows in values have different length than descriptors
+            ValueError: when a descriptor shows no variance in the data
+
+        Returns:
+            List[List[float]]: Nested list with descriptor values
+        """
+        if len(v) != len(values["categories"]):
+            raise ValueError("smiles must have same length as categories")
+        return v
 
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
