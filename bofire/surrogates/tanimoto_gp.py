@@ -1,18 +1,13 @@
-from typing import Dict, Optional, Union
+from typing import Dict, Optional
 
-import botorch
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
-# from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
-# from gpytorch.models import ExactGP
 
-# from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum, CategoricalMolecularEncodingEnum
+from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import TanimotoGPSurrogate as DataModel
-# from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
@@ -21,7 +16,6 @@ from botorch.models.gp_regression import SingleTaskGP
 from gpytorch.distributions import MultivariateNormal
 from gpytorch.kernels import ScaleKernel
 from gpytorch.likelihoods import GaussianLikelihood
-from gpytorch.means import ConstantMean
 from bofire.data_models.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 from gpytorch.module import Module
@@ -40,7 +34,6 @@ class TanimotoGP(SingleTaskGP):
         outcome_transform: Optional[OutcomeTransform] = None,
 ):
         super().__init__(train_X, train_Y, likelihood=GaussianLikelihood(), covar_module=covar_module, outcome_transform=outcome_transform)
-        # self.covar_module = covar_module
 
     def forward(self, x):
         mean_x = self.mean_module(x)
@@ -55,7 +48,6 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         **kwargs,
     ):
         self.kernel = data_model.kernel
-        # self.scaler = data_model.scaler
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[TanimotoGP] = None
@@ -63,9 +55,6 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        # scaler = get_scaler(
-        #     self.input_features, self.input_preprocessing_specs, self.scaler, X
-        # )
         transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
@@ -81,7 +70,6 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 ard_num_dims=None,  # this keyword is ingored
             ),
             outcome_transform=Standardize(m=tY.shape[-1]),
-            # input_transform=scaler,
         )
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)

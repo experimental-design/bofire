@@ -130,10 +130,10 @@ if __name__ == '__main__':
     # rmse = mean_squared_error(experiments['exp_fp'], preds['exp_fp_pred'], squared=False)
     # r2 = r2_score(experiments['exp_fp'], preds['exp_fp_pred'])
 
-    # strategy_data_model = dm_strategies.QnehviStrategy(
-    strategy_data_model = dm_strategies.MultiplicativeSoboStrategy(
+    strategy_data_model = dm_strategies.QnehviStrategy(
+    # strategy_data_model = dm_strategies.MultiplicativeSoboStrategy(
         domain=domain,
-        acquisition_function=dm_acquisition_functions.qNEI(),
+        # acquisition_function=dm_acquisition_functions.qNEI(),
         num_raw_samples=1024,
         num_restarts=8,
         num_sobol_samples=1024,

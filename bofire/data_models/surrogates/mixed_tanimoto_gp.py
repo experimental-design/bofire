@@ -1,33 +1,42 @@
-from typing import Literal
+from typing import Literal, Dict, Union
 
 from pydantic import Field, validator
 
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.enum import MolecularEncodingEnum
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernal,
     AnyContinuousKernel,
     HammingDistanceKernel,
+    TanimotoKernel,
     MaternKernel,
+    ScaleKernel,
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.single_task_gp import ScalerEnum
 
 
-class MixedSingleTaskGPSurrogate(BotorchSurrogate):
-    type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
+class MixedTanimotoGPSurrogate(BotorchSurrogate):
+    type: Literal["MixedTanimotoGPSurrogate"] = "MixedTanimotoGPSurrogate"
+
     continuous_kernel: AnyContinuousKernel = Field(
-        default_factory=lambda: MaternKernel(ard=True, nu=2.5)
+        default_factory=lambda: ScaleKernel(
+            base_kernel=MaternKernel(ard=True, nu=2.5))
     )
     categorical_kernel: AnyCategoricalKernal = Field(
-        default_factory=lambda: HammingDistanceKernel(ard=True)
+        default_factory=lambda: ScaleKernel(
+            base_kernel=HammingDistanceKernel(ard=True))
+    )
+    molecular_kernel: AnyCategoricalKernal = Field(
+        default_factory=lambda: ScaleKernel(
+            base_kernel=TanimotoKernel())
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
     @validator("input_preprocessing_specs")
     def validate_categoricals(cls, v, values):
-        """Checks that at least one one-hot encoded categorical feauture is present."""
-        if CategoricalEncodingEnum.ONE_HOT not in v.values():
+        """Checks that at least one of fingerprints, fragments or fingerprints_fragments features are present."""
+        if MolecularEncodingEnum.FINGERPRINTS not in v.values() and MolecularEncodingEnum.FRAGMENTS not in v.values() and MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS not in v.values():
             raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present."
+                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments or fingerprints_fragments features are present."
             )
         return v

@@ -10,3 +10,6 @@ from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate  # noqa: F401
 from bofire.surrogates.surrogate import Surrogate  # noqa: F401
 from bofire.surrogates.trainable import TrainableSurrogate  # noqa: F401
 from bofire.surrogates.values import PredictedValue  # noqa: F401
+from bofire.surrogates.mixed_tanimoto_gp import (  # noqa: F401
+    MixedTanimotoGPSurrogate,
+)

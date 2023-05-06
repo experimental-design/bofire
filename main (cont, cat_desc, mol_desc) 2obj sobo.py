@@ -58,20 +58,21 @@ if __name__ == '__main__':
         # 'CC(C)C(O)C(C)C',
     ]
     experiments = [
-        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 'B', 88.0],
-        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 'A', 35.0],
-        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 'C', 69.0],
-        ['1,2,4-triethenylcyclohexane', 298.15, 'B', 69.0],
+        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 'B', 88.0, 30.0],
+        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 'A', 35.0, 90.0],
+        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 'C', 69.0, 50.0],
+        ['1,2,4-triethenylcyclohexane', 298.15, 'B', 69.0, 60.0],
         # ['1,4-dioxacyclohexadecane-5,16-dione', 298.15, 'B', 165.0],
         # ['2,2-bis(1-methylethyl)-1,3-dioxolane', 298.15, 'A', 48.0],
         # ['2,4-dimethyl-3-pentanamine', 298.15, 'B', 20.0],
         # ['2,4-dimethyl-3-pentanol', 298.15, 'A', 42.0]
     ]
     X_columns = ['molecule', 'temperature', 'cat_descriptor_input']
-    Y_columns = ['target']
+    Y_columns = ['target1', 'target2']
 
     experiments = pd.DataFrame(experiments, columns=X_columns + Y_columns)
-    experiments[f"valid_target"] = 1
+    experiments[f"valid_target1"] = 1
+    experiments[f"valid_target2"] = 1
 
     mordred_descriptors = ['NssCH2','ATSC2d']
 
@@ -94,7 +95,7 @@ if __name__ == '__main__':
     )
 
     input_features = dm_domain.Inputs(features=[in1, in2, in3])
-    output_features = dm_domain.Outputs(features=[dm_features.ContinuousOutput(key='target', objective=dm_objectives.MaximizeObjective(w=1.0))])
+    output_features = dm_domain.Outputs(features=[dm_features.ContinuousOutput(key=y, objective=dm_objectives.MaximizeObjective(w=1.0)) for y in Y_columns])
     constraints = dm_domain.Constraints()
 
     domain = dm_domain.Domain(

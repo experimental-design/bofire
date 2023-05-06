@@ -58,16 +58,16 @@ if __name__ == '__main__':
         # 'CC(C)C(O)C(C)C',
     ]
     experiments = [
-        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 88.0],
-        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 35.0],
-        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 69.0],
-        ['1,2,4-triethenylcyclohexane', 298.15, 69.0],
+        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 88.0],
+        ['(1Z,5Z)-1,5-cyclooctadiene', 35.0],
+        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 69.0],
+        ['1,2,4-triethenylcyclohexane', 69.0],
         # ['1,4-dioxacyclohexadecane-5,16-dione', 298.15, 'B', 165.0],
         # ['2,2-bis(1-methylethyl)-1,3-dioxolane', 298.15, 'A', 48.0],
         # ['2,4-dimethyl-3-pentanamine', 298.15, 'B', 20.0],
         # ['2,4-dimethyl-3-pentanol', 298.15, 'A', 42.0]
     ]
-    X_columns = ['molecule', 'temperature']
+    X_columns = ['molecule']
     Y_columns = ['target']
 
     experiments = pd.DataFrame(experiments, columns=X_columns + Y_columns)
@@ -84,9 +84,8 @@ if __name__ == '__main__':
         molfeatures=dm_molfeatures.FingerprintsFragments(),
         # molfeatures=dm_molfeatures.MordredDescriptors(descriptors=mordred_descriptors),
     )
-    in2 = dm_features.ContinuousInput(key='temperature', bounds=(290, 310))
 
-    input_features = dm_domain.Inputs(features=[in1, in2])
+    input_features = dm_domain.Inputs(features=[in1])
     output_features = dm_domain.Outputs(features=[dm_features.ContinuousOutput(key='target', objective=dm_objectives.MaximizeObjective(w=1.0))])
     constraints = dm_domain.Constraints()
 

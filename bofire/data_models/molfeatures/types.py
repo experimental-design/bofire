@@ -1,68 +1,98 @@
-from typing import Literal, Union
-
+from typing import Literal
+import warnings
 import numpy as np
 import pandas as pd
-from pydantic import root_validator
+
+try:
+    from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
+except ImportError:
+    warnings.warn(
+        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
+    )
+
+from bofire.data_models.features.feature import TDescriptors
 
 from bofire.data_models.molfeatures.molfeatures import MolFeatures
 
+from bofire.utils.cheminformatics import (
+    # smiles2bag_of_characters,
+    smiles2fingerprints,
+    smiles2fragments,
+    smiles2mordred,
+)
 
 class Fingerprints(MolFeatures):
-    """An objective returning the identity as reward.
-    The return can be scaled, when a lower and upper bound are provided.
-
-    Attributes:
-        w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
-    """
-
     type: Literal["Fingerprints"] = "Fingerprints"
     bond_radius: int = 3
-    n_bits: int = 2048
+    n_bits: int = 1024
 
-    def __call__(self, values: pd.Series,
-        ) -> pd.DataFrame:
-            # validate it
-            data = smiles2fingerprints(
-                values.to_list(), bond_radius=bond_radius, n_bits=n_bits
-            )
-            return pd.DataFrame(
-                data=data,
-                columns=[f"{self.key}{_CAT_SEP}{i}" for i in range(data.shape[1])],
-            )
+    def __init__(self):
+        super().__init__()
+        self.descriptors = [f'fingerprint_{i}' for i in range(self.n_bits)]
 
+    def __call__(self, values: pd.Series) -> pd.DataFrame:
+        return pd.DataFrame(
+            data=smiles2fingerprints(values.to_list(), bond_radius=self.bond_radius, n_bits=self.n_bits),  # type: ignore
+            columns=self.descriptors,
+            index=values.index,
+        )
 
-# class MaximizeObjective(IdentityObjective):
-#     """Child class from the identity function without modifications, since the parent class is already defined as maximization
+class Fragments(MolFeatures):
+    type: Literal["Fragments"] = "Fragments"
+
+    def __init__(self):
+        super().__init__()
+        self.descriptors = [f'{i}' for i in [fragment[0] for fragment in Descriptors.descList[124:]]] #
+
+    def __call__(self, values: pd.Series) -> pd.DataFrame:
+        return pd.DataFrame(
+            data=smiles2fragments(values.to_list()),  # type: ignore
+            columns=self.descriptors,
+            index=values.index,
+        )
+
+class FingerprintsFragments(MolFeatures):
+    type: Literal["FingerprintsFragments"] = "FingerprintsFragments"
+    bond_radius: int = 3
+    n_bits: int = 1024
+
+    def __init__(self):
+        super().__init__()
+        self.descriptors = [f'fingerprint_{i}' for i in range(self.n_bits)] + [f'{i}' for i in [fragment[0] for fragment in Descriptors.descList[124:]]]
+
+    def __call__(self, values: pd.Series) -> pd.DataFrame:
+        # values is SMILES; not molecule name
+        fingerprints = smiles2fingerprints(values.to_list(), bond_radius=self.bond_radius, n_bits=self.n_bits)
+        fragments = smiles2fragments(values.to_list())
+
+        return pd.DataFrame(
+            data=np.hstack((fingerprints, fragments)),  # type: ignore
+            columns=self.descriptors,
+            index=values.index,
+        )
+
+# class BagOfCharacters(MolFeatures):
+#     type: Literal["BagOfCharacters"] = "BagOfCharacters"
+#     max_ngram: int = 5
 #
-#     Attributes:
-#         w (float): float between zero and one for weighting the objective
-#         lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-#         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
-#     """
+#     def __call__(self, values: pd.Series) -> pd.DataFrame:
+#         data = smiles2bag_of_characters(values.to_list(), max_ngram=self.max_ngram)
+#         self.descriptors = [f'boc_{i}' for i in range(data.shape[1])]
 #
-#     type: Literal["MaximizeObjective"] = "MaximizeObjective"
-#
-#
-# class MinimizeObjective(IdentityObjective):
-#     """Class returning the negative identity as reward.
-#
-#     Attributes:
-#         w (float): float between zero and one for weighting the objective
-#         lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-#         upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
-#     """
-#
-#     type: Literal["MinimizeObjective"] = "MinimizeObjective"
-#
-#     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
-#         """The call function returning a reward for passed x values
-#
-#         Args:
-#             x (np.ndarray): An array of x values
-#
-#         Returns:
-#             np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds
-#         """
-#         return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
+#         return pd.DataFrame(
+#             data=data,  # type: ignore
+#             columns=self.descriptors,
+#             index=values.index,
+#         )
+
+class MordredDescriptors(MolFeatures):
+    type: Literal["MordredDescriptors"] = "MordredDescriptors"
+    descriptors: TDescriptors
+
+    def __call__(self, values: pd.Series) -> pd.DataFrame:
+        # values is SMILES; not molecule name
+        return pd.DataFrame(
+            data=smiles2mordred(values.to_list(), self.descriptors),  # type: ignore
+            columns=self.descriptors,
+            index=values.index,
+        )

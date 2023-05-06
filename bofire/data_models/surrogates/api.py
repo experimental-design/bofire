@@ -19,6 +19,7 @@ try:
     from bofire.data_models.surrogates.surrogate import Surrogate
 
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+    from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 
     AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
 

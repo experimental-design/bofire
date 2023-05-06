@@ -45,7 +45,7 @@ class RegressionMetricsEnum(Enum):
     FISHER = "FISHER"
 
 
-class CategoricalMolecularEncodingEnum(Enum):
+class MolecularEncodingEnum(Enum):
     """Enumeration class of implemented categorical encodings
     Currently, one-hot and ordinal encoding are implemented.
     """

@@ -10,7 +10,7 @@ except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
     )
-from sklearn.feature_extraction.text import CountVectorizer
+# from sklearn.feature_extraction.text import CountVectorizer
 
 from rdkit import Chem
 from mordred import Calculator, descriptors
@@ -82,24 +82,23 @@ def smiles2fragments(smiles: List[str]) -> np.ndarray:
     return frags
 
 
-def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
-    """Transforms list of smiles to bag of characters.
+# def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
+#     """Transforms list of smiles to bag of characters.
+#
+#     Args:
+#         smiles (List[str]): List of smiles
+#         max_ngram (int, optional): Maximal ngram value. Defaults to 5.
+#
+#     Returns:
+#         np.ndarray: Array holding the bag of characters.
+#     """
+#     for smi in smiles:
+#         smiles2mol(smi)
+#     cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
+#     return cv.fit_transform(smiles).toarray()
 
-    Args:
-        smiles (List[str]): List of smiles
-        max_ngram (int, optional): Maximal ngram value. Defaults to 5.
 
-    Returns:
-        np.ndarray: Array holding the bag of characters.
-    """
-    for smi in smiles:
-        smiles2mol(smi)
-    cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
-    return cv.fit_transform(smiles).toarray()
-
-
-def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> pd.DataFrame:
-# def smiles2mordred(smiles: List[str], descriptors_list: List[str], drop_nan: bool = True) -> pd.DataFrame:
+def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray:
 
     mols = [smiles2mol(smi) for smi in smiles]
 
@@ -117,14 +116,10 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> pd.DataFra
         #     raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
         raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
 
-    return descriptors_df.astype(float)
+    return descriptors_df.astype(float).values
 
 def smiles2fragments_fingerprints(smiles: List[str]) -> np.ndarray:
-
     fingerprints = smiles2fingerprints(smiles)
     fragments = smiles2fragments(smiles)
 
     return np.hstack((fingerprints, fragments))
-
-if __name__ == '__main__':
-    smiles2mordred(["c1ccccc1", "c1ccccc1Cl", "c1ccccc1C"], ['ABC','ABCGG','SpAbs_A','SpMax_A'])

@@ -9,7 +9,7 @@ from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum, CategoricalMolecularEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum, MolecularEncodingEnum
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -18,46 +18,42 @@ from bofire.utils.torch_tools import tkwargs
 
 
 def get_scaler(
-    input_features: Inputs,
+    inputs: Inputs,
     input_preprocessing_specs: Dict[str, CategoricalEncodingEnum],
     scaler: ScalerEnum,
     X: pd.DataFrame,
 ) -> Union[InputStandardize, Normalize]:
     """Returns the instanitated scaler object for a set of input features and
     input_preprocessing_specs.
-
-
     Args:
-        input_features (Inputs): Input features.
+        inputs (Inputs): Input features.
         input_preprocessing_specs (Dict[str, CategoricalEncodingEnum]): Dictionary how to treat
             the categoricals.
         scaler (ScalerEnum): Enum indicating the scaler of interest.
         X (pd.DataFrame): The dataset of interest.
-
     Returns:
         Union[InputStandardize, Normalize]: The instantiated scaler class
     """
-    features2idx, _ = input_features._get_transform_info(input_preprocessing_specs)
+    features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
 
     d = 0
     for indices in features2idx.values():
         d += len(indices)
 
+    # Molecular fingerprints, fragments, and fingerprintfraagments are not scalarized
     non_numerical_features = [
         key
         for key, value in input_preprocessing_specs.items()
-        if value != CategoricalEncodingEnum.DESCRIPTOR and value != CategoricalMolecularEncodingEnum.MOL_DESCRIPTOR
+        if value != CategoricalEncodingEnum.DESCRIPTOR and value != MolecularEncodingEnum.MOL_DESCRIPTOR
     ]
 
     ord_dims = []
-    for feat in input_features.get():
+    for feat in inputs.get():
         if feat.key not in non_numerical_features:
             ord_dims += features2idx[feat.key]
 
     if scaler == ScalerEnum.NORMALIZE:
-        lower, upper = input_features.get_bounds(
-            specs=input_preprocessing_specs, experiments=X
-        )
+        lower, upper = inputs.get_bounds(specs=input_preprocessing_specs, experiments=X)
         scaler_transform = Normalize(
             d=d,
             bounds=torch.tensor([lower, upper]).to(**tkwargs),
@@ -90,10 +86,8 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        scaler = get_scaler(
-            self.input_features, self.input_preprocessing_specs, self.scaler, X
-        )
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values

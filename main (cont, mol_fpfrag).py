@@ -58,16 +58,16 @@ if __name__ == '__main__':
         # 'CC(C)C(O)C(C)C',
     ]
     experiments = [
-        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 'B', 88.0],
-        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 'A', 35.0],
-        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 'C', 69.0],
-        ['1,2,4-triethenylcyclohexane', 298.15, 'B', 69.0],
+        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 88.0],
+        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 35.0],
+        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 69.0],
+        ['1,2,4-triethenylcyclohexane', 298.15, 69.0],
         # ['1,4-dioxacyclohexadecane-5,16-dione', 298.15, 'B', 165.0],
         # ['2,2-bis(1-methylethyl)-1,3-dioxolane', 298.15, 'A', 48.0],
         # ['2,4-dimethyl-3-pentanamine', 298.15, 'B', 20.0],
         # ['2,4-dimethyl-3-pentanol', 298.15, 'A', 42.0]
     ]
-    X_columns = ['molecule', 'temperature', 'cat_descriptor_input']
+    X_columns = ['molecule', 'temperature']
     Y_columns = ['target']
 
     experiments = pd.DataFrame(experiments, columns=X_columns + Y_columns)
@@ -85,14 +85,8 @@ if __name__ == '__main__':
         # molfeatures=dm_molfeatures.MordredDescriptors(descriptors=mordred_descriptors),
     )
     in2 = dm_features.ContinuousInput(key='temperature', bounds=(290, 310))
-    in3 = dm_features.CategoricalDescriptorInput(
-        key="cat_descriptor_input",
-        categories=["A", "B", "C"],
-        descriptors=["d1", "d2"],
-        values=[[1, 2], [3, 4], [5, 6]],
-    )
 
-    input_features = dm_domain.Inputs(features=[in1, in2, in3])
+    input_features = dm_domain.Inputs(features=[in1, in2])
     output_features = dm_domain.Outputs(features=[dm_features.ContinuousOutput(key='target', objective=dm_objectives.MaximizeObjective(w=1.0))])
     constraints = dm_domain.Constraints()
 
@@ -116,8 +110,10 @@ if __name__ == '__main__':
         # 'molecule': MolecularEncodingEnum.FRAGMENTS,
         'molecule': MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
         # 'molecule': MolecularEncodingEnum.MOL_DESCRIPTOR,
-        'cat_descriptor_input': CategoricalEncodingEnum.DESCRIPTOR,
-        'cat_input': CategoricalEncodingEnum.ONE_HOT},
+        # 'cat_descriptor_input': CategoricalEncodingEnum.DESCRIPTOR,
+        # 'cat_input': CategoricalEncodingEnum.ONE_HOT
+    }
+                ,
             ) for output_name in Y_columns
         ],
     )

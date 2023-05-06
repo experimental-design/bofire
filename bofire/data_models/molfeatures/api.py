@@ -1,42 +1,14 @@
 from typing import Union
 
-from bofire.data_models.objectives.identity import (
-    IdentityObjective,
-    MaximizeObjective,
-    MinimizeObjective,
-)
-from bofire.data_models.objectives.objective import Objective
-from bofire.data_models.objectives.sigmoid import (
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    SigmoidObjective,
-)
-from bofire.data_models.objectives.target import (
-    CloseToTargetObjective,
-    ConstrainedObjective,
-    TargetObjective,
-)
+from bofire.data_models.molfeatures.types import Fingerprints, Fragments, FingerprintsFragments, MordredDescriptors # BagOfCharacters
+from bofire.data_models.molfeatures.molfeatures import MolFeatures
 
-AbstractObjective = Union[
-    Objective,
-    IdentityObjective,
-    SigmoidObjective,
-    ConstrainedObjective,
-]
+AbstractMolFeatures = MolFeatures
 
-AnyConstraintObjective = Union[
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    TargetObjective,
-]
-
-AnyRealObjective = Union[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
-
-AnyObjective = Union[
-    MaximizeObjective,
-    MinimizeObjective,
-    MaximizeSigmoidObjective,
-    MinimizeSigmoidObjective,
-    TargetObjective,
-    CloseToTargetObjective,
+AnyMolFeatures = Union[
+    Fingerprints,
+    Fragments,
+    FingerprintsFragments,
+    # BagOfCharacters,
+    MordredDescriptors,
 ]

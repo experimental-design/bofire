@@ -8,6 +8,7 @@ from bofire.surrogates.mlp import MLPEnsemble
 from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.tanimoto_gp import TanimotoGPSurrogate
+from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 
 SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
@@ -18,6 +19,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.MLPEnsemble: MLPEnsemble,
     data_models.SaasSingleTaskGPSurrogate: SaasSingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: TanimotoGPSurrogate,
+    data_models.MixedTanimotoGPSurrogate: MixedTanimotoGPSurrogate,
 }
 
 

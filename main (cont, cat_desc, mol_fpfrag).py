@@ -58,16 +58,16 @@ if __name__ == '__main__':
         # 'CC(C)C(O)C(C)C',
     ]
     experiments = [
-        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 'B', 'Y', 88.0],
-        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 'A', 'Z', 35.0],
-        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 'C', 'Y', 69.0],
-        ['1,2,4-triethenylcyclohexane', 298.15, 'B', 'Y', 69.0],
+        ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 'B', 88.0],
+        ['(1Z,5Z)-1,5-cyclooctadiene', 298.15, 'A', 35.0],
+        ['1-(1,1-dimethylethyl)-4-ethylbenzene', 298.15, 'C', 69.0],
+        ['1,2,4-triethenylcyclohexane', 298.15, 'B', 69.0],
         # ['1,4-dioxacyclohexadecane-5,16-dione', 298.15, 'B', 165.0],
         # ['2,2-bis(1-methylethyl)-1,3-dioxolane', 298.15, 'A', 48.0],
         # ['2,4-dimethyl-3-pentanamine', 298.15, 'B', 20.0],
         # ['2,4-dimethyl-3-pentanol', 298.15, 'A', 42.0]
     ]
-    X_columns = ['molecule', 'temperature', 'cat_descriptor_input', 'cat_input']
+    X_columns = ['molecule', 'temperature', 'cat_descriptor_input']
     Y_columns = ['target']
 
     experiments = pd.DataFrame(experiments, columns=X_columns + Y_columns)
@@ -75,7 +75,6 @@ if __name__ == '__main__':
 
     mordred_descriptors = ['NssCH2','ATSC2d']
 
-    # in1 = dm_features.CategoricalMolecularDescriptorInput(key='SMILES', descriptors=['SpAbs_A','SpMax_A'])
     in1 = dm_features.MolecularInput(
         key='molecule',
         categories=names,
@@ -92,12 +91,8 @@ if __name__ == '__main__':
         descriptors=["d1", "d2"],
         values=[[1, 2], [3, 4], [5, 6]],
     )
-    in4 = dm_features.CategoricalInput(
-        key="cat_input",
-        categories=["Y", "Z"],
-    )
 
-    input_features = dm_domain.Inputs(features=[in1, in2, in3, in4])
+    input_features = dm_domain.Inputs(features=[in1, in2, in3])
     output_features = dm_domain.Outputs(features=[dm_features.ContinuousOutput(key='target', objective=dm_objectives.MaximizeObjective(w=1.0))])
     constraints = dm_domain.Constraints()
 
@@ -122,7 +117,9 @@ if __name__ == '__main__':
         'molecule': MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
         # 'molecule': MolecularEncodingEnum.MOL_DESCRIPTOR,
         'cat_descriptor_input': CategoricalEncodingEnum.DESCRIPTOR,
-        'cat_input': CategoricalEncodingEnum.ONE_HOT},
+        # 'cat_input': CategoricalEncodingEnum.ONE_HOT,
+    }
+                ,
             ) for output_name in Y_columns
         ],
     )
