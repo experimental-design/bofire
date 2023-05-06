@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 import pandas as pd
 
+from pydantic import validator
+
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
 except ImportError:
@@ -88,6 +90,24 @@ class FingerprintsFragments(MolFeatures):
 class MordredDescriptors(MolFeatures):
     type: Literal["MordredDescriptors"] = "MordredDescriptors"
     descriptors: TDescriptors
+
+    @validator("descriptors")
+    def validate_descriptors(cls, descriptors):
+        """validates that descriptors have unique names
+
+        Args:
+            categories (List[str]): List of descriptor names
+
+        Raises:
+            ValueError: when descriptors have non-unique names
+
+        Returns:
+            List[str]: List of the descriptors
+        """
+        descriptors = [name for name in descriptors]
+        if len(descriptors) != len(set(descriptors)):
+            raise ValueError("descriptors must be unique")
+        return descriptors
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:
         # values is SMILES; not molecule name

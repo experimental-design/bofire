@@ -416,19 +416,7 @@ class Inputs(Features):
                 transformed.append(feat.to_descriptor_encoding(s))
             elif specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS or specs[feat.key] == MolecularEncodingEnum.FRAGMENTS or specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS or specs[feat.key] == MolecularEncodingEnum.BAG_CHAR or specs[feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR:
                 assert isinstance(feat, MolecularInput)
-            #     transformed.append(feat.to_fingerprints(s))
-            # elif specs[feat.key] == MolecularEncodingEnum.FRAGMENTS:
-            #     assert isinstance(feat, MolecularInput)
-            #     transformed.append(feat.to_fragments(s))
-            # elif specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS:
-            #     assert isinstance(feat, MolecularInput)
-            #     transformed.append(feat.to_fingerprints_fragments(s))
-            # elif specs[feat.key] == MolecularEncodingEnum.BAG_CHAR:
-            #     assert isinstance(feat, MolecularInput)
-            #     transformed.append(feat.to_bag_of_characters(s))
-            # elif specs[feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR or :
-            #     assert isinstance(feat, MolecularInput)
-                transformed.append(feat.to_molfeatures(s))
+                transformed.append(feat.to_descriptor_encoding(s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -472,18 +460,6 @@ class Inputs(Features):
                          feat.key] == MolecularEncodingEnum.BAG_CHAR or specs[
                          feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR:
                 assert isinstance(feat, MolecularInput)
-            #     raise ValueError(f"Cannot inverse transform fingerprints back to molecules for {feat}")
-            # elif specs[feat.key] == MolecularEncodingEnum.FRAGMENTS:
-            #     assert isinstance(feat, MolecularInput)
-            #     raise ValueError(f"Cannot inverse transform fragments back to molecules for {feat}")
-            # elif specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS:
-            #     assert isinstance(feat, MolecularInput)
-            #     raise ValueError(f"Cannot inverse transform fingerprints and fragments back to molecules for {feat}")
-            # elif specs[feat.key] == MolecularEncodingEnum.BAG_CHAR:
-            #     assert isinstance(feat, MolecularInput)
-            #     raise ValueError(f"Cannot inverse transform bags of characters back to molecules for {feat}")
-            # elif specs[feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR:
-            #     assert isinstance(feat, MolecularInput)
                 transformed.append(feat.from_descriptor_encoding(experiments))
         return pd.concat(transformed, axis=1)
 

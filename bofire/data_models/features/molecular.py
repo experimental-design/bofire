@@ -7,6 +7,7 @@ from bofire.data_models.features.categorical import _CAT_SEP, TTransform
 
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.utils.cheminformatics import smiles2mol
+from bofire.data_models.enum import MolecularEncodingEnum
 
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 
@@ -29,11 +30,36 @@ class MolecularInput(CategoricalInput):
             smiles2mol(smi)
         return values
 
-    def fixed_value(self, transform_type: Optional[TTransform] = None) -> None:
-        return None
+    def fixed_value(
+        self, transform_type: Optional[TTransform] = None
+    ) -> Union[List[str], List[float], None]:
+        """Returns the categories to which the feature is fixed, None if the feature is not fixed
+
+        Returns:
+            List[str]: List of categories or None
+        """
+        if transform_type != MolecularEncodingEnum.FINGERPRINTS or transform_type != MolecularEncodingEnum.FRAGMENTS or transform_type != MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS or transform_type != MolecularEncodingEnum.MOL_DESCRIPTOR:
+            return super().fixed_value(transform_type)
+        else:
+            val = self.get_allowed_categories()[0]
+            return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
     def is_fixed(self) -> bool:
         return False
+
+    def sample(self, n: int) -> pd.Series:
+        """Draw random samples from the feature.
+
+        Args:
+            n (int): number of samples.
+
+        Returns:
+            pd.Series: drawn samples.
+        """
+        return pd.Series(
+            name=self.key,
+            data=np.random.choice(self.categories, n),
+        )
 
     def name2smiles(self, values:pd.Series) -> pd.Series:
         return values.replace({cat: smi for cat, smi in zip(self.categories, self.smiles)})
@@ -41,38 +67,19 @@ class MolecularInput(CategoricalInput):
     def smiles2name(self, values:pd.Series) -> pd.Series:
         return values.replace({smi: cat for cat, smi in zip(self.categories, self.smiles)})
 
-    def sample(self, n: int) -> pd.Series:
-        raise ValueError("Sampling not supported for `MolecularInput`.")
-
-    def to_molfeatures(self, values: pd.Series) -> pd.DataFrame:
-        """Converts values to descriptor encoding.
-
-        Args:
-            values (pd.Series): Values to transform.
-
-        Returns:
-            pd.DataFrame: Descriptor encoded dataframe.
-        """
-        if self.values is None or len(self.values) != len(values):
-            self.values = self.molfeatures(self.name2smiles(values)).values.tolist()
-
-        return pd.DataFrame(
-            data=self.values,  # type: ignore
-            columns=[f"{self.key}{_CAT_SEP}{col}" for col in self.molfeatures.descriptors],
-            index=values.index,
-        )
+    def generate_descriptors(self):
+        self.values = self.molfeatures(pd.Series(self.smiles)).values.tolist()
 
     def get_bounds(
         self, transform_type: TTransform, values: pd.Series
     ) -> Tuple[List[float], List[float]]:
         if self.values is None:
-            data = self.to_molfeatures(self.name2smiles(values))
+            self.generate_descriptors()
 
         if values is None:
             data = self.to_df().loc[self.get_allowed_categories()]
         else:
-            if len(self.values) != len(values):
-                data = self.to_molfeatures(self.name2smiles(values))
+            data = self.to_descriptor_encoding(values)
 
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
@@ -97,6 +104,9 @@ class MolecularInput(CategoricalInput):
         Returns:
             pd.DataFrame: Descriptor encoded dataframe.
         """
+        if self.values is None:
+            self.generate_descriptors()
+
         return pd.DataFrame(
             data=values.map(
                 {cat: value for cat, value in zip(self.categories, self.values)}
@@ -141,16 +151,3 @@ class MolecularInput(CategoricalInput):
         s.name = self.key
         return s
 
-    # def fixed_value(
-    #     self, transform_type: Optional[TTransform] = None
-    # ) -> Union[List[str], List[float], None]:
-    #     """Returns the categories to which the feature is fixed, None if the feature is not fixed
-    #
-    #     Returns:
-    #         List[str]: List of categories or None
-    #     """
-    #     if transform_type != MolecularEncodingEnum.MOL_DESCRIPTOR:
-    #         return super().fixed_value(transform_type)
-    #     else:
-    #         val = self.get_allowed_categories()[0]
-    #         return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()

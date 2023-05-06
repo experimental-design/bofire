@@ -49,31 +49,7 @@ class MixedTanimotoGP(SingleTaskGP):
         outcome_transform: Optional[OutcomeTransform] = None,  # TODO
         input_transform: Optional[InputTransform] = None,  # TODO
     ) -> None:
-        r"""A single-task exact GP model supporting categorical parameters.
 
-        Args:
-            train_X: A `batch_shape x n x d` tensor of training features.
-            train_Y: A `batch_shape x n x m` tensor of training observations.
-            cat_dims: A list of indices corresponding to the columns of
-                the input `X` that should be considered categorical features.
-            cont_kernel_factory: A method that accepts  `batch_shape`, `ard_num_dims`,
-                and `active_dims` arguments and returns an instantiated GPyTorch
-                `Kernel` object to be used as the base kernel for the continuous
-                dimensions. If omitted, this model uses a Matern-2.5 kernel as
-                the kernel for the ordinal parameters.
-            likelihood: A likelihood. If omitted, use a standard
-                GaussianLikelihood with inferred noise level.
-            outcome_transform: An outcome transform that is applied to the
-                training data during instantiation and to the posterior during
-                inference (that is, the `Posterior` obtained by calling
-                `.posterior` on the model will be on the original scale).
-            input_transform: An input transform that is applied in the model's
-                forward pass. Only input transforms are allowed which do not
-                transform the categorical dimensions. If you want to use it
-                for example in combination with a `OneHotToNumeric` input transform
-                one has to instantiate the transform with `transform_on_train` == False
-                and pass in the already transformed input.
-        """
         if len(mol_dims) == 0:
             raise ValueError(
                 "Must specify molecular dimensions for MixedTanimotoGP"
@@ -91,7 +67,6 @@ class MixedTanimotoGP(SingleTaskGP):
             cat_kernel_factory = ScaleKernel(base_kernel=HammingDistanceKernel(ard=True)).to_gpytorch()
 
         if likelihood is None:
-            # This Gamma prior is quite close to the Horseshoe prior
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
             likelihood = GaussianLikelihood(
                 batch_shape=aug_batch_shape,

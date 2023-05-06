@@ -42,20 +42,20 @@ if __name__ == '__main__':
         '(1Z,5Z)-1,5-cyclooctadiene',
         '1-(1,1-dimethylethyl)-4-ethylbenzene',
         '1,2,4-triethenylcyclohexane',
-        # '1,4-dioxacyclohexadecane-5,16-dione',
-        # '2,2-bis(1-methylethyl)-1,3-dioxolane',
-        # '2,4-dimethyl-3-pentanamine',
-        # '2,4-dimethyl-3-pentanol',
+        '1,4-dioxacyclohexadecane-5,16-dione',
+        '2,2-bis(1-methylethyl)-1,3-dioxolane',
+        '2,4-dimethyl-3-pentanamine',
+        '2,4-dimethyl-3-pentanol',
     ]
     smiles = [
         'C1=CCCC=CCCC=CCC1',
         'C\\1=C\\CC/C=C\\CC/1',
         'CCC1=CC=C(C=C1)C(C)(C)C',
         'C=CC1CCC(C=C)C(C1)C=C',
-        # 'O=C1OCCOC(CCCCCCCCCC1)=O',
-        # 'CC(C)C1(OCCO1)C(C)C',
-        # 'CC(C(C(C)C)N)C',
-        # 'CC(C)C(O)C(C)C',
+        'O=C1OCCOC(CCCCCCCCCC1)=O',
+        'CC(C)C1(OCCO1)C(C)C',
+        'CC(C(C(C)C)N)C',
+        'CC(C)C(O)C(C)C',
     ]
     experiments = [
         ['(1E,5E,9Z)-1,5,9-cyclododecatriene', 298.15, 'B', 'Y', 88.0, 30.0],
