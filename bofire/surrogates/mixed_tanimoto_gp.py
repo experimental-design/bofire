@@ -81,11 +81,28 @@ class MixedTanimotoGP(SingleTaskGP):
         cat_dims = normalize_indices(indices=cat_dims, d=d)
         ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims))
 
-        if len(mol_dims) == d:
-            covar_module = mol_kernel_factory(
+        if len(ord_dims) == 0:
+            sum_kernel = cat_kernel_factory(
                     batch_shape=aug_batch_shape,
-                    ard_num_dims=len(mol_dims),
-                )
+                    ard_num_dims=len(cat_dims),
+                    active_dims=cat_dims,
+                ) + mol_kernel_factory(
+                batch_shape=aug_batch_shape,
+                ard_num_dims=len(mol_dims),
+                active_dims=mol_dims,
+            )
+
+            prod_kernel = cat_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(cat_dims),
+                    active_dims=cat_dims,
+                ) * mol_kernel_factory(
+                batch_shape=aug_batch_shape,
+                ard_num_dims=len(mol_dims),
+                active_dims=mol_dims,
+            )
+
+            covar_module = sum_kernel + prod_kernel
 
         elif len(cat_dims) == 0:
             sum_kernel = cont_kernel_factory(
@@ -229,7 +246,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=tf,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
-        fit_gpytorch_mll(mll, options=self.training_specs)
+        fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
 
     def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""

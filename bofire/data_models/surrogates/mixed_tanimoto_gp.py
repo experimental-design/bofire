@@ -13,7 +13,7 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.single_task_gp import ScalerEnum
-
+from bofire.data_models.features.molecular import MolecularInput
 
 class MixedTanimotoGPSurrogate(BotorchSurrogate):
     type: Literal["MixedTanimotoGPSurrogate"] = "MixedTanimotoGPSurrogate"
@@ -39,4 +39,6 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate):
             raise ValueError(
                 "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments or fingerprints_fragments features are present."
             )
+        if not any([not isinstance(x, MolecularInput) for x in values['inputs'].get()]):
+            raise ValueError('Did not find least one continuous or categorical input feature. MixedTanimotoGPSurrogate is designed to be used with these in combination with molecualr fingerprints, fragments or fingerprints_fragments features.')
         return v

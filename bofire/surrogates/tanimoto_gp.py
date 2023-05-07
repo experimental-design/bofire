@@ -55,19 +55,19 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values
         ).to(**tkwargs)
 
-        self.model = TanimotoGP(  # type: ignore
+        self.model = TanimotoGP(
             train_X=tX,
             train_Y=tY,
             covar_module=self.kernel.to_gpytorch(
                 batch_shape=torch.Size(),
+                ard_num_dims=tX.shape[1],
                 active_dims=list(range(tX.shape[1])),
-                ard_num_dims=None,  # this keyword is ingored
             ),
             outcome_transform=Standardize(m=tY.shape[-1]),
         )

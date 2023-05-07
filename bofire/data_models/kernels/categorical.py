@@ -27,6 +27,7 @@ class HammingDistanceKernel(CategoricalKernel):
 
 class TanimotoKernel(CategoricalKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
+    ard: bool = True
 
     def to_gpytorch(
         self, batch_shape: torch.Size,
@@ -34,6 +35,6 @@ class TanimotoKernel(CategoricalKernel):
     ) -> GpytorchKernel:
         return GaucheTanimotoKernel(
             batch_shape=batch_shape,
-            ard_num_dims=ard_num_dims,
+            ard_num_dims=ard_num_dims if self.ard else None,
             active_dims=active_dims,
         )
