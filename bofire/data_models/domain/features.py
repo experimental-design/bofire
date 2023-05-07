@@ -25,7 +25,6 @@ from bofire.data_models.features.api import (
     Output,
     TInputTransformSpecs,
     MolecularInput,
-    # CategoricalMolecularDescriptorInput,
 )
 from bofire.data_models.objectives.api import AbstractObjective, Objective
 
@@ -116,26 +115,7 @@ class Features(BaseModel):
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
         """
-        sorted_list = sorted(
-                filter_by_class(
-                    self.features,
-                    includes=includes,
-                    excludes=excludes,
-                    exact=exact,
-                )
-            )
-        non_cat_list = []
-        cat_list = []
-        for item in sorted_list:
-            if item.type != 'CategoricalInput':
-                non_cat_list.append(item)
-            else:
-                cat_list.append(item)
-
-        return self.__class__(features=non_cat_list + cat_list)
-
-        # return self.__class__(
-        #     features=sorted(
+        # sorted_list = sorted(
         #         filter_by_class(
         #             self.features,
         #             includes=includes,
@@ -143,7 +123,26 @@ class Features(BaseModel):
         #             exact=exact,
         #         )
         #     )
-        # )
+        # non_cat_list = []
+        # cat_list = []
+        # for item in sorted_list:
+        #     if item.type != 'CategoricalInput':
+        #         non_cat_list.append(item)
+        #     else:
+        #         cat_list.append(item)
+        #
+        # return self.__class__(features=non_cat_list + cat_list)
+
+        return self.__class__(
+            features=sorted(
+                filter_by_class(
+                    self.features,
+                    includes=includes,
+                    excludes=excludes,
+                    exact=exact,
+                )
+            )
+        )
 
     def get_keys(
         self,

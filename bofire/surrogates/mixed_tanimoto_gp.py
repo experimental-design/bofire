@@ -179,7 +179,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.scaler = data_model.scaler
         super().__init__(data_model=data_model, **kwargs)
 
-    model: Optional[botorch.models.MixedSingleTaskGP] = None
+    model: Optional[MixedTanimotoGP] = None
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
@@ -222,7 +222,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
         tf = ChainedInputTransform(tf1=scaler, tf2=o2n)
 
-        # So far, looking only for features that apply to tanimoto kernel
+        # So far, looking only for features that apply to tanimoto kernel (i.e. excludes MolecularEncodingEnum.MOL_DESCRIPTOR)
         molecular_features = [
             key
             for key, value in self.input_preprocessing_specs.items()
