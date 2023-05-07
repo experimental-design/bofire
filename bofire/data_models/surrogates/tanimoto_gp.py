@@ -13,15 +13,16 @@ class TanimotoGPSurrogate(BotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
     kernel: AnyKernel = Field(
-        default_factory=lambda: ScaleKernel(
-            base_kernel=TanimotoKernel())
+        default_factory=lambda: ScaleKernel(base_kernel=TanimotoKernel())
     )
 
     @validator("input_preprocessing_specs")
     def validate_categoricals(cls, v, values):
         """Checks that at only one of fingerprints, fragments or fingerprints_fragments features are present."""
-        if not all([isinstance(x, MolecularInput) for x in values['inputs'].get()]):
-            raise ValueError('Found input features other than MolecularInput. TanimotoGPSurrogate can only be used if with molecular fingerprints, fragments or fingerprints_fragments features.')
+        if not all([isinstance(x, MolecularInput) for x in values["inputs"].get()]):
+            raise ValueError(
+                "Found input features other than MolecularInput. TanimotoGPSurrogate can only be used if with molecular fingerprints, fragments or fingerprints_fragments features."
+            )
         if MolecularEncodingEnum.MOL_DESCRIPTOR in v.values():
             raise ValueError(
                 "TanimotoGPSurrogate can only be used with molecular fingerprints, fragments or fingerprints_fragments features."

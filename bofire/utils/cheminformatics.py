@@ -99,14 +99,16 @@ def smiles2fragments(smiles: List[str]) -> np.ndarray:
 
 
 def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray:
-
     mols = [smiles2mol(smi) for smi in smiles]
 
     calc = Calculator(descriptors, ignore_3D=True)
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
     descriptors_df = calc.pandas(mols)
-    nan_list = [pd.to_numeric(descriptors_df[col], errors='coerce').isnull().values.any() for col in descriptors_df.columns]
+    nan_list = [
+        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()
+        for col in descriptors_df.columns
+    ]
     if any(nan_list):
         # if drop_nan:
         #     nan_row_mask = (~np.isnan(descriptors_df.values.astype(float)).any(axis=1))
@@ -114,9 +116,12 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
         #     print(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])} for {(np.array(smiles)[~nan_row_mask]).tolist()}. Dropped these molecules')
         # else:
         #     raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
-        raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
+        raise ValueError(
+            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"
+        )
 
     return descriptors_df.astype(float).values
+
 
 def smiles2fragments_fingerprints(smiles: List[str]) -> np.ndarray:
     fingerprints = smiles2fingerprints(smiles)

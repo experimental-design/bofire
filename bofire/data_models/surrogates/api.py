@@ -31,7 +31,6 @@ try:
         MLPEnsemble,
         SaasSingleTaskGPSurrogate,
         TanimotoGPSurrogate,
-
     ]
 except ImportError:
     # with the minimal installationwe don't have botorch

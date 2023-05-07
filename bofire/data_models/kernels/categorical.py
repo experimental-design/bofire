@@ -2,10 +2,14 @@ from typing import List, Literal
 
 import torch
 from gpytorch.kernels import Kernel as GpytorchKernel
-from botorch.models.kernels.categorical import CategoricalKernel as BoTorchCategoricalKernel
+from botorch.models.kernels.categorical import (
+    CategoricalKernel as BoTorchCategoricalKernel,
+)
 
 from bofire.data_models.kernels.kernel import Kernel
-from bofire.data_models.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel as GaucheTanimotoKernel
+from bofire.data_models.kernels.fingerprint_kernels.tanimoto_kernel import (
+    TanimotoKernel as GaucheTanimotoKernel,
+)
 
 
 class CategoricalKernel(Kernel):
@@ -25,13 +29,13 @@ class HammingDistanceKernel(CategoricalKernel):
             active_dims=active_dims,
         )
 
+
 class TanimotoKernel(CategoricalKernel):
     type: Literal["TanimotoKernel"] = "TanimotoKernel"
     ard: bool = True
 
     def to_gpytorch(
-        self, batch_shape: torch.Size,
-            ard_num_dims: int, active_dims: List[int]
+        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
     ) -> GpytorchKernel:
         return GaucheTanimotoKernel(
             batch_shape=batch_shape,

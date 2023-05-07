@@ -11,7 +11,11 @@ from botorch.models.transforms.input import ChainedInputTransform, OneHotToNumer
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum, MolecularEncodingEnum
+from bofire.data_models.enum import (
+    CategoricalEncodingEnum,
+    OutputFilteringEnum,
+    MolecularEncodingEnum,
+)
 from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataModel
 from bofire.data_models.kernels.continuous import MaternKernel
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
@@ -43,17 +47,18 @@ class MixedTanimotoGP(SingleTaskGP):
         mol_dims: List[int],
         mol_kernel_factory: Callable[[torch.Size, int, List[int]], Kernel],
         cat_dims: Optional[List[int]] = None,
-        cont_kernel_factory: Optional[Callable[[torch.Size, int, List[int]], Kernel]] = None,
-        cat_kernel_factory: Optional[Callable[[torch.Size, int, List[int]], Kernel]] = None,
+        cont_kernel_factory: Optional[
+            Callable[[torch.Size, int, List[int]], Kernel]
+        ] = None,
+        cat_kernel_factory: Optional[
+            Callable[[torch.Size, int, List[int]], Kernel]
+        ] = None,
         likelihood: Optional[Likelihood] = None,
         outcome_transform: Optional[OutcomeTransform] = None,  # TODO
         input_transform: Optional[InputTransform] = None,  # TODO
     ) -> None:
-
         if len(mol_dims) == 0:
-            raise ValueError(
-                "Must specify molecular dimensions for MixedTanimotoGP"
-            )
+            raise ValueError("Must specify molecular dimensions for MixedTanimotoGP")
 
         if cat_dims is None:
             cat_dims = []
@@ -61,10 +66,14 @@ class MixedTanimotoGP(SingleTaskGP):
         _, aug_batch_shape = self.get_batch_dimensions(train_X=train_X, train_Y=train_Y)
 
         if cont_kernel_factory is None:
-            cont_kernel_factory = ScaleKernel(base_kernel=MaternKernel(ard=True, nu=2.5)).to_gpytorch()
+            cont_kernel_factory = ScaleKernel(
+                base_kernel=MaternKernel(ard=True, nu=2.5)
+            ).to_gpytorch()
 
         if cat_kernel_factory is None:
-            cat_kernel_factory = ScaleKernel(base_kernel=HammingDistanceKernel(ard=True)).to_gpytorch()
+            cat_kernel_factory = ScaleKernel(
+                base_kernel=HammingDistanceKernel(ard=True)
+            ).to_gpytorch()
 
         if likelihood is None:
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
@@ -83,20 +92,20 @@ class MixedTanimotoGP(SingleTaskGP):
 
         if len(ord_dims) == 0:
             sum_kernel = cat_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(cat_dims),
-                    active_dims=cat_dims,
-                ) + mol_kernel_factory(
+                batch_shape=aug_batch_shape,
+                ard_num_dims=len(cat_dims),
+                active_dims=cat_dims,
+            ) + mol_kernel_factory(
                 batch_shape=aug_batch_shape,
                 ard_num_dims=len(mol_dims),
                 active_dims=mol_dims,
             )
 
             prod_kernel = cat_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(cat_dims),
-                    active_dims=cat_dims,
-                ) * mol_kernel_factory(
+                batch_shape=aug_batch_shape,
+                ard_num_dims=len(cat_dims),
+                active_dims=cat_dims,
+            ) * mol_kernel_factory(
                 batch_shape=aug_batch_shape,
                 ard_num_dims=len(mol_dims),
                 active_dims=mol_dims,
@@ -106,29 +115,6 @@ class MixedTanimotoGP(SingleTaskGP):
 
         elif len(cat_dims) == 0:
             sum_kernel = cont_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(ord_dims),
-                    active_dims=ord_dims,
-                ) + mol_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(mol_dims),
-                active_dims=mol_dims,
-            )
-
-            prod_kernel = cont_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(ord_dims),
-                    active_dims=ord_dims,
-                ) * mol_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(mol_dims),
-                active_dims=mol_dims,
-            )
-
-            covar_module = sum_kernel + prod_kernel
-
-        else:
-            sum_kernel = cont_kernel_factory(
                 batch_shape=aug_batch_shape,
                 ard_num_dims=len(ord_dims),
                 active_dims=ord_dims,
@@ -136,10 +122,6 @@ class MixedTanimotoGP(SingleTaskGP):
                 batch_shape=aug_batch_shape,
                 ard_num_dims=len(mol_dims),
                 active_dims=mol_dims,
-            ) + cat_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(cat_dims),
-                active_dims=cat_dims,
             )
 
             prod_kernel = cont_kernel_factory(
@@ -150,10 +132,45 @@ class MixedTanimotoGP(SingleTaskGP):
                 batch_shape=aug_batch_shape,
                 ard_num_dims=len(mol_dims),
                 active_dims=mol_dims,
-            ) * cat_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(cat_dims),
-                active_dims=cat_dims,
+            )
+
+            covar_module = sum_kernel + prod_kernel
+
+        else:
+            sum_kernel = (
+                cont_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(ord_dims),
+                    active_dims=ord_dims,
+                )
+                + mol_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(mol_dims),
+                    active_dims=mol_dims,
+                )
+                + cat_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(cat_dims),
+                    active_dims=cat_dims,
+                )
+            )
+
+            prod_kernel = (
+                cont_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(ord_dims),
+                    active_dims=ord_dims,
+                )
+                * mol_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(mol_dims),
+                    active_dims=mol_dims,
+                )
+                * cat_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(cat_dims),
+                    active_dims=cat_dims,
+                )
             )
             covar_module = sum_kernel + prod_kernel
 
@@ -197,7 +214,11 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         non_numerical_features = [
             key
             for key, value in self.input_preprocessing_specs.items()
-            if value != CategoricalEncodingEnum.DESCRIPTOR and value != MolecularEncodingEnum.FINGERPRINTS and value != MolecularEncodingEnum.FRAGMENTS and value != MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS and value != MolecularEncodingEnum.MOL_DESCRIPTOR
+            if value != CategoricalEncodingEnum.DESCRIPTOR
+            and value != MolecularEncodingEnum.FINGERPRINTS
+            and value != MolecularEncodingEnum.FRAGMENTS
+            and value != MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
+            and value != MolecularEncodingEnum.MOL_DESCRIPTOR
         ]
 
         ord_dims = []
@@ -226,7 +247,9 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         molecular_features = [
             key
             for key, value in self.input_preprocessing_specs.items()
-            if value == MolecularEncodingEnum.FINGERPRINTS or value == MolecularEncodingEnum.FRAGMENTS or value == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
+            if value == MolecularEncodingEnum.FINGERPRINTS
+            or value == MolecularEncodingEnum.FRAGMENTS
+            or value == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
         ]
         mol_dims = []
         for mol_feat in molecular_features:

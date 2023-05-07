@@ -12,6 +12,7 @@ from bofire.data_models.enum import MolecularEncodingEnum
 
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 
+
 class MolecularInput(CategoricalInput):
     smiles: List[str]
     molfeatures: AnyMolFeatures
@@ -57,7 +58,12 @@ class MolecularInput(CategoricalInput):
         Returns:
             List[str]: List of categories or None
         """
-        if transform_type != MolecularEncodingEnum.FINGERPRINTS or transform_type != MolecularEncodingEnum.FRAGMENTS or transform_type != MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS or transform_type != MolecularEncodingEnum.MOL_DESCRIPTOR:
+        if (
+            transform_type != MolecularEncodingEnum.FINGERPRINTS
+            or transform_type != MolecularEncodingEnum.FRAGMENTS
+            or transform_type != MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
+            or transform_type != MolecularEncodingEnum.MOL_DESCRIPTOR
+        ):
             return super().fixed_value(transform_type)
         else:
             val = self.get_allowed_categories()[0]
@@ -80,11 +86,15 @@ class MolecularInput(CategoricalInput):
             data=np.random.choice(self.categories, n),
         )
 
-    def name2smiles(self, values:pd.Series) -> pd.Series:
-        return values.replace({cat: smi for cat, smi in zip(self.categories, self.smiles)})
+    def name2smiles(self, values: pd.Series) -> pd.Series:
+        return values.replace(
+            {cat: smi for cat, smi in zip(self.categories, self.smiles)}
+        )
 
-    def smiles2name(self, values:pd.Series) -> pd.Series:
-        return values.replace({smi: cat for cat, smi in zip(self.categories, self.smiles)})
+    def smiles2name(self, values: pd.Series) -> pd.Series:
+        return values.replace(
+            {smi: cat for cat, smi in zip(self.categories, self.smiles)}
+        )
 
     def generate_descriptors(self):
         self.values = self.molfeatures(pd.Series(self.smiles)).values.tolist()
@@ -112,7 +122,9 @@ class MolecularInput(CategoricalInput):
             pd.DataFrame: tabular overview of the feature as DataFrame
         """
         data = {cat: values for cat, values in zip(self.categories, self.values)}
-        return pd.DataFrame.from_dict(data, orient="index", columns=self.molfeatures.descriptors)
+        return pd.DataFrame.from_dict(
+            data, orient="index", columns=self.molfeatures.descriptors
+        )
 
     def to_descriptor_encoding(self, values: pd.Series) -> pd.DataFrame:
         """Converts values to descriptor encoding.
@@ -169,4 +181,3 @@ class MolecularInput(CategoricalInput):
         ).idxmin(1)
         s.name = self.key
         return s
-

@@ -6,10 +6,13 @@ Author: Ryan-Rhys Griffiths and Austin Tripp 2022
 
 import torch
 from gpytorch.kernels import Kernel
+
 # from gpytorch.kernels.kernel import default_postprocess_script
+
 
 def default_postprocess_script(x):
     return x
+
 
 def batch_tanimoto_sim(
     x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
@@ -133,8 +136,6 @@ class BitKernel(Kernel):
         ):
             self.distance_module = BitDistance(dist_postprocess_func)
 
-        res = self.distance_module._sim(
-            x1, x2, postprocess, x1_eq_x2, self.metric
-        )
+        res = self.distance_module._sim(x1, x2, postprocess, x1_eq_x2, self.metric)
 
         return res

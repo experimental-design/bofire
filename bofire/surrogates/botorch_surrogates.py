@@ -10,7 +10,9 @@ from botorch.models.transforms.input import ChainedInputTransform, FilterFeature
 
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import TInputTransformSpecs
-from bofire.data_models.surrogates.botorch_surrogates import BotorchSurrogates as DataModel
+from bofire.data_models.surrogates.botorch_surrogates import (
+    BotorchSurrogates as DataModel,
+)
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.mapper import map as map_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate

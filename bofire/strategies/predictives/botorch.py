@@ -21,7 +21,11 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum, MolecularEncodingEnum
+from bofire.data_models.enum import (
+    CategoricalEncodingEnum,
+    CategoricalMethodEnum,
+    MolecularEncodingEnum,
+)
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     MolecularInput,
@@ -434,14 +438,16 @@ class BotorchStrategy(PredictiveStrategy):
 
                         for j, idx in enumerate(features2idx[feat]):
                             fixed_features[idx] = feature.values[index][j]
-                    elif (
-                            isinstance(feature, MolecularInput)
-                            and (self.input_preprocessing_specs[feat]
-                            == MolecularEncodingEnum.FINGERPRINTS or self.input_preprocessing_specs[feat]
-                            == MolecularEncodingEnum.FRAGMENTS or self.input_preprocessing_specs[feat]
-                            == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS or self.input_preprocessing_specs[feat]
-                            # == MolecularEncodingEnum.BAG_CHAR or self.input_preprocessing_specs[feat]
-                            == MolecularEncodingEnum.MOL_DESCRIPTOR)
+                    elif isinstance(feature, MolecularInput) and (
+                        self.input_preprocessing_specs[feat]
+                        == MolecularEncodingEnum.FINGERPRINTS
+                        or self.input_preprocessing_specs[feat]
+                        == MolecularEncodingEnum.FRAGMENTS
+                        or self.input_preprocessing_specs[feat]
+                        == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
+                        or self.input_preprocessing_specs[feat]
+                        # == MolecularEncodingEnum.BAG_CHAR or self.input_preprocessing_specs[feat]
+                        == MolecularEncodingEnum.MOL_DESCRIPTOR
                     ):
                         index = feature.categories.index(val)
 

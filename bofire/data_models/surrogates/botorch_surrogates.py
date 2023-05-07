@@ -25,7 +25,7 @@ AnyBotorchSurrogate = Union[
     MLPEnsemble,
     SaasSingleTaskGPSurrogate,
     TanimotoGPSurrogate,
-    MixedTanimotoGPSurrogate
+    MixedTanimotoGPSurrogate,
 ]
 
 

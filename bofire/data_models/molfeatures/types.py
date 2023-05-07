@@ -23,6 +23,7 @@ from bofire.utils.cheminformatics import (
     smiles2mordred,
 )
 
+
 class Fingerprints(MolFeatures):
     type: Literal["Fingerprints"] = "Fingerprints"
     bond_radius: int = 3
@@ -30,7 +31,7 @@ class Fingerprints(MolFeatures):
 
     def __init__(self):
         super().__init__()
-        self.descriptors = [f'fingerprint_{i}' for i in range(self.n_bits)]
+        self.descriptors = [f"fingerprint_{i}" for i in range(self.n_bits)]
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
@@ -39,12 +40,15 @@ class Fingerprints(MolFeatures):
             index=values.index,
         )
 
+
 class Fragments(MolFeatures):
     type: Literal["Fragments"] = "Fragments"
 
     def __init__(self):
         super().__init__()
-        self.descriptors = [f'{i}' for i in [fragment[0] for fragment in Descriptors.descList[124:]]] #
+        self.descriptors = [
+            f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
+        ]  #
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
@@ -53,6 +57,7 @@ class Fragments(MolFeatures):
             index=values.index,
         )
 
+
 class FingerprintsFragments(MolFeatures):
     type: Literal["FingerprintsFragments"] = "FingerprintsFragments"
     bond_radius: int = 3
@@ -60,11 +65,15 @@ class FingerprintsFragments(MolFeatures):
 
     def __init__(self):
         super().__init__()
-        self.descriptors = [f'fingerprint_{i}' for i in range(self.n_bits)] + [f'{i}' for i in [fragment[0] for fragment in Descriptors.descList[124:]]]
+        self.descriptors = [f"fingerprint_{i}" for i in range(self.n_bits)] + [
+            f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
+        ]
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:
         # values is SMILES; not molecule name
-        fingerprints = smiles2fingerprints(values.to_list(), bond_radius=self.bond_radius, n_bits=self.n_bits)
+        fingerprints = smiles2fingerprints(
+            values.to_list(), bond_radius=self.bond_radius, n_bits=self.n_bits
+        )
         fragments = smiles2fragments(values.to_list())
 
         return pd.DataFrame(
@@ -72,6 +81,7 @@ class FingerprintsFragments(MolFeatures):
             columns=self.descriptors,
             index=values.index,
         )
+
 
 # class BagOfCharacters(MolFeatures):
 #     type: Literal["BagOfCharacters"] = "BagOfCharacters"
@@ -86,6 +96,7 @@ class FingerprintsFragments(MolFeatures):
 #             columns=self.descriptors,
 #             index=values.index,
 #         )
+
 
 class MordredDescriptors(MolFeatures):
     type: Literal["MordredDescriptors"] = "MordredDescriptors"

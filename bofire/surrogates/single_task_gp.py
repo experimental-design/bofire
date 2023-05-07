@@ -9,7 +9,11 @@ from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum, MolecularEncodingEnum
+from bofire.data_models.enum import (
+    CategoricalEncodingEnum,
+    OutputFilteringEnum,
+    MolecularEncodingEnum,
+)
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -44,7 +48,8 @@ def get_scaler(
     non_numerical_features = [
         key
         for key, value in input_preprocessing_specs.items()
-        if value != CategoricalEncodingEnum.DESCRIPTOR and value != MolecularEncodingEnum.MOL_DESCRIPTOR
+        if value != CategoricalEncodingEnum.DESCRIPTOR
+        and value != MolecularEncodingEnum.MOL_DESCRIPTOR
     ]
 
     ord_dims = []
