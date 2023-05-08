@@ -8,6 +8,7 @@ from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+import bofire.kernels.api as kernels
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
@@ -98,7 +99,8 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.model = botorch.models.SingleTaskGP(  # type: ignore
             train_X=tX,
             train_Y=tY,
-            covar_module=self.kernel.to_gpytorch(
+            covar_module=kernels.map(
+                self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(range(tX.shape[1])),
                 ard_num_dims=1,  # this keyword is ingored

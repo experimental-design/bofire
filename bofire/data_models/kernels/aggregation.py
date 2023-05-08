@@ -1,7 +1,4 @@
-from typing import List, Literal, Optional, Sequence, Union
-
-import gpytorch
-import torch
+from typing import Literal, Optional, Sequence, Union
 
 from bofire.data_models.kernels.categorical import HammondDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
@@ -24,20 +21,6 @@ class AdditiveKernel(Kernel):
     ]
     type: Literal["AdditiveKernel"] = "AdditiveKernel"
 
-    def to_gpytorch(
-        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
-    ) -> gpytorch.kernels.AdditiveKernel:
-        return gpytorch.kernels.AdditiveKernel(
-            *[  # type: ignore
-                k.to_gpytorch(
-                    batch_shape=batch_shape,
-                    ard_num_dims=ard_num_dims,
-                    active_dims=active_dims,
-                )
-                for k in self.kernels
-            ]
-        )
-
 
 class MultiplicativeKernel(Kernel):
     type: Literal["MultiplicativeKernel"] = "MultiplicativeKernel"
@@ -53,20 +36,6 @@ class MultiplicativeKernel(Kernel):
         ]
     ]
 
-    def to_gpytorch(
-        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
-    ) -> gpytorch.kernels.AdditiveKernel:
-        return gpytorch.kernels.ProductKernel(
-            *[  # type: ignore
-                k.to_gpytorch(
-                    batch_shape=batch_shape,
-                    ard_num_dims=ard_num_dims,
-                    active_dims=active_dims,
-                )
-                for k in self.kernels
-            ]
-        )
-
 
 class ScaleKernel(Kernel):
     type: Literal["ScaleKernel"] = "ScaleKernel"
@@ -80,20 +49,6 @@ class ScaleKernel(Kernel):
         "ScaleKernel",
     ]
     outputscale_prior: Optional[AnyPrior] = None
-
-    def to_gpytorch(
-        self, batch_shape: torch.Size, ard_num_dims: int, active_dims: List[int]
-    ) -> gpytorch.kernels.ScaleKernel:
-        return gpytorch.kernels.ScaleKernel(
-            base_kernel=self.base_kernel.to_gpytorch(
-                batch_shape=batch_shape,
-                ard_num_dims=ard_num_dims,
-                active_dims=active_dims,
-            ),
-            outputscale_prior=self.outputscale_prior.to_gpytorch()
-            if self.outputscale_prior is not None
-            else None,
-        )
 
 
 AdditiveKernel.update_forward_refs()

@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Dict, Optional
 
 import botorch
@@ -8,6 +9,7 @@ from botorch.models.transforms.input import ChainedInputTransform, OneHotToNumer
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+import bofire.kernels.api as kernels
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -77,7 +79,8 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             train_X=o2n.transform(tX),
             train_Y=tY,
             cat_dims=cat_dims,
-            cont_kernel_factory=self.continuous_kernel.to_gpytorch,
+            # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
+            cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=tf,
         )
