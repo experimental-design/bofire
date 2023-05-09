@@ -8,7 +8,6 @@ from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
-import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
 from bofire.data_models.domain.api import Outputs
 from bofire.data_models.strategies.api import (
@@ -33,7 +32,7 @@ VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
         ]
     ),
     "descriptor_method": "FREE",
-    "acquisition_function": specs.acquisition_functions.valid().obj(),
+    # "acquisition_function": specs.acquisition_functions.valid().obj(),
     "categorical_method": "FREE",
 }
 
@@ -63,14 +62,12 @@ BOTORCH_QPAREGO_STRATEGY_SPECS = {
                         outputs=Outputs(
                             features=[domains[2].outputs.get_by_key("of1")]
                         ),
-                        constraints=[],
                     ),
                     surrogate_data_models.MixedSingleTaskGPSurrogate(
                         inputs=domains[2].inputs,
                         outputs=Outputs(
                             features=[domains[2].outputs.get_by_key("of2")]
                         ),
-                        constraints=[],
                     ),
                 ]
             ),

@@ -18,7 +18,7 @@ from torch import Tensor
 
 import bofire.data_models.surrogates.api as data_models
 import bofire.surrogates.api as surrogates
-from bofire.data_models.domain.api import Constraints, Inputs, Outputs
+from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -61,7 +61,6 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     data_model = modelclass(
         inputs=inputs,
         outputs=outputs,
-        constraints=Constraints(),
     )
     surrogate = surrogates.map(data_model)
     assert surrogate.input_preprocessing_specs == {
@@ -72,7 +71,6 @@ def test_BotorchModel_validate_input_preprocessing_steps(modelclass):
     data_model = modelclass(
         inputs=inputs,
         outputs=outputs,
-        constraints=Constraints(),
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
     )
     surrogate = surrogates.map(data_model)
@@ -869,7 +867,6 @@ def test_empirical_model():
         outputs=outputs,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=ScalerEnum.STANDARDIZE,
-        constraints=Constraints(),
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
