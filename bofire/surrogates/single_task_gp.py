@@ -9,6 +9,7 @@ from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
+import bofire.priors.api as priors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
@@ -82,6 +83,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     ):
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
+        self.noise_prior = data_model.noise_prior
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.SingleTaskGP] = None
@@ -108,6 +110,8 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=scaler,
         )
+
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)

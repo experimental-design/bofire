@@ -119,7 +119,9 @@ def test_valid_kernel_specs(cls, spec):
 
 
 def test_scale_kernel():
-    kernel = ScaleKernel(base_kernel=RBFKernel(), outputscale_prior=BOTORCH_SCALE_PRIOR)
+    kernel = ScaleKernel(
+        base_kernel=RBFKernel(), outputscale_prior=BOTORCH_SCALE_PRIOR()
+    )
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),

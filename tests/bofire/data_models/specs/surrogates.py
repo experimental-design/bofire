@@ -13,7 +13,11 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     ScaleKernel,
 )
-from bofire.data_models.priors.api import BOTORCH_LENGTHCALE_PRIOR, BOTORCH_SCALE_PRIOR
+from bofire.data_models.priors.api import (
+    BOTORCH_LENGTHCALE_PRIOR,
+    BOTORCH_NOISE_PRIOR,
+    BOTORCH_SCALE_PRIOR,
+)
 from bofire.data_models.surrogates.api import ScalerEnum
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -79,11 +83,12 @@ specs.add_valid(
         ),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR,
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
         ),
         "scaler": ScalerEnum.NORMALIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
         "dump": None,
     },
