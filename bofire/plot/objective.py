@@ -13,7 +13,7 @@ def plot_objective_plotly(
     lower: float,
     upper: float,
     values: Optional[pd.Series] = None,
-    layout_options: Dict = {},
+    layout_options: Optional[Dict] = None,
 ):
     """Plot the assigned objective.
 
@@ -43,7 +43,7 @@ def plot_objective_plotly(
     else:
         fig = fig1
 
-    if len(layout_options) > 0:
+    if layout_options is not None:
         fig.update_layout(layout_options)
 
     return fig

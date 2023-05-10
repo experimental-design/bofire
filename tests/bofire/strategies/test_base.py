@@ -287,7 +287,7 @@ data = [
 ]
 
 
-@pytest.mark.parametrize("domain", [(domain) for domain in domains])
+@pytest.mark.parametrize("domain", list(domains))
 def test_base_create(domain: Domain):
     with pytest.raises(ValueError, match="number sobol samples"):
         DummyStrategyDataModel(domain=domain, num_sobol_samples=5)

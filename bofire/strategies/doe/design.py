@@ -28,7 +28,7 @@ def find_local_max_ipopt(
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
     delta: float = 1e-7,
-    ipopt_options: Dict = {},
+    ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
@@ -41,7 +41,7 @@ def find_local_max_ipopt(
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
         delta (float): Regularization parameter. Default value is 1e-3.
-        ipopt_options (Dict): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
         fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
@@ -76,11 +76,9 @@ def find_local_max_ipopt(
 
     # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
     assert all(
-        [
-            c.min_count == 0
-            for c in domain.constraints
-            if isinstance(c, NChooseKConstraint)
-        ]
+        c.min_count == 0
+        for c in domain.constraints
+        if isinstance(c, NChooseKConstraint)
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     # determine number of experiments (only relevant if n_experiments is not provided by the user)
@@ -140,6 +138,8 @@ def find_local_max_ipopt(
             x0[i] = val
 
     # set ipopt options
+    if ipopt_options is None:
+        ipopt_options = {}
     _ipopt_options = {"maxiter": 500, "disp": 0}
     for key in ipopt_options.keys():
         _ipopt_options[key] = ipopt_options[key]

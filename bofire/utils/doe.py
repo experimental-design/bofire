@@ -1,6 +1,6 @@
 import itertools
 import warnings
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
@@ -12,8 +12,8 @@ from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 def get_confounding_matrix(
     inputs: Inputs,
     design: pd.DataFrame,
-    powers: List[int] = [],
-    interactions: List[int] = [2],
+    powers: Optional[List[int]] = None,
+    interactions: Optional[List[int]] = None,
 ):
     """Analyzes the confounding of a design and returns the confounding matrix.
 
@@ -39,16 +39,22 @@ def get_confounding_matrix(
         data=scaler.fit_transform(design[keys]),
         columns=keys,
     )
+
     # add powers
-    for p in powers:
-        assert p > 1, "Power has to be at least of degree two."
-        for key in keys:
-            scaled_design[f"{key}**{p}"] = scaled_design[key] ** p
+    if powers is not None:
+        for p in powers:
+            assert p > 1, "Power has to be at least of degree two."
+            for key in keys:
+                scaled_design[f"{key}**{p}"] = scaled_design[key] ** p
 
     # add interactions
+    if interactions is None:
+        interactions = [2]
+
     for i in interactions:
         assert i > 1, "Interaction has to be at least of degree two."
         assert i < len(keys) + 1, f"Interaction has to be smaller than {len(keys)+1}."
         for combi in itertools.combinations(keys, i):
             scaled_design[":".join(combi)] = scaled_design[list(combi)].prod(axis=1)
+
     return scaled_design.corr()

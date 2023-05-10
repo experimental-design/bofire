@@ -91,5 +91,5 @@ def test_combine_permutation_importances(n_folds):
         importance = combine_permutation_importances(
             importances=pi["pemutation_importance"], metric=m
         )
-        list(importance.columns) == model.inputs.get_keys()
+        assert list(importance.columns) == model.inputs.get_keys()
         assert len(importance) == n_folds

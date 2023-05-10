@@ -52,7 +52,7 @@ class Ackley(Benchmark):
         lower: float = -32.768,
         upper: float = 32.768,
         best_possible_f: float = 0.0,
-        evaluated_points=[],
+        evaluated_points: Optional[list] = None,
     ):
         """Initializes benchmark function of type Ackley.
 
@@ -74,6 +74,8 @@ class Ackley(Benchmark):
         self.lower = lower
         self.upper = upper
         self.best_possible_f = best_possible_f
+        if evaluated_points is None:
+            evaluated_points = []
         self.evaluated_points = evaluated_points
 
         input_feature_list = []

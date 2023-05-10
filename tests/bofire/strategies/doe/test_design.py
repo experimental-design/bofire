@@ -151,9 +151,9 @@ def test_find_local_max_ipopt_mixed_results():
     A = find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"maxiter": 100})
     opt = np.eye(3)
     for row in A.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in opt])
+        assert any(np.allclose(row, o, atol=1e-2) for o in opt)
     for o in opt:
-        assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
@@ -186,9 +186,9 @@ def test_find_local_max_ipopt_results():
     A = find_local_max_ipopt(domain, "linear", n_experiments=12)
     opt = np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]])
     for row in A.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in opt])
+        assert any(np.allclose(row, o, atol=1e-2) for o in opt)
     for o in opt[:-1]:
-        assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
 # def test_find_local_max_ipopt_sampling():
@@ -310,9 +310,9 @@ def test_find_local_max_ipopt_fixed_experiments():
     )
     opt = np.eye(3)
     for row in A.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in opt])
+        assert any(np.allclose(row, o, atol=1e-2) for o in opt)
     for o in opt:
-        assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
     assert np.allclose(A.to_numpy()[:2, :], opt[:2, :])
 
 

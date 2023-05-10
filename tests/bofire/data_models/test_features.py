@@ -1077,7 +1077,7 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     categories, descriptors, values
 ):
     df = pd.DataFrame.from_dict(
-        {category: v for category, v in zip(categories, values)},
+        dict(zip(categories, values)),
         orient="index",
         columns=descriptors,
     )
@@ -1115,7 +1115,7 @@ out = specs.features.valid(ContinuousOutput).obj()
     ],
 )
 def test_feature_sorting(unsorted_list, sorted_list):
-    assert list(sorted(unsorted_list)) == sorted_list
+    assert sorted(unsorted_list) == sorted_list
 
 
 # test features container

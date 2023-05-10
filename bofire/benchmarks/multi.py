@@ -174,12 +174,14 @@ class SnarBenchmark(Benchmark):
     Solving of a differential equation system with varying intitial values.
     """
 
-    def __init__(self, C_i: Optional[np.ndarray] = np.ndarray((1, 1))):
+    def __init__(self, C_i: Optional[np.ndarray] = None):
         """Initializes multiobjective test function object of type SnarBenchmark.
 
         Args:
             C_i (Optional[np.ndarray]): Input concentrations. Defaults to [1, 1]
         """
+        if C_i is None:
+            C_i = np.array([1, 1])
         self.C_i = C_i
 
         # Decision variables
@@ -224,7 +226,7 @@ class SnarBenchmark(Benchmark):
         """
         stys = []
         e_factors = []
-        for i, candidate in candidates.iterrows():
+        for _, candidate in candidates.iterrows():
             tau = float(candidate["tau"])
             equiv_pldn = float(candidate["equiv_pldn"])
             conc_dfnb = float(candidate["conc_dfnb"])
@@ -297,11 +299,10 @@ class SnarBenchmark(Benchmark):
         T_ref = 90 + 273.71  # Convert to deg K
         T = T + 273.71  # Convert to deg K
         # Need to convert from 10^-2 M^-1s^-1 to M^-1min^-1
-        k = (
-            lambda k_ref, E_a, temp: 0.6
-            * k_ref
-            * np.exp(-E_a / R * (1 / temp - 1 / T_ref))
-        )
+
+        def k(k_ref, E_a, temp):
+            return 0.6 * k_ref * np.exp(-E_a / R * (1 / temp - 1 / T_ref))
+
         k_a = k(57.9, 33.3, T)
         k_b = k(2.70, 35.3, T)
         k_c = k(0.865, 38.9, T)

@@ -42,7 +42,7 @@ class CategoricalInput(Input):
         Returns:
             List[str]: List of the categories
         """
-        categories = [name for name in categories]
+        categories = list(categories)
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
         return categories
@@ -180,9 +180,7 @@ class CategoricalInput(Input):
         Returns:
             list: list of possible categories
         """
-        return sorted(
-            list(set(list(set(values.tolist())) + self.get_allowed_categories()))
-        )
+        return sorted(set(list(set(values.tolist())) + self.get_allowed_categories()))
 
     def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
         """Converts values to a one-hot encoding.
@@ -368,7 +366,7 @@ class CategoricalOutput(Output):
         Returns:
             List[str]: List of the categories
         """
-        categories = [name for name in categories]
+        categories = list(categories)
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
         return categories
@@ -386,7 +384,7 @@ class CategoricalOutput(Output):
 
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""
-        return {cat: obj for cat, obj in zip(self.categories, self.objective)}
+        return dict(zip(self.categories, self.objective))
 
     def __call__(self, values: pd.Series) -> pd.Series:
         return values.map(self.to_dict()).astype(float)

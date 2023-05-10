@@ -521,7 +521,7 @@ def test_predictive_strategy_predict(domain, experiments):
     )
     strategy.tell(experiments)
     preds = strategy.predict(generate_candidates(domain=domain))
-    assert sorted(list(preds.columns)) == sorted(
+    assert sorted(preds.columns) == sorted(
         [
             "of1_pred",
             "of2_pred",

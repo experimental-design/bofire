@@ -9,7 +9,7 @@ on:
 
 jobs:    
   style:
-    name: Check style with flake8, black, and isort
+    name: Check style with ruff and black
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -18,10 +18,9 @@ jobs:
           python-version: 3.9
       - name: style
         run: |
-          pip3 install flake8==5.0.4 black==22.10.0 isort==5.12.0
-          flake8 --verbose bofire tests
+          pip3 install ruff==0.0.265 black==22.10.0
           black --check bofire tests
-          isort . --check-only --verbose
+          ruff check .
 
   pyright:
     name: Typechecking with pyright

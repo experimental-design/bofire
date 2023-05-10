@@ -474,7 +474,7 @@ def nchoosek_constraints_as_bounds(
                 ]
 
                 # find and shuffle all combinations of elements of ind of length max_active
-                ind = np.array([c for c in combinations(ind, r=n_inactive)])
+                ind = np.array(list(combinations(ind, r=n_inactive)))
                 np.random.shuffle(ind)
 
                 # set bounds to zero in each experiments for the variables that should be inactive
