@@ -24,7 +24,7 @@ ignore = [
     "C419"
 ]
 line-length = 88
-select = ["B", "C", "E", "F", "W"]
+select = ["B", "C", "E", "F", "W", "I"]
 
 [tool.ruff.mccabe]
 max-complexity = 18
