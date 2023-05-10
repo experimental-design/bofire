@@ -4,6 +4,7 @@ import numpy as np
 import plotly.express as px
 import torch
 
+import bofire.priors.api as priors
 from bofire.data_models.priors.api import AnyPrior
 
 
@@ -29,7 +30,7 @@ def plot_prior_pdf_plotly(
 
     fig = px.line(
         x=x,
-        y=np.exp(prior.to_gpytorch().log_prob(torch.from_numpy(x)).numpy()),
+        y=np.exp(priors.map(prior).log_prob(torch.from_numpy(x)).numpy()),
     )
 
     if len(layout_options) > 0:

@@ -1,6 +1,5 @@
 from typing import Literal
 
-import gpytorch
 from pydantic import PositiveFloat
 
 from bofire.data_models.priors.prior import Prior
@@ -17,6 +16,3 @@ class NormalPrior(Prior):
     type: Literal["NormalPrior"] = "NormalPrior"
     loc: float
     scale: PositiveFloat
-
-    def to_gpytorch(self) -> gpytorch.priors.NormalPrior:
-        return gpytorch.priors.NormalPrior(loc=self.loc, scale=self.scale)
