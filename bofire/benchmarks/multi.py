@@ -299,11 +299,10 @@ class SnarBenchmark(Benchmark):
         T_ref = 90 + 273.71  # Convert to deg K
         T = T + 273.71  # Convert to deg K
         # Need to convert from 10^-2 M^-1s^-1 to M^-1min^-1
-        k = (
-            lambda k_ref, E_a, temp: 0.6
-            * k_ref
-            * np.exp(-E_a / R * (1 / temp - 1 / T_ref))
-        )
+
+        def k(k_ref, E_a, temp):
+            return 0.6 * k_ref * np.exp(-E_a / R * (1 / temp - 1 / T_ref))
+
         k_a = k(57.9, 33.3, T)
         k_b = k(2.70, 35.3, T)
         k_c = k(0.865, 38.9, T)

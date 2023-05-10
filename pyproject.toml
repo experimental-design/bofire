@@ -7,16 +7,15 @@ local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
 [tool.ruff]
 ignore = [
-    "E731",
     "E501", 
     "B028", 
     "B006", 
     "B007",
+    "B017",
+    "B027",
     "B023",
     "B904",
     "B905", 
-    "B017", 
-    "B027",
     "C413",
     "C414",
     "C416", 
