@@ -8,8 +8,6 @@ from pydantic import Extra
 
 class BaseModel(PydanticBaseModel):
     class Config:
-        # TODO: forbid extra fields in data models
-        # extra = "forbid"
         validate_assignment = True
         arbitrary_types_allowed = False
         copy_on_model_validation = "none"
