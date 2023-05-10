@@ -1077,7 +1077,7 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     categories, descriptors, values
 ):
     df = pd.DataFrame.from_dict(
-        {category: v for category, v in zip(categories, values)},
+        dict(zip(categories, values)),
         orient="index",
         columns=descriptors,
     )

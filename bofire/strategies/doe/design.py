@@ -76,11 +76,9 @@ def find_local_max_ipopt(
 
     # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
     assert all(
-        [
-            c.min_count == 0
-            for c in domain.constraints
-            if isinstance(c, NChooseKConstraint)
-        ]
+        c.min_count == 0
+        for c in domain.constraints
+        if isinstance(c, NChooseKConstraint)
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     # determine number of experiments (only relevant if n_experiments is not provided by the user)

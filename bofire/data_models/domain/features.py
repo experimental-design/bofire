@@ -433,7 +433,7 @@ class Inputs(Features):
             raise ValueError("Unknown features specified in transform specs.")
         # next check that all values are of type CategoricalEncodingEnum
         if not (
-            all([isinstance(enc, CategoricalEncodingEnum) for enc in specs.values()])
+            all(isinstance(enc, CategoricalEncodingEnum) for enc in specs.values())
         ):
             raise ValueError("Unknown transform specified.")
         # next check that only Categoricalwithdescriptor have the value DESCRIPTOR

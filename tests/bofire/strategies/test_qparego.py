@@ -102,7 +102,7 @@ def test_invalid_qparego_init_domain(domain):
 
 @pytest.mark.parametrize(
     "num_test_candidates",
-    [num_test_candidates for num_test_candidates in range(1, 2)],
+    list(range(1, 2)),
 )
 def test_qparego(num_test_candidates):
     # generate data
@@ -127,7 +127,7 @@ def test_qparego(num_test_candidates):
 
 @pytest.mark.parametrize(
     "num_test_candidates",
-    [num_test_candidates for num_test_candidates in range(1, 2)],
+    list(range(1, 2)),
 )
 def test_qparego_constraints(num_test_candidates):
     # generate data
