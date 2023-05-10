@@ -652,42 +652,36 @@ def test_base_invalid_pair_encoding_method(domain):
 
 
 @pytest.mark.parametrize(
-    "domain, data, acquisition_function",
+    "domain, data",
     [
         (
             domains[0],
             generate_experiments(
                 domains[0], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
         (
             domains[1],
             generate_experiments(
                 domains[1], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
         (
             domains[2],
             generate_experiments(
                 domains[2], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
         (
             domains[4],
             generate_experiments(
                 domains[4], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
     ],
 )
-def test_base_fit(domain, data, acquisition_function):
-    data_model = DummyStrategyDataModel(
-        domain=domain, acquisition_function=acquisition_function
-    )
+def test_base_fit(domain, data):
+    data_model = DummyStrategyDataModel(domain=domain)
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy.set_experiments(data)
     myStrategy.fit()
@@ -731,8 +725,9 @@ def test_base_fit(domain, data, acquisition_function):
 )
 def test_base_predict(domain, data, acquisition_function):
     data_model = DummyStrategyDataModel(
-        domain=domain, acquisition_function=acquisition_function
-    )
+        domain=domain
+    )  # , acquisition_function=acquisition_function
+    # )
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy.tell(experiments=data)
     predictions = myStrategy.predict(data)
@@ -756,7 +751,7 @@ def test_base_setup_ask_fixed_features(
     # test for fixed features list
     data_model = DummyStrategyDataModel(
         domain=domains[0],
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
         categorical_method=categorical_method,
         descriptor_method=descriptor_method,
         discrete_method=discrete_method,
@@ -795,7 +790,7 @@ def test_base_setup_ask_fixed_features(
 
     data_model = DummyStrategyDataModel(
         domain=domains[3],
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
         categorical_method=categorical_method,
         descriptor_method=descriptor_method,
         discrete_method=discrete_method,
@@ -818,7 +813,7 @@ def test_base_setup_ask():
     benchmark = Hartmann()
     data_model = DummyStrategyDataModel(
         domain=benchmark.domain,
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
     (
@@ -842,7 +837,7 @@ def test_base_setup_ask():
     benchmark = Hartmann(dim=6, allowed_k=3)
     data_model = DummyStrategyDataModel(
         domain=benchmark.domain,
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
     (

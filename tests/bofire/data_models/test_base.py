@@ -34,3 +34,8 @@ def test_assignment_validation(bla, a):
 def test_assignment_validation_invalid(bla, b):
     with pytest.raises(ValidationError):
         bla.a = b
+
+
+def test_forbid_extra():
+    with pytest.raises(ValidationError):
+        Bla(a=2, mama="papa")

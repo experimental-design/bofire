@@ -86,7 +86,7 @@ c3 = LinearInequalityConstraint(
         MinimizeObjective(w=0.5),
         MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
         TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
-        CloseToTargetObjective(target_value=2.0, exponent=1.0, tolerance=1e-3, w=0.5),
+        CloseToTargetObjective(target_value=2.0, exponent=1.0, w=0.5),
         # ConstantObjective(w=0.5, value=1.0),
     ],
 )
@@ -110,9 +110,7 @@ def test_get_multiplicative_botorch_objective():
             MinimizeObjective(w=1),
             MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
             TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
-            CloseToTargetObjective(
-                target_value=2.0, exponent=1.0, tolerance=1e-3, w=1.0
-            ),
+            CloseToTargetObjective(target_value=2.0, exponent=1.0, w=1.0),
         ],
         k=2,
     )

@@ -261,7 +261,7 @@ def test_MixedGPModel(kernel, scaler):
     model2 = MixedSingleTaskGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        kernel=kernel,
+        continuous_kernel=kernel,
         scaler=scaler,
     )
     model2 = surrogates.map(model2)
