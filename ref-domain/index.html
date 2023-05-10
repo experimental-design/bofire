@@ -969,7 +969,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                     <span class="n">used_features_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
 
                 <span class="k">if</span> <span class="n">con</span><span class="o">.</span><span class="n">none_also_valid</span><span class="p">:</span>
-                    <span class="n">used_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([]))</span>
+                    <span class="n">used_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(())</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">used_features_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                     <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">)</span>
@@ -2166,7 +2166,7 @@ involved output features.</p>
                 <span class="n">used_features_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
 
             <span class="k">if</span> <span class="n">con</span><span class="o">.</span><span class="n">none_also_valid</span><span class="p">:</span>
-                <span class="n">used_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">tuple</span><span class="p">([]))</span>
+                <span class="n">used_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">used_features_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
                 <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">)</span>

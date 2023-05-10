@@ -1210,7 +1210,7 @@
 
 
 <h3 id="bofire.utils.doe.get_confounding_matrix" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="p">[],</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span></code>
+<code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h3>
@@ -1248,14 +1248,14 @@
         <td><code>List[int]</code></td>
         <td><p>List of powers of the individual factors/features that should be considered.
 Integers has to be larger than 1. Defaults to [].</p></td>
-        <td><code>[]</code></td>
+        <td><code>None</code></td>
       </tr>
       <tr>
         <td><code>interactions</code></td>
         <td><code>List[int]</code></td>
         <td><p>List with interaction levels to be considered.
 Integers has to be larger than 1. Defaults to [2].</p></td>
-        <td><code>[2]</code></td>
+        <td><code>None</code></td>
       </tr>
   </tbody>
 </table>
@@ -1279,8 +1279,8 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_confounding_matrix</span><span class="p">(</span>
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">,</span>
     <span class="n">design</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
-    <span class="n">powers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[],</span>
-    <span class="n">interactions</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+    <span class="n">powers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">interactions</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyzes the confounding of a design and returns the confounding matrix.</span>
 
@@ -1306,18 +1306,24 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
         <span class="n">data</span><span class="o">=</span><span class="n">scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="n">keys</span><span class="p">]),</span>
         <span class="n">columns</span><span class="o">=</span><span class="n">keys</span><span class="p">,</span>
     <span class="p">)</span>
+
     <span class="c1"># add powers</span>
-    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">powers</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Power has to be at least of degree two.&quot;</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-            <span class="n">scaled_design</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">**</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">**</span> <span class="n">p</span>
+    <span class="k">if</span> <span class="n">powers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">powers</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Power has to be at least of degree two.&quot;</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+                <span class="n">scaled_design</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">**</span><span class="si">{</span><span class="n">p</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">**</span> <span class="n">p</span>
 
     <span class="c1"># add interactions</span>
+    <span class="k">if</span> <span class="n">interactions</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">interactions</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">interactions</span><span class="p">:</span>
         <span class="k">assert</span> <span class="n">i</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;Interaction has to be at least of degree two.&quot;</span>
         <span class="k">assert</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;Interaction has to be smaller than </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">.&quot;</span>
         <span class="k">for</span> <span class="n">combi</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
             <span class="n">scaled_design</span><span class="p">[</span><span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">scaled_design</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
 </code></pre></div>
         </details>
@@ -2302,7 +2308,7 @@ are the corresponding coefficients.</p></td>
 
     <span class="c1"># build up dict from domain.equalities e.g. {&quot;xi1&quot;: [coeff(xj1), ..., coeff(xjn)], ... &quot;xik&quot;:...}</span>
     <span class="n">coeffs_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">e</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">transform</span><span class="o">.</span><span class="n">equalities</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">transform</span><span class="o">.</span><span class="n">equalities</span><span class="p">:</span>
         <span class="n">coeffs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">M</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">e</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
             <span class="n">coeffs</span><span class="p">[</span><span class="n">inputs_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]]</span> <span class="o">=</span> <span class="n">e</span><span class="p">[</span><span class="mi">2</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
@@ -2811,7 +2817,7 @@ to setup ouput constrained optimizations.</p>
 
 
 <h3 id="bofire.utils.torch_tools.get_initial_conditions_generator" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_initial_conditions_generator</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">transform_specs</span><span class="p">,</span> <span class="n">ask_options</span><span class="o">=</span><span class="p">{},</span> <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_initial_conditions_generator</span><span class="p">(</span><span class="n">strategy</span><span class="p">,</span> <span class="n">transform_specs</span><span class="p">,</span> <span class="n">ask_options</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sequential</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 
 </h3>
@@ -2850,7 +2856,7 @@ transformed.</p></td>
         <td><code>Dict</code></td>
         <td><p>Dictionary of keyword arguments that are
 passed to the <code>ask</code> method of the strategy. Defaults to {}.</p></td>
-        <td><code>{}</code></td>
+        <td><code>None</code></td>
       </tr>
       <tr>
         <td><code>sequential</code></td>
@@ -2883,7 +2889,7 @@ are generated at once.</p></td>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_initial_conditions_generator</span><span class="p">(</span>
     <span class="n">strategy</span><span class="p">:</span> <span class="n">Strategy</span><span class="p">,</span>
     <span class="n">transform_specs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
-    <span class="n">ask_options</span><span class="p">:</span> <span class="n">Dict</span> <span class="o">=</span> <span class="p">{},</span>
+    <span class="n">ask_options</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">sequential</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Takes a strategy object and returns a callable which uses this</span>
@@ -2904,6 +2910,8 @@ are generated at once.</p></td>
 <span class="sd">        Callable[[int, int, int], Tensor]: Callable that can be passed to</span>
 <span class="sd">            `batch_initial_conditions`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ask_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">ask_options</span> <span class="o">=</span> <span class="p">{}</span>
 
     <span class="k">def</span> <span class="nf">generator</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">q</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">sequential</span><span class="p">:</span>
