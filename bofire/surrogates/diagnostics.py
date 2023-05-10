@@ -293,9 +293,9 @@ class CvResults(BaseModel):
                     )
         # check columns of X
         if v[0].X is not None:
-            cols = sorted(list(v[0].X.columns))
+            cols = sorted(v[0].X.columns)
             for i in v:
-                if sorted(list(i.X.columns)) != cols:
+                if sorted(i.X.columns) != cols:
                     raise ValueError("Columns of X do not match.")
         return v
 

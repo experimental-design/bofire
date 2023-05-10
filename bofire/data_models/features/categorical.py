@@ -180,9 +180,7 @@ class CategoricalInput(Input):
         Returns:
             list: list of possible categories
         """
-        return sorted(
-            list(set(list(set(values.tolist())) + self.get_allowed_categories()))
-        )
+        return sorted(set(list(set(values.tolist())) + self.get_allowed_categories()))
 
     def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
         """Converts values to a one-hot encoding.

@@ -59,7 +59,7 @@ class Surrogate(ABC):
         expected_cols = [
             f"{key}_{t}" for key in self.outputs.get_keys() for t in ["pred", "sd"]
         ]
-        if sorted(list(predictions.columns)) != sorted(expected_cols):
+        if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
                 f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
             )
