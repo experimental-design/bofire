@@ -11,7 +11,7 @@ ignore = [
     "B017",  # required for tests
     "B027",  # required for optional _tell method
     "B023",
-    "B028",  
+    "B028",
     "B904",
     "B905"
 ]
