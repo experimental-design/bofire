@@ -174,12 +174,14 @@ class SnarBenchmark(Benchmark):
     Solving of a differential equation system with varying intitial values.
     """
 
-    def __init__(self, C_i: Optional[np.ndarray] = np.ndarray((1, 1))):
+    def __init__(self, C_i: Optional[np.ndarray] = None):
         """Initializes multiobjective test function object of type SnarBenchmark.
 
         Args:
             C_i (Optional[np.ndarray]): Input concentrations. Defaults to [1, 1]
         """
+        if C_i is None:
+            C_i = np.array([1, 1])
         self.C_i = C_i
 
         # Decision variables
