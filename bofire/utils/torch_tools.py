@@ -349,7 +349,7 @@ def get_multiobjective_objective(
 def get_initial_conditions_generator(
     strategy: Strategy,
     transform_specs: Dict,
-    ask_options: Dict = {},
+    ask_options: Optional[Dict] = None,
     sequential: bool = True,
 ) -> Callable[[int, int, int], Tensor]:
     """Takes a strategy object and returns a callable which uses this
@@ -370,6 +370,8 @@ def get_initial_conditions_generator(
         Callable[[int, int, int], Tensor]: Callable that can be passed to
             `batch_initial_conditions`.
     """
+    if ask_options is None:
+        ask_options = {}
 
     def generator(n: int, q: int, seed: int) -> Tensor:
         if sequential:

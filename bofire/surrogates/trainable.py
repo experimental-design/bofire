@@ -52,20 +52,22 @@ class TrainableSurrogate(ABC):
         folds: int = -1,
         include_X: bool = False,
         include_labcodes: bool = False,
-        hooks: Dict[
-            str,
-            Callable[
-                [
-                    Surrogate,
-                    pd.DataFrame,
-                    pd.DataFrame,
-                    pd.DataFrame,
-                    pd.DataFrame,
+        hooks: Optional[
+            Dict[
+                str,
+                Callable[
+                    [
+                        Surrogate,
+                        pd.DataFrame,
+                        pd.DataFrame,
+                        pd.DataFrame,
+                        pd.DataFrame,
+                    ],
+                    Any,
                 ],
-                Any,
-            ],
-        ] = {},
-        hook_kwargs: Dict[str, Dict[str, Any]] = {},
+            ]
+        ] = None,
+        hook_kwargs: Optional[Dict[str, Dict[str, Any]]] = None,
     ) -> Tuple[CvResults, CvResults, Dict[str, List[Any]]]:
         """Perform a cross validation for the provided training data.
 
@@ -103,6 +105,10 @@ class TrainableSurrogate(ABC):
         elif folds == -1:
             folds = n
         # preprocess hooks
+        if hooks is None:
+            hooks = {}
+        if hook_kwargs is None:
+            hook_kwargs = {}
         hook_results = {key: [] for key in hooks.keys()}
         # instantiate kfold object
         cv = KFold(n_splits=folds, shuffle=True)

@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import plotly.express as px
@@ -11,7 +11,7 @@ def plot_prior_pdf_plotly(
     prior: AnyPrior,
     lower: float,
     upper: float,
-    layout_options: Dict = {},
+    layout_options: Optional[Dict] = None,
 ):
     """Plot the probability density function of the prior with plotly.
 
@@ -32,7 +32,7 @@ def plot_prior_pdf_plotly(
         y=np.exp(prior.to_gpytorch().log_prob(torch.from_numpy(x)).numpy()),
     )
 
-    if len(layout_options) > 0:
+    if layout_options is not None:
         fig.update_layout(layout_options)
 
     return fig
