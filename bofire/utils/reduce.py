@@ -291,7 +291,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
 
     # build up dict from domain.equalities e.g. {"xi1": [coeff(xj1), ..., coeff(xjn)], ... "xik":...}
     coeffs_dict = {}
-    for i, e in enumerate(transform.equalities):
+    for e in transform.equalities:
         coeffs = np.zeros(M + 1)
         for j, name in enumerate(e[1]):
             coeffs[inputs_dict[name]] = e[2][j]

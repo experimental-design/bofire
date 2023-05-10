@@ -133,7 +133,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         a = np.array(v)
         for i, d in enumerate(values["descriptors"]):
             if len(set(a[:, i])) == 1:
-                raise ValueError("No variation for descriptor {d}.")
+                raise ValueError(f"No variation for descriptor {d}.")
         return v
 
     def to_df(self):

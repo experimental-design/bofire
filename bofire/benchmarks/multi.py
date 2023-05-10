@@ -226,7 +226,7 @@ class SnarBenchmark(Benchmark):
         """
         stys = []
         e_factors = []
-        for i, candidate in candidates.iterrows():
+        for _, candidate in candidates.iterrows():
             tau = float(candidate["tau"])
             equiv_pldn = float(candidate["equiv_pldn"])
             conc_dfnb = float(candidate["conc_dfnb"])
