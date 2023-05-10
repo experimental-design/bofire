@@ -154,9 +154,9 @@ def test_doe_strategy_correctness():
         [[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]
     )
     for row in candidates.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in candidates_expected])
+        assert any(np.allclose(row, o, atol=1e-2) for o in candidates_expected)
     for o in candidates_expected[:-1]:
-        assert any([np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy())
 
 
 def test_doe_strategy_amount_of_candidates():

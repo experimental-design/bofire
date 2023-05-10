@@ -104,8 +104,6 @@ specs.add_valid(
         "max_iters": 1000,
         "num_base_samples": 1000,
         "sampling_method": SamplingMethodEnum.UNIFORM,
-        "num_base_samples": 1000,
-        "max_iters": 1000,
         "seed": 42,
     },
 )

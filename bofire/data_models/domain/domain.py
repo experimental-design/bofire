@@ -305,7 +305,7 @@ class Domain(BaseModel):
                     used_features_list.extend(itertools.combinations(con.features, n))
 
                 if con.none_also_valid:
-                    used_features_list.append(tuple([]))
+                    used_features_list.append(())
             else:
                 used_features_list.extend(
                     itertools.combinations(con.features, con.max_count)

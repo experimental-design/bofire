@@ -5,3 +5,26 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools_scm]
 local_scheme = "node-and-date"
 write_to = "./bofire/version.py"
+[tool.ruff]
+ignore = [
+    "E731",
+    "E501", 
+    "B028", 
+    "B006", 
+    "B007",
+    "B008",
+    "B023",
+    "B904",
+    "B905", 
+    "B017", 
+    "B027",
+    "C413",
+    "C414",
+    "C416", 
+    "C419"
+]
+line-length = 88
+select = ["B", "C", "E", "F", "W"]
+
+[tool.ruff.mccabe]
+max-complexity = 18
