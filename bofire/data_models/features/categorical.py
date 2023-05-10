@@ -42,7 +42,7 @@ class CategoricalInput(Input):
         Returns:
             List[str]: List of the categories
         """
-        categories = [name for name in categories]
+        categories = list(categories)
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
         return categories
@@ -366,7 +366,7 @@ class CategoricalOutput(Output):
         Returns:
             List[str]: List of the categories
         """
-        categories = [name for name in categories]
+        categories = list(categories)
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
         return categories
@@ -384,7 +384,7 @@ class CategoricalOutput(Output):
 
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""
-        return {cat: obj for cat, obj in zip(self.categories, self.objective)}
+        return dict(zip(self.categories, self.objective))
 
     def __call__(self, values: pd.Series) -> pd.Series:
         return values.map(self.to_dict()).astype(float)
