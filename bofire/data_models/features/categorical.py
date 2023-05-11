@@ -216,7 +216,7 @@ class CategoricalInput(Input):
             raise ValueError(
                 f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
             )
-        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
+        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True).iloc[:, -1]
         s.name = self.key
         return s
 
@@ -256,7 +256,7 @@ class CategoricalInput(Input):
             )
         values = values.copy()
         values[cat_cols[0]] = 1 - values[cat_cols[1:]].sum(axis=1)
-        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True)[1]
+        s = values[cat_cols].idxmax(1).str.split(_CAT_SEP, expand=True).iloc[:, -1]
         s.name = self.key
         return s
 
