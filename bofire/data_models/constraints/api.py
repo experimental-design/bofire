@@ -1,6 +1,6 @@
 from typing import Union
 
-from bofire.data_models.constraints.constraint import Constraint
+from bofire.data_models.constraints.constraint import Constraint, ConstraintNotFulfilledError
 from bofire.data_models.constraints.linear import (
     LinearConstraint,
     LinearEqualityConstraint,
@@ -26,3 +26,5 @@ AnyConstraint = Union[
     NonlinearInequalityConstraint,
     NChooseKConstraint,
 ]
+
+# %%

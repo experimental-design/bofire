@@ -4,7 +4,9 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
+import warnings
 
+from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
@@ -87,6 +89,7 @@ class Strategy(ABC):
         self,
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
+        raise_validation_error: bool = True
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
@@ -94,6 +97,8 @@ class Strategy(ABC):
             candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number
                 of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
+            raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
+                otherwise only a warning will be displayed. Defaults to True.
 
 
         Raises:
@@ -115,7 +120,12 @@ class Strategy(ABC):
 
         candidates = self._ask(candidate_count=candidate_count)
 
-        self.domain.validate_candidates(candidates=candidates, only_inputs=True)
+        try:
+            self.domain.validate_candidates(candidates=candidates, only_inputs=True)
+        except ConstraintNotFulfilledError as e:
+            if raise_validation_error:
+                raise e
+            warnings.warn("Not all constraints are fulfilled for the candidates.")
 
         if candidate_count is not None:
             if len(candidates) != candidate_count:

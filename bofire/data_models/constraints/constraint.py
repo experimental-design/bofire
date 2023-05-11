@@ -51,5 +51,15 @@ class Constraint(BaseModel):
         pass
 
 
+class ConstraintError(Exception):
+    """Base Error for Constraints"""
+    pass
+
+
+class ConstraintNotFulfilledError(ConstraintError):
+    """Raised when an constraint is not fulfilled."""
+    pass
+
+
 FeatureKeys = Annotated[List[str], Field(min_items=2)]
 Coefficients = Annotated[List[float], Field(min_items=2)]
