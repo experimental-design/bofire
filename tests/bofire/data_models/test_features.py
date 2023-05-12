@@ -548,25 +548,27 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
         input_feature.validate_candidental(values)
 
 
-def test_categorical_to_one_hot_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_to_one_hot_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_onehot_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
-            columns=["c_B", "c_A", "c_C"],
+            columns=[f"{key}_B", f"{key}_A", f"{key}_C"],
         ),
     )
     untransformed = c.from_onehot_encoding(t_samples)
     assert np.all(samples == untransformed)
 
 
-def test_categorical_from_one_hot_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_from_one_hot_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
-        columns=["c_B", "c_A", "c_C", "misc"],
+        columns=[f"{key}_B", f"{key}_A", f"{key}_C", "misc"],
         data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
     )
     samples = c.from_onehot_encoding(one_hot_values)
@@ -590,25 +592,27 @@ def test_categorical_from_one_hot_encoding_invalid():
         c.from_onehot_encoding(one_hot_values)
 
 
-def test_categorical_to_dummy_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_to_dummy_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_dummy_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
-            columns=["c_A", "c_C"],
+            columns=[f"{key}_A", f"{key}_C"],
         ),
     )
     untransformed = c.from_dummy_encoding(t_samples)
     assert np.all(samples == untransformed)
 
 
-def test_categorical_from_dummy_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_from_dummy_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
-        columns=["c_A", "c_C", "misc"],
+        columns=[f"{key}_A", f"{key}_C", "misc"],
         data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
     )
     samples = c.from_dummy_encoding(one_hot_values)
