@@ -32,6 +32,7 @@ jobs:
           python-version: 3.9
       - name: pyright
         run: |
-          pip install ".[optimization,cheminfo,tests]"
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install ".[optimization,tests,cheminfo]"
           pyright
           
