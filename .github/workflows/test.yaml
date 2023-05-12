@@ -60,9 +60,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install Bofire
-        run: |
-          pip install torch --index-url https://download.pytorch.org/whl/cpu
-          pip install ".[optimization,tests,cheminfo]"
+        run: pip install ".[optimization,tests,cheminfo]"
       - name: Install ipopt
         run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
       - name: Install cyipopt
