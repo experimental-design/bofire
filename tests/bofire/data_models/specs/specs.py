@@ -50,14 +50,11 @@ class Overwrite(Invalidator):
         self.overwrites = overwrites
 
     def invalidate(self, spec: Spec) -> List[Spec]:
-        def get_lambda(data, overwrite):
-            return lambda: {**data, **overwrite}
-
         data: dict = spec.spec()
         if self.key not in data:
             return []
         return [
-            Spec(spec.cls, get_lambda(data=data, overwrite=overwrite))
+            Spec(spec.cls, lambda data=data, overwrite=overwrite: {**data, **overwrite})
             for overwrite in self.overwrites
         ]
 
