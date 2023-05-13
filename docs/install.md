@@ -39,5 +39,5 @@ git clone https://github.com/experimental-design/bofire.git
 ```
 and cd `bofire`, you can proceed with
 ```
-pip install -e .[optimization,cheminfo,docs,testing]
+pip install -e .[optimization,cheminfo,docs,tests]
 ```
