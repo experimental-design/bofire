@@ -188,7 +188,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
             ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
 
             dataset = RegressionDataSet(
-                X=scaler.transform(tX),
+                X=scaler.transform(tX) if scaler is not None else tX,
                 y=ty,
             )
             mlp = MLP(
@@ -209,4 +209,5 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
             )
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps=mlps)
-        self.model.input_transform = scaler
+        if scaler is not None:
+            self.model.input_transform = scaler

@@ -39,41 +39,43 @@ def get_scaler(
     Returns:
         Union[InputStandardize, Normalize]: The instantiated scaler class
     """
-    features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
+    if scaler != ScalerEnum.NONE:
+        features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
 
-    d = 0
-    for indices in features2idx.values():
-        d += len(indices)
+        d = 0
+        for indices in features2idx.values():
+            d += len(indices)
 
-    non_numerical_features = [
-        key
-        for key, value in input_preprocessing_specs.items()
-        if value != CategoricalEncodingEnum.DESCRIPTOR
-    ]
+        non_numerical_features = [
+            key
+            for key, value in input_preprocessing_specs.items()
+            if value != CategoricalEncodingEnum.DESCRIPTOR
+        ]
 
-    ord_dims = []
-    for feat in inputs.get():
-        if feat.key not in non_numerical_features:
-            ord_dims += features2idx[feat.key]
+        ord_dims = []
+        for feat in inputs.get():
+            if feat.key not in non_numerical_features:
+                ord_dims += features2idx[feat.key]
 
-    if scaler == ScalerEnum.NORMALIZE:
-        lower, upper = inputs.get_bounds(specs=input_preprocessing_specs, experiments=X)
-        scaler_transform = Normalize(
-            d=d,
-            bounds=torch.tensor([lower, upper]).to(**tkwargs),
-            indices=ord_dims,
-            batch_shape=torch.Size(),
-        )
-    elif scaler == ScalerEnum.STANDARDIZE:
-        scaler_transform = InputStandardize(
-            d=d,
-            indices=ord_dims,
-            batch_shape=torch.Size(),
-        )
+        if scaler == ScalerEnum.NORMALIZE:
+            lower, upper = inputs.get_bounds(specs=input_preprocessing_specs, experiments=X)
+            scaler_transform = Normalize(
+                d=d,
+                bounds=torch.tensor([lower, upper]).to(**tkwargs),
+                indices=ord_dims,
+                batch_shape=torch.Size(),
+            )
+        elif scaler == ScalerEnum.STANDARDIZE:
+            scaler_transform = InputStandardize(
+                d=d,
+                indices=ord_dims,
+                batch_shape=torch.Size(),
+            )
+        else:
+            raise ValueError("Scaler enum not known.")
+        return scaler_transform
     else:
-        raise ValueError("Scaler enum not known.")
-    return scaler_transform
-
+        return None
 
 class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     def __init__(

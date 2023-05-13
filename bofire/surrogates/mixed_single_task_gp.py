@@ -72,7 +72,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             categorical_features=categorical_features,
             transform_on_train=False,
         )
-        tf = ChainedInputTransform(tf1=scaler, tf2=o2n)
+        tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
 
         # fit the model
         self.model = botorch.models.MixedSingleTaskGP(
