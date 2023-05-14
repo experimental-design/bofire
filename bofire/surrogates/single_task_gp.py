@@ -58,7 +58,9 @@ def get_scaler(
                 ord_dims += features2idx[feat.key]
 
         if scaler == ScalerEnum.NORMALIZE:
-            lower, upper = inputs.get_bounds(specs=input_preprocessing_specs, experiments=X)
+            lower, upper = inputs.get_bounds(
+                specs=input_preprocessing_specs, experiments=X
+            )
             scaler_transform = Normalize(
                 d=d,
                 bounds=torch.tensor([lower, upper]).to(**tkwargs),
@@ -76,6 +78,7 @@ def get_scaler(
         return scaler_transform
     else:
         return None
+
 
 class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     def __init__(
