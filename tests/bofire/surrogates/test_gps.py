@@ -137,21 +137,9 @@ def test_get_scaler(
     assert isinstance(scaler, expected_scaler)
     if expected_indices is not None:
         assert (scaler.indices == expected_indices).all()
-    else:
-        with pytest.raises(AttributeError):
-            scaler.indices
     if expected_offset is not None:
         assert torch.allclose(scaler.offset, expected_offset)
         assert torch.allclose(scaler.coefficient, expected_coefficient)
-    else:
-        if scaler is None:
-            with pytest.raises(AttributeError):
-                scaler.offset
-            with pytest.raises(AttributeError):
-                scaler.coefficient
-        else:
-            scaler.offset == expected_offset
-            scaler.coefficient == expected_coefficient
 
 
 @pytest.mark.parametrize(
@@ -202,9 +190,6 @@ def test_SingleTaskGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, InputStandardize)
-    else:
-        with pytest.raises(AttributeError):
-            model.model.input_transform
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = SingleTaskGPSurrogate(

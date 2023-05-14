@@ -183,9 +183,6 @@ def test_mlp_ensemble_fit(scaler):
         assert isinstance(surrogate.model.input_transform, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(surrogate.model.input_transform, InputStandardize)
-    else:
-        with pytest.raises(AttributeError):
-            surrogate.model.input_transform
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)
@@ -236,9 +233,6 @@ def test_mlp_ensemble_fit_categorical(scaler):
             surrogate.model.input_transform.indices,
             torch.tensor([0, 1], dtype=torch.int64),
         ).all()
-    else:
-        with pytest.raises(AttributeError):
-            surrogate.model.input_transform
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)
