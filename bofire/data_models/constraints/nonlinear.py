@@ -1,8 +1,8 @@
+import warnings
 from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
-import sympy
 from pydantic import validator
 
 from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
@@ -23,6 +23,13 @@ class NonlinearConstraint(Constraint):
 
     @validator("jacobian_expression", always=True)
     def set_jacobian_expression(cls, jacobian_expression, values):
+        try:
+            import sympy  # type: ignore
+        except ImportError as e:
+            warnings.warn(e.msg)
+            warnings.warn("please run `pip install sympy` for this functionality.")
+            return jacobian_expression
+
         if (
             jacobian_expression is None
             and "features" in values
