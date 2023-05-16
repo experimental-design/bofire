@@ -1,3 +1,4 @@
+import warnings
 from abc import abstractmethod
 from typing import List, Optional, Tuple
 
@@ -5,6 +6,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
+from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
@@ -35,12 +37,15 @@ class PredictiveStrategy(Strategy):
         self,
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
+        raise_validation_error: bool = True,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.
             add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
+            raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
+                otherwise only a warning will be displayed. Defaults to True.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
@@ -48,8 +53,14 @@ class PredictiveStrategy(Strategy):
         candidates = super().ask(
             candidate_count=candidate_count,
             add_pending=add_pending,
+            raise_validation_error=raise_validation_error,
         )
-        self.domain.validate_candidates(candidates=candidates)
+        try:
+            self.domain.validate_candidates(candidates=candidates)
+        except ConstraintNotFulfilledError as e:
+            if raise_validation_error:
+                raise e
+            warnings.warn("Not all constraints are fulfilled for the candidates.")
         return candidates
 
     def tell(

@@ -7,7 +7,10 @@ import pandas as pd
 import pytest
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.constraints.api import LinearEqualityConstraint
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    LinearEqualityConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -346,5 +349,5 @@ def test_domain_validate_candidates_not_numerical(
     "domain, candidates", [(d, generate_candidates(d)) for d in [domain7]]
 )
 def test_domain_validate_candidates_constraint_not_fulfilled(domain, candidates):
-    with pytest.raises(ValueError):
+    with pytest.raises(ConstraintNotFulfilledError):
         domain.validate_candidates(candidates)
