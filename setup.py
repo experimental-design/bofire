@@ -58,6 +58,7 @@ setup(
             "plotly",
             "formulaic>=0.6.0",
             "cloudpickle>=2.0.0",
+            "sympy>=1.12",
             sklearn_dependency,
         ],
         "cheminfo": ["rdkit", sklearn_dependency],

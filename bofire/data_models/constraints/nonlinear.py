@@ -1,7 +1,9 @@
+import warnings
 from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
+from pydantic import validator
 
 from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
 
@@ -16,8 +18,35 @@ class NonlinearConstraint(Constraint):
     """
 
     expression: str
-    jacobian_expression: Optional[str] = None
     features: Optional[FeatureKeys] = None
+    jacobian_expression: Optional[str] = None
+
+    @validator("jacobian_expression", always=True)
+    def set_jacobian_expression(cls, jacobian_expression, values):
+        try:
+            import sympy  # type: ignore
+        except ImportError as e:
+            warnings.warn(e.msg)
+            warnings.warn("please run `pip install sympy` for this functionality.")
+            return jacobian_expression
+
+        if (
+            jacobian_expression is None
+            and "features" in values
+            and "expression" in values
+        ):
+            if values["features"] is not None:
+                return (
+                    "["
+                    + ", ".join(
+                        [
+                            str(sympy.S(values["expression"]).diff(key))
+                            for key in values["features"]
+                        ]
+                    )
+                    + "]"
+                )
+        return jacobian_expression
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         return experiments.eval(self.expression)

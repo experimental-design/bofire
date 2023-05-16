@@ -60,9 +60,7 @@ def create_experiments(domain, nsamples=100, A=25, B=90, candidates=None):
         T = np.random.uniform(low=Tf.lower_bound, high=Tf.upper_bound, size=(nsamples,))
         V = np.random.uniform(low=Vf.lower_bound, high=Vf.upper_bound, size=(nsamples,))
         solvent_types = [
-            domain.inputs.get_by_key("Solvent Type").categories[
-                np.random.randint(0, 3)
-            ]
+            domain.inputs.get_by_key("Solvent Type").categories[np.random.randint(0, 3)]
             for i in range(nsamples)
         ]
     else:
