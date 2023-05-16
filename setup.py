@@ -4,16 +4,6 @@ from setuptools import find_packages, setup
 
 sklearn_dependency = "scikit-learn>=1.0.0"
 
-
-def get_version():
-    here = os.path.abspath(os.path.dirname(__file__))
-    fp = os.path.join(here, "bofire/__init__.py")
-    for line in open(fp).readlines():
-        if line.startswith("__version__"):
-            return line.split('"')[1]
-    return ""
-
-
 root_dir = os.path.dirname(__file__)
 with open(os.path.join(root_dir, "README.md"), "r") as f:
     long_description = f.read()
@@ -40,7 +30,6 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    version=get_version(),
     python_requires=">=3.9",
     packages=find_packages(),
     include_package_data=True,
