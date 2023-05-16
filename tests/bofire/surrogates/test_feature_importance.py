@@ -14,7 +14,7 @@ from bofire.surrogates.feature_importance import (
 
 
 def get_model_and_data():
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -23,13 +23,13 @@ def get_model_and_data():
             for i in range(3)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=20)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=20)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
     )
     model = surrogates.map(model)
     return model, experiments
@@ -37,7 +37,7 @@ def get_model_and_data():
 
 def test_permutation_importance_invalid():
     model, experiments = get_model_and_data()
-    X = experiments[model.input_features.get_keys()]
+    X = experiments[model.inputs.get_keys()]
     y = experiments[["y"]]
     model.fit(experiments=experiments)
     with pytest.raises(AssertionError):
@@ -48,7 +48,7 @@ def test_permutation_importance_invalid():
 
 def test_permutation_importance():
     model, experiments = get_model_and_data()
-    X = experiments[model.input_features.get_keys()]
+    X = experiments[model.inputs.get_keys()]
     y = experiments[["y"]]
     model.fit(experiments=experiments)
     results = permutation_importance(model=model, X=X, y=y, n_repeats=5)
@@ -57,14 +57,14 @@ def test_permutation_importance():
     for m in metrics.keys():
         assert m.name in results.keys()
         assert isinstance(results[m.name], pd.DataFrame)
-        assert list(results[m.name].columns) == model.input_features.get_keys()
+        assert list(results[m.name].columns) == model.inputs.get_keys()
         assert list(results[m.name].index) == ["mean", "std"]
 
 
 @pytest.mark.parametrize("use_test", [True, False])
 def test_permutation_importance_hook(use_test):
     model, experiments = get_model_and_data()
-    X = experiments[model.input_features.get_keys()]
+    X = experiments[model.inputs.get_keys()]
     y = experiments[["y"]]
     model.fit(experiments=experiments)
     results = permutation_importance_hook(
@@ -75,7 +75,7 @@ def test_permutation_importance_hook(use_test):
     for m in metrics.keys():
         assert m.name in results.keys()
         assert isinstance(results[m.name], pd.DataFrame)
-        assert list(results[m.name].columns) == model.input_features.get_keys()
+        assert list(results[m.name].columns) == model.inputs.get_keys()
         assert list(results[m.name].index) == ["mean", "std"]
 
 
@@ -91,5 +91,5 @@ def test_combine_permutation_importances(n_folds):
         importance = combine_permutation_importances(
             importances=pi["pemutation_importance"], metric=m
         )
-        list(importance.columns) == model.input_features.get_keys()
+        assert list(importance.columns) == model.inputs.get_keys()
         assert len(importance) == n_folds

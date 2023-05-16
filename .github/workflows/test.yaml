@@ -8,6 +8,29 @@ on:
       - main
 
 jobs:
+  testing_minimal:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Minimal Bofire
+        run: pip install "." pytest
+      - name: Run domain-only test
+        run: |
+          pytest tests/bofire/data_models/test_domain.py \
+            tests/bofire/data_models/test_base.py \
+            tests/bofire/data_models/test_constraint_fulfillment.py \
+            tests/bofire/data_models/test_constraints.py \
+            tests/bofire/data_models/test_domain_validators.py \
+            tests/bofire/data_models/test_features.py \
+            tests/bofire/data_models/test_filters.py \
+            tests/bofire/data_models/test_nchoosek_combinatorics.py \
+            tests/bofire/data_models/test_numeric.py \
+            tests/bofire/data_models/test_unions.py \
+            tests/bofire/data_models/test_util.py
+
   testing:
     runs-on: ubuntu-latest
     steps:
@@ -16,11 +39,30 @@ jobs:
         with:
           python-version: 3.9
       - name: Install Bofire
-        run: pip install ".[testing, cheminfo]"
+        run: pip install ".[optimization,tests,cheminfo]"
       - name: Install ipopt
         run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
       - name: Install cyipopt
         run: pip install cyipopt
       - name: Run tests
         run: pytest -ra --cov=bofire --cov-report term-missing tests
+      - name: Run pip freeze
+        run: pip freeze
+
+
+  testing_tutorials:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Install Bofire
+        run: pip install ".[optimization,tests,cheminfo]"
+      - name: Install ipopt
+        run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
+      - name: Install cyipopt
+        run: pip install cyipopt
+      - name: Run notebooks
+        run: python scripts/run_tutorials.py -p "$(pwd)"
           

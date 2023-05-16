@@ -1,4 +1,4 @@
-from typing import Callable, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
@@ -12,14 +12,15 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
-    BotorchConstrainedObjective,
     CloseToTargetObjective,
+    ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
     TargetObjective,
 )
+from bofire.strategies.strategy import Strategy
 
 tkwargs = {
     "dtype": torch.double,
@@ -43,7 +44,7 @@ def get_linear_constraints(
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
-    for c in domain.cnstrs.get(constraint):
+    for c in domain.constraints.get(constraint):
         indices = []
         coefficients = []
         lower = []
@@ -101,9 +102,19 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     def narrow_gaussian(x, ell=1e-3):
         return torch.exp(-0.5 * (x / ell) ** 2)
 
+    def max_constraint(indices: Tensor, num_features: int, max_count: int):
+        return lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1) - (
+            num_features - max_count
+        )
+
+    def min_constraint(indices: Tensor, num_features: int, min_count: int):
+        return lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1) + (
+            num_features - min_count
+        )
+
     constraints = []
     # ignore none also valid for the start
-    for c in domain.cnstrs.get(NChooseKConstraint):
+    for c in domain.constraints.get(NChooseKConstraint):
         assert isinstance(c, NChooseKConstraint)
         indices = torch.tensor(
             [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
@@ -111,25 +122,61 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
         )
         if c.max_count != len(c.features):
             constraints.append(
-                lambda x: narrow_gaussian(x=x[..., indices]).sum(dim=-1)
-                - (len(c.features) - c.max_count)  # type: ignore
+                max_constraint(
+                    indices=indices, num_features=len(c.features), max_count=c.max_count
+                )
             )
         if c.min_count > 0:
             constraints.append(
-                lambda x: -narrow_gaussian(x=x[..., indices]).sum(dim=-1)
-                + (len(c.features) - c.min_count)  # type: ignore
+                min_constraint(
+                    indices=indices, num_features=len(c.features), min_count=c.min_count
+                )
             )
     return constraints
 
 
+def constrained_objective2botorch(
+    idx: int,
+    objective: ConstrainedObjective,
+) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
+    """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
+    to setup ouput constrained optimizations.
+
+    Args:
+        idx (int): Index of the constraint objective in the list of outputs.
+        objective (BotorchConstrainedObjective): The objective that should be transformed.
+
+    Returns:
+        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
+            list of the corresponding botorch eta values.
+    """
+    assert isinstance(
+        objective, ConstrainedObjective
+    ), "Objective is not a `ConstrainedObjective`."
+    if isinstance(objective, MaximizeSigmoidObjective):
+        return [lambda Z: (Z[..., idx] - objective.tp) * -1.0], [
+            1.0 / objective.steepness
+        ]
+    elif isinstance(objective, MinimizeSigmoidObjective):
+        return [lambda Z: (Z[..., idx] - objective.tp)], [1.0 / objective.steepness]
+    elif isinstance(objective, TargetObjective):
+        return [
+            lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
+            * -1.0,
+            lambda Z: (Z[..., idx] - (objective.target_value + objective.tolerance)),
+        ], [1.0 / objective.steepness, 1.0 / objective.steepness]
+    else:
+        raise ValueError(f"Objective {objective.__class__.__name__} not known.")
+
+
 def get_output_constraints(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
 
     Args:
-        output_features (Outputs): Output feature object that should
+        outputs (Outputs): Output feature object that should
             be processed.
 
     Returns:
@@ -138,9 +185,11 @@ def get_output_constraints(
     """
     constraints = []
     etas = []
-    for idx, feat in enumerate(output_features.get()):
-        if isinstance(feat.objective, BotorchConstrainedObjective):  # type: ignore
-            iconstraints, ietas = feat.objective.to_constraints(idx=idx)  # type: ignore
+    for idx, feat in enumerate(outputs.get()):
+        if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
+            iconstraints, ietas = constrained_objective2botorch(
+                idx, objective=feat.objective  # type: ignore
+            )
             constraints += iconstraints
             etas += ietas
     return constraints, etas
@@ -215,16 +264,16 @@ def get_objective_callable(
 
 
 def get_multiplicative_botorch_objective(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
     ]
     weights = [
         feat.objective.w  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
     ]
 
@@ -238,24 +287,24 @@ def get_multiplicative_botorch_objective(
 
 
 def get_additive_botorch_objective(
-    output_features: Outputs, exclude_constraints: bool = True
+    outputs: Outputs, exclude_constraints: bool = True
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
     ]
     weights = [
         feat.objective.w  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and (
-            not isinstance(feat.objective, BotorchConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
             if exclude_constraints
             else True
         )
@@ -271,19 +320,19 @@ def get_additive_botorch_objective(
 
 
 def get_multiobjective_objective(
-    output_features: Outputs,
+    outputs: Outputs,
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     """Returns
 
     Args:
-        output_features (Outputs): _description_
+        outputs (Outputs): _description_
 
     Returns:
         Callable[[Tensor], Tensor]: _description_
     """
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
-        for i, feat in enumerate(output_features.get())
+        for i, feat in enumerate(outputs.get())
         if feat.objective is not None  # type: ignore
         and isinstance(
             feat.objective,  # type: ignore
@@ -295,3 +344,59 @@ def get_multiobjective_objective(
         return torch.stack([c(samples, None) for c in callables], dim=-1)
 
     return objective
+
+
+def get_initial_conditions_generator(
+    strategy: Strategy,
+    transform_specs: Dict,
+    ask_options: Optional[Dict] = None,
+    sequential: bool = True,
+) -> Callable[[int, int, int], Tensor]:
+    """Takes a strategy object and returns a callable which uses this
+    strategy to return a generator callable which can be used in botorch`s
+    `gen_batch_initial_conditions` to generate samples.
+
+    Args:
+        strategy (Strategy): Strategy that should be used to generate samples.
+        transform_specs (Dict): Dictionary indicating how the samples should be
+            transformed.
+        ask_options (Dict, optional): Dictionary of keyword arguments that are
+            passed to the `ask` method of the strategy. Defaults to {}.
+        sequential (bool, optional): If True, samples for every q-batch are
+            generate indepenent from each other. If False, the `n x q` samples
+            are generated at once.
+
+    Returns:
+        Callable[[int, int, int], Tensor]: Callable that can be passed to
+            `batch_initial_conditions`.
+    """
+    if ask_options is None:
+        ask_options = {}
+
+    def generator(n: int, q: int, seed: int) -> Tensor:
+        if sequential:
+            initial_conditions = []
+            for _ in range(n):
+                candidates = strategy.ask(q, **ask_options)
+                # transform it
+                transformed_candidates = strategy.domain.inputs.transform(
+                    candidates, transform_specs
+                )
+                # transform to tensor
+                initial_conditions.append(
+                    torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+                )
+            return torch.stack(initial_conditions, dim=0)
+        else:
+            candidates = strategy.ask(n * q, **ask_options)
+            # transform it
+            transformed_candidates = strategy.domain.inputs.transform(
+                candidates, transform_specs
+            )
+            return (
+                torch.from_numpy(transformed_candidates.values)
+                .to(**tkwargs)
+                .reshape(n, q, transformed_candidates.shape[1])
+            )
+
+    return generator

@@ -20,7 +20,7 @@ STRATEGY_SPECS_SINGLE_OBJECTIVE = {
 }
 STRATEGY_SPECS_MULTI_OBJECTIVE = {
     data_models.QehviStrategy: VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
-    data_models.QnehviStrategy: VALID_BOTORCH_SOBO_STRATEGY_SPEC,
+    data_models.QnehviStrategy: VALID_BOTORCH_QEHVI_STRATEGY_SPEC,
 }
 
 
@@ -41,7 +41,7 @@ def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_coun
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy.ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
 
     # set up of the strategy
     data_model = cls(**{**spec, "domain": benchmark.domain})
@@ -77,7 +77,7 @@ def test_ask_multi_objective(cls, spec, use_ref_point, candidate_count):
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy.ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
 
     # set up of the strategy
     data_model = cls(

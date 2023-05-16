@@ -6,6 +6,7 @@ import pytest
 import torch
 from pydantic import parse_obj_as
 
+import bofire.kernels.api as kernels
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     AnyKernel,
@@ -79,18 +80,24 @@ KERNEL_SPECS = {
         "invalids": [
             *get_invalids(VALID_LINEAR_SPEC),
         ],
-        ScaleKernel: {
-            "valids": [VALID_SCALE_SPEC],
-            "invalids": [
-                *get_invalids(VALID_SCALE_SPEC),
-            ],
-        },
-        MultiplicativeKernel: {
-            "valids": [VALID_MULTIPLICATIVE_SPEC],
-            "invalids": [
-                *get_invalids(VALID_SCALE_SPEC),
-            ],
-        },
+    },
+    ScaleKernel: {
+        "valids": [VALID_SCALE_SPEC],
+        "invalids": [
+            *get_invalids(VALID_SCALE_SPEC),
+        ],
+    },
+    MultiplicativeKernel: {
+        "valids": [VALID_MULTIPLICATIVE_SPEC],
+        "invalids": [
+            *get_invalids(VALID_SCALE_SPEC),
+        ],
+    },
+    AdditiveKernel: {
+        "valids": [VALID_ADDITIVE_SPEC],
+        "invalids": [
+            *get_invalids(VALID_SCALE_SPEC),
+        ],
     },
 }
 
@@ -103,8 +110,8 @@ def test_valid_kernel_specs(cls, spec):
     res = cls(**spec)
     assert isinstance(res, cls)
     assert isinstance(res.__str__(), str)
-    gkernel = res.to_gpytorch(
-        batch_shape=torch.Size(), ard_num_dims=10, active_dims=list(range(5))
+    gkernel = kernels.map(
+        res, batch_shape=torch.Size(), ard_num_dims=10, active_dims=list(range(5))
     )
     assert isinstance(gkernel, EQUIVALENTS[cls])
     res2 = parse_obj_as(AnyKernel, res.dict())
@@ -112,8 +119,11 @@ def test_valid_kernel_specs(cls, spec):
 
 
 def test_scale_kernel():
-    kernel = ScaleKernel(base_kernel=RBFKernel(), outputscale_prior=BOTORCH_SCALE_PRIOR)
-    k = kernel.to_gpytorch(
+    kernel = ScaleKernel(
+        base_kernel=RBFKernel(), outputscale_prior=BOTORCH_SCALE_PRIOR()
+    )
+    k = kernels.map(
+        kernel,
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
@@ -121,7 +131,8 @@ def test_scale_kernel():
     assert hasattr(k, "outputscale_prior")
     assert isinstance(k.outputscale_prior, gpytorch.priors.GammaPrior)
     kernel = ScaleKernel(base_kernel=RBFKernel())
-    k = kernel.to_gpytorch(
+    k = kernels.map(
+        kernel,
         batch_shape=torch.Size(),
         ard_num_dims=10,
         active_dims=list(range(5)),
@@ -173,8 +184,11 @@ def test_scale_kernel():
     ],
 )
 def test_continuous_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
-    k = kernel.to_gpytorch(
-        batch_shape=torch.Size(), ard_num_dims=ard_num_dims, active_dims=active_dims
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        ard_num_dims=ard_num_dims,
+        active_dims=active_dims,
     )
     assert isinstance(k, expected_kernel)
     if isinstance(kernel, LinearKernel):

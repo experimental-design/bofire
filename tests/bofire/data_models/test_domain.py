@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 from pydantic.error_wrappers import ValidationError
+from pytest import fixture
 
 from bofire.data_models.api import Outputs
 from bofire.data_models.base import BaseModel
@@ -14,6 +15,8 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.constraints import Constraints
+from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -25,7 +28,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import (
-    BotorchConstrainedObjective,
+    ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     Objective,
@@ -35,10 +38,8 @@ from bofire.utils.subdomain import get_subdomain
 
 
 def test_empty_domain():
-    Domain(
-        input_features=[],
-        output_features=[],
-        constraints=[],
+    assert Domain() == Domain(
+        inputs=Inputs(), outputs=Outputs(), constraints=Constraints()
     )
 
 
@@ -61,25 +62,62 @@ of2 = ContinuousOutput(key="f2", objective=obj)
 of3 = ContinuousOutput(key="of3", objective=obj)
 
 
+@fixture
+def input_list():
+    return [
+        ContinuousInput(key="ci1", bounds=(0, 1)),
+        ContinuousInput(key="ci2", bounds=(0, 1)),
+    ]
+
+
+@fixture
+def output_list():
+    objective = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
+    return [
+        ContinuousOutput(key="co1", objective=objective),
+        ContinuousOutput(key="co2", objective=objective),
+    ]
+
+
+@fixture
+def constraint_list(input_list):
+    return [
+        LinearEqualityConstraint(
+            features=[inp.key for inp in input_list],
+            coefficients=[1.0] * len(input_list),
+            rhs=11,
+        )
+    ]
+
+
+def test_from_lists(input_list, output_list, constraint_list):
+    assert Domain.from_lists(
+        inputs=input_list, outputs=output_list, constraints=constraint_list
+    ) == Domain(
+        inputs=Inputs(features=input_list),
+        outputs=Outputs(features=output_list),
+        constraints=Constraints(constraints=constraint_list),
+    )
+
+
 @pytest.mark.parametrize(
-    "input_features, output_features",
+    "inputs, outputs",
     [
         ([if1, if1_], []),
         ([], [of1, of1_]),
         ([if1], [of1]),
     ],
 )
-def test_duplicate_feature_names(input_features, output_features):
+def test_duplicate_feature_names(inputs, outputs):
     with pytest.raises(ValidationError):
         Domain(
-            input_features=input_features,
-            output_features=output_features,
-            constraints=[],
+            inputs=inputs,
+            outputs=outputs,
         )
 
 
 @pytest.mark.parametrize(
-    "input_features, output_features, constraints",
+    "inputs, outputs, constraints",
     [
         # input features
         ([nf], [], []),
@@ -89,17 +127,17 @@ def test_duplicate_feature_names(input_features, output_features):
         # ([], [], [nf]),
     ],
 )
-def test_invalid_domain_arg_types(input_features, output_features, constraints):
+def test_invalid_domain_arg_types(inputs, outputs, constraints):
     with pytest.raises(Exception):
         Domain(
-            input_features=input_features,
-            output_features=output_features,
+            inputs=inputs,
+            outputs=outputs,
             constraints=constraints,
         )
 
 
 @pytest.mark.parametrize(
-    "input_features, constraints",
+    "inputs, constraints",
     [
         (
             [
@@ -114,13 +152,13 @@ def test_invalid_domain_arg_types(input_features, output_features, constraints):
         )
     ],
 )
-def test_invalid_type_in_linear_constraints(input_features, constraints):
+def test_invalid_type_in_linear_constraints(inputs, constraints):
     with pytest.raises(ValidationError):
-        Domain(input_features=input_features, constraints=constraints)
+        Domain(inputs=inputs, constraints=constraints)
 
 
 @pytest.mark.parametrize(
-    "input_features, output_features, constraints",
+    "inputs, outputs, constraints",
     [
         (
             [if1, if2],
@@ -148,16 +186,16 @@ def test_invalid_type_in_linear_constraints(input_features, constraints):
         ),
     ],
 )
-def test_valid_constraints_in_domain(output_features, input_features, constraints):
+def test_valid_constraints_in_domain(outputs, inputs, constraints):
     Domain(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         constraints=constraints,
     )
 
 
 @pytest.mark.parametrize(
-    "input_features, output_features, constraints",
+    "inputs, outputs, constraints",
     [
         (
             [],
@@ -209,11 +247,11 @@ def test_valid_constraints_in_domain(output_features, input_features, constraint
         ),
     ],
 )
-def test_unknown_features_in_domain(output_features, input_features, constraints):
+def test_unknown_features_in_domain(outputs, inputs, constraints):
     with pytest.raises(ValidationError):
         Domain(
-            input_features=input_features,
-            output_features=output_features,
+            inputs=inputs,
+            outputs=outputs,
             constraints=constraints,
         )
 
@@ -222,23 +260,19 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
     "domain, data",
     [
         (
-            Domain(
-                input_features=[],
-                output_features=[],
-                constraints=[],
-            ),
+            Domain(),
             [],
         ),
         (
             Domain(
-                input_features=[
-                    CategoricalInput(
-                        key="f1",
-                        categories=["c11", "c12"],
-                    ),
-                ],
-                output_features=[],
-                constraints=[],
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(
+                            key="f1",
+                            categories=["c11", "c12"],
+                        ),
+                    ]
+                ),
             ),
             [
                 [("f1", "c11"), ("f1", "c12")],
@@ -246,22 +280,22 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
         ),
         (
             Domain(
-                input_features=[
-                    CategoricalInput(
-                        key="f1",
-                        categories=["c11", "c12"],
-                    ),
-                    CategoricalInput(
-                        key="f2",
-                        categories=["c21", "c22", "c23"],
-                    ),
-                    CategoricalInput(
-                        key="f3",
-                        categories=["c31", "c32"],
-                    ),
-                ],
-                output_features=[],
-                constraints=[],
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(
+                            key="f1",
+                            categories=["c11", "c12"],
+                        ),
+                        CategoricalInput(
+                            key="f2",
+                            categories=["c21", "c22", "c23"],
+                        ),
+                        CategoricalInput(
+                            key="f3",
+                            categories=["c31", "c32"],
+                        ),
+                    ]
+                ),
             ),
             [
                 [("f1", "c11"), ("f1", "c12")],
@@ -273,7 +307,7 @@ def test_unknown_features_in_domain(output_features, input_features, constraints
 )
 def test_categorical_combinations_of_domain_defaults(domain, data):
     expected = list(itertools.product(*data))
-    assert domain.input_features.get_categorical_combinations() == expected
+    assert domain.inputs.get_categorical_combinations() == expected
 
 
 @pytest.mark.parametrize(
@@ -281,18 +315,20 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
     [
         (
             Domain(
-                input_features=[
-                    CategoricalInput(
-                        key="f1",
-                        categories=["c11", "c12"],
-                    ),
-                    CategoricalDescriptorInput(
-                        key="f2",
-                        categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
-                    ),
-                ],
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(
+                            key="f1",
+                            categories=["c11", "c12"],
+                        ),
+                        CategoricalDescriptorInput(
+                            key="f2",
+                            categories=["c21", "c22"],
+                            descriptors=["d21", "d22"],
+                            values=[[1, 2], [3, 4]],
+                        ),
+                    ]
+                ),
             ),
             [
                 [("f1", "c11"), ("f1", "c12")],
@@ -302,18 +338,20 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
         ),
         (
             Domain(
-                input_features=[
-                    CategoricalInput(
-                        key="f1",
-                        categories=["c11", "c12"],
-                    ),
-                    CategoricalDescriptorInput(
-                        key="f2",
-                        categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
-                    ),
-                ],
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(
+                            key="f1",
+                            categories=["c11", "c12"],
+                        ),
+                        CategoricalDescriptorInput(
+                            key="f2",
+                            categories=["c21", "c22"],
+                            descriptors=["d21", "d22"],
+                            values=[[1, 2], [3, 4]],
+                        ),
+                    ]
+                ),
             ),
             [
                 [("f2", "c21"), ("f2", "c22")],
@@ -324,18 +362,20 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
         ),
         (
             Domain(
-                input_features=[
-                    CategoricalInput(
-                        key="f1",
-                        categories=["c11", "c12"],
-                    ),
-                    CategoricalDescriptorInput(
-                        key="f2",
-                        categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
-                    ),
-                ],
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(
+                            key="f1",
+                            categories=["c11", "c12"],
+                        ),
+                        CategoricalDescriptorInput(
+                            key="f2",
+                            categories=["c21", "c22"],
+                            descriptors=["d21", "d22"],
+                            values=[[1, 2], [3, 4]],
+                        ),
+                    ]
+                ),
             ),
             [
                 [("f2", "c21"), ("f2", "c22")],
@@ -345,18 +385,20 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
         ),
         (
             Domain(
-                input_features=[
-                    CategoricalInput(
-                        key="f1",
-                        categories=["c11", "c12"],
-                    ),
-                    CategoricalDescriptorInput(
-                        key="f2",
-                        categories=["c21", "c22"],
-                        descriptors=["d21", "d22"],
-                        values=[[1, 2], [3, 4]],
-                    ),
-                ],
+                inputs=Inputs(
+                    features=[
+                        CategoricalInput(
+                            key="f1",
+                            categories=["c11", "c12"],
+                        ),
+                        CategoricalDescriptorInput(
+                            key="f2",
+                            categories=["c21", "c22"],
+                            descriptors=["d21", "d22"],
+                            values=[[1, 2], [3, 4]],
+                        ),
+                    ]
+                ),
             ),
             [],
             CategoricalDescriptorInput,
@@ -367,9 +409,7 @@ def test_categorical_combinations_of_domain_defaults(domain, data):
 def test_categorical_combinations_of_domain_filtered(domain, data, include, exclude):
     expected = list(itertools.product(*data))
     assert (
-        domain.input_features.get_categorical_combinations(
-            include=include, exclude=exclude
-        )
+        domain.inputs.get_categorical_combinations(include=include, exclude=exclude)
         == expected
     )
 
@@ -396,9 +436,13 @@ c1 = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[5, 5], rhs=15
 of1_ = ContinuousOutput(key="out3", objective=None)
 of2_ = ContinuousOutput(key="out4", objective=None)
 
-domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
+domain = Domain(
+    inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+)
 domain2 = Domain(
-    input_features=[if1, if2], output_features=[of1, of2], constraints=[c1]
+    inputs=Inputs(features=[if1, if2]),
+    outputs=Outputs(features=[of1, of2]),
+    constraints=Constraints(constraints=[c1]),
 )
 
 
@@ -480,7 +524,7 @@ def test_domain_serialize(domain):
 def test_preprocess_experiments_all_valid_outputs(
     domain, data, output_feature_keys, expected
 ):
-    experiments = domain.output_features.preprocess_experiments_all_valid_outputs(
+    experiments = domain.outputs.preprocess_experiments_all_valid_outputs(
         data, output_feature_keys
     )
     assert_frame_equal(experiments.reset_index(drop=True), expected, check_dtype=False)
@@ -506,7 +550,7 @@ def test_preprocess_experiments_all_valid_outputs(
     ],
 )
 def test_preprocess_experiments_any_valid_output(domain, data, expected):
-    experiments = domain.output_features.preprocess_experiments_any_valid_output(data)
+    experiments = domain.outputs.preprocess_experiments_any_valid_output(data)
     assert experiments["x1"].tolist() == expected["x1"].tolist()
     assert experiments["out2"].tolist() == expected["out2"].tolist()
 
@@ -531,16 +575,16 @@ def test_preprocess_experiments_any_valid_output(domain, data, expected):
     ],
 )
 def test_preprocess_experiments_one_valid_output(domain, data, expected):
-    experiments = domain.output_features.preprocess_experiments_one_valid_output(
-        "out2", data
-    )
+    experiments = domain.outputs.preprocess_experiments_one_valid_output("out2", data)
     assert experiments["x1"].tolist() == expected["x1"].tolist()
     assert np.isnan(experiments["out1"].tolist()[2])
     assert experiments["out2"].tolist() == expected["out2"].tolist()
 
 
 def test_coerce_invalids():
-    domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+    )
     experiments = domain.coerce_invalids(data)
     expected = pd.DataFrame.from_dict(
         {
@@ -578,7 +622,9 @@ def test_aggregate_by_duplicates():
             "valid_out2": [1, 1, 1],
         }
     )
-    domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+    )
     aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(full, prec=2)
     assert duplicated_labcodes == [["1", "4"]]
     assert_frame_equal(
@@ -606,12 +652,16 @@ def test_aggregate_by_duplicates():
             "valid_out2": [1, 1, 1, 1],
         }
     )
-    domain = Domain(input_features=[if1, if2], output_features=[of1, of2])
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+    )
     aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(full, prec=2)
     assert duplicated_labcodes == []
 
 
-domain = Domain(input_features=[if1, if2], output_features=[of1, of2, of1_, of2_])
+domain = Domain(
+    inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2, of1_, of2_])
+)
 
 
 @pytest.mark.parametrize(
@@ -662,11 +712,11 @@ def test_get_outputs_by_objective_none():
             ContinuousOutput(key="c", objective=MaximizeObjective()),
         ]
     )
-    keys = outputs.get_keys_by_objective(excludes=BotorchConstrainedObjective)
+    keys = outputs.get_keys_by_objective(excludes=ConstrainedObjective)
     assert keys == ["c"]
     assert outputs.get_keys().index("c") == 2
-    assert outputs.get_keys_by_objective(excludes=Objective, includes=None) == ["a"]
-    assert outputs.get_by_objective(excludes=Objective, includes=None) == Outputs(
+    assert outputs.get_keys_by_objective(excludes=Objective, includes=[]) == ["a"]
+    assert outputs.get_by_objective(excludes=Objective, includes=[]) == Outputs(
         features=[ContinuousOutput(key="a", objective=None)]
     )
 

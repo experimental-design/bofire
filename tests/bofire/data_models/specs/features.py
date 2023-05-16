@@ -32,6 +32,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "bounds": (3, 5.3),
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "stepsize": None,
     },
 )
 specs.add_valid(
@@ -42,6 +43,7 @@ specs.add_valid(
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "stepsize": None,
     },
 )
 specs.add_valid(
@@ -78,5 +80,14 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "objective": objectives.valid(MaximizeObjective).typed_spec(),
         "unit": random.choice(["%", "area %", None]),
+    },
+)
+
+specs.add_valid(
+    features.CategoricalOutput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["a", "b", "c"],
+        "objective": [0.0, 1.0, 0.0],
     },
 )

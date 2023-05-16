@@ -38,7 +38,7 @@ class RejectionSampler(SamplerStrategy):
             samples = self.domain.inputs.sample(
                 self.num_base_samples, method=self.sampling_method
             )
-            valid = self.domain.cnstrs.is_fulfilled(samples)
+            valid = self.domain.constraints.is_fulfilled(samples)
             n_found += np.sum(valid)
             valid_samples.append(samples[valid])
             n_iters += 1

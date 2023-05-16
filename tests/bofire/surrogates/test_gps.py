@@ -87,7 +87,7 @@ def test_get_scaler(
     expected_offset,
     expected_coefficient,
 ):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -105,12 +105,12 @@ def test_get_scaler(
             ),
         ]
     )
-    experiments = input_features.sample(n=10)
+    experiments = inputs.sample(n=10)
     scaler = get_scaler(
-        input_features=input_features,
+        inputs=inputs,
         input_preprocessing_specs=input_preprocessing_specs,
         scaler=scaler_enum,
-        X=experiments[input_features.get_keys()],
+        X=experiments[inputs.get_keys()],
     )
     assert isinstance(scaler, expected_scaler)
     assert (scaler.indices == expected_indices).all()
@@ -127,7 +127,7 @@ def test_get_scaler(
     ],
 )
 def test_SingleTaskGPModel(kernel, scaler):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -136,18 +136,18 @@ def test_SingleTaskGPModel(kernel, scaler):
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         kernel=kernel,
         scaler=scaler,
     )
     model = surrogates.map(model)
-    samples = input_features.sample(5)
+    samples = inputs.sample(5)
     # test error on non fitted model
     with pytest.raises(ValueError):
         model.predict(samples)
@@ -169,8 +169,8 @@ def test_SingleTaskGPModel(kernel, scaler):
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         kernel=kernel,
         scaler=scaler,
     )
@@ -181,7 +181,7 @@ def test_SingleTaskGPModel(kernel, scaler):
 
 
 def test_MixedGPModel_invalid_preprocessing():
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -190,14 +190,14 @@ def test_MixedGPModel_invalid_preprocessing():
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     with pytest.raises(ValidationError):
         MixedSingleTaskGPSurrogate(
-            input_features=input_features,
-            output_features=output_features,
+            inputs=inputs,
+            outputs=outputs,
         )
 
 
@@ -209,7 +209,7 @@ def test_MixedGPModel_invalid_preprocessing():
     ],
 )
 def test_MixedGPModel(kernel, scaler):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -219,16 +219,16 @@ def test_MixedGPModel(kernel, scaler):
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
 
     model = MixedSingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=scaler,
         continuous_kernel=kernel,
@@ -241,7 +241,7 @@ def test_MixedGPModel(kernel, scaler):
     # dump the model
     dump = model.dumps()
     # make predictions
-    samples = input_features.sample(5)
+    samples = inputs.sample(5)
     preds = model.predict(samples)
     assert preds.shape == (5, 2)
     # check that model is composed correctly
@@ -259,9 +259,9 @@ def test_MixedGPModel(kernel, scaler):
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedSingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
-        kernel=kernel,
+        inputs=inputs,
+        outputs=outputs,
+        continuous_kernel=kernel,
         scaler=scaler,
     )
     model2 = surrogates.map(model2)

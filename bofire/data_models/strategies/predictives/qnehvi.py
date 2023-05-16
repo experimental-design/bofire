@@ -3,6 +3,7 @@ from typing import Literal, Type
 from pydantic import confloat
 
 from bofire.data_models.objectives.api import (
+    CloseToTargetObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -33,4 +34,5 @@ class QnehviStrategy(QehviStrategy):
             MinimizeSigmoidObjective,
             MaximizeSigmoidObjective,
             TargetObjective,
+            CloseToTargetObjective,
         ]

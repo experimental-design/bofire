@@ -1,21 +1,12 @@
-from typing import Union
+from typing import List, Union
 
-import numpy as np
-import pandas as pd
 import torch
+from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.acquisition.utils import get_acquisition_function
-from botorch.optim.optimize import optimize_acqf_list
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
 
-from bofire.data_models.constraints.api import (
-    LinearEqualityConstraint,
-    LinearInequalityConstraint,
-    NChooseKConstraint,
-)
-from bofire.data_models.enum import CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     MaximizeObjective,
@@ -25,7 +16,6 @@ from bofire.data_models.strategies.api import QparegoStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.multiobjective import get_ref_point_mask
 from bofire.utils.torch_tools import (
-    get_linear_constraints,
     get_multiobjective_objective,
     get_output_constraints,
     tkwargs,
@@ -43,20 +33,10 @@ class QparegoStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
 
-    def _init_acqf(self) -> None:
-        pass
-
-    def calc_acquisition(self, experiments: pd.DataFrame, combined: bool = False):
-        raise ValueError("ACQF calc not implemented for qparego")
-
-    def get_objective(
-        self, pred: torch.Tensor
+    def _get_objective(
+        self,
     ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
         """Returns the scalarized objective.
-
-        Args:
-            pred (torch.Tensor): Predictions for the training data from the
-                trained model.
 
         Returns:
             Union[GenericMCObjective, ConstrainedMCObjective]: the botorch objective.
@@ -80,10 +60,20 @@ class QparegoStrategy(BotorchStrategy):
             * ref_point_mask
         )
 
-        obj_callable = get_multiobjective_objective(output_features=self.domain.outputs)
+        obj_callable = get_multiobjective_objective(outputs=self.domain.outputs)
+
+        df_preds = self.predict(
+            self.domain.outputs.preprocess_experiments_any_valid_output(
+                experiments=self.experiments
+            )
+        )
+
+        preds = torch.from_numpy(
+            df_preds[[f"{key}_pred" for key in self.domain.outputs.get_keys()]].values
+        ).to(**tkwargs)
 
         scalarization = get_chebyshev_scalarization(
-            weights=weights, Y=obj_callable(pred, None) * ref_point_mask
+            weights=weights, Y=obj_callable(preds, None) * ref_point_mask
         )
 
         def objective(Z, X=None):
@@ -99,113 +89,24 @@ class QparegoStrategy(BotorchStrategy):
             )
         return GenericMCObjective(scalarization)
 
-    def _ask(self, candidate_count: int):
-        assert candidate_count > 0, "candidate_count has to be larger than zero."
+    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
+        assert self.is_fitted is True, "Model not trained."
 
-        acqf_list = []
-        with torch.no_grad():
-            clean_experiments = self.domain.outputs.preprocess_experiments_any_valid_output(
-                self.experiments  # type: ignore
-            )
-            transformed = self.domain.inputs.transform(
-                clean_experiments, self.input_preprocessing_specs
-            )
+        acqfs = []
 
-            train_x = torch.from_numpy(transformed.values).to(**tkwargs)
+        X_train, X_pending = self.get_acqf_input_tensors()
 
-            pred = self.model.posterior(train_x).mean  # type: ignore
-
-        clean_experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-            self.experiments  # type: ignore
-        )
-        transformed = self.domain.inputs.transform(
-            clean_experiments, self.input_preprocessing_specs
-        )
-        observed_x = torch.from_numpy(transformed.values).to(**tkwargs)
-
-        # TODO: unite it with SOBO and also add the other acquisition functions
-        for i in range(candidate_count):
-            assert self.model is not None
+        assert self.model is not None
+        for i in range(n):
             acqf = get_acquisition_function(
                 acquisition_function_name="qNEI",
                 model=self.model,
-                objective=self.get_objective(pred),
-                X_observed=observed_x,
+                objective=self._get_objective(),
+                X_observed=X_train,
+                X_pending=X_pending if i == 0 else None,
                 mc_samples=self.num_sobol_samples,
                 qmc=True,
                 prune_baseline=True,
             )
-            acqf_list.append(acqf)
-
-        # optimize
-        lower, upper = self.domain.inputs.get_bounds(self.input_preprocessing_specs)
-
-        num_categorical_features = len(self.domain.get_features(CategoricalInput))
-        num_categorical_combinations = len(
-            self.domain.inputs.get_categorical_combinations()
-        )
-
-        fixed_features = None
-        fixed_features_list = None
-
-        if (
-            (num_categorical_features == 0)
-            or (num_categorical_combinations == 1)
-            or (
-                (self.categorical_method == CategoricalMethodEnum.FREE)
-                and (self.descriptor_method == CategoricalMethodEnum.FREE)
-            )
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            fixed_features = self.get_fixed_features()
-
-        elif (
-            (self.categorical_method == CategoricalMethodEnum.EXHAUSTIVE)
-            or (self.descriptor_method == CategoricalMethodEnum.EXHAUSTIVE)
-        ) and len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
-            fixed_features_list = self.get_categorical_combinations()
-
-        elif len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
-            fixed_features_list = self.get_fixed_values_list()
-        else:
-            raise IOError()
-
-        candidates, _ = optimize_acqf_list(
-            acq_function_list=acqf_list,
-            bounds=torch.tensor([lower, upper]).to(**tkwargs),
-            num_restarts=self.num_restarts,
-            raw_samples=self.num_raw_samples,
-            equality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-            ),
-            inequality_constraints=get_linear_constraints(
-                domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-            ),
-            fixed_features=fixed_features,
-            fixed_features_list=fixed_features_list,
-            options={"batch_limit": 5, "maxiter": 200},
-        )
-
-        preds = self.model.posterior(X=candidates).mean.detach().numpy()  # type: ignore
-        stds = np.sqrt(self.model.posterior(X=candidates).variance.detach().numpy())  # type: ignore
-
-        input_feature_keys = [
-            item
-            for key in self.domain.inputs.get_keys()
-            for item in self._features2names[key]
-        ]
-
-        df_candidates = pd.DataFrame(
-            data=candidates.detach().numpy(),
-            columns=input_feature_keys,
-        )
-
-        df_candidates = self.domain.inputs.inverse_transform(
-            df_candidates, self.input_preprocessing_specs
-        )
-
-        for i, feat in enumerate(self.domain.outputs.get_by_objective(excludes=None)):
-            df_candidates[feat.key + "_pred"] = preds[:, i]
-            df_candidates[feat.key + "_sd"] = stds[:, i]
-            df_candidates[feat.key + "_des"] = feat.objective(preds[:, i])  # type: ignore
-
-        return df_candidates
+            acqfs.append(acqf)
+        return acqfs

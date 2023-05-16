@@ -1,11 +1,10 @@
-from typing import Callable, List, Literal, Tuple, Union
+from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
-from torch import Tensor
 
 from bofire.data_models.objectives.objective import (
-    BotorchConstrainedObjective,
+    ConstrainedObjective,
     Objective,
     TGe0,
     TGt0,
@@ -32,7 +31,7 @@ class CloseToTargetObjective(Objective):
         return -1 * (np.abs(x - self.target_value) ** self.exponent)
 
 
-class TargetObjective(Objective, BotorchConstrainedObjective):
+class TargetObjective(Objective, ConstrainedObjective):
     """Class for objectives for optimizing towards a target value
 
     Attributes:
@@ -77,38 +76,3 @@ class TargetObjective(Objective, BotorchConstrainedObjective):
                 )
             )
         )
-
-    def plot_details(self, ax):
-        """Plot function highlighting the tolerance area of the objective
-
-        Args:
-            ax (matplotlib.axes.Axes): Matplotlib axes object
-
-        Returns:
-            matplotlib.axes.Axes: The object to be plotted
-        """
-        ax.axvline(self.target_value, color="black")
-        ax.axvspan(
-            self.target_value - self.tolerance,
-            self.target_value + self.tolerance,
-            color="gray",
-            alpha=0.5,
-        )
-        return ax
-
-    def to_constraints(
-        self, idx: int
-    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
-        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
-
-        Args:
-            idx (int): Index of the constraint objective in the list of outputs.
-
-        Returns:
-            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
-                list of the corresponding botorch eta values.
-        """
-        return [
-            lambda Z: (Z[..., idx] - (self.target_value - self.tolerance)) * -1.0,
-            lambda Z: (Z[..., idx] - (self.target_value + self.tolerance)),
-        ], [1.0 / self.steepness, 1.0 / self.steepness]

@@ -54,7 +54,7 @@ class Overwrite(Invalidator):
         if self.key not in data:
             return []
         return [
-            Spec(spec.cls, lambda: {**data, **overwrite})
+            Spec(spec.cls, lambda data=data, overwrite=overwrite: {**data, **overwrite})
             for overwrite in self.overwrites
         ]
 

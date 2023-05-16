@@ -27,7 +27,7 @@ warnings.filterwarnings("ignore", category=UserWarning, append=True)
 with warnings.catch_warnings():
     warnings.simplefilter("ignore")
 
-input_features = [
+inputs = [
     ContinuousInput(
         key=f"x{1}",
         bounds=(0.0, 1.0),
@@ -41,9 +41,9 @@ input_features = [
         bounds=(0.0, 0.6),
     ),
 ]
-domain = Domain(
-    input_features=input_features,
-    output_features=[ContinuousOutput(key="y")],
+domain = Domain.from_lists(
+    inputs=inputs,
+    outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(
             features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -85,9 +85,9 @@ def test_doe_categoricals_not_implemented():
     categorical_inputs = [
         CategoricalInput(key=f"x{i+1}", categories=["a", "b", "c"]) for i in range(3)
     ]
-    domain = Domain(
-        input_features=categorical_inputs,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=categorical_inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
     with pytest.raises(Exception):
@@ -96,9 +96,9 @@ def test_doe_categoricals_not_implemented():
 
 def test_doe_discrete_not_implemented():
     discrete_inputs = [DiscreteInput(key=f"x{i+1}", values=[1, 2, 3]) for i in range(3)]
-    domain = Domain(
-        input_features=discrete_inputs,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=discrete_inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[],
     )
     with pytest.raises(Exception):
@@ -112,11 +112,9 @@ def test_nchoosek_implemented():
         max_count=2,
         none_also_valid=True,
     )
-    domain = Domain(
-        input_features=[
-            ContinuousInput(key=f"x{i+1}", bounds=(0.0, 1.0)) for i in range(3)
-        ],
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.0, 1.0)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[nchoosek_constraint],
     )
     data_model = data_models.DoEStrategy(domain=domain, formula="linear")
@@ -156,9 +154,9 @@ def test_doe_strategy_correctness():
         [[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]
     )
     for row in candidates.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in candidates_expected])
+        assert any(np.allclose(row, o, atol=1e-2) for o in candidates_expected)
     for o in candidates_expected[:-1]:
-        assert any([np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy())
 
 
 def test_doe_strategy_amount_of_candidates():

@@ -19,7 +19,7 @@ C = list(range(1, 11))
 def get_row(features, value: float = None, values: List[float] = None):
     if values is None:
         values = [value for _ in range(len(features))]
-    return pd.DataFrame.from_dict([{f: v for f, v in zip(features, values)}])
+    return pd.DataFrame.from_dict([dict(zip(features, values))])
 
 
 @pytest.mark.parametrize(

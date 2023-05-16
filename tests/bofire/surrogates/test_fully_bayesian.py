@@ -10,8 +10,8 @@ def test_SaasSingleTaskGPSurrogate_invalid_thinning():
     bench = Himmelblau()
     with pytest.raises(ValueError):
         SaasSingleTaskGPSurrogate(
-            input_features=bench.domain.inputs,
-            output_features=bench.domain.outputs,
+            inputs=bench.domain.inputs,
+            outputs=bench.domain.outputs,
             warmup_steps=32,
             num_samples=16,
             thinning=18,
@@ -23,8 +23,8 @@ def test_SaasSingleTaskGPSurrogate():
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     data_model = SaasSingleTaskGPSurrogate(
-        input_features=bench.domain.inputs,
-        output_features=bench.domain.outputs,
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
         warmup_steps=32,
         num_samples=16,
         thinning=4,

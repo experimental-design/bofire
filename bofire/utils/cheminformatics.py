@@ -5,11 +5,11 @@ import numpy as np
 
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
+    from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
     )
-from sklearn.feature_extraction.text import CountVectorizer
 
 # This code is based on GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/data_featuriser/featurisation.py
 

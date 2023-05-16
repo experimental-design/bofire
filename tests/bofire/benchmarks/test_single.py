@@ -1,7 +1,19 @@
 import numpy as np
 import pytest
 
-from bofire.benchmarks.single import Ackley, Branin, Branin30, Himmelblau
+from bofire.benchmarks.single import Ackley, Branin, Branin30, Hartmann, Himmelblau
+
+
+def test_hartmann():
+    with pytest.raises(ValueError):
+        Hartmann(8)
+    h = Hartmann(dim=6, allowed_k=3)
+    assert h.dim == 6
+    assert h.domain.constraints[0].max_count == 3
+    with pytest.raises(ValueError):
+        h.get_optima()
+    h = Hartmann(dim=6, allowed_k=None)
+    assert len(h.domain.constraints) == 0
 
 
 @pytest.mark.parametrize(
@@ -11,6 +23,8 @@ from bofire.benchmarks.single import Ackley, Branin, Branin30, Himmelblau
         (Ackley, False, {}),
         (Himmelblau, True, {}),
         (Ackley, True, {}),
+        (Hartmann, True, {}),
+        (Hartmann, False, {}),
         (Branin, True, {}),
         (Branin, False, {}),
         (Branin30, True, {}),
@@ -36,7 +50,7 @@ def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
     # Calculating corresponding y values
     Y = benchmark_function.f(X_samples, return_complete=return_complete)
     # Check, whether shape of output dataframe matches the expected shape.
-    expected_output_variables = len(benchmark_function.domain.output_features) * 2
+    expected_output_variables = len(benchmark_function.domain.outputs) * 2
 
     if return_complete:
         assert Y.shape == (
