@@ -1,3 +1,4 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -95,9 +96,10 @@ class TrainableSurrogate(ABC):
             )
         n = len(experiments)
         if folds > n:
-            raise ValueError(
-                f"Training data only has {n} experiments, which is less than folds"
+            warnings.warn(
+                f"Training data only has {n} experiments, which is less than folds, fallback to LOOCV."
             )
+            folds = n
         elif n == 0:
             raise ValueError("Experiments is empty.")
         elif folds < 2 and folds != -1:

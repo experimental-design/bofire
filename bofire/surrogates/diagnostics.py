@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict, List, Optional, Sequence
 
 import numpy as np
@@ -262,7 +263,10 @@ class CvResult(BaseModel):
             float: Metric value.
         """
         if self.n_samples == 1:
-            raise ValueError("Metric cannot be calculated for only one sample.")
+            warnings.warn(
+                "Metric cannot be calculated for only one sample. Null value will be returned"
+            )
+            return np.nan
         return metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
 
@@ -431,7 +435,7 @@ def CvResults2CrossValidationValues(
                 standardDeviation=fold.standard_deviation.tolist()
                 if fold.standard_deviation is not None
                 else None,
-                metrics=metrics.loc[i].to_dict(),
+                metrics=metrics.loc[i].to_dict() if fold.n_samples > 1 else None,
             )
         )
     return cvResults

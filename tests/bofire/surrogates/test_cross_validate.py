@@ -179,7 +179,7 @@ def test_model_cross_validate_hooks():
     assert hook_results["hook2"] == [(8, 2), (8, 2), (8, 2), (8, 2), (8, 2)]
 
 
-@pytest.mark.parametrize("folds", [-2, 0, 1, 11])
+@pytest.mark.parametrize("folds", [-2, 0, 1])
 def test_model_cross_validate_invalid(folds):
     inputs = Inputs(
         features=[
