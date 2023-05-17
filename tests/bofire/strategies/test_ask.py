@@ -1,5 +1,4 @@
 import random
-from unittest import mock
 
 import pandas as pd
 import pytest
@@ -8,7 +7,6 @@ import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Ackley
-from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -97,48 +95,3 @@ def test_ask_multi_objective(cls, spec, use_ref_point, candidate_count):
     assert len(candidates) == candidate_count
 
     # TODO: add check of convergence towards the optimum (0)
-
-
-@pytest.mark.parametrize(
-    "cls, spec, raise_validation_error, candidate_count",
-    [
-        (cls, specs, raise_validation_error, random.randint(1, 2))
-        for cls, specs in STRATEGY_SPECS_SINGLE_OBJECTIVE.items()
-        for raise_validation_error in [True, False]
-    ],
-)
-def test_ask_candidate_validation(cls, spec, raise_validation_error, candidate_count):
-    # generate data
-    benchmark = Ackley(categorical=False, descriptor=False)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
-    )
-    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
-
-    # set up of the strategy
-    data_model = cls(**{**spec, "domain": benchmark.domain})
-    print("data_model:", type(data_model))
-    strategy = strategies.map(data_model)
-    strategy.tell(experiments)
-
-    # mock validation method to always raise ConstraintNotFulfilledError
-    # use __setattr__ for pydantic reasons
-    object.__setattr__(
-        strategy.domain,
-        "validate_candidates",
-        mock.MagicMock(side_effect=ConstraintNotFulfilledError("test error")),
-    )
-
-    # ask
-    if raise_validation_error:
-        with pytest.raises(ConstraintNotFulfilledError):
-            candidates = strategy.ask(
-                candidate_count=candidate_count,
-                raise_validation_error=raise_validation_error,
-            )
-    else:
-        candidates = strategy.ask(
-            candidate_count=candidate_count,
-            raise_validation_error=raise_validation_error,
-        )
-        assert isinstance(candidates, pd.DataFrame)

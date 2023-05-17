@@ -1,4 +1,3 @@
-import warnings
 from abc import abstractmethod
 from typing import List, Optional, Tuple
 
@@ -6,7 +5,6 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
-from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
@@ -55,12 +53,9 @@ class PredictiveStrategy(Strategy):
             add_pending=add_pending,
             raise_validation_error=raise_validation_error,
         )
-        try:
-            self.domain.validate_candidates(candidates=candidates)
-        except ConstraintNotFulfilledError as e:
-            if raise_validation_error:
-                raise e
-            warnings.warn("Not all constraints are fulfilled for the candidates.")
+        self.domain.validate_candidates(
+            candidates=candidates, raise_validation_error=raise_validation_error
+        )
         return candidates
 
     def tell(

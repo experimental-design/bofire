@@ -346,8 +346,25 @@ def test_domain_validate_candidates_not_numerical(
 
 
 @pytest.mark.parametrize(
-    "domain, candidates", [(d, generate_candidates(d)) for d in [domain7]]
+    "domain, candidates, raise_validation_error",
+    [
+        (d, generate_candidates(d), raise_validation_error)
+        for d in [domain7]
+        for raise_validation_error in [True, False]
+    ],
 )
-def test_domain_validate_candidates_constraint_not_fulfilled(domain, candidates):
-    with pytest.raises(ConstraintNotFulfilledError):
-        domain.validate_candidates(candidates)
+def test_domain_validate_candidates_constraint_not_fulfilled(
+    domain, candidates, raise_validation_error
+):
+    if raise_validation_error:
+        with pytest.raises(ConstraintNotFulfilledError):
+            domain.validate_candidates(
+                candidates, raise_validation_error=raise_validation_error
+            )
+    else:
+        assert isinstance(
+            domain.validate_candidates(
+                candidates, raise_validation_error=raise_validation_error
+            ),
+            pd.DataFrame,
+        )

@@ -1,4 +1,3 @@
-import warnings
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
@@ -6,7 +5,6 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
-from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue
@@ -120,12 +118,11 @@ class Strategy(ABC):
 
         candidates = self._ask(candidate_count=candidate_count)
 
-        try:
-            self.domain.validate_candidates(candidates=candidates, only_inputs=True)
-        except ConstraintNotFulfilledError as e:
-            if raise_validation_error:
-                raise e
-            warnings.warn("Not all constraints are fulfilled for the candidates.")
+        self.domain.validate_candidates(
+            candidates=candidates,
+            only_inputs=True,
+            raise_validation_error=raise_validation_error,
+        )
 
         if candidate_count is not None:
             if len(candidates) != candidate_count:

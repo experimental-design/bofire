@@ -1,5 +1,6 @@
 import collections.abc
 import itertools
+import warnings
 from typing import (
     Any,
     Dict,
@@ -558,7 +559,11 @@ class Domain(BaseModel):
         )
 
     def validate_candidates(
-        self, candidates: pd.DataFrame, only_inputs: bool = False, tol: float = 1e-5
+        self,
+        candidates: pd.DataFrame,
+        only_inputs: bool = False,
+        tol: float = 1e-5,
+        raise_validation_error: bool = True,
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
@@ -567,13 +572,15 @@ class Domain(BaseModel):
             only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.
             tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation
                 is larger than tol. Defaults to 1e-6.
+            raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
+                otherwise only a warning will be displayed. Defaults to True.
 
         Raises:
             ValueError: when a column is missing for a defined input feature
             ValueError: when a column is missing for a defined output feature
             ValueError: when a non-numerical value is proposed
             ValueError: when an additional column is found
-            ConstraintNotFulfilledError: when the constraints are not fulfilled
+            ConstraintNotFulfilledError: when the constraints are not fulfilled and `raise_validation_error = True`
 
         Returns:
             pd.DataFrame: dataframe with suggested experiments (candidates)
@@ -583,9 +590,11 @@ class Domain(BaseModel):
         self.inputs.validate_inputs(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates, tol=tol).all():
-            raise ConstraintNotFulfilledError(
-                f"Constraints not fulfilled: {candidates}"
-            )
+            if raise_validation_error:
+                raise ConstraintNotFulfilledError(
+                    f"Constraints not fulfilled: {candidates}"
+                )
+            warnings.warn("Not all constraints are fulfilled.")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.outputs, Outputs)
