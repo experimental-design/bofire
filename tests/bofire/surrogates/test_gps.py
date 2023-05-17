@@ -135,7 +135,7 @@ def test_get_scaler(
         X=experiments[inputs.get_keys()],
     )
     assert isinstance(scaler, expected_scaler)
-    if expected_indices is not None:        
+    if expected_indices is not None:
         assert (scaler.indices == expected_indices).all()
     else:
         with pytest.raises(AttributeError):
@@ -288,14 +288,16 @@ def test_MixedGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
         assert torch.eq(
-        model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
+            model.model.input_transform.tf1.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, InputStandardize)
         assert torch.eq(
-        model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
+            model.model.input_transform.tf1.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
         ).all()
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:
