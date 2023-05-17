@@ -1,10 +1,10 @@
+import warnings
 from abc import ABC, abstractmethod
 from typing import List, Optional
 
 import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
-import warnings
 
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.strategies.api import Strategy as DataModel
@@ -89,7 +89,7 @@ class Strategy(ABC):
         self,
         candidate_count: Optional[PositiveInt] = None,
         add_pending: bool = False,
-        raise_validation_error: bool = True
+        raise_validation_error: bool = True,
     ) -> pd.DataFrame:
         """Function to generate new candidates.
 

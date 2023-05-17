@@ -21,9 +21,9 @@ from pydantic import Field, validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
+    ConstraintNotFulfilledError,
     LinearConstraint,
     NChooseKConstraint,
-    ConstraintNotFulfilledError
 )
 from bofire.data_models.domain.constraints import Constraints
 from bofire.data_models.domain.features import Features, Inputs, Outputs
@@ -583,7 +583,9 @@ class Domain(BaseModel):
         self.inputs.validate_inputs(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates, tol=tol).all():
-            raise ConstraintNotFulfilledError(f"Constraints not fulfilled: {candidates}")
+            raise ConstraintNotFulfilledError(
+                f"Constraints not fulfilled: {candidates}"
+            )
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.outputs, Outputs)

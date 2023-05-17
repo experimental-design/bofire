@@ -53,11 +53,13 @@ class Constraint(BaseModel):
 
 class ConstraintError(Exception):
     """Base Error for Constraints"""
+
     pass
 
 
 class ConstraintNotFulfilledError(ConstraintError):
     """Raised when an constraint is not fulfilled."""
+
     pass
 
 
