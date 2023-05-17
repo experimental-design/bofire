@@ -162,9 +162,7 @@ def test_mlp_ensemble_forward():
     assert pred.shape == torch.Size((1, 2, 10, 1))
 
 
-@pytest.mark.parametrize(
-    "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.NONE]
-)
+@pytest.mark.parametrize("scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY])
 def test_mlp_ensemble_fit(scaler):
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
@@ -182,7 +180,10 @@ def test_mlp_ensemble_fit(scaler):
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(surrogate.model.input_transform, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(surrogate.model.input_transform, InputStandardize)
+        assert isinstance(surrogate.model.input_transform, InputStandardize)        
+    else:
+        with pytest.raises(AttributeError):
+            assert surrogate.model.input_transform is None
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)
@@ -191,9 +192,7 @@ def test_mlp_ensemble_fit(scaler):
     assert_frame_equal(preds, preds2)
 
 
-@pytest.mark.parametrize(
-    "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.NONE]
-)
+@pytest.mark.parametrize("scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY])
 def test_mlp_ensemble_fit_categorical(scaler):
     inputs = Inputs(
         features=[
@@ -224,15 +223,16 @@ def test_mlp_ensemble_fit_categorical(scaler):
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(surrogate.model.input_transform, Normalize)
         assert torch.eq(
-            surrogate.model.input_transform.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
-        ).all()
+            surrogate.model.input_transform.indices, torch.tensor([0, 1], dtype=torch.int64)
+        ).all()    
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(surrogate.model.input_transform, InputStandardize)
+        assert isinstance(surrogate.model.input_transform, InputStandardize)        
         assert torch.eq(
-            surrogate.model.input_transform.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+            surrogate.model.input_transform.indices, torch.tensor([0, 1], dtype=torch.int64)
         ).all()
+    else:    
+        with pytest.raises(AttributeError):
+            assert surrogate.model.input_transform is None
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)

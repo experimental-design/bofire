@@ -78,7 +78,7 @@ from bofire.utils.torch_tools import tkwargs
             None,
         ),
         (
-            ScalerEnum.NONE,
+            ScalerEnum.IDENTITY,
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.ONE_HOT,
@@ -89,7 +89,7 @@ from bofire.utils.torch_tools import tkwargs
             None,
         ),
         (
-            ScalerEnum.NONE,
+            ScalerEnum.IDENTITY,
             {
                 "x_cat": CategoricalEncodingEnum.ONE_HOT,
                 "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
@@ -135,11 +135,20 @@ def test_get_scaler(
         X=experiments[inputs.get_keys()],
     )
     assert isinstance(scaler, expected_scaler)
-    if expected_indices is not None:
+    if expected_indices is not None:        
         assert (scaler.indices == expected_indices).all()
+    else:
+        with pytest.raises(AttributeError):
+            assert (scaler.indices == expected_indices).all()
     if expected_offset is not None:
         assert torch.allclose(scaler.offset, expected_offset)
         assert torch.allclose(scaler.coefficient, expected_coefficient)
+    else:
+        if scaler is None:
+            with pytest.raises(AttributeError):
+                assert (scaler.offset == expected_offset).all()
+            with pytest.raises(AttributeError):
+                assert (scaler.coefficient == expected_coefficient).all()
 
 
 @pytest.mark.parametrize(
@@ -147,7 +156,7 @@ def test_get_scaler(
     [
         (ScaleKernel(base_kernel=RBFKernel(ard=True)), ScalerEnum.NORMALIZE),
         (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.STANDARDIZE),
-        (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.NONE),
+        (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.IDENTITY),
     ],
 )
 def test_SingleTaskGPModel(kernel, scaler):
@@ -190,6 +199,9 @@ def test_SingleTaskGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, InputStandardize)
+    else:
+        with pytest.raises(AttributeError):
+            assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = SingleTaskGPSurrogate(
@@ -230,7 +242,7 @@ def test_MixedGPModel_invalid_preprocessing():
     [
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE),
         (RBFKernel(ard=False), ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.NONE),
+        (RBFKernel(ard=False), ScalerEnum.IDENTITY),
     ],
 )
 def test_MixedGPModel(kernel, scaler):
@@ -276,16 +288,14 @@ def test_MixedGPModel(kernel, scaler):
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
         assert torch.eq(
-            model.model.input_transform.tf1.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+        model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
         ).all()
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, InputStandardize)
         assert torch.eq(
-            model.model.input_transform.tf1.indices,
-            torch.tensor([0, 1], dtype=torch.int64),
+        model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
         ).all()
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:

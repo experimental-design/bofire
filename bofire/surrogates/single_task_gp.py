@@ -39,7 +39,7 @@ def get_scaler(
     Returns:
         Union[InputStandardize, Normalize]: The instantiated scaler class
     """
-    if scaler != ScalerEnum.NONE:
+    if scaler != ScalerEnum.IDENTITY:
         features2idx, _ = inputs._get_transform_info(input_preprocessing_specs)
 
         d = 0
