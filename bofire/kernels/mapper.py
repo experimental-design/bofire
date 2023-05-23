@@ -3,6 +3,7 @@ from typing import List
 import gpytorch
 import torch
 from gpytorch.kernels import Kernel as GpytorchKernel
+from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
@@ -109,6 +110,19 @@ def map_ScaleKernel(
     )
 
 
+def map_TanimotoKernel(
+    data_model: data_models.TanimotoKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> TanimotoKernel:
+    return TanimotoKernel(
+        batch_shape=batch_shape,
+        ard_num_dims=ard_num_dims if data_model.ard else None,
+        active_dims=active_dims,
+    )
+
+
 KERNEL_MAP = {
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
@@ -116,6 +130,7 @@ KERNEL_MAP = {
     data_models.AdditiveKernel: map_AdditiveKernel,
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
+    data_models.TanimotoKernel: map_TanimotoKernel,
 }
 
 

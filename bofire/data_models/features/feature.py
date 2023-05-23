@@ -5,10 +5,10 @@ import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEnum
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
-TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
+TTransform = Union[CategoricalEncodingEnum, ScalerEnum, MolecularEncodingEnum]
 
 
 class Feature(BaseModel):
@@ -140,7 +140,7 @@ def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
 
-TInputTransformSpecs = Dict[str, CategoricalEncodingEnum]
+TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, MolecularEncodingEnum]]
 
 
 TDescriptors = Annotated[List[str], Field(min_items=1)]
@@ -157,5 +157,7 @@ TCategoricalDescriptorVals = Annotated[
 
 TDiscreteVals = Annotated[List[float], Field(min_items=1)]
 
+TSmiles = Annotated[List[str], Field(min_items=1)]
+TMolecularVals = Annotated[List[List[Union[float, int]]], Field(min_items=1)]
 
 _CAT_SEP = "_"

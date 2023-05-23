@@ -43,3 +43,15 @@ class RegressionMetricsEnum(Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+
+
+class MolecularEncodingEnum(Enum):
+    """Enumeration class of implemented molecular encodings
+    Currently, fingerprints, fragments, fingerprints-fragements
+    and mordred descriptors are implemented."""
+
+    FINGERPRINTS = "FINGERPRINTS"
+    FRAGMENTS = "FRAGMENTS"
+    FINGERPRINTS_FRAGMENTS = "FINGERPRINTS_FRAGMENTS"
+    # BAG_CHAR = "BAG_CHAR"
+    MOL_DESCRIPTOR = "MOL_DESCRIPTOR"

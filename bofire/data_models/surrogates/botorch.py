@@ -1,10 +1,11 @@
 from pydantic import validator
 
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     NumericalInput,
+    MolecularInput
 )
 from bofire.data_models.surrogates.surrogate import Surrogate
 
@@ -15,6 +16,7 @@ class BotorchSurrogate(Surrogate):
         inputs = values["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
         descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)
+        molecular_keys = inputs.get_keys(MolecularInput, exact=True)
         for key in categorical_keys:
             if (
                 v.get(key, CategoricalEncodingEnum.ONE_HOT)
@@ -41,4 +43,17 @@ class BotorchSurrogate(Surrogate):
                 raise ValueError(
                     "Botorch based models have to use internal transforms to preprocess numerical features."
                 )
+        # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
+        for key in molecular_keys:
+            if v.get(key, MolecularEncodingEnum.FINGERPRINTS) not in [
+                MolecularEncodingEnum.FINGERPRINTS,
+                MolecularEncodingEnum.FRAGMENTS,
+                MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
+                MolecularEncodingEnum.MOL_DESCRIPTOR
+            ]:
+                raise ValueError(
+                    "Botorch based models have to use fingerprints, fragments, fingerprints_fragments, or molecular descriptors for molecular inputs"
+                )
+            elif v.get(key) is None:
+                v[key] = MolecularEncodingEnum.FINGERPRINTS
         return v

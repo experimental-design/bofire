@@ -50,6 +50,7 @@ def get_scaler(
             key
             for key, value in input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
+            and value != MolecularEncodingEnum.MOL_DESCRIPTOR
         ]
 
         ord_dims = []
