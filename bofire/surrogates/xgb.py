@@ -1,9 +1,21 @@
+import os
+import warnings
+from typing import Tuple
+
+import numpy as np
 import pandas as pd
-from xgboost import XGBRegressor
+
+try:
+    from xgboost import XGBRegressor  # type: ignore
+except ImportError:
+    warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
+
 
 from bofire.data_models.surrogates.api import XGBoostSurrogate as DataModel
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
+
+TEMPFILENAME = "temp_xgb.json"
 
 
 class XGBoostSurrogate(TrainableSurrogate, Surrogate):
@@ -32,7 +44,7 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
         self.num_parallel_tree = data_model.num_parallel_tree
         super().__init__(data_model=data_model, **kwargs)
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+    def _init_xgb(self):
         self.model = XGBRegressor(
             n_estimators=self.n_estimators,
             max_depth=self.max_depth,
@@ -57,7 +69,29 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
             random_state=self.random_state,
             num_parallel_tree=self.num_parallel_tree,
         )
+
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+        self._init_xgb()
         self.model.fit(X=X.values, y=Y.values)
 
+    def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+        preds = self.model.predict(transformed_X.values)
+        return preds.reshape((transformed_X.shape[0], 1)), np.zeros(
+            (transformed_X.shape[0], 1)
+        )
+
+    def loads(self, data: str):
+        # write to file
+        self._init_xgb()
+        with open(TEMPFILENAME, "w") as f:
+            f.write(data)
+        self.model.load_model(TEMPFILENAME)
+        os.remove(TEMPFILENAME)
+
     def _dumps(self) -> str:
-        self.model.save_model()
+        self.model.save_model(fname=TEMPFILENAME)
+        with open(TEMPFILENAME, "r") as f:
+            dump = f.read()
+        # remove temp file
+        os.remove(TEMPFILENAME)
+        return dump
