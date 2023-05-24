@@ -60,6 +60,7 @@ setup(
             "cloudpickle>=2.0.0",
             sklearn_dependency,
         ],
+        "xgb": ["xgboost>=1.7.5"],
         "cheminfo": ["rdkit", sklearn_dependency],
         "tests": [
             "mock",
