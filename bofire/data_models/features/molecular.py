@@ -40,6 +40,13 @@ class MolecularInput(Input):
     def is_fixed(self) -> bool:
         return False
 
+    def to(self, values: pd.Series, transform_type: MolecularEncodingEnum, **kwargs):
+        mapper = {
+            MolecularEncodingEnum.FINGERPRINTS: self.to_fingerprints,
+            MolecularEncodingEnum.FRAGMENTS: self.to_fragments,
+        }
+        return mapper[transform_type](values, **kwargs)
+
     # TODO: model descriptors as pydantic class
     def to_fingerprints(
         self, values: pd.Series, bond_radius: int = 5, n_bits: int = 2048
@@ -89,7 +96,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     def validate_categories_valid_smiles(cls, v, values):
         for smi in v:
             smiles2mol(smi)
-        return values
+        return v
 
     def get_bounds(
         self,
@@ -98,17 +105,21 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     ) -> Tuple[List[float], List[float]]:
         if isinstance(transform_type, CategoricalEncodingEnum):
             return super().get_bounds(transform_type, values)
-        if transform_type == MolecularEncodingEnum.FINGERPRINTS:
+        if transform_type in [
+            MolecularEncodingEnum.FINGERPRINTS,
+            MolecularEncodingEnum.FRAGMENTS,
+        ]:
             # in case that values is None, we return the optimization bounds
             # else we return the complete bounds
             if values is None:
-                df = self.to_fingerprints(self.categories).loc[  # type: ignore
-                    self.get_allowed_categories()
-                ]
+                df = self.to(
+                    values=pd.Series(self.get_allowed_categories()),
+                    transform_type=transform_type,
+                )
             else:
-                df = self.to_fingerprints(values=values)
+                df = self.to(values=values, transform_type=transform_type)
             lower = df.min().values.tolist()  # type: ignore
             upper = df.max().values.tolist()  # type: ignore
             return lower, upper
         else:
-            raise ValueError
+            raise ValueError("Unkown transform type provided.")
