@@ -35,8 +35,10 @@ class Fingerprints(MolFeatures):
 
     @root_validator
     def generate_descriptor_names(cls, values):
-        if values['descriptors'] is None:
-            values['descriptors'] = [f"fingerprint_{i}" for i in range(values['n_bits'])]
+        if values["descriptors"] is None:
+            values["descriptors"] = [
+                f"fingerprint_{i}" for i in range(values["n_bits"])
+            ]
         return values
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:
@@ -52,10 +54,10 @@ class Fragments(MolFeatures):
 
     @root_validator
     def generate_descriptor_names(cls, values):
-        if values['descriptors'] is None:
-            values['descriptors'] = [
-            f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-        ]
+        if values["descriptors"] is None:
+            values["descriptors"] = [
+                f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
+            ]
         return values
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:
@@ -73,10 +75,12 @@ class FingerprintsFragments(MolFeatures):
 
     @root_validator
     def generate_descriptor_names(cls, values):
-        if values['descriptors'] is None:
-            values['descriptors'] = [f"fingerprint_{i}" for i in range(values['n_bits'])] + [
-            f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-        ]
+        if values["descriptors"] is None:
+            values["descriptors"] = [
+                f"fingerprint_{i}" for i in range(values["n_bits"])
+            ] + [
+                f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
+            ]
         return values
 
     def __call__(self, values: pd.Series) -> pd.DataFrame:

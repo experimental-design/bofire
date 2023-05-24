@@ -10,7 +10,11 @@ from pydantic import Field, validate_arguments
 from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
-from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum, MolecularEncodingEnum
+from bofire.data_models.enum import (
+    CategoricalEncodingEnum,
+    SamplingMethodEnum,
+    MolecularEncodingEnum,
+)
 from bofire.data_models.features.api import (
     _CAT_SEP,
     AnyFeature,
@@ -465,11 +469,22 @@ class Inputs(Features):
             specs (TInputTransformSpecs): Transform specs to be validated.
         """
         # first check that the keys in the specs dict are correct also correct feature keys
-        if len(set(specs.keys()) - set(self.get_keys(CategoricalInput)) - set(self.get_keys(MolecularInput))) > 0:
+        if (
+            len(
+                set(specs.keys())
+                - set(self.get_keys(CategoricalInput))
+                - set(self.get_keys(MolecularInput))
+            )
+            > 0
+        ):
             raise ValueError("Unknown features specified in transform specs.")
         # next check that all values are of type CategoricalEncodingEnum
         if not (
-            all(isinstance(enc, CategoricalEncodingEnum) or isinstance(enc, MolecularEncodingEnum) for enc in specs.values())
+            all(
+                isinstance(enc, CategoricalEncodingEnum)
+                or isinstance(enc, MolecularEncodingEnum)
+                for enc in specs.values()
+            )
         ):
             raise ValueError("Unknown transform specified.")
         # next check that only Categoricalwithdescriptor have the value DESCRIPTOR

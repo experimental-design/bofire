@@ -18,7 +18,9 @@ class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
     smiles: TSmiles
     molfeatures: AnyMolFeatures
-    descriptor_values: Optional[TMolecularVals] = None # Optional[List[List[Union[float, int]]]] = None
+    descriptor_values: Optional[
+        TMolecularVals
+    ] = None  # Optional[List[List[Union[float, int]]]] = None
     order: ClassVar[int] = 6
 
     def validate_experimental(
@@ -54,7 +56,9 @@ class MolecularInput(Input):
         )
 
     def generate_descriptor_values(self):
-        self.descriptor_values = self.molfeatures(pd.Series(self.smiles)).values.tolist()
+        self.descriptor_values = self.molfeatures(
+            pd.Series(self.smiles)
+        ).values.tolist()
 
     def get_bounds(
         self, transform_type: TTransform, values: pd.Series

@@ -2,6 +2,7 @@ import warnings
 from typing import List
 
 import numpy as np
+import pandas as pd
 
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore

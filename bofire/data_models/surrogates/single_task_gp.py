@@ -45,9 +45,10 @@ class SingleTaskGPSurrogate(BotorchSurrogate):
                         yield pre + [key, value]
             else:
                 yield pre + [dic]
-        dict_lists = dict_generator(values['kernel'].dict())
+
+        dict_lists = dict_generator(values["kernel"].dict())
         for l in dict_lists:
-            if 'TanimotoKernel' in l:
+            if "TanimotoKernel" in l:
                 if v != ScalerEnum.IDENTITY:
                     raise ValueError(
                         "Must use ScalerEnum.IDENTITY when using TanimotoKernel"

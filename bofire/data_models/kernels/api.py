@@ -21,12 +21,7 @@ from bofire.data_models.kernels.molecular import (
 )
 from bofire.data_models.kernels.kernel import Kernel
 
-AbstractKernel = Union[
-    Kernel,
-    CategoricalKernel,
-    ContinuousKernel,
-    MolecularKernel
-]
+AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
 
 AnyContinuousKernel = Union[
     MaternKernel,

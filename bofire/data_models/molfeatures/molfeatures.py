@@ -46,4 +46,3 @@ class MolFeatures(BaseModel):
             if len(descriptors) != len(set(descriptors)):
                 raise ValueError("descriptors must be unique")
         return descriptors
-

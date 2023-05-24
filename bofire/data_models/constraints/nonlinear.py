@@ -52,7 +52,6 @@ class NonlinearConstraint(Constraint):
         return experiments.eval(self.expression)
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
-
         if self.jacobian_expression is not None:
             res = experiments.eval(self.jacobian_expression)
             for i, col in enumerate(res):

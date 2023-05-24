@@ -75,8 +75,8 @@ if __name__ == '__main__':
         smiles=smiles,
         # molfeatures=dm_molfeatures.Fingerprints(),
         # molfeatures=dm_molfeatures.Fragments(),
-        molfeatures=dm_molfeatures.FingerprintsFragments(),
-        # molfeatures=dm_molfeatures.MordredDescriptors(descriptors=mordred_descriptors),
+        # molfeatures=dm_molfeatures.FingerprintsFragments(),
+        molfeatures=dm_molfeatures.MordredDescriptors(descriptors=mordred_descriptors),
     )
     # in1 = dm_features.MolecularInput('molecule', smiles, dm_molfeatures.FingerprintsFragments())
 
@@ -109,8 +109,8 @@ if __name__ == '__main__':
         input_preprocessing_specs={
             # 'molecule': MolecularEncodingEnum.FINGERPRINTS,
             # 'molecule': MolecularEncodingEnum.FRAGMENTS,
-            'molecule': MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
-            # 'molecule': MolecularEncodingEnum.MOL_DESCRIPTOR,
+            # 'molecule': MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
+            'molecule': MolecularEncodingEnum.MOL_DESCRIPTOR,
         }
                     ,
                 )
