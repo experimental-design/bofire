@@ -28,6 +28,13 @@ class CategoricalEncodingEnum(Enum):
     DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
+class MolecularEncodingEnum(Enum):
+    """Enumeration class if implemented molecular encodings."""
+
+    FINGERPRINTS = "FINGERPRINTS"
+    FRAGMENTS = "FRAGMENTS"
+
+
 class OutputFilteringEnum(Enum):
     ALL = "ALL"
     ANY = "ANY"
