@@ -1221,7 +1221,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+        <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+        <span class="n">raise_validation_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
 
@@ -1230,13 +1234,15 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">            only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.</span>
 <span class="sd">            tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation</span>
 <span class="sd">                is larger than tol. Defaults to 1e-6.</span>
+<span class="sd">            raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,</span>
+<span class="sd">                otherwise only a warning will be displayed. Defaults to True.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: when a column is missing for a defined input feature</span>
 <span class="sd">            ValueError: when a column is missing for a defined output feature</span>
 <span class="sd">            ValueError: when a non-numerical value is proposed</span>
-<span class="sd">            ValueError: when the constraints are not fulfilled</span>
 <span class="sd">            ValueError: when an additional column is found</span>
+<span class="sd">            ConstraintNotFulfilledError: when the constraints are not fulfilled and `raise_validation_error = True`</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: dataframe with suggested experiments (candidates)</span>
@@ -1246,7 +1252,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
         <span class="c1"># check if all constraints are fulfilled</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raise_validation_error</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ConstraintNotFulfilledError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Not all constraints are fulfilled.&quot;</span><span class="p">)</span>
         <span class="c1"># for each continuous output feature with an attached objective object</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span> <span class="n">Outputs</span><span class="p">)</span>
@@ -2256,7 +2266,7 @@ involved output features.</p>
 
 
 <h3 id="bofire.data_models.domain.domain.Domain.validate_candidates" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">only_inputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">validate_candidates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">,</span> <span class="n">only_inputs</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-05</span><span class="p">,</span> <span class="n">raise_validation_error</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></code>
 
 
 </h3>
@@ -2295,6 +2305,13 @@ involved output features.</p>
 is larger than tol. Defaults to 1e-6.</p></td>
         <td><code>1e-05</code></td>
       </tr>
+      <tr>
+        <td><code>raise_validation_error</code></td>
+        <td><code>bool</code></td>
+        <td><p>If true an error will be raised if candidates violate constraints,
+otherwise only a warning will be displayed. Defaults to True.</p></td>
+        <td><code>True</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Exceptions:</strong></p>
@@ -2320,11 +2337,11 @@ is larger than tol. Defaults to 1e-6.</p></td>
       </tr>
       <tr>
         <td><code>ValueError</code></td>
-        <td><p>when the constraints are not fulfilled</p></td>
+        <td><p>when an additional column is found</p></td>
       </tr>
       <tr>
-        <td><code>ValueError</code></td>
-        <td><p>when an additional column is found</p></td>
+        <td><code>ConstraintNotFulfilledError</code></td>
+        <td><p>when the constraints are not fulfilled and <code>raise_validation_error = True</code></p></td>
       </tr>
   </tbody>
 </table>
@@ -2346,7 +2363,11 @@ is larger than tol. Defaults to 1e-6.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">candidates</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">only_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+    <span class="n">raise_validation_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
 
@@ -2355,13 +2376,15 @@ is larger than tol. Defaults to 1e-6.</p></td>
 <span class="sd">        only_inputs (bool,optional): If True, only the input columns are validated. Defaults to False.</span>
 <span class="sd">        tol (float,optional): tolerance parameter for constraints. A constraint is considered as not fulfilled if the violation</span>
 <span class="sd">            is larger than tol. Defaults to 1e-6.</span>
+<span class="sd">        raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,</span>
+<span class="sd">            otherwise only a warning will be displayed. Defaults to True.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: when a column is missing for a defined input feature</span>
 <span class="sd">        ValueError: when a column is missing for a defined output feature</span>
 <span class="sd">        ValueError: when a non-numerical value is proposed</span>
-<span class="sd">        ValueError: when the constraints are not fulfilled</span>
 <span class="sd">        ValueError: when an additional column is found</span>
+<span class="sd">        ConstraintNotFulfilledError: when the constraints are not fulfilled and `raise_validation_error = True`</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: dataframe with suggested experiments (candidates)</span>
@@ -2371,7 +2394,11 @@ is larger than tol. Defaults to 1e-6.</p></td>
     <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
     <span class="c1"># check if all constraints are fulfilled</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">raise_validation_error</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ConstraintNotFulfilledError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Not all constraints are fulfilled.&quot;</span><span class="p">)</span>
     <span class="c1"># for each continuous output feature with an attached objective object</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span> <span class="n">Outputs</span><span class="p">)</span>
