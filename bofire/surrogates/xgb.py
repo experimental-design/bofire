@@ -71,8 +71,9 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
         )
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
         self._init_xgb()
-        self.model.fit(X=X.values, y=Y.values)
+        self.model.fit(X=transformed_X.values, y=Y.values)
 
     def _predict(self, transformed_X: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         preds = self.model.predict(transformed_X.values)
