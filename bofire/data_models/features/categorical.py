@@ -1,4 +1,4 @@
-from typing import Annotated, ClassVar, Dict, List, Literal, Optional, Tuple, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -13,6 +13,7 @@ from bofire.data_models.features.feature import (
     TCategoryVals,
     TTransform,
 )
+from bofire.utils.annotated import Annotated
 
 
 class CategoricalInput(Input):

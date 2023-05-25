@@ -30,7 +30,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -38,6 +38,7 @@ setup(
         "pandas",
         "pydantic>=1.10.0,<2.0",
         "scipy>=1.7",
+        "typing_extensions",
     ],
     extras_require={
         "optimization": [

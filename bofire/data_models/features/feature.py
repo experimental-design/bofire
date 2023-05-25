@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Annotated, ClassVar, Dict, List, Optional, Tuple, Union
+from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import Field
@@ -7,6 +7,7 @@ from pydantic import Field
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.utils.annotated import Annotated
 
 TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
 
