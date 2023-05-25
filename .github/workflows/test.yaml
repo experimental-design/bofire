@@ -10,14 +10,17 @@ on:
 jobs:
   testing_minimal:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.8', '3.9', '3.10' ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
-      - name: Minimal Bofire
+          python-version: ${{ matrix.python-version }}
+      - name: Minimal Bofire, Python ${{ matrix.python-version }}
         run: pip install "." pytest
-      - name: Run domain-only test
+      - name: Run domain-only, test Python ${{ matrix.python-version }}
         run: |
           pytest tests/bofire/data_models/test_domain.py \
             tests/bofire/data_models/test_base.py \
