@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import Field, validator
 
@@ -9,6 +9,7 @@ from bofire.data_models.features.api import (
     NumericalInput,
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.utils.annotated import Annotated
 
 
 class XGBoostSurrogate(BotorchSurrogate):
