@@ -1,9 +1,10 @@
-import os
 import warnings
 from typing import Tuple
 
 import numpy as np
 import pandas as pd
+
+from bofire.utils.tmpfile import make_tmpfile
 
 try:
     from xgboost import XGBRegressor  # type: ignore
@@ -11,8 +12,6 @@ except ImportError:
     warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
 
 import uuid
-from pathlib import Path
-from tempfile import gettempdir
 
 from bofire.data_models.surrogates.api import XGBoostSurrogate as DataModel
 from bofire.surrogates.surrogate import Surrogate
@@ -43,6 +42,7 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
         self.scale_pos_weight = data_model.scale_pos_weight
         self.random_state = data_model.random_state
         self.num_parallel_tree = data_model.num_parallel_tree
+        self.tmpfile_name = f"xgb_{uuid.uuid4().hex}.json"
         super().__init__(data_model=data_model, **kwargs)
 
     def _init_xgb(self):
@@ -82,26 +82,17 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
             (transformed_X.shape[0], 1)
         )
 
-    def _get_tempfile_name(self) -> str:
-        # create tempdir in case it does not exist
-        tempfolder = Path(f"{gettempdir()}/bofire")
-        tempfolder.mkdir(parents=True, exist_ok=True)
-        return f"{str(tempfolder)}/temp_xgb_{uuid.uuid4()}.json"
-
     def loads(self, data: str):
-        fname = self._get_tempfile_name()
-        # write to file
-        self._init_xgb()
-        with open(fname, "w") as f:
-            f.write(data)
-        self.model.load_model(fname)
-        os.remove(fname)
+        with make_tmpfile(name=self.tmpfile_name) as fname:
+            # write to file
+            self._init_xgb()
+            with open(fname, "w") as f:
+                f.write(data)
+            self.model.load_model(fname)
 
     def _dumps(self) -> str:
-        fname = self._get_tempfile_name()
-        self.model.save_model(fname=fname)
-        with open(fname, "r") as f:
-            dump = f.read()
-        # remove temp file
-        os.remove(fname)
-        return dump
+        with make_tmpfile(name=self.tmpfile_name) as fname:
+            self.model.save_model(fname=fname)
+            with open(fname, "r") as f:
+                dump = f.read()
+            return dump
