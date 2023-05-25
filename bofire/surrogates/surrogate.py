@@ -94,7 +94,7 @@ class Surrogate(ABC):
         return self._dumps()
 
     @abstractmethod
-    def _dumps() -> str:
+    def _dumps(self) -> str:
         pass
 
     def _prepare_for_dump(self):

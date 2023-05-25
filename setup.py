@@ -51,6 +51,7 @@ setup(
             "sympy>=1.12",
             sklearn_dependency,
         ],
+        "xgb": ["xgboost>=1.7.5"],
         "cheminfo": ["rdkit", sklearn_dependency],
         "tests": [
             "mock",
