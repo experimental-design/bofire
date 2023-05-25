@@ -11,6 +11,7 @@ except ImportError:
     warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
 
 import uuid
+from pathlib import Path
 from tempfile import gettempdir
 
 from bofire.data_models.surrogates.api import XGBoostSurrogate as DataModel
@@ -82,7 +83,10 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
         )
 
     def _get_tempfile_name(self) -> str:
-        return f"{gettempdir()}/temp_xgb_{uuid.uuid4()}.json"
+        # create tempdir in case it does not exist
+        tempfolder = Path(f"{gettempdir()}/bofire")
+        tempfolder.mkdir(parents=True, exist_ok=True)
+        return f"{str(tempfolder)}/temp_xgb_{uuid.uuid4()}.json"
 
     def loads(self, data: str):
         fname = self._get_tempfile_name()
