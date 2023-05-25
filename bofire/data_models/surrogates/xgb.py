@@ -41,17 +41,6 @@ class XGBoostSurrogate(BotorchSurrogate):
     random_state: Optional[Annotated[int, Field(ge=0)]] = None
     num_parallel_tree: Annotated[int, Field(gt=0)] = 1
 
-    # TODO: So far ignore hyperparams
-    # monotone_constraints
-    # interaction_constraints
-    # importance_type
-    # validate_parameters
-    # enable categorical
-    # interaction_constraints
-    # importance_type
-    # validate_parameters
-    # enable categorical
-
     @validator("input_preprocessing_specs", always=True)
     def validate_input_preprocessing_specs(cls, v, values):
         inputs = values["inputs"]
@@ -68,7 +57,6 @@ class XGBoostSurrogate(BotorchSurrogate):
                 )
             else:
                 v[key] = CategoricalEncodingEnum.ONE_HOT
-        # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in descriptor_keys:
             if v.get(key, CategoricalEncodingEnum.DESCRIPTOR) not in [
                 CategoricalEncodingEnum.DESCRIPTOR,
@@ -83,7 +71,5 @@ class XGBoostSurrogate(BotorchSurrogate):
                 v[key] = CategoricalEncodingEnum.DESCRIPTOR
         for key in inputs.get_keys(NumericalInput):
             if v.get(key) is not None:
-                raise ValueError(
-                    "Botorch based models have to use internal transforms to preprocess numerical features."
-                )
+                raise ValueError("Currently no numeric transforms are supported.")
         return v
