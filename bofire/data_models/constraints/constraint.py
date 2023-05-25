@@ -1,10 +1,11 @@
 from abc import abstractmethod
-from typing import Annotated, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
+from bofire.utils.annotated import Annotated
 
 
 class Constraint(BaseModel):

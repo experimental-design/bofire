@@ -1,8 +1,9 @@
-from typing import Annotated, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 from pydantic import Field
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.utils.annotated import Annotated
 
 
 class RandomForestSurrogate(BotorchSurrogate):

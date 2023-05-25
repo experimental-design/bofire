@@ -1,8 +1,9 @@
-from typing import Annotated, Union
+from typing import Union
 
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
+from bofire.utils.annotated import Annotated
 
 Value = Union[float, str, int]
 
