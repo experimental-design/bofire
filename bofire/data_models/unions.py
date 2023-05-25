@@ -1,11 +1,8 @@
-from typing import Type, Union, _UnionGenericAlias  # type: ignore
+from typing import Type, Union, get_args, get_origin
 
 
-def to_list(union: Union[Type, _UnionGenericAlias]):
-    if isinstance(union, Type):
+def to_list(union: Type):
+    if get_origin(union) is Union:
+        return get_args(union)
+    else:
         return [union]
-    if isinstance(union, _UnionGenericAlias):
-        return union.__args__
-    raise TypeError(
-        f"expected argument of type Type or _UnionGenericAlias, got {type(union)}"
-    )
