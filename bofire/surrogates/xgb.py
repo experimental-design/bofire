@@ -10,12 +10,11 @@ try:
 except ImportError:
     warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
 
+import uuid
 
 from bofire.data_models.surrogates.api import XGBoostSurrogate as DataModel
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
-
-TEMPFILENAME = "temp_xgb.json"
 
 
 class XGBoostSurrogate(TrainableSurrogate, Surrogate):
@@ -81,18 +80,23 @@ class XGBoostSurrogate(TrainableSurrogate, Surrogate):
             (transformed_X.shape[0], 1)
         )
 
+    def _get_tempfile_name(self) -> str:
+        return f"temp_xgb_{uuid.uuid4()}.json"
+
     def loads(self, data: str):
+        fname = self._get_tempfile_name()
         # write to file
         self._init_xgb()
-        with open(TEMPFILENAME, "w") as f:
+        with open(fname, "w") as f:
             f.write(data)
-        self.model.load_model(TEMPFILENAME)
-        os.remove(TEMPFILENAME)
+        self.model.load_model(fname)
+        os.remove(fname)
 
     def _dumps(self) -> str:
-        self.model.save_model(fname=TEMPFILENAME)
-        with open(TEMPFILENAME, "r") as f:
+        fname = self._get_tempfile_name()
+        self.model.save_model(fname=fname)
+        with open(fname, "r") as f:
             dump = f.read()
         # remove temp file
-        os.remove(TEMPFILENAME)
+        os.remove(fname)
         return dump
