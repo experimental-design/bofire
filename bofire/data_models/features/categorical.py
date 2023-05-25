@@ -3,6 +3,7 @@ from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, root_validator, validator
+from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -13,7 +14,6 @@ from bofire.data_models.features.feature import (
     TCategoryVals,
     TTransform,
 )
-from bofire.utils.annotated import Annotated
 
 
 class CategoricalInput(Input):
