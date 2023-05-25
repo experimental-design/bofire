@@ -38,7 +38,7 @@ setup(
         "pandas",
         "pydantic>=1.10.0,<2.0",
         "scipy>=1.7",
-        "typing_extensions",
+        "typing-extensions",
     ],
     extras_require={
         "optimization": [
