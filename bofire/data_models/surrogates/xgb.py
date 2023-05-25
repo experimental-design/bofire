@@ -1,6 +1,7 @@
 from typing import Literal, Optional
 
 from pydantic import Field, validator
+from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -9,7 +10,6 @@ from bofire.data_models.features.api import (
     NumericalInput,
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.utils.annotated import Annotated
 
 
 class XGBoostSurrogate(BotorchSurrogate):

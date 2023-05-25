@@ -3,11 +3,11 @@ from typing import ClassVar, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 from pydantic import Field
+from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.utils.annotated import Annotated
 
 TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
 
