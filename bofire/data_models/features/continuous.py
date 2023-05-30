@@ -15,6 +15,7 @@ class ContinuousInput(NumericalInput):
     Attributes:
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
         stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
+        zero_also_valid (bool, optional): Boolean indicating if a value of zero is allowed additional to the defined bounds.
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
@@ -22,6 +23,7 @@ class ContinuousInput(NumericalInput):
 
     bounds: Tuple[float, float]
     stepsize: Optional[float] = None
+    zero_also_valid: bool = True
 
     @property
     def lower_bound(self) -> float:
@@ -106,11 +108,15 @@ class ContinuousInput(NumericalInput):
 
         noise = 10e-6
         super().validate_candidental(values)
-        if (values < self.lower_bound - noise).any():
+        if self.zero_also_valid:
+            nonzeros = values[(values > noise) & (values < noise)]
+        else:
+            nonzeros = values
+        if (nonzeros < self.lower_bound - noise).any():
             raise ValueError(
                 f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` "
             )
-        if (values > self.upper_bound + noise).any():
+        if (nonzeros > self.upper_bound + noise).any():
             raise ValueError(
                 f"not all values of input feature `{self.key}`are smaller than upper bound `{self.upper_bound}` "
             )

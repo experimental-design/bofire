@@ -33,6 +33,7 @@ specs.add_valid(
         "bounds": (3, 5.3),
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "stepsize": None,
+        "zero_also_valid": False,
     },
 )
 specs.add_valid(
@@ -44,6 +45,7 @@ specs.add_valid(
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
         "stepsize": None,
+        "zero_also_valid": False,
     },
 )
 specs.add_valid(

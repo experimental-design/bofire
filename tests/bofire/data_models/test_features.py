@@ -199,6 +199,10 @@ def test_continuous_input_feature_validate_invalid(input_feature, values, strict
             specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
         ),
+        (
+            ContinuousInput(key="a", bounds=(1.0, 3.0), zero_also_valid=True),
+            pd.Series([0.0, 3.0, 3.0]),
+        ),
     ],
 )
 def test_continuous_input_feature_validate_candidental_valid(input_feature, values):
@@ -223,6 +227,10 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
         (
             specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.1, 3.2, 3.4]),
+        ),
+        (
+            ContinuousInput(key="a", bounds=(1.0, 3.0), zero_also_valid=False),
+            pd.Series([0.0, 3.0, 3.0]),
         ),
     ],
 )
