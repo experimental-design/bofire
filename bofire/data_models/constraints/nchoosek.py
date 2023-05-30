@@ -2,9 +2,10 @@ from typing import List, Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import Field, root_validator, validator
+from typing_extensions import Annotated
 
-from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
+from bofire.data_models.constraints.constraint import Constraint
 
 
 def narrow_gaussian(x, ell=1e-3):
@@ -23,7 +24,7 @@ class NChooseKConstraint(Constraint):
     """
 
     type: Literal["NChooseKConstraint"] = "NChooseKConstraint"
-    features: FeatureKeys
+    features: Annotated[List[str], Field(min_items=1)]
     min_count: int
     max_count: int
     none_also_valid: bool

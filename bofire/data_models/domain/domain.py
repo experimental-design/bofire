@@ -290,17 +290,27 @@ class Domain(BaseModel):
             Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
                 unused_features_list is a list of lists containing features unused in each NChooseK combination.
         """
-        prefix = "no___"
-        dummies = []
+        constraints = self.constraints.get(NChooseKConstraint)
+        dummy_constraints = Constraints(
+            constraints=[
+                NChooseKConstraint(
+                    features=[feat.key], max_count=1, min_count=0, none_also_valid=True
+                )
+                for feat in self.inputs.get(ContinuousInput)
+                if feat.zero_also_valid  # type: ignore
+            ]
+        )
 
-        if len(self.constraints.get(NChooseKConstraint)) == 0:
+        constraints += dummy_constraints
+
+        if len(constraints) == 0:
             used_continuous_features = self.get_feature_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
 
         # loops through each NChooseK constraint
-        for con in self.constraints.get(NChooseKConstraint):
+        for con in constraints:
             assert isinstance(con, NChooseKConstraint)
             used_features_list = []
 
@@ -315,18 +325,7 @@ class Domain(BaseModel):
                     itertools.combinations(con.features, con.max_count)
                 )
 
-            used_features_list_all.append(used_features_list)
-
-        # we loop also through the continuous input features to check for zero also valid
-        for feat in self.inputs.get(ContinuousInput):
-            assert isinstance(feat, ContinuousInput)
-            if feat.zero_also_valid:
-                used_features_list_all.append([(feat.key,), (f"{prefix}{feat.key}",)])
-                dummies.append(f"{prefix}{feat.key}")
-                if dummies[-1] in self.inputs.get_keys():
-                    raise ValueError(
-                        f"Feature name clash, {dummies[-1]} already exists."
-                    )
+            used_features_list_all.append(list(set(used_features_list)))
 
         used_features_list_all = list(
             itertools.product(*used_features_list_all)
@@ -343,21 +342,19 @@ class Domain(BaseModel):
         # sort lists
         used_features_list_sorted = []
         for used_features in used_features_list_formatted:
-            used_features_list_sorted.append(sorted(used_features))
+            used_features_list_sorted.append(tuple(sorted(used_features)))
 
         # drop duplicates
-        used_features_list_no_dup = []
-        for used_features in used_features_list_sorted:
-            if used_features not in used_features_list_no_dup:
-                used_features_list_no_dup.append(used_features)
+        used_features_list_no_dup = list(set(used_features_list_sorted))
 
         # remove combinations not fulfilling constraints
+
         used_features_list_final = []
         for combo in used_features_list_no_dup:
             fulfil_constraints = (
                 []
             )  # list of bools tracking if constraints are fulfilled
-            for con in self.constraints.get(NChooseKConstraint):
+            for con in constraints:
                 assert isinstance(con, NChooseKConstraint)
                 count = 0  # count of features in combo that are in con.features
                 for f in combo:
@@ -370,17 +367,13 @@ class Domain(BaseModel):
                 else:
                     fulfil_constraints.append(False)
             if np.all(fulfil_constraints):
-                used_features_list_final.append(combo)
+                used_features_list_final.append(list(combo))
 
         # features unused
         features_in_cc = []
-        for con in self.constraints.get(NChooseKConstraint):
+        for con in constraints:
             assert isinstance(con, NChooseKConstraint)
             features_in_cc.extend(con.features)
-        for feat in self.inputs.get(ContinuousInput):
-            assert isinstance(feat, ContinuousInput)
-            if feat.zero_also_valid:
-                features_in_cc.extend([feat.key, f"{prefix}{feat.key}"])
         features_in_cc = list(set(features_in_cc))
         features_in_cc.sort()
         unused_features_list = []
@@ -388,20 +381,8 @@ class Domain(BaseModel):
             unused_features_list.append(
                 [f_key for f_key in features_in_cc if f_key not in used_features]
             )
-        # postprocess
-        used_features_list_final_post = []
-        unused_features_list_post = []
-        for used in used_features_list_final:
-            used_features_list_final_post.append(
-                [key for key in used if key not in dummies]
-            )
 
-        for unused in unused_features_list:
-            unused_features_list_post.append(
-                [key for key in unused if key not in dummies]
-            )
-
-        return used_features_list_final_post, unused_features_list_post
+        return used_features_list_final, unused_features_list
 
     def coerce_invalids(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Coerces all invalid output measurements to np.nan
