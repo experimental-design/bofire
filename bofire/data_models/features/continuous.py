@@ -23,7 +23,7 @@ class ContinuousInput(NumericalInput):
 
     bounds: Tuple[float, float]
     stepsize: Optional[float] = None
-    zero_also_valid: bool = True
+    zero_also_valid: bool = False
 
     @property
     def lower_bound(self) -> float:
