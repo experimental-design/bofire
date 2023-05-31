@@ -17,7 +17,7 @@ from bofire.strategies.doe.utils import get_formula_from_string
 
 def test_Objective_model_jacobian_t():
     # "small" model
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -81,7 +81,7 @@ def test_Objective_model_jacobian_t():
     assert np.allclose(B, model_jacobian_t(x)[0])
 
     # fully cubic model
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -366,7 +366,7 @@ def test_Objective_model_jacobian_t():
 
 
 def test_Objective_convert_input_to_model_tensor():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -387,7 +387,7 @@ def test_Objective_convert_input_to_model_tensor():
 
 def test_DOptimality_instantiation():
     # default jacobian building block
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -434,7 +434,7 @@ def test_DOptimality_instantiation():
     ) == (6,)
 
     # 5th order model
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -468,7 +468,7 @@ def test_DOptimality_evaluate_jacobian():
     def jacobian(x: np.ndarray, delta=1e-3) -> np.ndarray:  # type: ignore
         return -2 * x / (x[0] ** 2 + x[1] ** 2 + delta)
 
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -605,7 +605,7 @@ def test_DOptimality_evaluate_jacobian():
 
 
 def test_DOptimality_evaluate():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -623,7 +623,7 @@ def test_DOptimality_evaluate():
 
 
 def test_AOptimality_evaluate():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -642,7 +642,7 @@ def test_AOptimality_evaluate():
 
 
 def test_AOptimality_evaluate_jacobian():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
@@ -663,7 +663,7 @@ def test_AOptimality_evaluate_jacobian():
 
 
 def test_EOptimality_evaluate():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
@@ -686,7 +686,7 @@ def test_EOptimality_evaluate():
 
 
 def test_EOptimality_evaluate_jacobian():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
@@ -711,7 +711,7 @@ def test_EOptimality_evaluate_jacobian():
 
 
 def test_GOptimality_evaluate():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
@@ -727,7 +727,7 @@ def test_GOptimality_evaluate():
 
 
 def test_GOptimality_evaluate_jacobian():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
@@ -744,7 +744,7 @@ def test_GOptimality_evaluate_jacobian():
 
 
 def test_SpaceFilling_evaluate():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
@@ -758,7 +758,7 @@ def test_SpaceFilling_evaluate():
 
 
 def test_SpaceFilling_evaluate_jacobian():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
         outputs=[ContinuousOutput(key="y")],
     )
