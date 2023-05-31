@@ -33,7 +33,7 @@ def test_raise_error_if_cyipopt_not_available():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_no_constraint():
     # Design for a problem with an n-choose-k constraint
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
@@ -65,7 +65,7 @@ def test_find_local_max_ipopt_nchoosek():
         )
         for i in range(4)
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -101,7 +101,7 @@ def test_find_local_max_ipopt_mixture():
         )
         for i in range(4)
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -134,7 +134,7 @@ def test_find_local_max_ipopt_mixed_results():
             bounds=(0, 1),
         ),
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -170,7 +170,7 @@ def test_find_local_max_ipopt_results():
         ContinuousInput(key=f"x{2}", bounds=(0.1, 1)),
         ContinuousInput(key=f"x{3}", bounds=(0, 0.6)),
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -222,7 +222,7 @@ def test_find_local_max_ipopt_fixed_experiments():
         ContinuousInput(key=f"x{2}", bounds=(0.1, 1)),
         ContinuousInput(key=f"x{3}", bounds=(0, 0.6)),
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -287,7 +287,7 @@ def test_find_local_max_ipopt_fixed_experiments():
             bounds=(0, 1),
         ),
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -336,7 +336,7 @@ def test_check_fixed_experiments():
             bounds=(0, 1),
         ),
     ]
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -436,7 +436,7 @@ def test_check_fixed_experiments():
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_nonlinear_constraint():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(-1, 1)),
             ContinuousInput(key="x2", bounds=(-1, 1)),
@@ -458,7 +458,7 @@ def test_find_local_max_ipopt_nonlinear_constraint():
 
 
 def test_get_n_experiments():
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="x1", bounds=(-1, 1)),
             ContinuousInput(key="x2", bounds=(-1, 1)),

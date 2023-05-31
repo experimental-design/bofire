@@ -10,14 +10,17 @@ on:
 jobs:
   testing_minimal:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.8', '3.9', '3.10' ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
-      - name: Minimal Bofire
+          python-version: ${{ matrix.python-version }}
+      - name: Minimal Bofire, Python ${{ matrix.python-version }}
         run: pip install "." pytest
-      - name: Run domain-only test
+      - name: Run domain-only test, Python ${{ matrix.python-version }}
         run: |
           pytest tests/bofire/data_models/test_domain.py \
             tests/bofire/data_models/test_base.py \
@@ -33,20 +36,23 @@ jobs:
 
   testing:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.8', '3.10' ]
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
-      - name: Install Bofire
-        run: pip install ".[optimization,tests,cheminfo]"
-      - name: Install ipopt
+          python-version: ${{ matrix.python-version }}
+      - name: Install Bofire, Python ${{ matrix.python-version }}
+        run: pip install ".[optimization,tests,cheminfo,xgb]"
+      - name: Install ipopt, Python ${{ matrix.python-version }}
         run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
-      - name: Install cyipopt
+      - name: Install cyipopt, Python ${{ matrix.python-version }}
         run: pip install cyipopt
-      - name: Run tests
+      - name: Run tests, Python ${{ matrix.python-version }}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
-      - name: Run pip freeze
+      - name: Run pip freeze, Python ${{ matrix.python-version }}
         run: pip freeze
 
 
@@ -58,7 +64,7 @@ jobs:
         with:
           python-version: 3.9
       - name: Install Bofire
-        run: pip install ".[optimization,tests,cheminfo]"
+        run: pip install ".[optimization,tests,cheminfo,xgb]"
       - name: Install ipopt
         run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
       - name: Install cyipopt

@@ -8,3 +8,4 @@ class ScalerEnum(Enum):
 
     NORMALIZE = "NORMALIZE"
     STANDARDIZE = "STANDARDIZE"
+    IDENTITY = "IDENTITY"

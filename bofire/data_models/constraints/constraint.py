@@ -1,8 +1,9 @@
 from abc import abstractmethod
-from typing import Annotated, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 from pydantic import Field
+from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
@@ -49,6 +50,18 @@ class Constraint(BaseModel):
             pd.DataFrame: the i-th row contains the jacobian evaluated at the i-th experiment
         """
         pass
+
+
+class ConstraintError(Exception):
+    """Base Error for Constraints"""
+
+    pass
+
+
+class ConstraintNotFulfilledError(ConstraintError):
+    """Raised when an constraint is not fulfilled."""
+
+    pass
 
 
 FeatureKeys = Annotated[List[str], Field(min_items=2)]

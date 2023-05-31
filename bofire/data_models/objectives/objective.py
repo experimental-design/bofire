@@ -1,9 +1,10 @@
 from abc import abstractmethod
-from typing import Annotated, Union
+from typing import Union
 
 import numpy as np
 import pandas as pd
 from pydantic import Field
+from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
