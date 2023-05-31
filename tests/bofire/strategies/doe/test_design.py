@@ -11,7 +11,10 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, CategoricalInput
+from bofire.data_models.features.api import (
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     find_local_max_ipopt,
@@ -473,26 +476,3 @@ def test_get_n_experiments():
     # user provided n_experiment
     with pytest.warns(UserWarning):
         assert get_n_experiments(domain, "linear", 4) == 4
-
-@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_find_local_max_ipopt_basic_categorical():
-    domain = Domain(
-    inputs = [
-        ContinuousInput(key="x1", bounds = (0,1)),
-        ContinuousInput(key="x2", bounds = (0.1, 1)),
-        ContinuousInput(key="x3", bounds = (0, 0.6)),
-        CategoricalInput(key="k1", categories=["A", "B", "C"], allowed=[True, True, True])
-        ],
-    outputs = [ContinuousOutput(key="y")],
-    constraints = [
-        LinearEqualityConstraint(features=["x1","x2","x3"], coefficients=[1,1,1], rhs=1),
-        LinearInequalityConstraint(features=["x1","x2"], coefficients=[5,4], rhs=3.9),
-        LinearInequalityConstraint(features=["x1","x2"], coefficients=[-20,5], rhs=-3)
-    ]
-    )
-
-    d_optimal_design = find_local_max_ipopt(domain, "linear", n_experiments=12, ipopt_options={"disp":0}).to_numpy().T
-
-
-if __name__ == "__main__":
-    test_find_local_max_ipopt_basic_categorical()

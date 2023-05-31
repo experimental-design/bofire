@@ -6,7 +6,6 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.data_models.features.api import CategoricalInput
 from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
@@ -126,17 +125,6 @@ def find_local_max_ipopt(
     constraints = constraints_as_scipy_constraints(
         domain, n_experiments, ignore_nchoosek=True
     )
-
-    # reformulate categorical input variables as one-hot-encoding
-    categorical_vars = domain.inputs
-    categorical_vars = filter(lambda var: isinstance(var, CategoricalInput), categorical_vars)
-    cat_as_onehot = map(lambda var: var.to_onehot_encoding(pd.Series(var.get_allowed_categories())), categorical_vars)
-    # ich muss die variablen irgendwie in das x0 reinbringen,
-    
-    # relax categorical input variables
-
-
-
 
     # find bounds imposing NChooseK constraints
     bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
