@@ -8,20 +8,20 @@
       
       
       
-        <link rel="canonical" href="https://experimental-design.github.io/bofire/install/">
+        <link rel="canonical" href="https://experimental-design.github.io/bofire/examples/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../getting_started/">
       
       
-        <link rel="next" href="../getting_started/">
+        <link rel="next" href="../data_models_functionals/">
       
       <link rel="icon" href="../assets/images/favicon.png">
       <meta name="generator" content="mkdocs-1.4.3, mkdocs-material-9.1.15">
     
     
       
-        <title>Install - BoFire</title>
+        <title>Examples - BoFire</title>
       
     
     
@@ -75,7 +75,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#installation" class="md-skip">
+        <a href="#examples" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Install
+              Examples
             
           </span>
         </div>
@@ -275,80 +275,11 @@
 
   
   
-    
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          Install
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../install/" class="md-nav__link">
         Install
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#domain-and-optimization-algorithms" class="md-nav__link">
-    Domain and Optimization Algorithms
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#design-of-experiments" class="md-nav__link">
-    Design of Experiments
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#just-domain" class="md-nav__link">
-    Just Domain
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#cheminformatics" class="md-nav__link">
-    Cheminformatics
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#development-installation" class="md-nav__link">
-    Development Installation
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -374,11 +305,52 @@
 
   
   
+    
   
-    <li class="md-nav__item">
-      <a href="../examples/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Examples
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         Examples
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#doe" class="md-nav__link">
+    DoE
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -583,35 +555,15 @@
   
 
 
-<h1 id="installation">Installation</h1>
-<p>In Bofire we have several optional depencies.</p>
-<h3 id="domain-and-optimization-algorithms">Domain and Optimization Algorithms</h3>
-<p>To install Bofire with optimization tools you can use
-<div class="highlight"><pre><span></span><code>pip install bofire[optimization]
-</code></pre></div>
-This will also install <a href="https://botorch.org/">Botorch</a> that depends on <a href="https://pytorch.org/">Pytorch</a>.</p>
-<h3 id="design-of-experiments">Design of Experiments</h3>
-<p>BoFire has functionality to create D-optimal experimental designs via the <code>doe</code> module. This module is depends on 
-<a href="https://cyipopt.readthedocs.io/en/stable/">Cyipopt</a>. A comfortable way to install Cyipopt and the dependencies is via
-<div class="highlight"><pre><span></span><code>conda install -c conda-forge cyipopt
-</code></pre></div>
-You have to install Cyipopt manually.</p>
-<h3 id="just-domain">Just Domain</h3>
-<p>If you just want a data structure that represents the domain of an optimization problem you can
-<div class="highlight"><pre><span></span><code>pip install bofire
-</code></pre></div></p>
-<h3 id="cheminformatics">Cheminformatics</h3>
-<p>Some features related to molecules and their representation depend on <a href="https://www.rdkit.org/">Rdkit</a>.
-<div class="highlight"><pre><span></span><code>pip install bofire[optimization,cheminfo]
-</code></pre></div></p>
-<h3 id="development-installation">Development Installation</h3>
-<p>If you want to <a href="CONTRIBUTING.md">contribute</a> to BoFire, you might want to install in editable mode including the test dependencies.
-After cloning the repository via
-<div class="highlight"><pre><span></span><code>git clone https://github.com/experimental-design/bofire.git
-</code></pre></div>
-and cd <code>bofire</code>, you can proceed with
-<div class="highlight"><pre><span></span><code>pip install -e .[optimization,cheminfo,docs,tests]
-</code></pre></div></p>
+<h1 id="examples">Examples</h1>
+<p>This is a collection of code examples to allow for an easy exploration of the functionalities that BoFire offers.</p>
+<h2 id="doe">DoE</h2>
+<ul>
+<li><a href="../basic_examples/">creating designs for constrained design spaces</a></li>
+<li><a href="../optimality_criteria/">optimizing designs with respect to various optimality criteria</a></li>
+<li><a href="../design_with_explicit_formula/">creating designs for a custom model</a></li>
+<li><a href="../nchoosek_constraint/">creating designs with NChooseK constraints</a></li>
+</ul>
 
 
 
