@@ -31,7 +31,12 @@ class SamplerStrategy(Strategy):
         pass
 
     @validate_arguments
-    def ask(self, candidate_count: int, return_all: bool = False) -> pd.DataFrame:
+    def ask(
+        self,
+        candidate_count: int,
+        return_all: bool = False,
+        raise_validation_error: bool = True,
+    ) -> pd.DataFrame:
         """Generates the samples. In the case that `NChooseK` constraints are
         present, per combination `n` samples are generated.
 
@@ -39,13 +44,15 @@ class SamplerStrategy(Strategy):
             n (Tnum_asks): number of samples to generate.
             return_all (bool, optional): If true all `NchooseK` samples
                 are generated, else only `n` samples in total. Defaults to True.
+            raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
+                otherwise only a warning will be displayed. Defaults to True.
 
         Returns:
             Dataframe with samples.
         """
         # n = candidate_count
         # handle here NChooseK
-        if len(self.domain.cnstrs.get(NChooseKConstraint)) > 0:
+        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
             _, unused = self.domain.get_nchoosek_combinations()
 
             if return_all:
@@ -68,7 +75,7 @@ class SamplerStrategy(Strategy):
             for u in sampled_combinations:
                 # create new domain without the nchoosekconstraints
                 domain = deepcopy(self.domain)
-                domain.constraints = domain.cnstrs.get(excludes=NChooseKConstraint)
+                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
                 # fix the unused features
                 for key in u:
                     feat = domain.inputs.get_by_key(key=key)
@@ -79,16 +86,23 @@ class SamplerStrategy(Strategy):
                 samples.append(sampler.ask(num_samples_per_it))
             samples = pd.concat(samples, axis=0, ignore_index=True)
             if return_all:
-                return self.domain.validate_candidates(samples, only_inputs=True)
+                return self.domain.validate_candidates(
+                    samples,
+                    only_inputs=True,
+                    raise_validation_error=raise_validation_error,
+                )
             return self.domain.validate_candidates(
                 samples.sample(n=candidate_count, replace=False, ignore_index=True),
                 only_inputs=True,
+                raise_validation_error=raise_validation_error,
             )
 
         samples = self._ask(candidate_count)
         if len(samples) != candidate_count:
             raise ValueError(f"expected {candidate_count} samples, got {len(samples)}.")
-        return self.domain.validate_candidates(samples, only_inputs=True)
+        return self.domain.validate_candidates(
+            samples, only_inputs=True, raise_validation_error=raise_validation_error
+        )
 
     def has_sufficient_experiments(self) -> bool:
         return True

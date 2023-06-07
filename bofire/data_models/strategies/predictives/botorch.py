@@ -78,7 +78,7 @@ class BotorchStrategy(PredictiveStrategy):
         #  we also check that if a categorical with descriptor method is used as one hot encoded the same method is
         # used for the descriptor as for the categoricals
         for m in values["surrogate_specs"].surrogates:
-            keys = m.input_features.get_keys(CategoricalDescriptorInput)
+            keys = m.inputs.get_keys(CategoricalDescriptorInput)
             for k in keys:
                 if m.input_preprocessing_specs[k] == CategoricalEncodingEnum.ONE_HOT:
                     if values["categorical_method"] != values["descriptor_method"]:
@@ -104,9 +104,7 @@ class BotorchStrategy(PredictiveStrategy):
             List[ModelSpec]: List of model specification classes
         """
         existing_keys = (
-            surrogate_specs.output_features.get_keys()
-            if surrogate_specs is not None
-            else []
+            surrogate_specs.outputs.get_keys() if surrogate_specs is not None else []
         )
         non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
         _surrogate_specs = (
@@ -116,19 +114,17 @@ class BotorchStrategy(PredictiveStrategy):
             if len(domain.inputs.get(CategoricalInput, exact=True)):
                 _surrogate_specs.append(
                     MixedSingleTaskGPSurrogate(
-                        input_features=domain.inputs,
-                        output_features=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
+                        inputs=domain.inputs,
+                        outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
                     )
                 )
             else:
                 _surrogate_specs.append(
                     SingleTaskGPSurrogate(
-                        input_features=domain.inputs,
-                        output_features=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
+                        inputs=domain.inputs,
+                        outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
                     )
                 )
         surrogate_specs = BotorchSurrogates(surrogates=_surrogate_specs)
-        surrogate_specs._check_compability(
-            input_features=domain.inputs, output_features=domain.outputs
-        )
+        surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs

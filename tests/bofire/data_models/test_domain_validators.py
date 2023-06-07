@@ -7,7 +7,10 @@ import pandas as pd
 import pytest
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.constraints.api import LinearEqualityConstraint
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    LinearEqualityConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -132,48 +135,47 @@ def generate_invalid_candidates_bounds(domain, row_count: int = 5, error="lower"
     return candidates
 
 
-domain0 = Domain(
-    input_features=[if1, if2, if3],
-    output_features=[of1, of2],
+domain0 = Domain.from_lists(
+    inputs=[if1, if2, if3],
+    outputs=[of1, of2],
     constraints=[],
 )
 
-domain1 = Domain(
-    input_features=[if1, if2],
-    output_features=[of1],
+domain1 = Domain.from_lists(
+    inputs=[if1, if2],
+    outputs=[of1],
     constraints=[],
 )
 
-domain2 = Domain(
-    input_features=[if1, if2, if3],
-    output_features=[of1],
+domain2 = Domain.from_lists(
+    inputs=[if1, if2, if3],
+    outputs=[of1],
     constraints=[],
 )
 
-domain3 = Domain(
-    input_features=[if1, if2],
-    output_features=[of1, of2],
-    constraints=[],
+domain3 = Domain.from_lists(
+    [if1, if2],
+    [of1, of2],
+    [],
 )
 
-domain4 = Domain(
-    input_features=[if1, if2, if3, if4],
-    output_features=[of1, of2],
-    constraints=[],
+domain4 = Domain.from_lists(
+    [if1, if2, if3, if4],
+    [of1, of2],
+    [],
 )
-domain5 = Domain(
-    input_features=[if1, if5],
-    output_features=[of1, of2],
-    constraints=[],
+domain5 = Domain.from_lists(
+    [if1, if5],
+    [of1, of2],
+    [],
 )
-domain6 = Domain(
-    input_features=[if1, if6],
-    output_features=[of1, of2],
-    constraints=[],
+domain6 = Domain.from_lists(
+    [if1, if6],
+    [of1, of2],
 )
-domain7 = Domain(
-    input_features=[if1, if5],
-    output_features=[of1, of2],
+domain7 = Domain.from_lists(
+    [if1, if5],
+    [of1, of2],
     constraints=[
         LinearEqualityConstraint(features=["cont", "if5"], coefficients=[1, 1], rhs=500)
     ],
@@ -344,8 +346,25 @@ def test_domain_validate_candidates_not_numerical(
 
 
 @pytest.mark.parametrize(
-    "domain, candidates", [(d, generate_candidates(d)) for d in [domain7]]
+    "domain, candidates, raise_validation_error",
+    [
+        (d, generate_candidates(d), raise_validation_error)
+        for d in [domain7]
+        for raise_validation_error in [True, False]
+    ],
 )
-def test_domain_validate_candidates_constraint_not_fulfilled(domain, candidates):
-    with pytest.raises(ValueError):
-        domain.validate_candidates(candidates)
+def test_domain_validate_candidates_constraint_not_fulfilled(
+    domain, candidates, raise_validation_error
+):
+    if raise_validation_error:
+        with pytest.raises(ConstraintNotFulfilledError):
+            domain.validate_candidates(
+                candidates, raise_validation_error=raise_validation_error
+            )
+    else:
+        assert isinstance(
+            domain.validate_candidates(
+                candidates, raise_validation_error=raise_validation_error
+            ),
+            pd.DataFrame,
+        )

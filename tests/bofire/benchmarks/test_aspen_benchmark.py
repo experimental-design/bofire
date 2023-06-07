@@ -28,7 +28,7 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
     """
 
     domain = Domain(
-        input_features=Inputs(
+        inputs=Inputs(
             features=[
                 ContinuousInput(key="A", type="ContinuousInput", bounds=(0, 10)),
                 ContinuousInput(
@@ -46,7 +46,7 @@ def test_aspen_benchmark(cls_benchmark: Aspen_benchmark):
                 ),
             ]
         ),
-        output_features=Outputs(
+        outputs=Outputs(
             features=[
                 ContinuousOutput(
                     key="X",

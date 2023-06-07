@@ -3,8 +3,8 @@ from typing import Literal, Type
 from pydantic import validator
 
 from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction
-from bofire.data_models.features.api import Feature
-from bofire.data_models.objectives.api import BotorchConstrainedObjective, Objective
+from bofire.data_models.features.api import CategoricalOutput, Feature
+from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
@@ -21,7 +21,9 @@ class SoboBaseStrategy(BotorchStrategy):
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
         """
-        return True
+        if my_type not in [CategoricalOutput]:
+            return True
+        return False
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
@@ -44,7 +46,7 @@ class SoboStrategy(SoboBaseStrategy):
         if len(v.outputs) == 1:
             return v
         if (
-            len(v.outputs.get_by_objective(excludes=BotorchConstrainedObjective))
+            len(v.outputs.get_by_objective(excludes=ConstrainedObjective))
             - len(v.outputs.get_by_objective(includes=None, excludes=Objective))
         ) > 1:
             raise ValueError(

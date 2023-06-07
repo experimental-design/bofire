@@ -1,18 +1,17 @@
-from typing import Callable, List, Literal, Tuple, Union
+from typing import Literal, Union
 
 import numpy as np
 import pandas as pd
-from torch import Tensor
 
 from bofire.data_models.objectives.objective import (
-    BotorchConstrainedObjective,
+    ConstrainedObjective,
     Objective,
     TGt0,
     TWeight,
 )
 
 
-class SigmoidObjective(Objective, BotorchConstrainedObjective):
+class SigmoidObjective(Objective, ConstrainedObjective):
     """Base class for all sigmoid shaped objectives
 
     Attributes:
@@ -49,20 +48,6 @@ class MaximizeSigmoidObjective(SigmoidObjective):
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
-    def to_constraints(
-        self, idx: int
-    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
-        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
-
-        Args:
-            idx (int): Index of the constraint objective in the list of outputs.
-
-        Returns:
-            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
-                list of the corresponding botorch eta values.
-        """
-        return [lambda Z: (Z[..., idx] - self.tp) * -1.0], [1.0 / self.steepness]
-
 
 class MinimizeSigmoidObjective(SigmoidObjective):
     """Class for a minimizing a sigmoid objective
@@ -85,17 +70,3 @@ class MinimizeSigmoidObjective(SigmoidObjective):
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
         """
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
-
-    def to_constraints(
-        self, idx: int
-    ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
-        """Create a callable that can be used by `botorch.utils.objective.apply_constraints` to setup ouput constrained optimizations.
-
-        Args:
-            idx (int): Index of the constraint objective in the list of outputs.
-
-        Returns:
-            Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
-                list of the corresponding botorch eta values.
-        """
-        return [lambda Z: (Z[..., idx] - self.tp)], [1.0 / self.steepness]

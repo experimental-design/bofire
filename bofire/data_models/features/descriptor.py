@@ -43,7 +43,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         Returns:
             List[str]: List of valid keys
         """
-        return [name for name in descriptors]
+        return list(descriptors)
 
     @root_validator(pre=False, skip_on_failure=True)
     def validate_list_lengths(cls, values):
@@ -104,7 +104,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             List[str]: List of the descriptors
         """
-        descriptors = [name for name in descriptors]
+        descriptors = list(descriptors)
         if len(descriptors) != len(set(descriptors)):
             raise ValueError("descriptors must be unique")
         return descriptors
@@ -133,7 +133,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         a = np.array(v)
         for i, d in enumerate(values["descriptors"]):
             if len(set(a[:, i])) == 1:
-                raise ValueError("No variation for descriptor {d}.")
+                raise ValueError(f"No variation for descriptor {d}.")
         return v
 
     def to_df(self):
@@ -142,7 +142,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             pd.DataFrame: tabular overview of the feature as DataFrame
         """
-        data = {cat: values for cat, values in zip(self.categories, self.values)}
+        data = dict(zip(self.categories, self.values))
         return pd.DataFrame.from_dict(data, orient="index", columns=self.descriptors)
 
     def fixed_value(
@@ -234,7 +234,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         """
         return pd.DataFrame(
             data=values.map(
-                {cat: value for cat, value in zip(self.categories, self.values)}
+                dict(zip(self.categories, self.values))
             ).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
             index=values.index,

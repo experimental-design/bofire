@@ -202,8 +202,7 @@ def test_cvresult_get_metric_invalid():
     predicted = observed + np.random.normal(loc=0, scale=1, size=n_samples)
     cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
     for metric in metrics.keys():
-        with pytest.raises(ValueError):
-            cv.get_metric(metric)
+        np.isnan(cv.get_metric(metric=metric))
 
 
 def test_cvresults_invalid():
@@ -421,3 +420,16 @@ def test_CvResults2CrossValidationValues(cv_results):
             assert transformed["a"][i].standardDeviation is None
         for m in metrics.columns:
             assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
+
+
+def test_CvResults2CrossValidationValues_minimal():
+    cv_results = CvResults(
+        results=[generate_cvresult(key="a", n_samples=2) for _ in range(4)]
+        + [generate_cvresult(key="a", n_samples=1)]
+    )
+    transformed = CvResults2CrossValidationValues(cv_results)
+    for i in range(5):
+        if i < 4:
+            assert transformed["a"][i].metrics is not None
+        else:
+            assert transformed["a"][i].metrics is None

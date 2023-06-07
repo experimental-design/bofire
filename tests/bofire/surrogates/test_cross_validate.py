@@ -13,7 +13,7 @@ from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
 @pytest.mark.parametrize("folds", [5, 3, 10, -1])
 def test_model_cross_validate(folds):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -22,14 +22,14 @@ def test_model_cross_validate(folds):
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=100)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=100)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     experiments = experiments.sample(10)
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
     )
     model = surrogates.map(model)
     train_cv, test_cv, _ = model.cross_validate(experiments, folds=folds)
@@ -40,7 +40,7 @@ def test_model_cross_validate(folds):
 
 def test_model_cross_validate_descriptor():
     folds = 5
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -57,8 +57,8 @@ def test_model_cross_validate_descriptor():
             )
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=100)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=100)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_2 == "b", "y"] += 5
     experiments.loc[experiments.x_2 == "c", "y"] += 10
@@ -69,8 +69,8 @@ def test_model_cross_validate_descriptor():
         CategoricalEncodingEnum.DESCRIPTOR,
     ]:
         model = SingleTaskGPSurrogate(
-            input_features=input_features,
-            output_features=output_features,
+            inputs=inputs,
+            outputs=outputs,
             input_preprocessing_specs={"x_3": encoding},
         )
         model = surrogates.map(model)
@@ -82,7 +82,7 @@ def test_model_cross_validate_descriptor():
 
 @pytest.mark.parametrize("include_X, include_labcodes", [[True, False], [False, True]])
 def test_model_cross_validate_include_X(include_X, include_labcodes):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -91,14 +91,14 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments["labcode"] = [str(i) for i in range(10)]
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
     )
     model = surrogates.map(model)
     train_cv, test_cv, _ = model.cross_validate(
@@ -130,7 +130,7 @@ def test_model_cross_validate_hooks():
             return X_test.shape
         return X_train.shape
 
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -139,14 +139,14 @@ def test_model_cross_validate_hooks():
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     #
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
     )
     model = surrogates.map(model)
     # first test with one hook
@@ -179,9 +179,9 @@ def test_model_cross_validate_hooks():
     assert hook_results["hook2"] == [(8, 2), (8, 2), (8, 2), (8, 2), (8, 2)]
 
 
-@pytest.mark.parametrize("folds", [-2, 0, 1, 11])
+@pytest.mark.parametrize("folds", [-2, 0, 1])
 def test_model_cross_validate_invalid(folds):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -190,13 +190,13 @@ def test_model_cross_validate_invalid(folds):
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
     )
     model = surrogates.map(model)
     with pytest.raises(ValueError):

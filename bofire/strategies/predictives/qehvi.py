@@ -13,7 +13,7 @@ from botorch.utils.multi_objective.box_decompositions.non_dominated import (
     NondominatedPartitioning,
 )
 
-from bofire.data_models.objectives.api import BotorchConstrainedObjective
+from bofire.data_models.objectives.api import ConstrainedObjective
 from bofire.data_models.strategies.api import QehviStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.multiobjective import get_ref_point_mask, infer_ref_point
@@ -75,7 +75,7 @@ class QehviStrategy(BotorchStrategy):
         return [acqf]
 
     def _get_objective(self) -> GenericMCMultiOutputObjective:
-        objective = get_multiobjective_objective(output_features=self.domain.outputs)
+        objective = get_multiobjective_objective(outputs=self.domain.outputs)
         return GenericMCMultiOutputObjective(objective=objective)
 
     def get_adjusted_refpoint(self) -> List[float]:
@@ -94,7 +94,7 @@ class QehviStrategy(BotorchStrategy):
                 [
                     ref_point[feat]
                     for feat in self.domain.outputs.get_keys_by_objective(
-                        excludes=BotorchConstrainedObjective
+                        excludes=ConstrainedObjective
                     )
                 ]
             )

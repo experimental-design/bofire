@@ -92,8 +92,8 @@ class BotorchStrategy(PredictiveStrategy):
         """
         self.surrogate_specs.fit(experiments)  # type: ignore
         self.model = self.surrogate_specs.compatibilize(  # type: ignore
-            input_features=self.domain.input_features,  # type: ignore
-            output_features=self.domain.output_features,  # type: ignore
+            inputs=self.domain.inputs,  # type: ignore
+            outputs=self.domain.outputs,  # type: ignore
         )
 
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
@@ -152,7 +152,7 @@ class BotorchStrategy(PredictiveStrategy):
         )
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
         # setup nchooseks
-        if len(self.domain.cnstrs.get(NChooseKConstraint)) == 0:
+        if len(self.domain.constraints.get(NChooseKConstraint)) == 0:
             ic_generator = None
             ic_gen_kwargs = {}
             nchooseks = None

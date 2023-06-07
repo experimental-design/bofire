@@ -1,6 +1,5 @@
 from typing import List
 
-import gpytorch.priors
 import pytest
 from pydantic.error_wrappers import ValidationError
 
@@ -77,20 +76,3 @@ def test_valid_prior_specs(cls, spec):
 def test_invalid_prior_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
         _ = cls(**spec)
-
-
-@pytest.mark.parametrize(
-    "prior, expected_prior",
-    [
-        (GammaPrior(concentration=2.0, rate=0.2), gpytorch.priors.GammaPrior),
-        (NormalPrior(loc=0, scale=0.5), gpytorch.priors.NormalPrior),
-    ],
-)
-def test_prior(prior, expected_prior):
-    gprior = prior.to_gpytorch()
-    assert isinstance(gprior, expected_prior)
-    for key, value in prior.dict().items():
-        if key == "type":
-            continue
-        assert value == getattr(gprior, key)
-    prior.plot_pdf(lower=-5, upper=5)

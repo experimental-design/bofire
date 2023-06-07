@@ -30,15 +30,15 @@ def test_raise_error_if_cyipopt_not_available():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_no_constraint():
     # Design for a problem with an n-choose-k constraint
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(
                 key=f"x{i+1}",
                 bounds=(0, 1),
             )
             for i in range(4)
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
     dim_input = len(domain.inputs.get_keys())
 
@@ -55,16 +55,16 @@ def test_find_local_max_ipopt_no_constraint():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_nchoosek():
     # Design for a problem with an n-choose-k constraint
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{i+1}",
             bounds=(0, 1),
         )
         for i in range(4)
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NChooseKConstraint(
                 features=[f"x{i+1}" for i in range(4)],
@@ -91,16 +91,16 @@ def test_find_local_max_ipopt_nchoosek():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_mixture():
     # Design for a problem with a mixture constraint
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{i+1}",
             bounds=(0, 1),
         )
         for i in range(4)
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=[f"x{i+1}" for i in range(4)], coefficients=[1, 1, 1, 1], rhs=1
@@ -117,7 +117,7 @@ def test_find_local_max_ipopt_mixture():
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_mixed_results():
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{1}",
             bounds=(0, 1),
@@ -131,9 +131,9 @@ def test_find_local_max_ipopt_mixed_results():
             bounds=(0, 1),
         ),
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -151,15 +151,15 @@ def test_find_local_max_ipopt_mixed_results():
     A = find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"maxiter": 100})
     opt = np.eye(3)
     for row in A.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in opt])
+        assert any(np.allclose(row, o, atol=1e-2) for o in opt)
     for o in opt:
-        assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_results():
     # define problem: no NChooseK constraints
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{1}",
             bounds=(0, 1),
@@ -167,9 +167,9 @@ def test_find_local_max_ipopt_results():
         ContinuousInput(key=f"x{2}", bounds=(0.1, 1)),
         ContinuousInput(key=f"x{3}", bounds=(0, 0.6)),
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -186,9 +186,9 @@ def test_find_local_max_ipopt_results():
     A = find_local_max_ipopt(domain, "linear", n_experiments=12)
     opt = np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]])
     for row in A.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in opt])
+        assert any(np.allclose(row, o, atol=1e-2) for o in opt)
     for o in opt[:-1]:
-        assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
 
 
 # def test_find_local_max_ipopt_sampling():
@@ -211,7 +211,7 @@ def test_find_local_max_ipopt_results():
 def test_find_local_max_ipopt_fixed_experiments():
     # TODO fix this test. Currently it gets stuck in a local minimum 50% of the time
     # working if fixed experiments is tested below. Do I need this test?
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{1}",
             bounds=(0, 1),
@@ -219,9 +219,9 @@ def test_find_local_max_ipopt_fixed_experiments():
         ContinuousInput(key=f"x{2}", bounds=(0.1, 1)),
         ContinuousInput(key=f"x{3}", bounds=(0, 0.6)),
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -270,7 +270,7 @@ def test_find_local_max_ipopt_fixed_experiments():
         )
 
     # define domain: with NChooseK constraints, 2 fixed_experiments
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{1}",
             bounds=(0, 1),
@@ -284,9 +284,9 @@ def test_find_local_max_ipopt_fixed_experiments():
             bounds=(0, 1),
         ),
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -310,16 +310,16 @@ def test_find_local_max_ipopt_fixed_experiments():
     )
     opt = np.eye(3)
     for row in A.to_numpy():
-        assert any([np.allclose(row, o, atol=1e-2) for o in opt])
+        assert any(np.allclose(row, o, atol=1e-2) for o in opt)
     for o in opt:
-        assert any([np.allclose(o, row, atol=1e-2) for row in A.to_numpy()])
+        assert any(np.allclose(o, row, atol=1e-2) for row in A.to_numpy())
     assert np.allclose(A.to_numpy()[:2, :], opt[:2, :])
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_check_fixed_experiments():
     # define problem: everything fine
-    input_features = [
+    inputs = [
         ContinuousInput(
             key=f"x{1}",
             bounds=(0, 1),
@@ -333,9 +333,9 @@ def test_check_fixed_experiments():
             bounds=(0, 1),
         ),
     ]
-    domain = Domain(
-        input_features=input_features,
-        output_features=[ContinuousOutput(key="y")],
+    domain = Domain.from_lists(
+        inputs=inputs,
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -372,14 +372,14 @@ def test_check_fixed_experiments():
 # def test_check_constraints_and_domain_respected():
 #     # problem with unfulfillable constraints
 #     # formulation constraint
-#     input_features = [
+#     inputs = [
 #         ContinuousInput(key=f"x{1}", lower_bound=0.5, upper_bound=1),
 #         ContinuousInput(key=f"x{2}", lower_bound=0.5, upper_bound=1),
 #         ContinuousInput(key=f"x{3}", lower_bound=0.5, upper_bound=1),
 #     ]
 #     domain = Domain(
-#         input_features=input_features,
-#         output_features=[ContinuousOutput(key="y")],
+#         inputs=inputs,
+#         outputs=[ContinuousOutput(key="y")],
 #         constraints=[
 #             LinearEqualityConstraint(
 #                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -401,14 +401,14 @@ def test_check_fixed_experiments():
 #     #    domain.validate_candidates(candidates=A, only_inputs=True)
 
 #     # everything ok
-#     input_features = [
+#     inputs = [
 #         ContinuousInput(key=f"x{1}", bounds=(0, 1),),
 #         ContinuousInput(key=f"x{2}", bounds=(0, 1),),
 #         ContinuousInput(key=f"x{3}", bounds=(0, 1),),
 #     ]
 #     domain = Domain(
-#         input_features=input_features,
-#         output_features=[ContinuousOutput(key="y")],
+#         inputs=inputs,
+#         outputs=[ContinuousOutput(key="y")],
 #         constraints=[
 #             LinearEqualityConstraint(
 #                 features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
@@ -433,13 +433,13 @@ def test_check_fixed_experiments():
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_find_local_max_ipopt_nonlinear_constraint():
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key="x1", bounds=(-1, 1)),
             ContinuousInput(key="x2", bounds=(-1, 1)),
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
         constraints=[
             NonlinearInequalityConstraint(
                 expression="x1**2 + x2**2 - x3",
@@ -449,21 +449,19 @@ def test_find_local_max_ipopt_nonlinear_constraint():
         ],
     )
 
-    result = find_local_max_ipopt(
-        domain, "linear", tol=0, ipopt_options={"maxiter": 100}
-    )
+    result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100})
 
     assert np.allclose(domain.constraints(result), 0, atol=1e-6)
 
 
 def test_get_n_experiments():
-    domain = Domain(
-        input_features=[
+    domain = Domain.from_lists(
+        inputs=[
             ContinuousInput(key="x1", bounds=(-1, 1)),
             ContinuousInput(key="x2", bounds=(-1, 1)),
             ContinuousInput(key="x3", bounds=(0, 1)),
         ],
-        output_features=[ContinuousOutput(key="y")],
+        outputs=[ContinuousOutput(key="y")],
     )
 
     # keyword

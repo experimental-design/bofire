@@ -12,6 +12,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalOutput,
     ContinuousDescriptorInput,
     ContinuousInput,
     ContinuousOutput,
@@ -20,11 +21,7 @@ from bofire.data_models.features.api import (
     MolecularInput,
     Output,
 )
-from bofire.data_models.objectives.api import (
-    MaximizeSigmoidObjective,
-    MinimizeObjective,
-    Objective,
-)
+from bofire.data_models.objectives.api import MinimizeObjective, Objective
 from bofire.data_models.surrogates.api import ScalerEnum
 
 objective = MinimizeObjective(w=1)
@@ -35,7 +32,9 @@ objective = MinimizeObjective(w=1)
     [
         (spec, n)
         for spec in specs.features.valids
-        if (spec.cls != ContinuousOutput) and (spec.cls != MolecularInput)
+        if (spec.cls != ContinuousOutput)
+        and (spec.cls != MolecularInput)
+        and (spec.cls != CategoricalOutput)
         for n in [1, 5]
     ],
 )
@@ -86,6 +85,25 @@ def test_sample(spec: specs.Spec, n: int):
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
+
+def test_continuous_input_invalid_stepsize():
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(1, 1), stepsize=0)
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(0, 5), stepsize=0.3)
+    with pytest.raises(ValueError):
+        ContinuousInput(key="a", bounds=(0, 1), stepsize=1)
+
+
+def test_continuous_input_round():
+    feature = ContinuousInput(key="a", bounds=(0, 5))
+    values = pd.Series([1.0, 1.3, 0.55])
+    assert_series_equal(values, feature.round(values))
+    feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.25)
+    assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
+    feature = ContinuousInput(key="a", bounds=(0, 5), stepsize=0.1)
+    assert_series_equal(pd.Series([1.0, 1.3, 0.5]), feature.round(values))
 
 
 @pytest.mark.parametrize(
@@ -530,25 +548,27 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
         input_feature.validate_candidental(values)
 
 
-def test_categorical_to_one_hot_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_to_one_hot_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_onehot_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
-            columns=["c_B", "c_A", "c_C"],
+            columns=[f"{key}_B", f"{key}_A", f"{key}_C"],
         ),
     )
     untransformed = c.from_onehot_encoding(t_samples)
     assert np.all(samples == untransformed)
 
 
-def test_categorical_from_one_hot_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_from_one_hot_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
-        columns=["c_B", "c_A", "c_C", "misc"],
+        columns=[f"{key}_B", f"{key}_A", f"{key}_C", "misc"],
         data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
     )
     samples = c.from_onehot_encoding(one_hot_values)
@@ -572,25 +592,27 @@ def test_categorical_from_one_hot_encoding_invalid():
         c.from_onehot_encoding(one_hot_values)
 
 
-def test_categorical_to_dummy_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_to_dummy_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_dummy_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
-            columns=["c_A", "c_C"],
+            columns=[f"{key}_A", f"{key}_C"],
         ),
     )
     untransformed = c.from_dummy_encoding(t_samples)
     assert np.all(samples == untransformed)
 
 
-def test_categorical_from_dummy_encoding():
-    c = CategoricalInput(key="c", categories=["B", "A", "C"])
+@pytest.mark.parametrize("key", ["c", "c_alpha"])
+def test_categorical_from_dummy_encoding(key):
+    c = CategoricalInput(key=key, categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
-        columns=["c_A", "c_C", "misc"],
+        columns=[f"{key}_A", f"{key}_C", "misc"],
         data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
     )
     samples = c.from_dummy_encoding(one_hot_values)
@@ -1059,7 +1081,7 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     categories, descriptors, values
 ):
     df = pd.DataFrame.from_dict(
-        {category: v for category, v in zip(categories, values)},
+        dict(zip(categories, values)),
         orient="index",
         columns=descriptors,
     )
@@ -1097,7 +1119,7 @@ out = specs.features.valid(ContinuousOutput).obj()
     ],
 )
 def test_feature_sorting(unsorted_list, sorted_list):
-    assert list(sorted(unsorted_list)) == sorted_list
+    assert sorted(unsorted_list) == sorted_list
 
 
 # test features container
@@ -1119,8 +1141,8 @@ of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
 of2 = specs.features.valid(ContinuousOutput).obj(key="of2")
 of3 = specs.features.valid(ContinuousOutput).obj(key="of3", objective=None)
 
-input_features = Inputs(features=[if1, if2])
-output_features = Outputs(features=[of1, of2])
+inputs = Inputs(features=[if1, if2])
+outputs = Outputs(features=[of1, of2])
 features = Features(features=[if1, if2, of1, of2])
 
 
@@ -1157,14 +1179,14 @@ def test_features_invalid_feature(FeatureContainer, features):
 @pytest.mark.parametrize(
     "features1, features2, expected_type",
     [
-        [input_features, input_features, Inputs],
-        [output_features, output_features, Outputs],
-        [input_features, output_features, Features],
-        [output_features, input_features, Features],
-        [features, output_features, Features],
-        [features, input_features, Features],
-        [output_features, features, Features],
-        [input_features, features, Features],
+        [inputs, inputs, Inputs],
+        [outputs, outputs, Outputs],
+        [inputs, outputs, Features],
+        [outputs, inputs, Features],
+        [features, outputs, Features],
+        [features, inputs, Features],
+        [outputs, features, Features],
+        [inputs, features, Features],
     ],
 )
 def test_features_plus(features1, features2, expected_type):
@@ -1178,8 +1200,8 @@ def test_features_plus(features1, features2, expected_type):
     [
         (features, Feature, False, [if1, if2, of1, of2]),
         (features, Output, False, [of1, of2]),
-        (input_features, ContinuousInput, False, [if1, if2]),
-        (output_features, ContinuousOutput, False, [of1, of2]),
+        (inputs, ContinuousInput, False, [if1, if2]),
+        (outputs, ContinuousOutput, False, [of1, of2]),
     ],
 )
 def test_constraints_get(features, FeatureType, exact, expected):
@@ -1195,8 +1217,8 @@ def test_constraints_get(features, FeatureType, exact, expected):
     [
         (features, Feature, False, ["if1", "if2", "of1", "of2"]),
         (features, Output, False, ["of1", "of2"]),
-        (input_features, ContinuousInput, False, ["if1", "if2"]),
-        (output_features, ContinuousOutput, False, ["of1", "of2"]),
+        (inputs, ContinuousInput, False, ["if1", "if2"]),
+        (outputs, ContinuousOutput, False, ["of1", "of2"]),
     ],
 )
 def test_features_get_keys(features, FeatureType, exact, expected):
@@ -1207,8 +1229,8 @@ def test_features_get_keys(features, FeatureType, exact, expected):
     "features, key, expected",
     [
         (features, "if1", if1),
-        (output_features, "of1", of1),
-        (input_features, "if1", if1),
+        (outputs, "of1", of1),
+        (inputs, "if1", if1),
     ],
 )
 def test_features_get_by_key(features, key, expected):
@@ -1228,8 +1250,8 @@ def test_features_get_by_keys():
     "features, key",
     [
         (features, "if133"),
-        (output_features, "of3331"),
-        (input_features, "if1333333"),
+        (outputs, "of3331"),
+        (inputs, "if1333333"),
     ],
 )
 def test_features_get_by_key_invalid(features, key):
@@ -1244,7 +1266,7 @@ def test_features_get_by_key_invalid(features, key):
         (Inputs(features=[if1, if2, if3, if4, if5]), [if3, if4]),
     ],
 )
-def test_input_features_get_fixed(features, expected):
+def test_inputs_get_fixed(features, expected):
     returned = features.get_fixed()
     assert isinstance(features, Inputs)
     assert returned.features == expected
@@ -1259,7 +1281,7 @@ def test_input_features_get_fixed(features, expected):
         (Inputs(features=[if1, if2, if3, if4, if5]), [if1, if2, if5]),
     ],
 )
-def test_input_features_get_free(features, expected):
+def test_inputs_get_free(features, expected):
     returned = features.get_free()
     assert isinstance(features, Inputs)
     assert returned.features == expected
@@ -1272,14 +1294,14 @@ def test_input_features_get_free(features, expected):
     [
         (features, num_samples, method)
         for features in [
-            input_features,
+            inputs,
             Inputs(features=[if1, if2, if3, if4, if5, if7]),
         ]
         for num_samples in [1, 2, 1024]
         for method in ["UNIFORM", "SOBOL", "LHS"]
     ],
 )
-def test_input_features_sample(features: Inputs, num_samples, method):
+def test_inputs_sample(features: Inputs, num_samples, method):
     samples = features.sample(num_samples, method=method)
     assert samples.shape == (num_samples, len(features))
     assert list(samples.columns) == features.get_keys()
@@ -1294,7 +1316,7 @@ def test_input_features_sample(features: Inputs, num_samples, method):
         ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
     ],
 )
-def test_input_features_validate_transform_specs_invalid(specs):
+def test_inputs_validate_transform_specs_invalid(specs):
     inps = Inputs(
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
@@ -1325,7 +1347,7 @@ def test_input_features_validate_transform_specs_invalid(specs):
         ),
     ],
 )
-def test_input_features_validate_transform_valid(specs):
+def test_inputs_validate_transform_valid(specs):
     inps = Inputs(
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
@@ -1413,7 +1435,7 @@ def test_input_features_validate_transform_valid(specs):
         ),
     ],
 )
-def test_input_features_get_transform_info(
+def test_inputs_get_transform_info(
     specs, expected_features2idx, expected_features2names
 ):
     inps = Inputs(
@@ -1461,7 +1483,7 @@ def test_input_features_get_transform_info(
         ),
     ],
 )
-def test_input_features_transform(specs):
+def test_inputs_transform(specs):
     inps = Inputs(
         features=[
             ContinuousInput(key="x1", bounds=(0, 1)),
@@ -1518,9 +1540,9 @@ if6 = specs.features.valid(CategoricalDescriptorInput).obj(
 
 of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
 
-input_features1 = Inputs(features=[if1, if3, if5])
+inputs1 = Inputs(features=[if1, if3, if5])
 
-input_features2 = Inputs(
+inputs2 = Inputs(
     features=[
         if1,
         if2,
@@ -1533,10 +1555,10 @@ input_features2 = Inputs(
 
 
 @pytest.mark.parametrize(
-    "input_features, specs, expected_bounds",
+    "inputs, specs, expected_bounds",
     [
         (
-            input_features1,
+            inputs1,
             {
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if5": CategoricalEncodingEnum.DESCRIPTOR,
@@ -1544,7 +1566,7 @@ input_features2 = Inputs(
             [[3, 1, 2, 0, 0, 0], [5.3, 1, 2, 1, 1, 1]],
         ),
         (
-            input_features1,
+            inputs1,
             {
                 "if3": CategoricalEncodingEnum.DUMMY,
                 "if5": CategoricalEncodingEnum.DESCRIPTOR,
@@ -1552,7 +1574,7 @@ input_features2 = Inputs(
             [[3, 1, 2, 0, 0], [5.3, 1, 2, 1, 1]],
         ),
         (
-            input_features1,
+            inputs1,
             {
                 "if3": CategoricalEncodingEnum.DUMMY,
                 "if5": CategoricalEncodingEnum.DUMMY,
@@ -1560,7 +1582,7 @@ input_features2 = Inputs(
             [[3, 0, 0, 0, 0], [5.3, 1, 1, 1, 1]],
         ),
         (
-            input_features1,
+            inputs1,
             {
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if5": CategoricalEncodingEnum.ONE_HOT,
@@ -1568,7 +1590,7 @@ input_features2 = Inputs(
             [[3, 0, 0, 0, 0, 0, 0], [5.3, 1, 0, 0, 1, 1, 1]],
         ),
         (
-            input_features1,
+            inputs1,
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if5": CategoricalEncodingEnum.DESCRIPTOR,
@@ -1576,7 +1598,7 @@ input_features2 = Inputs(
             [[3, 1, 2, 0], [5.3, 1, 2, 2]],
         ),
         (
-            input_features1,
+            inputs1,
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if5": CategoricalEncodingEnum.ORDINAL,
@@ -1585,7 +1607,7 @@ input_features2 = Inputs(
         ),
         # new domain
         (
-            input_features2,
+            inputs2,
             {
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if4": CategoricalEncodingEnum.ONE_HOT,
@@ -1611,7 +1633,7 @@ input_features2 = Inputs(
             ],
         ),
         (
-            input_features2,
+            inputs2,
             {
                 "if3": CategoricalEncodingEnum.ONE_HOT,
                 "if4": CategoricalEncodingEnum.ONE_HOT,
@@ -1624,7 +1646,7 @@ input_features2 = Inputs(
             ],
         ),
         (
-            input_features2,
+            inputs2,
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if4": CategoricalEncodingEnum.ORDINAL,
@@ -1646,7 +1668,7 @@ input_features2 = Inputs(
             ],
         ),
         (
-            input_features2,
+            inputs2,
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if4": CategoricalEncodingEnum.ORDINAL,
@@ -1656,7 +1678,7 @@ input_features2 = Inputs(
             [[3, 3, 0, 0, 0, 0], [5.3, 3, 2, 2, 2, 2]],
         ),
         (
-            input_features2,
+            inputs2,
             {
                 "if3": CategoricalEncodingEnum.ORDINAL,
                 "if4": CategoricalEncodingEnum.ONE_HOT,
@@ -1680,27 +1702,27 @@ input_features2 = Inputs(
         ),
     ],
 )
-def test_input_features_get_bounds(input_features, specs, expected_bounds):
-    lower, upper = input_features.get_bounds(specs=specs)
+def test_inputs_get_bounds(inputs, specs, expected_bounds):
+    lower, upper = inputs.get_bounds(specs=specs)
     assert np.allclose(expected_bounds[0], lower)
     assert np.allclose(expected_bounds[1], upper)
 
 
-def test_input_features_get_bounds_fit():
+def test_inputs_get_bounds_fit():
     # at first the fix on the continuous ones is tested
-    input_features = Inputs(features=[if1, if2])
-    experiments = input_features.sample(100)
+    inputs = Inputs(features=[if1, if2])
+    experiments = inputs.sample(100)
     experiments["if1"] += [random.uniform(-2, 2) for _ in range(100)]
     experiments["if2"] += [random.uniform(-2, 2) for _ in range(100)]
-    opt_bounds = input_features.get_bounds(specs={})
-    fit_bounds = input_features.get_bounds(specs={}, experiments=experiments)
-    for i, key in enumerate(input_features.get_keys(ContinuousInput)):
+    opt_bounds = inputs.get_bounds(specs={})
+    fit_bounds = inputs.get_bounds(specs={}, experiments=experiments)
+    for i, key in enumerate(inputs.get_keys(ContinuousInput)):
         assert fit_bounds[0][i] < opt_bounds[0][i]
         assert fit_bounds[1][i] > opt_bounds[1][i]
         assert fit_bounds[0][i] == experiments[key].min()
         assert fit_bounds[1][i] == experiments[key].max()
     # next test the fix for the CategoricalDescriptor feature
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             if1,
             if2,
@@ -1710,10 +1732,10 @@ def test_input_features_get_bounds_fit():
             if6,
         ]
     )
-    experiments = input_features.sample(100)
+    experiments = inputs.sample(100)
     experiments["if4"] = [random.choice(if4.categories) for _ in range(100)]
     experiments["if6"] = [random.choice(if6.categories) for _ in range(100)]
-    opt_bounds = input_features.get_bounds(
+    opt_bounds = inputs.get_bounds(
         specs={
             "if3": CategoricalEncodingEnum.ONE_HOT,
             "if4": CategoricalEncodingEnum.ONE_HOT,
@@ -1721,7 +1743,7 @@ def test_input_features_get_bounds_fit():
             "if6": CategoricalEncodingEnum.DESCRIPTOR,
         }
     )
-    fit_bounds = input_features.get_bounds(
+    fit_bounds = inputs.get_bounds(
         {
             "if3": CategoricalEncodingEnum.ONE_HOT,
             "if4": CategoricalEncodingEnum.ONE_HOT,
@@ -1746,11 +1768,19 @@ def test_input_features_get_bounds_fit():
     assert fit_bounds[1][-2] == 1
 
 
+mixed_data = pd.DataFrame(
+    columns=["of1", "of2", "of3"],
+    index=range(5),
+    data=np.random.uniform(size=(5, 3)),
+)
+mixed_data["of4"] = ["a", "a", "b", "b", "a"]
+
+
 @pytest.mark.parametrize(
     "features, samples",
     [
         (
-            output_features,
+            outputs,
             pd.DataFrame(
                 columns=["of1", "of2"],
                 index=range(5),
@@ -1765,36 +1795,40 @@ def test_input_features_get_bounds_fit():
                 data=np.random.uniform(size=(5, 3)),
             ),
         ),
+        (
+            Outputs(
+                features=[
+                    of1,
+                    of2,
+                    of3,
+                    CategoricalOutput(
+                        key="of4", categories=["a", "b"], objective=[1.0, 0.0]
+                    ),
+                ]
+            ),
+            mixed_data,
+        ),
     ],
 )
-def test_output_features_call(features, samples):
+def test_outputs_call(features, samples):
     o = features(samples)
-    assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
+    assert o.shape == (
+        len(samples),
+        len(features.get_keys_by_objective(Objective))
+        + len(features.get_keys(CategoricalOutput)),
+    )
     assert list(o.columns) == [
-        f"{key}_des" for key in features.get_keys_by_objective(Objective)
+        f"{key}_des"
+        for key in features.get_keys_by_objective(Objective)
+        + features.get_keys(CategoricalOutput)
     ]
 
 
-@pytest.mark.parametrize(
-    "feature, data",
-    [
-        (
-            ContinuousOutput(
-                key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
-            ),
-            None,
-        ),
-        (
-            ContinuousOutput(
-                key="of1", objective=MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)
-            ),
-            pd.DataFrame(
-                columns=["of1", "of2", "of3"],
-                index=range(5),
-                data=np.random.uniform(size=(5, 3)),
-            ),
-        ),
-    ],
-)
-def test_output_feature_plot(feature, data):
-    feature.plot(lower=0, upper=30, experiments=data)
+def test_categorical_output():
+    feature = CategoricalOutput(
+        key="a", categories=["alpha", "beta", "gamma"], objective=[1.0, 0.0, 0.1]
+    )
+
+    assert feature.to_dict() == {"alpha": 1.0, "beta": 0.0, "gamma": 0.1}
+    data = pd.Series(data=["alpha", "beta", "beta", "gamma"], name="a")
+    assert_series_equal(feature(data), pd.Series(data=[1.0, 0.0, 0.0, 0.1], name="a"))

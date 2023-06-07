@@ -1,3 +1,4 @@
+from functools import partial
 from typing import Dict, Optional
 
 import botorch
@@ -8,6 +9,7 @@ from botorch.models.transforms.input import ChainedInputTransform, OneHotToNumer
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
+import bofire.kernels.api as kernels
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -34,16 +36,14 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        scaler = get_scaler(
-            self.input_features, self.input_preprocessing_specs, self.scaler, X
-        )
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values
         ).to(**tkwargs)
 
-        features2idx, _ = self.input_features._get_transform_info(
+        features2idx, _ = self.inputs._get_transform_info(
             self.input_preprocessing_specs
         )
         non_numerical_features = [
@@ -53,7 +53,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         ]
 
         ord_dims = []
-        for feat in self.input_features.get():
+        for feat in self.inputs.get():
             if feat.key not in non_numerical_features:
                 ord_dims += features2idx[feat.key]
 
@@ -72,14 +72,15 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             categorical_features=categorical_features,
             transform_on_train=False,
         )
-        tf = ChainedInputTransform(tf1=scaler, tf2=o2n)
+        tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
 
         # fit the model
         self.model = botorch.models.MixedSingleTaskGP(
             train_X=o2n.transform(tX),
             train_Y=tY,
             cat_dims=cat_dims,
-            cont_kernel_factory=self.continuous_kernel.to_gpytorch,
+            # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
+            cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=tf,
         )

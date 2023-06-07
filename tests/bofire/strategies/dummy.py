@@ -74,7 +74,7 @@ class DummyStrategy(Strategy):
         candidate_count: Optional[NonNegativeInt] = None,
     ) -> pd.DataFrame:
         candidates = candidate_pool.sample(candidate_count, replace=False)
-        for feat in self.domain.output_features.get_by_objective(Objective):
+        for feat in self.domain.outputs.get_by_objective(Objective):
             candidates[f"{feat.key}_pred"] = np.nan
             candidates[f"{feat.key}_sd"] = np.nan
             candidates[f"{feat.key}_des"] = np.nan
@@ -133,8 +133,8 @@ class DummyPredictiveStrategy(PredictiveStrategy):
 
     def _predict(self, experiments: pd.DataFrame):
         return (
-            np.ones([len(experiments), len(self.domain.output_features)]) * 4,
-            np.ones([len(experiments), len(self.domain.output_features)]) * 5,
+            np.ones([len(experiments), len(self.domain.outputs)]) * 4,
+            np.ones([len(experiments), len(self.domain.outputs)]) * 5,
         )
 
     def _ask(
@@ -151,7 +151,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
         candidate_count: Optional[NonNegativeInt] = None,
     ) -> pd.DataFrame:
         candidates = candidate_pool.sample(candidate_count, replace=False)
-        for feat in self.domain.output_features.get_by_objective(Objective):
+        for feat in self.domain.outputs.get_by_objective(Objective):
             candidates[f"{feat.key}_pred"] = np.nan
             candidates[f"{feat.key}_sd"] = np.nan
             candidates[f"{feat.key}_des"] = np.nan

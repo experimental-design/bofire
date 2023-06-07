@@ -60,13 +60,11 @@ def test_random_forest():
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
-    rf = RandomForestSurrogate(
-        input_features=bench.domain.inputs, output_features=bench.domain.outputs
-    )
+    rf = RandomForestSurrogate(inputs=bench.domain.inputs, outputs=bench.domain.outputs)
     rf = surrogates.map(rf)
     rf.fit(experiments=experiments)
     # test with categoricals
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -76,15 +74,13 @@ def test_random_forest():
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
-    rf = RandomForestSurrogate(
-        input_features=input_features, output_features=output_features
-    )
+    rf = RandomForestSurrogate(inputs=inputs, outputs=outputs)
     rf = surrogates.map(rf)
     assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ONE_HOT
     with pytest.raises(ValueError):
@@ -93,9 +89,7 @@ def test_random_forest():
     # test dumps and load
     preds = rf.predict(experiments)
     dump = rf.dumps()
-    rf2 = RandomForestSurrogate(
-        input_features=input_features, output_features=output_features
-    )
+    rf2 = RandomForestSurrogate(inputs=inputs, outputs=outputs)
     rf2 = surrogates.map(rf2)
     rf2.loads(dump)
     preds2 = rf.predict(experiments)

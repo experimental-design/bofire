@@ -162,14 +162,16 @@ def test_mlp_ensemble_forward():
     assert pred.shape == torch.Size((1, 2, 10, 1))
 
 
-@pytest.mark.parametrize("scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE])
+@pytest.mark.parametrize(
+    "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY]
+)
 def test_mlp_ensemble_fit(scaler):
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     ens = MLPEnsemble(
-        input_features=bench.domain.input_features,
-        output_features=bench.domain.output_features,
+        inputs=bench.domain.inputs,
+        outputs=bench.domain.outputs,
         n_estimators=2,
         n_epochs=5,
         scaler=scaler,
@@ -177,10 +179,13 @@ def test_mlp_ensemble_fit(scaler):
     surrogate = surrogates.map(ens)
 
     surrogate.fit(experiments=experiments)
-    assert isinstance(
-        surrogate.model.input_transform,
-        Normalize if scaler == ScalerEnum.NORMALIZE else InputStandardize,
-    )
+    if scaler == ScalerEnum.NORMALIZE:
+        assert isinstance(surrogate.model.input_transform, Normalize)
+    elif scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(surrogate.model.input_transform, InputStandardize)
+    else:
+        with pytest.raises(AttributeError):
+            assert surrogate.model.input_transform is None
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)
@@ -189,9 +194,11 @@ def test_mlp_ensemble_fit(scaler):
     assert_frame_equal(preds, preds2)
 
 
-@pytest.mark.parametrize("scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE])
+@pytest.mark.parametrize(
+    "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY]
+)
 def test_mlp_ensemble_fit_categorical(scaler):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -201,29 +208,37 @@ def test_mlp_ensemble_fit_categorical(scaler):
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
 
     ens = MLPEnsemble(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         n_estimators=2,
         n_epochs=5,
-        scaler=ScalerEnum.STANDARDIZE,
+        scaler=scaler,
     )
     surrogate = surrogates.map(ens)
     surrogate.fit(experiments=experiments)
-    assert isinstance(
-        surrogate.model.input_transform,
-        InputStandardize,
-    )
-    assert torch.eq(
-        surrogate.model.input_transform.indices, torch.tensor([0, 1], dtype=torch.int64)
-    ).all()
+    if scaler == ScalerEnum.NORMALIZE:
+        assert isinstance(surrogate.model.input_transform, Normalize)
+        assert torch.eq(
+            surrogate.model.input_transform.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+    elif scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(surrogate.model.input_transform, InputStandardize)
+        assert torch.eq(
+            surrogate.model.input_transform.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+    else:
+        with pytest.raises(AttributeError):
+            assert surrogate.model.input_transform is None
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)

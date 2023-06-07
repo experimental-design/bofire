@@ -132,7 +132,7 @@ def fit_mlp(
     optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
     for _ in range(n_epoches):
         current_loss = 0.0
-        for i, data in enumerate(train_loader, 0):
+        for data in train_loader:
             # Get and prepare inputs
             inputs, targets = data
             if len(targets.shape) == 1:
@@ -176,21 +176,19 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     model: Optional[_MLPEnsemble] = None
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        scaler = get_scaler(
-            self.input_features, self.input_preprocessing_specs, self.scaler, X
-        )
-        transformed_X = self.input_features.transform(X, self.input_preprocessing_specs)
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])
-        for i in range(self.n_estimators):
+        for _ in range(self.n_estimators):
             # resample X and Y
             sample_idx = np.random.choice(X.shape[0], replace=True, size=subsample_size)
             tX = torch.from_numpy(transformed_X.values[sample_idx]).to(**tkwargs)
             ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
 
             dataset = RegressionDataSet(
-                X=scaler.transform(tX),
+                X=scaler.transform(tX) if scaler is not None else tX,
                 y=ty,
             )
             mlp = MLP(
@@ -211,4 +209,5 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
             )
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps=mlps)
-        self.model.input_transform = scaler
+        if scaler is not None:
+            self.model.input_transform = scaler

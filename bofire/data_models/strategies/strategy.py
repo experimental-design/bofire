@@ -57,7 +57,7 @@ class Strategy(BaseModel):
         Returns:
             Domain: the domain
         """
-        for feature in domain.inputs + domain.output_features:
+        for feature in domain.inputs + domain.outputs:
             if not cls.is_feature_implemented(type(feature)):
                 raise ValueError(
                     f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
@@ -77,7 +77,7 @@ class Strategy(BaseModel):
         Returns:
             Domain: the domain
         """
-        if len(domain.input_features) == 0:
+        if len(domain.inputs) == 0:
             raise ValueError("no input feature specified")
         return domain
 

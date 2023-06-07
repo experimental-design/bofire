@@ -7,21 +7,11 @@ repos:
         stages: [commit]
         entry: black
         types: [python]
-  - repo: https://github.com/pycqa/flake8
-    rev: 5.0.4
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    # Ruff version.
+    rev: "v0.0.265"
     hooks:
-      - id: flake8
-        name: flake8
-        entry: flake8
-        types: [python]
-        require_serial: true
-  - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
-    hooks:
-      - id: isort
-        name: isort
-        stages: [commit]
-        entry: isort
-        types: [python]
-
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+  
 exclude: "README.md"

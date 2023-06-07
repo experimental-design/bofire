@@ -12,13 +12,14 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.doe.objective import DOptimality
+from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
     get_formula_from_string,
     metrics,
     nchoosek_constraints_as_bounds,
 )
+from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
@@ -26,25 +27,25 @@ def find_local_max_ipopt(
     domain: Domain,
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
-    tol: float = 0.0,
     delta: float = 1e-7,
-    ipopt_options: Dict = {},
+    ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
+    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
 ) -> pd.DataFrame:
-    """Function computing a d-optimal design" for a given domain and model.
+    """Function computing an optimal design for a given domain and model.
     Args:
         domain (Domain): domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
             are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
         n_experiments (int): Number of experiments. By default the value corresponds to
             the number of model terms - dimension of ker() + 3.
-        tol (float): Tolerance for linear/NChooseK constraint violation. Default value is 0.
         delta (float): Regularization parameter. Default value is 1e-3.
-        ipopt_options (Dict): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+        ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
         sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
         fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
+        objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.
@@ -75,7 +76,9 @@ def find_local_max_ipopt(
 
     # check that NChooseK constraints only impose an upper bound on the number of nonzero components (and no lower bound)
     assert all(
-        [c.min_count == 0 for c in domain.cnstrs if isinstance(c, NChooseKConstraint)]
+        c.min_count == 0
+        for c in domain.constraints
+        if isinstance(c, NChooseKConstraint)
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     # determine number of experiments (only relevant if n_experiments is not provided by the user)
@@ -91,7 +94,7 @@ def find_local_max_ipopt(
         domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values
     else:
-        if len(domain.cnstrs.get(NonlinearConstraint)) == 0:
+        if len(domain.constraints.get(NonlinearConstraint)) == 0:
             sampler = PolytopeSampler(
                 data_model=PolytopeSamplerDataModel(domain=domain)
             )
@@ -113,13 +116,14 @@ def find_local_max_ipopt(
         model_type=model_type, rhs_only=True, domain=domain
     )
 
-    d_optimality = DOptimality(
+    objective_class = get_objective_class(objective)
+    d_optimality = objective_class(
         domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
     )
 
     # write constraints as scipy constraints
     constraints = constraints_as_scipy_constraints(
-        domain, n_experiments, tol, ignore_nchoosek=True
+        domain, n_experiments, ignore_nchoosek=True
     )
 
     # find bounds imposing NChooseK constraints
@@ -134,6 +138,8 @@ def find_local_max_ipopt(
             x0[i] = val
 
     # set ipopt options
+    if ipopt_options is None:
+        ipopt_options = {}
     _ipopt_options = {"maxiter": 500, "disp": 0}
     for key in ipopt_options.keys():
         _ipopt_options[key] = ipopt_options[key]
@@ -165,8 +171,7 @@ def find_local_max_ipopt(
         for key in ["fun", "message", "nfev", "nit", "njev", "status", "success"]:
             print(key + ":", result[key])
         X = model_formula.get_model_matrix(design).to_numpy()
-        d = metrics(X, domain, n_samples=1000)
-        print("metrics:", d)
+        print("metrics:", metrics(X))
 
     # check if all points respect the domain and the constraint
     try:

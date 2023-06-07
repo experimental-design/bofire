@@ -35,7 +35,7 @@ class Aspen_benchmark(Benchmark):
         filename: str,
         domain: Domain,
         paths: Dict[str, str],
-        additional_output_keys: List = [],
+        additional_output_keys: Optional[List] = None,
         translate_into_aspen_readable: Optional[
             Callable[[Domain, pd.DataFrame], pd.DataFrame]
         ] = None,
@@ -60,7 +60,7 @@ class Aspen_benchmark(Benchmark):
 
         self.translate_into_aspen_readable = translate_into_aspen_readable
         self._domain = domain
-        self.additional_output_keys = additional_output_keys
+        self.additional_output_keys = additional_output_keys or []
 
         for key in self.domain.get_feature_keys():
             # Check, if every input and output variable has a path to Aspen provided.

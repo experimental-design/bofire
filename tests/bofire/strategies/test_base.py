@@ -167,13 +167,13 @@ of2 = ContinuousOutput(
 )
 
 domains = [
-    Domain(
-        input_features=[if1, if3, if5, if9],  # no fixed features
-        output_features=[of1],
+    Domain.from_lists(
+        inputs=[if1, if3, if5, if9],  # no fixed features
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
-        input_features=[
+    Domain.from_lists(
+        inputs=[
             if1,
             if2,
             if3,
@@ -182,11 +182,11 @@ domains = [
             if6,
             if9,
         ],  # all feature types incl. with fixed values
-        output_features=[of1],
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
-        input_features=[
+    Domain.from_lists(
+        inputs=[
             if1,
             if2,
             if3,
@@ -195,32 +195,32 @@ domains = [
             if6,
             if9,
         ],  # all feature types incl. with fixed values + mutli-objective
-        output_features=[of1, of2],
+        outputs=[of1, of2],
         constraints=[],
     ),
-    Domain(
-        input_features=[if1, if2],  # only continuous features
-        output_features=[of1],
+    Domain.from_lists(
+        inputs=[if1, if2],  # only continuous features
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
-        input_features=[if1, if3, if5, if9],  # all feature types + mutli-objective
-        output_features=[of1, of2],
+    Domain.from_lists(
+        inputs=[if1, if3, if5, if9],  # all feature types + mutli-objective
+        outputs=[of1, of2],
         constraints=[],
     ),
-    Domain(
-        input_features=[if1, if2, if8],
-        output_features=[of1],
+    Domain.from_lists(
+        inputs=[if1, if2, if8],
+        outputs=[of1],
         constraints=[],
     ),
-    Domain(
-        input_features=[if1, if2],  # only continuous features
-        output_features=[of1, of2],
+    Domain.from_lists(
+        inputs=[if1, if2],  # only continuous features
+        outputs=[of1, of2],
         constraints=[],
     )
     # Domain(
-    #     input_features=[if1, if7], # unknown dummy feature
-    #     output_features=[of1],
+    #     inputs=[if1, if7], # unknown dummy feature
+    #     outputs=[of1],
     #     constraints=[],
     # )
 ]
@@ -287,7 +287,7 @@ data = [
 ]
 
 
-@pytest.mark.parametrize("domain", [(domain) for domain in domains])
+@pytest.mark.parametrize("domain", list(domains))
 def test_base_create(domain: Domain):
     with pytest.raises(ValueError, match="number sobol samples"):
         DummyStrategyDataModel(domain=domain, num_sobol_samples=5)
@@ -302,8 +302,8 @@ def test_base_invalid_descriptor_method():
             domain=domains[0],
             surrogate_specs=[
                 surrogate_data_models.SingleTaskGPSurrogate(
-                    input_features=domains[0].input_features,
-                    output_features=domains[0].output_features,
+                    inputs=domains[0].inputs,
+                    outputs=domains[0].outputs,
                     input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 )
             ],
@@ -329,8 +329,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[1].input_features,
-                        output_features=domains[1].output_features,
+                        inputs=domains[1].inputs,
+                        outputs=domains[1].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                             "if6": CategoricalEncodingEnum.ONE_HOT,
@@ -347,8 +347,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[1].input_features,
-                        output_features=domains[1].output_features,
+                        inputs=domains[1].inputs,
+                        outputs=domains[1].outputs,
                     )
                 ]
             ),
@@ -361,8 +361,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[1].input_features,
-                        output_features=domains[1].output_features,
+                        inputs=domains[1].inputs,
+                        outputs=domains[1].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                             "if6": CategoricalEncodingEnum.ONE_HOT,
@@ -380,8 +380,8 @@ def test_base_invalid_descriptor_method():
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[5].input_features,
-                        output_features=domains[5].output_features,
+                        inputs=domains[5].inputs,
+                        outputs=domains[5].outputs,
                         input_preprocessing_specs={
                             "if8": CategoricalEncodingEnum.ONE_HOT,
                         },
@@ -471,8 +471,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].input_features,
-                        output_features=domains[0].output_features,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
@@ -508,8 +508,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].input_features,
-                        output_features=domains[0].output_features,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
@@ -536,8 +536,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].input_features,
-                        output_features=domains[0].output_features,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                     )
                 ]
             ),
@@ -551,8 +551,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].input_features,
-                        output_features=domains[0].output_features,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                     )
                 ]
             ),
@@ -566,8 +566,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].input_features,
-                        output_features=domains[0].output_features,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                     )
                 ]
             ),
@@ -588,8 +588,8 @@ def test_base_get_fixed_features(
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
                     surrogate_data_models.SingleTaskGPSurrogate(
-                        input_features=domains[0].input_features,
-                        output_features=domains[0].output_features,
+                        inputs=domains[0].inputs,
+                        outputs=domains[0].outputs,
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT
                         },
@@ -652,42 +652,36 @@ def test_base_invalid_pair_encoding_method(domain):
 
 
 @pytest.mark.parametrize(
-    "domain, data, acquisition_function",
+    "domain, data",
     [
         (
             domains[0],
             generate_experiments(
                 domains[0], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
         (
             domains[1],
             generate_experiments(
                 domains[1], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
         (
             domains[2],
             generate_experiments(
                 domains[2], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
         (
             domains[4],
             generate_experiments(
                 domains[4], row_count=5, tol=1.0, force_all_categories=True
             ),
-            specs.acquisition_functions.valid().obj().dict(),
         ),
     ],
 )
-def test_base_fit(domain, data, acquisition_function):
-    data_model = DummyStrategyDataModel(
-        domain=domain, acquisition_function=acquisition_function
-    )
+def test_base_fit(domain, data):
+    data_model = DummyStrategyDataModel(domain=domain)
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy.set_experiments(data)
     myStrategy.fit()
@@ -731,8 +725,9 @@ def test_base_fit(domain, data, acquisition_function):
 )
 def test_base_predict(domain, data, acquisition_function):
     data_model = DummyStrategyDataModel(
-        domain=domain, acquisition_function=acquisition_function
-    )
+        domain=domain
+    )  # , acquisition_function=acquisition_function
+    # )
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy.tell(experiments=data)
     predictions = myStrategy.predict(data)
@@ -756,15 +751,15 @@ def test_base_setup_ask_fixed_features(
     # test for fixed features list
     data_model = DummyStrategyDataModel(
         domain=domains[0],
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
         categorical_method=categorical_method,
         descriptor_method=descriptor_method,
         discrete_method=discrete_method,
         surrogate_specs=surrogate_data_models.BotorchSurrogates(
             surrogates=[
                 surrogate_data_models.SingleTaskGPSurrogate(
-                    input_features=domains[0].input_features,
-                    output_features=domains[0].output_features,
+                    inputs=domains[0].inputs,
+                    outputs=domains[0].outputs,
                     # input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 )
             ]
@@ -795,7 +790,7 @@ def test_base_setup_ask_fixed_features(
 
     data_model = DummyStrategyDataModel(
         domain=domains[3],
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
         categorical_method=categorical_method,
         descriptor_method=descriptor_method,
         discrete_method=discrete_method,
@@ -818,7 +813,7 @@ def test_base_setup_ask():
     benchmark = Hartmann()
     data_model = DummyStrategyDataModel(
         domain=benchmark.domain,
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
     (
@@ -842,7 +837,7 @@ def test_base_setup_ask():
     benchmark = Hartmann(dim=6, allowed_k=3)
     data_model = DummyStrategyDataModel(
         domain=benchmark.domain,
-        acquisition_function=specs.acquisition_functions.valid().obj(),
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
     (

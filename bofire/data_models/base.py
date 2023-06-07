@@ -3,15 +3,16 @@ from typing import Any, Callable, List, Sequence, Type, Union, get_args, get_ori
 
 import pandas as pd
 from pydantic import BaseModel as PydanticBaseModel
+from pydantic import Extra
 
 
 class BaseModel(PydanticBaseModel):
     class Config:
-        # TODO: forbid extra fields in data models
-        # extra = "forbid"
         validate_assignment = True
         arbitrary_types_allowed = False
         copy_on_model_validation = "none"
+        extra = Extra.forbid
+
         json_encoders = {
             pd.DataFrame: lambda x: x.to_dict(orient="list"),
             pd.Series: lambda x: x.to_list(),
@@ -114,6 +115,6 @@ def filter_by_class(
     return [
         d
         for d in data
-        if isinstance(key(d), tuple(includes))
-        and not isinstance(key(d), tuple(excludes))
+        if isinstance(key(d), tuple(includes))  # type: ignore
+        and not isinstance(key(d), tuple(excludes))  # type: ignore
     ]

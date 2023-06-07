@@ -77,6 +77,28 @@ from bofire.utils.torch_tools import tkwargs
             None,
             None,
         ),
+        (
+            ScalerEnum.IDENTITY,
+            {
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_desc": CategoricalEncodingEnum.ONE_HOT,
+            },
+            type(None),
+            None,
+            None,
+            None,
+        ),
+        (
+            ScalerEnum.IDENTITY,
+            {
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+                "x_desc": CategoricalEncodingEnum.DESCRIPTOR,
+            },
+            type(None),
+            None,
+            None,
+            None,
+        ),
     ],
 )
 def test_get_scaler(
@@ -87,7 +109,7 @@ def test_get_scaler(
     expected_offset,
     expected_coefficient,
 ):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -105,18 +127,28 @@ def test_get_scaler(
             ),
         ]
     )
-    experiments = input_features.sample(n=10)
+    experiments = inputs.sample(n=10)
     scaler = get_scaler(
-        input_features=input_features,
+        inputs=inputs,
         input_preprocessing_specs=input_preprocessing_specs,
         scaler=scaler_enum,
-        X=experiments[input_features.get_keys()],
+        X=experiments[inputs.get_keys()],
     )
     assert isinstance(scaler, expected_scaler)
-    assert (scaler.indices == expected_indices).all()
+    if expected_indices is not None:
+        assert (scaler.indices == expected_indices).all()
+    else:
+        with pytest.raises(AttributeError):
+            assert (scaler.indices == expected_indices).all()
     if expected_offset is not None:
         assert torch.allclose(scaler.offset, expected_offset)
         assert torch.allclose(scaler.coefficient, expected_coefficient)
+    else:
+        if scaler is None:
+            with pytest.raises(AttributeError):
+                assert (scaler.offset == expected_offset).all()
+            with pytest.raises(AttributeError):
+                assert (scaler.coefficient == expected_coefficient).all()
 
 
 @pytest.mark.parametrize(
@@ -124,10 +156,11 @@ def test_get_scaler(
     [
         (ScaleKernel(base_kernel=RBFKernel(ard=True)), ScalerEnum.NORMALIZE),
         (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.STANDARDIZE),
+        (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.IDENTITY),
     ],
 )
 def test_SingleTaskGPModel(kernel, scaler):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -136,18 +169,18 @@ def test_SingleTaskGPModel(kernel, scaler):
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     model = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         kernel=kernel,
         scaler=scaler,
     )
     model = surrogates.map(model)
-    samples = input_features.sample(5)
+    samples = inputs.sample(5)
     # test error on non fitted model
     with pytest.raises(ValueError):
         model.predict(samples)
@@ -164,13 +197,16 @@ def test_SingleTaskGPModel(kernel, scaler):
     assert isinstance(model.model.outcome_transform, Standardize)
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, Normalize)
-    else:
+    elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, InputStandardize)
+    else:
+        with pytest.raises(AttributeError):
+            assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = SingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         kernel=kernel,
         scaler=scaler,
     )
@@ -181,7 +217,7 @@ def test_SingleTaskGPModel(kernel, scaler):
 
 
 def test_MixedGPModel_invalid_preprocessing():
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -190,14 +226,14 @@ def test_MixedGPModel_invalid_preprocessing():
             for i in range(2)
         ]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments["valid_y"] = 1
     with pytest.raises(ValidationError):
         MixedSingleTaskGPSurrogate(
-            input_features=input_features,
-            output_features=output_features,
+            inputs=inputs,
+            outputs=outputs,
         )
 
 
@@ -206,10 +242,11 @@ def test_MixedGPModel_invalid_preprocessing():
     [
         (RBFKernel(ard=True), ScalerEnum.NORMALIZE),
         (RBFKernel(ard=False), ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), ScalerEnum.IDENTITY),
     ],
 )
 def test_MixedGPModel(kernel, scaler):
-    input_features = Inputs(
+    inputs = Inputs(
         features=[
             ContinuousInput(
                 key=f"x_{i+1}",
@@ -219,16 +256,16 @@ def test_MixedGPModel(kernel, scaler):
         ]
         + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
     )
-    output_features = Outputs(features=[ContinuousOutput(key="y")])
-    experiments = input_features.sample(n=10)
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = inputs.sample(n=10)
     experiments.eval("y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=True)
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
 
     model = MixedSingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
+        inputs=inputs,
+        outputs=outputs,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=scaler,
         continuous_kernel=kernel,
@@ -241,27 +278,36 @@ def test_MixedGPModel(kernel, scaler):
     # dump the model
     dump = model.dumps()
     # make predictions
-    samples = input_features.sample(5)
+    samples = inputs.sample(5)
     preds = model.predict(samples)
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, MixedSingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
-    assert isinstance(model.model.input_transform, ChainedInputTransform)
     if scaler == ScalerEnum.NORMALIZE:
+        assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
-    else:
+        assert torch.eq(
+            model.model.input_transform.tf1.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    elif scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, InputStandardize)
-    assert torch.eq(
-        model.model.input_transform.tf1.indices, torch.tensor([0, 1], dtype=torch.int64)
-    ).all()
-    assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+        assert torch.eq(
+            model.model.input_transform.tf1.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    else:
+        assert isinstance(model.model.input_transform, OneHotToNumeric)
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedSingleTaskGPSurrogate(
-        input_features=input_features,
-        output_features=output_features,
-        kernel=kernel,
+        inputs=inputs,
+        outputs=outputs,
+        continuous_kernel=kernel,
         scaler=scaler,
     )
     model2 = surrogates.map(model2)

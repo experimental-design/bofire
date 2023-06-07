@@ -14,66 +14,34 @@ BoFire ...
 - supports mixed continuous, discrete and categorical parameter spaces for system inputs and outputs,
 - separates objectives (minimize, maximize, close-to-target) from the outputs on which they operate,
 - supports different specific and generic constraints as well as black-box output constraints,
+- can provide flexible DoEs that fulfill constraints,
 - provides sampling methods for constrained mixed variable spaces,
-- json-serializes problems for use in RESTful APIs and json/bson DBs,
+- serializes problems for use in RESTful APIs and json/bson DBs,
 - allows easy out of the box usage of strategies for single and multi-objective Bayesian optimization, and 
 - provides a high flexibility on the modelling side if needed.
 
 ## Installation
 
-BoFire has BoTorch as its main dependency which depends on PyTorch. In the following you find different options to install BoFire and its dependencies.
-
-### Optional dependencies
-
-BoFire has functionality to create D-optimal experimental designs via the doe module. To use this module please install cyipopt. The most comfortable way to do this is via `conda`
+In our [docs](https://experimental-design.github.io/bofire/install/),
+you can find all different options for the BoFire installation.
+To install all BoFire-features you need to run
+```
+pip install bofire[optimization,cheminfo]
+```
+This will also install [BoTorch](https://botorch.org/) that depends on 
+[PyTorch](https://pytorch.org/). To use the DoE package, you need to install
+[Cyipopt](https://cyipopt.readthedocs.io/en/stable/)
+additionally, e.g., via
 ```
 conda install -c conda-forge cyipopt
 ```
 
-### Latest stable release
-
-We do not recommend the latest stable release from PyPI until we have published version [0.1](https://github.com/experimental-design/bofire/milestone/1). 
-
-### Current main branch
-```
-pip install --upgrade git+https://github.com/experimental-design/bofire.git
-```
-
-### Development installation
-If you want to [contribute](CONTRIBUTING.md) to BoFire, you might want to install in editable mode including the test dependencies.
-After cloning the repository via
-```
-git clone https://github.com/experimental-design/bofire.git
-```
-and cd `bofire`, you can proceed with
-```
-pip install -e .[testing]
-```
 ## Documentation
 
 Documentation including a section on how to get started can be found under https://experimental-design.github.io/bofire/.
 
 ## Contributing
 
-See our [Contributing](./CONTRIBUTING.md) guidelines.
-
-### Release roadmap
-
-The features for the next release are tracked in the [milestones](https://github.com/experimental-design/bofire/milestones).
-
-### Pull Requests
-
-Pull requests are highly welcome:
-
-1. Create a fork from main.
-2. Add or adapt unit tests according to your change.
-3. Add doc-strings and update the documentation. You might consider contributing to the tutorials section.
-4. Make sure that the GitHub pipeline passes.
-
-### Issues
-
-If you find any issues, Bugs, or not sure about something -  feel free to create an Issue.
-
-## License
+See our [Contributing](./CONTRIBUTING.md) guidelines. If you are not sure about something or find bugs, feel free to create an issue.
 
 By contributing you agree that your contributions will be licensed under the same license as BoFire: [BSD 3-Clause License](./LICENSE).
