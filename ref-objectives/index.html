@@ -929,14 +929,9 @@ The return can be scaled, when a lower and upper bound are provided.</p>
         <td><p>float between zero and one for weighting the objective</p></td>
       </tr>
       <tr>
-        <td><code>lower_bound</code></td>
-        <td><code>float</code></td>
-        <td><p>Lower bound for normalizing the objective between zero and one. Defaults to zero.</p></td>
-      </tr>
-      <tr>
-        <td><code>upper_bound</code></td>
-        <td><code>float</code></td>
-        <td><p>Upper bound for normalizing the objective between zero and one. Defaults to one.</p></td>
+        <td><code>bounds</code></td>
+        <td><code>Tuple[float]</code></td>
+        <td><p>Bound for normalizing the objective between zero and one. Defaults to (0,1).</p></td>
       </tr>
   </tbody>
 </table>
@@ -948,14 +943,20 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        w (float): float between zero and one for weighting the objective</span>
-<span class="sd">        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.</span>
-<span class="sd">        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.</span>
+<span class="sd">        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;IdentityObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;IdentityObjective&quot;</span>
     <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mi">1</span>
-    <span class="n">lower_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">upper_bound</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">lower_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
     <span class="nd">@root_validator</span><span class="p">(</span><span class="n">pre</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_on_failure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_lower_upper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
@@ -970,7 +971,7 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 <span class="sd">        Returns:</span>
 <span class="sd">            Dict: The attributes of the class</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s1">&#39;lower bound must be &lt;= upper bound, got </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &gt; </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
             <span class="p">)</span>
@@ -992,6 +993,7 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 
 
   <div class="doc doc-children">
+
 
 
 
@@ -1182,7 +1184,7 @@ of the given arguments and keywords.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Dict: The attributes of the class</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s1">&#39;lower bound must be &lt;= upper bound, got </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &gt; </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
         <span class="p">)</span>
@@ -1241,14 +1243,9 @@ MaximizeObjective            (<a class="autorefs autorefs-internal" title="bofir
         <td><p>float between zero and one for weighting the objective</p></td>
       </tr>
       <tr>
-        <td><code>lower_bound</code></td>
-        <td><code>float</code></td>
-        <td><p>Lower bound for normalizing the objective between zero and one. Defaults to zero.</p></td>
-      </tr>
-      <tr>
-        <td><code>upper_bound</code></td>
-        <td><code>float</code></td>
-        <td><p>Upper bound for normalizing the objective between zero and one. Defaults to one.</p></td>
+        <td><code>bounds</code></td>
+        <td><code>Tuple[float]</code></td>
+        <td><p>Bound for normalizing the objective between zero and one. Defaults to (0,1).</p></td>
       </tr>
   </tbody>
 </table>
@@ -1259,8 +1256,7 @@ MaximizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        w (float): float between zero and one for weighting the objective</span>
-<span class="sd">        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.</span>
-<span class="sd">        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.</span>
+<span class="sd">        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MaximizeObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MaximizeObjective&quot;</span>
@@ -1351,14 +1347,9 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
         <td><p>float between zero and one for weighting the objective</p></td>
       </tr>
       <tr>
-        <td><code>lower_bound</code></td>
-        <td><code>float</code></td>
-        <td><p>Lower bound for normalizing the objective between zero and one. Defaults to zero.</p></td>
-      </tr>
-      <tr>
-        <td><code>upper_bound</code></td>
-        <td><code>float</code></td>
-        <td><p>Upper bound for normalizing the objective between zero and one. Defaults to one.</p></td>
+        <td><code>bounds</code></td>
+        <td><code>Tuple[float]</code></td>
+        <td><p>Bound for normalizing the objective between zero and one. Defaults to (0,1).</p></td>
       </tr>
   </tbody>
 </table>
@@ -1369,8 +1360,7 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 
 <span class="sd">    Attributes:</span>
 <span class="sd">        w (float): float between zero and one for weighting the objective</span>
-<span class="sd">        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.</span>
-<span class="sd">        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.</span>
+<span class="sd">        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MinimizeObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MinimizeObjective&quot;</span>

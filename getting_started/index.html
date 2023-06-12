@@ -1793,8 +1793,7 @@ x6 = CategoricalDescriptorInput(key="x6", categories=["c1", "c2", "c3"], descrip
 
 <span class="n">objective1</span> <span class="o">=</span> <span class="n">MaximizeObjective</span><span class="p">(</span>
     <span class="n">w</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> 
-    <span class="n">lower_bound</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> 
-    <span class="n">upper_bound</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">bounds</span><span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">1.0</span><span class="p">],</span>
 <span class="p">)</span>
 <span class="n">y1</span> <span class="o">=</span> <span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">&quot;y1&quot;</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">objective1</span><span class="p">)</span>
 
@@ -1808,8 +1807,7 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 
 objective1 = MaximizeObjective(
     w=1.0, 
-    lower_bound=0, 
-    upper_bound=1,
+    bounds= [0.0,1.0],
 )
 y1 = ContinuousOutput(key="y1", objective=objective1)
 
