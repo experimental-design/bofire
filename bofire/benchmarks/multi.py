@@ -457,11 +457,11 @@ class CrossCoupling(Benchmark):
         outputs = [
             ContinuousOutput(
                 key="yield",
-                objective=MaximizeObjective(w=1.0, lower_bound=0.0, upper_bound=1.0),
+                objective=MaximizeObjective(w=1.0, bounds=(0.0, 1.0)),
             ),
             ContinuousOutput(
                 key="cost",
-                objective=MinimizeObjective(w=1.0, lower_bound=0.0, upper_bound=1.0),
+                objective=MinimizeObjective(w=1.0, bounds=(0.0, 1.0)),
             ),
         ]
         self.ref_point = {"yield": 0.0, "cost": 1.0}
