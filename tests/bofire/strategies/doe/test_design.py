@@ -15,8 +15,11 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
+from bofire.data_models.features.binary import ContinuousBinaryInput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
+    check_partially_and_fully_fixed_experiments,
+    find_find_local_max_ipopt_binary_naive,
     find_local_max_ipopt,
     get_n_experiments,
 )
@@ -476,3 +479,196 @@ def test_get_n_experiments():
     # user provided n_experiment
     with pytest.warns(UserWarning):
         assert get_n_experiments(domain, "linear", 4) == 4
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_simple_optimal_binary_problem():
+    domain = Domain(
+        inputs=[ContinuousBinaryInput(key="x1"), ContinuousBinaryInput(key="x2")],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=1),
+        ],
+    )
+
+    d_optimal_design = find_find_local_max_ipopt_binary_naive(
+        domain,
+        "linear",
+        n_experiments=2,
+        ipopt_options={"disp": 0},
+        prohibited_binary_combinations=[(0, 0), (1, 1)],
+    )
+    d_optimal_design = d_optimal_design.to_numpy().T
+
+    option_1 = np.array([[1, 0], [0, 1]])
+    option_2 = np.array([[0, 1], [1, 0]])
+
+    option_1 = np.allclose(d_optimal_design, option_1)
+    option_2 = np.allclose(d_optimal_design, option_2)
+
+    assert option_1 or option_2
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_advanced_optimal_binary_problem():
+    n_experiments = 3
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousBinaryInput(key="a"),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a"], coefficients=[1, 1, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a"], coefficients=[1, 0.2, 2], rhs=5
+            ),
+        ],
+    )
+
+    initial_values = np.zeros((n_experiments, 3))
+    initial_values[0][2] = 5
+    initial_values[1][2] = 5
+    initial_values[2][1] = 3
+    initial_values = pd.DataFrame(initial_values, columns=domain.inputs.get_keys())
+
+    d_optimal_design = find_find_local_max_ipopt_binary_naive(
+        domain,
+        "linear",
+        n_experiments=n_experiments,
+        ipopt_options={"disp": 0},
+        sampling=initial_values,
+    )
+
+    result = np.array([[0, 5, 0], [1, 0, 15], [1, 0, 0]])
+
+    result = np.allclose(d_optimal_design.to_numpy(), result, atol=1e-5)
+
+    assert result
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_solving_binary_variables_naive():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousBinaryInput(key="a1"),
+            ContinuousBinaryInput(key="a2"),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            # Case 1: a and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+            ),
+            # Case 2: a and c are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+            ),
+            # Case 3: c and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+            ),
+        ],
+    )
+
+    opt_values = find_find_local_max_ipopt_binary_naive(
+        domain, "linear", n_experiments=12, ipopt_options={"disp": 0}
+    )
+
+    assert opt_values
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_partially_fixed_experiments():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousBinaryInput(key="a1"),
+            ContinuousBinaryInput(key="a2"),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            # Case 1: a and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+            ),
+            # Case 2: a and c are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+            ),
+            # Case 3: c and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+            ),
+        ],
+    )
+    fixed_experiments = pd.DataFrame(
+        np.array([[1, 0, 0, 0], [0, 1, 0, 0]]), columns=domain.inputs.get_keys()
+    )
+    partially_fixed_experiments = pd.DataFrame(
+        np.array([[1, None, None, None], [0, 1, 0, 0]]),
+        columns=domain.inputs.get_keys(),
+    )
+    # all fine
+    check_partially_and_fully_fixed_experiments(
+        domain, 10, fixed_experiments, partially_fixed_experiments
+    )
+
+    # all fine
+    check_partially_and_fully_fixed_experiments(
+        domain, 4, fixed_experiments, partially_fixed_experiments
+    )
+
+    # partially fixed will be cut of
+    with pytest.warns(UserWarning):
+        check_partially_and_fully_fixed_experiments(
+            domain, 3, fixed_experiments, partially_fixed_experiments
+        )
+
+    # to few experiments
+    with pytest.raises(ValueError):
+        check_partially_and_fully_fixed_experiments(
+            domain, 2, fixed_experiments, partially_fixed_experiments
+        )

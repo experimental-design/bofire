@@ -179,7 +179,7 @@ class Domain(BaseModel):
         # gather continuous inputs in dictionary
         continuous_inputs_dict = {}
         for f in values["inputs"]:
-            if type(f) is ContinuousInput:
+            if isinstance(f, ContinuousInput):
                 continuous_inputs_dict[f.key] = f
 
         # check if non continuous input features appear in linear constraints
