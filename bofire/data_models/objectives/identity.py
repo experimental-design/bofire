@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -13,14 +13,20 @@ class IdentityObjective(Objective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
+        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
     w: TWeight = 1
-    lower_bound: float = 0
-    upper_bound: float = 1
+    bounds: Tuple[float, float] = (0, 1)
+
+    @property
+    def lower_bound(self) -> float:
+        return self.bounds[0]
+
+    @property
+    def upper_bound(self) -> float:
+        return self.bounds[1]
 
     @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
@@ -35,7 +41,7 @@ class IdentityObjective(Objective):
         Returns:
             Dict: The attributes of the class
         """
-        if values["lower_bound"] > values["upper_bound"]:
+        if values["bounds"][0] > values["bounds"][1]:
             raise ValueError(
                 f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
             )
@@ -58,8 +64,7 @@ class MaximizeObjective(IdentityObjective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
+        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
     """
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
@@ -70,8 +75,7 @@ class MinimizeObjective(IdentityObjective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective
-        lower_bound (float, optional): Lower bound for normalizing the objective between zero and one. Defaults to zero.
-        upper_bound (float, optional): Upper bound for normalizing the objective between zero and one. Defaults to one.
+        bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
