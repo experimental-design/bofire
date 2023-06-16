@@ -6,7 +6,7 @@ import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 from pydantic.error_wrappers import ValidationError
 
-import tests.bofire.data_models.specs.api as specs
+import tests.bofire.data_models.specs.api as Specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -31,14 +31,14 @@ objective = MinimizeObjective(w=1)
     "spec, n",
     [
         (spec, n)
-        for spec in specs.features.valids
+        for spec in Specs.features.valids
         if (spec.cls != ContinuousOutput)
         and (spec.cls != MolecularInput)
         and (spec.cls != CategoricalOutput)
         for n in [1, 5]
     ],
 )
-def test_sample(spec: specs.Spec, n: int):
+def test_sample(spec: Specs.Spec, n: int):
     feat = spec.obj()
     samples = feat.sample(n=n)
     feat.validate_candidental(samples)
@@ -47,11 +47,11 @@ def test_sample(spec: specs.Spec, n: int):
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
-        ( specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 1)), True, [1]),
-        (specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 2)), False, None),
-        (specs.features.valid(ContinuousInput).obj(key="k", bounds=(2, 3)), False, None),
+        ( Specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 1)), True, [1]),
+        (Specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 2)), False, None),
+        (Specs.features.valid(ContinuousInput).obj(key="k", bounds=(2, 3)), False, None),
         (
-            specs.features.valid(ContinuousDescriptorInput).obj(
+            Specs.features.valid(ContinuousDescriptorInput).obj(
                 key="k",
                 bounds=(1, 1),
                 descriptors=["a", "b"],
@@ -61,7 +61,7 @@ def test_sample(spec: specs.Spec, n: int):
             [1],
         ),
         (
-            specs.features.valid(ContinuousDescriptorInput).obj(
+            Specs.features.valid(ContinuousDescriptorInput).obj(
                 key="k",
                 bounds=(1, 2),
                 descriptors=["a", "b"],
@@ -71,7 +71,7 @@ def test_sample(spec: specs.Spec, n: int):
             None,
         ),
         (
-            specs.features.valid(ContinuousDescriptorInput).obj(
+            Specs.features.valid(ContinuousDescriptorInput).obj(
                 key="k",
                 bounds=(2, 3),
                 descriptors=["a", "b"],
@@ -89,20 +89,20 @@ def test_continuous_input_feature_is_fixed(input_feature, expected, expected_val
 
 def test_continuous_input_invalid_stepsize():
     with pytest.raises(ValueError):
-        specs.features.valid(ContinuousInput).obj(key="a", bounds=(1, 1), stepsize=0)
+        Specs.features.valid(ContinuousInput).obj(key="a", bounds=(1, 1), stepsize=0)
     with pytest.raises(ValueError):
-        specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.3)
+        Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.3)
     with pytest.raises(ValueError):
-        specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 1), stepsize=1)
+        Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 1), stepsize=1)
 
 
 def test_continuous_input_round():
-    feature = specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5))
+    feature = Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5))
     values = pd.Series([1.0, 1.3, 0.55])
     assert_series_equal(values, feature.round(values))
-    feature = specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.25)
+    feature = Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.25)
     assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
-    feature = specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.1)
+    feature = Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.1)
     assert_series_equal(pd.Series([1.0, 1.3, 0.5]), feature.round(values))
 
 
@@ -110,12 +110,12 @@ def test_continuous_input_round():
     "input_feature, expected",
     [
         (
-            specs.features.valid(ContinuousInput).obj(key="if1", bounds=(0.5, 4)),
+            Specs.features.valid(ContinuousInput).obj(key="if1", bounds=(0.5, 4)),
             (0.5, 4.0),
         ),
-        (specs.features.valid(ContinuousInput).obj(key="if1", bounds=(2.5, 2.9)), (1, 3.0)),
-        (specs.features.valid(ContinuousInput).obj(key="if2", bounds=(1, 3)), (1, 3.0)),
-        (specs.features.valid(ContinuousInput).obj(key="if2", bounds=(1, 1)), (1, 1.0)),
+        (Specs.features.valid(ContinuousInput).obj(key="if1", bounds=(2.5, 2.9)), (1, 3.0)),
+        (Specs.features.valid(ContinuousInput).obj(key="if2", bounds=(1, 3)), (1, 3.0)),
+        (Specs.features.valid(ContinuousInput).obj(key="if2", bounds=(1, 1)), (1, 1.0)),
     ],
 )
 def test_continuous_input_feature_get_bounds(input_feature, expected):
@@ -133,27 +133,27 @@ def test_continuous_input_feature_get_bounds(input_feature, expected):
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
+            Specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
+            Specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
+            Specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
             False,
         ),
@@ -167,17 +167,17 @@ def test_continuous_input_feature_validate_valid(input_feature, values, strict):
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([3.0, "mama"]),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([3.0, "mama"]),
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
+            Specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
             True,
         ),
@@ -192,11 +192,11 @@ def test_continuous_input_feature_validate_invalid(input_feature, values, strict
     "input_feature, values",
     [
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([random.uniform(3.0, 5.3) for _ in range(20)]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
+            Specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.0, 3.0, 3.0]),
         ),
     ],
@@ -209,19 +209,19 @@ def test_continuous_input_feature_validate_candidental_valid(input_feature, valu
     "input_feature, values",
     [
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([3.1, "a"]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([2.9, 4.0]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(),
+            Specs.features.valid(ContinuousInput).obj(),
             pd.Series([4.0, 6]),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
+            Specs.features.valid(ContinuousInput).obj(bounds=(3, 3)),
             pd.Series([3.1, 3.2, 3.4]),
         ),
     ],
@@ -235,12 +235,12 @@ def test_continuous_input_feature_validate_candidental_invalid(input_feature, va
     "feature, xt, expected",
     [
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 10)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 10)),
             pd.Series(np.linspace(0, 1, 11)),
             np.linspace(0, 10, 11),
         ),
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(-10, 20)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(-10, 20)),
             pd.Series(np.linspace(0, 1)),
             np.linspace(-10, 20),
         ),
@@ -255,37 +255,37 @@ def test_continuous_input_feature_from_unit_range(feature, xt, expected):
     "feature, x, expected, real",
     [
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 10)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 10)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 1, 11),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(-10, 20)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(-10, 20)),
             pd.Series(np.linspace(-10, 20)),
             np.linspace(0, 1),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 10)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 10)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 1, 11),
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(-10, 20)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(-10, 20)),
             pd.Series(np.linspace(-10, 20)),
             np.linspace(0, 1),
             False,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 9)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 9)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 1, 11),
             True,
         ),
         (
-            specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 9)),
+            Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 9)),
             pd.Series(np.linspace(0, 10, 11)),
             np.linspace(0, 10 / 9, 11),
             False,
@@ -300,7 +300,7 @@ def test_continuous_input_feature_to_unit_range(feature, x, expected, real):
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
-        (specs.features.valid(DiscreteInput).obj(values=[1, 2, 3]), False, None),
+        (Specs.features.valid(DiscreteInput).obj(values=[1, 2, 3]), False, None),
     ],
 )
 def test_discrete_input_feature_is_fixed(input_feature, expected, expected_value):
@@ -313,7 +313,7 @@ def test_discrete_input_feature_is_fixed(input_feature, expected, expected_value
     "input_feature, expected_lower, expected_upper",
     [
         (
-            specs.features.valid(DiscreteInput).obj(values=[1.0, 2.0, 3.0]),
+            Specs.features.valid(DiscreteInput).obj(values=[1.0, 2.0, 3.0]),
             1,
             3,
         ),
@@ -328,15 +328,15 @@ def test_discrete_input_feature_bounds(input_feature, expected_lower, expected_u
     "input_feature, expected",
     [
         (
-            specs.features.valid(DiscreteInput).obj(key="if1", values=[2.0, 3.0]),
+            Specs.features.valid(DiscreteInput).obj(key="if1", values=[2.0, 3.0]),
             (1.0, 4.0),
         ),
         (
-            specs.features.valid(DiscreteInput).obj(key="if1", values=[0.0, 3.0]),
+            Specs.features.valid(DiscreteInput).obj(key="if1", values=[0.0, 3.0]),
             (0.0, 4.0),
         ),
         (
-            specs.features.valid(DiscreteInput).obj(key="if1", values=[2.0, 5.0]),
+            Specs.features.valid(DiscreteInput).obj(key="if1", values=[2.0, 5.0]),
             (1.0, 5.0),
         ),
     ],
@@ -358,7 +358,7 @@ def test_discrete_input_feature_get_bounds(input_feature, expected):
     "input_feature, values",
     [
         (
-            specs.features.valid(DiscreteInput).obj(values=[1, 2, 3]),
+            Specs.features.valid(DiscreteInput).obj(values=[1, 2, 3]),
             pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
         ),
     ],
@@ -371,7 +371,7 @@ def test_discrete_input_feature_validate_candidental_valid(input_feature, values
     "input_feature, values",
     [
         (
-            specs.features.valid(DiscreteInput).obj(values=[1, 2]),
+            Specs.features.valid(DiscreteInput).obj(values=[1, 2]),
             pd.Series([1, 2, 3]),
         ),
     ],
@@ -382,7 +382,7 @@ def test_discrete_input_feature_validate_candidental_invalid(input_feature, valu
 
 
 def test_from_continuous():
-    d = specs.features.valid(DiscreteInput).obj(key="d", values=[1, 2, 3])
+    d = Specs.features.valid(DiscreteInput).obj(key="d", values=[1, 2, 3])
 
     continuous_values = pd.DataFrame(
         columns=["d"],
@@ -396,19 +396,19 @@ def test_from_continuous():
     "input_feature, expected",
     [
         (
-            specs.features.valid(CategoricalInput).obj(key="if1", categories=["a", "b"], allowed=[True, True]),
+            Specs.features.valid(CategoricalInput).obj(key="if1", categories=["a", "b"], allowed=[True, True]),
             ["a", "b"],
         ),
         (
-            specs.features.valid(CategoricalInput).obj(key="if2", categories=["a", "b"], allowed=[True, True]),
+            Specs.features.valid(CategoricalInput).obj(key="if2", categories=["a", "b"], allowed=[True, True]),
             ["a", "b"],
         ),
         (
-            specs.features.valid(CategoricalInput).obj(key="if3", categories=["a", "b"], allowed=[True, False]),
+            Specs.features.valid(CategoricalInput).obj(key="if3", categories=["a", "b"], allowed=[True, False]),
             ["a"],
         ),
         (
-            specs.features.valid(CategoricalInput).obj(key="if4", categories=["a", "b"], allowed=[False, True]),
+            Specs.features.valid(CategoricalInput).obj(key="if4", categories=["a", "b"], allowed=[False, True]),
             ["b"],
         ),
     ],
@@ -425,17 +425,17 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
+            Specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
             pd.Series([random.choice(["a", "b", "c"]) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
+            Specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
             pd.Series([random.choice(["a", "b", "c"]) for _ in range(20)]),
             False,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
@@ -445,7 +445,7 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
             True,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
@@ -455,7 +455,7 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
             False,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
@@ -474,17 +474,17 @@ def test_categorical_input_feature_validate_valid(input_feature, values, strict)
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
+            Specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
             pd.Series(["a", "b", "c", "d"]),
             True,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
+            Specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
             pd.Series(["a", "b", "c", "d"]),
             False,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
@@ -492,7 +492,7 @@ def test_categorical_input_feature_validate_valid(input_feature, values, strict)
             True,
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b", "c"],
                 allowed=[True, False, False],
             ),
@@ -510,14 +510,14 @@ def test_categorical_input_feature_validate_invalid(input_feature, values, stric
     "input_feature, values",
     [
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, True, True],
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b"], allowed=[True, False]
             ),
             pd.Series(["a", "a"]),
@@ -532,11 +532,11 @@ def test_categorical_input_feature_validate_candidental_valid(input_feature, val
     "input_feature, values",
     [
         (
-            specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
+            Specs.features.valid(CategoricalInput).obj(categories=["a", "b", "c"]),
             pd.Series(["a", "b", "c", "d"]),
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 categories=["a", "b"], allowed=[True, False]
             ),
             pd.Series(["a", "b"]),
@@ -550,7 +550,7 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
 
 @pytest.mark.parametrize("key", ["c", "c_alpha"])
 def test_categorical_to_one_hot_encoding(key):
-    c = specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
+    c = Specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_onehot_encoding(samples)
     assert_frame_equal(
@@ -566,7 +566,7 @@ def test_categorical_to_one_hot_encoding(key):
 
 @pytest.mark.parametrize("key", ["c", "c_alpha"])
 def test_categorical_from_one_hot_encoding(key):
-    c = specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
+    c = Specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
         columns=[f"{key}_B", f"{key}_A", f"{key}_C", "misc"],
         data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
@@ -576,7 +576,7 @@ def test_categorical_from_one_hot_encoding(key):
 
 
 def test_categorical_from_one_hot_encoding_invalid():
-    c = specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"])
+    c = Specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
         columns=["c_B", "c_A", "misc"],
         data=[
@@ -594,7 +594,7 @@ def test_categorical_from_one_hot_encoding_invalid():
 
 @pytest.mark.parametrize("key", ["c", "c_alpha"])
 def test_categorical_to_dummy_encoding(key):
-    c = specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
+    c = Specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_dummy_encoding(samples)
     assert_frame_equal(
@@ -610,7 +610,7 @@ def test_categorical_to_dummy_encoding(key):
 
 @pytest.mark.parametrize("key", ["c", "c_alpha"])
 def test_categorical_from_dummy_encoding(key):
-    c = specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
+    c = Specs.features.valid(CategoricalInput).obj(key=key, categories=["B", "A", "C"])
     one_hot_values = pd.DataFrame(
         columns=[f"{key}_A", f"{key}_C", "misc"],
         data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
@@ -620,7 +620,7 @@ def test_categorical_from_dummy_encoding(key):
 
 
 def test_categorical_to_label_encoding():
-    c = specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"])
+    c = Specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"])
     samples = pd.Series(["A", "A", "C", "B"])
     t_samples = c.to_ordinal_encoding(samples)
     assert_series_equal(t_samples, pd.Series([1, 1, 2, 0], name="c"))
@@ -632,21 +632,21 @@ def test_categorical_to_label_encoding():
     "feature, transform_type, values, expected",
     [
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 key="c", categories=["B", "A", "C"],allowed=[True, True, True]),
             CategoricalEncodingEnum.ORDINAL,
             None,
             (0, 2),
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 key="c", categories=["B", "A", "C"],allowed=[True, True, True]),
             CategoricalEncodingEnum.ONE_HOT,
             None,
             ([0, 0, 0], [1, 1, 1]),
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 key="c", categories=["B", "A", "C"], allowed=[True, False, True]
             ),
             CategoricalEncodingEnum.ONE_HOT,
@@ -654,7 +654,7 @@ def test_categorical_to_label_encoding():
             ([0, 0, 0], [1, 1, 1]),
         ),
         (
-            specs.features.valid(CategoricalInput).obj(
+            Specs.features.valid(CategoricalInput).obj(
                 key="c", categories=["B", "A", "C"], allowed=[True, False, True]
             ),
             CategoricalEncodingEnum.ONE_HOT,
@@ -662,7 +662,7 @@ def test_categorical_to_label_encoding():
             ([0, 0, 0], [1, 0, 1]),
         ),
         (
-            specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"]),
+            Specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"]),
             CategoricalEncodingEnum.DUMMY,
             None,
             ([0, 0], [1, 1]),
@@ -674,7 +674,7 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
     # test the same for the categorical with descriptor
-    f = specs.features.valid(CategoricalDescriptorInput).obj(
+    f = Specs.features.valid(CategoricalDescriptorInput).obj(
         key="c",
         categories=feature.categories,
         allowed=feature.allowed,
@@ -687,7 +687,7 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
 
 
 def test_categorical_descriptor_to_descriptor_encoding():
-    c = specs.features.valid(CategoricalDescriptorInput).obj(
+    c = Specs.features.valid(CategoricalDescriptorInput).obj(
         key="c",
         categories=["B", "A", "C"],
         allowed=[True, True, True],
@@ -708,7 +708,7 @@ def test_categorical_descriptor_to_descriptor_encoding():
 
 
 def test_categorical_descriptor_from_descriptor_encoding():
-    c1 = specs.features.valid(CategoricalDescriptorInput).obj(
+    c1 = Specs.features.valid(CategoricalDescriptorInput).obj(
         key="c",
         categories=["B", "A", "C"],
         descriptors=["d1", "d2"],
@@ -722,7 +722,7 @@ def test_categorical_descriptor_from_descriptor_encoding():
     print(samples)
     assert np.all(samples == pd.Series(["B", "A"]))
 
-    c2 = specs.features.valid(CategoricalDescriptorInput).obj(
+    c2 = Specs.features.valid(CategoricalDescriptorInput).obj(
         key="c",
         categories=["B", "A", "C"],
         descriptors=["d1", "d2"],
@@ -736,7 +736,7 @@ def test_categorical_descriptor_from_descriptor_encoding():
 
 
 def test_categorical_descriptor_to_descriptor_encoding_1d():
-    c = specs.features.valid(CategoricalDescriptorInput).obj(
+    c = Specs.features.valid(CategoricalDescriptorInput).obj(
         key="c",
         categories=["B", "A", "C"],
         allowed=[True, True, True],
@@ -760,7 +760,7 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
     "input_feature, expected_with_values, expected",
     [
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="if1",
                 categories=["a", "b"],
                 allowed=[True, True],
@@ -771,7 +771,7 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
             ([1, 2], [3, 4]),
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="if2",
                 categories=["a", "b", "c"],
                 allowed=[True, False, True],
@@ -813,21 +813,21 @@ def test_categorical_descriptor_feature_get_bounds(
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"]
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"]
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
@@ -835,7 +835,7 @@ def test_categorical_descriptor_feature_get_bounds(
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
@@ -843,7 +843,7 @@ def test_categorical_descriptor_feature_get_bounds(
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
             ),
@@ -851,7 +851,7 @@ def test_categorical_descriptor_feature_get_bounds(
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[False, True, True],
                 descriptors=["d1", "d2"],
@@ -876,17 +876,17 @@ def test_categorical_descriptor_input_feature_validate_valid(
     "input_feature, values, strict",
     [
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(),
+            Specs.features.valid(CategoricalDescriptorInput).obj(),
             pd.Series(["c1", "c4"]),
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(),
+            Specs.features.valid(CategoricalDescriptorInput).obj(),
             pd.Series(["c1", "c4"]),
             False,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[True, False, False],
                 descriptors=["d1", "d2"],
@@ -900,7 +900,7 @@ def test_categorical_descriptor_input_feature_validate_valid(
             True,
         ),
         (
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 categories=["c1", "c2", "c3"],
                 allowed=[False, True, True],
                 descriptors=["d1", "d2"],
@@ -926,7 +926,7 @@ def test_categorical_descriptor_input_feature_validate_invalid(
     "input_feature, expected, expected_value, transform_type",
     [
         (
-            specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
+            Specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
             expected,
             expected_value,
             transform_type,
@@ -987,7 +987,7 @@ def test_categorical_input_feature_is_fixed(
     "input_feature, expected",
     [
         (
-            specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
+            Specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
             expected,
         )
         for categories, allowed, expected in [
@@ -1004,7 +1004,7 @@ def test_categorical_input_feature_allowed_categories(input_feature, expected):
     "input_feature, expected",
     [
         (
-            specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
+            Specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
             expected,
         )
         for categories, allowed, expected in [
@@ -1036,7 +1036,7 @@ def test_categorical_input_feature_forbidden_categories(input_feature, expected)
 def test_categorical_descriptor_input_feature_as_dataframe(
     categories, descriptors, values
 ):
-    f = specs.features.valid(CategoricalDescriptorInput).obj(
+    f = Specs.features.valid(CategoricalDescriptorInput).obj(
         key="k", categories=categories, descriptors=descriptors, values=values, 
         allowed=[True for _ in range(len(categories))]
     )
@@ -1054,7 +1054,7 @@ def test_categorical_descriptor_input_feature_as_dataframe(
     ],
 )
 def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
-    f = specs.features.valid(ContinuousDescriptorInput).obj(
+    f = Specs.features.valid(ContinuousDescriptorInput).obj(
         key="k",
         bounds=(1, 2),
         descriptors=descriptors,
@@ -1096,10 +1096,10 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     assert f.values == values
 
 
-cont = specs.features.valid(ContinuousInput).obj()
-cat = specs.features.valid(CategoricalInput).obj()
-cat_ = specs.features.valid(CategoricalDescriptorInput).obj()
-out = specs.features.valid(ContinuousOutput).obj()
+cont = Specs.features.valid(ContinuousInput).obj()
+cat = Specs.features.valid(CategoricalInput).obj()
+cat_ = Specs.features.valid(CategoricalDescriptorInput).obj()
+out = Specs.features.valid(ContinuousOutput).obj()
 
 
 @pytest.mark.parametrize(
@@ -1128,23 +1128,23 @@ def test_feature_sorting(unsorted_list, sorted_list):
 
 
 # test features container
-if1 = specs.features.valid(ContinuousInput).obj(key="if1")
-if2 = specs.features.valid(ContinuousInput).obj(key="if2")
-if3 = specs.features.valid(ContinuousInput).obj(key="if3", bounds=(3, 3))
-if4 = specs.features.valid(CategoricalInput).obj(
+if1 = Specs.features.valid(ContinuousInput).obj(key="if1")
+if2 = Specs.features.valid(ContinuousInput).obj(key="if2")
+if3 = Specs.features.valid(ContinuousInput).obj(key="if3", bounds=(3, 3))
+if4 = Specs.features.valid(CategoricalInput).obj(
     key="if4", categories=["a", "b"], allowed=[True, False]
 )
-if5 = specs.features.valid(DiscreteInput).obj(key="if5")
-if7 = specs.features.valid(CategoricalInput).obj(
+if5 = Specs.features.valid(DiscreteInput).obj(key="if5")
+if7 = Specs.features.valid(CategoricalInput).obj(
     key="if7",
     categories=["c", "d", "e"],
     allowed=[True, False, False],
 )
 
 
-of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
-of2 = specs.features.valid(ContinuousOutput).obj(key="of2")
-of3 = specs.features.valid(ContinuousOutput).obj(key="of3", objective=None)
+of1 = Specs.features.valid(ContinuousOutput).obj(key="of1")
+of2 = Specs.features.valid(ContinuousOutput).obj(key="of2")
+of3 = Specs.features.valid(ContinuousOutput).obj(key="of3", objective=None)
 
 inputs = Inputs(features=[if1, if2])
 outputs = Outputs(features=[of1, of2])
@@ -1155,23 +1155,23 @@ features = Features(features=[if1, if2, of1, of2])
     "FeatureContainer, features",
     [
         (Features, ["s"]),
-        (Features, [specs.features.valid(ContinuousInput).obj(), 5]),
+        (Features, [Specs.features.valid(ContinuousInput).obj(), 5]),
         (Inputs, ["s"]),
-        (Inputs, [specs.features.valid(ContinuousInput).obj(), 5]),
+        (Inputs, [Specs.features.valid(ContinuousInput).obj(), 5]),
         (
             Inputs,
             [
-                specs.features.valid(ContinuousInput).obj(),
-                specs.features.valid(ContinuousOutput).obj(),
+                Specs.features.valid(ContinuousInput).obj(),
+                Specs.features.valid(ContinuousOutput).obj(),
             ],
         ),
         (Outputs, ["s"]),
-        (Outputs, [specs.features.valid(ContinuousOutput).obj(), 5]),
+        (Outputs, [Specs.features.valid(ContinuousOutput).obj(), 5]),
         (
             Outputs,
             [
-                specs.features.valid(ContinuousOutput).obj(),
-                specs.features.valid(ContinuousInput).obj(),
+                Specs.features.valid(ContinuousOutput).obj(),
+                Specs.features.valid(ContinuousInput).obj(),
             ],
         ),
     ],
@@ -1313,7 +1313,7 @@ def test_inputs_sample(features: Inputs, num_samples, method):
 
 
 @pytest.mark.parametrize(
-    "specis",
+    "specs",
     [
         ({"x4": CategoricalEncodingEnum.ONE_HOT}),
         ({"x1": CategoricalEncodingEnum.ONE_HOT}),
@@ -1321,13 +1321,13 @@ def test_inputs_sample(features: Inputs, num_samples, method):
         ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
     ],
 )
-def test_inputs_validate_transform_specs_invalid(specis):
+def test_inputs_validate_transform_specs_invalid(specs):
     inps = Inputs(
         features=[
-            specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
+            Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
+            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
                 ,allowed=[True,True]),
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana"],
                 allowed=[True,True],
@@ -1337,11 +1337,11 @@ def test_inputs_validate_transform_specs_invalid(specis):
         ]
     )
     with pytest.raises(ValueError):
-        inps._validate_transform_specs(specis)
+        inps._validate_transform_specs(specs)
 
 
 @pytest.mark.parametrize(
-    "specis",
+    "specs",
     [
         ({"x2": CategoricalEncodingEnum.ONE_HOT}),
         ({"x3": CategoricalEncodingEnum.ONE_HOT}),
@@ -1354,13 +1354,13 @@ def test_inputs_validate_transform_specs_invalid(specis):
         ),
     ],
 )
-def test_inputs_validate_transform_valid(specis):
+def test_inputs_validate_transform_valid(specs):
     inps = Inputs(
         features=[
-            specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
+            Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
+            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
                 ,allowed=[True,True]),
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana"],
                 allowed=[True,True],
@@ -1369,11 +1369,11 @@ def test_inputs_validate_transform_valid(specis):
             ),
         ]
     )
-    inps._validate_transform_specs(specis)
+    inps._validate_transform_specs(specs)
 
 
 @pytest.mark.parametrize(
-    "specis, expected_features2idx, expected_features2names",
+    "specs, expected_features2idx, expected_features2names",
     [
         (
             {"x2": CategoricalEncodingEnum.ONE_HOT},
@@ -1445,14 +1445,14 @@ def test_inputs_validate_transform_valid(specis):
     ],
 )
 def test_inputs_get_transform_info(
-    specis, expected_features2idx, expected_features2names
+    specs, expected_features2idx, expected_features2names
 ):
     inps = Inputs(
         features=[
-            specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana", "orange"]
+            Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
+            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana", "orange"]
                 ,allowed=[True,True,True]),
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
                 allowed=[True,True,True,True],
@@ -1461,13 +1461,13 @@ def test_inputs_get_transform_info(
             ),
         ]
     )
-    features2idx, features2names = inps._get_transform_info(specis)
+    features2idx, features2names = inps._get_transform_info(specs)
     assert features2idx == expected_features2idx
     assert features2names == expected_features2names
 
 
 @pytest.mark.parametrize(
-    "specis",
+    "specs",
     [
         ({"x2": CategoricalEncodingEnum.ONE_HOT}),
         ({"x2": CategoricalEncodingEnum.DUMMY}),
@@ -1494,13 +1494,13 @@ def test_inputs_get_transform_info(
         ),
     ],
 )
-def test_inputs_transform(specis):
+def test_inputs_transform(specs):
     inps = Inputs(
         features=[
-            specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana", "orange"]
+            Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
+            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana", "orange"]
                 ,allowed=[True,True,True]),
-            specs.features.valid(CategoricalDescriptorInput).obj(
+            Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
                 allowed=[True,True,True,True],
@@ -1511,24 +1511,24 @@ def test_inputs_transform(specis):
     )
     samples = inps.sample(n=100)
     samples = samples.sample(40)
-    transformed = inps.transform(experiments=samples, specs=specis)
-    untransformed = inps.inverse_transform(experiments=transformed, specs=specis)
+    transformed = inps.transform(experiments=samples, specs=specs)
+    untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
     assert_frame_equal(samples, untransformed)
 
 
-if1 = specs.features.valid(ContinuousInput).obj(key="if1")
-if2 = specs.features.valid(ContinuousInput).obj(key="if2", bounds=(3, 3))
-if3 = specs.features.valid(CategoricalInput).obj(
+if1 = Specs.features.valid(ContinuousInput).obj(key="if1")
+if2 = Specs.features.valid(ContinuousInput).obj(key="if2", bounds=(3, 3))
+if3 = Specs.features.valid(CategoricalInput).obj(
     key="if3",
     categories=["c1", "c2", "c3"],
     allowed=[True, True, True],
 )
-if4 = specs.features.valid(CategoricalInput).obj(
+if4 = Specs.features.valid(CategoricalInput).obj(
     key="if4",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
 )
-if5 = specs.features.valid(CategoricalDescriptorInput).obj(
+if5 = Specs.features.valid(CategoricalDescriptorInput).obj(
     key="if5",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
@@ -1539,7 +1539,7 @@ if5 = specs.features.valid(CategoricalDescriptorInput).obj(
         [5, 1],
     ],
 )
-if6 = specs.features.valid(CategoricalDescriptorInput).obj(
+if6 = Specs.features.valid(CategoricalDescriptorInput).obj(
     key="if6",
     categories=["c1", "c2", "c3"],
     allowed=[True, False, False],
@@ -1551,7 +1551,7 @@ if6 = specs.features.valid(CategoricalDescriptorInput).obj(
     ],
 )
 
-of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
+of1 = Specs.features.valid(ContinuousOutput).obj(key="of1")
 
 inputs1 = Inputs(features=[if1, if3, if5])
 
@@ -1814,7 +1814,7 @@ mixed_data["of4"] = ["a", "a", "b", "b", "a"]
                     of1,
                     of2,
                     of3,
-                    specs.features.valid(CategoricalOutput).obj(
+                    Specs.features.valid(CategoricalOutput).obj(
                         key="of4", categories=["a", "b"], objective=[1.0, 0.0]
                     ),
                 ]
@@ -1838,7 +1838,7 @@ def test_outputs_call(features, samples):
 
 
 def test_categorical_output():
-    feature = specs.features.valid(CategoricalOutput).obj(
+    feature = Specs.features.valid(CategoricalOutput).obj(
         key="a", categories=["alpha", "beta", "gamma"], objective=[1.0, 0.0, 0.1]
     )
 
