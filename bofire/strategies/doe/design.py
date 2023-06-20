@@ -136,7 +136,7 @@ def find_local_max_ipopt(
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
 ) -> pd.DataFrame:
-    """Function computing a d-optimal design" for a given domain and model.
+    """Function computing an optimal design for a given domain and model.
     Args:
         domain (Domain): domain containing the inputs and constraints.
         model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
