@@ -21,7 +21,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import TargetObjective
 from bofire.strategies.strategy import Strategy
-from tests.bofire.data_models.test_domain_validators import (
+from tests.bofire.data_models.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
 )

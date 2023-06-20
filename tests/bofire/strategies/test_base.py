@@ -32,7 +32,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import get_nchoosek_constraints, tkwargs
-from tests.bofire.data_models.test_domain_validators import generate_experiments
+from tests.bofire.data_models.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
