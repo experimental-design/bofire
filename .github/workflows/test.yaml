@@ -22,15 +22,15 @@ jobs:
         run: pip install "." pytest
       - name: Run domain-only test, Python ${{ matrix.python-version }}
         run: |
-          pytest tests/bofire/data_models/test_domain.py \
+          pytest tests/bofire/data_models/domain/test_domain.py \
             tests/bofire/data_models/test_base.py \
-            tests/bofire/data_models/test_constraint_fulfillment.py \
-            tests/bofire/data_models/test_constraints.py \
-            tests/bofire/data_models/test_domain_validators.py \
-            tests/bofire/data_models/test_features.py \
+            tests/bofire/data_models/constraints/test_constraint_fulfillment.py \
+            tests/bofire/data_models/constraintstest_constraints.py \
+            tests/bofire/data_models/domain/test_domain_validators.py \
+            tests/bofire/data_models/features/test_features.py \
             tests/bofire/data_models/test_filters.py \
-            tests/bofire/data_models/test_nchoosek_combinatorics.py \
-            tests/bofire/data_models/test_numeric.py \
+            tests/bofire/data_models/constraints/test_nchoosek_combinatorics.py \
+            tests/bofire/data_models/domaintest_numeric.py \
             tests/bofire/data_models/test_unions.py \
             tests/bofire/data_models/test_util.py
 
