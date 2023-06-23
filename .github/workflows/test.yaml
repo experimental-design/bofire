@@ -25,7 +25,7 @@ jobs:
           pytest tests/bofire/data_models/domain/test_domain.py \
             tests/bofire/data_models/test_base.py \
             tests/bofire/data_models/constraints/test_constraint_fulfillment.py \
-            tests/bofire/data_models/constraintstest_constraints.py \
+            tests/bofire/data_models/constraints/test_constraints.py \
             tests/bofire/data_models/domain/test_domain_validators.py \
             tests/bofire/data_models/features/test_features.py \
             tests/bofire/data_models/test_filters.py \
