@@ -623,7 +623,7 @@ An acquisition function <span class="arithmatex">\(a\)</span> then formulates th
 <h2 id="design-of-experiments">Design of Experiments</h2>
 <p>BoFire can be used to generate optimal experimental designs with respect to various optimality criteria like D-optimality, A-optimality or uniform space filling.</p>
 <p>For this, the user specifies a design space and a model formula, then chooses an optimality criterion and the desired number of experiments in the design. The resulting optimization problem is then solved by <a href="https://coin-or.github.io/Ipopt/">IPOPT</a>.</p>
-<p>The doe subpackage also supports a wide range of constraints on the design space including linear and nonlinear equalities and inequalities as well a (limited) use of NChooseK constraints. The user can provide fixed experiments that will be treated as part of the design but remain fixed during the optimization process. Design spaces that contain design variables which are not continuous are currently not supported.</p>
+<p>The doe subpackage also supports a wide range of constraints on the design space including linear and nonlinear equalities and inequalities as well a (limited) use of NChooseK constraints. The user can provide fixed experiments that will be treated as part of the design but remain fixed during the optimization process. While some of the <em>optimization</em> algorithms support non-continuous design variables, the doe subpackage only supports those that are continuous.</p>
 
 
 
