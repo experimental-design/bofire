@@ -77,6 +77,7 @@ def find_find_local_max_ipopt_binary_naive(
         )
     else:
         allowed_fixations = possible_fixations
+
     all_n_fixed_experiments = combinations_with_replacement(
         allowed_fixations, n_experiments
     )
