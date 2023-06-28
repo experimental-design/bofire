@@ -1,2 +1,0 @@
-from bofire.outlier_detection.outlier_detection import OutlierDetection, IterativeTrimming
-from bofire.outlier_detection.mapper import map

@@ -1,18 +1,20 @@
 from abc import ABC, abstractmethod
-import numpy as np
-from scipy.stats import chi2
 from typing import Tuple
+
+import numpy as np
 import pandas as pd
+from scipy.stats import chi2
+
 from bofire.surrogates.api import SingleTaskGPSurrogate
 
-class OutlierDetection(ABC):
 
+class OutlierDetection(ABC):
     @abstractmethod
-    def detect(self, experiments: pd.DataFrame)-> Tuple[pd.DataFrame,pd.DataFrame]:
+    def detect(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         pass
 
-class IterativeTrimming(OutlierDetection):
 
+class IterativeTrimming(OutlierDetection):
     def __init__(self, data_model, **kwargs):
         self.alpha1 = data_model.alpha1
         self.alpha2 = data_model.alpha2
@@ -23,7 +25,7 @@ class IterativeTrimming(OutlierDetection):
         super().__init__()
 
     def detect(self, experiments: pd.DataFrame):
-        model = SingleTaskGPSurrogate(data_model= self.base_gp)
+        model = SingleTaskGPSurrogate(data_model=self.base_gp)
         n = len(experiments)
         indices = experiments.index.to_numpy()
         p = 1
@@ -48,7 +50,7 @@ class IterativeTrimming(OutlierDetection):
 
                 # XXX: might be buggy when there are identical data points
                 # better to use argpartition! but may break ix_sub == ix_old.
-                ix_sub = (d_sq <= np.partition(d_sq, h)[h]) # alpha-quantile
+                ix_sub = d_sq <= np.partition(d_sq, h)[h]  # alpha-quantile
                 consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence
@@ -60,21 +62,24 @@ class IterativeTrimming(OutlierDetection):
 
             # make prediction
             pred = model.predict(experiments)
-            d_sq = ((experiments['y']-pred['y_pred'])**2 / pred['y_sd']**2).ravel()
+            d_sq = (
+                (experiments["y"] - pred["y_pred"]) ** 2 / pred["y_sd"] ** 2
+            ).ravel()
 
             niter += 1
-        for i in range(self.nrw):
+        for _ in range(self.nrw):
             alpha = self.alpha2
             chi_sq = chi2(p).ppf(alpha)
 
             # XXX: might be buggy when there are identical data points
-            ix_sub = (d_sq <= chi_sq * consistency)
+            ix_sub = d_sq <= chi_sq * consistency
             consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence
             if (ix_sub == ix_old).all():
                 break  # converged
             ix_old = ix_sub
-        return (experiments[experiments.index.isin(indices[ix_sub])],experiments[~experiments.index.isin(indices[ix_sub])])
-
-
+        return (
+            experiments[experiments.index.isin(indices[ix_sub])],
+            experiments[~experiments.index.isin(indices[ix_sub])],
+        )

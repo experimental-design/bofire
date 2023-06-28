@@ -1,7 +1,10 @@
 from typing import Dict, Type
 
 from bofire.data_models.outlier_detection import api as data_models
-from bofire.outlier_detection.outlier_detection import OutlierDetection, IterativeTrimming
+from bofire.outlier_detection.outlier_detection import (
+    IterativeTrimming,
+    OutlierDetection,
+)
 
 SURROGATE_MAP: Dict[Type[data_models.OutlierDetection], Type[OutlierDetection]] = {
     data_models.IterativeTrimming: IterativeTrimming,
