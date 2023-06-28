@@ -12,6 +12,7 @@ from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    CustomSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
@@ -32,6 +33,7 @@ AnyStrategy = Union[
     SoboStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
@@ -45,6 +47,7 @@ AnyPredictive = Union[
     SoboStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,

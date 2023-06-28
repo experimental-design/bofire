@@ -1,6 +1,10 @@
 from typing import List, Union
 
 import torch
+
+import cloudpickle
+import base64
+
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
@@ -12,11 +16,13 @@ from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDa
 from bofire.data_models.strategies.api import (
     MultiplicativeSoboStrategy as MultiplicativeDataModel,
 )
+from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
 from bofire.data_models.strategies.predictives.sobo import SoboBaseStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_multiplicative_botorch_objective,
+    get_custom_botorch_objective,
     get_objective_callable,
     get_output_constraints,
     tkwargs,
@@ -128,3 +134,39 @@ class MultiplicativeSoboStrategy(SoboStrategy):
                 outputs=self.domain.outputs
             )
         )
+
+
+class CustomSoboStrategy(SoboStrategy):
+    def __init__(
+        self,
+        data_model: CustomDataModel,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
+        if data_model.dump is not None:
+            self.loads(data_model.dump)
+        else:
+            self.f = None
+        # self.f = data_model.f
+        # self.fkwargs = data_model.fkwargs if data_model.fkwargs is not None else {}
+
+
+
+    def _get_objective(self) -> GenericMCObjective:
+        return GenericMCObjective(
+            objective=get_custom_botorch_objective(
+                outputs=self.domain.outputs,
+                f=self.f,
+                # fkwargs=self.fkwargs,
+            )
+        )
+
+    def _dumps(self) -> str:
+        """Dumps the function to a string via pickle as this is not directly json serializable."""
+        f_bytes_dump = cloudpickle.dumps(self.f)
+        return base64.b64encode(f_bytes_dump).decode()
+
+    def loads(self, data: str):
+        """Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
+        f_bytes_load = base64.b64decode(data.encode())
+        self.f = cloudpickle.loads(f_bytes_load)

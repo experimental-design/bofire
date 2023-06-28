@@ -10,6 +10,7 @@ from bofire.strategies.predictives.qparego import QparegoStrategy  # noqa: F401
 from bofire.strategies.predictives.sobo import (  # noqa: F401
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    CustomSoboStrategy,
     SoboStrategy,
 )
 from bofire.strategies.random import RandomStrategy  # noqa: F401
@@ -23,6 +24,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.SoboStrategy: SoboStrategy,
     data_models.AdditiveSoboStrategy: AdditiveSoboStrategy,
     data_models.MultiplicativeSoboStrategy: MultiplicativeSoboStrategy,
+    data_models.CustomSoboStrategy: CustomSoboStrategy,
     data_models.QehviStrategy: QehviStrategy,
     data_models.QnehviStrategy: QnehviStrategy,
     data_models.QparegoStrategy: QparegoStrategy,

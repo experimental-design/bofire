@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Union, Any
 
 import numpy as np
 import torch
@@ -261,6 +261,32 @@ def get_objective_callable(
         raise NotImplementedError(
             f"Objective {objective.__class__.__name__} not implemented."
         )
+
+
+def get_custom_botorch_objective(
+    outputs: Outputs,
+    f: Callable[[Tensor, Optional[Tensor]], Tensor],
+) -> Callable[[Tensor, Tensor], Tensor]:
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(outputs.get())
+        if feat.objective is not None  # type: ignore
+    ]
+    weights = [
+        feat.objective.w  # type: ignore
+        for i, feat in enumerate(outputs.get())
+        if feat.objective is not None  # type: ignore
+    ]
+
+    def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+        outputs_list = []
+        for c, w in zip(callables, weights):
+            outputs_list.append(c(samples, None) ** w)
+        val = f(torch.stack(outputs_list, dim=-1))
+        return val  # type: ignore
+
+    return objective
+
 
 
 def get_multiplicative_botorch_objective(
