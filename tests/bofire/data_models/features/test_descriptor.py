@@ -12,6 +12,7 @@ from bofire.data_models.features.api import (
     ContinuousDescriptorInput,
 )
 
+
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
@@ -47,23 +48,28 @@ from bofire.data_models.features.api import (
         ),
     ],
 )
-def test_continuous_descriptor_input_feature_is_fixed(input_feature, expected, expected_value):
+def test_continuous_descriptor_input_feature_is_fixed(
+    input_feature, expected, expected_value
+):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
 
 @pytest.mark.parametrize(
     "feature, transform_type, values, expected",
     [
         (
             Specs.features.valid(CategoricalDescriptorInput).obj(
-                key="c", categories=["B", "A", "C"],allowed=[True, True, True]),
+                key="c", categories=["B", "A", "C"], allowed=[True, True, True]
+            ),
             CategoricalEncodingEnum.ORDINAL,
             None,
             (0, 2),
         ),
         (
             Specs.features.valid(CategoricalDescriptorInput).obj(
-                key="c", categories=["B", "A", "C"],allowed=[True, True, True]),
+                key="c", categories=["B", "A", "C"], allowed=[True, True, True]
+            ),
             CategoricalEncodingEnum.ONE_HOT,
             None,
             ([0, 0, 0], [1, 1, 1]),
@@ -85,7 +91,9 @@ def test_continuous_descriptor_input_feature_is_fixed(input_feature, expected, e
             ([0, 0, 0], [1, 0, 1]),
         ),
         (
-            Specs.features.valid(CategoricalDescriptorInput).obj(key="c", categories=["B", "A", "C"]),
+            Specs.features.valid(CategoricalDescriptorInput).obj(
+                key="c", categories=["B", "A", "C"]
+            ),
             CategoricalEncodingEnum.DUMMY,
             None,
             ([0, 0], [1, 1]),
@@ -107,6 +115,7 @@ def test_categorical_descriptor_get_bounds(feature, transform_type, values, expe
     lower, upper = f.get_bounds(transform_type=transform_type, values=values)
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
+
 
 def test_categorical_descriptor_to_descriptor_encoding():
     c = Specs.features.valid(CategoricalDescriptorInput).obj(
@@ -391,8 +400,11 @@ def test_categorical_descriptor_input_feature_as_dataframe(
     categories, descriptors, values
 ):
     f = Specs.features.valid(CategoricalDescriptorInput).obj(
-        key="k", categories=categories, descriptors=descriptors, values=values, 
-        allowed=[True for _ in range(len(categories))]
+        key="k",
+        categories=categories,
+        descriptors=descriptors,
+        values=values,
+        allowed=[True for _ in range(len(categories))],
     )
     df = f.to_df()
     assert len(df.columns) == len(descriptors)
@@ -418,6 +430,7 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
     assert len(df.columns) == len(descriptors)
     assert len(df) == 1
     assert df.values.tolist()[0] == values
+
 
 @pytest.mark.parametrize(
     "categories, descriptors, values",
@@ -447,4 +460,3 @@ def test_categorical_descriptor_input_feature_from_dataframe(
     assert f.categories == categories
     assert f.descriptors == descriptors
     assert f.values == values
-

@@ -5,9 +5,8 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
-
 import tests.bofire.data_models.specs.api as Specs
-from bofire.data_models.domain.api import  Inputs
+from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -20,19 +19,27 @@ from bofire.data_models.surrogates.api import ScalerEnum
     "input_feature, expected",
     [
         (
-            Specs.features.valid(CategoricalInput).obj(key="if1", categories=["a", "b"], allowed=[True, True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="if1", categories=["a", "b"], allowed=[True, True]
+            ),
             ["a", "b"],
         ),
         (
-            Specs.features.valid(CategoricalInput).obj(key="if2", categories=["a", "b"], allowed=[True, True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="if2", categories=["a", "b"], allowed=[True, True]
+            ),
             ["a", "b"],
         ),
         (
-            Specs.features.valid(CategoricalInput).obj(key="if3", categories=["a", "b"], allowed=[True, False]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="if3", categories=["a", "b"], allowed=[True, False]
+            ),
             ["a"],
         ),
         (
-            Specs.features.valid(CategoricalInput).obj(key="if4", categories=["a", "b"], allowed=[False, True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="if4", categories=["a", "b"], allowed=[False, True]
+            ),
             ["b"],
         ),
     ],
@@ -43,6 +50,7 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
     )
     categories = input_feature.get_possible_categories(experiments[input_feature.key])
     assert categories == expected
+
 
 @pytest.mark.parametrize(
     "input_feature, values, strict",
@@ -91,6 +99,7 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
 )
 def test_categorical_input_feature_validate_valid(input_feature, values, strict):
     input_feature.validate_experimental(values, strict)
+
 
 @pytest.mark.parametrize(
     "input_feature, values, strict",
@@ -148,6 +157,7 @@ def test_categorical_input_feature_validate_invalid(input_feature, values, stric
 )
 def test_categorical_input_feature_validate_candidental_valid(input_feature, values):
     input_feature.validate_candidental(values)
+
 
 @pytest.mark.parametrize(
     "input_feature, values",
@@ -254,14 +264,16 @@ def test_categorical_to_label_encoding():
     [
         (
             Specs.features.valid(CategoricalInput).obj(
-                key="c", categories=["B", "A", "C"],allowed=[True, True, True]),
+                key="c", categories=["B", "A", "C"], allowed=[True, True, True]
+            ),
             CategoricalEncodingEnum.ORDINAL,
             None,
             (0, 2),
         ),
         (
             Specs.features.valid(CategoricalInput).obj(
-                key="c", categories=["B", "A", "C"],allowed=[True, True, True]),
+                key="c", categories=["B", "A", "C"], allowed=[True, True, True]
+            ),
             CategoricalEncodingEnum.ONE_HOT,
             None,
             ([0, 0, 0], [1, 1, 1]),
@@ -283,7 +295,9 @@ def test_categorical_to_label_encoding():
             ([0, 0, 0], [1, 0, 1]),
         ),
         (
-            Specs.features.valid(CategoricalInput).obj(key="c", categories=["B", "A", "C"]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="c", categories=["B", "A", "C"]
+            ),
             CategoricalEncodingEnum.DUMMY,
             None,
             ([0, 0], [1, 1]),
@@ -295,11 +309,14 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
 
+
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value, transform_type",
     [
         (
-            Specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
+            Specs.features.valid(CategoricalInput).obj(
+                key="k", categories=categories, allowed=allowed
+            ),
             expected,
             expected_value,
             transform_type,
@@ -330,8 +347,7 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
                 CategoricalEncodingEnum.DUMMY,
             ),
         ]
-    ]
-
+    ],
 )
 def test_categorical_input_feature_is_fixed(
     input_feature, expected, expected_value, transform_type
@@ -339,11 +355,14 @@ def test_categorical_input_feature_is_fixed(
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value(transform_type) == expected_value
 
+
 @pytest.mark.parametrize(
     "input_feature, expected",
     [
         (
-            Specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
+            Specs.features.valid(CategoricalInput).obj(
+                key="k", categories=categories, allowed=allowed
+            ),
             expected,
         )
         for categories, allowed, expected in [
@@ -360,7 +379,9 @@ def test_categorical_input_feature_allowed_categories(input_feature, expected):
     "input_feature, expected",
     [
         (
-            Specs.features.valid(CategoricalInput).obj(key="k", categories=categories, allowed=allowed),
+            Specs.features.valid(CategoricalInput).obj(
+                key="k", categories=categories, allowed=allowed
+            ),
             expected,
         )
         for categories, allowed, expected in [
@@ -371,6 +392,7 @@ def test_categorical_input_feature_allowed_categories(input_feature, expected):
 )
 def test_categorical_input_feature_forbidden_categories(input_feature, expected):
     assert input_feature.get_forbidden_categories() == expected
+
 
 @pytest.mark.parametrize(
     "specs",
@@ -384,9 +406,9 @@ def test_categorical_input_feature_forbidden_categories(input_feature, expected)
 def test_inputs_validate_transform_specs_invalid(specs):
     inps = Inputs(
         features=[
-            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
-                ,allowed=[True,True]),
-           
+            Specs.features.valid(CategoricalInput).obj(
+                key="x2", categories=["apple", "banana"], allowed=[True, True]
+            ),
         ]
     )
     with pytest.raises(ValueError):

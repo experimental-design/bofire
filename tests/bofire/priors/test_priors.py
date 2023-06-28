@@ -1,12 +1,11 @@
+from typing import List
+
 import gpytorch.priors
 import pytest
+from pydantic.error_wrappers import ValidationError
 
 import bofire.priors.api as priors
 from bofire.data_models.priors.api import GammaPrior, NormalPrior
-
-from typing import List
-
-from pydantic.error_wrappers import ValidationError
 
 
 def get_invalids(valid: dict) -> List[dict]:
@@ -79,6 +78,7 @@ def test_valid_prior_specs(cls, spec):
 def test_invalid_prior_specs(cls, spec):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
         _ = cls(**spec)
+
 
 @pytest.mark.parametrize(
     "prior, expected_prior",

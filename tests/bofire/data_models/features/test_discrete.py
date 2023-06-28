@@ -36,6 +36,7 @@ def test_discrete_input_feature_bounds(input_feature, expected_lower, expected_u
     assert input_feature.upper_bound == expected_upper
     assert input_feature.lower_bound == expected_lower
 
+
 @pytest.mark.parametrize(
     "input_feature, expected",
     [
@@ -102,4 +103,3 @@ def test_from_continuous():
     )
     samples = d.from_continuous(continuous_values)
     assert np.all(samples == pd.Series([2, 2, 3, 2]))
-

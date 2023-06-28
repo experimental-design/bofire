@@ -17,7 +17,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     MolecularInput,
 )
-from bofire.data_models.objectives.api import  Objective
+from bofire.data_models.objectives.api import Objective
 from bofire.data_models.surrogates.api import ScalerEnum
 
 
@@ -92,6 +92,7 @@ inputs = Inputs(features=[if1, if2])
 outputs = Outputs(features=[of1, of2])
 features = Features(features=[if1, if2, of1, of2])
 
+
 @pytest.mark.parametrize(
     "features, expected",
     [
@@ -153,12 +154,13 @@ def test_inputs_validate_transform_specs_invalid(specs):
     inps = Inputs(
         features=[
             Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
-                ,allowed=[True,True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="x2", categories=["apple", "banana"], allowed=[True, True]
+            ),
             Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana"],
-                allowed=[True,True],
+                allowed=[True, True],
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
@@ -186,12 +188,13 @@ def test_inputs_validate_transform_valid(specs):
     inps = Inputs(
         features=[
             Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana"]
-                ,allowed=[True,True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="x2", categories=["apple", "banana"], allowed=[True, True]
+            ),
             Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana"],
-                allowed=[True,True],
+                allowed=[True, True],
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4]],
             ),
@@ -278,12 +281,15 @@ def test_inputs_get_transform_info(
     inps = Inputs(
         features=[
             Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana", "orange"]
-                ,allowed=[True,True,True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="x2",
+                categories=["apple", "banana", "orange"],
+                allowed=[True, True, True],
+            ),
             Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                allowed=[True,True,True,True],
+                allowed=[True, True, True, True],
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
@@ -326,12 +332,15 @@ def test_inputs_transform(specs):
     inps = Inputs(
         features=[
             Specs.features.valid(ContinuousInput).obj(key="x1", bounds=(0, 1)),
-            Specs.features.valid(CategoricalInput).obj(key="x2", categories=["apple", "banana", "orange"]
-                ,allowed=[True,True,True]),
+            Specs.features.valid(CategoricalInput).obj(
+                key="x2",
+                categories=["apple", "banana", "orange"],
+                allowed=[True, True, True],
+            ),
             Specs.features.valid(CategoricalDescriptorInput).obj(
                 key="x3",
                 categories=["apple", "banana", "orange", "cherry"],
-                allowed=[True,True,True,True],
+                allowed=[True, True, True, True],
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
@@ -663,5 +672,3 @@ def test_outputs_call(features, samples):
         for key in features.get_keys_by_objective(Objective)
         + features.get_keys(CategoricalOutput)
     ]
-
-

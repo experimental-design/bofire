@@ -12,22 +12,30 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     Feature,
-    Output
+    Output,
 )
 
 
 @pytest.mark.parametrize(
     "input_feature, expected, expected_value",
     [
-        ( Specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 1)), True, [1]),
-        (Specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 2)), False, None),
-        (Specs.features.valid(ContinuousInput).obj(key="k", bounds=(2, 3)), False, None),
-        
+        (Specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 1)), True, [1]),
+        (
+            Specs.features.valid(ContinuousInput).obj(key="k", bounds=(1, 2)),
+            False,
+            None,
+        ),
+        (
+            Specs.features.valid(ContinuousInput).obj(key="k", bounds=(2, 3)),
+            False,
+            None,
+        ),
     ],
 )
 def test_continuous_input_feature_is_fixed(input_feature, expected, expected_value):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value() == expected_value
+
 
 def test_continuous_input_invalid_stepsize():
     with pytest.raises(ValueError):
@@ -42,9 +50,13 @@ def test_continuous_input_round():
     feature = Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5))
     values = pd.Series([1.0, 1.3, 0.55])
     assert_series_equal(values, feature.round(values))
-    feature = Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.25)
+    feature = Specs.features.valid(ContinuousInput).obj(
+        key="a", bounds=(0, 5), stepsize=0.25
+    )
     assert_series_equal(pd.Series([1.0, 1.25, 0.5]), feature.round(values))
-    feature = Specs.features.valid(ContinuousInput).obj(key="a", bounds=(0, 5), stepsize=0.1)
+    feature = Specs.features.valid(ContinuousInput).obj(
+        key="a", bounds=(0, 5), stepsize=0.1
+    )
     assert_series_equal(pd.Series([1.0, 1.3, 0.5]), feature.round(values))
 
 
@@ -55,7 +67,10 @@ def test_continuous_input_round():
             Specs.features.valid(ContinuousInput).obj(key="if1", bounds=(0.5, 4)),
             (0.5, 4.0),
         ),
-        (Specs.features.valid(ContinuousInput).obj(key="if1", bounds=(2.5, 2.9)), (1, 3.0)),
+        (
+            Specs.features.valid(ContinuousInput).obj(key="if1", bounds=(2.5, 2.9)),
+            (1, 3.0),
+        ),
         (Specs.features.valid(ContinuousInput).obj(key="if2", bounds=(1, 3)), (1, 3.0)),
         (Specs.features.valid(ContinuousInput).obj(key="if2", bounds=(1, 1)), (1, 1.0)),
     ],
@@ -69,6 +84,7 @@ def test_continuous_input_feature_get_bounds(input_feature, expected):
         input_feature.lower_bound,
         input_feature.upper_bound,
     )
+
 
 @pytest.mark.parametrize(
     "input_feature, values, strict",
@@ -267,6 +283,7 @@ def test_features_invalid_feature(FeatureContainer, features):
     with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
         FeatureContainer(features=features)
 
+
 # test features container
 if1 = Specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = Specs.features.valid(ContinuousInput).obj(key="if2")
@@ -362,4 +379,3 @@ def test_features_get_by_keys():
 def test_features_get_by_key_invalid(features, key):
     with pytest.raises(KeyError):
         features.get_by_key(key)
-
