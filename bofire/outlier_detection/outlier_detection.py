@@ -24,7 +24,7 @@ class IterativeTrimming(OutlierDetection):
         self.base_gp = data_model.base_gp
         super().__init__()
 
-    def detect(self, experiments: pd.DataFrame):
+    def detect(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
         model = SingleTaskGPSurrogate(data_model=self.base_gp)
         n = len(experiments)
         indices = experiments.index.to_numpy()
