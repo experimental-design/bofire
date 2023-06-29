@@ -18,6 +18,7 @@ from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.stepwise import Step, StepwiseStrategy  # noqa: F401
 from bofire.data_models.strategies.strategy import Strategy
 
 AbstractStrategy = Union[
@@ -39,6 +40,7 @@ AnyStrategy = Union[
     RejectionSampler,
     RandomStrategy,
     DoEStrategy,
+    StepwiseStrategy,
 ]
 
 AnyPredictive = Union[
