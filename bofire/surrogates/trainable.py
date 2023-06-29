@@ -53,6 +53,7 @@ class TrainableSurrogate(ABC):
         folds: int = -1,
         include_X: bool = False,
         include_labcodes: bool = False,
+        random_state: int = None
         hooks: Optional[
             Dict[
                 str,
@@ -77,6 +78,7 @@ class TrainableSurrogate(ABC):
             folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
             include_X (bool, optional): If true the X values of the fold are written to respective CvResult objects for
                 later analysis. Defaults ot False.
+            random_state (int, optional): Controls the randomness of the indices in the train and test sets of each fold.
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.
@@ -113,7 +115,7 @@ class TrainableSurrogate(ABC):
             hook_kwargs = {}
         hook_results = {key: [] for key in hooks.keys()}
         # instantiate kfold object
-        cv = KFold(n_splits=folds, shuffle=True)
+        cv = KFold(n_splits=folds, shuffle=True, random_state=random_state)
         key = self.outputs.get_keys()[0]  # type: ignore
         # first filter the experiments based on the model setting
         experiments = self._preprocess_experiments(experiments)
