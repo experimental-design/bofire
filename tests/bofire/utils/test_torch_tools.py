@@ -104,7 +104,12 @@ def test_get_objective_callable(objective):
 
 
 def test_get_custom_botorch_objective():
-    def f(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+    def f(samples, callables, weights, X):
+        outputs_list = []
+        for c, w in zip(callables, weights):
+            outputs_list.append(c(samples, None) ** w)
+        samples = torch.stack(outputs_list, dim=-1)
+
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     (obj1, obj2) = random.choices(

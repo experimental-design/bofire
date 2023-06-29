@@ -53,7 +53,6 @@ class TrainableSurrogate(ABC):
         folds: int = -1,
         include_X: bool = False,
         include_labcodes: bool = False,
-        random_state: Optional[int] = None,
         hooks: Optional[
             Dict[
                 str,
@@ -114,7 +113,7 @@ class TrainableSurrogate(ABC):
             hook_kwargs = {}
         hook_results = {key: [] for key in hooks.keys()}
         # instantiate kfold object
-        cv = KFold(n_splits=folds, shuffle=True, random_state=random_state)
+        cv = KFold(n_splits=folds, shuffle=True)
         key = self.outputs.get_keys()[0]  # type: ignore
         # first filter the experiments based on the model setting
         experiments = self._preprocess_experiments(experiments)

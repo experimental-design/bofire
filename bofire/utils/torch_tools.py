@@ -265,7 +265,15 @@ def get_objective_callable(
 
 def get_custom_botorch_objective(
     outputs: Outputs,
-    f: Callable[[Tensor, Tensor], Tensor],
+    f: Callable[
+        [
+            Tensor,
+            List[Callable[[Tensor, Optional[Tensor]], Tensor]],
+            List[float],
+            Tensor,
+        ],
+        Tensor,
+    ],
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
@@ -279,11 +287,7 @@ def get_custom_botorch_objective(
     ]
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
-        outputs_list = []
-        for c, w in zip(callables, weights):
-            outputs_list.append(c(samples, None) ** w)
-        val = f(torch.stack(outputs_list, dim=-1), X)
-        return val  # type: ignore
+        return f(samples, callables, weights, X)
 
     return objective
 

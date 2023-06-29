@@ -183,7 +183,12 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
 
 
 def test_custom_get_objective():
-    def f(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+    def f(samples, callables, weights, X):
+        outputs_list = []
+        for c, w in zip(callables, weights):
+            outputs_list.append(c(samples, None) ** w)
+        samples = torch.stack(outputs_list, dim=-1)
+
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     benchmark = DTLZ2(3)
@@ -208,7 +213,12 @@ def test_custom_get_objective_invalid():
 
 
 def test_custom_dumps_loads():
-    def f(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+    def f(samples, callables, weights, X):
+        outputs_list = []
+        for c, w in zip(callables, weights):
+            outputs_list.append(c(samples, None) ** w)
+        samples = torch.stack(outputs_list, dim=-1)
+
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     benchmark = DTLZ2(3)
