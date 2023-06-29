@@ -12,7 +12,8 @@ class OutlierDetection(BaseModel):
 
 
 class IterativeTrimming(OutlierDetection):
-    """
+    """Remove outliers using Robust GP
+
     Paper: Robust Gaussian Process Regression Based on Iterative Trimming.
     https://arxiv.org/pdf/2011.11057.pdf
 
@@ -23,7 +24,7 @@ class IterativeTrimming(OutlierDetection):
         Trimming and reweighting parameters respectively.
     nsh, ncc, nrw: int (>=1)
         Number of shrinking, concentrating, and reweighting iterations respectively.
-    bas_gp: SingleTaskGPSurrogate = Gaussian process model for outlier detection.
+    base_gp: SingleTaskGPSurrogate = Gaussian process model for outlier detection.
     """
 
     type: Literal["IterativeTrimming"] = "IterativeTrimming"

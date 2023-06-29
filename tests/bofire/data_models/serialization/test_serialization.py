@@ -58,3 +58,9 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
     for k, v in data.items():
         if v is not None:
             assert v == spec[k]
+
+
+def test_outlier_detection_should_be_serializable(outlier_detection_spec: Spec):
+    spec = outlier_detection_spec.typed_spec()
+    obj = outlier_detection_spec.cls(**spec)
+    assert obj.dict() == spec
