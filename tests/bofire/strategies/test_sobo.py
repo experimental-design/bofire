@@ -181,6 +181,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
         len(set(chain(*names.values()))),
     )
 
+
 def test_custom_get_objective():
     def f(samples: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
@@ -201,7 +202,7 @@ def test_custom_get_objective_invalid():
         domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
-    
+
     with pytest.raises(ValueError):
         generic_objective = strategy._get_objective()
 
@@ -223,7 +224,7 @@ def test_custom_dumps_loads():
     )
     strategy2 = CustomSoboStrategy(data_model=data_model2)
     strategy2.loads(f_str)
-    assert(isinstance(strategy2.f, type(f)))
+    assert isinstance(strategy2.f, type(f))
 
 
 def test_custom_dumps_invalid():

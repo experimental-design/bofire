@@ -106,7 +106,7 @@ def test_get_objective_callable(objective):
 def test_get_custom_botorch_objective():
     def f(samples: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
-        
+
     (obj1, obj2) = random.choices(
         [
             MaximizeObjective(w=0.5),
@@ -136,7 +136,8 @@ def test_get_custom_botorch_objective():
     # do the comparison
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
-        (reward1**obj1.w + reward2**obj2.w) * (reward1**obj1.w * reward2**obj2.w),
+        (reward1**obj1.w + reward2**obj2.w)
+        * (reward1**obj1.w * reward2**obj2.w),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )

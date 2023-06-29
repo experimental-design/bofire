@@ -150,7 +150,7 @@ class CustomSoboStrategy(SoboStrategy):
 
     def _get_objective(self) -> GenericMCObjective:
         if self.f is None:
-            raise ValueError('No function has been provided for the strategy')
+            raise ValueError("No function has been provided for the strategy")
         return GenericMCObjective(
             objective=get_custom_botorch_objective(
                 outputs=self.domain.outputs,
@@ -161,7 +161,7 @@ class CustomSoboStrategy(SoboStrategy):
     def dumps(self) -> str:
         """Dumps the function to a string via pickle as this is not directly json serializable."""
         if self.f is None:
-            raise ValueError('No function has been provided for the strategy')
+            raise ValueError("No function has been provided for the strategy")
         f_bytes_dump = cloudpickle.dumps(self.f)
         return base64.b64encode(f_bytes_dump).decode()
 

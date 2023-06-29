@@ -288,7 +288,6 @@ def get_custom_botorch_objective(
     return objective
 
 
-
 def get_multiplicative_botorch_objective(
     outputs: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:
