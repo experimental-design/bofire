@@ -15,6 +15,7 @@ from botorch.acquisition.objective import GenericMCObjective
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.single import Himmelblau
+from bofire.benchmarks.multi import DTLZ2
 from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -184,13 +185,7 @@ def test_custom_get_objective():
     def f(samples: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
-    benchmark = Himmelblau()
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
-    )
-    experiments = benchmark.f(
-        random_strategy._ask(n=2), return_complete=True
-    )
+    benchmark = DTLZ2(3)
     data_model = data_models.CustomSoboStrategy(
         domain=benchmark.domain, acquisition_function=qNEI()
     )
@@ -201,13 +196,7 @@ def test_custom_get_objective():
 
 
 def test_custom_get_objective_invalid():
-    benchmark = Himmelblau()
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
-    )
-    experiments = benchmark.f(
-        random_strategy._ask(n=2), return_complete=True
-    )
+    benchmark = DTLZ2(3)
     data_model = data_models.CustomSoboStrategy(
         domain=benchmark.domain, acquisition_function=qNEI()
     )
@@ -221,13 +210,7 @@ def test_custom_dumps_loads():
     def f(samples: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
-    benchmark = Himmelblau()
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
-    )
-    experiments = benchmark.f(
-        random_strategy._ask(n=2), return_complete=True
-    )
+    benchmark = DTLZ2(3)
     data_model1 = data_models.CustomSoboStrategy(
         domain=benchmark.domain, acquisition_function=qNEI()
     )
@@ -244,17 +227,10 @@ def test_custom_dumps_loads():
 
 
 def test_custom_dumps_invalid():
-    benchmark = Himmelblau()
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
-    )
-    experiments = benchmark.f(
-        random_strategy._ask(n=2), return_complete=True
-    )
+    benchmark = DTLZ2(3)
     data_model = data_models.CustomSoboStrategy(
         domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
     with pytest.raises(ValueError):
         strategy.dumps()
-
