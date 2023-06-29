@@ -6,6 +6,7 @@ from bofire.data_models.api import (
     AnyFeature,
     AnyKernel,
     AnyObjective,
+    AnyOutlierDetection,
     AnyPrior,
     AnyStrategy,
     AnySurrogate,
@@ -73,4 +74,10 @@ def test_strategy_should_be_deserializable(strategy_spec: Spec):
     deserialized = {
         k: v for k, v in deserialized.dict().items() if k != "surrogate_specs"
     }
+    assert obj == deserialized
+
+
+def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec):
+    obj = outlier_detection_spec.obj()
+    deserialized = parse_obj_as(AnyOutlierDetection, obj.dict())
     assert obj == deserialized

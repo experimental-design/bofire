@@ -23,6 +23,10 @@ try:
     # in case of the minimal installation these import are not available
     from bofire.data_models.kernels.api import AnyKernel, Kernel  # noqa: F401
     from bofire.data_models.objectives.api import AnyObjective, Objective  # noqa: F401
+    from bofire.data_models.outlier_detection.api import (
+        AnyOutlierDetection,
+        OutlierDetection,  # noqa: F401
+    )
     from bofire.data_models.priors.api import AnyPrior, Prior  # noqa: F401
     from bofire.data_models.strategies.api import (  # noqa: F401
         AnyPredictive,
@@ -45,6 +49,7 @@ try:
         AnyFeature,
         AnyKernel,
         AnySurrogate,
+        AnyOutlierDetection,
         AnyObjective,
         AnyPrior,
         AnyStrategy,
