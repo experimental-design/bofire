@@ -14,13 +14,13 @@ from botorch.acquisition.objective import GenericMCObjective
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
-from bofire.benchmarks.single import Himmelblau
 from bofire.benchmarks.multi import DTLZ2
+from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler, SoboStrategy, CustomSoboStrategy
+from bofire.strategies.api import CustomSoboStrategy, PolytopeSampler, SoboStrategy
 from tests.bofire.strategies.test_base import domains
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -183,7 +183,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
 
 
 def test_custom_get_objective():
-    def f(samples: torch.Tensor) -> torch.Tensor:
+    def f(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     benchmark = DTLZ2(3)
@@ -204,11 +204,11 @@ def test_custom_get_objective_invalid():
     strategy = CustomSoboStrategy(data_model=data_model)
 
     with pytest.raises(ValueError):
-        generic_objective = strategy._get_objective()
+        strategy._get_objective()
 
 
 def test_custom_dumps_loads():
-    def f(samples: torch.Tensor) -> torch.Tensor:
+    def f(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     benchmark = DTLZ2(3)

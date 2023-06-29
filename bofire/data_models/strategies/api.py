@@ -11,8 +11,8 @@ from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
     CustomSoboStrategy,
+    MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy

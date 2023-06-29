@@ -1,4 +1,4 @@
-from typing import Literal, Type, Optional
+from typing import Literal, Optional, Type
 
 from pydantic import validator
 

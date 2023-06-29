@@ -32,10 +32,10 @@ from bofire.data_models.strategies.api import PolytopeSampler
 from bofire.utils.torch_tools import (
     constrained_objective2botorch,
     get_additive_botorch_objective,
+    get_custom_botorch_objective,
     get_initial_conditions_generator,
     get_linear_constraints,
     get_multiobjective_objective,
-    get_custom_botorch_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_objective_callable,
@@ -104,7 +104,7 @@ def test_get_objective_callable(objective):
 
 
 def test_get_custom_botorch_objective():
-    def f(samples: torch.Tensor) -> torch.Tensor:
+    def f(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     (obj1, obj2) = random.choices(
