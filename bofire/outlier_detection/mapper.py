@@ -13,4 +13,4 @@ OUTLIER_MAP: Dict[Type[data_models.OutlierDetection], Type[OutlierDetection]] = 
 
 def map(data_model: data_models.OutlierDetection) -> OutlierDetection:
     cls = OUTLIER_MAP[data_model.__class__]
-    return cls(data_model=data_model)
+    return cls(data_model=data_model)  # type: ignore

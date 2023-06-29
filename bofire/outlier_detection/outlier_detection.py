@@ -3,7 +3,7 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2
+from scipy.stats import chi2  # type: ignore
 
 from bofire.surrogates.api import SingleTaskGPSurrogate
 
@@ -54,7 +54,7 @@ class IterativeTrimming(OutlierDetection):
                 consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence
-            if (i > self.nsh + 1) and (ix_sub == ix_old).all():
+            if (i > self.nsh + 1) and (ix_sub == ix_old).all():  # type: ignore
                 break  # converged
             ix_old = ix_sub
 
@@ -72,7 +72,7 @@ class IterativeTrimming(OutlierDetection):
             chi_sq = chi2(p).ppf(alpha)
 
             # XXX: might be buggy when there are identical data points
-            ix_sub = d_sq <= chi_sq * consistency
+            ix_sub = d_sq <= chi_sq * consistency  # type: ignore
             consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence
@@ -80,6 +80,6 @@ class IterativeTrimming(OutlierDetection):
                 break  # converged
             ix_old = ix_sub
         return (
-            experiments[experiments.index.isin(indices[ix_sub])],
-            experiments[~experiments.index.isin(indices[ix_sub])],
+            experiments[experiments.index.isin(indices[ix_sub])],  # type: ignore
+            experiments[~experiments.index.isin(indices[ix_sub])],  # type: ignore
         )
