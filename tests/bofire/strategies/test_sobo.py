@@ -201,9 +201,6 @@ def test_custom_get_objective():
 
 
 def test_custom_get_objective_invalid():
-    def f(samples: torch.Tensor) -> torch.Tensor:
-        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
-
     benchmark = Himmelblau()
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
@@ -247,9 +244,6 @@ def test_custom_dumps_loads():
 
 
 def test_custom_dumps_invalid():
-    def f(samples: torch.Tensor) -> torch.Tensor:
-        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
-
     benchmark = Himmelblau()
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
