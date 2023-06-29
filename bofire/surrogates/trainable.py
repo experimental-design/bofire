@@ -53,7 +53,7 @@ class TrainableSurrogate(ABC):
         folds: int = -1,
         include_X: bool = False,
         include_labcodes: bool = False,
-        random_state: int = None,
+        random_state: Optional[int] = None,
         hooks: Optional[
             Dict[
                 str,
