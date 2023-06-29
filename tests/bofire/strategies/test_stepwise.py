@@ -20,12 +20,12 @@ def test_StepwiseStrategy_invalid():
             domain=benchmark.domain,
             steps=[
                 Step(
-                    data_model=RandomStrategy(domain=benchmark.domain),
+                    strategy_data=RandomStrategy(domain=benchmark.domain),
                     num_required_experiments=1,
                     max_parallelism=-1,
                 ),
                 Step(
-                    data_model=SoboStrategy(
+                    strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
                     num_required_experiments=10,
@@ -40,19 +40,19 @@ def test_StepwiseStrategy_invalid():
             domain=benchmark.domain,
             steps=[
                 Step(
-                    data_model=RandomStrategy(domain=benchmark.domain),
+                    strategy_data=RandomStrategy(domain=benchmark.domain),
                     num_required_experiments=0,
                     max_parallelism=-1,
                 ),
                 Step(
-                    data_model=SoboStrategy(
+                    strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
                     num_required_experiments=10,
                     max_parallelism=2,
                 ),
                 Step(
-                    data_model=SoboStrategy(
+                    strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qEI()
                     ),
                     num_required_experiments=5,
@@ -70,12 +70,12 @@ def test_StepwiseStrategy_invalid():
             domain=benchmark.domain,
             steps=[
                 Step(
-                    data_model=RandomStrategy(domain=domain2),
+                    strategy_data=RandomStrategy(domain=domain2),
                     num_required_experiments=0,
                     max_parallelism=-1,
                 ),
                 Step(
-                    data_model=SoboStrategy(
+                    strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
                     num_required_experiments=10,
@@ -98,12 +98,12 @@ def test_StepWiseStrategy_get_step(num_experiments, expected_strategy, expected_
         domain=benchmark.domain,
         steps=[
             Step(
-                data_model=RandomStrategy(domain=benchmark.domain),
+                strategy_data=RandomStrategy(domain=benchmark.domain),
                 num_required_experiments=0,
                 max_parallelism=-1,
             ),
             Step(
-                data_model=SoboStrategy(
+                strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 num_required_experiments=10,
@@ -114,7 +114,7 @@ def test_StepWiseStrategy_get_step(num_experiments, expected_strategy, expected_
     strategy = strategies.map(data_model)
     strategy.tell(experiments)
     i, step = strategy._get_step()
-    assert isinstance(step.data_model, expected_strategy)
+    assert isinstance(step.strategy_data, expected_strategy)
     assert i == expected_index
 
 
@@ -124,12 +124,12 @@ def test_StepWiseStrategy_invalid_ask():
         domain=benchmark.domain,
         steps=[
             Step(
-                data_model=RandomStrategy(domain=benchmark.domain),
+                strategy_data=RandomStrategy(domain=benchmark.domain),
                 num_required_experiments=0,
                 max_parallelism=2,
             ),
             Step(
-                data_model=SoboStrategy(
+                strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 num_required_experiments=10,
@@ -150,12 +150,12 @@ def test_StepWiseStrategy_ask():
         domain=benchmark.domain,
         steps=[
             Step(
-                data_model=RandomStrategy(domain=benchmark.domain),
+                strategy_data=RandomStrategy(domain=benchmark.domain),
                 num_required_experiments=0,
                 max_parallelism=2,
             ),
             Step(
-                data_model=SoboStrategy(
+                strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 num_required_experiments=10,

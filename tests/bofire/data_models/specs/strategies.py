@@ -124,12 +124,12 @@ specs.add_valid(
         "domain": tempdomain,
         "steps": [
             strategies.Step(
-                data_model=strategies.RandomStrategy(domain=tempdomain),
+                strategy_data=strategies.RandomStrategy(domain=tempdomain),
                 num_required_experiments=0,
                 max_parallelism=-1,
             ).dict(),
             strategies.Step(
-                data_model=strategies.QehviStrategy(domain=tempdomain),
+                strategy_data=strategies.QehviStrategy(domain=tempdomain),
                 num_required_experiments=10,
                 max_parallelism=2,
             ).dict(),

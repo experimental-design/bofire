@@ -36,7 +36,7 @@ AnyStrategy = Union[
 
 class Step(BaseModel):
     type: Literal["Step"] = "Step"
-    data_model: AnyStrategy
+    strategy_data: AnyStrategy
     num_required_experiments: Annotated[int, Field(ge=0)]
     max_parallelism: Annotated[int, Field(ge=-1)]  # -1 means no restriction at all
 
@@ -56,7 +56,7 @@ class StepwiseStrategy(Strategy):
                 )
         # check also for domain equality
         for i, step in enumerate(v):
-            if step.data_model.domain != values["domain"]:
+            if step.strategy_data.domain != values["domain"]:
                 raise ValueError(
                     f"Domain of step {i} is incompatible to domain of StepwiseStrategy."
                 )

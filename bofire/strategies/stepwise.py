@@ -67,7 +67,7 @@ class StepwiseStrategy(Strategy):
                 f"Maximum number of candidates for step {istep} is {step.max_parallelism}."
             )
         # map it
-        strategy = map(step.data_model)
+        strategy = map(step.strategy_data)
         # tell the experiments
         if self.num_experiments > 0:
             strategy.tell(experiments=self.experiments)
