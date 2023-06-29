@@ -10,6 +10,7 @@ from botorch.acquisition import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.objective import GenericMCObjective
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
@@ -18,7 +19,7 @@ from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qU
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler, SoboStrategy
+from bofire.strategies.api import PolytopeSampler, SoboStrategy, CustomSoboStrategy
 from tests.bofire.strategies.test_base import domains
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -178,3 +179,88 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
         num_candidates,
         len(set(chain(*names.values()))),
     )
+
+def test_custom_get_objective():
+    def f(samples: torch.Tensor) -> torch.Tensor:
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+
+    benchmark = Himmelblau()
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(
+        random_strategy._ask(n=2), return_complete=True
+    )
+    data_model = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy = CustomSoboStrategy(data_model=data_model)
+    strategy.f = f
+    generic_objective = strategy._get_objective()
+    assert isinstance(generic_objective, GenericMCObjective)
+
+
+def test_custom_get_objective_invalid():
+    def f(samples: torch.Tensor) -> torch.Tensor:
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+
+    benchmark = Himmelblau()
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(
+        random_strategy._ask(n=2), return_complete=True
+    )
+    data_model = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy = CustomSoboStrategy(data_model=data_model)
+    
+    with pytest.raises(ValueError):
+        generic_objective = strategy._get_objective()
+
+
+def test_custom_dumps_loads():
+    def f(samples: torch.Tensor) -> torch.Tensor:
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+
+    benchmark = Himmelblau()
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(
+        random_strategy._ask(n=2), return_complete=True
+    )
+    data_model1 = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy1 = CustomSoboStrategy(data_model=data_model1)
+    strategy1.f = f
+    f_str = strategy1.dumps()
+
+    data_model2 = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy2 = CustomSoboStrategy(data_model=data_model2)
+    strategy2.loads(f_str)
+    assert(isinstance(strategy2.f, type(f)))
+
+
+def test_custom_dumps_invalid():
+    def f(samples: torch.Tensor) -> torch.Tensor:
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+
+    benchmark = Himmelblau()
+    random_strategy = PolytopeSampler(
+        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    )
+    experiments = benchmark.f(
+        random_strategy._ask(n=2), return_complete=True
+    )
+    data_model = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy = CustomSoboStrategy(data_model=data_model)
+    with pytest.raises(ValueError):
+        strategy.dumps()
+

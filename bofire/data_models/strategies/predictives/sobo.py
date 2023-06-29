@@ -1,4 +1,4 @@
-from typing import Literal, Type, Callable, Optional, Dict, List, Any
+from typing import Literal, Type, Optional
 
 from pydantic import validator
 
@@ -7,7 +7,6 @@ from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
-from torch import Tensor
 
 class SoboBaseStrategy(BotorchStrategy):
     acquisition_function: AnyAcquisitionFunction

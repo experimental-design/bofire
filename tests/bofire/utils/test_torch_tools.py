@@ -35,6 +35,7 @@ from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
     get_linear_constraints,
     get_multiobjective_objective,
+    get_custom_botorch_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_objective_callable,
@@ -98,6 +99,45 @@ def test_get_objective_callable(objective):
         # objective.reward(samples, desFunc)[0].detach().numpy(),
         callable(samples).detach().numpy(),
         objective(a_samples[:, 1]),
+        rtol=1e-06,
+    )
+
+
+def test_get_custom_botorch_objective():
+    def f(samples: torch.Tensor) -> torch.Tensor:
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+        
+    (obj1, obj2) = random.choices(
+        [
+            MaximizeObjective(w=0.5),
+            MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+            MinimizeObjective(w=1),
+            MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
+            TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
+            CloseToTargetObjective(target_value=2.0, exponent=1.0, w=1.0),
+        ],
+        k=2,
+    )
+    outputs = Outputs(
+        features=[
+            ContinuousOutput(key="alpha", objective=obj1),
+            ContinuousOutput(key="beta", objective=obj2),
+        ]
+    )
+
+    objective = get_custom_botorch_objective(outputs, f=f)
+    generic_objective = GenericMCObjective(objective=objective)
+    samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    objective_forward = generic_objective.forward(samples)
+    # calc with numpy
+    reward1 = obj1(a_samples[:, 0])
+    reward2 = obj2(a_samples[:, 1])
+    # do the comparison
+    assert np.allclose(
+        # objective.reward(samples, desFunc)[0].detach().numpy(),
+        (reward1**obj1.w + reward2**obj2.w) * (reward1**obj1.w * reward2**obj2.w),
+        objective_forward.detach().numpy(),
         rtol=1e-06,
     )
 

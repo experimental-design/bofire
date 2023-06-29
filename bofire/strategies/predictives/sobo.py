@@ -147,22 +147,21 @@ class CustomSoboStrategy(SoboStrategy):
             self.loads(data_model.dump)
         else:
             self.f = None
-        # self.f = data_model.f
-        # self.fkwargs = data_model.fkwargs if data_model.fkwargs is not None else {}
-
-
 
     def _get_objective(self) -> GenericMCObjective:
+        if self.f is None:
+            raise ValueError('No function has been provided for the strategy')
         return GenericMCObjective(
             objective=get_custom_botorch_objective(
                 outputs=self.domain.outputs,
                 f=self.f,
-                # fkwargs=self.fkwargs,
             )
         )
 
-    def _dumps(self) -> str:
+    def dumps(self) -> str:
         """Dumps the function to a string via pickle as this is not directly json serializable."""
+        if self.f is None:
+            raise ValueError('No function has been provided for the strategy')
         f_bytes_dump = cloudpickle.dumps(self.f)
         return base64.b64encode(f_bytes_dump).decode()
 
