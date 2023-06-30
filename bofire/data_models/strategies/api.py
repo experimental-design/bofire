@@ -18,7 +18,15 @@ from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
-from bofire.data_models.strategies.stepwise import Step, StepwiseStrategy  # noqa: F401
+from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
+    AndCondition,
+    OrCondition,
+    RequiredExperimentsCondition,
+)
+from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
+    Step,
+    StepwiseStrategy,
+)
 from bofire.data_models.strategies.strategy import Strategy
 
 AbstractStrategy = Union[
@@ -56,3 +64,10 @@ AnySampler = Union[
     PolytopeSampler,
     RejectionSampler,
 ]
+
+AnySampler = Union[
+    PolytopeSampler,
+    RejectionSampler,
+]
+
+AnyCondition = Union[RequiredExperimentsCondition, AndCondition, OrCondition]

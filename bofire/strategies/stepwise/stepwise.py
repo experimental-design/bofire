@@ -3,6 +3,7 @@ from typing import Dict, Tuple, Type
 import pandas as pd
 
 import bofire.data_models.strategies.api as data_models
+import bofire.strategies.stepwise.conditions as conditions
 from bofire.data_models.strategies.api import Step
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
 from bofire.strategies.doe_strategy import DoEStrategy  # noqa: F401
@@ -48,16 +49,12 @@ class StepwiseStrategy(Strategy):
         return True
 
     def _get_step(self) -> Tuple[int, Step]:  # type: ignore
-        if self.num_experiments == 0:
-            return 0, self.steps[0]
         for i in range(len(self.steps) - 1, -1, -1):
-            num_experiments = len(
-                self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                    self.experiments
-                )
-            )
-            if num_experiments >= self.steps[i].num_required_experiments:
-                return i, self.steps[i]
+            step = self.steps[i]
+            condition = conditions.map(step.condition)
+            if condition.evaluate(self.domain, experiments=self.experiments):
+                return i, step
+        raise ValueError("No condition could be satisfied.")
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         # we have to decide here w

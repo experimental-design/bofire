@@ -18,6 +18,11 @@ from bofire.data_models.strategies.predictives.sobo import (
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
+from bofire.data_models.strategies.stepwise.conditions import (
+    AndCondition,
+    OrCondition,
+    RequiredExperimentsCondition,
+)
 from bofire.data_models.strategies.strategy import Strategy
 
 AnyStrategy = Union[
@@ -33,11 +38,13 @@ AnyStrategy = Union[
     DoEStrategy,
 ]
 
+AnyCondition = Union[RequiredExperimentsCondition, AndCondition, OrCondition]
+
 
 class Step(BaseModel):
     type: Literal["Step"] = "Step"
     strategy_data: AnyStrategy
-    num_required_experiments: Annotated[int, Field(ge=0)]
+    condition: AnyCondition
     max_parallelism: Annotated[int, Field(ge=-1)]  # -1 means no restriction at all
 
 
@@ -47,14 +54,6 @@ class StepwiseStrategy(Strategy):
 
     @validator("steps")
     def validate_steps(cls, v: List[Step], values):
-        if v[0].num_required_experiments != 0:
-            raise ValueError("First step has to be always applicable.")
-        for i in range(1, len(v)):
-            if v[i].num_required_experiments < v[i - 1].num_required_experiments:
-                raise ValueError(
-                    f"Step {i} needs less experiments than step {i-1}. Wrong order."
-                )
-        # check also for domain equality
         for i, step in enumerate(v):
             if step.strategy_data.domain != values["domain"]:
                 raise ValueError(
