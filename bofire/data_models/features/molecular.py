@@ -1,33 +1,77 @@
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+import warnings
+from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import validator
 
 from bofire.data_models.features.categorical import _CAT_SEP, TTransform
-
-from bofire.data_models.features.feature import Input
-from bofire.utils.cheminformatics import smiles2mol
-from bofire.data_models.enum import MolecularEncodingEnum
-
+from bofire.data_models.features.feature import Input, TMolecularVals, TSmiles
 from bofire.data_models.molfeatures.api import AnyMolFeatures
-from bofire.data_models.features.feature import TSmiles, TMolecularVals
+from bofire.utils.cheminformatics import smiles2mol
+
+try:
+    from rdkit import Chem
+except ImportError:
+    warnings.warn(
+        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
+    )
 
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
     smiles: TSmiles
     molfeatures: AnyMolFeatures
-    descriptor_values: Optional[
-        TMolecularVals
-    ] = None  # Optional[List[List[Union[float, int]]]] = None
+    descriptor_values: Optional[TMolecularVals] = None
     order: ClassVar[int] = 6
+
+    @validator("smiles")
+    def validate_smiles(cls, smiles):
+        """validates that smiles are unique molecules
+
+        Args:
+            categories (List[str]): List of smiles
+
+        Raises:
+            ValueError: when smiles are non-unique molecules
+
+        Returns:
+            List[str]: List of the smiles
+        """
+        canonicalized_smiles = [Chem.CanonSmiles(smi) for smi in smiles]
+        if len(set(smiles)) != len(set(canonicalized_smiles)):
+            SMILES = pd.Series(canonicalized_smiles)
+            identical_bool = SMILES.duplicated(keep=False)
+            dup_SMILES = SMILES[identical_bool]
+
+            index_list = []
+            if identical_bool.any():
+                for i1, (index1, smiles1) in enumerate(dup_SMILES.items()):
+                    temp = [index1]
+                    for i2, (index2, smiles2) in enumerate(dup_SMILES.items()):
+                        if i1 != i2 and smiles1 == smiles2:
+                            temp.append(index2)
+
+                    temp.sort()
+                    if temp not in index_list:
+                        index_list.append(temp)
+
+            raise ValueError(
+                f"Duplicate molecules found at indexes {index_list} in the `smiles` list"
+            )
+        return smiles
 
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
     ) -> pd.Series:
         for smi in values:
             smiles2mol(smi)
+
+        if set(values.unique()) - set(self.smiles):
+            raise ValueError(
+                f"SMILES string(s) {set(values.unique()) - set(self.smiles)} in the experiments is not in the list of smiles provided to the MolecularInput"
+            )
+
         return values
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
@@ -82,6 +126,9 @@ class MolecularInput(Input):
         Returns:
             pd.DataFrame: tabular overview of the feature as DataFrame
         """
+        if self.descriptor_values is None:
+            self.generate_descriptor_values()
+
         data = {smi: values for smi, values in zip(self.smiles, self.descriptor_values)}
         return pd.DataFrame.from_dict(
             data, orient="index", columns=self.molfeatures.descriptors

@@ -3,10 +3,10 @@ from typing import List
 import gpytorch
 import torch
 from gpytorch.kernels import Kernel as GpytorchKernel
-from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 import bofire.data_models.kernels.api as data_models
 import bofire.priors.api as priors
+from bofire.kernels.fingerprint_kernels.tanimoto_kernel import TanimotoKernel
 
 
 def map_RBFKernel(

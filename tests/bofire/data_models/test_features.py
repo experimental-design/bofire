@@ -5,10 +5,11 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 from pydantic.error_wrappers import ValidationError
+from rdkit.Chem import Descriptors
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -20,6 +21,12 @@ from bofire.data_models.features.api import (
     Feature,
     MolecularInput,
     Output,
+)
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+    MordredDescriptors,
 )
 from bofire.data_models.objectives.api import MinimizeObjective, Objective
 from bofire.data_models.surrogates.api import ScalerEnum
@@ -1456,6 +1463,76 @@ def test_inputs_get_transform_info(
 
 
 @pytest.mark.parametrize(
+    "specs, molfeatures, expected_features2idx, expected_features2names",
+    [
+        (
+            {"x1": MolecularEncodingEnum.FINGERPRINTS},
+            Fingerprints(n_bits=2048),
+            {"x1": tuple(range(2048))},
+            {
+                "x1": tuple(f"x1_fingerprint_{i}" for i in range(2048)),
+            },
+        ),
+        (
+            {"x1": MolecularEncodingEnum.FRAGMENTS},
+            Fragments(),
+            {"x1": tuple(range(84))},
+            {
+                "x1": tuple(
+                    f"x1_{i}"
+                    for i in [fragment[0] for fragment in Descriptors.descList[124:]]
+                ),
+            },
+        ),
+        (
+            {"x1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
+            FingerprintsFragments(n_bits=2048),
+            {"x1": tuple(range(2048 + 84))},
+            {
+                "x1": tuple(
+                    [f"x1_fingerprint_{i}" for i in range(2048)]
+                    + [
+                        f"x1_{i}"
+                        for i in [
+                            fragment[0] for fragment in Descriptors.descList[124:]
+                        ]
+                    ]
+                ),
+            },
+        ),
+        (
+            {"x1": MolecularEncodingEnum.MOL_DESCRIPTOR},
+            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            {"x1": (0, 1)},
+            {
+                "x1": (
+                    "x1_NssCH2",
+                    "x1_ATSC2d",
+                ),
+            },
+        ),
+    ],
+)
+def test_inputs_get_transform_info_molecular(
+    specs, molfeatures, expected_features2idx, expected_features2names
+):
+    smiles = [
+        "C1=CCCC=CCCC=CCC1",
+        "C\\1=C\\CC/C=C\\CC/1",
+        "CCC1=CC=C(C=C1)C(C)(C)C",
+        "C=CC1CCC(C=C)C(C1)C=C",
+    ]
+    inps = Inputs(
+        features=[
+            MolecularInput(key="x1", smiles=smiles, molfeatures=molfeatures),
+        ]
+    )
+    features2idx, features2names = inps._get_transform_info(specs)
+    assert features2idx == expected_features2idx
+    assert features2names == expected_features2names
+
+
+@pytest.mark.parametrize(
     "specs",
     [
         ({"x2": CategoricalEncodingEnum.ONE_HOT}),
@@ -1494,6 +1571,46 @@ def test_inputs_transform(specs):
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
+        ]
+    )
+    samples = inps.sample(n=100)
+    samples = samples.sample(40)
+    transformed = inps.transform(experiments=samples, specs=specs)
+    untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
+    assert_frame_equal(samples, untransformed)
+
+
+@pytest.mark.parametrize(
+    "specs, molfeatures",
+    [
+        (
+            {"x1": MolecularEncodingEnum.FINGERPRINTS},
+            Fingerprints(n_bits=2048),
+        ),
+        (
+            {"x1": MolecularEncodingEnum.FRAGMENTS},
+            Fragments(),
+        ),
+        (
+            {"x1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
+            FingerprintsFragments(n_bits=2048),
+        ),
+        (
+            {"x1": MolecularEncodingEnum.MOL_DESCRIPTOR},
+            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        ),
+    ],
+)
+def test_inputs_transform_molecular(specs, molfeatures):
+    smiles = [
+        "C1=CCCC=CCCC=CCC1",
+        "C\\1=C\\CC/C=C\\CC/1",
+        "CCC1=CC=C(C=C1)C(C)(C)C",
+        "C=CC1CCC(C=C)C(C1)C=C",
+    ]
+    inps = Inputs(
+        features=[
+            MolecularInput(key="x1", smiles=smiles, molfeatures=molfeatures),
         ]
     )
     samples = inps.sample(n=100)

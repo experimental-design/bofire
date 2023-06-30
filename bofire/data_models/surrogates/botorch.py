@@ -4,15 +4,15 @@ from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEn
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
-    NumericalInput,
     MolecularInput,
+    NumericalInput,
 )
-from bofire.data_models.molfeatures.api import (
+from bofire.data_models.molfeatures.api import (  # BagOfCharacters
     Fingerprints,
-    Fragments,
     FingerprintsFragments,
+    Fragments,
     MordredDescriptors,
-)  # BagOfCharacters
+)
 from bofire.data_models.surrogates.surrogate import Surrogate
 
 
@@ -51,7 +51,6 @@ class BotorchSurrogate(Surrogate):
                 )
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in molecular_keys:
-            # if v.get(key, MolecularEncodingEnum.FINGERPRINTS) not in [
             mol_encoding = v.get(key)
             if mol_encoding not in [
                 MolecularEncodingEnum.FINGERPRINTS,
@@ -85,7 +84,4 @@ class BotorchSurrogate(Surrogate):
                         raise ValueError(
                             f"The molecular feature type selected ({feat.molfeatures.type}) for '{feat.key}' is not the same as the molecular encoding type chosen ({mol_encoding})"
                         )
-
-            # elif mol_encoding is None:
-            #     v[key] = MolecularEncodingEnum.FINGERPRINTS
         return v

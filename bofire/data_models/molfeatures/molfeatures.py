@@ -1,10 +1,8 @@
 from abc import abstractmethod
-from typing import Union, List, Optional
+from typing import Optional
 
-from pydantic import validator
-
-import numpy as np
 import pandas as pd
+from pydantic import validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.features.feature import TDescriptors

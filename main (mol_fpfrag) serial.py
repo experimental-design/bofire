@@ -1,6 +1,8 @@
 import os
+
 # os.chdir(r'C:\Users\S31015\python_projects\bofire\bofire')
 import sys
+
 # appending a path
 # sys.path.append(r'C:\Users\S31015\python_projects\bofire\bofire')
 
@@ -26,51 +28,50 @@ from pydantic import parse_obj_as
 import json
 
 
-project_name = 'ester_molecule_prediction'
+project_name = "ester_molecule_prediction"
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     # XY_data_df['exp_fp'] = XY_data_df['exp_fp'].astype(float)
     names = [
-        '(1E,5E,9Z)-1,5,9-cyclododecatriene',
-        '(1Z,5Z)-1,5-cyclooctadiene',
-        '1-(1,1-dimethylethyl)-4-ethylbenzene',
-        '1,2,4-triethenylcyclohexane',
+        "(1E,5E,9Z)-1,5,9-cyclododecatriene",
+        "(1Z,5Z)-1,5-cyclooctadiene",
+        "1-(1,1-dimethylethyl)-4-ethylbenzene",
+        "1,2,4-triethenylcyclohexane",
         # '1,4-dioxacyclohexadecane-5,16-dione',
         # '2,2-bis(1-methylethyl)-1,3-dioxolane',
         # '2,4-dimethyl-3-pentanamine',
         # '2,4-dimethyl-3-pentanol',
     ]
     smiles = [
-        'C1=CCCC=CCCC=CCC1',
-        'C\\1=C\\CC/C=C\\CC/1',
-        'CCC1=CC=C(C=C1)C(C)(C)C',
-        'C=CC1CCC(C=C)C(C1)C=C',
+        "C1=CCCC=CCCC=CCC1",
+        "C\\1=C\\CC/C=C\\CC/1",
+        "CCC1=CC=C(C=C1)C(C)(C)C",
+        "C=CC1CCC(C=C)C(C1)C=C",
         # 'O=C1OCCOC(CCCCCCCCCC1)=O',
         # 'CC(C)C1(OCCO1)C(C)C',
         # 'CC(C(C(C)C)N)C',
         # 'CC(C)C(O)C(C)C',
     ]
     experiments = [
-        ['C1=CCCC=CCCC=CCC1', 88.0],
-        ['C\\1=C\\CC/C=C\\CC/1', 35.0],
-        ['CCC1=CC=C(C=C1)C(C)(C)C', 69.0],
-        ['C=CC1CCC(C=C)C(C1)C=C', 69.0],
+        ["C1=CCCC=CCCC=CCC1", 88.0],
+        ["C\\1=C\\CC/C=C\\CC/1", 35.0],
+        ["CCC1=CC=C(C=C1)C(C)(C)C", 69.0],
+        ["C=CC1CCC(C=C)C(C1)C=C", 69.0],
         # ['1,4-dioxacyclohexadecane-5,16-dione', 298.15, 'B', 165.0],
         # ['2,2-bis(1-methylethyl)-1,3-dioxolane', 298.15, 'A', 48.0],
         # ['2,4-dimethyl-3-pentanamine', 298.15, 'B', 20.0],
         # ['2,4-dimethyl-3-pentanol', 298.15, 'A', 42.0]
     ]
-    X_columns = ['molecule']
-    Y_columns = ['target']
+    X_columns = ["molecule"]
+    Y_columns = ["target"]
 
     experiments = pd.DataFrame(experiments, columns=X_columns + Y_columns)
     experiments[f"valid_target"] = 1
 
-    mordred_descriptors = ['NssCH2','ATSC2d']
+    mordred_descriptors = ["NssCH2", "ATSC2d"]
 
     in1 = dm_features.MolecularInput(
-        key='molecule',
+        key="molecule",
         # categories=names,
         smiles=smiles,
         # molfeatures=dm_molfeatures.Fingerprints(),
@@ -87,8 +88,14 @@ if __name__ == '__main__':
     input_jspec = input_features.json()
     input_loaded_jspec = parse_obj_as(dm_domain.Inputs, json.loads(input_jspec))
 
-    output_features = dm_domain.Outputs(features=[dm_features.ContinuousOutput(key='target', objective=dm_objectives.MaximizeObjective(w=1.0))])
-    
+    output_features = dm_domain.Outputs(
+        features=[
+            dm_features.ContinuousOutput(
+                key="target", objective=dm_objectives.MaximizeObjective(w=1.0)
+            )
+        ]
+    )
+
     output_jspec = output_features.json()
     output_loaded_jspec = parse_obj_as(dm_domain.Outputs, json.loads(output_jspec))
 
@@ -101,19 +108,18 @@ if __name__ == '__main__':
     # )
 
     surrogate_data = dm_surrogates.SingleTaskGPSurrogate(
-                        inputs=input_features,
-                    outputs=output_features,
-                    # scaler=dm_surrogates.ScalerEnum.NORMALIZE,
-                    scaler=dm_surrogates.ScalerEnum.IDENTITY,
-                    kernel=dm_kernels.ScaleKernel(base_kernel=dm_kernels.TanimotoKernel()),
+        inputs=input_features,
+        outputs=output_features,
+        # scaler=dm_surrogates.ScalerEnum.NORMALIZE,
+        scaler=dm_surrogates.ScalerEnum.IDENTITY,
+        kernel=dm_kernels.ScaleKernel(base_kernel=dm_kernels.TanimotoKernel()),
         input_preprocessing_specs={
             # 'molecule': MolecularEncodingEnum.FINGERPRINTS,
             # 'molecule': MolecularEncodingEnum.FRAGMENTS,
             # 'molecule': MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
-            'molecule': MolecularEncodingEnum.MOL_DESCRIPTOR,
-        }
-                    ,
-                )
+            "molecule": MolecularEncodingEnum.MOL_DESCRIPTOR,
+        },
+    )
 
     jspec = surrogate_data.json()
 
@@ -129,7 +135,6 @@ if __name__ == '__main__':
     # transform to spec
     predictions = surrogate.to_predictions(predictions=df_predictions)
 
-
     surrogate_data = parse_obj_as(dm_surrogates.AnySurrogate, json.loads(jspec))
     surrogate2 = surrogates_api.map(surrogate_data)
     surrogate2.loads(dump)
@@ -140,4 +145,4 @@ if __name__ == '__main__':
     predictions2 = surrogate2.to_predictions(predictions=df_predictions2)
 
     # check for equality
-    predictions==predictions2
+    predictions == predictions2

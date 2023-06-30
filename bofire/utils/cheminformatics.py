@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 
 try:
+    from mordred import Calculator, descriptors
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
     from sklearn.feature_extraction.text import CountVectorizer
-    from mordred import Calculator, descriptors
 except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
@@ -41,8 +41,8 @@ def smiles2fingerprints(
 
     Args:
         smiles (List[str]): List of smiles
-        bond_radius (int, optional): Bond radius to use. Defaults to 5.
-        n_bits (int, optional): Number of bits. Defaults to 2048.
+        bond_radius (int, optional): Bond radius to use. Defaults to 3.
+        n_bits (int, optional): Number of bits. Defaults to 1024.
 
     Returns:
         np.ndarray: Numpy array holding the fingerprints
@@ -108,12 +108,6 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
         for col in descriptors_df.columns
     ]
     if any(nan_list):
-        # if drop_nan:
-        #     nan_row_mask = (~np.isnan(descriptors_df.values.astype(float)).any(axis=1))
-        #     descriptors_df = descriptors_df[nan_row_mask]
-        #     print(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])} for {(np.array(smiles)[~nan_row_mask]).tolist()}. Dropped these molecules')
-        # else:
-        #     raise ValueError(f'Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}')
         raise ValueError(
             f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"
         )
@@ -121,8 +115,10 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     return descriptors_df.astype(float).values
 
 
-def smiles2fragments_fingerprints(smiles: List[str]) -> np.ndarray:
-    fingerprints = smiles2fingerprints(smiles)
+def smiles2fragments_fingerprints(
+    smiles: List[str], bond_radius: int = 5, n_bits: int = 2048
+) -> np.ndarray:
+    fingerprints = smiles2fingerprints(smiles, bond_radius=bond_radius, n_bits=n_bits)
     fragments = smiles2fragments(smiles)
 
     return np.hstack((fingerprints, fragments))

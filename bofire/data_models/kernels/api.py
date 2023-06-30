@@ -15,11 +15,8 @@ from bofire.data_models.kernels.continuous import (
     MaternKernel,
     RBFKernel,
 )
-from bofire.data_models.kernels.molecular import (
-    MolecularKernel,
-    TanimotoKernel,
-)
 from bofire.data_models.kernels.kernel import Kernel
+from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
 
 AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
 

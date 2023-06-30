@@ -12,8 +12,8 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
 from bofire.data_models.enum import (
     CategoricalEncodingEnum,
-    SamplingMethodEnum,
     MolecularEncodingEnum,
+    SamplingMethodEnum,
 )
 from bofire.data_models.features.api import (
     _CAT_SEP,
@@ -26,9 +26,9 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
     Input,
+    MolecularInput,
     Output,
     TInputTransformSpecs,
-    MolecularInput,
 )
 from bofire.data_models.objectives.api import AbstractObjective, Objective
 
@@ -478,7 +478,7 @@ class Inputs(Features):
             > 0
         ):
             raise ValueError("Unknown features specified in transform specs.")
-        # next check that all values are of type CategoricalEncodingEnum
+        # next check that all values are of type CategoricalEncodingEnum or MolecularEncodingEnum
         if not (
             all(
                 isinstance(enc, CategoricalEncodingEnum)
@@ -488,18 +488,29 @@ class Inputs(Features):
         ):
             raise ValueError("Unknown transform specified.")
         # next check that only Categoricalwithdescriptor have the value DESCRIPTOR
-        descriptor_keys = [
-            key
-            for key, value in specs.items()
-            if value == CategoricalEncodingEnum.DESCRIPTOR
-            if value == MolecularEncodingEnum.FINGERPRINTS
-            if value == MolecularEncodingEnum.FRAGMENTS
-            # if value == MolecularEncodingEnum.BAG_CHAR
-            if value == MolecularEncodingEnum.MOL_DESCRIPTOR
-        ]
-
+        # descriptor_keys = [key
+        #     for key, value in specs.items()
+        #     if value == CategoricalEncodingEnum.DESCRIPTOR
+        #     if value == MolecularEncodingEnum.FINGERPRINTS
+        #     if value == MolecularEncodingEnum.FRAGMENTS
+        #     # if value == MolecularEncodingEnum.BAG_CHAR
+        #     if value == MolecularEncodingEnum.MOL_DESCRIPTOR
+        # ]
+        descriptor_keys = []
+        for key, value in specs.items():
+            if (
+                value == CategoricalEncodingEnum.DESCRIPTOR
+                or value == MolecularEncodingEnum.FINGERPRINTS
+                or value == MolecularEncodingEnum.FRAGMENTS
+                or value == MolecularEncodingEnum.MOL_DESCRIPTOR
+            ):
+                descriptor_keys.append(key)
         if (
-            len(set(descriptor_keys) - set(self.get_keys(CategoricalDescriptorInput)))
+            len(
+                set(descriptor_keys)
+                - set(self.get_keys(CategoricalDescriptorInput))
+                - set(self.get_keys(MolecularInput))
+            )
             > 0
         ):
             raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")

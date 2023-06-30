@@ -593,7 +593,6 @@ def test_check_nchoosek_constraints_as_bounds():
         ],
     )
     with pytest.raises(ValueError):
-
         check_nchoosek_constraints_as_bounds(domain)  # FIXME: should be allowed
 
     # Not allowed: names parameters of two NChooseK overlap
