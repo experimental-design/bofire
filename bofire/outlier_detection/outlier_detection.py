@@ -63,7 +63,12 @@ class IterativeTrimming(OutlierDetection):
             # make prediction
             pred = model.predict(experiments)
             d_sq = (
-                (experiments["y"] - pred["y_pred"]) ** 2 / pred["y_sd"] ** 2
+                (
+                    experiments[self.base_gp.outputs.get_keys()[0]]
+                    - pred[self.base_gp.outputs.get_keys()[0] + "_pred"]
+                )
+                ** 2
+                / pred[self.base_gp.outputs.get_keys()[0] + "_sd"] ** 2
             ).ravel()
 
             niter += 1
