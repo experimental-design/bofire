@@ -40,6 +40,7 @@ from bofire.data_models.surrogates.api import ScalerEnum
 
 objective = MinimizeObjective(w=1)
 
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 @pytest.mark.parametrize(
     "spec, n",
@@ -1468,7 +1469,7 @@ def test_inputs_get_transform_info(
     assert features2idx == expected_features2idx
     assert features2names == expected_features2names
 
-
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "specs, molfeatures, expected_features2idx, expected_features2names",
     [
@@ -1587,6 +1588,7 @@ def test_inputs_transform(specs):
     assert_frame_equal(samples, untransformed)
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "specs, molfeatures",
     [

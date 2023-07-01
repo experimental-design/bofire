@@ -488,14 +488,6 @@ class Inputs(Features):
         ):
             raise ValueError("Unknown transform specified.")
         # next check that only Categoricalwithdescriptor have the value DESCRIPTOR
-        # descriptor_keys = [key
-        #     for key, value in specs.items()
-        #     if value == CategoricalEncodingEnum.DESCRIPTOR
-        #     if value == MolecularEncodingEnum.FINGERPRINTS
-        #     if value == MolecularEncodingEnum.FRAGMENTS
-        #     # if value == MolecularEncodingEnum.BAG_CHAR
-        #     if value == MolecularEncodingEnum.MOL_DESCRIPTOR
-        # ]
         descriptor_keys = []
         for key, value in specs.items():
             if (

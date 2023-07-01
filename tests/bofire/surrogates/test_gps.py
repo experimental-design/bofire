@@ -43,6 +43,7 @@ from bofire.data_models.surrogates.api import (
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 @pytest.mark.parametrize(
     "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices, expected_offset, expected_coefficient",
@@ -237,7 +238,7 @@ smiles = [
     "N[C@](C)(F)C(=O)O",
 ]
 
-
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "input_feature, kernel, scaler, specs",
     [
@@ -339,6 +340,7 @@ def test_SingleTaskGPModel_molecular(input_feature, kernel, scaler, specs):
     assert_frame_equal(preds, preds2)
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "input_feature, scaler, specs",
     [
@@ -395,6 +397,7 @@ def test_SingleTaskGPModel_molecular_invalid_input_preprocessing_specs(
         )
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "molfeatures, kernel, specs",
     [
@@ -430,6 +433,7 @@ def test_SingleTaskGPModel_molecular_invalid_kernel(molfeatures, kernel, specs):
         )
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "molfeatures, scaler, specs",
     [
