@@ -1,7 +1,14 @@
 import base64
+import warnings
 from typing import List, Union
 
-import cloudpickle
+try:
+    import cloudpickle
+except ModuleNotFoundError:
+    warnings.warn(
+        "Cloudpickle is not available. CustomSoboStrategy's `f` cannot be dumped or loaded."
+    )
+
 import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
@@ -141,6 +148,7 @@ class CustomSoboStrategy(SoboStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
+        self.use_output_constraints = data_model.use_output_constraints
         if data_model.dump is not None:
             self.loads(data_model.dump)
         else:
@@ -149,10 +157,25 @@ class CustomSoboStrategy(SoboStrategy):
     def _get_objective(self) -> GenericMCObjective:
         if self.f is None:
             raise ValueError("No function has been provided for the strategy")
+
+        if (
+            self.use_output_constraints
+            and len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0
+        ):
+            constraints, etas = get_output_constraints(outputs=self.domain.outputs)
+            objective = get_custom_botorch_objective(
+                outputs=self.domain.outputs, f=self.f, exclude_constraints=True
+            )
+            return ConstrainedMCObjective(
+                objective=objective,  # type: ignore
+                constraints=constraints,
+                eta=torch.tensor(etas).to(**tkwargs),
+                infeasible_cost=self.get_infeasible_cost(objective=objective),
+            )
+
         return GenericMCObjective(
             objective=get_custom_botorch_objective(
-                outputs=self.domain.outputs,
-                f=self.f,
+                outputs=self.domain.outputs, f=self.f, exclude_constraints=False
             )
         )
 

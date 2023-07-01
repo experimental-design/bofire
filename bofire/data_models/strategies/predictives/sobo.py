@@ -66,4 +66,5 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy):
 
 class CustomSoboStrategy(SoboBaseStrategy):
     type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
+    use_output_constraints: bool = True
     dump: Optional[str] = None

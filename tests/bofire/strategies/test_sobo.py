@@ -223,18 +223,41 @@ def test_custom_dumps_loads():
 
     benchmark = DTLZ2(3)
     data_model1 = data_models.CustomSoboStrategy(
-        domain=benchmark.domain, acquisition_function=qNEI()
+        domain=benchmark.domain,
+        acquisition_function=qNEI(),
+        use_output_constraints=False,
     )
     strategy1 = CustomSoboStrategy(data_model=data_model1)
     strategy1.f = f
     f_str = strategy1.dumps()
 
     data_model2 = data_models.CustomSoboStrategy(
-        domain=benchmark.domain, acquisition_function=qNEI()
+        domain=benchmark.domain,
+        acquisition_function=qNEI(),
+        use_output_constraints=False,
+        dump=f_str,
     )
     strategy2 = CustomSoboStrategy(data_model=data_model2)
-    strategy2.loads(f_str)
+
+    data_model3 = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy3 = CustomSoboStrategy(data_model=data_model3)
+    strategy3.loads(f_str)
+
     assert isinstance(strategy2.f, type(f))
+    assert isinstance(strategy3.f, type(f))
+
+    samples = torch.rand(30, 2, requires_grad=True) * 5
+    objective1 = strategy1._get_objective()
+    output1 = objective1.forward(samples)
+    objective2 = strategy2._get_objective()
+    output2 = objective2.forward(samples)
+    objective3 = strategy3._get_objective()
+    output3 = objective3.forward(samples)
+
+    torch.testing.assert_close(output1, output2)
+    torch.testing.assert_close(output1, output3)
 
 
 def test_custom_dumps_invalid():

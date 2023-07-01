@@ -103,49 +103,93 @@ def test_get_objective_callable(objective):
     )
 
 
-def test_get_custom_botorch_objective():
-    def f(samples, callables, weights, X):
-        outputs_list = []
-        for c, w in zip(callables, weights):
-            outputs_list.append(c(samples, None) ** w)
-        samples = torch.stack(outputs_list, dim=-1)
+def f1(samples, callables, weights, X):
+    outputs_list = []
+    for c, w in zip(callables, weights):
+        outputs_list.append(c(samples, None) ** w)
+    samples = torch.stack(outputs_list, dim=-1)
 
-        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+    return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
-    (obj1, obj2) = random.choices(
-        [
-            MaximizeObjective(w=0.5),
-            MaximizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
-            MinimizeObjective(w=1),
-            MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
-            TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
-            CloseToTargetObjective(target_value=2.0, exponent=1.0, w=1.0),
-        ],
-        k=2,
+
+def f2(samples, callables, weights, X):
+    outputs_list = []
+    for c, w in zip(callables, weights):
+        outputs_list.append(c(samples, None) ** w)
+    samples = torch.stack(outputs_list, dim=-1)
+
+    return (
+        (samples[..., 0] + samples[..., 1])
+        * (samples[..., 0] * samples[..., 1])
+        * (samples[..., 0] * samples[..., 2])
     )
+
+
+@pytest.mark.parametrize("f, exclude_constraints", [(f1, True), (f2, False)])
+def test_get_custom_botorch_objective(f, exclude_constraints):
+    samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    obj1 = MaximizeObjective(w=1.0)
+    obj2 = MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=1.0)
+    obj3 = CloseToTargetObjective(w=1.0, target_value=2, exponent=1)
     outputs = Outputs(
         features=[
-            ContinuousOutput(key="alpha", objective=obj1),
-            ContinuousOutput(key="beta", objective=obj2),
+            ContinuousOutput(
+                key="alpha",
+                objective=obj1,
+            ),
+            ContinuousOutput(
+                key="beta",
+                objective=obj2,
+            ),
+            ContinuousOutput(
+                key="gamma",
+                objective=obj3,
+            ),
         ]
     )
-
-    objective = get_custom_botorch_objective(outputs, f=f)
+    objective = get_custom_botorch_objective(
+        outputs, f=f, exclude_constraints=exclude_constraints
+    )
     generic_objective = GenericMCObjective(objective=objective)
-    samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
-    a_samples = samples.detach().numpy()
     objective_forward = generic_objective.forward(samples)
+
     # calc with numpy
     reward1 = obj1(a_samples[:, 0])
     reward2 = obj2(a_samples[:, 1])
+    reward3 = obj3(a_samples[:, 2])
     # do the comparison
     assert np.allclose(
-        # objective.reward(samples, desFunc)[0].detach().numpy(),
-        (reward1**obj1.w + reward2**obj2.w)
-        * (reward1**obj1.w * reward2**obj2.w),
+        (reward1**obj1.w + reward3**obj3.w)
+        * (reward1**obj1.w * reward3**obj3.w)
+        if exclude_constraints
+        else (reward1**obj1.w + reward2**obj2.w)
+        * (reward1**obj1.w * reward2**obj2.w)
+        * (reward1**obj1.w * reward3**obj3.w),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
+    if exclude_constraints:
+        constraints, etas = get_output_constraints(outputs=outputs)
+        generic_objective = ConstrainedMCObjective(
+            objective=objective,
+            constraints=constraints,
+            eta=torch.tensor(etas).to(**tkwargs),
+        )
+        objective_forward = generic_objective.forward(samples)
+        assert np.allclose(
+            np.clip(
+                (
+                    (reward1**obj1.w + reward3**obj3.w)
+                    * (reward1**obj1.w * reward3**obj3.w)
+                )
+                * reward2,
+                0,
+                None,
+            ),
+            objective_forward.detach().numpy(),
+            rtol=1e-06,
+        )
 
 
 def test_get_multiplicative_botorch_objective():
