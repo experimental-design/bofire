@@ -118,7 +118,7 @@ def map_TanimotoKernel(
 ) -> TanimotoKernel:
     return TanimotoKernel(
         batch_shape=batch_shape,
-        ard_num_dims=ard_num_dims if data_model.ard else None,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
     )
 

@@ -38,4 +38,5 @@ AnyKernel = Union[
     LinearKernel,
     MaternKernel,
     RBFKernel,
+    TanimotoKernel,
 ]

@@ -1,8 +1,14 @@
 from typing import Literal
 
-from pydantic import Field, validator
+from pydantic import Field, root_validator
 
+from bofire.data_models.features.api import MolecularInput
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, ScaleKernel
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+)
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
@@ -29,8 +35,8 @@ class SingleTaskGPSurrogate(BotorchSurrogate):
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
-    @validator("scaler")
-    def validate_scaler(cls, v, values):
+    @root_validator
+    def validate_scaler_and_kernel(cls, values):
         # Identify if TanimotoKernel is used at any point in the kernel
         def dict_generator(dic, pre=None):
             pre = pre[:] if pre else []
@@ -47,10 +53,34 @@ class SingleTaskGPSurrogate(BotorchSurrogate):
                 yield pre + [dic]
 
         dict_lists = dict_generator(values["kernel"].dict())
+        tanimoto_bool_list = []
         for l in dict_lists:
             if "TanimotoKernel" in l:
-                if v != ScalerEnum.IDENTITY:
-                    raise ValueError(
-                        "Must use ScalerEnum.IDENTITY when using TanimotoKernel"
-                    )
-        return v
+                tanimoto_bool_list.append(True)
+            else:
+                tanimoto_bool_list.append(False)
+
+        molfeatures_list = [
+            i.molfeatures for i in values["inputs"].get(MolecularInput).features
+        ]
+
+        if any(tanimoto_bool_list):
+            if values["scaler"] != ScalerEnum.IDENTITY:
+                raise ValueError("Use ScalerEnum.IDENTITY when using TanimotoKernel")
+
+        if any(
+            [
+                (
+                    isinstance(molfeat, Fingerprints)
+                    or isinstance(molfeat, FingerprintsFragments)
+                    or isinstance(molfeat, Fragments)
+                )
+                for molfeat in molfeatures_list
+            ]
+        ):
+            if not any(tanimoto_bool_list):
+                raise ValueError(
+                    "Use Tanimoto kernel when using fingerprints, fragments, or fingerprints_fragments molecular features"
+                )
+
+        return values

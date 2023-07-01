@@ -13,11 +13,6 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
-    smiles2fingerprints,
-    smiles2fragments,
-    smiles2mordred,
-)
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
