@@ -13,6 +13,7 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_smiles2mol():
     # invalid

@@ -1,3 +1,4 @@
+import importlib
 import random
 import warnings
 
@@ -41,6 +42,7 @@ from bofire.data_models.surrogates.api import ScalerEnum
 objective = MinimizeObjective(w=1)
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
+
 
 @pytest.mark.parametrize(
     "spec, n",
@@ -1468,6 +1470,7 @@ def test_inputs_get_transform_info(
     features2idx, features2names = inps._get_transform_info(specs)
     assert features2idx == expected_features2idx
     assert features2names == expected_features2names
+
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(

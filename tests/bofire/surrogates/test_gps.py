@@ -1,3 +1,5 @@
+import importlib
+
 import pandas as pd
 import pytest
 import torch
@@ -44,6 +46,7 @@ from bofire.surrogates.single_task_gp import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
+
 
 @pytest.mark.parametrize(
     "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices, expected_offset, expected_coefficient",
@@ -237,6 +240,7 @@ smiles = [
     "[CH3][CH2][OH]",
     "N[C@](C)(F)C(=O)O",
 ]
+
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
