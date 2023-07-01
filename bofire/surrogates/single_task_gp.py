@@ -25,18 +25,20 @@ from bofire.utils.torch_tools import tkwargs
 
 def get_scaler(
     inputs: Inputs,
-    input_preprocessing_specs: Dict[str, CategoricalEncodingEnum],
+    input_preprocessing_specs: Dict[
+        str, Union[CategoricalEncodingEnum, MolecularEncodingEnum]
+    ],
     scaler: ScalerEnum,
     X: pd.DataFrame,
-) -> Union[InputStandardize, Normalize]:
+) -> Union[InputStandardize, Normalize, None]:
     """Returns the instanitated scaler object for a set of input features and
     input_preprocessing_specs.
 
 
     Args:
         inputs (Inputs): Input features.
-        input_preprocessing_specs (Dict[str, CategoricalEncodingEnum]): Dictionary how to treat
-            the categoricals.
+        input_preprocessing_specs (Dict[str, Union[CategoricalEncodingEnum, MolecularEncodingEnum]]): Dictionary how to treat
+            the categoricals and/or molecules.
         scaler (ScalerEnum): Enum indicating the scaler of interest.
         X (pd.DataFrame): The dataset of interest.
 

@@ -3,7 +3,7 @@ from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import Field, validator
 
 from bofire.data_models.features.categorical import _CAT_SEP, TTransform
 from bofire.data_models.features.feature import Input, TMolecularVals, TSmiles
@@ -22,7 +22,7 @@ class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
     smiles: TSmiles
     molfeatures: AnyMolFeatures
-    descriptor_values: Optional[TMolecularVals] = None
+    descriptor_values: TMolecularVals = Field(default_factory=list)
     order: ClassVar[int] = 6
 
     @validator("smiles")
@@ -51,7 +51,6 @@ class MolecularInput(Input):
                     for i2, (index2, smiles2) in enumerate(dup_SMILES.items()):
                         if i1 != i2 and smiles1 == smiles2:
                             temp.append(index2)
-
                     temp.sort()
                     if temp not in index_list:
                         index_list.append(temp)
@@ -107,7 +106,7 @@ class MolecularInput(Input):
     def get_bounds(
         self, transform_type: TTransform, values: pd.Series
     ) -> Tuple[List[float], List[float]]:
-        if self.descriptor_values is None:
+        if len(self.descriptor_values) == 0:
             self.generate_descriptor_values()
 
         if values is None:
@@ -126,10 +125,10 @@ class MolecularInput(Input):
         Returns:
             pd.DataFrame: tabular overview of the feature as DataFrame
         """
-        if self.descriptor_values is None:
+        if len(self.descriptor_values) == 0:
             self.generate_descriptor_values()
 
-        data = {smi: values for smi, values in zip(self.smiles, self.descriptor_values)}
+        data = dict(zip(self.smiles, self.descriptor_values))
         return pd.DataFrame.from_dict(
             data, orient="index", columns=self.molfeatures.descriptors
         )
@@ -143,12 +142,12 @@ class MolecularInput(Input):
         Returns:
             pd.DataFrame: Descriptor encoded dataframe.
         """
-        if self.descriptor_values is None:
+        if len(self.descriptor_values) == 0:
             self.generate_descriptor_values()
 
         return pd.DataFrame(
             data=values.map(
-                {smi: value for smi, value in zip(self.smiles, self.descriptor_values)}
+                dict(zip(self.smiles, self.descriptor_values))
             ).values.tolist(),
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.molfeatures.descriptors],
             index=values.index,

@@ -1,11 +1,18 @@
 import random
+import warnings
 
 import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 from pydantic.error_wrappers import ValidationError
-from rdkit.Chem import Descriptors
+
+try:
+    from rdkit.Chem import Descriptors
+except ImportError:
+    warnings.warn(
+        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
+    )
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs

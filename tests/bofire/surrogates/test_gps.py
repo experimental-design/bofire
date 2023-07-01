@@ -35,7 +35,6 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.molfeatures.types import MordredDescriptors
 from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
     ScalerEnum,

@@ -54,8 +54,8 @@ class SingleTaskGPSurrogate(BotorchSurrogate):
 
         dict_lists = dict_generator(values["kernel"].dict())
         tanimoto_bool_list = []
-        for l in dict_lists:
-            if "TanimotoKernel" in l:
+        for dict_item in dict_lists:
+            if "TanimotoKernel" in dict_item:
                 tanimoto_bool_list.append(True)
             else:
                 tanimoto_bool_list.append(False)
@@ -69,14 +69,12 @@ class SingleTaskGPSurrogate(BotorchSurrogate):
                 raise ValueError("Use ScalerEnum.IDENTITY when using TanimotoKernel")
 
         if any(
-            [
-                (
-                    isinstance(molfeat, Fingerprints)
-                    or isinstance(molfeat, FingerprintsFragments)
-                    or isinstance(molfeat, Fragments)
-                )
-                for molfeat in molfeatures_list
-            ]
+            (
+                isinstance(molfeat, Fingerprints)
+                or isinstance(molfeat, FingerprintsFragments)
+                or isinstance(molfeat, Fragments)
+            )
+            for molfeat in molfeatures_list
         ):
             if not any(tanimoto_bool_list):
                 raise ValueError(

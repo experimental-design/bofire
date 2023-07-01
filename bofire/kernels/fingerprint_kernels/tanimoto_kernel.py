@@ -4,11 +4,9 @@ RDKit fragment features.
 """
 # This code was copied from GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py
 
-import gpytorch
 import torch
-from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import (
-    BitKernel,
-)
+
+from bofire.kernels.fingerprint_kernels.base_fingerprint_kernel import BitKernel
 
 
 class TanimotoKernel(BitKernel):

@@ -7,7 +7,8 @@ import pandas as pd
 try:
     from mordred import Calculator, descriptors
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
-    from sklearn.feature_extraction.text import CountVectorizer
+
+    # from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."

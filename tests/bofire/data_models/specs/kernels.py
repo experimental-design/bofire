@@ -56,3 +56,9 @@ specs.add_valid(
         ]
     },
 )
+specs.add_valid(
+    kernels.TanimotoKernel,
+    lambda: {
+        "ard": True,
+    },
+)

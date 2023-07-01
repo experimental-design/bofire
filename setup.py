@@ -50,7 +50,7 @@ setup(
             "sympy>=1.12",
             sklearn_dependency,
         ],
-        "cheminfo": ["rdkit", sklearn_dependency],
+        "cheminfo": ["rdkit", sklearn_dependency, "mordred"],
         "tests": [
             "mock",
             "mopti",

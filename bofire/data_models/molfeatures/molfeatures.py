@@ -1,18 +1,17 @@
 from abc import abstractmethod
-from typing import Optional
+from typing import List
 
 import pandas as pd
-from pydantic import validator
+from pydantic import Field, validator
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.features.feature import TDescriptors
 
 
 class MolFeatures(BaseModel):
     """The base class for all molecular features"""
 
     type: str
-    descriptors: Optional[TDescriptors] = None
+    descriptors: List[str] = Field(default_factory=list)
 
     @abstractmethod
     def __call__(self, values: pd.Series) -> pd.DataFrame:
@@ -40,7 +39,6 @@ class MolFeatures(BaseModel):
             List[str]: List of the descriptors
         """
         if descriptors is not None:
-            descriptors = [name for name in descriptors]
             if len(descriptors) != len(set(descriptors)):
                 raise ValueError("descriptors must be unique")
         return descriptors

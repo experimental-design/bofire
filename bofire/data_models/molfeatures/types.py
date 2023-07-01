@@ -1,7 +1,6 @@
 import warnings
 from typing import Literal
 
-import numpy as np
 import pandas as pd
 from pydantic import root_validator
 
@@ -29,7 +28,7 @@ class Fingerprints(MolFeatures):
 
     @root_validator
     def generate_descriptor_names(cls, values):
-        if values["descriptors"] is None:
+        if len(values["descriptors"]) == 0:
             values["descriptors"] = [
                 f"fingerprint_{i}" for i in range(values["n_bits"])
             ]
@@ -50,7 +49,7 @@ class Fragments(MolFeatures):
 
     @root_validator
     def generate_descriptor_names(cls, values):
-        if values["descriptors"] is None:
+        if len(values["descriptors"]) == 0:
             values["descriptors"] = [
                 f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
             ]
@@ -71,7 +70,7 @@ class FingerprintsFragments(MolFeatures):
 
     @root_validator
     def generate_descriptor_names(cls, values):
-        if values["descriptors"] is None:
+        if len(values["descriptors"]) == 0:
             values["descriptors"] = [
                 f"fingerprint_{i}" for i in range(values["n_bits"])
             ] + [

@@ -7,8 +7,6 @@ Author: Ryan-Rhys Griffiths and Austin Tripp 2022
 import torch
 from gpytorch.kernels import Kernel
 
-# from gpytorch.kernels.kernel import default_postprocess_script
-
 
 def default_postprocess_script(x):
     return x
@@ -24,8 +22,10 @@ def batch_tanimoto_sim(
     # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
     assert x1.ndim >= 2 and x2.ndim >= 2
     dot_prod = torch.matmul(x1, torch.transpose(x2, -1, -2))
-    x1_sum = torch.sum(x1**2, dim=-1, keepdims=True)
-    x2_sum = torch.sum(x2**2, dim=-1, keepdims=True)
+    # x1_sum = torch.sum(x1**2, dim=-1, keepdims=True)
+    # x2_sum = torch.sum(x2**2, dim=-1, keepdims=True)
+    x1_sum = torch.sum(x1**2, dim=-1).unsqueeze(-1)
+    x2_sum = torch.sum(x2**2, dim=-1).unsqueeze(-1)
     return (dot_prod + eps) / (
         eps + x1_sum + torch.transpose(x2_sum, -1, -2) - dot_prod
     )
