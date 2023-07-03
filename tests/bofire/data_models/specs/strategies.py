@@ -18,6 +18,7 @@ strategy_commons = {
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
     "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
     "surrogate_specs": None,
+    "outlier_detection_specs": None,
     "seed": 42,
 }
 

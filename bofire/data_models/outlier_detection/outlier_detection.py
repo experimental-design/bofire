@@ -1,10 +1,13 @@
-from typing import Literal
+from typing import Literal, Union
 
 from pydantic import Field
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.api import (
+    MixedSingleTaskGPSurrogate,
+    SingleTaskGPSurrogate,
+)
 
 
 class OutlierDetection(BaseModel):
@@ -33,4 +36,4 @@ class IterativeTrimming(OutlierDetection):
     nsh: Annotated[int, Field(ge=1)] = 2
     ncc: Annotated[int, Field(ge=1)] = 2
     nrw: Annotated[int, Field(ge=1)] = 1
-    base_gp: SingleTaskGPSurrogate
+    base_gp: Union[SingleTaskGPSurrogate, MixedSingleTaskGPSurrogate]

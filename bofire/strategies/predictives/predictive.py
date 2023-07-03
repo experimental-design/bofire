@@ -59,7 +59,11 @@ class PredictiveStrategy(Strategy):
         return candidates
 
     def tell(
-        self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True
+        self,
+        experiments: pd.DataFrame,
+        replace: bool = False,
+        retrain: bool = True,
+        filter_outliers: bool = False,
     ):
         """This function passes new experimental data to the optimizer.
 
@@ -67,6 +71,7 @@ class PredictiveStrategy(Strategy):
             experiments (pd.DataFrame): DataFrame with experimental data
             replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
             retrain (bool, optional): If True, model(s) are retrained when new experimental data is passed to the optimizer. Defaults to True.
+            filter_outliers (bool, optional): If True, use outlier detection to get rid of outliers. Default to False.
         """
         # maybe unite the preprocessor here with the one of the parent tell
         # TODO: add self.domain.validate_experiments(self.experiments, strict=True) here to ensure variance in each feature?
@@ -77,7 +82,7 @@ class PredictiveStrategy(Strategy):
         else:
             self.add_experiments(experiments)
         if retrain and self.has_sufficient_experiments():
-            self.fit()
+            self.fit(filter_outliers=filter_outliers)
             # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
             # to fitting the models like initializing the ACQF.
             self._tell()
@@ -120,19 +125,27 @@ class PredictiveStrategy(Strategy):
         """Abstract method in which the actual prediction is happening. Has to be overwritten."""
         pass
 
-    def fit(self):
+    def fit(self, filter_outliers: bool = False):
         """Fit the model(s) to the experimental data."""
         assert (
             self.experiments is not None and len(self.experiments) > 0
         ), "No fitting data available"
         self.domain.validate_experiments(self.experiments, strict=True)
+        if filter_outliers:
+            experiments = self.filter_outliers(self.experiments)
+        else:
+            experiments = self.experiments
         # transformed = self.transformer.fit_transform(self.experiments)
-        self._fit(self.experiments)
+        self._fit(experiments)
         self.is_fitted = True
 
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):
         """Abstract method where the acutal prediction are occuring."""
+        pass
+
+    @abstractmethod
+    def filter_outliers(self, experiments: pd.DataFrame) -> pd.DataFrame:
         pass
 
     def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:

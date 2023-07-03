@@ -55,11 +55,11 @@ def generate_experiments(
         [
             {
                 **{
-                    f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)
+                    f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)  # type: ignore
                     for f in domain.get_features(ContinuousInput)
                 },
                 **{
-                    f.key: random.choice(f.values)
+                    f.key: random.choice(f.values)  # type: ignore
                     for f in domain.get_features(DiscreteInput)
                 },
                 **{
@@ -69,9 +69,9 @@ def generate_experiments(
                     ]
                 },
                 **{
-                    f.key: random.choice(f.categories)
+                    f.key: random.choice(f.categories)  # type: ignore
                     if not only_allowed_categories
-                    else random.choice(f.get_allowed_categories())
+                    else random.choice(f.get_allowed_categories())  # type: ignore
                     for f in domain.get_features(CategoricalInput)
                 },
             }
@@ -83,9 +83,9 @@ def generate_experiments(
     if force_all_categories:
         for feat in domain.get_features(CategoricalInput):
             categories = (
-                feat.categories
-                if len(feat.categories) <= row_count
-                else feat.categories[:row_count]
+                feat.categories  # type: ignore
+                if len(feat.categories) <= row_count  # type: ignore
+                else feat.categories[:row_count]  # type: ignore
             )
             experiments.loc[: len(categories) - 1, feat.key] = categories
 
@@ -97,7 +97,7 @@ def generate_candidates(domain: Domain, row_count: int = 5):
         [
             {
                 **{
-                    feat.key: random.uniform(feat.lower_bound, feat.upper_bound)
+                    feat.key: random.uniform(feat.lower_bound, feat.upper_bound)  # type: ignore
                     for feat in domain.get_features(ContinuousInput)
                 },
                 **{
@@ -113,7 +113,7 @@ def generate_candidates(domain: Domain, row_count: int = 5):
                     for k in domain.get_feature_keys(ContinuousOutput)
                 },
                 **{
-                    f.key: random.choice(f.get_allowed_categories())
+                    f.key: random.choice(f.get_allowed_categories())  # type: ignore
                     for f in domain.get_features(CategoricalInput)
                 },
             }

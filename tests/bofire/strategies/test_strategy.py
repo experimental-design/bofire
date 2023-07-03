@@ -1,6 +1,7 @@
 from typing import List
 
 import mock
+import numpy as np
 import pandas as pd
 import pytest
 from _pytest.fixtures import fixture
@@ -51,13 +52,13 @@ of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }
+    }  # type: ignore
 )
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }
+    }  # type: ignore
 )
 of3 = ContinuousOutput(key="of3", objective=None)
 
@@ -262,7 +263,7 @@ def test_strategy_set_experiments():
     experiments = generate_experiments(domain, 2)
     strategy.set_experiments(experiments=experiments)
     assert_frame_equal(strategy.experiments, experiments)
-    assert_frame_equal(strategy._experiments, experiments)
+    assert_frame_equal(strategy._experiments, experiments)  # type: ignore
     assert strategy.num_experiments == 2
 
 
@@ -291,7 +292,7 @@ def test_strategy_set_candidates():
     candidates = generate_candidates(domain, 2)
     strategy.set_candidates(candidates=candidates)
     assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
-    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
+    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])  # type: ignore
     assert strategy.num_candidates == 2
     strategy.reset_candidates()
     assert strategy.num_candidates == 0
@@ -359,6 +360,32 @@ def test_strategy_tell_replace(
         strategy.tell(experiments=experiments, replace=True)
         expected_len = len(experiments)
         assert len(strategy.experiments) == expected_len
+
+
+@pytest.mark.parametrize(
+    "domain",
+    [domain],
+)
+def test_strategy_tell_outliers(
+    domain: Domain,
+):
+    experiments = generate_experiments(domain=domain, row_count=200)
+    for key in domain.outputs.get_keys():
+        experiments.loc[:59, key] = experiments.loc[:59, key] + np.random.randn(60) * 1
+    experiments = domain.validate_experiments(experiments=experiments)
+    experiments1 = experiments.copy()
+    strategy = dummy.DummyBotorchPredictiveStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    strategy1 = dummy.DummyBotorchPredictiveStrategy(
+        data_model=dummy.DummyStrategyDataModel(domain=domain)
+    )
+    strategy.tell(experiments=experiments, filter_outliers=True)
+    assert_frame_equal(
+        experiments1, experiments
+    )  # test that experiments don't get changed outside detect_outliers
+    strategy1.tell(experiments=experiments)
+    assert str(strategy.model.state_dict()) != str(strategy1.model.state_dict())  # type: ignore # test if two fitted surrogates are different
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])

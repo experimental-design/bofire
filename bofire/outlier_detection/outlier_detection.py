@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from scipy.stats import chi2  # type: ignore
 
-from bofire.surrogates.api import SingleTaskGPSurrogate
+from bofire.surrogates.api import map
 
 
 class OutlierDetection(ABC):
@@ -25,7 +25,7 @@ class IterativeTrimming(OutlierDetection):
         super().__init__()
 
     def detect(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        model = SingleTaskGPSurrogate(data_model=self.base_gp)
+        model = map(self.base_gp)
         n = len(experiments)
         indices = experiments.index.to_numpy()
         p = 1
@@ -58,7 +58,7 @@ class IterativeTrimming(OutlierDetection):
                 break  # converged
             ix_old = ix_sub
 
-            model.fit(experiments[experiments.index.isin(indices[ix_sub])])
+            model.fit(experiments[experiments.index.isin(indices[ix_sub])])  # type: ignore
 
             # make prediction
             pred = model.predict(experiments)

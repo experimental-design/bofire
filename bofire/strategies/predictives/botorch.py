@@ -33,6 +33,7 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
+from bofire.outlier_detection.mapper import map as map_outlier
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
@@ -62,6 +63,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
         self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
+        self.outlier_detection_specs = data_model.outlier_detection_specs  # type: ignore
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -95,6 +97,18 @@ class BotorchStrategy(PredictiveStrategy):
             inputs=self.domain.inputs,  # type: ignore
             outputs=self.domain.outputs,  # type: ignore
         )
+
+    def filter_outliers(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        filtered_experiments = experiments.copy()
+        for outlier_model in self.outlier_detection_specs:  # type: ignore
+            if outlier_model is not None:
+                outlier_detector = map_outlier(outlier_model)  # type: ignore
+                _, outliers = outlier_detector.detect(filtered_experiments)
+                filtered_experiments.loc[
+                    outliers.index,
+                    f"valid_{outlier_model.base_gp.outputs.get_keys()[0]}",  # type: ignore
+                ] = 0
+        return filtered_experiments
 
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         # we are using self.model here for this purpose we have to take the transformed
@@ -299,8 +313,8 @@ class BotorchStrategy(PredictiveStrategy):
                     fixed_features=fixed_features,
                     nonlinear_inequality_constraints=nchooseks,
                     return_best_only=True,
-                    ic_generator=ic_generator,
-                    **ic_gen_kwargs,
+                    ic_generator=ic_generator,  # type: ignore
+                    **ic_gen_kwargs,  # type: ignore
                 )
         return self._postprocess_candidates(candidates=candidates)
 

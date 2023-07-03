@@ -89,7 +89,7 @@ def test_to_outputs(n_outputs):
     data_model = DummyDataModel(inputs=inputs, outputs=outputs)
     model = Dummy(data_model=data_model)
 
-    model.model = "dummymodel"
+    model.model = "dummymodel"  # type: ignore
     preds = model.predict(inputs.sample(10))
     output = model.to_predictions(preds)
     assert len(output) == n_outputs
@@ -113,5 +113,5 @@ def test_is_fitted():
     data_model = DummyDataModel(inputs=inputs, outputs=outputs)
     d = Dummy(data_model=data_model)
     assert d.is_fitted is False
-    d.model = "dummymodel"
+    d.model = "dummymodel"  # type: ignore
     assert d.is_fitted is True

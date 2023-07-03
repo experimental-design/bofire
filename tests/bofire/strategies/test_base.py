@@ -156,14 +156,14 @@ of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }
+    }  # type: ignore
 )
 
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }
+    }  # type: ignore
 )
 
 domains = [
@@ -306,9 +306,9 @@ def test_base_invalid_descriptor_method():
                     outputs=domains[0].outputs,
                     input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 )
-            ],
-            descriptor_method="FREE",
-            categorical_method="EXHAUSTIVE",
+            ],  # type: ignore
+            descriptor_method="FREE",  # type: ignore
+            categorical_method="EXHAUSTIVE",  # type: ignore
         )
 
 
@@ -647,7 +647,7 @@ def test_base_get_categorical_combinations(
 def test_base_invalid_pair_encoding_method(domain):
     with pytest.raises(ValueError):
         DummyStrategyDataModel(
-            domain=domain, categorical_encoding="ORDINAL", categorical_method="FREE"
+            domain=domain, categorical_encoding="ORDINAL", categorical_method="FREE"  # type: ignore
         )
 
 
@@ -854,6 +854,6 @@ def test_base_setup_ask():
     )
     assert ic_generator == gen_batch_initial_conditions
     assert list(ic_gen_kwargs.keys()) == ["generator"]
-    assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))
+    assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))  # type: ignore
     assert fixed_features == {}
     assert fixed_features_list is None
