@@ -1,6 +1,7 @@
-from typing import Annotated, List, Literal, Union
+from typing import List, Literal, Union
 
 from pydantic import Field, validator
+from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
