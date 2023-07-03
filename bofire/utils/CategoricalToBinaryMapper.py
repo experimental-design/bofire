@@ -65,3 +65,13 @@ def get_bounds_of_constraint(constraint: LinearConstraint, variables: Inputs):
 
     for feat in features:
         variables.get_by_keys(feat)
+
+
+def generate_mixture_constraints(keys: List[str]):
+    binary_vars = (ContinuousBinaryInput(key=x) for x in keys)
+
+    mixture_constraint = LinearEqualityConstraint(
+        features=keys, coefficients=[1 for x in range(len(keys))], rhs=1
+    )
+
+    return mixture_constraint, list(binary_vars)

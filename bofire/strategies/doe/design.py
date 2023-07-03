@@ -100,7 +100,7 @@ def find_find_local_max_ipopt_binary_naive(
         )
 
         if sampling is not None:
-            sampling.loc[:, list_keys] = one_set_of_experiments[list_keys]
+            sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
 
         current_design = find_local_max_ipopt(
             domain,
