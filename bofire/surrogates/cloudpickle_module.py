@@ -9,4 +9,4 @@ try:
     from cloudpickle import CloudPickler as Pickler  # noqa: F401
 
 except ModuleNotFoundError:
-    warnings.warn("Cloudpicke is not available.")
+    warnings.warn("Cloudpickle is not available.")
