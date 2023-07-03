@@ -70,6 +70,15 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.CustomSoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().dict(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).dict(),
+        "use_output_constraints": True,
+    },
+)
+specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
         "domain": domain.valid().obj().dict(),

@@ -124,7 +124,6 @@ def test_nchoosek_implemented():
 
 
 def test_formulas_implemented():
-
     expected_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
         "linear-and-quadratic": 10,  # 1+a+b+c+a**2+b**2+c**2+3

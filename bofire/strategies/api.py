@@ -7,6 +7,7 @@ from bofire.strategies.predictives.qnehvi import QnehviStrategy  # noqa: F401
 from bofire.strategies.predictives.qparego import QparegoStrategy  # noqa: F401
 from bofire.strategies.predictives.sobo import (  # noqa: F401
     AdditiveSoboStrategy,
+    CustomSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
