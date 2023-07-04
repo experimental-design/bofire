@@ -17,6 +17,7 @@ from bofire.strategies.random import RandomStrategy  # noqa: F401
 from bofire.strategies.samplers.polytope import PolytopeSampler  # noqa: F401
 from bofire.strategies.samplers.rejection import RejectionSampler  # noqa: F401
 from bofire.strategies.samplers.sampler import SamplerStrategy  # noqa: F401
+from bofire.strategies.stepwise.stepwise import StepwiseStrategy
 from bofire.strategies.strategy import Strategy  # noqa: F401
 
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
@@ -31,6 +32,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.PolytopeSampler: PolytopeSampler,
     data_models.RejectionSampler: RejectionSampler,
     data_models.DoEStrategy: DoEStrategy,
+    data_models.StepwiseStrategy: StepwiseStrategy,
 }
 
 

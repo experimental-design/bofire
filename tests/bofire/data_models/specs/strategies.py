@@ -124,3 +124,25 @@ specs.add_valid(
         "seed": 42,
     },
 )
+
+tempdomain = domain.valid().obj().dict()
+
+specs.add_valid(
+    strategies.StepwiseStrategy,
+    lambda: {
+        "domain": tempdomain,
+        "steps": [
+            strategies.Step(
+                strategy_data=strategies.RandomStrategy(domain=tempdomain),
+                condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
+                max_parallelism=2,
+            ).dict(),
+            strategies.Step(
+                strategy_data=strategies.QehviStrategy(domain=tempdomain),
+                condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
+                max_parallelism=2,
+            ).dict(),
+        ],
+        "seed": 42,
+    },
+)
