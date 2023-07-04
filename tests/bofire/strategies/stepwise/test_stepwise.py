@@ -6,6 +6,7 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qNEI
 from bofire.data_models.strategies.api import (
+    AlwaysTrueCondition,
     NumberOfExperimentsCondition,
     RandomStrategy,
     SoboStrategy,
@@ -14,7 +15,7 @@ from bofire.data_models.strategies.api import (
 )
 
 
-def test_StepwiseStrategy_invalid():
+def test_StepwiseStrategy_invalid_domains():
     benchmark = Himmelblau()
     domain2 = deepcopy(benchmark.domain)
     domain2.inputs[0].key = "mama"
@@ -36,6 +37,30 @@ def test_StepwiseStrategy_invalid():
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
                     condition=NumberOfExperimentsCondition(n_experiments=15),
+                    max_parallelism=2,
+                ),
+            ],
+        )
+
+
+def test_StepwiseStrategy_invalid_AlwaysTrue():
+    benchmark = Himmelblau()
+    with pytest.raises(
+        ValueError, match="`AlwaysTrueCondition` is only allowed for the last step."
+    ):
+        StepwiseStrategy(
+            domain=benchmark.domain,
+            steps=[
+                Step(
+                    strategy_data=RandomStrategy(domain=benchmark.domain),
+                    condition=AlwaysTrueCondition(),
+                    max_parallelism=-1,
+                ),
+                Step(
+                    strategy_data=SoboStrategy(
+                        domain=benchmark.domain, acquisition_function=qNEI()
+                    ),
+                    condition=NumberOfExperimentsCondition(n_experiments=10),
                     max_parallelism=2,
                 ),
             ],

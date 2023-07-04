@@ -58,3 +58,9 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
     for k, v in data.items():
         if v is not None:
             assert v == spec[k]
+
+
+def test_condition_should_be_serializable(condition_spec: Spec):
+    spec = condition_spec.typed_spec()
+    obj = condition_spec.cls(**spec)
+    assert obj.dict() == spec

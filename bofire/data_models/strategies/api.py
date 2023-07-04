@@ -19,6 +19,7 @@ from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
+    AlwaysTrueCondition,
     CombiCondition,
     NumberOfExperimentsCondition,
 )
@@ -69,4 +70,4 @@ AnySampler = Union[
     RejectionSampler,
 ]
 
-AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition]
+AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]

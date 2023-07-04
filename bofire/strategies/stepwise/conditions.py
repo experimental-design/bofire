@@ -24,6 +24,14 @@ class NumberOfExperimentsCondition(Condition):
         return n_experiments <= self.n_experiments
 
 
+class AlwaysTrueCondition(Condition):
+    def __init__(self, data_model: data_models.AlwaysTrueCondition):
+        pass
+
+    def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
+        return True
+
+
 class CombiCondition(Condition):
     def __init__(self, data_model: data_models.CombiCondition) -> None:
         self.conditions = [map(c) for c in data_model.conditions]  # type: ignore
@@ -42,12 +50,15 @@ class CombiCondition(Condition):
 CONDITION_MAP = {
     data_models.CombiCondition: CombiCondition,
     data_models.NumberOfExperimentsCondition: NumberOfExperimentsCondition,
+    data_models.AlwaysTrueCondition: AlwaysTrueCondition,
 }
 
 
 def map(
     data_model: Union[
-        data_models.CombiCondition, data_models.NumberOfExperimentsCondition
+        data_models.CombiCondition,
+        data_models.NumberOfExperimentsCondition,
+        data_models.AlwaysTrueCondition,
     ],
-) -> Union[CombiCondition, NumberOfExperimentsCondition]:
+) -> Union[CombiCondition, NumberOfExperimentsCondition, AlwaysTrueCondition]:
     return CONDITION_MAP[data_model.__class__](data_model)

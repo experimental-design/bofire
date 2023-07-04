@@ -19,10 +19,17 @@ class NumberOfExperimentsCondition(SingleCondition):
     n_experiments: Annotated[int, Field(ge=1)]
 
 
+class AlwaysTrueCondition(SingleCondition):
+    type: Literal["AlwaysTrueCondition"] = "AlwaysTrueCondition"
+
+
 class CombiCondition(Condition):
     type: Literal["CombiCondition"] = "CombiCondition"
     conditions: Annotated[
-        List[Union[NumberOfExperimentsCondition, "CombiCondition"]], Field(min_items=2)
+        List[
+            Union[NumberOfExperimentsCondition, "CombiCondition", AlwaysTrueCondition]
+        ],
+        Field(min_items=2),
     ]
     n_required_conditions: Annotated[int, Field(ge=0)]
 

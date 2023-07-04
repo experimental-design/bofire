@@ -15,6 +15,14 @@ def test_RequiredExperimentsCondition():
     assert condition.evaluate(benchmark.domain, experiments=experiments) is False
 
 
+def test_AlwaysTrueCondition():
+    benchmark = Himmelblau()
+    experiments = benchmark.f(benchmark.domain.inputs.sample(3), return_complete=True)
+    data_model = data_models.AlwaysTrueCondition()
+    condition = conditions.map(data_model=data_model)
+    assert condition.evaluate(benchmark.domain, experiments=experiments) is True
+
+
 def test_CombiCondition_invalid():
     with pytest.raises(
         ValueError,

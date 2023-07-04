@@ -19,6 +19,7 @@ from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.stepwise.conditions import (
+    AlwaysTrueCondition,
     CombiCondition,
     NumberOfExperimentsCondition,
 )
@@ -37,7 +38,7 @@ AnyStrategy = Union[
     DoEStrategy,
 ]
 
-AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition]
+AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
 
 
 class Step(BaseModel):
@@ -57,6 +58,10 @@ class StepwiseStrategy(Strategy):
             if step.strategy_data.domain != values["domain"]:
                 raise ValueError(
                     f"Domain of step {i} is incompatible to domain of StepwiseStrategy."
+                )
+            if i < len(v) - 1 and isinstance(step.condition, AlwaysTrueCondition):
+                raise ValueError(
+                    "`AlwaysTrueCondition` is only allowed for the last step."
                 )
         return v
 
