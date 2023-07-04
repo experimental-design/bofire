@@ -1,6 +1,6 @@
 import warnings
-from itertools import combinations_with_replacement, product
-from typing import Dict, List, Optional, Tuple, Union
+from itertools import combinations_with_replacement
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -33,7 +33,6 @@ def find_find_local_max_ipopt_binary_naive(
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
-    prohibited_binary_combinations: Optional[List[Tuple[int, ...]]] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
 ):
     """Function computing a d-optimal design" for a given domain and model.
@@ -70,13 +69,7 @@ def find_find_local_max_ipopt_binary_naive(
     for var in binary_vars:
         var.relax()
 
-    possible_fixations = product([0, 1], repeat=len(binary_vars))
-    if prohibited_binary_combinations is not None:
-        allowed_fixations = filter(
-            lambda x: x not in prohibited_binary_combinations, possible_fixations
-        )
-    else:
-        allowed_fixations = possible_fixations
+    allowed_fixations = np.eye(len(binary_vars))
 
     all_n_fixed_experiments = combinations_with_replacement(
         allowed_fixations, n_experiments
