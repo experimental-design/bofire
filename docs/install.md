@@ -1,14 +1,14 @@
 # Installation
 
-In Bofire we have several optional depencies.
+In BoFire we have several optional depencies.
 
 ### Domain and Optimization Algorithms
 
-To install Bofire with optimization tools you can use
+To install BoFire with optimization tools you can use
 ```
 pip install bofire[optimization]
 ```
-This will also install [Botorch](https://botorch.org/) that depends on [Pytorch](https://pytorch.org/).
+This will also install [BoTorch](https://botorch.org/) that depends on [PyTorch](https://pytorch.org/).
 ### Design of Experiments
 
 BoFire has functionality to create D-optimal experimental designs via the `doe` module. This module is depends on 

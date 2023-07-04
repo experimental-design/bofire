@@ -18,6 +18,10 @@ try:
     # in case of the minimal installation these import are not available
     from bofire.data_models.kernels.api import AnyKernel, Kernel
     from bofire.data_models.objectives.api import AnyObjective, Objective
+    from bofire.data_models.outlier_detection.api import (
+        AnyOutlierDetection,
+        OutlierDetection,
+    )
     from bofire.data_models.priors.api import AnyPrior, Prior
     from bofire.data_models.strategies.api import (
         AnyCondition,
@@ -41,6 +45,7 @@ try:
         AnyFeature,
         AnyKernel,
         AnySurrogate,
+        AnyOutlierDetection,
         AnyObjective,
         AnyPrior,
         AnyStrategy,
@@ -53,5 +58,7 @@ except ImportError:
         AnyFeature,
         Domain,
     ]
+
+AnyThing = [model for models in data_model_list for model in unions.to_list(models)]
 
 AnyThing = [model for models in data_model_list for model in unions.to_list(models)]
