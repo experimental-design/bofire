@@ -20,7 +20,7 @@ from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     CombiCondition,
-    RequiredExperimentsCondition,
+    NumberOfExperimentsCondition,
 )
 from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     Step,
@@ -69,4 +69,4 @@ AnySampler = Union[
     RejectionSampler,
 ]
 
-AnyCondition = Union[RequiredExperimentsCondition, CombiCondition]
+AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition]

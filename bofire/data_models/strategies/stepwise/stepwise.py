@@ -20,7 +20,7 @@ from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.stepwise.conditions import (
     CombiCondition,
-    RequiredExperimentsCondition,
+    NumberOfExperimentsCondition,
 )
 from bofire.data_models.strategies.strategy import Strategy
 
@@ -37,7 +37,7 @@ AnyStrategy = Union[
     DoEStrategy,
 ]
 
-AnyCondition = Union[RequiredExperimentsCondition, CombiCondition]
+AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition]
 
 
 class Step(BaseModel):

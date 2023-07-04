@@ -13,15 +13,15 @@ class Condition(object):
         pass
 
 
-class RequiredExperimentsCondition(Condition):
-    def __init__(self, data_model: data_models.RequiredExperimentsCondition):
-        self.n_required_experiments = data_model.n_required_experiments
+class NumberOfExperimentsCondition(Condition):
+    def __init__(self, data_model: data_models.NumberOfExperimentsCondition):
+        self.n_experiments = data_model.n_experiments
 
     def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
         n_experiments = len(
             domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
         )
-        return n_experiments >= self.n_required_experiments
+        return n_experiments <= self.n_experiments
 
 
 class CombiCondition(Condition):
@@ -41,13 +41,13 @@ class CombiCondition(Condition):
 
 CONDITION_MAP = {
     data_models.CombiCondition: CombiCondition,
-    data_models.RequiredExperimentsCondition: RequiredExperimentsCondition,
+    data_models.NumberOfExperimentsCondition: NumberOfExperimentsCondition,
 }
 
 
 def map(
     data_model: Union[
-        data_models.CombiCondition, data_models.RequiredExperimentsCondition
+        data_models.CombiCondition, data_models.NumberOfExperimentsCondition
     ],
-) -> Union[CombiCondition, RequiredExperimentsCondition]:
+) -> Union[CombiCondition, NumberOfExperimentsCondition]:
     return CONDITION_MAP[data_model.__class__](data_model)

@@ -49,8 +49,7 @@ class StepwiseStrategy(Strategy):
         return True
 
     def _get_step(self) -> Tuple[int, Step]:  # type: ignore
-        for i in range(len(self.steps) - 1, -1, -1):
-            step = self.steps[i]
+        for i, step in enumerate(self.steps):
             condition = conditions.map(step.condition)
             if condition.evaluate(self.domain, experiments=self.experiments):
                 return i, step

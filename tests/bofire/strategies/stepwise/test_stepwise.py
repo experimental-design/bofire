@@ -6,8 +6,8 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qNEI
 from bofire.data_models.strategies.api import (
+    NumberOfExperimentsCondition,
     RandomStrategy,
-    RequiredExperimentsCondition,
     SoboStrategy,
     Step,
     StepwiseStrategy,
@@ -20,7 +20,7 @@ def test_StepwiseStrategy_invalid():
     domain2.inputs[0].key = "mama"
     with pytest.raises(
         ValueError,
-        # match="Domain of step 0 is incompatible to domain of StepwiseStrategy.",
+        match="Domain of step 0 is incompatible to domain of StepwiseStrategy.",
         # match=f"Domain of step {0} is incompatible to domain of StepwiseStrategy.",
     ):
         StepwiseStrategy(
@@ -28,14 +28,14 @@ def test_StepwiseStrategy_invalid():
             steps=[
                 Step(
                     strategy_data=RandomStrategy(domain=domain2),
-                    condition=RequiredExperimentsCondition(n_required_experiments=0),
+                    condition=NumberOfExperimentsCondition(n_experiments=5),
                     max_parallelism=-1,
                 ),
                 Step(
                     strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
-                    condition=RequiredExperimentsCondition(n_required_experiments=0),
+                    condition=NumberOfExperimentsCondition(n_experiments=15),
                     max_parallelism=2,
                 ),
             ],
@@ -56,14 +56,14 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy, expected_in
         steps=[
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
-                condition=RequiredExperimentsCondition(n_required_experiments=0),
+                condition=NumberOfExperimentsCondition(n_experiments=6),
                 max_parallelism=-1,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
-                condition=RequiredExperimentsCondition(n_required_experiments=10),
+                condition=NumberOfExperimentsCondition(n_experiments=10),
                 max_parallelism=2,
             ),
         ],
@@ -75,6 +75,32 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy, expected_in
     assert i == expected_index
 
 
+def test_StepWiseStrategy_get_step_invalid():
+    benchmark = Himmelblau()
+    experiments = benchmark.f(benchmark.domain.inputs.sample(12), return_complete=True)
+    data_model = StepwiseStrategy(
+        domain=benchmark.domain,
+        steps=[
+            Step(
+                strategy_data=RandomStrategy(domain=benchmark.domain),
+                condition=NumberOfExperimentsCondition(n_experiments=6),
+                max_parallelism=-1,
+            ),
+            Step(
+                strategy_data=SoboStrategy(
+                    domain=benchmark.domain, acquisition_function=qNEI()
+                ),
+                condition=NumberOfExperimentsCondition(n_experiments=10),
+                max_parallelism=2,
+            ),
+        ],
+    )
+    strategy = strategies.map(data_model)
+    strategy.tell(experiments)
+    with pytest.raises(ValueError, match="No condition could be satisfied."):
+        strategy._get_step()
+
+
 def test_StepWiseStrategy_invalid_ask():
     benchmark = Himmelblau()
     data_model = StepwiseStrategy(
@@ -82,14 +108,14 @@ def test_StepWiseStrategy_invalid_ask():
         steps=[
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
-                condition=RequiredExperimentsCondition(n_required_experiments=0),
+                condition=NumberOfExperimentsCondition(n_experiments=8),
                 max_parallelism=2,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
-                condition=RequiredExperimentsCondition(n_required_experiments=10),
+                condition=NumberOfExperimentsCondition(n_experiments=10),
                 max_parallelism=2,
             ),
         ],
@@ -111,14 +137,14 @@ def test_StepWiseStrategy_ask():
         steps=[
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
-                condition=RequiredExperimentsCondition(n_required_experiments=0),
+                condition=NumberOfExperimentsCondition(n_experiments=5),
                 max_parallelism=2,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
-                condition=RequiredExperimentsCondition(n_required_experiments=10),
+                condition=NumberOfExperimentsCondition(n_experiments=10),
                 max_parallelism=2,
             ),
         ],

@@ -125,16 +125,12 @@ specs.add_valid(
         "steps": [
             strategies.Step(
                 strategy_data=strategies.RandomStrategy(domain=tempdomain),
-                condition=strategies.RequiredExperimentsCondition(
-                    n_required_experiments=0
-                ),
+                condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
                 max_parallelism=2,
             ).dict(),
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(domain=tempdomain),
-                condition=strategies.RequiredExperimentsCondition(
-                    n_required_experiments=10
-                ),
+                condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
                 max_parallelism=2,
             ).dict(),
         ],
