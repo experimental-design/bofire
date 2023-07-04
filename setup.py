@@ -36,7 +36,7 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
-        "pydantic>=1.10.0,<2.0",
+        "pydantic>=2.0.1",
         "scipy>=1.7",
         "typing-extensions",
     ],
