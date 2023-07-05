@@ -1,6 +1,6 @@
 import warnings
-from itertools import combinations_with_replacement
-from typing import Dict, Optional, Union
+from itertools import combinations_with_replacement, product
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -10,7 +10,7 @@ from scipy.optimize._minimize import standardize_constraints
 from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.features.api import ContinuousBinaryInput
+from bofire.data_models.features.api import ContinuousBinaryInput, Input
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -27,6 +27,7 @@ from bofire.strategies.samplers.polytope import PolytopeSampler
 
 def find_find_local_max_ipopt_binary_naive(
     domain: Domain,
+    categorical_groups: List[List[ContinuousBinaryInput]],
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
     delta: float = 1e-7,
@@ -48,9 +49,8 @@ def find_find_local_max_ipopt_binary_naive(
             sampling (pd.DataFrame): dataframe containing the initial guess.
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
-            prohibited_binary_combinations (pd.DataFrame): Combinations of binary variables which are prohibited.
-                defaults to None
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            categorical_groups: groups that describe from which variables can be chosen from
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -64,32 +64,50 @@ def find_find_local_max_ipopt_binary_naive(
     )
 
     binary_vars = domain.get_features(ContinuousBinaryInput)
+    non_binary_vars = domain.get_features(
+        includes=[Input], excludes=ContinuousBinaryInput
+    )
     list_keys = binary_vars.get_keys()
 
     for var in binary_vars:
         var.relax()
 
-    allowed_fixations = np.eye(len(binary_vars))
+    allowed_fixations = []
+    for group in categorical_groups:
+        allowed_fixations.append(np.eye(len(group)))
 
+    allowed_fixations = product(*allowed_fixations)
     all_n_fixed_experiments = combinations_with_replacement(
         allowed_fixations, n_experiments
     )
+
+    column_keys = [var.key for group in categorical_groups for var in group] + [
+        var.key for var in non_binary_vars
+    ]
 
     minimum = float("inf")
     optimal_design = None
     number_of_non_binary_vars = len(domain.inputs) - len(binary_vars)
     for i, binary_fixed_experiments in enumerate(list(all_n_fixed_experiments)):
+        binary_fixed_experiments = np.array(
+            [
+                var
+                for experiment in binary_fixed_experiments
+                for group in experiment
+                for var in group
+            ]
+        ).reshape(n_experiments, len(binary_vars))
 
         one_set_of_experiments = np.concatenate(
             [
-                np.array(binary_fixed_experiments),
+                binary_fixed_experiments,
                 np.full((n_experiments, number_of_non_binary_vars), None),
             ],
             axis=1,
         )
 
         one_set_of_experiments = pd.DataFrame(
-            one_set_of_experiments, columns=domain.inputs.get_keys()
+            one_set_of_experiments, columns=column_keys
         )
 
         if sampling is not None:
