@@ -25,6 +25,118 @@ from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
+def find_find_local_max_ipopt_BnB(
+    domain: Domain,
+    categorical_groups: List[List[ContinuousBinaryInput]],
+    model_type: Union[str, Formula],
+    n_experiments: Optional[int] = None,
+    delta: float = 1e-7,
+    ipopt_options: Optional[Dict] = None,
+    sampling: Optional[pd.DataFrame] = None,
+    fixed_experiments: Optional[pd.DataFrame] = None,
+    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+):
+    """Function computing a d-optimal design" for a given domain and model.
+    It allows for the problem to have categorical values which is solved by Branch-and-Bound
+        Args:
+            domain (Domain): domain containing the inputs and constraints.
+            model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
+                are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
+            n_experiments (int): Number of experiments. By default the value corresponds to
+                the number of model terms - dimension of ker() + 3.
+            delta (float): Regularization parameter. Default value is 1e-3.
+            ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+            sampling (pd.DataFrame): dataframe containing the initial guess.
+            fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
+                Values are set before the optimization.
+            objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            categorical_groups: groups that describe from which variables can be chosen from
+        Returns:
+            A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
+            local optimum.
+    """
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
+    )
+    objective_class = get_objective_class(objective)
+    objective_class = objective_class(
+        domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
+    )
+
+    binary_vars = domain.get_features(ContinuousBinaryInput)
+    non_binary_vars = domain.get_features(
+        includes=[Input], excludes=ContinuousBinaryInput
+    )
+    list_keys = binary_vars.get_keys()
+
+    for var in binary_vars:
+        var.relax()
+
+    allowed_fixations = []
+    for group in categorical_groups:
+        allowed_fixations.append(np.eye(len(group)))
+
+    allowed_fixations = product(*allowed_fixations)
+    all_n_fixed_experiments = combinations_with_replacement(
+        allowed_fixations, n_experiments
+    )
+
+    column_keys = [var.key for group in categorical_groups for var in group] + [
+        var.key for var in non_binary_vars
+    ]
+
+    minimum = float("inf")
+    optimal_design = None
+    number_of_non_binary_vars = len(domain.inputs) - len(binary_vars)
+    for i, binary_fixed_experiments in enumerate(list(all_n_fixed_experiments)):
+        binary_fixed_experiments = np.array(
+            [
+                var
+                for experiment in binary_fixed_experiments
+                for group in experiment
+                for var in group
+            ]
+        ).reshape(n_experiments, len(binary_vars))
+
+        one_set_of_experiments = np.concatenate(
+            [
+                binary_fixed_experiments,
+                np.full((n_experiments, number_of_non_binary_vars), None),
+            ],
+            axis=1,
+        )
+
+        one_set_of_experiments = pd.DataFrame(
+            one_set_of_experiments, columns=column_keys
+        )
+
+        if sampling is not None:
+            sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
+
+        current_design = find_local_max_ipopt(
+            domain,
+            model_type,
+            n_experiments,
+            delta,
+            ipopt_options,
+            sampling,
+            fixed_experiments,
+            one_set_of_experiments,
+            objective,
+        )
+        temp_value = objective_class.evaluate(
+            current_design.to_numpy().T,
+        )
+        if minimum is None or minimum > temp_value:
+            minimum = temp_value
+            optimal_design = current_design
+        print(
+            f"run: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
+        )
+
+    return optimal_design
+
+
 def find_find_local_max_ipopt_binary_naive(
     domain: Domain,
     categorical_groups: List[List[ContinuousBinaryInput]],
@@ -37,7 +149,7 @@ def find_find_local_max_ipopt_binary_naive(
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
 ):
     """Function computing a d-optimal design" for a given domain and model.
-    It allows for the problem to be a mixed-integer-linear-problem (MILP) which is solved by exhaustive search
+    It allows for the problem to have categorical values which is solved by exhaustive search
         Args:
             domain (Domain): domain containing the inputs and constraints.
             model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
