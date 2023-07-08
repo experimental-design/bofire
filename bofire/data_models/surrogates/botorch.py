@@ -1,13 +1,13 @@
 from pydantic import validator
 
-from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     MolecularInput,
     NumericalInput,
 )
-from bofire.data_models.molfeatures.api import (  # BagOfCharacters
+from bofire.data_models.molfeatures.api import (
     Fingerprints,
     FingerprintsFragments,
     Fragments,
@@ -52,36 +52,16 @@ class BotorchSurrogate(Surrogate):
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in molecular_keys:
             mol_encoding = v.get(key)
-            if mol_encoding not in [
-                MolecularEncodingEnum.FINGERPRINTS,
-                MolecularEncodingEnum.FRAGMENTS,
-                MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS,
-                MolecularEncodingEnum.MOL_DESCRIPTOR,
-            ]:
+            if not isinstance(
+                mol_encoding,
+                (
+                    Fingerprints,
+                    Fragments,
+                    FingerprintsFragments,
+                    MordredDescriptors,
+                ),
+            ):
                 raise ValueError(
                     "Botorch based models have to use fingerprints, fragments, fingerprints_fragments, or molecular descriptors for molecular inputs"
                 )
-            for feat in inputs:
-                if key == feat.key:
-                    if (
-                        (
-                            mol_encoding == MolecularEncodingEnum.FINGERPRINTS
-                            and not isinstance(feat.molfeatures, Fingerprints)
-                        )
-                        or (
-                            mol_encoding == MolecularEncodingEnum.FRAGMENTS
-                            and not isinstance(feat.molfeatures, Fragments)
-                        )
-                        or (
-                            mol_encoding == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
-                            and not isinstance(feat.molfeatures, FingerprintsFragments)
-                        )
-                        or (
-                            mol_encoding == MolecularEncodingEnum.MOL_DESCRIPTOR
-                            and not isinstance(feat.molfeatures, MordredDescriptors)
-                        )
-                    ):
-                        raise ValueError(
-                            f"The molecular feature type selected ({feat.molfeatures.type}) for '{feat.key}' is not the same as the molecular encoding type chosen ({mol_encoding})"
-                        )
         return v

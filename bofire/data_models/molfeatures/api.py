@@ -1,10 +1,10 @@
 from typing import Union
 
-from bofire.data_models.molfeatures.molfeatures import MolFeatures
-from bofire.data_models.molfeatures.types import (  # BagOfCharacters
+from bofire.data_models.molfeatures.molfeatures import (  # BagOfCharacters
     Fingerprints,
     FingerprintsFragments,
     Fragments,
+    MolFeatures,
     MordredDescriptors,
 )
 

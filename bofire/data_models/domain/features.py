@@ -12,9 +12,9 @@ from scipy.stats.qmc import LatinHypercube, Sobol
 from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
 from bofire.data_models.enum import (
     CategoricalEncodingEnum,
-    MolecularEncodingEnum,
     SamplingMethodEnum,
 )
+
 from bofire.data_models.features.api import (
     _CAT_SEP,
     AnyFeature,
@@ -29,6 +29,12 @@ from bofire.data_models.features.api import (
     MolecularInput,
     Output,
     TInputTransformSpecs,
+)
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+    MordredDescriptors,
 )
 from bofire.data_models.objectives.api import AbstractObjective, Objective
 
@@ -353,23 +359,26 @@ class Inputs(Features):
                     [f"{feat.key}{_CAT_SEP}{d}" for d in feat.descriptors]
                 )
                 counter += len(feat.descriptors)
-            elif (
-                specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS
-                or specs[feat.key] == MolecularEncodingEnum.FRAGMENTS
-                or specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
-                or specs[feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR
+            elif isinstance(
+                specs[feat.key],
+                (
+                    Fingerprints,
+                    Fragments,
+                    FingerprintsFragments,
+                    MordredDescriptors,
+                ),
             ):
                 assert isinstance(feat, MolecularInput)
 
+                descriptor_names = specs[feat.key].get_descriptor_names()
+
                 features2idx[feat.key] = tuple(
-                    (
-                        np.array(range(len(feat.molfeatures.descriptors))) + counter
-                    ).tolist()
+                    (np.array(range(len(descriptor_names))) + counter).tolist()
                 )
                 features2names[feat.key] = tuple(
-                    [f"{feat.key}{_CAT_SEP}{d}" for d in feat.molfeatures.descriptors]
+                    [f"{feat.key}{_CAT_SEP}{d}" for d in descriptor_names]
                 )
-                counter += len(feat.molfeatures.descriptors)
+                counter += len(descriptor_names)
         return features2idx, features2names
 
     def transform(
@@ -405,15 +414,17 @@ class Inputs(Features):
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.to_descriptor_encoding(s))
-            elif (
-                specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS
-                or specs[feat.key] == MolecularEncodingEnum.FRAGMENTS
-                or specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
-                # or specs[feat.key] == MolecularEncodingEnum.BAG_CHAR
-                or specs[feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR
+            elif isinstance(
+                specs[feat.key],
+                (
+                    Fingerprints,
+                    Fragments,
+                    FingerprintsFragments,
+                    MordredDescriptors,
+                ),
             ):
                 assert isinstance(feat, MolecularInput)
-                transformed.append(feat.to_descriptor_encoding(s))
+                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -451,15 +462,10 @@ class Inputs(Features):
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.from_descriptor_encoding(experiments))
-            elif (
-                specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS
-                or specs[feat.key] == MolecularEncodingEnum.FRAGMENTS
-                or specs[feat.key] == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
-                # or specs[feat.key] == MolecularEncodingEnum.BAG_CHAR
-                or specs[feat.key] == MolecularEncodingEnum.MOL_DESCRIPTOR
-            ):
-                assert isinstance(feat, MolecularInput)
-                transformed.append(feat.from_descriptor_encoding(experiments))
+            # elif isinstance(specs[feat.key], (MolecularEncodingEnum.FINGERPRINTS.value, MolecularEncodingEnum.FRAGMENTS.value, MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS.value, MolecularEncodingEnum.MORDRED_DESCRIPTORS.value)):
+            #     assert isinstance(feat, MolecularInput)
+            #     transformed.append(feat.from_descriptor_encoding(specs[feat.key], experiments))
+
         return pd.concat(transformed, axis=1)
 
     def _validate_transform_specs(self, specs: TInputTransformSpecs):
@@ -478,11 +484,19 @@ class Inputs(Features):
             > 0
         ):
             raise ValueError("Unknown features specified in transform specs.")
-        # next check that all values are of type CategoricalEncodingEnum or MolecularEncodingEnum
+        # next check that all values are of type CategoricalEncodingEnum or AnyMolFeatures
         if not (
             all(
-                isinstance(enc, CategoricalEncodingEnum)
-                or isinstance(enc, MolecularEncodingEnum)
+                isinstance(
+                    enc,
+                    (
+                        CategoricalEncodingEnum,
+                        Fingerprints,
+                        Fragments,
+                        FingerprintsFragments,
+                        MordredDescriptors,
+                    ),
+                )
                 for enc in specs.values()
             )
         ):
@@ -490,11 +504,16 @@ class Inputs(Features):
         # next check that only Categoricalwithdescriptor have the value DESCRIPTOR
         descriptor_keys = []
         for key, value in specs.items():
-            if (
-                value == CategoricalEncodingEnum.DESCRIPTOR
-                or value == MolecularEncodingEnum.FINGERPRINTS
-                or value == MolecularEncodingEnum.FRAGMENTS
-                or value == MolecularEncodingEnum.MOL_DESCRIPTOR
+            if value == CategoricalEncodingEnum.DESCRIPTOR or (
+                isinstance(
+                    value,
+                    (
+                        Fingerprints,
+                        Fragments,
+                        FingerprintsFragments,
+                        MordredDescriptors,
+                    ),
+                )
             ):
                 descriptor_keys.append(key)
         if (

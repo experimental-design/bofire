@@ -16,7 +16,7 @@ from pydantic import ValidationError
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -42,6 +42,7 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
     SingleTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
@@ -234,62 +235,30 @@ def test_SingleTaskGPModel(kernel, scaler):
     assert_frame_equal(preds, preds2)
 
 
-smiles = [
-    "CC(=O)Oc1ccccc1C(=O)O",
-    "c1ccccc1",
-    "[CH3][CH2][OH]",
-    "N[C@](C)(F)C(=O)O",
-]
-
-
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "input_feature, kernel, scaler, specs",
+    "kernel, specs",
     [
         (
-            [
-                MolecularInput(
-                    key="x_1", smiles=smiles, molfeatures=Fingerprints(n_bits=32)
-                )
-            ],
             ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
-            ScalerEnum.IDENTITY,
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS},
+            {"x_1": Fingerprints(n_bits=32)},
         ),
         (
-            [MolecularInput(key="x_1", smiles=smiles, molfeatures=Fragments())],
-            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
-            ScalerEnum.IDENTITY,
-            {"x_1": MolecularEncodingEnum.FRAGMENTS},
+            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
+            {"x_1": Fragments()},
         ),
         (
-            [
-                MolecularInput(
-                    key="x_1",
-                    smiles=smiles,
-                    molfeatures=FingerprintsFragments(n_bits=32),
-                )
-            ],
             ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
-            ScalerEnum.IDENTITY,
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
+            {"x_1": FingerprintsFragments(n_bits=32)},
         ),
         (
-            [
-                MolecularInput(
-                    key="x_1",
-                    smiles=smiles,
-                    molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                )
-            ],
-            ScaleKernel(base_kernel=RBFKernel(ard=False)),
-            ScalerEnum.NORMALIZE,
-            {"x_1": MolecularEncodingEnum.MOL_DESCRIPTOR},
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
         ),
     ],
 )
-def test_SingleTaskGPModel_molecular(input_feature, kernel, scaler, specs):
-    inputs = Inputs(features=input_feature)
+def test_TanimotoGP(kernel, specs):
+    inputs = Inputs(features=[MolecularInput(key="x_1")])
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
         ["CC(=O)Oc1ccccc1C(=O)O", 88.0],
@@ -299,179 +268,34 @@ def test_SingleTaskGPModel_molecular(input_feature, kernel, scaler, specs):
     ]
     experiments = pd.DataFrame(experiments, columns=["x_1", "y"])
     experiments["valid_y"] = 1
-    model = SingleTaskGPSurrogate(
+    model = TanimotoGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
-        scaler=scaler,
         input_preprocessing_specs=specs,
     )
     model = surrogates.map(model)
-    samples = inputs.sample(5)
-    # test error on non fitted model
-    with pytest.raises(ValueError):
-        model.predict(samples)
     model.fit(experiments)
     # dump the model
     dump = model.dumps()
     # make predictions
-    samples2 = samples.copy()
-    samples2 = samples2.astype({"x_1": "object"})
-    preds = model.predict(samples2)
-    assert preds.shape == (5, 2)
+    preds = model.predict(experiments)
+    assert preds.shape == (4, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
-    if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(model.model.input_transform, Normalize)
-    elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(model.model.input_transform, InputStandardize)
-    else:
-        with pytest.raises(AttributeError):
-            assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
-    model2 = SingleTaskGPSurrogate(
+    model2 = TanimotoGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         kernel=kernel,
-        scaler=scaler,
         input_preprocessing_specs=specs,
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)
-    preds2 = model2.predict(samples)
+    preds2 = model2.predict(experiments)
     assert_frame_equal(preds, preds2)
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "input_feature, scaler, specs",
-    [
-        (
-            [
-                MolecularInput(
-                    key="x_1", smiles=smiles, molfeatures=Fingerprints(n_bits=32)
-                )
-            ],
-            ScalerEnum.IDENTITY,
-            {"x_1": MolecularEncodingEnum.FRAGMENTS},
-        ),
-        (
-            [MolecularInput(key="x_1", smiles=smiles, molfeatures=Fragments())],
-            ScalerEnum.IDENTITY,
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS},
-        ),
-        (
-            [
-                MolecularInput(
-                    key="x_1",
-                    smiles=smiles,
-                    molfeatures=FingerprintsFragments(n_bits=32),
-                )
-            ],
-            ScalerEnum.IDENTITY,
-            {"x_1": MolecularEncodingEnum.MOL_DESCRIPTOR},
-        ),
-        (
-            [
-                MolecularInput(
-                    key="x_1",
-                    smiles=smiles,
-                    molfeatures=MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                )
-            ],
-            ScalerEnum.NORMALIZE,
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
-        ),
-    ],
-)
-def test_SingleTaskGPModel_molecular_invalid_input_preprocessing_specs(
-    input_feature, scaler, specs
-):
-    inputs = Inputs(features=input_feature)
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    with pytest.raises(ValueError):
-        SingleTaskGPSurrogate(
-            inputs=inputs,
-            outputs=outputs,
-            kernel=ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
-            scaler=scaler,
-            input_preprocessing_specs=specs,
-        )
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "molfeatures, kernel, specs",
-    [
-        (
-            Fingerprints(n_bits=32),
-            ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS},
-        ),
-        (
-            Fragments(),
-            ScaleKernel(base_kernel=MaternKernel(ard=True)),
-            {"x_1": MolecularEncodingEnum.FRAGMENTS},
-        ),
-        (
-            FingerprintsFragments(n_bits=32),
-            ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
-        ),
-    ],
-)
-def test_SingleTaskGPModel_molecular_invalid_kernel(molfeatures, kernel, specs):
-    inputs = Inputs(
-        features=[MolecularInput(key="x_1", smiles=smiles, molfeatures=molfeatures)]
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    with pytest.raises(ValueError):
-        SingleTaskGPSurrogate(
-            inputs=inputs,
-            outputs=outputs,
-            kernel=kernel,
-            scaler=ScalerEnum.IDENTITY,
-            input_preprocessing_specs=specs,
-        )
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "molfeatures, scaler, specs",
-    [
-        (
-            Fingerprints(n_bits=32),
-            ScalerEnum.NORMALIZE,
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS},
-        ),
-        (Fragments(), ScalerEnum.STANDARDIZE, {"x_1": MolecularEncodingEnum.FRAGMENTS}),
-        (
-            FingerprintsFragments(n_bits=32),
-            ScalerEnum.NORMALIZE,
-            {"x_1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
-        ),
-        (
-            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-            ScalerEnum.STANDARDIZE,
-            {"x_1": MolecularEncodingEnum.MOL_DESCRIPTOR},
-        ),
-    ],
-)
-def test_SingleTaskGPModel_tanimoto_invalid_scaler(molfeatures, scaler, specs):
-    inputs = Inputs(
-        features=[MolecularInput(key="x_1", smiles=smiles, molfeatures=molfeatures)]
-    )
-    outputs = Outputs(features=[ContinuousOutput(key="y")])
-    with pytest.raises(ValueError):
-        SingleTaskGPSurrogate(
-            inputs=inputs,
-            outputs=outputs,
-            kernel=ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
-            scaler=scaler,
-            input_preprocessing_specs=specs,
-        )
 
 
 def test_MixedGPModel_invalid_preprocessing():

@@ -16,6 +16,7 @@ try:
     from bofire.data_models.surrogates.mlp import MLPEnsemble
     from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
     from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+    from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
     from bofire.data_models.surrogates.surrogate import Surrogate
 
     AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
@@ -27,6 +28,7 @@ try:
         MixedSingleTaskGPSurrogate,
         MLPEnsemble,
         SaasSingleTaskGPSurrogate,
+        TanimotoGPSurrogate,
     ]
 except ImportError:
     # with the minimal installationwe don't have botorch

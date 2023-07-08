@@ -32,7 +32,7 @@ def batch_tanimoto_sim(
 
 
 class BitDistance(torch.nn.Module):
-    r"""
+    """
     Distance module for bit vector test_kernels.
     """
 
@@ -41,23 +41,22 @@ class BitDistance(torch.nn.Module):
         self._postprocess = postprocess_script
 
     def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric="tanimoto"):
-        r"""
-        Computes the similarity between x1 and x2
-        Args:
-            :attr: `x1`: (Tensor `n x d` or `b x n x d`):
-                First set of data where b is a batch dimension
-            :attr: `x2`: (Tensor `m x d` or `b x m x d`):
-                Second set of data where b is a batch dimension
-            :attr: `postprocess` (bool):
-                Whether to apply a postprocess script (default is none)
-            :attr: `x1_eq_x2` (bool):
-                Is x1 equal to x2
-            :attr: `metric` (str):
-                String specifying the similarity metric. One of ['tanimoto']
-        Returns:
-            (:class:`Tensor`, :class:`Tensor) corresponding to the similarity matrix between `x1` and `x2`
         """
+        Computes the similarity between x1 and x2
 
+        Args:
+            x1 (Tensor): First set of data where b is a batch dimension. Has shape `n x d` or `b x n x d`
+            x2 (Tensor): Second set of data where b is a batch dimension. Has shape `m x d` or `b x m x d`
+            postprocess (bool): Whether to apply a postprocess script
+            x1_eq_x2 (bool, optional): Is x1 equal to x2. Defaults to False
+            metric (str): String specifying the similarity metric. One of ['tanimoto']. Defaults to 'tanimoto'
+
+        Raises:
+            RuntimeError: If tanimoto is not used as the similarity metric.
+
+        Returns:
+            Tensor: corresponding to the similarity matrix between `x1` and `x2`
+        """
         # Branch for Tanimoto metric
         if metric == "tanimoto":
             res = batch_tanimoto_sim(x1, x2)
@@ -70,18 +69,15 @@ class BitDistance(torch.nn.Module):
 
 
 class BitKernel(Kernel):
-    r"""
+    """
      Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
      In the typical use case, test_kernels inheriting from this class will specify a similarity metric such as Tanimoto,
-     MinMax etc.
-    .. note::
-     This kernel does not have an `outputscale` parameter. To add a scaling parameter,
-     decorate this kernel with a :class:`gpytorch.test_kernels.ScaleKernel`.
-     This base :class:`BitKernel` class does not include a lengthscale parameter
-     :math:`\Theta`, in contrast to many common kernel functions.
-     Base Attributes:
-     :attr:`metric` (str):
-         The similarity metric to use. One of ['tanimoto'].
+     MinMax etc. This kernel does not have an `outputscale` parameter. To add a scaling parameter, decorate this kernel
+     with a `gpytorch.test_kernels.ScaleKernel`. This base :class:`BitKernel` class does not include a lengthscale
+     parameter `Theta`, in contrast to many common kernel functions.
+
+    Args:
+        metric (str): The similarity metric to use. One of ['tanimoto']. Defaults to ''
     """
 
     def __init__(self, metric="", **kwargs):
@@ -100,18 +96,19 @@ class BitKernel(Kernel):
         postprocess=True,
         **params,
     ):
-        r"""
+        """
         This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.
+
         Args:
-            :attr:`x1` (Tensor `n x d` or `b1 x ... x bk x n x d`):
-                First set of data.
-            :attr:`x2` (Tensor `m x d` or `b1 x ... x bk x m x d`):
-                Second set of data.
-            :attr:`last_dim_is_batch` (tuple, optional):
-                Is the last dimension of the data a batch dimension or not?
+            x1 (Tensor): First set of data. Has shape `n x d` or `b1 x ... x bk x n x d`
+            x2 (Tensor): Second set of data. Has shape `m x d` or `b1 x ... x bk x m x d`
+            last_dim_is_batch (bool, optional): Is the last dimension of the data a batch dimension or not?.
+            Defaults to False
+            postprocess (bool): Whether to apply a postprocess script
+
         Returns:
-            (:class:`Tensor`, :class:`Tensor) corresponding to the distance matrix between `x1` and `x2`.
+            Tensor: corresponding to the distance matrix between `x1` and `x2`.
             The shape depends on the kernel's mode
             * `diag=False`
             * `diag=False` and `last_dim_is_batch=True`: (`b x d x n x n`)

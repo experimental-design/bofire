@@ -17,7 +17,7 @@ except ImportError:
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum, MolecularEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -1474,19 +1474,17 @@ def test_inputs_get_transform_info(
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "specs, molfeatures, expected_features2idx, expected_features2names",
+    "specs, expected_features2idx, expected_features2names",
     [
         (
-            {"x1": MolecularEncodingEnum.FINGERPRINTS},
-            Fingerprints(n_bits=2048),
+            {"x1": Fingerprints(n_bits=2048)},
             {"x1": tuple(range(2048))},
             {
                 "x1": tuple(f"x1_fingerprint_{i}" for i in range(2048)),
             },
         ),
         (
-            {"x1": MolecularEncodingEnum.FRAGMENTS},
-            Fragments(),
+            {"x1": Fragments()},
             {"x1": tuple(range(84))},
             {
                 "x1": tuple(
@@ -1496,8 +1494,7 @@ def test_inputs_get_transform_info(
             },
         ),
         (
-            {"x1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
-            FingerprintsFragments(n_bits=2048),
+            {"x1": FingerprintsFragments(n_bits=2048)},
             {"x1": tuple(range(2048 + 84))},
             {
                 "x1": tuple(
@@ -1512,8 +1509,7 @@ def test_inputs_get_transform_info(
             },
         ),
         (
-            {"x1": MolecularEncodingEnum.MOL_DESCRIPTOR},
-            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            {"x1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
             {"x1": (0, 1)},
             {
                 "x1": (
@@ -1525,19 +1521,9 @@ def test_inputs_get_transform_info(
     ],
 )
 def test_inputs_get_transform_info_molecular(
-    specs, molfeatures, expected_features2idx, expected_features2names
+    specs, expected_features2idx, expected_features2names
 ):
-    smiles = [
-        "C1=CCCC=CCCC=CCC1",
-        "C\\1=C\\CC/C=C\\CC/1",
-        "CCC1=CC=C(C=C1)C(C)(C)C",
-        "C=CC1CCC(C=C)C(C1)C=C",
-    ]
-    inps = Inputs(
-        features=[
-            MolecularInput(key="x1", smiles=smiles, molfeatures=molfeatures),
-        ]
-    )
+    inps = Inputs(features=[MolecularInput(key="x1")])
     features2idx, features2names = inps._get_transform_info(specs)
     assert features2idx == expected_features2idx
     assert features2names == expected_features2names
@@ -1593,43 +1579,285 @@ def test_inputs_transform(specs):
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "specs, molfeatures",
+    "specs, expected",
     [
         (
-            {"x1": MolecularEncodingEnum.FINGERPRINTS},
-            Fingerprints(n_bits=2048),
+            {"x1": Fingerprints(n_bits=32)},
+            {
+                "x1_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
+                "x1_fingerprint_2": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_3": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_4": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_5": {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_6": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_7": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
+                "x1_fingerprint_8": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_9": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_10": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_11": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_12": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_13": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_14": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_15": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_16": {0: 1.0, 1: 1.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_17": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_18": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_19": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_20": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_21": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_22": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_23": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_24": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_25": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_26": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_27": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_28": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_29": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_30": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_31": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+            },
         ),
         (
-            {"x1": MolecularEncodingEnum.FRAGMENTS},
-            Fragments(),
+            {"x1": Fragments()},
+            {
+                "x1_fr_Al_OH": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fr_Al_OH_noTert": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fr_ArN": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_COO": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_N": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_NH": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_OH": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_COO": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_COO2": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_C_O": {0: 2.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_C_O_noCOO": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_C_S": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_HOCCN": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Imine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_NH0": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_NH1": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_NH2": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_N_O": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ndealkylation1": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ndealkylation2": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Nhpyrrole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_SH": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_aldehyde": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_alkyl_carbamate": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_alkyl_halide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_allylic_oxid": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_amide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_amidine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_aniline": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_aryl_methyl": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_azide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_azo": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_barbitur": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_benzene": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x1_fr_benzodiazepine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_bicyclic": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_diazo": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_dihydropyridine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_epoxide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ester": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ether": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_furan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_guanido": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_halogen": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_hdrzine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_hdrzone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_imidazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_imide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_isocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_isothiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ketone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ketone_Topliss": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_lactam": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_lactone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_methoxy": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_morpholine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitrile": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitro": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitro_arom": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitro_arom_nonortho": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitroso": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_oxazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_oxime": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_para_hydroxylation": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phenol": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phenol_noOrthoHbond": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phos_acid": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phos_ester": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_piperdine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_piperzine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_priamide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_prisulfonamd": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_pyridine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_quatN": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_sulfide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_sulfonamd": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_sulfone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_term_acetylene": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_tetrazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_thiazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_thiophene": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_urea": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+            },
         ),
         (
-            {"x1": MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS},
-            FingerprintsFragments(n_bits=2048),
+            {"x1": FingerprintsFragments(n_bits=32)},
+            {
+                "x1_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
+                "x1_fingerprint_2": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_3": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_4": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_5": {0: 1.0, 1: 1.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_6": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_7": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
+                "x1_fingerprint_8": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_9": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_10": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_11": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_12": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_13": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_14": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_15": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_16": {0: 1.0, 1: 1.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_17": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_18": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_19": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_20": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_21": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_22": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_23": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_24": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_25": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_26": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_27": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_28": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fingerprint_29": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fingerprint_30": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fingerprint_31": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Al_OH": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fr_Al_OH_noTert": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x1_fr_ArN": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_COO": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_N": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_NH": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ar_OH": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_COO": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_COO2": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_C_O": {0: 2.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_C_O_noCOO": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_C_S": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_HOCCN": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Imine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_NH0": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_NH1": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_NH2": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_N_O": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ndealkylation1": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Ndealkylation2": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_Nhpyrrole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_SH": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_aldehyde": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_alkyl_carbamate": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_alkyl_halide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_allylic_oxid": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_amide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_amidine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_aniline": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_aryl_methyl": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_azide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_azo": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_barbitur": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_benzene": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x1_fr_benzodiazepine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_bicyclic": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_diazo": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_dihydropyridine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_epoxide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ester": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ether": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_furan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_guanido": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_halogen": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x1_fr_hdrzine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_hdrzone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_imidazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_imide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_isocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_isothiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ketone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_ketone_Topliss": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_lactam": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_lactone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_methoxy": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_morpholine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitrile": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitro": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitro_arom": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitro_arom_nonortho": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_nitroso": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_oxazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_oxime": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_para_hydroxylation": {0: 1.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phenol": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phenol_noOrthoHbond": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phos_acid": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_phos_ester": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_piperdine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_piperzine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_priamide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_prisulfonamd": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_pyridine": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_quatN": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_sulfide": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_sulfonamd": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_sulfone": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_term_acetylene": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_tetrazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_thiazole": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_thiophene": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x1_fr_urea": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+            },
         ),
         (
-            {"x1": MolecularEncodingEnum.MOL_DESCRIPTOR},
-            MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            {"x1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            {
+                "x1_NssCH2": {
+                    0: 0.5963718820861676,
+                    1: -1.5,
+                    2: -0.28395061728395066,
+                    3: -8.34319526627219,
+                },
+                "x1_ATSC2d": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
+            },
         ),
     ],
 )
-def test_inputs_transform_molecular(specs, molfeatures):
-    smiles = [
-        "C1=CCCC=CCCC=CCC1",
-        "C\\1=C\\CC/C=C\\CC/1",
-        "CCC1=CC=C(C=C1)C(C)(C)C",
-        "C=CC1CCC(C=C)C(C1)C=C",
+def test_inputs_transform_molecular(specs, expected):
+    experiments = [
+        ["CC(=O)Oc1ccccc1C(=O)O", 88.0],
+        ["c1ccccc1", 35.0],
+        ["[CH3][CH2][OH]", 69.0],
+        ["N[C@](C)(F)C(=O)O", 20.0],
     ]
+    experiments = pd.DataFrame(experiments, columns=["x1", "y"])
+    experiments["valid_y"] = 1
     inps = Inputs(
         features=[
-            MolecularInput(key="x1", smiles=smiles, molfeatures=molfeatures),
+            MolecularInput(key="x1"),
         ]
     )
-    samples = inps.sample(n=100)
-    samples = samples.sample(40)
-    transformed = inps.transform(experiments=samples, specs=specs)
-    untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
-    assert_frame_equal(samples, untransformed)
+    transformed = inps.transform(experiments=experiments, specs=specs)
+    assert_frame_equal(transformed, pd.DataFrame.from_dict(expected))
 
 
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
