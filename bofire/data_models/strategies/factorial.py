@@ -3,6 +3,7 @@ from typing import Literal, Type
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    ContinuousOutput,
     DiscreteInput,
     Feature,
 )
@@ -22,4 +23,5 @@ class FactorialStrategy(Strategy):
             CategoricalInput,
             DiscreteInput,
             CategoricalDescriptorInput,
+            ContinuousOutput,
         ]
