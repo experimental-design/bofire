@@ -19,6 +19,7 @@ from bofire.data_models.priors.api import (
     BOTORCH_SCALE_PRIOR,
 )
 from bofire.data_models.surrogates.api import ScalerEnum
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -91,6 +92,7 @@ specs.add_valid(
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
         "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig(),
     },
 )
 specs.add_valid(

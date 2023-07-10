@@ -142,7 +142,9 @@ specs.add_valid(
                 max_parallelism=2,
             ).dict(),
             strategies.Step(
-                strategy_data=strategies.QehviStrategy(domain=tempdomain),
+                strategy_data=strategies.QehviStrategy(
+                    domain=tempdomain,
+                ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
                 max_parallelism=2,
             ).dict(),
