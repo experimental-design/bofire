@@ -39,13 +39,13 @@ def test_IterativeTrimming():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],
+                key=experiments.keys()[0],  # type: ignore
                 bounds=(-3, 3),
             )
             for i in range(1)
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
+    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model = IterativeTrimming(
@@ -54,11 +54,11 @@ def test_IterativeTrimming():
         )
     )
     ITGP = mapper.map(ITGP_model)
-    assert isinstance(ITGP.base_gp, SingleTaskGPSurrogate)
+    assert isinstance(ITGP.base_gp, SingleTaskGPSurrogate)  # type: ignore
     assert isinstance(ITGP, mapper.IterativeTrimming)
     # detect
-    trimmed, outliers = ITGP.detect(experiments=experiments)
-    assert isinstance(trimmed, pd.DataFrame)
-    assert isinstance(outliers, pd.DataFrame)
-    assert len(experiments) == len(trimmed) + len(outliers)
-    assert len(outliers) >= n_outlier / 2
+    experiments1 = ITGP.detect(experiments=experiments)
+    assert len(experiments[experiments["valid_y"] == 1]) != len(
+        experiments1[experiments1["valid_y"] == 1]
+    )
+    assert len(experiments1[experiments1["valid_y"] == 0]) > n_outlier / 2

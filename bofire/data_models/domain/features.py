@@ -479,7 +479,7 @@ class Inputs(Features):
         for feat in self.get():
             lo, up = feat.get_bounds(  # type: ignore
                 transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,
+                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
             )
             lower += lo
             upper += up

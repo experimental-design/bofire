@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import Optional, Type
 
 from pydantic import PositiveInt, root_validator, validator
 
@@ -11,8 +11,7 @@ from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
 from bofire.data_models.outlier_detection.api import (
-    AnyOutlierDetection,
-    IterativeTrimming,
+    OutlierDetections,
 )
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.surrogates.api import (
@@ -34,7 +33,9 @@ class BotorchStrategy(PredictiveStrategy):
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     surrogate_specs: Optional[BotorchSurrogates] = None
-    outlier_detection_specs: Optional[List[AnyOutlierDetection]] = None
+    outlier_detection_specs: Optional[OutlierDetections] = None
+    min_experiments_before_outlier_check: PositiveInt = 1
+    num_experiments_frequency_outlier_check: PositiveInt = 1
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -93,14 +94,12 @@ class BotorchStrategy(PredictiveStrategy):
         return values
 
     @root_validator(pre=False, skip_on_failure=True)
-    def update_outlier_detection_specs_for_domain(cls, values):
+    def validate_outlier_detection_specs_for_domain(cls, values):
         """Ensures that a outlier_detection model is specified for each output feature"""
-        values[
-            "outlier_detection_specs"
-        ] = BotorchStrategy._generate_outlier_detection_specs(
-            values["domain"],
-            values["outlier_detection_specs"],
-        )
+        if values["outlier_detection_specs"] is not None:
+            values["outlier_detection_specs"]._check_compability(
+                inputs=values["domain"].inputs, outputs=values["domain"].outputs
+            )
         return values
 
     @staticmethod
@@ -144,48 +143,3 @@ class BotorchStrategy(PredictiveStrategy):
         surrogate_specs = BotorchSurrogates(surrogates=_surrogate_specs)  # type: ignore
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
-
-    @staticmethod
-    def _generate_outlier_detection_specs(
-        domain: Domain,
-        outlier_detection_specs: Optional[List[AnyOutlierDetection]] = None,
-    ) -> List[AnyOutlierDetection]:
-        """Method to generate outlier_detection specifications when no outlier_dection specs are passed
-        As default specification, Iterativetrimming with SingleTaskGPsurrogate as base_gp is used
-        Args:
-            domain (Domain): The domain defining the problem to be optimized with the strategy
-            outlier_detection_specs (List[outlier_detectionSpec], optional): List of outlier_detection classes specifying the models to be used in the strategy. Defaults to None.
-        Returns:
-            List[outlier_detectionSpec]: List of outlier detection classes
-        """
-        existing_keys = []
-        _outlier_detection_specs = []
-        if outlier_detection_specs is not None:
-            for outlier_detector in outlier_detection_specs:
-                existing_keys.append(
-                    outlier_detector.base_gp.outputs.get_keys()[0]  # type: ignore
-                )
-                _outlier_detection_specs.append(outlier_detector)
-        non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
-
-        for output_feature in non_exisiting_keys:
-            if len(domain.inputs.get(CategoricalInput, exact=True)):
-                _outlier_detection_specs.append(
-                    IterativeTrimming(
-                        base_gp=MixedSingleTaskGPSurrogate(
-                            inputs=domain.inputs,
-                            outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
-                        )
-                    )
-                )
-            else:
-                _outlier_detection_specs.append(
-                    IterativeTrimming(
-                        base_gp=SingleTaskGPSurrogate(
-                            inputs=domain.inputs,
-                            outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
-                        )
-                    )
-                )
-
-        return _outlier_detection_specs

@@ -33,7 +33,7 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.outlier_detection.mapper import map as map_outlier
+from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
@@ -63,7 +63,18 @@ class BotorchStrategy(PredictiveStrategy):
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
         self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
-        self.outlier_detection_specs = data_model.outlier_detection_specs  # type: ignore
+        if data_model.outlier_detection_specs is not None:
+            self.outlier_detection_specs = OutlierDetections(
+                data_model=data_model.outlier_detection_specs
+            )
+        else:
+            self.outlier_detection_specs = None  # type: ignore
+        self.min_experiments_before_outlier_check = (
+            data_model.min_experiments_before_outlier_check
+        )
+        self.num_experiments_frequency_outlier_check = (
+            data_model.num_experiments_frequency_outlier_check
+        )
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -92,6 +103,14 @@ class BotorchStrategy(PredictiveStrategy):
         Args:
             transformed (pd.DataFrame): [description]
         """
+        if self.outlier_detection_specs is not None:
+            if (
+                self.num_experiments >= self.min_experiments_before_outlier_check
+                and self.num_experiments % self.num_experiments_frequency_outlier_check
+                == 0
+            ):
+                experiments = self.filter_outliers(experiments)
+
         self.surrogate_specs.fit(experiments)  # type: ignore
         self.model = self.surrogate_specs.compatibilize(  # type: ignore
             inputs=self.domain.inputs,  # type: ignore
@@ -100,14 +119,11 @@ class BotorchStrategy(PredictiveStrategy):
 
     def filter_outliers(self, experiments: pd.DataFrame) -> pd.DataFrame:
         filtered_experiments = experiments.copy()
-        for outlier_model in self.outlier_detection_specs:  # type: ignore
-            if outlier_model is not None:
-                outlier_detector = map_outlier(outlier_model)  # type: ignore
-                _, outliers = outlier_detector.detect(filtered_experiments)
-                filtered_experiments.loc[
-                    outliers.index,
-                    f"valid_{outlier_model.base_gp.outputs.get_keys()[0]}",  # type: ignore
-                ] = 0
+        filtered_experiments = self.outlier_detection_specs.detect(filtered_experiments)  # type: ignore
+        self.outlier_detection_model = self.outlier_detection_specs.compatibilize(  # type: ignore
+            inputs=self.domain.inputs,  # type: ignore
+            outputs=self.domain.outputs,  # type: ignore
+        )
         return filtered_experiments
 
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
@@ -141,7 +157,7 @@ class BotorchStrategy(PredictiveStrategy):
         """
         acqf = self._get_acqfs(1)[0]
 
-        transformed = self.domain.inputs.transform(
+        transformed = self.domain.inputs.transform(  # type: ignore
             candidates, self.input_preprocessing_specs
         )
         X = torch.from_numpy(transformed.values).to(**tkwargs)

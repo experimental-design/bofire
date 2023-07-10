@@ -63,7 +63,6 @@ class PredictiveStrategy(Strategy):
         experiments: pd.DataFrame,
         replace: bool = False,
         retrain: bool = True,
-        filter_outliers: bool = False,
     ):
         """This function passes new experimental data to the optimizer.
 
@@ -82,7 +81,7 @@ class PredictiveStrategy(Strategy):
         else:
             self.add_experiments(experiments)
         if retrain and self.has_sufficient_experiments():
-            self.fit(filter_outliers=filter_outliers)
+            self.fit()
             # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
             # to fitting the models like initializing the ACQF.
             self._tell()
@@ -125,27 +124,19 @@ class PredictiveStrategy(Strategy):
         """Abstract method in which the actual prediction is happening. Has to be overwritten."""
         pass
 
-    def fit(self, filter_outliers: bool = False):
+    def fit(self):
         """Fit the model(s) to the experimental data."""
         assert (
             self.experiments is not None and len(self.experiments) > 0
         ), "No fitting data available"
         self.domain.validate_experiments(self.experiments, strict=True)
-        if filter_outliers:
-            experiments = self.filter_outliers(self.experiments)
-        else:
-            experiments = self.experiments
         # transformed = self.transformer.fit_transform(self.experiments)
-        self._fit(experiments)
+        self._fit(self.experiments)
         self.is_fitted = True
 
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):
         """Abstract method where the acutal prediction are occuring."""
-        pass
-
-    @abstractmethod
-    def filter_outliers(self, experiments: pd.DataFrame) -> pd.DataFrame:
         pass
 
     def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
