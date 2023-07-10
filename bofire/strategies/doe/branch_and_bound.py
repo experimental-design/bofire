@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import total_ordering
 from queue import PriorityQueue
+from typing import List
 
 import numpy as np
 import pandas as pd
@@ -17,38 +18,60 @@ from bofire.strategies.enum import OptimalityCriterionEnum
 @total_ordering
 class NodeExperiment:
     def __init__(
-        self, fixed_experiments: pd.DataFrame, design_matrix: pd.DataFrame, value: float
+        self,
+        fixed_experiments: pd.DataFrame,
+        design_matrix: pd.DataFrame,
+        value: float,
+        categorical_groups: List[List[ContinuousBinaryInput]],
     ):
         self.fixed_experiments = fixed_experiments
         self.design_matrix = design_matrix
         self.value = value
+        self.categorical_groups = categorical_groups
 
-    def get_next_fixed_experiments(self):
-        b1 = 1
-        b2 = 2
-        return b1, b2
+    def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
 
-    def __eq__(self, other: NodeExperiment):
+        for group in self.categorical_groups:
+            for row_index, _exp in self.fixed_experiments.iterrows():
+                if self.fixed_experiments.iloc[row_index][group[0].key] is None:
+                    current_keys = [elem.key for elem in group]
+                    allowed_fixations = np.eye(len(group))
+                    branches = [
+                        self.fixed_experiments.copy()
+                        for i in range(len(allowed_fixations))
+                    ]
+                    for k, elem in enumerate(branches):
+                        elem.loc[row_index, current_keys] = allowed_fixations[k]
+                    return branches
+        return []
+
+    def __eq__(self, other: NodeExperiment) -> bool:
         return self.value == other.value
 
-    def __ne__(self, other: NodeExperiment):
+    def __ne__(self, other: NodeExperiment) -> bool:
         return self.value != other.value
 
-    def __lt__(self, other: NodeExperiment):
+    def __lt__(self, other: NodeExperiment) -> bool:
         return self.value < other.value
 
+    def __str__(self):
+        print("Branch-and-Bound Node")
+        print(f"objective value {self.value}")
+        print(f"design matrix {self.design_matrix}")
+        print(f"current fixations {self.fixed_experiments}")
 
-def is_valid(design_matrix: pd.DataFrame, domain: Domain):
+
+def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
     categorical_vars = domain.get_features(includes=ContinuousBinaryInput)
     for var in categorical_vars:
         value = design_matrix.get(var.key)
-        if not (np.isclose(value, 0) or np.isclose(value, 1)):
+        if not (np.logical_or(np.isclose(value, 0), np.isclose(value, 1)).all()):
             return False
 
     return True
 
 
-def bnb(priority_queue: PriorityQueue, **kwargs):
+def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
     if priority_queue.empty():
         raise RuntimeError("Queue empty before feasible solution was found")
 
@@ -74,10 +97,12 @@ def bnb(priority_queue: PriorityQueue, **kwargs):
     next_branches = current_branch.get_next_fixed_experiments()
 
     # solve branched problems
-    for branch in next_branches:
-        solution = find_local_max_ipopt(**kwargs)
-        value = objective_class.evaluate(solution.to_numpy().T)
-        new_node = NodeExperiment(branch, solution, value)
+    for _i, branch in enumerate(next_branches):
+        design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
+        value = objective_class.evaluate(design.to_numpy().flatten())
+        new_node = NodeExperiment(
+            branch, design, value, current_branch.categorical_groups
+        )
         priority_queue.put(new_node)
 
-    bnb(priority_queue, **kwargs)
+    return bnb(priority_queue, **kwargs)

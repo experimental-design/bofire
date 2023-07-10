@@ -1,5 +1,6 @@
 import warnings
 from itertools import combinations_with_replacement, product
+from queue import PriorityQueue
 from typing import Dict, List, Optional, Union
 
 import numpy as np
@@ -25,7 +26,7 @@ from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
-def find_find_local_max_ipopt_BnB(
+def find_find_local_max_ipopt_BaB(
     domain: Domain,
     categorical_groups: List[List[ContinuousBinaryInput]],
     model_type: Union[str, Formula],
@@ -35,7 +36,7 @@ def find_find_local_max_ipopt_BnB(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
-):
+) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
         Args:
@@ -55,6 +56,8 @@ def find_find_local_max_ipopt_BnB(
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
     """
+    from bofire.strategies.doe.branch_and_bound import NodeExperiment, bnb
+
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
@@ -72,6 +75,48 @@ def find_find_local_max_ipopt_BnB(
     for var in binary_vars:
         var.relax()
 
+    column_keys = [var.key for group in categorical_groups for var in group] + [
+        var.key for var in non_binary_vars
+    ]
+
+    initial_branch = pd.DataFrame(
+        np.full((n_experiments, len(column_keys)), None), columns=column_keys
+    )
+    initial_design = find_local_max_ipopt(
+        domain,
+        model_type,
+        n_experiments,
+        delta,
+        ipopt_options,
+        sampling,
+        fixed_experiments,
+        partially_fixed_experiments=initial_branch,
+        objective=objective,
+    )
+    initial_value = objective_class.evaluate(
+        initial_design.to_numpy().flatten(),
+    )
+    initial_node = NodeExperiment(
+        initial_branch, initial_design, initial_value, categorical_groups
+    )
+
+    initial_queue = PriorityQueue()
+    initial_queue.put(initial_node)
+
+    result_node = bnb(
+        initial_queue,
+        domain=domain,
+        model_type=model_type,
+        n_experiments=n_experiments,
+        delta=delta,
+        ipopt_options=ipopt_options,
+        sampling=sampling,
+        fixed_experiments=fixed_experiments,
+        objective=objective,
+    )
+
+    return result_node.design_matrix
+
     allowed_fixations = []
     for group in categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
@@ -80,10 +125,6 @@ def find_find_local_max_ipopt_BnB(
     all_n_fixed_experiments = combinations_with_replacement(
         allowed_fixations, n_experiments
     )
-
-    column_keys = [var.key for group in categorical_groups for var in group] + [
-        var.key for var in non_binary_vars
-    ]
 
     minimum = float("inf")
     optimal_design = None
@@ -147,7 +188,7 @@ def find_find_local_max_ipopt_binary_naive(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
-):
+) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
         Args:

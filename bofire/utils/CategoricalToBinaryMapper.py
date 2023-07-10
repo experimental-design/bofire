@@ -1,5 +1,5 @@
 from itertools import product
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 
@@ -67,7 +67,9 @@ def get_bounds_of_constraint(constraint: LinearConstraint, variables: Inputs):
         variables.get_by_keys(feat)
 
 
-def generate_mixture_constraints(keys: List[str]):
+def generate_mixture_constraints(
+    keys: List[str],
+) -> Tuple[LinearEqualityConstraint, List[ContinuousBinaryInput]]:
     binary_vars = (ContinuousBinaryInput(key=x) for x in keys)
 
     mixture_constraint = LinearEqualityConstraint(
