@@ -55,10 +55,12 @@ class NodeExperiment:
         return self.value < other.value
 
     def __str__(self):
-        print("Branch-and-Bound Node")
-        print(f"objective value {self.value}")
-        print(f"design matrix {self.design_matrix}")
-        print(f"current fixations {self.fixed_experiments}")
+        return (
+            "\n ================ Branch-and-Bound Node ================ \n"
+            + f"objective value: {self.value} \n"
+            + f"design matrix: \n{self.design_matrix.round(4)} \n"
+            + f"current fixations: \n{self.fixed_experiments.round(4)} \n"
+        )
 
 
 def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
@@ -89,8 +91,7 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
     current_branch = priority_queue.get()
 
     # test if current solution is already valid
-    current_design = current_branch.design_matrix
-    if is_valid(current_design, domain):
+    if priority_queue.qsize() >= 9:  # is_valid(current_design, domain):
         return current_branch
 
     # branch current solutions in sub-problems
