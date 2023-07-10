@@ -158,7 +158,6 @@ TCategoricalDescriptorVals = Annotated[
 
 TDiscreteVals = Annotated[List[float], Field(min_items=1)]
 
-TSmiles = Annotated[List[str], Field(min_items=1)]
 TMolecularVals = List[List[Union[float, int]]]
 
 _CAT_SEP = "_"

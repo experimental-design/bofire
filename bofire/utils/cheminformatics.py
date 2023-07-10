@@ -48,8 +48,8 @@ def smiles2fingerprints(
 
     Args:
         smiles (List[str]): List of smiles
-        bond_radius (int, optional): Bond radius to use. Defaults to 3.
-        n_bits (int, optional): Number of bits. Defaults to 1024.
+        bond_radius (int, optional): Bond radius to use. Defaults to 5.
+        n_bits (int, optional): Number of bits. Defaults to 2048.
 
     Returns:
         np.ndarray: Numpy array holding the fingerprints
@@ -112,6 +112,15 @@ def smiles2fragments(
 
 
 def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray:
+    """Transforms list of smiles to mordred moelcular descriptors.
+
+    Args:
+        smiles (List[str]): List of smiles
+        descriptors_list (List[str]): List of desired mordred descriptors
+
+    Returns:
+        np.ndarray: Array holding the mordred moelcular descriptors.
+    """
     mols = [smiles2mol(smi) for smi in smiles]
 
     calc = Calculator(descriptors, ignore_3D=True)

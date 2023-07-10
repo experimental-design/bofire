@@ -1,14 +1,5 @@
 from enum import Enum
 
-# from bofire.data_models.molfeatures.api import (
-#     AnyMolFeatures,
-#     Fingerprints,
-#     FingerprintsFragments,
-#     Fragments,
-#     MordredDescriptors,
-# )
-
-
 class SamplingMethodEnum(Enum):
     UNIFORM = "UNIFORM"
     SOBOL = "SOBOL"

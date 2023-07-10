@@ -21,18 +21,11 @@ except ImportError:
 
 
 class MolFeatures(BaseModel):
-    """The base class for all molecular features"""
+    """Base class for all molecular features"""
 
     type: str
 
-    def get_descriptor_names(self):
-        pass
 
-    def get_descriptor_values(self):
-        pass
-
-
-# Save these to molfeatures folder
 class Fingerprints(MolFeatures):
     type: Literal["Fingerprints"] = "Fingerprints"
     bond_radius: int = 5
@@ -154,7 +147,7 @@ class MordredDescriptors(MolFeatures):
         """validates that descriptors have unique names
 
         Args:
-            categories (List[str]): List of descriptor names
+            descriptors (List[str]): List of descriptor names
 
         Raises:
             ValueError: when descriptors have non-unique names
