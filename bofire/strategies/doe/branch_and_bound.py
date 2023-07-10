@@ -89,9 +89,8 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
     )
 
     current_branch = priority_queue.get()
-
     # test if current solution is already valid
-    if priority_queue.qsize() >= 9:  # is_valid(current_design, domain):
+    if is_valid(current_branch.design_matrix, domain):
         return current_branch
 
     # branch current solutions in sub-problems
