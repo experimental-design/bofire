@@ -69,6 +69,12 @@ class Objective:
     def _convert_input_to_model_tensor(
         self, x: np.ndarray, requires_grad: bool = True
     ) -> Tensor:
+        """
+
+        Args:
+            x: x (np.ndarray): values of design variables a 1d array.
+        """
+        assert x.ndim == 1, "values of design should be 1d array"
         X = pd.DataFrame(
             x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
         )
@@ -432,12 +438,6 @@ class SpaceFilling(Objective):
     def _convert_input_to_tensor(
         self, x: np.ndarray, requires_grad: bool = True
     ) -> Tensor:
-        """
-
-        Args:
-            x: x (np.ndarray): values of design variables a 1d array.
-        """
-        assert x.ndim == 1, "values of design should be 1d array"
         X = pd.DataFrame(
             x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
         )
