@@ -125,7 +125,7 @@ def find_find_local_max_ipopt_BnB(
             objective,
         )
         temp_value = objective_class.evaluate(
-            current_design.to_numpy().T,
+            current_design.to_numpy().flatten(),
         )
         if minimum is None or minimum > temp_value:
             minimum = temp_value
@@ -237,7 +237,7 @@ def find_find_local_max_ipopt_binary_naive(
             objective,
         )
         temp_value = objective_class.evaluate(
-            current_design.to_numpy().T,
+            current_design.to_numpy().flatten(),
         )
         if minimum is None or minimum > temp_value:
             minimum = temp_value
