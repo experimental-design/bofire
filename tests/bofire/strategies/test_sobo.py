@@ -10,15 +10,17 @@ from botorch.acquisition import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
+from botorch.acquisition.objective import GenericMCObjective
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
+from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
-from bofire.strategies.api import PolytopeSampler, SoboStrategy
+from bofire.strategies.api import CustomSoboStrategy, PolytopeSampler, SoboStrategy
 from tests.bofire.strategies.test_base import domains
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -178,3 +180,91 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
         num_candidates,
         len(set(chain(*names.values()))),
     )
+
+
+def test_custom_get_objective():
+    def f(samples, callables, weights, X):
+        outputs_list = []
+        for c, w in zip(callables, weights):
+            outputs_list.append(c(samples, None) ** w)
+        samples = torch.stack(outputs_list, dim=-1)
+
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+
+    benchmark = DTLZ2(3)
+    data_model = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy = CustomSoboStrategy(data_model=data_model)
+    strategy.f = f
+    generic_objective = strategy._get_objective()
+    assert isinstance(generic_objective, GenericMCObjective)
+
+
+def test_custom_get_objective_invalid():
+    benchmark = DTLZ2(3)
+    data_model = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy = CustomSoboStrategy(data_model=data_model)
+
+    with pytest.raises(ValueError):
+        strategy._get_objective()
+
+
+def test_custom_dumps_loads():
+    def f(samples, callables, weights, X):
+        outputs_list = []
+        for c, w in zip(callables, weights):
+            outputs_list.append(c(samples, None) ** w)
+        samples = torch.stack(outputs_list, dim=-1)
+
+        return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
+
+    benchmark = DTLZ2(3)
+    data_model1 = data_models.CustomSoboStrategy(
+        domain=benchmark.domain,
+        acquisition_function=qNEI(),
+        use_output_constraints=False,
+    )
+    strategy1 = CustomSoboStrategy(data_model=data_model1)
+    strategy1.f = f
+    f_str = strategy1.dumps()
+
+    data_model2 = data_models.CustomSoboStrategy(
+        domain=benchmark.domain,
+        acquisition_function=qNEI(),
+        use_output_constraints=False,
+        dump=f_str,
+    )
+    strategy2 = CustomSoboStrategy(data_model=data_model2)
+
+    data_model3 = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy3 = CustomSoboStrategy(data_model=data_model3)
+    strategy3.loads(f_str)
+
+    assert isinstance(strategy2.f, type(f))
+    assert isinstance(strategy3.f, type(f))
+
+    samples = torch.rand(30, 2, requires_grad=True) * 5
+    objective1 = strategy1._get_objective()
+    output1 = objective1.forward(samples)
+    objective2 = strategy2._get_objective()
+    output2 = objective2.forward(samples)
+    objective3 = strategy3._get_objective()
+    output3 = objective3.forward(samples)
+
+    torch.testing.assert_close(output1, output2)
+    torch.testing.assert_close(output1, output3)
+
+
+def test_custom_dumps_invalid():
+    benchmark = DTLZ2(3)
+    data_model = data_models.CustomSoboStrategy(
+        domain=benchmark.domain, acquisition_function=qNEI()
+    )
+    strategy = CustomSoboStrategy(data_model=data_model)
+    with pytest.raises(ValueError):
+        strategy.dumps()

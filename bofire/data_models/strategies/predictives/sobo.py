@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
 from pydantic import validator
 
@@ -62,3 +62,9 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
 
 class MultiplicativeSoboStrategy(SoboBaseStrategy):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
+
+
+class CustomSoboStrategy(SoboBaseStrategy):
+    type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
+    use_output_constraints: bool = True
+    dump: Optional[str] = None
