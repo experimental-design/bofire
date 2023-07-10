@@ -10,6 +10,7 @@ try:
     )
     from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
     from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
+    from bofire.data_models.surrogates.linear import LinearSurrogate
     from bofire.data_models.surrogates.mixed_single_task_gp import (
         MixedSingleTaskGPSurrogate,
     )
@@ -32,9 +33,18 @@ try:
         MLPEnsemble,
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
+        LinearSurrogate,
     ]
 
-    AnyTrainableSurrogate = SingleTaskGPSurrogate
+    AnyTrainableSurrogate = Union[
+        RandomForestSurrogate,
+        SingleTaskGPSurrogate,
+        MixedSingleTaskGPSurrogate,
+        MLPEnsemble,
+        SaasSingleTaskGPSurrogate,
+        XGBoostSurrogate,
+        LinearSurrogate,
+    ]
 except ImportError:
     # with the minimal installationwe don't have botorch
     pass

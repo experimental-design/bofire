@@ -11,9 +11,10 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.single_task_gp import ScalerEnum
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class MixedSingleTaskGPSurrogate(BotorchSurrogate):
+class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: MaternKernel(ard=True, nu=2.5)

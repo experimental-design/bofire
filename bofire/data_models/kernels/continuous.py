@@ -23,3 +23,4 @@ class MaternKernel(ContinuousKernel):
 
 class LinearKernel(ContinuousKernel):
     type: Literal["LinearKernel"] = "LinearKernel"
+    variance_prior: Optional[AnyPrior] = None
