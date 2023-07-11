@@ -1,17 +1,15 @@
 from typing import ClassVar, List, Literal, Optional, Tuple
 
 import pandas as pd
-from pydantic import Field
 
 from bofire.data_models.features.categorical import _CAT_SEP
-from bofire.data_models.features.feature import Input, TMolecularVals
+from bofire.data_models.features.feature import Input
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.utils.cheminformatics import smiles2mol
 
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
-    descriptor_values: TMolecularVals = Field(default_factory=list)
     order: ClassVar[int] = 6
 
     def validate_experimental(
@@ -39,11 +37,6 @@ class MolecularInput(Input):
     def get_bounds(
         self, transform_type: AnyMolFeatures, values: pd.Series
     ) -> Tuple[List[float], List[float]]:
-        if len(self.descriptor_values) == 0:
-            self.descriptor_values = transform_type.get_descriptor_values(
-                values
-            ).values.tolist()
-
         if values is None:
             raise NotImplementedError(
                 "`values` is currently required for `MolecularInput`"
@@ -67,16 +60,11 @@ class MolecularInput(Input):
         Returns:
             pd.DataFrame: Descriptor encoded dataframe.
         """
-        if len(self.descriptor_values) == 0:
-            self.descriptor_values = transform_type.get_descriptor_values(
-                values
-            ).values.tolist()
+        descriptor_values = transform_type.get_descriptor_values(values)
 
-        return pd.DataFrame(
-            data=self.descriptor_values,
-            columns=[
-                f"{self.key}{_CAT_SEP}{d}"
-                for d in transform_type.get_descriptor_names()
-            ],
-            index=values.index,
-        )
+        descriptor_values.columns = [
+            f"{self.key}{_CAT_SEP}{d}" for d in transform_type.get_descriptor_names()
+        ]
+        descriptor_values.index = values.index
+
+        return descriptor_values

@@ -92,6 +92,5 @@ specs.add_valid(
     features.MolecularInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "descriptor_values": [],
     },
 )

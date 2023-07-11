@@ -279,8 +279,8 @@ def test_TanimotoGP(kernel, specs):
     # dump the model
     dump = model.dumps()
     # make predictions
-    preds = model.predict(experiments)
-    assert preds.shape == (4, 2)
+    preds = model.predict(experiments.iloc[:-1])
+    assert preds.shape == (3, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
     assert isinstance(model.model.outcome_transform, Standardize)
@@ -294,7 +294,7 @@ def test_TanimotoGP(kernel, specs):
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)
-    preds2 = model2.predict(experiments)
+    preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
 

@@ -22,7 +22,6 @@ except ImportError:
 
 class MolFeatures(BaseModel):
     """Base class for all molecular features"""
-
     type: str
 
 

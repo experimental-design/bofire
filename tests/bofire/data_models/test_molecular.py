@@ -35,22 +35,6 @@ def test_molecular_input_validate_experimental():
         m.validate_experimental(INVALID_SMILES)
 
 
-# @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-# def test_molecular_input_validate_experimental_invalid_experiments():
-#     experiments = pd.Series(
-#         [
-#             "CC(=O)Oc1ccccc1C(=O)O",
-#             "c1ccccc1",
-#             "[CH3][CH2][OH]",
-#             "C=CC1CCC(C=C)C(C1)C=C",
-#             "N[C@](C)(F)C(=O)O",
-#         ]
-#     )
-#     m = MolecularInput(key="molecules")
-#     with pytest.raises(ValueError):
-#         m.validate_experimental(experiments)
-
-
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 def test_molecular_input_validate_candidental():
     m = MolecularInput(key="molecule")
@@ -1130,29 +1114,3 @@ def test_molfeatures_type_mordreddescriptors():
     generated = molfeature.get_descriptor_values(VALID_SMILES)
     assert_frame_equal(generated, pd.DataFrame.from_dict(values))
 
-
-# @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-# def test_to_fingerprints():
-#     m = MolecularInput(key="molecules")
-#     data = m.to_fingerprints(VALID_SMILES)
-#     assert data.shape[0] == 6
-#     with pytest.raises(ValueError):
-#         m.to_fingerprints(INVALID_SMILES)
-
-
-# @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-# def test_to_bag_of_characters():
-#     m = MolecularInput(key="molecules")
-#     data = m.to_bag_of_characters(VALID_SMILES)
-#     assert data.shape[0] == 6
-#     with pytest.raises(ValueError):
-#         m.to_bag_of_characters(INVALID_SMILES)
-
-
-# @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-# def test_to_fragments():
-#     m = MolecularInput(key="molecules")
-#     data = m.to_fragments(VALID_SMILES)
-#     assert data.shape[0] == 6
-#     with pytest.raises(ValueError):
-#         m.to_fragments(INVALID_SMILES)
