@@ -10,6 +10,7 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousBinaryInput,
+    ContinuousDiscreteInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -47,4 +48,5 @@ class PolytopeSampler(SamplerStrategy):
             DiscreteInput,
             CategoricalDescriptorInput,
             ContinuousBinaryInput,
+            ContinuousDiscreteInput,
         ]

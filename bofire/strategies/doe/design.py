@@ -67,17 +67,13 @@ def find_find_local_max_ipopt_BaB(
     )
 
     binary_vars = domain.get_features(ContinuousBinaryInput)
-    non_binary_vars = domain.get_features(
-        includes=[Input], excludes=ContinuousBinaryInput
-    )
+    domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
     list_keys = binary_vars.get_keys()
 
     for var in binary_vars:
         var.relax()
 
-    column_keys = [var.key for group in categorical_groups for var in group] + [
-        var.key for var in non_binary_vars
-    ]
+    column_keys = domain.inputs.get_keys()
 
     initial_branch = pd.DataFrame(
         np.full((n_experiments, len(column_keys)), None), columns=column_keys
@@ -217,9 +213,7 @@ def find_find_local_max_ipopt_binary_naive(
     )
 
     binary_vars = domain.get_features(ContinuousBinaryInput)
-    non_binary_vars = domain.get_features(
-        includes=[Input], excludes=ContinuousBinaryInput
-    )
+    domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
     list_keys = binary_vars.get_keys()
 
     for var in binary_vars:
@@ -234,9 +228,7 @@ def find_find_local_max_ipopt_binary_naive(
         allowed_fixations, n_experiments
     )
 
-    column_keys = [var.key for group in categorical_groups for var in group] + [
-        var.key for var in non_binary_vars
-    ]
+    column_keys = domain.inputs.get_keys()
 
     minimum = float("inf")
     optimal_design = None
@@ -492,7 +484,10 @@ def partially_fix_experiment(
         )
         partially_fixed_experiments = np.array(partially_fixed_experiments.values)
         for i, val in enumerate(partially_fixed_experiments.flatten()):
-            if val is not None:
+            if type(val) is tuple:
+                bounds[i] = (val[0], val[1])
+                x0[i] = val[0]
+            elif val is not None:
                 bounds[i] = (val, val)
                 x0[i] = val
     return bounds, x0

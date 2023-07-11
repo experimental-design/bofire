@@ -3,6 +3,7 @@ from typing import Union
 from bofire.data_models.features.binary import ContinuousBinaryInput
 from bofire.data_models.features.categorical import CategoricalInput, CategoricalOutput
 from bofire.data_models.features.continuous import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.continuous_discrete import ContinuousDiscreteInput
 from bofire.data_models.features.descriptor import (
     CategoricalDescriptorInput,
     ContinuousDescriptorInput,
@@ -35,6 +36,7 @@ AnyFeature = Union[
     MolecularInput,
     CategoricalOutput,
     ContinuousBinaryInput,
+    ContinuousDiscreteInput,
 ]
 
 AnyInput = Union[
@@ -45,6 +47,7 @@ AnyInput = Union[
     CategoricalDescriptorInput,
     MolecularInput,
     ContinuousBinaryInput,
+    ContinuousDiscreteInput,
 ]
 
 AnyOutput = Union[ContinuousOutput, CategoricalOutput]
