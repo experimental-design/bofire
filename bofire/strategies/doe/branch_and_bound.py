@@ -88,6 +88,7 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
         domain=domain, model=model_formula, n_experiments=n_experiments
     )
 
+    pre_size = priority_queue.qsize()
     current_branch = priority_queue.get()
     # test if current solution is already valid
     if is_valid(current_branch.design_matrix, domain):
@@ -96,6 +97,7 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
     # branch current solutions in sub-problems
     next_branches = current_branch.get_next_fixed_experiments()
 
+    print(f"{pre_size} + {len(next_branches)}")
     # solve branched problems
     for _i, branch in enumerate(next_branches):
         design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
