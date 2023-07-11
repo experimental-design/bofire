@@ -25,3 +25,5 @@ max-complexity = 18
 "bofire/utils/annotated.py" = ["F401"]
 "tests/bofire/data_models/specs/api.py" = ["F401"]
 "bofire/data_models/api.py" = ["F401"]
+"bofire/data_models/surrogates/api.py" = ["F401"]
+"bofire/benchmarks/api.py" = ["F401"]

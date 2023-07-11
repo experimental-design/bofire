@@ -48,7 +48,11 @@ def map_LinearKernel(
     active_dims: List[int],
 ) -> gpytorch.kernels.LinearKernel:
     return gpytorch.kernels.LinearKernel(
-        batch_shape=batch_shape, active_dims=active_dims
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+        variance_prior=priors.map(data_model.variance_prior)
+        if data_model.variance_prior is not None
+        else None,
     )
 
 

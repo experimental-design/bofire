@@ -9,10 +9,11 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     NumericalInput,
 )
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.data_models.surrogates.surrogate import Surrogate
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class XGBoostSurrogate(BotorchSurrogate):
+class XGBoostSurrogate(Surrogate, TrainableSurrogate):
     type: Literal["XGBoostSurrogate"] = "XGBoostSurrogate"
     n_estimators: int
     max_depth: Annotated[int, Field(ge=0)] = 6

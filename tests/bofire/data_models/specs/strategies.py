@@ -3,7 +3,11 @@ from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qPI
 from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
-from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+)
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -138,11 +142,29 @@ specs.add_valid(
                 max_parallelism=2,
             ).dict(),
             strategies.Step(
-                strategy_data=strategies.QehviStrategy(domain=tempdomain),
+                strategy_data=strategies.QehviStrategy(
+                    domain=tempdomain,
+                ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
                 max_parallelism=2,
             ).dict(),
         ],
+        "seed": 42,
+    },
+)
+
+
+specs.add_valid(
+    strategies.FactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="alpha", categories=["a", "b", "c"]),
+                    DiscreteInput(key="beta", values=[1.0, 2, 3.0, 4.0]),
+                ]
+            )
+        ),
         "seed": 42,
     },
 )
