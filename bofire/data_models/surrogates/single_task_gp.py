@@ -48,11 +48,11 @@ class SingleTaskGPHyperconfig(Hyperconfig):
     def _update_hyperparameters(
         surrogate_data: "SingleTaskGPSurrogate", hyperparameters: pd.Series
     ):
-        def matern_25(ard: bool, lenghtscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=2.5, lengthscale_prior=lenghtscale_prior, ard=ard)
+        def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
+            return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
 
-        def matern_15(ard: bool, lenghtscale_prior: AnyPrior) -> MaternKernel:
-            return MaternKernel(nu=1.5, lengthscale_prior=lenghtscale_prior, ard=ard)
+        def matern_15(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
+            return MaternKernel(nu=1.5, lengthscale_prior=lengthscale_prior, ard=ard)
 
         if hyperparameters.prior == "mbo":
             noise_prior, lengthscale_prior, outputscale_prior = (
@@ -77,14 +77,14 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         elif hyperparameters.kernel == "matern_2.5":
             surrogate_data.kernel = ScaleKernel(
                 base_kernel=matern_25(
-                    ard=hyperparameters.ard, lenghtscale_prior=lengthscale_prior
+                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
                 ),
                 outputscale_prior=outputscale_prior,
             )
         elif hyperparameters.kernel == "matern_1.5":
             surrogate_data.kernel = ScaleKernel(
                 base_kernel=matern_15(
-                    ard=hyperparameters.ard, lenghtscale_prior=lengthscale_prior
+                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
                 ),
                 outputscale_prior=outputscale_prior,
             )
