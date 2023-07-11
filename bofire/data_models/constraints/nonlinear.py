@@ -73,7 +73,7 @@ class NonlinearConstraint(Constraint):
 
 
 class NonlinearEqualityConstraint(NonlinearConstraint):
-    """Nonlinear inequality constraint of the form 'expression <= 0'.
+    """Nonlinear equality constraint of the form 'expression == 0'.
 
     Attributes:
         expression: Mathematical expression that can be evaluated by `pandas.eval`.
@@ -91,7 +91,7 @@ class NonlinearEqualityConstraint(NonlinearConstraint):
 
 
 class NonlinearInequalityConstraint(NonlinearConstraint):
-    """Linear inequality constraint of the form 'expression == 0'.
+    """Linear inequality constraint of the form 'expression <= 0'.
 
     Attributes:
         expression: Mathematical expression that can be evaluated by `pandas.eval`.
