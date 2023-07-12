@@ -64,6 +64,8 @@ class ContinuousDiscreteInput(ContinuousInput):
         if size % 2 == 0:
             lower_index = size / 2 - 1
             upper_index = size / 2
+        elif size == 1:
+            return sub_list[0], sub_list[0]
         else:
             lower_index = math.floor(size / 2)
             upper_index = math.ceil(size / 2)
