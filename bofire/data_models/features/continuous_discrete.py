@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 import numpy as np
@@ -48,3 +49,26 @@ class ContinuousDiscreteInput(ContinuousInput):
             pd.Series: drawn samples.
         """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
+
+    def equal_range_split(self) -> (float, float):
+
+        return (self.upper_bound - self.lower_bound) / 2 + self.lower_bound
+
+    def equal_count_split(
+        self, lower_bound: float, upper_bound: float
+    ) -> (float, float):
+        self.values.sort()
+        sub_list = [elem for elem in self.values if lower_bound <= elem <= upper_bound]
+
+        size = len(sub_list)
+        if size % 2 == 0:
+            lower_index = size / 2 - 1
+            upper_index = size / 2
+        else:
+            lower_index = math.floor(size / 2)
+            upper_index = math.ceil(size / 2)
+
+        lower_index = int(lower_index)
+        upper_index = int(upper_index)
+
+        return sub_list[lower_index], sub_list[upper_index]

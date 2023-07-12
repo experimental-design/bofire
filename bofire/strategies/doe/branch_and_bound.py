@@ -7,8 +7,12 @@ from typing import List
 import numpy as np
 import pandas as pd
 
+from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.domain import Domain
-from bofire.data_models.features.api import ContinuousBinaryInput
+from bofire.data_models.features.api import (
+    ContinuousBinaryInput,
+    ContinuousDiscreteInput,
+)
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
@@ -23,11 +27,13 @@ class NodeExperiment:
         design_matrix: pd.DataFrame,
         value: float,
         categorical_groups: List[List[ContinuousBinaryInput]],
+        discrete_vars: List[ContinuousDiscreteInput],
     ):
         self.fixed_experiments = fixed_experiments
         self.design_matrix = design_matrix
         self.value = value
         self.categorical_groups = categorical_groups
+        self.discrete_vars = discrete_vars
 
     def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
 
@@ -43,6 +49,34 @@ class NodeExperiment:
                     for k, elem in enumerate(branches):
                         elem.loc[row_index, current_keys] = allowed_fixations[k]
                     return branches
+
+        for var in self.discrete_vars:
+            for row_index, _exp in self.fixed_experiments.iterrows():
+                current_fixation = self.fixed_experiments.iloc[row_index][var.key]
+                first_fixation, second_fixation = None, None
+                if current_fixation is None:
+                    lower_split, upper_split = var.equal_count_split(
+                        var.lower_bound, var.upper_bound
+                    )
+                    first_fixation = (var.lower_bound, lower_split)
+                    second_fixation = (upper_split, var.upper_bound)
+
+                elif current_fixation[0] != current_fixation[1]:
+                    lower_split, upper_split = var.equal_count_split(
+                        current_fixation[0], current_fixation[1]
+                    )
+                    first_fixation = (current_fixation[0], lower_split)
+                    second_fixation = (upper_split, current_fixation[1])
+
+                if first_fixation is not None:
+                    first_branch = self.fixed_experiments.copy()
+                    second_branch = self.fixed_experiments.copy()
+
+                    first_branch.loc[row_index, var.key] = first_fixation
+                    second_branch.loc[row_index, var.key] = second_fixation
+
+                    return [first_branch, second_branch]
+
         return []
 
     def __eq__(self, other: NodeExperiment) -> bool:
@@ -100,11 +134,18 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
     print(f"{pre_size} + {len(next_branches)}")
     # solve branched problems
     for _i, branch in enumerate(next_branches):
-        design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
-        value = objective_class.evaluate(design.to_numpy().flatten())
-        new_node = NodeExperiment(
-            branch, design, value, current_branch.categorical_groups
-        )
-        priority_queue.put(new_node)
+        try:
+            design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
+            value = objective_class.evaluate(design.to_numpy().flatten())
+            new_node = NodeExperiment(
+                branch,
+                design,
+                value,
+                current_branch.categorical_groups,
+                current_branch.discrete_vars,
+            )
+            priority_queue.put(new_node)
+        except ConstraintNotFulfilledError:
+            print("skipping branch because of not fulfilling constraints")
 
     return bnb(priority_queue, **kwargs)

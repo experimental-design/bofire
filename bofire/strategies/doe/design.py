@@ -11,7 +11,11 @@ from scipy.optimize._minimize import standardize_constraints
 from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.features.api import ContinuousBinaryInput, Input
+from bofire.data_models.features.api import (
+    ContinuousBinaryInput,
+    ContinuousDiscreteInput,
+    Input,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -92,8 +96,10 @@ def find_find_local_max_ipopt_BaB(
     initial_value = objective_class.evaluate(
         initial_design.to_numpy().flatten(),
     )
+
+    discrete_vars = domain.inputs.get(includes=ContinuousDiscreteInput)
     initial_node = NodeExperiment(
-        initial_branch, initial_design, initial_value, categorical_groups
+        initial_branch, initial_design, initial_value, categorical_groups, discrete_vars
     )
 
     initial_queue = PriorityQueue()
