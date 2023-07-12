@@ -1,5 +1,5 @@
 import warnings
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pandas as pd
 
@@ -23,6 +23,7 @@ class Hyperopt(Benchmark):
         surrogate_data: AnyTrainableSurrogate,
         training_data: pd.DataFrame,
         folds: int,
+        random_state: Optional[int] = None,
     ) -> None:
         super().__init__()
         if surrogate_data.hyperconfig is None:
@@ -31,6 +32,7 @@ class Hyperopt(Benchmark):
         self.training_data = training_data
         self.folds = folds
         self.results = None
+        self.random_state = random_state
 
     @property
     def domain(self) -> Domain:
@@ -44,7 +46,9 @@ class Hyperopt(Benchmark):
         for i, candidate in candidates.iterrows():
             self.surrogate_data.update_hyperparameters(candidate)
             surrogate = surrogates.map(self.surrogate_data)
-            _, cv_test, _ = surrogate.cross_validate(self.training_data, folds=self.folds)  # type: ignore
+            _, cv_test, _ = surrogate.cross_validate(  # type: ignore
+                self.training_data, folds=self.folds, random_state=self.random_state
+            )
             if i == 0:
                 results = cv_test.get_metrics(combine_folds=True)
             else:
@@ -61,6 +65,7 @@ def hyperoptimize(
     surrogate_data: AnyTrainableSurrogate,
     training_data: pd.DataFrame,
     folds: int,
+    random_state: Optional[int] = None,
 ) -> Tuple[AnyTrainableSurrogate, pd.DataFrame]:
     if surrogate_data.hyperconfig is None:
         warnings.warn(
@@ -85,6 +90,7 @@ def hyperoptimize(
         surrogate_data=surrogate_data,
         training_data=training_data,
         folds=folds,
+        random_state=random_state,
     )
 
     if surrogate_data.hyperconfig.hyperstrategy == "FactorialStrategy":  # type: ignore
