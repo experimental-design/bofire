@@ -423,12 +423,7 @@ def partially_fix_experiment(
                 list(range(cut_of_start_index, cut_of_end_index)), inplace=True
             )
 
-        partially_fixed_experiments.where(
-            partially_fixed_experiments.notnull(),
-            np.reshape(x0, partially_fixed_experiments.shape),
-        )
-        partially_fixed_experiments = np.array(partially_fixed_experiments.values)
-        for i, val in enumerate(partially_fixed_experiments.flatten()):
+        for i, val in enumerate(np.array(partially_fixed_experiments.values).flatten()):
             if type(val) is tuple:
                 bounds[i] = (val[0], val[1])
                 x0[i] = val[0]
