@@ -29,7 +29,7 @@ class NodeExperiment:
         categorical_groups: List[List[ContinuousBinaryInput]],
         discrete_vars: List[ContinuousDiscreteInput],
     ):
-        self.fixed_experiments = fixed_experiments
+        self.partially_fixed_experiments = fixed_experiments
         self.design_matrix = design_matrix
         self.value = value
         self.categorical_groups = categorical_groups
@@ -38,12 +38,15 @@ class NodeExperiment:
     def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
 
         for group in self.categorical_groups:
-            for row_index, _exp in self.fixed_experiments.iterrows():
-                if self.fixed_experiments.iloc[row_index][group[0].key] is None:
+            for row_index, _exp in self.partially_fixed_experiments.iterrows():
+                if (
+                    self.partially_fixed_experiments.iloc[row_index][group[0].key]
+                    is None
+                ):
                     current_keys = [elem.key for elem in group]
                     allowed_fixations = np.eye(len(group))
                     branches = [
-                        self.fixed_experiments.copy()
+                        self.partially_fixed_experiments.copy()
                         for i in range(len(allowed_fixations))
                     ]
                     for k, elem in enumerate(branches):
@@ -51,8 +54,10 @@ class NodeExperiment:
                     return branches
 
         for var in self.discrete_vars:
-            for row_index, _exp in self.fixed_experiments.iterrows():
-                current_fixation = self.fixed_experiments.iloc[row_index][var.key]
+            for row_index, _exp in self.partially_fixed_experiments.iterrows():
+                current_fixation = self.partially_fixed_experiments.iloc[row_index][
+                    var.key
+                ]
                 first_fixation, second_fixation = None, None
                 if current_fixation is None:
                     lower_split, upper_split = var.equal_count_split(
@@ -69,8 +74,8 @@ class NodeExperiment:
                     second_fixation = (upper_split, current_fixation[1])
 
                 if first_fixation is not None:
-                    first_branch = self.fixed_experiments.copy()
-                    second_branch = self.fixed_experiments.copy()
+                    first_branch = self.partially_fixed_experiments.copy()
+                    second_branch = self.partially_fixed_experiments.copy()
 
                     first_branch.loc[row_index, var.key] = first_fixation
                     second_branch.loc[row_index, var.key] = second_fixation
@@ -93,7 +98,7 @@ class NodeExperiment:
             "\n ================ Branch-and-Bound Node ================ \n"
             + f"objective value: {self.value} \n"
             + f"design matrix: \n{self.design_matrix.round(4)} \n"
-            + f"current fixations: \n{self.fixed_experiments.round(4)} \n"
+            + f"current fixations: \n{self.partially_fixed_experiments.round(4)} \n"
         )
 
 
