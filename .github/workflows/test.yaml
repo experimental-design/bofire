@@ -55,6 +55,30 @@ jobs:
       - name: Run pip freeze, Python ${{ matrix.python-version }}
         run: pip freeze
 
+  testing_against_latest_botorch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.10'
+      - name: Install latest botorch
+        run: |
+          pip install --upgrade git+https://github.com/cornellius-gp/linear_operator.git
+          pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
+          export ALLOW_LATEST_GPYTORCH_LINOP=true
+          pip install --upgrade git+https://github.com/pytorch/botorch.git
+      - name: Install Bofire, Python ${{ matrix.python-version }}
+        run: pip install ".[optimization,tests,cheminfo,xgb]"
+      - name: Install ipopt, Python ${{ matrix.python-version }}
+        run: sudo apt install build-essential pkg-config coinor-libipopt1v5 coinor-libipopt-dev
+      - name: Install cyipopt, Python ${{ matrix.python-version }}
+        run: pip install cyipopt
+      - name: Run tests, Python ${{ matrix.python-version }}
+        run: pytest -ra --cov=bofire --cov-report term-missing tests
+      - name: Run pip freeze, Python ${{ matrix.python-version }}
+        run: pip freeze    
+
 
   testing_tutorials:
     runs-on: ubuntu-latest
@@ -62,7 +86,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v2
         with:
-          python-version: 3.9
+          python-version: '3.10'
       - name: Install Bofire
         run: pip install ".[optimization,tests,cheminfo,xgb]"
       - name: Install ipopt
