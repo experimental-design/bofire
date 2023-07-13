@@ -72,7 +72,6 @@ def find_local_max_ipopt_BaB(
 
     binary_vars = domain.get_features(ContinuousBinaryInput)
     domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
-    list_keys = binary_vars.get_keys()
 
     for var in binary_vars:
         var.relax()
@@ -118,66 +117,6 @@ def find_local_max_ipopt_BaB(
     )
 
     return result_node.design_matrix
-
-    allowed_fixations = []
-    for group in categorical_groups:
-        allowed_fixations.append(np.eye(len(group)))
-
-    allowed_fixations = product(*allowed_fixations)
-    all_n_fixed_experiments = combinations_with_replacement(
-        allowed_fixations, n_experiments
-    )
-
-    minimum = float("inf")
-    optimal_design = None
-    number_of_non_binary_vars = len(domain.inputs) - len(binary_vars)
-    for i, binary_fixed_experiments in enumerate(list(all_n_fixed_experiments)):
-        binary_fixed_experiments = np.array(
-            [
-                var
-                for experiment in binary_fixed_experiments
-                for group in experiment
-                for var in group
-            ]
-        ).reshape(n_experiments, len(binary_vars))
-
-        one_set_of_experiments = np.concatenate(
-            [
-                binary_fixed_experiments,
-                np.full((n_experiments, number_of_non_binary_vars), None),
-            ],
-            axis=1,
-        )
-
-        one_set_of_experiments = pd.DataFrame(
-            one_set_of_experiments, columns=column_keys
-        )
-
-        if sampling is not None:
-            sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
-
-        current_design = find_local_max_ipopt(
-            domain,
-            model_type,
-            n_experiments,
-            delta,
-            ipopt_options,
-            sampling,
-            fixed_experiments,
-            one_set_of_experiments,
-            objective,
-        )
-        temp_value = objective_class.evaluate(
-            current_design.to_numpy().flatten(),
-        )
-        if minimum is None or minimum > temp_value:
-            minimum = temp_value
-            optimal_design = current_design
-        print(
-            f"run: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
-        )
-
-    return optimal_design
 
 
 def find_local_max_ipopt_binary_naive(
