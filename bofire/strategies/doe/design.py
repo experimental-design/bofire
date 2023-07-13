@@ -30,7 +30,7 @@ from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
 
 
-def find_find_local_max_ipopt_BaB(
+def find_local_max_ipopt_BaB(
     domain: Domain,
     categorical_groups: List[List[ContinuousBinaryInput]],
     model_type: Union[str, Formula],
@@ -180,7 +180,7 @@ def find_find_local_max_ipopt_BaB(
     return optimal_design
 
 
-def find_find_local_max_ipopt_binary_naive(
+def find_local_max_ipopt_binary_naive(
     domain: Domain,
     categorical_groups: List[List[ContinuousBinaryInput]],
     model_type: Union[str, Formula],

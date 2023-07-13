@@ -19,8 +19,8 @@ from bofire.data_models.features.binary import ContinuousBinaryInput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
-    find_find_local_max_ipopt_binary_naive,
     find_local_max_ipopt,
+    find_local_max_ipopt_binary_naive,
     get_n_experiments,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
@@ -491,7 +491,7 @@ def test_simple_optimal_binary_problem():
         ],
     )
 
-    d_optimal_design = find_find_local_max_ipopt_binary_naive(
+    d_optimal_design = find_local_max_ipopt_binary_naive(
         domain,
         "linear",
         n_experiments=2,
@@ -535,7 +535,7 @@ def test_advanced_optimal_binary_problem():
     initial_values[2][1] = 3
     initial_values = pd.DataFrame(initial_values, columns=domain.inputs.get_keys())
 
-    d_optimal_design = find_find_local_max_ipopt_binary_naive(
+    d_optimal_design = find_local_max_ipopt_binary_naive(
         domain,
         "linear",
         n_experiments=n_experiments,
@@ -594,7 +594,7 @@ def test_solving_binary_variables_naive():
         ],
     )
 
-    opt_values = find_find_local_max_ipopt_binary_naive(
+    opt_values = find_local_max_ipopt_binary_naive(
         domain, "linear", n_experiments=12, ipopt_options={"disp": 0}
     )
 
