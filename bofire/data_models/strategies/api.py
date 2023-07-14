@@ -1,6 +1,7 @@
 from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
+from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -19,6 +20,15 @@ from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
+    AlwaysTrueCondition,
+    CombiCondition,
+    NumberOfExperimentsCondition,
+)
+from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
+    Step,
+    StepwiseStrategy,
+)
 from bofire.data_models.strategies.strategy import Strategy
 
 AbstractStrategy = Union[
@@ -41,6 +51,8 @@ AnyStrategy = Union[
     RejectionSampler,
     RandomStrategy,
     DoEStrategy,
+    StepwiseStrategy,
+    FactorialStrategy,
 ]
 
 AnyPredictive = Union[
@@ -53,7 +65,7 @@ AnyPredictive = Union[
     QparegoStrategy,
 ]
 
-AnySampler = Union[
-    PolytopeSampler,
-    RejectionSampler,
-]
+AnySampler = Union[PolytopeSampler, RejectionSampler]
+
+
+AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]

@@ -64,6 +64,12 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
             assert v == spec[k]
 
 
+def test_condition_should_be_serializable(condition_spec: Spec):
+    spec = condition_spec.typed_spec()
+    obj = condition_spec.cls(**spec)
+    assert obj.dict() == spec
+
+
 def test_outlier_detection_should_be_serializable(outlier_detection_spec: Spec):
     spec = outlier_detection_spec.typed_spec()
     obj = outlier_detection_spec.cls(**spec)

@@ -4,9 +4,10 @@ from pydantic import conint, validator
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class SaasSingleTaskGPSurrogate(BotorchSurrogate):
+class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["SaasSingleTaskGPSurrogate"] = "SaasSingleTaskGPSurrogate"
     warmup_steps: conint(ge=1) = 256  # type: ignore
     num_samples: conint(ge=1) = 128  # type: ignore

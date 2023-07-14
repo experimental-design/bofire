@@ -18,6 +18,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.MLPEnsemble: MLPEnsemble,
     data_models.SaasSingleTaskGPSurrogate: SaasSingleTaskGPSurrogate,
     data_models.XGBoostSurrogate: XGBoostSurrogate,
+    data_models.LinearSurrogate: SingleTaskGPSurrogate,
 }
 
 

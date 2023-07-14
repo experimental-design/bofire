@@ -46,6 +46,10 @@ try:
     def kernel_spec(request) -> specs.Spec:
         return request.param
 
+    @fixture(params=specs.conditions.valids)
+    def condition_spec(request) -> specs.Spec:
+        return request.param
+
     @fixture(params=specs.outlier_detection.valids)
     def outlier_detection_spec(request) -> specs.Spec:
         return request.param

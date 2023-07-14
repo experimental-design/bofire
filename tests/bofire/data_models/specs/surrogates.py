@@ -19,6 +19,7 @@ from bofire.data_models.priors.api import (
     BOTORCH_SCALE_PRIOR,
 )
 from bofire.data_models.surrogates.api import ScalerEnum
+from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -44,6 +45,7 @@ specs.add_valid(
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
+        "hyperconfig": None,
     },
 )
 
@@ -66,6 +68,7 @@ specs.add_valid(
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
+        "hyperconfig": None,
     },
 )
 specs.add_valid(
@@ -91,6 +94,7 @@ specs.add_valid(
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
         "dump": None,
+        "hyperconfig": SingleTaskGPHyperconfig(),
     },
 )
 specs.add_valid(
@@ -122,6 +126,7 @@ specs.add_valid(
         "ccp_alpha": 0.0,
         "max_samples": None,
         "dump": None,
+        "hyperconfig": None,
     },
 )
 specs.add_valid(
@@ -150,5 +155,47 @@ specs.add_valid(
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {},
         "dump": None,
+        "hyperconfig": None,
+    },
+)
+
+specs.add_valid(
+    models.XGBoostSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "n_estimators": 10,
+        "max_depth": 6,
+        "max_leaves": 0,
+        "max_bin": 256,
+        "grow_policy": "depthwise",
+        "learning_rate": 0.3,
+        "objective": "reg:squarederror",
+        "booster": "gbtree",
+        "n_jobs": 1,
+        "gamma": 0.0,
+        "min_child_weight": 1.0,
+        "max_delta_step": 0.0,
+        "subsample": 1.0,
+        "sampling_method": "uniform",
+        "colsample_bytree": 1.0,
+        "colsample_bylevel": 1.0,
+        "colsample_bynode": 1.0,
+        "reg_alpha": 0.0,
+        "reg_lambda": 1.0,
+        "scale_pos_weight": 1,
+        "random_state": None,
+        "num_parallel_tree": 1,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
     },
 )

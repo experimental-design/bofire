@@ -42,7 +42,7 @@ class PolytopeSampler(SamplerStrategy):
             return self.domain.inputs.sample(n, self.fallback_sampling_method)
 
         # check if we have pseudo fixed features in the linear equality constraints
-        # a pseude fixed is a linear euquality constraint with only one feature included
+        # a pseudo fixed is a linear euquality constraint with only one feature included
         # this can happen when fixing features when sampling with NChooseK constraints
         eqs = get_linear_constraints(
             domain=self.domain,
