@@ -5,6 +5,7 @@ from bofire.data_models.api import (
     AnyConstraint,
     AnyFeature,
     AnyKernel,
+    AnyMolFeatures,
     AnyObjective,
     AnyPrior,
     AnyStrategy,
@@ -73,4 +74,10 @@ def test_strategy_should_be_deserializable(strategy_spec: Spec):
     deserialized = {
         k: v for k, v in deserialized.dict().items() if k != "surrogate_specs"
     }
+    assert obj == deserialized
+
+
+def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
+    obj = molfeatures_spec.obj()
+    deserialized = parse_obj_as(AnyMolFeatures, obj.dict())
     assert obj == deserialized

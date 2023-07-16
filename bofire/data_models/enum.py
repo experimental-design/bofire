@@ -1,5 +1,6 @@
 from enum import Enum
 
+
 class SamplingMethodEnum(Enum):
     UNIFORM = "UNIFORM"
     SOBOL = "SOBOL"

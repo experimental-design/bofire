@@ -1331,6 +1331,10 @@ def test_inputs_sample(features: Inputs, num_samples, method):
         ({"x1": CategoricalEncodingEnum.ONE_HOT}),
         ({"x2": ScalerEnum.NORMALIZE}),
         ({"x2": CategoricalEncodingEnum.DESCRIPTOR}),
+        ({"x1": Fingerprints()}),
+        ({"x2": Fragments()}),
+        ({"x3": FingerprintsFragments()}),
+        ({"x3": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])}),
     ],
 )
 def test_inputs_validate_transform_specs_invalid(specs):
@@ -1381,54 +1385,163 @@ def test_inputs_validate_transform_valid(specs):
 
 
 @pytest.mark.parametrize(
+    "specs",
+    [
+        ({"x2": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
+        ({"x4": CategoricalEncodingEnum.ONE_HOT}),
+        ({"x4": ScalerEnum.NORMALIZE}),
+        ({"x4": CategoricalEncodingEnum.DESCRIPTOR}),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+            }
+        ),
+    ],
+)
+# Invalid when no specs do not contain transform information for x4, or when the transform is not a MolFeatures type
+def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
+    inps = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["apple", "banana"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4]],
+            ),
+            MolecularInput(key="x4"),
+        ]
+    )
+    with pytest.raises(ValueError):
+        inps._validate_transform_specs(specs)
+
+
+@pytest.mark.parametrize(
+    "specs",
+    [
+        ({"x4": Fingerprints()}),
+        ({"x4": Fragments()}),
+        ({"x4": FingerprintsFragments()}),
+        ({"x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])}),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x4": Fingerprints(),
+            }
+        ),
+        (
+            {
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": Fingerprints(),
+            }
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": Fingerprints(),
+            }
+        ),
+    ],
+)
+def test_inputs_validate_transform_specs_molecular_input_valid(specs):
+    inps = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["apple", "banana"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4]],
+            ),
+            MolecularInput(key="x4"),
+        ]
+    )
+    inps._validate_transform_specs(specs)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
     "specs, expected_features2idx, expected_features2names",
     [
         (
-            {"x2": CategoricalEncodingEnum.ONE_HOT},
-            {"x1": (0,), "x2": (2, 3, 4), "x3": (1,)},
+            {"x2": CategoricalEncodingEnum.ONE_HOT, "x4": Fingerprints(n_bits=2048)},
+            {
+                "x1": (2048,),
+                "x2": (2050, 2051, 2052),
+                "x3": (2049,),
+                "x4": tuple(range(2048)),
+            },
             {
                 "x1": ("x1",),
                 "x2": ("x2_apple", "x2_banana", "x2_orange"),
                 "x3": ("x3",),
+                "x4": tuple(f"x4_fingerprint_{i}" for i in range(2048)),
             },
         ),
         (
-            {"x2": CategoricalEncodingEnum.DUMMY},
-            {"x1": (0,), "x2": (2, 3), "x3": (1,)},
-            {"x1": ("x1",), "x2": ("x2_banana", "x2_orange"), "x3": ("x3",)},
+            {"x2": CategoricalEncodingEnum.DUMMY, "x4": Fragments()},
+            {"x1": (84,), "x2": (86, 87), "x3": (85,), "x4": tuple(range(84))},
+            {
+                "x1": ("x1",),
+                "x2": ("x2_banana", "x2_orange"),
+                "x3": ("x3",),
+                "x4": tuple(
+                    f"x4_{i}"
+                    for i in [fragment[0] for fragment in Descriptors.descList[124:]]
+                ),
+            },
         ),
         (
-            {"x2": CategoricalEncodingEnum.ORDINAL},
-            {"x1": (0,), "x2": (2,), "x3": (1,)},
-            {"x1": ("x1",), "x2": ("x2",), "x3": ("x3",)},
+            {
+                "x2": CategoricalEncodingEnum.ORDINAL,
+                "x4": FingerprintsFragments(n_bits=2048),
+            },
+            {
+                "x1": (2132,),
+                "x2": (2134,),
+                "x3": (2133,),
+                "x4": tuple(range(2048 + 84)),
+            },
+            {
+                "x1": ("x1",),
+                "x2": ("x2",),
+                "x3": ("x3",),
+                "x4": tuple(
+                    [f"x4_fingerprint_{i}" for i in range(2048)]
+                    + [
+                        f"x4_{i}"
+                        for i in [
+                            fragment[0] for fragment in Descriptors.descList[124:]
+                        ]
+                    ]
+                ),
+            },
         ),
         (
-            {"x3": CategoricalEncodingEnum.ONE_HOT},
-            {"x1": (0,), "x2": (5,), "x3": (1, 2, 3, 4)},
+            {
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            {"x1": (2,), "x2": (7,), "x3": (3, 4, 5, 6), "x4": (0, 1)},
             {
                 "x1": ("x1",),
                 "x2": ("x2",),
                 "x3": ("x3_apple", "x3_banana", "x3_orange", "x3_cherry"),
-            },
-        ),
-        (
-            {"x3": CategoricalEncodingEnum.DESCRIPTOR},
-            {"x1": (0,), "x2": (3,), "x3": (1, 2)},
-            {
-                "x1": ("x1",),
-                "x2": ("x2",),
-                "x3": (
-                    "x3_d1",
-                    "x3_d2",
-                ),
+                "x4": ("x4_NssCH2", "x4_ATSC2d"),
             },
         ),
         (
             {
                 "x2": CategoricalEncodingEnum.ONE_HOT,
                 "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
-            {"x1": (0,), "x2": (3, 4, 5), "x3": (1, 2)},
+            {"x1": (2,), "x2": (5, 6, 7), "x3": (3, 4), "x4": (0, 1)},
             {
                 "x1": ("x1",),
                 "x2": ("x2_apple", "x2_banana", "x2_orange"),
@@ -1436,23 +1549,12 @@ def test_inputs_validate_transform_valid(specs):
                     "x3_d1",
                     "x3_d2",
                 ),
-            },
-        ),
-        (
-            {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.ONE_HOT,
-            },
-            {"x1": (0,), "x2": (5, 6, 7), "x3": (1, 2, 3, 4)},
-            {
-                "x1": ("x1",),
-                "x2": ("x2_apple", "x2_banana", "x2_orange"),
-                "x3": ("x3_apple", "x3_banana", "x3_orange", "x3_cherry"),
+                "x4": ("x4_NssCH2", "x4_ATSC2d"),
             },
         ),
     ],
 )
-def test_inputs_get_transform_info(
+def test_inputs_get_transform_info_molecular(
     specs, expected_features2idx, expected_features2names
 ):
     inps = Inputs(
@@ -1465,65 +1567,9 @@ def test_inputs_get_transform_info(
                 descriptors=["d1", "d2"],
                 values=[[1, 2], [3, 4], [5, 6], [7, 8]],
             ),
+            MolecularInput(key="x4"),
         ]
     )
-    features2idx, features2names = inps._get_transform_info(specs)
-    assert features2idx == expected_features2idx
-    assert features2names == expected_features2names
-
-
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-@pytest.mark.parametrize(
-    "specs, expected_features2idx, expected_features2names",
-    [
-        (
-            {"x1": Fingerprints(n_bits=2048)},
-            {"x1": tuple(range(2048))},
-            {
-                "x1": tuple(f"x1_fingerprint_{i}" for i in range(2048)),
-            },
-        ),
-        (
-            {"x1": Fragments()},
-            {"x1": tuple(range(84))},
-            {
-                "x1": tuple(
-                    f"x1_{i}"
-                    for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-                ),
-            },
-        ),
-        (
-            {"x1": FingerprintsFragments(n_bits=2048)},
-            {"x1": tuple(range(2048 + 84))},
-            {
-                "x1": tuple(
-                    [f"x1_fingerprint_{i}" for i in range(2048)]
-                    + [
-                        f"x1_{i}"
-                        for i in [
-                            fragment[0] for fragment in Descriptors.descList[124:]
-                        ]
-                    ]
-                ),
-            },
-        ),
-        (
-            {"x1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
-            {"x1": (0, 1)},
-            {
-                "x1": (
-                    "x1_NssCH2",
-                    "x1_ATSC2d",
-                ),
-            },
-        ),
-    ],
-)
-def test_inputs_get_transform_info_molecular(
-    specs, expected_features2idx, expected_features2names
-):
-    inps = Inputs(features=[MolecularInput(key="x1")])
     features2idx, features2names = inps._get_transform_info(specs)
     assert features2idx == expected_features2idx
     assert features2names == expected_features2names

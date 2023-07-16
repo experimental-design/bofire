@@ -19,9 +19,18 @@ except ImportError:
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
     )
 
+try:
+    from mordred import Calculator
+    from mordred import descriptors as mordred_descriptors
+except ImportError:
+    warnings.warn(
+        "mordred not installed. Mordred molecular descriptors cannot be used."
+    )
+
 
 class MolFeatures(BaseModel):
     """Base class for all molecular features"""
+
     type: str
 
 
@@ -67,12 +76,9 @@ class Fragments(MolFeatures):
                 raise ValueError("Fragments must be unique")
 
             if not all(
-                frag
-                in [
-                    f"{i}"
-                    for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-                ]
-                for frag in fragments
+                user_fragment
+                in [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
+                for user_fragment in fragments
             ):
                 raise ValueError(
                     "Not all provided fragments were not found in the RDKit list"
@@ -84,9 +90,7 @@ class Fragments(MolFeatures):
         return (
             self.fragments
             if self.fragments is not None
-            else [
-                f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-            ]
+            else [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
         )
 
     def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
@@ -105,9 +109,7 @@ class FingerprintsFragments(Fingerprints, Fragments):
         fragments_list = (
             self.fragments
             if self.fragments is not None
-            else [
-                f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-            ]
+            else [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
         )
 
         fingerprints_fragment_list = fingerprints_list + fragments_list
@@ -118,9 +120,7 @@ class FingerprintsFragments(Fingerprints, Fragments):
         fragments_list = (
             self.fragments
             if self.fragments is not None
-            else [
-                f"{i}" for i in [fragment[0] for fragment in Descriptors.descList[124:]]
-            ]
+            else [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
         )
 
         return pd.DataFrame(
@@ -154,9 +154,15 @@ class MordredDescriptors(MolFeatures):
         Returns:
             List[str]: List of the descriptors
         """
-        if descriptors is not None:
-            if len(descriptors) != len(set(descriptors)):
-                raise ValueError("descriptors must be unique")
+        if len(descriptors) != len(set(descriptors)):
+            raise ValueError("descriptors must be unique")
+
+        calc = Calculator(mordred_descriptors, ignore_3D=False)
+        if not all(desc in [str(d) for d in calc.descriptors] for desc in descriptors):
+            raise ValueError(
+                "Not all provided descriptors were not found in the Mordred list"
+            )
+
         return descriptors
 
     def get_descriptor_names(self) -> List[str]:

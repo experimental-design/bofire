@@ -58,3 +58,9 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
     for k, v in data.items():
         if v is not None:
             assert v == spec[k]
+
+
+def test_molfeatures_should_be_serializable(molfeatures_spec: Spec):
+    spec = molfeatures_spec.typed_spec()
+    obj = molfeatures_spec.cls(**spec)
+    assert obj.dict() == spec

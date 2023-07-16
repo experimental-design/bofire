@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (  # noqa: F401
 try:
     # in case of the minimal installation these import are not available
     from bofire.data_models.kernels.api import AnyKernel, Kernel  # noqa: F401
+    from bofire.data_models.molfeatures.api import AnyMolFeatures, MolFeatures  # noqa: F401
     from bofire.data_models.objectives.api import AnyObjective, Objective  # noqa: F401
     from bofire.data_models.priors.api import AnyPrior, Prior  # noqa: F401
     from bofire.data_models.strategies.api import (  # noqa: F401
@@ -48,6 +49,7 @@ try:
         AnyObjective,
         AnyPrior,
         AnyStrategy,
+        AnyMolFeatures,
         Domain,
     ]
 except ImportError:

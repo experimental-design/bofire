@@ -1,4 +1,5 @@
 import importlib
+import warnings
 
 import numpy as np
 import pandas as pd
@@ -12,6 +13,13 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
+
+try:
+    from rdkit.Chem import Descriptors
+except ImportError:
+    warnings.warn(
+        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
+    )
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
@@ -49,6 +57,39 @@ def test_molecular_input_fixed():
     m = MolecularInput(key="molecule")
     assert m.fixed_value() is None
     assert m.is_fixed() is False
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "molfeatures, expected",
+    [
+        (Fingerprints(), [f"fingerprint_{i}" for i in range(2048)]),
+        (Fingerprints(n_bits=32), [f"fingerprint_{i}" for i in range(32)]),
+        (
+            Fragments(),
+            [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]],
+        ),
+        (
+            Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+            ["fr_unbrch_alkane", "fr_thiocyan"],
+        ),
+        (
+            FingerprintsFragments(),
+            [f"fingerprint_{i}" for i in range(2048)]
+            + [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]],
+        ),
+        (
+            FingerprintsFragments(
+                n_bits=32, fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+            ),
+            [f"fingerprint_{i}" for i in range(32)]
+            + ["fr_unbrch_alkane", "fr_thiocyan"],
+        ),
+        (MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), ["NssCH2", "ATSC2d"]),
+    ],
+)
+def test_molfeatures_get_descriptor_names(molfeatures, expected):
+    assert molfeatures.get_descriptor_names() == expected
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
@@ -827,7 +868,7 @@ def test_molecular_descriptor_feature_get_bounds(expected, transform_type):
         ),
     ],
 )
-def test_molecular_input_to_from_descriptor_encoding(transform_type, values):
+def test_molecular_input_to_descriptor_encoding(transform_type, values):
     input_feature = MolecularInput(key="molecule")
 
     encoded = input_feature.to_descriptor_encoding(transform_type, VALID_SMILES)
@@ -837,7 +878,7 @@ def test_molecular_input_to_from_descriptor_encoding(transform_type, values):
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molfeatures_type_fingerprints():
+def test_molfeatures_type_get_descriptor_values_fingerprints():
     values = {
         "fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
         "fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
@@ -879,7 +920,7 @@ def test_molfeatures_type_fingerprints():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molfeatures_type_fragments():
+def test_molfeatures_type_get_descriptor_values_fragments():
     values = {
         "fr_Al_OH": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
         "fr_Al_OH_noTert": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
@@ -973,7 +1014,20 @@ def test_molfeatures_type_fragments():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molfeatures_type_fingerprintsfragments():
+@pytest.mark.parametrize(
+    "fragment_list",
+    [
+        (["fr_unbrch_alkane','fr_unbrch_alkane', 'fr_thiocyan"]),
+        (["frag','fr_unbrch_alkane', 'fr_thiocyan"]),
+    ],
+)
+def test_molfeatures_type_fragments_invalid(fragment_list):
+    with pytest.raises(ValueError):
+        FingerprintsFragments(fragments=fragment_list)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_molfeatures_type_get_descriptor_values_fingerprintsfragments():
     values = {
         "fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
         "fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
@@ -1099,7 +1153,20 @@ def test_molfeatures_type_fingerprintsfragments():
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_molfeatures_type_mordreddescriptors():
+@pytest.mark.parametrize(
+    "fragment_list",
+    [
+        (["fr_unbrch_alkane','fr_unbrch_alkane', 'fr_thiocyan"]),
+        (["frag','fr_unbrch_alkane', 'fr_thiocyan"]),
+    ],
+)
+def test_molfeatures_type_fingerprintsfragments_invalid(fragment_list):
+    with pytest.raises(ValueError):
+        FingerprintsFragments(fragments=fragment_list)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_molfeatures_type_get_descriptor_values_mordreddescriptors():
     values = {
         "NssCH2": {
             0: 0.5963718820861676,
@@ -1114,3 +1181,15 @@ def test_molfeatures_type_mordreddescriptors():
     generated = molfeature.get_descriptor_values(VALID_SMILES)
     assert_frame_equal(generated, pd.DataFrame.from_dict(values))
 
+
+@pytest.mark.parametrize(
+    "mordred_list",
+    [
+        (["NssCH2", "NssCH2", "ATSC2d"]),
+        (["desc", "NssCH2", "ATSC2d"]),
+    ],
+)
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_molfeatures_type_mordreddescriptors_invalid(mordred_list):
+    with pytest.raises(ValueError):
+        MordredDescriptors(descriptors=mordred_list)

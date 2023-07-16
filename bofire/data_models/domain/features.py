@@ -462,22 +462,30 @@ class Inputs(Features):
             )
         ):
             raise ValueError("Unknown transform specified.")
-        # next check that only Categoricalwithdescriptor have the value DESCRIPTOR or are of type MolFeatures
+        # next check that only CategoricalDescriptorInput can have the value DESCRIPTOR
         descriptor_keys = []
         for key, value in specs.items():
-            if value == CategoricalEncodingEnum.DESCRIPTOR or (
-                isinstance(value, MolFeatures)
-            ):
+            if value == CategoricalEncodingEnum.DESCRIPTOR:
                 descriptor_keys.append(key)
         if (
-            len(
-                set(descriptor_keys)
-                - set(self.get_keys(CategoricalDescriptorInput))
-                - set(self.get_keys(MolecularInput))
-            )
+            len(set(descriptor_keys) - set(self.get_keys(CategoricalDescriptorInput)))
             > 0
         ):
             raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")
+        # next check if MolFeatures have been assigned to feature types other than MolecularInput
+        molfeature_keys = []
+        for key, value in specs.items():
+            if isinstance(value, MolFeatures):
+                molfeature_keys.append(key)
+        if len(set(molfeature_keys) - set(self.get_keys(MolecularInput))) > 0:
+            raise ValueError("Wrong features types assigned to MolFeatures transforms.")
+        # next check that all MolecularInput have MolFeatures transforms
+        for feat in self.get(includes=[MolecularInput]):
+            mol_encoding = specs.get(feat.key)
+            if mol_encoding is None:
+                raise ValueError("No transform assigned to MolecularInput.")
+            elif not isinstance(mol_encoding, MolFeatures):
+                raise ValueError("Incorrect transform assigned to MolecularInput.")
         return specs
 
     def get_bounds(
