@@ -25,7 +25,7 @@ strategy_commons = {
     "outlier_detection_specs": None,
     "seed": 42,
     "min_experiments_before_outlier_check": 1,
-    "num_experiments_frequency_outlier_check": 1,
+    "frequency_check": 1,
 }
 
 

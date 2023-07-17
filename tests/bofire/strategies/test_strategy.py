@@ -92,7 +92,7 @@ c3 = NChooseKConstraint(
 )
 
 
-@fixture
+@fixture  # type: ignore
 def strategy():
     data_model = dummy.DummyStrategyDataModel(
         domain=Domain.from_lists(

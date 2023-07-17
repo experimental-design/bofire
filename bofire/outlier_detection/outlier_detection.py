@@ -5,11 +5,22 @@ import pandas as pd
 from scipy.stats import chi2  # type: ignore
 
 import bofire.surrogates.api as surrogates
+from bofire.data_models.domain.api import Inputs, Outputs
 
 
 class OutlierDetection(ABC):
     @abstractmethod
     def detect(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        pass
+
+    @property
+    @abstractmethod
+    def inputs(self) -> Inputs:
+        pass
+
+    @property
+    @abstractmethod
+    def outputs(self) -> Outputs:
         pass
 
 
@@ -23,6 +34,14 @@ class IterativeTrimming(OutlierDetection):
         self.base_gp = data_model.base_gp
         self.surrogate = surrogates.map(self.base_gp)
         super().__init__()
+
+    @property
+    def inputs(self) -> Inputs:
+        return self.base_gp.inputs
+
+    @property
+    def outputs(self) -> Outputs:
+        return self.base_gp.outputs
 
     def detect(self, experiments: pd.DataFrame) -> pd.DataFrame:
         n = len(experiments)

@@ -23,6 +23,8 @@ max-complexity = 18
 [tool.ruff.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
 "bofire/utils/annotated.py" = ["F401"]
+"bofire/data_models/outlier_detection/api.py" = ["F401"]
+"bofire/outlier_detection/api.py" = ["F401"]
 "tests/bofire/data_models/specs/api.py" = ["F401"]
 "bofire/data_models/api.py" = ["F401"]
 "bofire/data_models/surrogates/api.py" = ["F401"]

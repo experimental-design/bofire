@@ -131,9 +131,6 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     def _fit(self, transformed: pd.DataFrame):
         pass
 
-    def filter_outliers(self, experiments: pd.DataFrame):
-        pass
-
     def _predict(self, experiments: pd.DataFrame):
         return (
             np.ones([len(experiments), len(self.domain.outputs)]) * 4,

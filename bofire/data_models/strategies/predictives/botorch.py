@@ -35,7 +35,7 @@ class BotorchStrategy(PredictiveStrategy):
     surrogate_specs: Optional[BotorchSurrogates] = None
     outlier_detection_specs: Optional[OutlierDetections] = None
     min_experiments_before_outlier_check: PositiveInt = 1
-    num_experiments_frequency_outlier_check: PositiveInt = 1
+    frequency_check: PositiveInt = 1
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

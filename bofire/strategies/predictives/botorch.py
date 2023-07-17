@@ -72,9 +72,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.min_experiments_before_outlier_check = (
             data_model.min_experiments_before_outlier_check
         )
-        self.num_experiments_frequency_outlier_check = (
-            data_model.num_experiments_frequency_outlier_check
-        )
+        self.frequency_check = data_model.frequency_check
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -106,25 +104,15 @@ class BotorchStrategy(PredictiveStrategy):
         if self.outlier_detection_specs is not None:
             if (
                 self.num_experiments >= self.min_experiments_before_outlier_check
-                and self.num_experiments % self.num_experiments_frequency_outlier_check
-                == 0
+                and self.num_experiments % self.frequency_check == 0
             ):
-                experiments = self.filter_outliers(experiments)
+                experiments = self.outlier_detection_specs.detect(experiments)
 
         self.surrogate_specs.fit(experiments)  # type: ignore
         self.model = self.surrogate_specs.compatibilize(  # type: ignore
             inputs=self.domain.inputs,  # type: ignore
             outputs=self.domain.outputs,  # type: ignore
         )
-
-    def filter_outliers(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        filtered_experiments = experiments.copy()
-        filtered_experiments = self.outlier_detection_specs.detect(filtered_experiments)  # type: ignore
-        self.outlier_detection_model = self.outlier_detection_specs.compatibilize(  # type: ignore
-            inputs=self.domain.inputs,  # type: ignore
-            outputs=self.domain.outputs,  # type: ignore
-        )
-        return filtered_experiments
 
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
         # we are using self.model here for this purpose we have to take the transformed

@@ -70,7 +70,6 @@ class PredictiveStrategy(Strategy):
             experiments (pd.DataFrame): DataFrame with experimental data
             replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
             retrain (bool, optional): If True, model(s) are retrained when new experimental data is passed to the optimizer. Defaults to True.
-            filter_outliers (bool, optional): If True, use outlier detection to get rid of outliers. Default to False.
         """
         # maybe unite the preprocessor here with the one of the parent tell
         # TODO: add self.domain.validate_experiments(self.experiments, strict=True) here to ensure variance in each feature?

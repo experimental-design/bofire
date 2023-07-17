@@ -54,11 +54,7 @@ def test_strategy_should_be_serializable(strategy_spec: Spec):
     spec = strategy_spec.typed_spec()
     obj = strategy_spec.cls(**spec)
     # TODO: can we unhide the comparison of surrogate_specs?
-    data = {
-        k: v
-        for k, v in obj.dict().items()
-        if k != "surrogate_specs" and k != "outlier_detection_specs"
-    }
+    data = {k: v for k, v in obj.dict().items() if k != "surrogate_specs"}
     for k, v in data.items():
         if v is not None:
             assert v == spec[k]
