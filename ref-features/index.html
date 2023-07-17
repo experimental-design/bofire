@@ -1544,6 +1544,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.Series: A dataFrame with experiments</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                 <span class="sa">f</span><span class="s2">&quot;invalid values for `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`, allowed are: `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="si">}</span><span class="s2">`&quot;</span>
@@ -3145,6 +3146,7 @@ that can be used in the optimization</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.Series: A dataFrame with experiments</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">values</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">str</span><span class="p">)</span>
     <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;invalid values for `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">`, allowed are: `</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="si">}</span><span class="s2">`&quot;</span>
