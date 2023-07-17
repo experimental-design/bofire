@@ -133,6 +133,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: A dataFrame with experiments
         """
+        values = values.map(str)
         if sum(values.isin(self.categories)) != len(values):
             raise ValueError(
                 f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
