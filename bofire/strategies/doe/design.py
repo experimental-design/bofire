@@ -9,6 +9,7 @@ from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
 from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
+from bofire.data_models.constraints.constraint import ConstraintNotFulfilledError
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
@@ -202,27 +203,30 @@ def find_local_max_ipopt_binary_naive(
 
         if sampling is not None:
             sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
+        try:
+            current_design = find_local_max_ipopt(
+                domain,
+                model_type,
+                n_experiments,
+                delta,
+                ipopt_options,
+                sampling,
+                fixed_experiments,
+                one_set_of_experiments,
+                objective,
+            )
 
-        current_design = find_local_max_ipopt(
-            domain,
-            model_type,
-            n_experiments,
-            delta,
-            ipopt_options,
-            sampling,
-            fixed_experiments,
-            one_set_of_experiments,
-            objective,
-        )
-        temp_value = objective_class.evaluate(
-            current_design.to_numpy().flatten(),
-        )
-        if minimum is None or minimum > temp_value:
-            minimum = temp_value
-            optimal_design = current_design
-        print(
-            f"run: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
-        )
+            temp_value = objective_class.evaluate(
+                current_design.to_numpy().flatten(),
+            )
+            if minimum is None or minimum > temp_value:
+                minimum = temp_value
+                optimal_design = current_design
+            print(
+                f"run: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
+            )
+        except ConstraintNotFulfilledError:
+            print("skipping branch because of not fulfilling constraints")
 
     return optimal_design
 
