@@ -1,7 +1,7 @@
 import warnings
 from itertools import combinations_with_replacement, product
 from queue import PriorityQueue
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -32,7 +32,6 @@ from bofire.strategies.samplers.polytope import PolytopeSampler
 
 def find_local_max_ipopt_BaB(
     domain: Domain,
-    categorical_groups: List[List[ContinuousBinaryInput]],
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
     delta: float = 1e-7,
@@ -55,7 +54,6 @@ def find_local_max_ipopt_BaB(
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
-            categorical_groups: groups that describe from which variables can be chosen from
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -98,7 +96,11 @@ def find_local_max_ipopt_BaB(
 
     discrete_vars = domain.inputs.get(includes=ContinuousDiscreteInput)
     initial_node = NodeExperiment(
-        initial_branch, initial_design, initial_value, categorical_groups, discrete_vars
+        initial_branch,
+        initial_design,
+        initial_value,
+        domain.categorical_groups,
+        discrete_vars,
     )
 
     initial_queue = PriorityQueue()
@@ -121,7 +123,6 @@ def find_local_max_ipopt_BaB(
 
 def find_local_max_ipopt_binary_naive(
     domain: Domain,
-    categorical_groups: List[List[ContinuousBinaryInput]],
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
     delta: float = 1e-7,
@@ -144,7 +145,6 @@ def find_local_max_ipopt_binary_naive(
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
-            categorical_groups: groups that describe from which variables can be chosen from
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -165,7 +165,7 @@ def find_local_max_ipopt_binary_naive(
         var.relax()
 
     allowed_fixations = []
-    for group in categorical_groups:
+    for group in domain.categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
 
     allowed_fixations = product(*allowed_fixations)
