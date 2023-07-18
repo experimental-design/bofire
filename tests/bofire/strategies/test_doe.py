@@ -10,6 +10,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
+from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -18,6 +19,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
+from bofire.utils.CategoricalToBinaryMapper import generate_mixture_constraints
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
@@ -46,13 +48,46 @@ domain = Domain.from_lists(
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(
-            features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+            features=[f"x{i + 1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
         ),
         LinearInequalityConstraint(features=["x1", "x2"], coefficients=[5, 4], rhs=3.9),
         LinearInequalityConstraint(
             features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
         ),
     ],
+)
+
+mixture_constraint_1, categorical_vars_1 = generate_mixture_constraints(["a", "b"])
+mixture_constraint_2, categorical_vars_2 = generate_mixture_constraints(["c", "d"])
+all_inputs = (
+    [
+        ContinuousInput(key="x1", bounds=(0, 5)),
+        ContinuousInput(key="x2", bounds=(0, 15)),
+    ]
+    + categorical_vars_1
+    + categorical_vars_2
+)
+constraints = [
+    LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=3),
+    LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1, 0.2], rhs=2),
+    NonlinearEqualityConstraint(
+        expression="a * (x1 + x2 - 0.5)", features=["a", "x1", "x2"]
+    ),
+    NonlinearEqualityConstraint(
+        expression="b * (x1 + x2 - 1)", features=["b", "x1", "x2"]
+    ),
+    NonlinearEqualityConstraint(
+        expression="c * (x1 + x2 - 3)", features=["c", "x1", "x2"]
+    ),
+    mixture_constraint_1,
+    mixture_constraint_2,
+]
+
+categorical_domain = Domain(
+    inputs=all_inputs,
+    outputs=[ContinuousOutput(key="y")],
+    constraints=constraints,
+    categorical_groups=[categorical_vars_1, categorical_vars_2],
 )
 
 
@@ -83,7 +118,7 @@ def test_doe_strategy_ask_with_candidates():
 
 def test_doe_categoricals_not_implemented():
     categorical_inputs = [
-        CategoricalInput(key=f"x{i+1}", categories=["a", "b", "c"]) for i in range(3)
+        CategoricalInput(key=f"x{i + 1}", categories=["a", "b", "c"]) for i in range(3)
     ]
     domain = Domain.from_lists(
         inputs=categorical_inputs,
@@ -95,7 +130,9 @@ def test_doe_categoricals_not_implemented():
 
 
 def test_doe_discrete_not_implemented():
-    discrete_inputs = [DiscreteInput(key=f"x{i+1}", values=[1, 2, 3]) for i in range(3)]
+    discrete_inputs = [
+        DiscreteInput(key=f"x{i + 1}", values=[1, 2, 3]) for i in range(3)
+    ]
     domain = Domain.from_lists(
         inputs=discrete_inputs,
         outputs=[ContinuousOutput(key="y")],
@@ -107,13 +144,13 @@ def test_doe_discrete_not_implemented():
 
 def test_nchoosek_implemented():
     nchoosek_constraint = NChooseKConstraint(
-        features=[f"x{i+1}" for i in range(3)],
+        features=[f"x{i + 1}" for i in range(3)],
         min_count=0,
         max_count=2,
         none_also_valid=True,
     )
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.0, 1.0)) for i in range(3)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[nchoosek_constraint],
     )
@@ -124,7 +161,6 @@ def test_nchoosek_implemented():
 
 
 def test_formulas_implemented():
-
     expected_num_candidates = {
         "linear": 7,  # 1+a+b+c+3
         "linear-and-quadratic": 10,  # 1+a+b+c+a**2+b**2+c**2+3
@@ -172,6 +208,26 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
+
+
+def test_doe_exhaustive_categorical():
+    data_model = data_models.DoEStrategy(
+        domain=categorical_domain, formula="linear", optimization_strategy="relaxed"
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=7)
+
+    np.random.seed(1)
+    num_candidates_expected = 7
+    assert len(candidates) == num_candidates_expected
+
+
+def test_doe_exhaustive_discrete():
+    pass
+
+
+def test_doe_exhaustive_categorical_discrete():
+    pass
 
 
 # if __name__ == "__main__":

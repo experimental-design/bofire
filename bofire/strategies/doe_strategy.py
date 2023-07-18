@@ -61,7 +61,6 @@ class DoEStrategy(Strategy):
         ):
             design = find_local_max_ipopt_binary_naive(
                 domain=self.domain,
-                categorical_groups=1,
                 model_type=self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=self.candidates,
@@ -69,7 +68,6 @@ class DoEStrategy(Strategy):
         elif self.data_model.optimization_strategy == "branch-and-bound":
             design = find_local_max_ipopt_BaB(
                 domain=self.domain,
-                categorical_groups=1,
                 model_type=self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=self.candidates,
