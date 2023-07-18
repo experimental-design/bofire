@@ -201,15 +201,14 @@ class Domain(BaseModel):
         """Validate if features given as the categorical groups are also features in the domain and if each feature
         is in exactly one group
 
-        Args: categorical_group (List[List[ContinuousBinaryInput]]) : List of constraints or empty if no constraints
-        are defined
+        Args: categorical_group (List[List[ContinuousBinaryInput]]) : groups of the different categories
         values (List[Input]): List of input features of the domain
 
         Raises
-            ValueError: Feature key in constraint is unknown.
+            ValueError: Feature key not registered in any group or registered too often.
 
         Returns:
-            List[Constraint]: List of constraints defined for the domain
+            List[List[ContinuousBinaryInput]]: groups of the different categories
         """
         if "inputs" not in values:
             return categorical_group
