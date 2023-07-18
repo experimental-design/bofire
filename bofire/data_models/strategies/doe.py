@@ -22,6 +22,9 @@ class DoEStrategy(Strategy):
         ],
         str,
     ]
+    optimization_strategy: Literal[
+        "relaxed", "exhaustive", "branch-and-bound"
+    ] = "relaxed"
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
