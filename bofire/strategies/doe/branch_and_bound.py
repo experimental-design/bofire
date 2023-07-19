@@ -108,6 +108,15 @@ class NodeExperiment:
 
 
 def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
+    """
+    test if a design is a valid solution. i.e. binary and discrete variables are valid
+    Args:
+        design_matrix (pd.DataFrame): the design to test
+        domain (Domain): the domain for which the design should be tested
+
+    Returns: True if the design is valid, else False
+
+    """
     categorical_vars = domain.get_features(includes=ContinuousBinaryInput)
     for var in categorical_vars:
         value = design_matrix.get(var.key)
@@ -120,12 +129,23 @@ def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
 def bnb(
     priority_queue: PriorityQueue, verbose: bool = False, **kwargs
 ) -> NodeExperiment:
+    """
+    branch-and-bound algorithm for solving optimization problems containing binary and discrete variables
+    Args:
+        priority_queue (PriorityQueue): initial nodes of the branching tree
+        verbose (bool): if true, print information during the optimization process
+        **kwargs: parameters for the actual optimization / find_local_max_ipopt
+
+    Returns: a branching Node containing the best design found
+
+    """
     if priority_queue.empty():
         raise RuntimeError("Queue empty before feasible solution was found")
 
     domain = kwargs["domain"]
     n_experiments = kwargs["n_experiments"]
 
+    # get objective function
     model_formula = get_formula_from_string(
         model_type=kwargs["model_type"], rhs_only=True, domain=domain
     )
@@ -135,8 +155,6 @@ def bnb(
     )
 
     pre_size = priority_queue.qsize()
-    if pre_size == 2:
-        pass
     current_branch = priority_queue.get()
     # test if current solution is already valid
     if is_valid(current_branch.design_matrix, domain):
