@@ -23,12 +23,14 @@ class NodeExperiment:
     def __init__(
         self,
         fixed_experiments: pd.DataFrame,
+        partially_fixed_experiments: pd.DataFrame,
         design_matrix: pd.DataFrame,
         value: float,
         categorical_groups: List[List[ContinuousBinaryInput]],
         discrete_vars: List[ContinuousDiscreteInput],
     ):
-        self.partially_fixed_experiments = fixed_experiments
+        self.fixed_experiments = fixed_experiments
+        self.partially_fixed_experiments = partially_fixed_experiments
         self.design_matrix = design_matrix
         self.value = value
         self.categorical_groups = categorical_groups
@@ -37,7 +39,9 @@ class NodeExperiment:
     def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
 
         for group in self.categorical_groups:
-            for row_index, _exp in self.partially_fixed_experiments.iterrows():
+            for row_index, _exp in self.partially_fixed_experiments.iloc[
+                len(self.fixed_experiments) :
+            ].iterrows():
                 if (
                     self.partially_fixed_experiments.iloc[row_index][group[0].key]
                     is None
@@ -53,7 +57,9 @@ class NodeExperiment:
                     return branches
 
         for var in self.discrete_vars:
-            for row_index, _exp in self.partially_fixed_experiments.iterrows():
+            for row_index, _exp in self.partially_fixed_experiments.iloc[
+                len(self.fixed_experiments) :
+            ].iterrows():
                 current_fixation = self.partially_fixed_experiments.iloc[row_index][
                     var.key
                 ]
@@ -129,6 +135,8 @@ def bnb(
     )
 
     pre_size = priority_queue.qsize()
+    if pre_size == 2:
+        pass
     current_branch = priority_queue.get()
     # test if current solution is already valid
     if is_valid(current_branch.design_matrix, domain):
@@ -147,6 +155,7 @@ def bnb(
             design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
             value = objective_class.evaluate(design.to_numpy().flatten())
             new_node = NodeExperiment(
+                current_branch.fixed_experiments,
                 branch,
                 design,
                 value,
@@ -158,4 +167,4 @@ def bnb(
             if verbose:
                 print("skipping branch because of not fulfilling constraints")
 
-    return bnb(priority_queue, **kwargs)
+    return bnb(priority_queue, verbose=verbose, **kwargs)
