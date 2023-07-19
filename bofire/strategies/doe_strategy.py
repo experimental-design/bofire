@@ -64,6 +64,7 @@ class DoEStrategy(Strategy):
                 model_type=self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=self.candidates,
+                verbose=self.data_model.verbose,
             )
         elif self.data_model.optimization_strategy == "branch-and-bound":
             design = find_local_max_ipopt_BaB(
@@ -71,6 +72,7 @@ class DoEStrategy(Strategy):
                 model_type=self.formula,
                 n_experiments=_candidate_count,
                 fixed_experiments=self.candidates,
+                verbose=self.data_model.verbose,
             )
         else:
             raise RuntimeError("Could not find suitable optimization strategy")

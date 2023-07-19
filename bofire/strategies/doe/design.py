@@ -40,6 +40,7 @@ def find_local_max_ipopt_BaB(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
@@ -55,6 +56,7 @@ def find_local_max_ipopt_BaB(
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -131,6 +133,7 @@ def find_local_max_ipopt_binary_naive(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
@@ -146,6 +149,7 @@ def find_local_max_ipopt_binary_naive(
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -222,11 +226,13 @@ def find_local_max_ipopt_binary_naive(
             if minimum is None or minimum > temp_value:
                 minimum = temp_value
                 optimal_design = current_design
-            print(
-                f"run: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
-            )
+            if verbose:
+                print(
+                    f"branch: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
+                )
         except ConstraintNotFulfilledError:
-            print("skipping branch because of not fulfilling constraints")
+            if verbose:
+                print("skipping branch because of not fulfilling constraints")
 
     return optimal_design
 

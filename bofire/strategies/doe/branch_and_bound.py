@@ -112,7 +112,9 @@ def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
     return True
 
 
-def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
+def bnb(
+    priority_queue: PriorityQueue, verbose: bool = False, **kwargs
+) -> NodeExperiment:
     if priority_queue.empty():
         raise RuntimeError("Queue empty before feasible solution was found")
 
@@ -136,7 +138,10 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
     # branch current solutions in sub-problems
     next_branches = current_branch.get_next_fixed_experiments()
 
-    print(f"{pre_size} + {len(next_branches)}")
+    if verbose:
+        print(
+            f"current length of branching queue (+ new branches): {pre_size} + {len(next_branches)}"
+        )
     # solve branched problems
     for _i, branch in enumerate(next_branches):
         try:
@@ -151,6 +156,7 @@ def bnb(priority_queue: PriorityQueue, **kwargs) -> NodeExperiment:
             )
             priority_queue.put(new_node)
         except ConstraintNotFulfilledError:
-            print("skipping branch because of not fulfilling constraints")
+            if verbose:
+                print("skipping branch because of not fulfilling constraints")
 
     return bnb(priority_queue, **kwargs)

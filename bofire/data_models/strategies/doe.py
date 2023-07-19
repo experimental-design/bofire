@@ -26,6 +26,8 @@ class DoEStrategy(Strategy):
         "relaxed", "exhaustive", "branch-and-bound"
     ] = "relaxed"
 
+    verbose: bool = False
+
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return True
