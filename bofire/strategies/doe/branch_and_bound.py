@@ -126,7 +126,7 @@ def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
     discrete_vars = domain.get_features(includes=ContinuousDiscreteInput)
     for var in discrete_vars:
         value = design_matrix.get(var.key)
-        if value not in var.values:
+        if False in [True in np.isclose(v, var.values) for v in value]:
             return False
     return True
 
