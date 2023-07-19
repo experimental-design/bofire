@@ -16,7 +16,6 @@ from bofire.data_models.features.api import (
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
-from bofire.strategies.enum import OptimalityCriterionEnum
 
 
 @total_ordering
@@ -122,9 +121,9 @@ def bnb(
     n_experiments = kwargs["n_experiments"]
 
     model_formula = get_formula_from_string(
-        model_type="linear", rhs_only=True, domain=domain
+        model_type=kwargs["model_type"], rhs_only=True, domain=domain
     )
-    objective_class = get_objective_class(OptimalityCriterionEnum.D_OPTIMALITY)
+    objective_class = get_objective_class(kwargs["objective"])
     objective_class = objective_class(
         domain=domain, model=model_formula, n_experiments=n_experiments
     )
