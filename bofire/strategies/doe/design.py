@@ -175,9 +175,13 @@ def find_local_max_ipopt_binary_naive(
     for group in domain.categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
 
+    n_non_fixed_experiments = n_experiments
+    if fixed_experiments is not None:
+        n_non_fixed_experiments -= len(fixed_experiments)
+
     allowed_fixations = product(*allowed_fixations)
     all_n_fixed_experiments = combinations_with_replacement(
-        allowed_fixations, n_experiments
+        allowed_fixations, n_non_fixed_experiments
     )
 
     column_keys = domain.inputs.get_keys()
@@ -193,14 +197,24 @@ def find_local_max_ipopt_binary_naive(
                 for group in experiment
                 for var in group
             ]
-        ).reshape(n_experiments, len(binary_vars))
+        ).reshape(n_non_fixed_experiments, len(binary_vars))
 
         one_set_of_experiments = np.concatenate(
             [
                 binary_fixed_experiments,
-                np.full((n_experiments, number_of_non_binary_vars), None),
+                np.full((n_non_fixed_experiments, number_of_non_binary_vars), None),
             ],
             axis=1,
+        )
+
+        one_set_of_experiments = np.concatenate(
+            [
+                np.full(
+                    (n_experiments - n_non_fixed_experiments, len(domain.inputs)), None
+                ),
+                one_set_of_experiments,
+            ],
+            axis=0,
         )
 
         one_set_of_experiments = pd.DataFrame(
