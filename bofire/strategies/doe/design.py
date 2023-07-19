@@ -119,6 +119,7 @@ def find_local_max_ipopt_BaB(
         sampling=sampling,
         fixed_experiments=fixed_experiments,
         objective=objective,
+        verbose=verbose,
     )
 
     return result_node.design_matrix
