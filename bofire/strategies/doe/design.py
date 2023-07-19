@@ -15,7 +15,6 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     ContinuousBinaryInput,
     ContinuousDiscreteInput,
-    Input,
 )
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -63,6 +62,7 @@ def find_local_max_ipopt_BaB(
     """
     from bofire.strategies.doe.branch_and_bound import NodeExperiment, bnb
 
+    # get objective function
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
@@ -71,9 +71,7 @@ def find_local_max_ipopt_BaB(
         domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
     )
 
-    domain.get_features(ContinuousBinaryInput)
-    domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
-
+    # setting up initial node in the branch-and-bound tree
     column_keys = domain.inputs.get_keys()
 
     initial_branch = pd.DataFrame(
@@ -104,9 +102,11 @@ def find_local_max_ipopt_BaB(
         discrete_vars,
     )
 
+    # initializing branch-and-bound queue
     initial_queue = PriorityQueue()
     initial_queue.put(initial_node)
 
+    # starting branch-and-bound
     result_node = bnb(
         initial_queue,
         domain=domain,
@@ -153,6 +153,8 @@ def find_local_max_ipopt_binary_naive(
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
     """
+
+    # get objective function
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
@@ -161,10 +163,11 @@ def find_local_max_ipopt_binary_naive(
         domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
     )
 
+    # get binary variables
     binary_vars = domain.get_features(ContinuousBinaryInput)
-    domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
     list_keys = binary_vars.get_keys()
 
+    # determine possible fixations of the different categories
     allowed_fixations = []
     for group in domain.categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
@@ -178,12 +181,13 @@ def find_local_max_ipopt_binary_naive(
         allowed_fixations, n_non_fixed_experiments
     )
 
+    # testing all different fixations
     column_keys = domain.inputs.get_keys()
-
     minimum = float("inf")
     optimal_design = None
     number_of_non_binary_vars = len(domain.inputs) - len(binary_vars)
     for i, binary_fixed_experiments in enumerate(list(all_n_fixed_experiments)):
+        # setting up the pd.Dataframe for the partially fixed experiment
         binary_fixed_experiments = np.array(
             [
                 var
@@ -217,6 +221,8 @@ def find_local_max_ipopt_binary_naive(
 
         if sampling is not None:
             sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
+
+        # minimizing with the current fixation
         try:
             current_design = find_local_max_ipopt(
                 domain,
@@ -425,8 +431,26 @@ def find_local_max_ipopt(
 
 
 def partially_fix_experiment(
-    bounds, fixed_experiments, n_experiments, partially_fixed_experiments, x0
-):
+    bounds: list,
+    fixed_experiments: pd.DataFrame,
+    n_experiments: int,
+    partially_fixed_experiments: pd.DataFrame,
+    x0: pd.DataFrame,
+) -> (list, pd.DataFrame):
+    """
+    fixes some variables within an experiment.
+    Args:
+        bounds (list): current bounds
+        fixed_experiments (pd.Dataframe): experiments which are guaranteed to be part of the design and are fully fixed
+        n_experiments (int): number of experiments
+        partially_fixed_experiments (pd.Dataframe): experiments which are partially fixed
+        x0: initial guess
+
+    Returns: Tuple of list and pd.Dataframe containing the new bounds for each variable and an adapted initial guess
+        which comply with the bounds
+
+    """
+
     if partially_fixed_experiments is not None:
         if fixed_experiments is not None:
             cut_of_k_experiments = (
