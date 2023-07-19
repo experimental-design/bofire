@@ -70,6 +70,8 @@ class Domain(BaseModel):
         inputs (List[Input], optional): List of input features. Defaults to [].
         outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
+        categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
+            categorical variables. Defaults to [].
     """
 
     @classmethod
