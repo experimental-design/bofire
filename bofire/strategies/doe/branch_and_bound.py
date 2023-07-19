@@ -123,6 +123,11 @@ def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
         if not (np.logical_or(np.isclose(value, 0), np.isclose(value, 1)).all()):
             return False
 
+    discrete_vars = domain.get_features(includes=ContinuousDiscreteInput)
+    for var in discrete_vars:
+        value = design_matrix.get(var.key)
+        if value not in var.values:
+            return False
     return True
 
 
