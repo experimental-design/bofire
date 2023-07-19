@@ -8,11 +8,11 @@ from bofire.data_models.features.continuous import ContinuousInput
 
 
 class ContinuousDiscreteInput(ContinuousInput):
-    """Feature with discretized ordinal values allowed in the optimization.
+    """Feature with discrete ordinal values allowed in the optimization.
 
     Attributes:
         key(str): key of the feature.
-        values(List[float]): the discretized allowed values during the optimization.
+        values(List[float]): the allowed discrete values during the optimization.
     """
 
     values: List[float]
@@ -50,13 +50,35 @@ class ContinuousDiscreteInput(ContinuousInput):
         """
         return pd.Series(name=self.key, data=np.random.choice(self.values, n))
 
-    def equal_range_split(self) -> (float, float):
+    def equal_range_split(
+        self, lower_bound: float, upper_bound: float
+    ) -> (float, float):
+        """
+        Determines the two identical elements x such that the intervals (lower_bound, x) and (x, upper_bound)
+        are of equal length
+        Args:
+            lower_bound: inclusive lower bound
+            upper_bound: inclusive upper bound
 
-        return (self.upper_bound - self.lower_bound) / 2 + self.lower_bound
+        Returns: tuple of floats which split the interval in half
+
+        """
+        x = (upper_bound - lower_bound) / 2 + lower_bound
+        return x, x
 
     def equal_count_split(
         self, lower_bound: float, upper_bound: float
     ) -> (float, float):
+        """
+        Determines the two elements x and y such that the intervals (lower_bound, x) and (y, upper_bound)
+        have the same number of elements regarding the values of the discrete variable
+        Args:
+            lower_bound: inclusive lower bound
+            upper_bound: inclusive upper bound
+
+        Returns: tuple of floats which split the interval in half
+
+        """
         self.values.sort()
         sub_list = [elem for elem in self.values if lower_bound <= elem <= upper_bound]
 
