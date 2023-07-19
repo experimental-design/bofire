@@ -39,7 +39,10 @@ class NodeExperiment:
             categorical_groups: Represents the different groups of the categorical variables
             discrete_vars: List of discrete variables in the optimization problem
         """
-        self.fixed_experiments = fixed_experiments
+        if fixed_experiments is None:
+            self.fixed_experiments = []
+        else:
+            self.fixed_experiments = fixed_experiments
         self.partially_fixed_experiments = partially_fixed_experiments
         self.design_matrix = design_matrix
         self.value = value

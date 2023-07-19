@@ -240,7 +240,7 @@ def test_doe_exhaustive_categorical():
     assert np.isclose(candidates.to_numpy(), true_design).all()
 
 
-def test_doe_bab_discrete():
+def test_doe_bab_categorical():
     np.random.seed(1)
     data_model = data_models.DoEStrategy(
         domain=categorical_domain,
@@ -277,13 +277,13 @@ def test_doe_bab_categorical_discrete():
 
     true_design = np.array(
         [
-            [0, 1, 0, 0, 0.00018, 0.99982],
-            [0, 0, 1, 0.055812, 0.00011, 2.99989],
-            [0, 0, 1, 73.416031, 1.7498, 1.2502],
-            [0, 0, 1, 66.676566, 0.00014, 2.99986],
-            [0, 1, 0, 0, 0.99982, 0.00018],
-            [0, 0, 1, 88.807327, 0.00042, 2.99958],
-            [0, 0, 1, 5.391093, 1.74991, 1.25009],
+            [0, 0, 1, 0, 1.75, 1.25],
+            [0, 1, 0, 0, 1, 0],
+            [0, 1, 0, 0, 0, 1],
+            [0, 0, 1, 0, 0, 3],
+            [0, 0, 1, 99, 0, 3],
+            [0, 0, 1, 99, 0, 3],
+            [0, 0, 1, 99, 1.75, 1.25],
         ]
     )
 
