@@ -14,6 +14,7 @@ from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
+    ContinuousDiscreteInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -57,16 +58,11 @@ domain = Domain.from_lists(
     ],
 )
 
-mixture_constraint_1, categorical_vars_1 = generate_mixture_constraints(["a", "b"])
-mixture_constraint_2, categorical_vars_2 = generate_mixture_constraints(["c", "d"])
-all_inputs = (
-    [
-        ContinuousInput(key="x1", bounds=(0, 5)),
-        ContinuousInput(key="x2", bounds=(0, 15)),
-    ]
-    + categorical_vars_1
-    + categorical_vars_2
-)
+mixture_constraint_1, categorical_vars_1 = generate_mixture_constraints(["a", "b", "c"])
+all_inputs = [
+    ContinuousInput(key="x1", bounds=(0, 5)),
+    ContinuousInput(key="x2", bounds=(0, 15)),
+] + categorical_vars_1
 constraints = [
     LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=3),
     LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1, 0.2], rhs=2),
@@ -80,14 +76,25 @@ constraints = [
         expression="c * (x1 + x2 - 3)", features=["c", "x1", "x2"]
     ),
     mixture_constraint_1,
-    mixture_constraint_2,
 ]
 
 categorical_domain = Domain(
     inputs=all_inputs,
     outputs=[ContinuousOutput(key="y")],
     constraints=constraints,
-    categorical_groups=[categorical_vars_1, categorical_vars_2],
+    categorical_groups=[categorical_vars_1],
+)
+
+categorical_discrete_domain = Domain(
+    inputs=all_inputs + [ContinuousDiscreteInput(key="d", values=list(range(100)))],
+    outputs=[ContinuousOutput(key="y")],
+    constraints=constraints
+    + [
+        NonlinearEqualityConstraint(
+            expression="d * (x1 + x2 - 3)", features=["d", "x1", "x2"]
+        )
+    ],
+    categorical_groups=[categorical_vars_1],
 )
 
 
@@ -211,23 +218,76 @@ def test_doe_strategy_amount_of_candidates():
 
 
 def test_doe_exhaustive_categorical():
+    np.random.seed(1)
     data_model = data_models.DoEStrategy(
-        domain=categorical_domain, formula="linear", optimization_strategy="relaxed"
+        domain=categorical_domain, formula="linear", optimization_strategy="exhaustive"
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=7)
 
+    true_design = np.array(
+        [
+            [1, 0, 0, 0, 0.5],
+            [1, 0, 0, 0.5, 0],
+            [0, 1, 0, 0, 1],
+            [0, 1, 0, 1, 0],
+            [0, 0, 1, 0, 3],
+            [0, 0, 1, 0, 3],
+            [0, 0, 1, 1.75, 1.25],
+        ]
+    )
+
+    assert np.isclose(candidates.to_numpy(), true_design).all()
+
+
+def test_doe_bab_discrete():
     np.random.seed(1)
-    num_candidates_expected = 7
-    assert len(candidates) == num_candidates_expected
+    data_model = data_models.DoEStrategy(
+        domain=categorical_domain,
+        formula="linear",
+        optimization_strategy="branch-and-bound",
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=7)
+
+    true_design = np.array(
+        [
+            [0, 1, 0, 0.3931, 0.6069],
+            [0, 0, 1, 1.75, 1.25],
+            [0, 0, 1, 0, 3],
+            [0, 0, 1, 0, 3],
+            [0, 0, 1, 1.75, 1.25],
+            [0, 0, 1, 1.75, 1.25],
+            [0, 0, 1, 0, 3],
+        ]
+    )
+
+    assert np.isclose(candidates.to_numpy(), true_design).all()
 
 
-def test_doe_exhaustive_discrete():
-    pass
+def test_doe_bab_categorical_discrete():
+    np.random.seed(1)
+    data_model = data_models.DoEStrategy(
+        domain=categorical_discrete_domain,
+        formula="linear",
+        optimization_strategy="branch-and-bound",
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=7)
 
+    true_design = np.array(
+        [
+            [0, 1, 0, 0, 0.00018, 0.99982],
+            [0, 0, 1, 0.055812, 0.00011, 2.99989],
+            [0, 0, 1, 73.416031, 1.7498, 1.2502],
+            [0, 0, 1, 66.676566, 0.00014, 2.99986],
+            [0, 1, 0, 0, 0.99982, 0.00018],
+            [0, 0, 1, 88.807327, 0.00042, 2.99958],
+            [0, 0, 1, 5.391093, 1.74991, 1.25009],
+        ]
+    )
 
-def test_doe_exhaustive_categorical_discrete():
-    pass
+    assert np.isclose(candidates.to_numpy(), true_design, rtol=1e-4, atol=1e-5).all()
 
 
 # if __name__ == "__main__":
