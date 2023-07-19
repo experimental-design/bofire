@@ -99,6 +99,7 @@ def find_local_max_ipopt_BaB(
 
     discrete_vars = domain.inputs.get(includes=ContinuousDiscreteInput)
     initial_node = NodeExperiment(
+        fixed_experiments,
         initial_branch,
         initial_design,
         initial_value,
@@ -427,20 +428,23 @@ def partially_fix_experiment(
             )
         else:
             cut_of_k_experiments = len(partially_fixed_experiments) - n_experiments
-        if cut_of_k_experiments > 0:
-            cut_of_start_index = len(partially_fixed_experiments) - cut_of_k_experiments
-            cut_of_end_index = len(partially_fixed_experiments)
-            partially_fixed_experiments.drop(
-                list(range(cut_of_start_index, cut_of_end_index)), inplace=True
-            )
 
-        for i, val in enumerate(np.array(partially_fixed_experiments.values).flatten()):
+        if cut_of_k_experiments > 0:
+            cut_partially_fixed = partially_fixed_experiments.drop(
+                list(range(cut_of_k_experiments))
+            )
+        else:
+            cut_partially_fixed = partially_fixed_experiments
+
+        shift = cut_of_k_experiments * len(partially_fixed_experiments.columns)
+        for i, val in enumerate(np.array(cut_partially_fixed.values).flatten()):
+            index = shift + i
             if type(val) is tuple:
-                bounds[i] = (val[0], val[1])
-                x0[i] = val[0]
+                bounds[index] = (val[0], val[1])
+                x0[index] = val[0]
             elif val is not None:
-                bounds[i] = (val, val)
-                x0[i] = val
+                bounds[index] = (val, val)
+                x0[index] = val
     return bounds, x0
 
 
