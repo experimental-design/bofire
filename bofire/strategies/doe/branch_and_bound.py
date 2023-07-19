@@ -29,6 +29,16 @@ class NodeExperiment:
         categorical_groups: List[List[ContinuousBinaryInput]],
         discrete_vars: List[ContinuousDiscreteInput],
     ):
+        """
+
+        Args:
+            fixed_experiments: dataframe containing experiments that will be definitely part of the design.
+            partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
+            design_matrix: optimal design for given the fixed and partially fixed experiments
+            value: value of the objective function evaluated with the design_matrix
+            categorical_groups: Represents the different groups of the categorical variables
+            discrete_vars: List of discrete variables in the optimization problem
+        """
         self.fixed_experiments = fixed_experiments
         self.partially_fixed_experiments = partially_fixed_experiments
         self.design_matrix = design_matrix
@@ -37,7 +47,13 @@ class NodeExperiment:
         self.discrete_vars = discrete_vars
 
     def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
+        """
+        Based on the current partially_fixed_experiment DataFrame the next branches are determined. One variable will
+        be fixed more than before.
+        Returns: List of the next possible branches where only one variable more is fixed
 
+        """
+        # branching for the binary/ categorical variables
         for group in self.categorical_groups:
             for row_index, _exp in self.partially_fixed_experiments.iloc[
                 len(self.fixed_experiments) :
@@ -56,6 +72,7 @@ class NodeExperiment:
                         elem.loc[row_index, current_keys] = allowed_fixations[k]
                     return branches
 
+        # branching for the discrete variables
         for var in self.discrete_vars:
             for row_index, _exp in self.partially_fixed_experiments.iloc[
                 len(self.fixed_experiments) :
