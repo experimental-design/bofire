@@ -71,11 +71,8 @@ def find_local_max_ipopt_BaB(
         domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
     )
 
-    binary_vars = domain.get_features(ContinuousBinaryInput)
+    domain.get_features(ContinuousBinaryInput)
     domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
-
-    for var in binary_vars:
-        var.relax()
 
     column_keys = domain.inputs.get_keys()
 
@@ -167,9 +164,6 @@ def find_local_max_ipopt_binary_naive(
     binary_vars = domain.get_features(ContinuousBinaryInput)
     domain.get_features(includes=[Input], excludes=ContinuousBinaryInput)
     list_keys = binary_vars.get_keys()
-
-    for var in binary_vars:
-        var.relax()
 
     allowed_fixations = []
     for group in domain.categorical_groups:

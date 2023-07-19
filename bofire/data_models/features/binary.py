@@ -1,4 +1,4 @@
-from typing import Tuple
+import warnings
 
 from pydantic import root_validator
 
@@ -12,8 +12,14 @@ class ContinuousBinaryInput(ContinuousInput):
 
     """
 
-    def __init__(self, bounds=(0, 1), **kwargs):
-        super().__init__(bounds=bounds, **kwargs)
+    def __init__(self, **kwargs):
+        if "bounds" in kwargs and kwargs["bounds"] != (0, 1):
+            warnings.warn("bounds must be set to (0, 1). Readjusting the bounds...")
+            kwargs["bounds"] = (0, 1)
+            super().__init__(**kwargs)
+        else:
+            bounds = (0, 1)
+            super().__init__(bounds=bounds, **kwargs)
 
     @root_validator(pre=False, skip_on_failure=True)
     def validate_lower_upper(cls, values):
@@ -44,25 +50,3 @@ class ContinuousBinaryInput(ContinuousInput):
             )
 
         return values
-
-    def fix_to(self, value: int) -> Tuple[int, int]:
-        """Fixes the binary variable to either 0 or 1
-        Args:
-            value: value to which the variable will be fixed to
-
-        Returns: fixed bounds for the variable
-
-        """
-        if value != 0 and value != 1:
-            raise ValueError(f"must be fixed to either 0 or 1, got {value}")
-        self.bounds = (value, value)
-        return self.bounds
-
-    def relax(self) -> Tuple[int, int]:
-        """Relaxes the bounds of the variable to the interval (0, 1)
-
-        Returns: the new relaxed bounds
-
-        """
-        self.bounds = (0, 1)
-        return self.bounds
