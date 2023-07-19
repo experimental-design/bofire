@@ -544,7 +544,6 @@ class Domain(BaseModel):
             if valid_key not in experiments:
                 experiments[valid_key] = True
         # check all cols
-        expected = feature_keys + valid_keys
         cols = list(experiments.columns)
         # we allow here for a column named labcode used to identify experiments
         if "labcode" in cols:
@@ -561,10 +560,6 @@ class Domain(BaseModel):
                 raise ValueError("labcodes are not unique")
             # we remove the labcode from the cols list to proceed as before
             cols.remove("labcode")
-        if len(expected) != len(cols):
-            raise ValueError(f"expected the following cols: `{expected}`, got `{cols}`")
-        if len(set(expected + cols)) != len(cols):
-            raise ValueError(f"expected the following cols: `{expected}`, got `{cols}`")
         # check values of continuous input features
         if experiments[self.get_feature_keys(Input)].isnull().to_numpy().any():
             raise ValueError("there are null values")

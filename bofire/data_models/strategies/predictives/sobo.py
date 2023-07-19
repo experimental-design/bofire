@@ -1,15 +1,15 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
-from pydantic import validator
+from pydantic import Field, validator
 
-from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction
+from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction, qNEI
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class SoboBaseStrategy(BotorchStrategy):
-    acquisition_function: AnyAcquisitionFunction
+    acquisition_function: AnyAcquisitionFunction = Field(default_factory=lambda: qNEI())
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
@@ -62,3 +62,9 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
 
 class MultiplicativeSoboStrategy(SoboBaseStrategy):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
+
+
+class CustomSoboStrategy(SoboBaseStrategy):
+    type: Literal["CustomSoboStrategy"] = "CustomSoboStrategy"
+    use_output_constraints: bool = True
+    dump: Optional[str] = None

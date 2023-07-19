@@ -4,9 +4,10 @@ from pydantic import Field
 from typing_extensions import Annotated
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class RandomForestSurrogate(BotorchSurrogate):
+class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["RandomForestSurrogate"] = "RandomForestSurrogate"
 
     # hyperparams passed down to `RandomForestRegressor`
