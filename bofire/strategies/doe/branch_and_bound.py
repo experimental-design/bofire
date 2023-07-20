@@ -127,12 +127,15 @@ class NodeExperiment:
         )
 
 
-def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
+def is_valid(
+    design_matrix: pd.DataFrame, domain: Domain, tolerance: float = 1e-5
+) -> bool:
     """
     test if a design is a valid solution. i.e. binary and discrete variables are valid
     Args:
         design_matrix (pd.DataFrame): the design to test
         domain (Domain): the domain for which the design should be tested
+        tolerance: absolute tolerance between valid values and values in the design
 
     Returns: True if the design is valid, else False
 
@@ -140,13 +143,18 @@ def is_valid(design_matrix: pd.DataFrame, domain: Domain) -> bool:
     categorical_vars = domain.get_features(includes=ContinuousBinaryInput)
     for var in categorical_vars:
         value = design_matrix.get(var.key)
-        if not (np.logical_or(np.isclose(value, 0), np.isclose(value, 1)).all()):
+        if not (
+            np.logical_or(
+                np.isclose(value, 0, atol=tolerance),
+                np.isclose(value, 1, atol=tolerance),
+            ).all()
+        ):
             return False
 
     discrete_vars = domain.get_features(includes=ContinuousDiscreteInput)
     for var in discrete_vars:
         value = design_matrix.get(var.key)
-        if False in [True in np.isclose(v, var.values) for v in value]:
+        if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:
             return False
     return True
 
