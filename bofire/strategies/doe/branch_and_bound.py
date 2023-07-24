@@ -128,7 +128,7 @@ class NodeExperiment:
 
 
 def is_valid(
-    design_matrix: pd.DataFrame, domain: Domain, tolerance: float = 1e-5
+    design_matrix: pd.DataFrame, domain: Domain, tolerance: float = 1e-3
 ) -> bool:
     """
     test if a design is a valid solution. i.e. binary and discrete variables are valid
