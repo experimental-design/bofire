@@ -326,6 +326,7 @@ def find_local_max_ipopt(
     #
 
     if sampling is not None:
+        sampling.sort_index(axis=1, inplace=True)
         domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values.flatten()
     else:
@@ -366,6 +367,7 @@ def find_local_max_ipopt(
 
     # fix experiments if any are given
     if fixed_experiments is not None:
+        fixed_experiments.sort_index(axis=1, inplace=True)
         domain.validate_candidates(fixed_experiments, only_inputs=True)
         fixed_experiments = np.array(fixed_experiments.values)
         for i, val in enumerate(fixed_experiments.flatten()):
@@ -453,6 +455,7 @@ def partially_fix_experiment(
 
     shift = 0
     if partially_fixed_experiments is not None:
+        partially_fixed_experiments.sort_index(axis=1, inplace=True)
         if fixed_experiments is not None:
             if (
                 len(fixed_experiments) + len(partially_fixed_experiments)
