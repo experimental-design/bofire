@@ -451,25 +451,21 @@ def partially_fix_experiment(
 
     """
 
+    shift = 0
     if partially_fixed_experiments is not None:
         if fixed_experiments is not None:
-            cut_of_k_experiments = (
-                len(fixed_experiments)
-                + len(partially_fixed_experiments)
-                - n_experiments
-            )
-        else:
-            cut_of_k_experiments = len(partially_fixed_experiments) - n_experiments
+            if (
+                len(fixed_experiments) + len(partially_fixed_experiments)
+                > n_experiments
+            ):
+                raise AttributeError(
+                    "Number of fixed experiments and partially fixed experiments exceeds the number of total "
+                    "experiments"
+                )
+            shift = len(fixed_experiments)
 
-        if cut_of_k_experiments > 0:
-            cut_partially_fixed = partially_fixed_experiments.drop(
-                list(range(cut_of_k_experiments))
-            )
-        else:
-            cut_partially_fixed = partially_fixed_experiments
-
-        shift = cut_of_k_experiments * len(partially_fixed_experiments.columns)
-        for i, val in enumerate(np.array(cut_partially_fixed.values).flatten()):
+        shift = shift * len(partially_fixed_experiments.columns)
+        for i, val in enumerate(np.array(partially_fixed_experiments.values).flatten()):
             index = shift + i
             if type(val) is tuple:
                 bounds[index] = (val[0], val[1])
