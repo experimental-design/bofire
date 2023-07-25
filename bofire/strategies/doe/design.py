@@ -75,8 +75,10 @@ def find_local_max_ipopt_BaB(
     column_keys = domain.inputs.get_keys()
 
     initial_branch = pd.DataFrame(
-        np.full((n_experiments, len(column_keys)), None), columns=column_keys
+        np.full((n_experiments - len(fixed_experiments), len(column_keys)), None),
+        columns=column_keys,
     )
+
     initial_design = find_local_max_ipopt(
         domain,
         model_type,
@@ -278,7 +280,7 @@ def find_local_max_ipopt(
             Values are set before the optimization.
         partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
-            If the parameter fixed_experiments is given, those experiments will be prioritized.
+            Variables can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None.
         objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
     Returns:

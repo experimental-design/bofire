@@ -22,7 +22,6 @@ from bofire.strategies.doe.utils import get_formula_from_string
 class NodeExperiment:
     def __init__(
         self,
-        fixed_experiments: pd.DataFrame,
         partially_fixed_experiments: pd.DataFrame,
         design_matrix: pd.DataFrame,
         value: float,
@@ -32,17 +31,12 @@ class NodeExperiment:
         """
 
         Args:
-            fixed_experiments: dataframe containing experiments that will be definitely part of the design.
             partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
             design_matrix: optimal design for given the fixed and partially fixed experiments
             value: value of the objective function evaluated with the design_matrix
             categorical_groups: Represents the different groups of the categorical variables
             discrete_vars: List of discrete variables in the optimization problem
         """
-        if fixed_experiments is None:
-            self.fixed_experiments = []
-        else:
-            self.fixed_experiments = fixed_experiments
         self.partially_fixed_experiments = partially_fixed_experiments
         self.design_matrix = design_matrix
         self.value = value
@@ -58,9 +52,7 @@ class NodeExperiment:
         """
         # branching for the binary/ categorical variables
         for group in self.categorical_groups:
-            for row_index, _exp in self.partially_fixed_experiments.iloc[
-                len(self.fixed_experiments) :
-            ].iterrows():
+            for row_index, _exp in self.partially_fixed_experiments.iterrows():
                 if (
                     self.partially_fixed_experiments.iloc[row_index][group[0].key]
                     is None
@@ -77,9 +69,7 @@ class NodeExperiment:
 
         # branching for the discrete variables
         for var in self.discrete_vars:
-            for row_index, _exp in self.partially_fixed_experiments.iloc[
-                len(self.fixed_experiments) :
-            ].iterrows():
+            for row_index, _exp in self.partially_fixed_experiments.iterrows():
                 current_fixation = self.partially_fixed_experiments.iloc[row_index][
                     var.key
                 ]
@@ -206,7 +196,6 @@ def bnb(
             design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
             value = objective_class.evaluate(design.to_numpy().flatten())
             new_node = NodeExperiment(
-                current_branch.fixed_experiments,
                 branch,
                 design,
                 value,
