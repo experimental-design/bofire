@@ -5,6 +5,7 @@ import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import (
     ContinuousBinaryInput,
     ContinuousDiscreteInput,
+    Input,
 )
 from bofire.strategies.doe.design import (
     find_local_max_ipopt,
@@ -29,6 +30,11 @@ class DoEStrategy(Strategy):
         super().__init__(data_model=data_model, **kwargs)
         self.formula = data_model.formula
         self.data_model = data_model
+
+    def _tell(self) -> None:
+        self.set_candidates(
+            self.experiments[self.domain.get_feature_keys(includes=Input)]
+        )
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         if self.candidates is not None:
