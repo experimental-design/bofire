@@ -15,6 +15,7 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     ContinuousBinaryInput,
     ContinuousDiscreteInput,
+    Input,
 )
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -38,6 +39,7 @@ def find_local_max_ipopt_BaB(
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
+    partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
     verbose: bool = False,
 ) -> pd.DataFrame:
@@ -54,6 +56,10 @@ def find_local_max_ipopt_BaB(
             sampling (pd.DataFrame): dataframe containing the initial guess.
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
+            partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+                Values are set before the optimization. Within one experiment not all variables need to be fixed.
+                Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+                Non-fixed variables have to be set to None or nan.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
             verbose (bool): if true, print information during the optimization process
         Returns:
@@ -79,6 +85,28 @@ def find_local_max_ipopt_BaB(
         columns=column_keys,
     )
 
+    partially_fixed_experiments = pd.concat(
+        [
+            partially_fixed_experiments,
+            pd.DataFrame(
+                np.full(
+                    (
+                        n_experiments - len(partially_fixed_experiments),
+                        len(domain.inputs),
+                    ),
+                    None,
+                ),
+                columns=domain.get_feature_keys(includes=Input),
+            ),
+        ]
+    ).reset_index(drop=True)
+
+    initial_branch.mask(
+        partially_fixed_experiments.notnull(),
+        other=partially_fixed_experiments,
+        inplace=True,
+    )
+
     initial_design = find_local_max_ipopt(
         domain,
         model_type,
@@ -96,7 +124,6 @@ def find_local_max_ipopt_BaB(
 
     discrete_vars = domain.inputs.get(includes=ContinuousDiscreteInput)
     initial_node = NodeExperiment(
-        fixed_experiments,
         initial_branch,
         initial_design,
         initial_value,
@@ -134,6 +161,7 @@ def find_local_max_ipopt_binary_naive(
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    partially_fixed_experiments: Optional[pd.DataFrame] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -150,6 +178,10 @@ def find_local_max_ipopt_binary_naive(
             fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
                 Values are set before the optimization.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+                Values are set before the optimization. Within one experiment not all variables need to be fixed.
+                Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+                Non-fixed variables have to be set to None or nan.
             verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -183,6 +215,22 @@ def find_local_max_ipopt_binary_naive(
         allowed_fixations, n_non_fixed_experiments
     )
 
+    partially_fixed_experiments = pd.concat(
+        [
+            partially_fixed_experiments,
+            pd.DataFrame(
+                np.full(
+                    (
+                        n_non_fixed_experiments - len(partially_fixed_experiments),
+                        len(domain.inputs),
+                    ),
+                    None,
+                ),
+                columns=domain.get_feature_keys(includes=Input),
+            ),
+        ]
+    ).reset_index(drop=True)
+
     # testing all different fixations
     column_keys = domain.inputs.get_keys()
     minimum = float("inf")
@@ -207,18 +255,14 @@ def find_local_max_ipopt_binary_naive(
             axis=1,
         )
 
-        one_set_of_experiments = np.concatenate(
-            [
-                np.full(
-                    (n_experiments - n_non_fixed_experiments, len(domain.inputs)), None
-                ),
-                one_set_of_experiments,
-            ],
-            axis=0,
-        )
-
         one_set_of_experiments = pd.DataFrame(
             one_set_of_experiments, columns=column_keys
+        )
+
+        one_set_of_experiments.mask(
+            partially_fixed_experiments.notnull(),
+            other=partially_fixed_experiments,
+            inplace=True,
         )
 
         if sampling is not None:
@@ -280,8 +324,8 @@ def find_local_max_ipopt(
             Values are set before the optimization.
         partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
             Values are set before the optimization. Within one experiment not all variables need to be fixed.
-            Variables can be set to a range by setting a tuple with lower and upper bound
-            Non-fixed variables have to be set to None.
+            Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+            Non-fixed variables have to be set to None or nan.
         objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -442,7 +486,10 @@ def partially_fix_experiment(
     x0: pd.DataFrame,
 ) -> (list, pd.DataFrame):
     """
-    fixes some variables within an experiment.
+    fixes some variables for experiments. Within one experiment not all variables need to be fixed.
+    Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+    Non-fixed variables have to be set to None or nan.
+
     Args:
         bounds (list): current bounds
         fixed_experiments (pd.Dataframe): experiments which are guaranteed to be part of the design and are fully fixed
@@ -475,7 +522,7 @@ def partially_fix_experiment(
             if type(val) is tuple:
                 bounds[index] = (val[0], val[1])
                 x0[index] = val[0]
-            elif val is not None:
+            elif val is not None and not np.isnan(val):
                 bounds[index] = (val, val)
                 x0[index] = val
     return bounds, x0
