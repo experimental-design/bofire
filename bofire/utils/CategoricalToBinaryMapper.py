@@ -68,17 +68,12 @@ def get_bounds_of_constraint(constraint: LinearConstraint, variables: Inputs):
 
 
 def generate_mixture_constraints(
-    keys: List[str], rhs: float = 1, equality=True
+    keys: List[str],
 ) -> Tuple[LinearEqualityConstraint, List[ContinuousBinaryInput]]:
     binary_vars = (ContinuousBinaryInput(key=x) for x in keys)
 
-    if equality:
-        mixture_constraint = LinearEqualityConstraint(
-            features=keys, coefficients=[1 for x in range(len(keys))], rhs=rhs
-        )
-    else:
-        mixture_constraint = LinearInequalityConstraint(
-            features=keys, coefficients=[1 for x in range(len(keys))], rhs=rhs
-        )
+    mixture_constraint = LinearEqualityConstraint(
+        features=keys, coefficients=[1 for x in range(len(keys))], rhs=1
+    )
 
     return mixture_constraint, list(binary_vars)
