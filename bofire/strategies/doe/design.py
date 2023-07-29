@@ -1,3 +1,4 @@
+import time
 import warnings
 from itertools import combinations_with_replacement, product
 from queue import PriorityQueue
@@ -215,28 +216,32 @@ def find_local_max_ipopt_binary_naive(
         allowed_fixations, n_non_fixed_experiments
     )
 
-    partially_fixed_experiments = pd.concat(
-        [
-            partially_fixed_experiments,
-            pd.DataFrame(
-                np.full(
-                    (
-                        n_non_fixed_experiments - len(partially_fixed_experiments),
-                        len(domain.inputs),
+    if partially_fixed_experiments is not None:
+        partially_fixed_experiments = pd.concat(
+            [
+                partially_fixed_experiments,
+                pd.DataFrame(
+                    np.full(
+                        (
+                            n_non_fixed_experiments - len(partially_fixed_experiments),
+                            len(domain.inputs),
+                        ),
+                        None,
                     ),
-                    None,
+                    columns=domain.get_feature_keys(includes=Input),
                 ),
-                columns=domain.get_feature_keys(includes=Input),
-            ),
-        ]
-    ).reset_index(drop=True)
+            ]
+        ).reset_index(drop=True)
 
     # testing all different fixations
     column_keys = domain.inputs.get_keys()
     minimum = float("inf")
     optimal_design = None
     number_of_non_binary_vars = len(domain.inputs) - len(binary_vars)
-    for i, binary_fixed_experiments in enumerate(list(all_n_fixed_experiments)):
+    all_n_fixed_experiments = list(all_n_fixed_experiments)
+    for i, binary_fixed_experiments in enumerate(all_n_fixed_experiments):
+        if verbose:
+            start_time = time.time()
         # setting up the pd.Dataframe for the partially fixed experiment
         binary_fixed_experiments = np.array(
             [
@@ -259,11 +264,12 @@ def find_local_max_ipopt_binary_naive(
             one_set_of_experiments, columns=column_keys
         )
 
-        one_set_of_experiments.mask(
-            partially_fixed_experiments.notnull(),
-            other=partially_fixed_experiments,
-            inplace=True,
-        )
+        if partially_fixed_experiments is not None:
+            one_set_of_experiments.mask(
+                partially_fixed_experiments.notnull(),
+                other=partially_fixed_experiments,
+                inplace=True,
+            )
 
         if sampling is not None:
             sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
@@ -290,7 +296,7 @@ def find_local_max_ipopt_binary_naive(
                 optimal_design = current_design
             if verbose:
                 print(
-                    f"branch: {i}, solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
+                    f"branch: {i} / {len(all_n_fixed_experiments)}, time: {time.time() - start_time} solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
                 )
         except ConstraintNotFulfilledError:
             if verbose:
