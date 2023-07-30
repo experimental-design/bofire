@@ -14,9 +14,9 @@ from bofire.data_models.constraints.constraint import ConstraintNotFulfilledErro
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
-    ContinuousBinaryInput,
-    ContinuousDiscreteInput,
     Input,
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
 )
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -81,32 +81,36 @@ def find_local_max_ipopt_BaB(
     # setting up initial node in the branch-and-bound tree
     column_keys = domain.inputs.get_keys()
 
+    subtract = 0
+    if fixed_experiments is not None:
+        subtract = len(fixed_experiments)
     initial_branch = pd.DataFrame(
-        np.full((n_experiments - len(fixed_experiments), len(column_keys)), None),
+        np.full((n_experiments - subtract, len(column_keys)), None),
         columns=column_keys,
     )
 
-    partially_fixed_experiments = pd.concat(
-        [
-            partially_fixed_experiments,
-            pd.DataFrame(
-                np.full(
-                    (
-                        n_experiments - len(partially_fixed_experiments),
-                        len(domain.inputs),
+    if partially_fixed_experiments is not None:
+        partially_fixed_experiments = pd.concat(
+            [
+                partially_fixed_experiments,
+                pd.DataFrame(
+                    np.full(
+                        (
+                            n_experiments - len(partially_fixed_experiments),
+                            len(domain.inputs),
+                        ),
+                        None,
                     ),
-                    None,
+                    columns=domain.get_feature_keys(includes=Input),
                 ),
-                columns=domain.get_feature_keys(includes=Input),
-            ),
-        ]
-    ).reset_index(drop=True)
+            ]
+        ).reset_index(drop=True)
 
-    initial_branch.mask(
-        partially_fixed_experiments.notnull(),
-        other=partially_fixed_experiments,
-        inplace=True,
-    )
+        initial_branch.mask(
+            partially_fixed_experiments.notnull(),
+            other=partially_fixed_experiments,
+            inplace=True,
+        )
 
     initial_design = find_local_max_ipopt(
         domain,
@@ -123,7 +127,7 @@ def find_local_max_ipopt_BaB(
         initial_design.to_numpy().flatten(),
     )
 
-    discrete_vars = domain.inputs.get(includes=ContinuousDiscreteInput)
+    discrete_vars = domain.inputs.get(includes=RelaxableDiscreteInput)
     initial_node = NodeExperiment(
         initial_branch,
         initial_design,
@@ -153,7 +157,7 @@ def find_local_max_ipopt_BaB(
     return result_node.design_matrix
 
 
-def find_local_max_ipopt_binary_naive(
+def find_local_max_ipopt_exhaustive(
     domain: Domain,
     model_type: Union[str, Formula],
     n_experiments: Optional[int] = None,
@@ -189,6 +193,11 @@ def find_local_max_ipopt_binary_naive(
             local optimum.
     """
 
+    if len(domain.get_features(includes=RelaxableDiscreteInput)) > 0:
+        raise NotImplementedError(
+            "Exhaustive search for discrete variables is not implemented yet."
+        )
+
     # get objective function
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
@@ -199,7 +208,7 @@ def find_local_max_ipopt_binary_naive(
     )
 
     # get binary variables
-    binary_vars = domain.get_features(ContinuousBinaryInput)
+    binary_vars = domain.get_features(RelaxableBinaryInput)
     list_keys = binary_vars.get_keys()
 
     # determine possible fixations of the different categories
@@ -235,9 +244,10 @@ def find_local_max_ipopt_binary_naive(
 
     # testing all different fixations
     column_keys = domain.inputs.get_keys()
+    group_keys = [var.key for group in domain.categorical_groups for var in group]
     minimum = float("inf")
     optimal_design = None
-    number_of_non_binary_vars = len(domain.inputs) - len(binary_vars)
+    len(domain.inputs) - len(binary_vars)
     all_n_fixed_experiments = list(all_n_fixed_experiments)
     for i, binary_fixed_experiments in enumerate(all_n_fixed_experiments):
         if verbose:
@@ -252,16 +262,18 @@ def find_local_max_ipopt_binary_naive(
             ]
         ).reshape(n_non_fixed_experiments, len(binary_vars))
 
-        one_set_of_experiments = np.concatenate(
-            [
-                binary_fixed_experiments,
-                np.full((n_non_fixed_experiments, number_of_non_binary_vars), None),
-            ],
-            axis=1,
+        binary_fixed_experiments = pd.DataFrame(
+            binary_fixed_experiments, columns=group_keys
+        )
+        one_set_of_experiments = pd.DataFrame(
+            np.full((n_non_fixed_experiments, len(domain.inputs)), None),
+            columns=column_keys,
         )
 
-        one_set_of_experiments = pd.DataFrame(
-            one_set_of_experiments, columns=column_keys
+        one_set_of_experiments.mask(
+            binary_fixed_experiments.notnull(),
+            other=binary_fixed_experiments,
+            inplace=True,
         )
 
         if partially_fixed_experiments is not None:
@@ -301,7 +313,6 @@ def find_local_max_ipopt_binary_naive(
         except ConstraintNotFulfilledError:
             if verbose:
                 print("skipping branch because of not fulfilling constraints")
-
     return optimal_design
 
 
