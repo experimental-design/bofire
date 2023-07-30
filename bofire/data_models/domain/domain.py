@@ -37,7 +37,7 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
-from bofire.data_models.features.binary import ContinuousBinaryInput
+from bofire.data_models.features.binary import RelaxableBinaryInput
 from bofire.data_models.objectives.api import Objective
 
 
@@ -60,7 +60,7 @@ class Domain(BaseModel):
     outputs: Outputs = Field(default_factory=lambda: Outputs())
 
     constraints: Constraints = Field(default_factory=lambda: Constraints())
-    categorical_groups: List[List[ContinuousBinaryInput]] = Field(
+    categorical_groups: List[List[RelaxableBinaryInput]] = Field(
         default_factory=lambda: []
     )
 
@@ -80,7 +80,7 @@ class Domain(BaseModel):
         inputs: Optional[Sequence[AnyInput]] = None,
         outputs: Optional[Sequence[AnyOutput]] = None,
         constraints: Optional[Sequence[AnyConstraint]] = None,
-        categorical_groups: List[List[ContinuousBinaryInput]] = None,
+        categorical_groups: List[List[RelaxableBinaryInput]] = None,
     ):
         inputs = [] if inputs is None else inputs
         outputs = [] if outputs is None else outputs
@@ -210,12 +210,12 @@ class Domain(BaseModel):
             ValueError: Feature key not registered in any group or registered too often.
 
         Returns:
-            List[List[ContinuousBinaryInput]]: groups of the different categories
+            List[List[RelaxableBinaryInput]]: groups of the different categories
         """
         if "inputs" not in values:
             return categorical_group
 
-        bin_vars = values["inputs"].get(includes=ContinuousBinaryInput)
+        bin_vars = values["inputs"].get(includes=RelaxableBinaryInput)
 
         if len(bin_vars) == 0:
             return categorical_group

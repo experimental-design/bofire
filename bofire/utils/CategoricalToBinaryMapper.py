@@ -9,7 +9,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
 )
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.features.api import ContinuousBinaryInput
+from bofire.data_models.features.api import RelaxableBinaryInput
 
 
 def constraints_mapper(
@@ -22,9 +22,7 @@ def constraints_mapper(
     possible_fixations[len(constraints) :]
 
     # todo ensure unique name for each var
-    binary_vars = [
-        ContinuousBinaryInput(key=f"a{i}") for i in range(num_of_binary_vars)
-    ]
+    binary_vars = [RelaxableBinaryInput(key=f"a{i}") for i in range(num_of_binary_vars)]
     binary_keys = [f"a{i}" for i in range(num_of_binary_vars)]
 
     # todo find tighter bounds
@@ -69,8 +67,8 @@ def get_bounds_of_constraint(constraint: LinearConstraint, variables: Inputs):
 
 def generate_mixture_constraints(
     keys: List[str],
-) -> Tuple[LinearEqualityConstraint, List[ContinuousBinaryInput]]:
-    binary_vars = (ContinuousBinaryInput(key=x) for x in keys)
+) -> Tuple[LinearEqualityConstraint, List[RelaxableBinaryInput]]:
+    binary_vars = (RelaxableBinaryInput(key=x) for x in keys)
 
     mixture_constraint = LinearEqualityConstraint(
         features=keys, coefficients=[1 for x in range(len(keys))], rhs=1

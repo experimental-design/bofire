@@ -9,12 +9,12 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
-    ContinuousBinaryInput,
-    ContinuousDiscreteInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     Feature,
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
 )
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 
@@ -47,6 +47,6 @@ class PolytopeSampler(SamplerStrategy):
             CategoricalInput,
             DiscreteInput,
             CategoricalDescriptorInput,
-            ContinuousBinaryInput,
-            ContinuousDiscreteInput,
+            RelaxableBinaryInput,
+            RelaxableDiscreteInput,
         ]

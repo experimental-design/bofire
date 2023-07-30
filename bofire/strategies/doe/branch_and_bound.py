@@ -10,8 +10,8 @@ import pandas as pd
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
-    ContinuousBinaryInput,
-    ContinuousDiscreteInput,
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
 )
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
@@ -25,8 +25,8 @@ class NodeExperiment:
         partially_fixed_experiments: pd.DataFrame,
         design_matrix: pd.DataFrame,
         value: float,
-        categorical_groups: List[List[ContinuousBinaryInput]],
-        discrete_vars: List[ContinuousDiscreteInput],
+        categorical_groups: List[List[RelaxableBinaryInput]],
+        discrete_vars: List[RelaxableDiscreteInput],
     ):
         """
 
@@ -130,7 +130,7 @@ def is_valid(
     Returns: True if the design is valid, else False
 
     """
-    categorical_vars = domain.get_features(includes=ContinuousBinaryInput)
+    categorical_vars = domain.get_features(includes=RelaxableBinaryInput)
     for var in categorical_vars:
         value = design_matrix.get(var.key)
         if not (
@@ -141,7 +141,7 @@ def is_valid(
         ):
             return False
 
-    discrete_vars = domain.get_features(includes=ContinuousDiscreteInput)
+    discrete_vars = domain.get_features(includes=RelaxableDiscreteInput)
     for var in discrete_vars:
         value = design_matrix.get(var.key)
         if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:

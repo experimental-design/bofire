@@ -7,7 +7,7 @@ import pandas as pd
 from bofire.data_models.features.continuous import ContinuousInput
 
 
-class ContinuousDiscreteInput(ContinuousInput):
+class RelaxableDiscreteInput(ContinuousInput):
     """Feature with discrete ordinal values allowed in the optimization.
 
     Attributes:

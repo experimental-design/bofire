@@ -15,12 +15,12 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.features.binary import ContinuousBinaryInput
+from bofire.data_models.features.binary import RelaxableBinaryInput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
     find_local_max_ipopt,
-    find_local_max_ipopt_binary_naive,
+    find_local_max_ipopt_exhaustive,
     get_n_experiments,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
@@ -484,14 +484,14 @@ def test_get_n_experiments():
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_simple_optimal_binary_problem():
     domain = Domain(
-        inputs=[ContinuousBinaryInput(key="x1"), ContinuousBinaryInput(key="x2")],
+        inputs=[RelaxableBinaryInput(key="x1"), RelaxableBinaryInput(key="x2")],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=1),
         ],
     )
 
-    d_optimal_design = find_local_max_ipopt_binary_naive(
+    d_optimal_design = find_local_max_ipopt_exhaustive(
         domain,
         "linear",
         n_experiments=2,
@@ -516,7 +516,7 @@ def test_advanced_optimal_binary_problem():
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
-            ContinuousBinaryInput(key="a"),
+            RelaxableBinaryInput(key="a"),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -535,7 +535,7 @@ def test_advanced_optimal_binary_problem():
     initial_values[2][1] = 3
     initial_values = pd.DataFrame(initial_values, columns=domain.inputs.get_keys())
 
-    d_optimal_design = find_local_max_ipopt_binary_naive(
+    d_optimal_design = find_local_max_ipopt_exhaustive(
         domain,
         "linear",
         n_experiments=n_experiments,
@@ -556,8 +556,8 @@ def test_solving_binary_variables_naive():
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
-            ContinuousBinaryInput(key="a1"),
-            ContinuousBinaryInput(key="a2"),
+            RelaxableBinaryInput(key="a1"),
+            RelaxableBinaryInput(key="a2"),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
@@ -594,7 +594,7 @@ def test_solving_binary_variables_naive():
         ],
     )
 
-    opt_values = find_local_max_ipopt_binary_naive(
+    opt_values = find_local_max_ipopt_exhaustive(
         domain, "linear", n_experiments=12, ipopt_options={"disp": 0}
     )
 
@@ -607,8 +607,8 @@ def test_partially_fixed_experiments():
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
-            ContinuousBinaryInput(key="a1"),
-            ContinuousBinaryInput(key="a2"),
+            RelaxableBinaryInput(key="a1"),
+            RelaxableBinaryInput(key="a2"),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[

@@ -5,7 +5,7 @@ from pydantic import root_validator
 from bofire.data_models.features.continuous import ContinuousInput
 
 
-class ContinuousBinaryInput(ContinuousInput):
+class RelaxableBinaryInput(ContinuousInput):
     """Base class for all binary input features. It behaves like a continuous inputs to allow for easy relaxation.
     It is not a true binary variable as it does not allow the variable to be either 0 or 1 while prohibiting all values
     in between.

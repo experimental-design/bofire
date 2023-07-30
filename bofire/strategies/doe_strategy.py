@@ -3,14 +3,14 @@ from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import (
-    ContinuousBinaryInput,
-    ContinuousDiscreteInput,
     Input,
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
 )
 from bofire.strategies.doe.design import (
     find_local_max_ipopt,
     find_local_max_ipopt_BaB,
-    find_local_max_ipopt_binary_naive,
+    find_local_max_ipopt_exhaustive,
 )
 from bofire.strategies.strategy import Strategy
 
@@ -81,11 +81,9 @@ class DoEStrategy(Strategy):
             _fixed_experiments_count = 0
             _candidate_count = candidate_count
 
-        num_binary_vars = len(
-            self.domain.get_features(includes=[ContinuousBinaryInput])
-        )
+        num_binary_vars = len(self.domain.get_features(includes=[RelaxableBinaryInput]))
         num_discrete_vars = len(
-            self.domain.get_features(includes=[ContinuousDiscreteInput])
+            self.domain.get_features(includes=[RelaxableDiscreteInput])
         )
 
         if self.data_model.optimization_strategy == "relaxed" or (
@@ -103,7 +101,7 @@ class DoEStrategy(Strategy):
             self.data_model.optimization_strategy == "exhaustive"
             and num_discrete_vars == 0
         ):
-            design = find_local_max_ipopt_binary_naive(
+            design = find_local_max_ipopt_exhaustive(
                 domain=self.domain,
                 model_type=self.formula,
                 n_experiments=_candidate_count,

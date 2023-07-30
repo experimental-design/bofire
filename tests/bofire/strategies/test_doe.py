@@ -14,10 +14,10 @@ from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalInput,
-    ContinuousDiscreteInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    RelaxableDiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
 from bofire.utils.CategoricalToBinaryMapper import generate_mixture_constraints
@@ -86,7 +86,7 @@ categorical_domain = Domain(
 )
 
 categorical_discrete_domain = Domain(
-    inputs=all_inputs + [ContinuousDiscreteInput(key="d", values=list(range(100)))],
+    inputs=all_inputs + [RelaxableDiscreteInput(key="d", values=list(range(100)))],
     outputs=[ContinuousOutput(key="y")],
     constraints=constraints
     + [
