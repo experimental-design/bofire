@@ -1346,7 +1346,6 @@ def test_inputs_sample(features: Inputs, num_samples, method):
     assert list(samples.columns) == features.get_keys()
 
 
-@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "specs",
     [
