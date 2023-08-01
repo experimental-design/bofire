@@ -11,9 +11,10 @@ from bofire.data_models.priors.api import (
 )
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class TanimotoGPSurrogate(BotorchSurrogate):
+class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
     kernel: AnyKernel = Field(

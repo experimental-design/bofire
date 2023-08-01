@@ -352,7 +352,9 @@ class Inputs(Features):
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, MolecularInput)
-                descriptor_names = specs[feat.key].get_descriptor_names()
+                descriptor_names = specs[
+                    feat.key
+                ].get_descriptor_names()  # type: ingnore
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist()
                 )
@@ -397,7 +399,7 @@ class Inputs(Features):
                 transformed.append(feat.to_descriptor_encoding(s))
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, MolecularInput)
-                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))
+                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))  # type: ignore
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
