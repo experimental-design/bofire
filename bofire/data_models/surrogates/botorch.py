@@ -7,7 +7,7 @@ from bofire.data_models.features.api import (
     MolecularInput,
     NumericalInput,
 )
-from bofire.data_models.molfeatures.api import MolFeatures
+from bofire.data_models.molfeatures.api import Fingerprints, MolFeatures
 from bofire.data_models.surrogates.surrogate import Surrogate
 
 
@@ -46,9 +46,10 @@ class BotorchSurrogate(Surrogate):
                 )
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in molecular_keys:
-            mol_encoding = v.get(key)
+            mol_encoding = v.get(key, Fingerprints())
             if not isinstance(mol_encoding, MolFeatures):
                 raise ValueError(
                     "Botorch based models have to use fingerprints, fragments, fingerprints_fragments, or molecular descriptors for molecular inputs"
                 )
+            v[key] = mol_encoding
         return v
