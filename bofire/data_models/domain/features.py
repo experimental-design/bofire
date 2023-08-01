@@ -354,7 +354,7 @@ class Inputs(Features):
                 assert isinstance(feat, MolecularInput)
                 descriptor_names = specs[
                     feat.key
-                ].get_descriptor_names()  # type: ingnore
+                ].get_descriptor_names()  # type: ignore
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist()
                 )
