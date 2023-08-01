@@ -1,16 +1,11 @@
 from bofire.data_models import unions
-from bofire.data_models.acquisition_functions.api import (  # noqa: F401
+from bofire.data_models.acquisition_functions.api import (
     AcquisitionFunction,
     AnyAcquisitionFunction,
 )
-from bofire.data_models.constraints.api import AnyConstraint, Constraint  # noqa: F401
-from bofire.data_models.domain.api import (  # noqa: F401
-    Domain,
-    Features,
-    Inputs,
-    Outputs,
-)
-from bofire.data_models.features.api import (  # noqa: F401
+from bofire.data_models.constraints.api import AnyConstraint, Constraint
+from bofire.data_models.domain.api import Domain, Features, Inputs, Outputs
+from bofire.data_models.features.api import (
     AnyFeature,
     AnyInput,
     AnyOutput,
@@ -21,11 +16,19 @@ from bofire.data_models.features.api import (  # noqa: F401
 
 try:
     # in case of the minimal installation these import are not available
-    from bofire.data_models.kernels.api import AnyKernel, Kernel  # noqa: F401
-    from bofire.data_models.molfeatures.api import AnyMolFeatures, MolFeatures  # noqa: F401
-    from bofire.data_models.objectives.api import AnyObjective, Objective  # noqa: F401
-    from bofire.data_models.priors.api import AnyPrior, Prior  # noqa: F401
-    from bofire.data_models.strategies.api import (  # noqa: F401
+    from bofire.data_models.kernels.api import AnyKernel, Kernel
+    from bofire.data_models.molfeatures.api import (  # noqa: F401
+        AnyMolFeatures,
+        MolFeatures,
+    )
+    from bofire.data_models.objectives.api import AnyObjective, Objective
+    from bofire.data_models.outlier_detection.api import (
+        AnyOutlierDetection,
+        OutlierDetection,
+    )
+    from bofire.data_models.priors.api import AnyPrior, Prior
+    from bofire.data_models.strategies.api import (
+        AnyCondition,
         AnyPredictive,
         AnySampler,
         AnyStrategy,
@@ -33,7 +36,7 @@ try:
         SamplerStrategy,
         Strategy,
     )
-    from bofire.data_models.surrogates.api import (  # noqa: F401
+    from bofire.data_models.surrogates.api import (
         AnyBotorchSurrogate,
         AnySurrogate,
         BotorchSurrogate,
@@ -46,6 +49,7 @@ try:
         AnyFeature,
         AnyKernel,
         AnySurrogate,
+        AnyOutlierDetection,
         AnyObjective,
         AnyPrior,
         AnyStrategy,
@@ -59,5 +63,7 @@ except ImportError:
         AnyFeature,
         Domain,
     ]
+
+AnyThing = [model for models in data_model_list for model in unions.to_list(models)]
 
 AnyThing = [model for models in data_model_list for model in unions.to_list(models)]

@@ -455,22 +455,12 @@ def test_categorical_input_feature_get_possible_categories(input_feature, expect
         ),
         (
             specs.features.valid(CategoricalInput).obj(
-                categories=["a", "b", "c"],
+                categories=["1", "2", "3"],
                 allowed=[True, False, False],
             ),
-            pd.Series([random.choice(["a", "b", "c"]) for _ in range(20)]),
+            pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
             # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
             # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
-            False,
-        ),
-        (
-            specs.features.valid(CategoricalInput).obj(
-                categories=["a", "b", "c"],
-                allowed=[True, False, False],
-            ),
-            pd.Series(["a", "a"]),
-            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
-            # pd.Series(["c1", "c1"]),
             False,
         ),
     ],
@@ -506,6 +496,26 @@ def test_categorical_input_feature_validate_valid(input_feature, values, strict)
                 allowed=[True, False, False],
             ),
             pd.Series(["a", "b"]),
+            True,
+        ),
+        (
+            specs.features.valid(CategoricalInput).obj(
+                categories=["1", "2", "3"],
+                allowed=[True, False, False],
+            ),
+            pd.Series([1, 2]),
+            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            True,
+        ),
+        (
+            specs.features.valid(CategoricalInput).obj(
+                categories=["one", "two", "three"],
+                allowed=[True, False, False],
+            ),
+            pd.Series([1, 2, 3]),
+            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
     ],
@@ -869,6 +879,16 @@ def test_categorical_descriptor_feature_get_bounds(
             pd.Series(["c2", "c3"]),
             False,
         ),
+        (
+            specs.features.valid(CategoricalDescriptorInput).obj(
+                categories=["1", "2", "3"],
+                allowed=[True, False, False],
+            ),
+            pd.Series([random.choice([1, 2, 3]) for _ in range(20)]),
+            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
+            False,
+        ),
     ],
 )
 def test_categorical_descriptor_input_feature_validate_valid(
@@ -916,6 +936,16 @@ def test_categorical_descriptor_input_feature_validate_valid(
                 ],
             ),
             pd.Series(["c2", "c3"]),
+            True,
+        ),
+        (
+            specs.features.valid(CategoricalInput).obj(
+                categories=["1", "2", "3"],
+                allowed=[True, False, False],
+            ),
+            pd.Series([1, 2]),
+            # CategoricalInput(**VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC),
+            # pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
     ],

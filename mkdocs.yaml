@@ -7,6 +7,7 @@ nav:
   - index.md
   - Install: install.md
   - Notebook page: getting_started.ipynb
+  - Examples: examples.md
   - Package Architecture:
     - Data Models vs Functional Components: data_models_functionals.md
   - API Reference:

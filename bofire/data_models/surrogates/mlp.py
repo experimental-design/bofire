@@ -2,9 +2,10 @@ from typing import Literal, Sequence
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class MLPEnsemble(BotorchSurrogate):
+class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     type: Literal["MLPEnsemble"] = "MLPEnsemble"
     n_estimators: int
     hidden_layer_sizes: Sequence = (100,)

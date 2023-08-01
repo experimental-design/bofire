@@ -263,6 +263,46 @@ def get_objective_callable(
         )
 
 
+def get_custom_botorch_objective(
+    outputs: Outputs,
+    f: Callable[
+        [
+            Tensor,
+            List[Callable[[Tensor, Optional[Tensor]], Tensor]],
+            List[float],
+            Tensor,
+        ],
+        Tensor,
+    ],
+    exclude_constraints: bool = True,
+) -> Callable[[Tensor, Tensor], Tensor]:
+    callables = [
+        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        for i, feat in enumerate(outputs.get())
+        if feat.objective is not None  # type: ignore
+        and (
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            if exclude_constraints
+            else True
+        )
+    ]
+    weights = [
+        feat.objective.w  # type: ignore
+        for i, feat in enumerate(outputs.get())
+        if feat.objective is not None  # type: ignore
+        and (
+            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            if exclude_constraints
+            else True
+        )
+    ]
+
+    def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+        return f(samples, callables, weights, X)
+
+    return objective
+
+
 def get_multiplicative_botorch_objective(
     outputs: Outputs,
 ) -> Callable[[Tensor, Tensor], Tensor]:

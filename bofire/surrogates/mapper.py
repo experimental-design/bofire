@@ -8,6 +8,7 @@ from bofire.surrogates.mlp import MLPEnsemble
 from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
+from bofire.surrogates.xgb import XGBoostSurrogate
 
 SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.EmpiricalSurrogate: EmpiricalSurrogate,
@@ -16,6 +17,8 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.MixedSingleTaskGPSurrogate: MixedSingleTaskGPSurrogate,
     data_models.MLPEnsemble: MLPEnsemble,
     data_models.SaasSingleTaskGPSurrogate: SaasSingleTaskGPSurrogate,
+    data_models.XGBoostSurrogate: XGBoostSurrogate,
+    data_models.LinearSurrogate: SingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: SingleTaskGPSurrogate,
 }
 

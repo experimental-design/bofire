@@ -1,8 +1,9 @@
-from typing import Annotated, ClassVar, Dict, List, Literal, Optional, Tuple, Union
+from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, root_validator, validator
+from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -132,6 +133,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: A dataFrame with experiments
         """
+        values = values.map(str)
         if sum(values.isin(self.categories)) != len(values):
             raise ValueError(
                 f"invalid values for `{self.key}`, allowed are: `{self.categories}`"

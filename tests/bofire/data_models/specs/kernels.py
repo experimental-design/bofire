@@ -14,7 +14,7 @@ specs.add_valid(
 )
 specs.add_valid(
     kernels.LinearKernel,
-    lambda: {},
+    lambda: {"variance_prior": priors.valid().obj()},
 )
 specs.add_valid(
     kernels.MaternKernel,

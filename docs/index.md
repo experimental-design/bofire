@@ -60,3 +60,11 @@ $$
 and the minimizer $x_\mathrm{opt}$ of this acquisition function determines the next experiment $y(x)$ to run.
 
 When there are multiple competing objectives, the task is again to find a suitable approximation of the Pareto front.
+
+## Design of Experiments
+
+BoFire can be used to generate optimal experimental designs with respect to various optimality criteria like D-optimality, A-optimality or uniform space filling.
+
+For this, the user specifies a design space and a model formula, then chooses an optimality criterion and the desired number of experiments in the design. The resulting optimization problem is then solved by [IPOPT](https://coin-or.github.io/Ipopt/).
+
+The doe subpackage also supports a wide range of constraints on the design space including linear and nonlinear equalities and inequalities as well a (limited) use of NChooseK constraints. The user can provide fixed experiments that will be treated as part of the design but remain fixed during the optimization process. While some of the *optimization* algorithms support non-continuous design variables, the doe subpackage only supports those that are continuous.

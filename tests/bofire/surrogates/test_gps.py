@@ -15,8 +15,9 @@ from pandas.testing import assert_frame_equal
 from pydantic import ValidationError
 
 import bofire.surrogates.api as surrogates
+from bofire.benchmarks.api import Himmelblau
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -37,12 +38,22 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
+from bofire.data_models.priors.api import (
+    BOTORCH_LENGTHCALE_PRIOR,
+    BOTORCH_NOISE_PRIOR,
+    BOTORCH_SCALE_PRIOR,
+    MBO_LENGTHCALE_PRIOR,
+    MBO_NOISE_PRIOR,
+    MBO_OUTPUTSCALE_PRIOR,
+)
 from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
     ScalerEnum,
+    SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+from bofire.data_models.surrogates.trainable import metrics2objectives
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
@@ -233,6 +244,74 @@ def test_SingleTaskGPModel(kernel, scaler):
     model2.loads(dump)
     preds2 = model2.predict(samples)
     assert_frame_equal(preds, preds2)
+
+
+@pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
+def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
+    # we test here also the abstract methods from the corresponding base class
+    # should be move somewhere else when tidying up all tests
+    hy = SingleTaskGPHyperconfig(target_metric=target_metric)
+    assert hy.domain.inputs == hy.inputs
+    assert hy.domain.outputs.get_keys() == [target_metric.name]
+    assert hy.domain.outputs[0].objective == metrics2objectives[target_metric]()
+
+
+def test_hyperconfig_invalid():
+    with pytest.raises(
+        ValueError,
+        match="It is not allowed to scpecify the number of its for FactorialStrategy",
+    ):
+        SingleTaskGPHyperconfig(n_iterations=5)
+    with pytest.raises(
+        ValueError,
+        match="At least number of hyperparams plus 2 iterations has to be specified",
+    ):
+        SingleTaskGPHyperconfig(n_iterations=3, hyperstrategy="RandomStrategy")
+    hy = SingleTaskGPHyperconfig(n_iterations=None, hyperstrategy="RandomStrategy")
+    assert hy.n_iterations == 13
+
+
+def test_SingleTaskGPHyperconfig():
+    # we test here also the basic trainable
+    benchmark = Himmelblau()
+    surrogate_data_no_hy = SingleTaskGPSurrogate(
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
+        hyperconfig=None,
+    )
+    with pytest.raises(ValueError, match="No hyperconfig available."):
+        surrogate_data_no_hy.update_hyperparameters(
+            benchmark.domain.inputs.sample(1).loc[0]
+        )
+    # test that correct stuff is written
+    surrogate_data = SingleTaskGPSurrogate(
+        inputs=benchmark.domain.inputs, outputs=benchmark.domain.outputs
+    )
+    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
+    surrogate_data.update_hyperparameters(candidate)
+    assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
+    if candidate.kernel == "matern_1.5":
+        assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+        assert surrogate_data.kernel.base_kernel.nu == 1.5
+    elif candidate.kernel == "matern_2.5":
+        assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+        assert surrogate_data.kernel.base_kernel.nu == 2.5
+    else:
+        assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
+    if candidate.prior == "mbo":
+        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
+        assert (
+            surrogate_data.kernel.base_kernel.lengthscale_prior
+            == MBO_LENGTHCALE_PRIOR()
+        )
+    else:
+        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+        assert surrogate_data.kernel.outputscale_prior == BOTORCH_SCALE_PRIOR()
+        assert (
+            surrogate_data.kernel.base_kernel.lengthscale_prior
+            == BOTORCH_LENGTHCALE_PRIOR()
+        )
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")

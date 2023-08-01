@@ -2,11 +2,13 @@ from pydantic import parse_obj_as
 
 from bofire.data_models.api import (
     AnyAcquisitionFunction,
+    AnyCondition,
     AnyConstraint,
     AnyFeature,
     AnyKernel,
     AnyMolFeatures,
     AnyObjective,
+    AnyOutlierDetection,
     AnyPrior,
     AnyStrategy,
     AnySurrogate,
@@ -65,15 +67,24 @@ def test_acquisition_function_should_be_deserializable(acquisition_function_spec
 
 def test_strategy_should_be_deserializable(strategy_spec: Spec):
     obj = strategy_spec.obj()
-    print("obj:", type(obj))
-    print(obj)
-    print(obj.dict().keys())
     deserialized = parse_obj_as(AnyStrategy, obj.dict())
     # TODO: can we unhide the comparison of surrogate_specs?
     obj = {k: v for k, v in obj.dict().items() if k != "surrogate_specs"}
     deserialized = {
         k: v for k, v in deserialized.dict().items() if k != "surrogate_specs"
     }
+    assert obj == deserialized
+
+
+def test_condition_should_be_deserializable(condition_spec: Spec):
+    obj = condition_spec.obj()
+    deserialized = parse_obj_as(AnyCondition, obj.dict())
+    assert obj == deserialized
+
+
+def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec):
+    obj = outlier_detection_spec.obj()
+    deserialized = parse_obj_as(AnyOutlierDetection, obj.dict())
     assert obj == deserialized
 
 

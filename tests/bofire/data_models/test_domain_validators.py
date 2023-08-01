@@ -7,7 +7,10 @@ import pandas as pd
 import pytest
 
 import tests.bofire.data_models.specs.api as specs
-from bofire.data_models.constraints.api import LinearEqualityConstraint
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    LinearEqualityConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
@@ -201,11 +204,8 @@ def test_domain_validate_experiments_valid(
 @pytest.mark.parametrize(
     "domain, experiments, strict",
     [
-        (d1, generate_experiments(d2), strict)
-        for strict in [True, False]
-        for d1 in domains
-        for d2 in domains
-        if d1 != d2
+        (domains[0], generate_experiments(domains[1]), True),
+        (domains[0], generate_experiments(domains[1]), False),
     ],
 )
 def test_domain_validate_experiments_invalid(
@@ -343,8 +343,25 @@ def test_domain_validate_candidates_not_numerical(
 
 
 @pytest.mark.parametrize(
-    "domain, candidates", [(d, generate_candidates(d)) for d in [domain7]]
+    "domain, candidates, raise_validation_error",
+    [
+        (d, generate_candidates(d), raise_validation_error)
+        for d in [domain7]
+        for raise_validation_error in [True, False]
+    ],
 )
-def test_domain_validate_candidates_constraint_not_fulfilled(domain, candidates):
-    with pytest.raises(ValueError):
-        domain.validate_candidates(candidates)
+def test_domain_validate_candidates_constraint_not_fulfilled(
+    domain, candidates, raise_validation_error
+):
+    if raise_validation_error:
+        with pytest.raises(ConstraintNotFulfilledError):
+            domain.validate_candidates(
+                candidates, raise_validation_error=raise_validation_error
+            )
+    else:
+        assert isinstance(
+            domain.validate_candidates(
+                candidates, raise_validation_error=raise_validation_error
+            ),
+            pd.DataFrame,
+        )

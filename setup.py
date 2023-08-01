@@ -30,7 +30,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.9",
+    python_requires=">=3.8",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -38,11 +38,12 @@ setup(
         "pandas",
         "pydantic>=1.10.0,<2.0",
         "scipy>=1.7",
+        "typing-extensions",
     ],
     extras_require={
         "optimization": [
             "torch>=1.12",
-            "botorch>=0.8.4",
+            "botorch>=0.8.5",
             "multiprocess",
             "plotly",
             "formulaic>=0.6.0",
@@ -50,6 +51,7 @@ setup(
             "sympy>=1.12",
             sklearn_dependency,
         ],
+        "xgb": ["xgboost>=1.7.5"],
         "cheminfo": ["rdkit", sklearn_dependency, "mordred"],
         "tests": [
             "mock",
