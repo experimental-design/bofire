@@ -1346,6 +1346,7 @@ def test_inputs_sample(features: Inputs, num_samples, method):
     assert list(samples.columns) == features.get_keys()
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "specs",
     [
@@ -1441,6 +1442,7 @@ def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
         inps._validate_transform_specs(specs)
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "specs",
     [
