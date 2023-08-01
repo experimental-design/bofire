@@ -150,11 +150,15 @@ def is_valid(
 
 
 def bnb(
-    priority_queue: PriorityQueue, verbose: bool = False, **kwargs
+    priority_queue: PriorityQueue,
+    verbose: bool = False,
+    num_explored: int = 0,
+    **kwargs,
 ) -> NodeExperiment:
     """
     branch-and-bound algorithm for solving optimization problems containing binary and discrete variables
     Args:
+        num_explored: keeping track of how many branches have been explored
         priority_queue (PriorityQueue): initial nodes of the branching tree
         verbose (bool): if true, print information during the optimization process
         **kwargs: parameters for the actual optimization / find_local_max_ipopt
@@ -188,7 +192,8 @@ def bnb(
 
     if verbose:
         print(
-            f"current length of branching queue (+ new branches): {pre_size} + {len(next_branches)}"
+            f"current length of branching queue (+ new branches): {pre_size} + {len(next_branches)} currently "
+            f"explored branches: {num_explored}, current best value: {current_branch.value}"
         )
     # solve branched problems
     for _i, branch in enumerate(next_branches):
@@ -207,4 +212,9 @@ def bnb(
             if verbose:
                 print("skipping branch because of not fulfilling constraints")
 
-    return bnb(priority_queue, verbose=verbose, **kwargs)
+    return bnb(
+        priority_queue,
+        verbose=verbose,
+        num_explored=num_explored + len(next_branches),
+        **kwargs,
+    )
