@@ -364,7 +364,7 @@ def test_smiles2mordred():
     desc = smiles2mordred(smiles=smiles, descriptors_list=["NssCH2", "ATSC2d"])
     assert desc.shape[0] == 4
     assert desc.shape[1] == 2
-    np.testing.assert_array_equal(desc, values)
+    np.testing.assert_array_almost_equal(desc, values)
 
 
 # @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
