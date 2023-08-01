@@ -1,8 +1,9 @@
 import warnings
-from typing import Annotated, List, Literal, Optional
+from typing import List, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, validator
+from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
