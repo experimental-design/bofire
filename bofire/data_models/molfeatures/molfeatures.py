@@ -1,10 +1,10 @@
-import warnings
 from typing import List, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, validator
 from typing_extensions import Annotated
 
+import bofire.data_models.molfeatures.names as names
 from bofire.data_models.base import BaseModel
 from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
     smiles2fingerprints,
@@ -12,21 +12,6 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
     smiles2fragments_fingerprints,
     smiles2mordred,
 )
-
-try:
-    from rdkit.Chem import Descriptors
-except ImportError:
-    warnings.warn(
-        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
-    )
-
-try:
-    from mordred import Calculator
-    from mordred import descriptors as mordred_descriptors
-except ImportError:
-    warnings.warn(
-        "mordred not installed. Mordred molecular descriptors cannot be used."
-    )
 
 
 class MolFeatures(BaseModel):
@@ -76,11 +61,7 @@ class Fragments(MolFeatures):
             if len(fragments) != len(set(fragments)):
                 raise ValueError("Fragments must be unique")
 
-            if not all(
-                user_fragment
-                in [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
-                for user_fragment in fragments
-            ):
+            if not all(user_fragment in names.fragments for user_fragment in fragments):
                 raise ValueError(
                     "Not all provided fragments were not found in the RDKit list"
                 )
@@ -88,11 +69,7 @@ class Fragments(MolFeatures):
         return fragments
 
     def get_descriptor_names(self) -> List[str]:
-        return (
-            self.fragments
-            if self.fragments is not None
-            else [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
-        )
+        return self.fragments if self.fragments is not None else names.fragments
 
     def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
@@ -108,9 +85,7 @@ class FingerprintsFragments(Fingerprints, Fragments):
     def get_descriptor_names(self) -> List[str]:
         fingerprints_list = [f"fingerprint_{i}" for i in range(self.n_bits)]
         fragments_list = (
-            self.fragments
-            if self.fragments is not None
-            else [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
+            self.fragments if self.fragments is not None else names.fragments
         )
 
         fingerprints_fragment_list = fingerprints_list + fragments_list
@@ -119,9 +94,7 @@ class FingerprintsFragments(Fingerprints, Fragments):
 
     def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         fragments_list = (
-            self.fragments
-            if self.fragments is not None
-            else [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]]
+            self.fragments if self.fragments is not None else names.fragments
         )
 
         return pd.DataFrame(
@@ -158,8 +131,7 @@ class MordredDescriptors(MolFeatures):
         if len(descriptors) != len(set(descriptors)):
             raise ValueError("descriptors must be unique")
 
-        calc = Calculator(mordred_descriptors, ignore_3D=False)
-        if not all(desc in [str(d) for d in calc.descriptors] for desc in descriptors):
+        if not all(desc in names.mordred for desc in descriptors):
             raise ValueError(
                 "Not all provided descriptors were not found in the Mordred list"
             )
