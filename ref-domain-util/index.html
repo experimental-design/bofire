@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-mappers/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.1, mkdocs-material-9.1.21">
+      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.21">
     
     
       
@@ -505,13 +505,6 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#bofire.utils.cheminformatics.smiles2bag_of_characters" class="md-nav__link">
-    smiles2bag_of_characters()
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.utils.cheminformatics.smiles2fingerprints" class="md-nav__link">
     smiles2fingerprints()
   </a>
@@ -528,6 +521,13 @@
           <li class="md-nav__item">
   <a href="#bofire.utils.cheminformatics.smiles2mol" class="md-nav__link">
     smiles2mol()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.cheminformatics.smiles2mordred" class="md-nav__link">
+    smiles2mordred()
   </a>
   
 </li>
@@ -853,84 +853,6 @@
 
 
 
-<h3 id="bofire.utils.cheminformatics.smiles2bag_of_characters" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">smiles2bag_of_characters</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">max_ngram</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Transforms list of smiles to bag of characters.</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>smiles</code></td>
-        <td><code>List[str]</code></td>
-        <td><p>List of smiles</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>max_ngram</code></td>
-        <td><code>int</code></td>
-        <td><p>Maximal ngram value. Defaults to 5.</p></td>
-        <td><code>5</code></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>np.ndarray</code></td>
-      <td><p>Array holding the bag of characters.</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2bag_of_characters</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">max_ngram</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms list of smiles to bag of characters.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        smiles (List[str]): List of smiles</span>
-<span class="sd">        max_ngram (int, optional): Maximal ngram value. Defaults to 5.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        np.ndarray: Array holding the bag of characters.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">:</span>
-        <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
-    <span class="n">cv</span> <span class="o">=</span> <span class="n">CountVectorizer</span><span class="p">(</span><span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_ngram</span><span class="p">),</span> <span class="n">analyzer</span><span class="o">=</span><span class="s2">&quot;char&quot;</span><span class="p">,</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">cv</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-function">
-
-
-
 <h3 id="bofire.utils.cheminformatics.smiles2fingerprints" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">smiles2fingerprints</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">bond_radius</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span></code>
 
@@ -1024,7 +946,7 @@
 
 
 <h3 id="bofire.utils.cheminformatics.smiles2fragments" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">smiles2fragments</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">smiles2fragments</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">fragments_list</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h3>
@@ -1069,7 +991,9 @@
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fragments</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fragments</span><span class="p">(</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fragments_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms smiles to an array of fragments.</span>
 
 <span class="sd">    Args:</span>
@@ -1081,10 +1005,16 @@
     <span class="c1"># descList[115:] contains fragment-based features only</span>
     <span class="c1"># (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)</span>
     <span class="c1"># Update: in the new RDKit version the indices are [124:]</span>
-    <span class="n">fragments</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span><span class="p">[</span><span class="mi">124</span><span class="p">:]}</span>
+    <span class="k">if</span> <span class="n">fragments_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">fragments</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span><span class="p">[</span><span class="mi">124</span><span class="p">:]}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">fragments</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span><span class="p">[</span><span class="mi">124</span><span class="p">:]</span> <span class="k">if</span> <span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">fragments_list</span>
+        <span class="p">}</span>
+
     <span class="n">frags</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">smiles</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">fragments</span><span class="p">)))</span>
-    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">smiles</span><span class="p">)):</span>
-        <span class="n">mol</span> <span class="o">=</span> <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smiles</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">smi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">smiles</span><span class="p">):</span>
+        <span class="n">mol</span> <span class="o">=</span> <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
         <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="n">fragments</span><span class="p">[</span><span class="n">d</span><span class="p">](</span><span class="n">mol</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">fragments</span><span class="p">]</span>
         <span class="n">frags</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">features</span>
 
@@ -1094,6 +1024,7 @@
     </div>
 
   </div>
+
 
 
 
@@ -1178,6 +1109,96 @@
     <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">smiles</span><span class="si">}</span><span class="s2"> is not a valid smiles string.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mol</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.cheminformatics.smiles2mordred" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">smiles2mordred</span><span class="p">(</span><span class="n">smiles</span><span class="p">,</span> <span class="n">descriptors_list</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Transforms list of smiles to mordred moelcular descriptors.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>smiles</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of smiles</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>descriptors_list</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of desired mordred descriptors</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>Array holding the mordred moelcular descriptors.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2mordred</span><span class="p">(</span><span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">descriptors_list</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms list of smiles to mordred moelcular descriptors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        smiles (List[str]): List of smiles</span>
+<span class="sd">        descriptors_list (List[str]): List of desired mordred descriptors</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Array holding the mordred moelcular descriptors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span> <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
+
+    <span class="n">calc</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">ignore_3D</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">calc</span><span class="o">.</span><span class="n">descriptors</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">descriptors</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">descriptors_list</span><span class="p">]</span>
+
+    <span class="n">descriptors_df</span> <span class="o">=</span> <span class="n">calc</span><span class="o">.</span><span class="n">pandas</span><span class="p">(</span><span class="n">mols</span><span class="p">)</span>
+    <span class="n">nan_list</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">descriptors_df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">nan_list</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Found NaN values in descriptors </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">nan_list</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">descriptors_df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
 </code></pre></div>
         </details>
     </div>

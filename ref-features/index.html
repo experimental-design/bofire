@@ -17,7 +17,7 @@
         <link rel="next" href="../ref-domain-util/">
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.1, mkdocs-material-9.1.21">
+      <meta name="generator" content="mkdocs-1.5.2, mkdocs-material-9.1.21">
     
     
       
@@ -1151,6 +1151,13 @@
           <li class="md-nav__item">
   <a href="#bofire.data_models.features.molecular.MolecularInput.sample" class="md-nav__link">
     sample()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.MolecularInput.to_descriptor_encoding" class="md-nav__link">
+    to_descriptor_encoding()
   </a>
   
 </li>
@@ -7280,6 +7287,7 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
             <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+
         <span class="k">return</span> <span class="n">values</span>
 
     <span class="k">def</span> <span class="nf">validate_candidental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
@@ -7287,51 +7295,49 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
             <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
 
-    <span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
-
     <span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="c1"># TODO: model descriptors as pydantic class</span>
-    <span class="k">def</span> <span class="nf">to_fingerprints</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">bond_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="c1"># validate it</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">smiles2fingerprints</span><span class="p">(</span>
-            <span class="n">values</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span> <span class="n">bond_radius</span><span class="o">=</span><span class="n">bond_radius</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="n">n_bits</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">to_bag_of_characters</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">max_ngram</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-        <span class="c1"># todo: add selfies later</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">smiles2bag_of_characters</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">to_list</span><span class="p">(),</span> <span class="n">max_ngram</span><span class="o">=</span><span class="n">max_ngram</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">to_fragments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">):</span>
-        <span class="n">data</span> <span class="o">=</span> <span class="n">smiles2fragments</span><span class="p">(</span><span class="n">values</span><span class="o">.</span><span class="n">to_list</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])],</span>
-        <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`.&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">TTransform</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-        <span class="c1"># TODO: this is only needed for optimization for which we need also</span>
-        <span class="c1"># MolecularCategorical, this will be added later.</span>
-        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;`get_bounds` not yet implemented.&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;`values` is currently required for `MolecularInput`&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_descriptor_encoding</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+
+        <span class="n">lower</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
+
+    <span class="k">def</span> <span class="nf">to_descriptor_encoding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts values to descriptor encoding.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values (pd.Series): Values to transform.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.DataFrame: Descriptor encoded dataframe.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">descriptor_values</span> <span class="o">=</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+        <span class="n">descriptor_values</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">descriptor_values</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">index</span>
+
+        <span class="k">return</span> <span class="n">descriptor_values</span>
 </code></pre></div>
         </details>
 
@@ -7405,7 +7411,7 @@ of the given arguments and keywords.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
         </details>
@@ -7473,11 +7479,19 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">TTransform</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
-    <span class="c1"># TODO: this is only needed for optimization for which we need also</span>
-    <span class="c1"># MolecularCategorical, this will be added later.</span>
-    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;`get_bounds` not yet implemented.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;`values` is currently required for `MolecularInput`&quot;</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_descriptor_encoding</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span>
+
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
 </code></pre></div>
         </details>
     </div>
@@ -7578,7 +7592,7 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`.&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -7587,6 +7601,80 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
 
 
 
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.MolecularInput.to_descriptor_encoding" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_descriptor_encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Converts values to descriptor encoding.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.Series</code></td>
+        <td><p>Values to transform.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.DataFrame</code></td>
+      <td><p>Descriptor encoded dataframe.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_descriptor_encoding</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts values to descriptor encoding.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        values (pd.Series): Values to transform.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.DataFrame: Descriptor encoded dataframe.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">descriptor_values</span> <span class="o">=</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+
+    <span class="n">descriptor_values</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="n">descriptor_values</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">index</span>
+
+    <span class="k">return</span> <span class="n">descriptor_values</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -7713,6 +7801,7 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
     <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
         <span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">values</span>
 </code></pre></div>
         </details>
