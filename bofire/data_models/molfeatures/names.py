@@ -1,5 +1,6 @@
 # names of the rdkit fragments
 fragments = [
+    "fr_Al_COO",
     "fr_Al_OH",
     "fr_Al_OH_noTert",
     "fr_ArN",
