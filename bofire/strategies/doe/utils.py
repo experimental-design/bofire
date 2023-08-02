@@ -1,6 +1,6 @@
 import sys
 from itertools import combinations
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -12,17 +12,17 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
 )
+from bofire.data_models.constraints.nonlinear import NonlinearInequalityConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
-    CategoricalInput,
-    ContinuousInput,
     DiscreteInput,
     Output,
-    RelaxableBinaryInput,
     RelaxableDiscreteInput,
 )
+from bofire.data_models.features.binary import RelaxableBinaryInput
+from bofire.data_models.features.categorical import CategoricalInput
+from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -550,11 +550,40 @@ def NChooseKGroup_with_quantity(
     combined_quantity_limit: Optional[float] = None,
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
-) -> Tuple[
-    List[Union[CategoricalInput, RelaxableBinaryInput]],
-    List[ContinuousInput],
-    List[LinearConstraint],
+) -> tuple[
+    list[CategoricalInput] | list[RelaxableBinaryInput],
+    list[ContinuousInput] | list[Any],
+    list[LinearEqualityConstraint],
 ]:
+    """
+    helper function to generate an N choose K problem with categorical variables, with an option to connect each
+    element of a category to a corresponding quantity of how much that category should be used.
+
+    Args:
+        unique_group_identifier (str): unique ID for the category/group which will be used to mark all variables
+            containing to this group
+        keys (List[str]): defines the names and the amount of the elements within the category
+        pick_at_least (int): minimum number of elements to be picked from the category. >=0
+        pick_at_most (int): maximum number of elements to be picked from the category. >=pick_at_least
+        quantity_if_picked (Optional[Union[Tuple[float, float], List[Tuple[float, float]]]): If provided, specifies
+            the lower and upper bound of the quantity, for each element in the category. List of bounds to specify the
+            allowed quantity for each element separately or one single bound to set the same bounds for all elements.
+        combined_quantity_limit (Optional[float]): If provided, sets an upper bound on what the sum of all the
+            quantities of all elements should be
+        combined_quantity_is_equal_or_less_than (bool): If True, the combined_quantity_limit describes the exact amount
+            of the sum of all quantities. If False, it is a upper bound, i.e. the sum of the quantities can be lower.
+            Default is False
+        use_non_relaxable_category_and_non_linear_constraint (bool): Default is False.
+            If False, RelaxableCategoricalInput is used in combination with LinearConstraints.
+            If True, CategoricalInput used in combination with NonlinearConstraints, as CategoricalInput can not be
+            used within LinearConstraints
+    Returns:
+        Either one CategoricalInput wrapped in a List or List of RelaxableBinaryInput describing the group,
+        If quantities are provided, List of ContinuousInput describing the quantity of each element of the group
+        otherwise empty List,
+        List of either LinearConstraints or mix of Linear- and NonlinearConstraints, which enforce the quantities
+        and group restrictions.
+    """
     if quantity_if_picked is not None:
         if type(quantity_if_picked) is list and len(keys) != len(quantity_if_picked):
             raise ValueError(
@@ -600,6 +629,7 @@ def NChooseKGroup_with_quantity(
     quantity_constraints_lb, quantity_constraints_ub = [], []
     max_quantity_constraint = None
 
+    # creating possible combination of n choose k
     combined_keys_as_tuple = []
     if pick_at_most > 1:
         for i in range(2, pick_at_most + 1):
@@ -607,6 +637,7 @@ def NChooseKGroup_with_quantity(
 
     combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
 
+    # generating the quantity variables and corresponding constraints
     if quantity_if_picked:
         (
             quantity_var,
@@ -624,12 +655,15 @@ def NChooseKGroup_with_quantity(
             combined_quantity_is_equal_or_less_than,
         )
 
+    # adding the new possible combinations to the list of keys
     keys.extend(combined_keys)
     keys = [unique_group_identifier + "_" + k for k in keys]
 
+    # allowing to pick none
     if pick_at_least == 0:
         keys.append(unique_group_identifier + "_pick_none")
 
+    # choosing between CategoricalInput and RelaxableBinaryInput
     if use_non_relaxable_category_and_non_linear_constraint:
         category = [CategoricalInput(key=unique_group_identifier, categories=keys)]
         # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
@@ -661,7 +695,15 @@ def _generate_quantity_var_constr(
     use_non_relaxable_category_and_non_linear_constraint,
     combined_quantity_limit,
     combined_quantity_is_equal_or_less_than,
-):
+) -> tuple[
+    list[ContinuousInput],
+    list[NonlinearInequalityConstraint] | list[LinearInequalityConstraint],
+    list[NonlinearInequalityConstraint] | list[LinearInequalityConstraint],
+    LinearEqualityConstraint | LinearInequalityConstraint | None,
+]:
+    """
+    Internal helper function just to create the quantity variables and the corresponding constraints.
+    """
     quantity_var = [
         ContinuousInput(
             key=unique_group_identifier + "_" + k + "_quantity", bounds=(0, q[1])
