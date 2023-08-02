@@ -20,6 +20,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     DiscreteInput,
     Output,
+    RelaxableBinaryInput,
     RelaxableDiscreteInput,
 )
 from bofire.data_models.strategies.api import (
@@ -533,7 +534,7 @@ def discrete_to_relaxable_domain_mapper(domain: Domain) -> Domain:
         inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,
         outputs=domain.outputs.features,
         constraints=domain.constraints.constraints + new_constraints,
-        categorical_groups=categorical_groups,
+        categorical_groups=domain.categorical_groups + categorical_groups,
     )
     return new_domain
 
@@ -546,7 +547,12 @@ def NChooseKGroup_with_quantity(
     quantity_limit: float,
     quantity_if_picked: List[Tuple[float, float]],
     quantity_is_equality: bool,
-) -> Tuple[CategoricalInput, List[ContinuousInput], List[LinearConstraint]]:
+    use_legacy_classes: bool = False,
+) -> Tuple[
+    List[Union[CategoricalInput, RelaxableBinaryInput]],
+    List[ContinuousInput],
+    List[LinearConstraint],
+]:
     if len(keys) != len(quantity_if_picked):
         raise ValueError(
             f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
@@ -599,32 +605,58 @@ def NChooseKGroup_with_quantity(
     all_quantity_features = []
     for k in keys:
         all_quantity_features.append(
-            [
-                state_key
+            [unique_group_identifier + "_" + k]
+            + [
+                unique_group_identifier + "_" + state_key
                 for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
                 if k in state_tuple
             ]
         )
 
-    quantity_constraints_lb = [
-        LinearInequalityConstraint(
-            features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-            coefficients=[-1] + [q[0] for i in range(len(combi))],
-            rhs=0,
-        )
-        for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
-        if len(combi) > 1
-    ]
+    if use_legacy_classes:
+        quantity_constraints_lb = [
+            NonlinearInequalityConstraint(
+                expression="".join(
+                    ["-" + unique_group_identifier + "_" + k + "_quantity"]
+                    + [f" + {q[0]} * {key_c}" for key_c in combi]
+                ),
+                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
+            )
+            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
+            if len(combi) >= 1
+        ]
 
-    quantity_constraints_ub = [
-        LinearInequalityConstraint(
-            features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-            coefficients=[1] + [-q[1] for i in range(len(combi))],
-            rhs=0,
-        )
-        for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
-        if len(combi) > 1
-    ]
+        quantity_constraints_ub = [
+            NonlinearInequalityConstraint(
+                expression="".join(
+                    [unique_group_identifier + "_" + k + "_quantity"]
+                    + [f" - {q[1]} * {key_c}" for key_c in combi]
+                ),
+                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
+            )
+            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
+            if len(combi) >= 1
+        ]
+    else:
+        quantity_constraints_lb = [
+            LinearInequalityConstraint(
+                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
+                coefficients=[-1] + [q[0] for i in range(len(combi))],
+                rhs=0,
+            )
+            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
+            if len(combi) >= 1
+        ]
+
+        quantity_constraints_ub = [
+            LinearInequalityConstraint(
+                features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
+                coefficients=[1] + [-q[1] for i in range(len(combi))],
+                rhs=0,
+            )
+            for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
+            if len(combi) >= 1
+        ]
 
     keys.extend(combined_keys)
     keys = [unique_group_identifier + "_" + k for k in keys]
@@ -644,9 +676,23 @@ def NChooseKGroup_with_quantity(
 
     if pick_at_least == 0:
         keys.append(unique_group_identifier + "_pick_none")
-    category = CategoricalInput(key=unique_group_identifier, categories=keys)
+
+    if use_legacy_classes:
+        category = [CategoricalInput(key=unique_group_identifier, categories=keys)]
+        # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
+        pick_exactly_one_of_group_const = []
+    else:
+        category = [RelaxableBinaryInput(key=k) for k in keys]
+        pick_exactly_one_of_group_const = [
+            LinearEqualityConstraint(
+                features=list(keys), coefficients=[1 for k in keys], rhs=1
+            )
+        ]
 
     all_new_constraints = (
-        [max_quantity_constraint] + quantity_constraints_lb + quantity_constraints_ub
+        [max_quantity_constraint]
+        + pick_exactly_one_of_group_const
+        + quantity_constraints_lb
+        + quantity_constraints_ub
     )
     return category, quantity_var, all_new_constraints
