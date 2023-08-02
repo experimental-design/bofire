@@ -544,20 +544,27 @@ def NChooseKGroup_with_quantity(
     keys: List[str],
     pick_at_least: int,
     pick_at_most: int,
-    quantity_limit: float,
     quantity_if_picked: List[Tuple[float, float]],
-    quantity_is_equality: bool,
-    use_legacy_classes: bool = False,
+    combined_quantity_limit: Optional[float] = None,
+    combined_quantity_is_equal_or_less_than: bool = False,
+    use_non_relaxable_category_and_non_linear_constraint: bool = False,
 ) -> Tuple[
     List[Union[CategoricalInput, RelaxableBinaryInput]],
     List[ContinuousInput],
     List[LinearConstraint],
 ]:
-    if len(keys) != len(quantity_if_picked):
-        raise ValueError(
-            f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
-            f"and {len(quantity_if_picked)} quantities"
-        )
+    if quantity_if_picked is not None:
+        if len(keys) != len(quantity_if_picked):
+            raise ValueError(
+                f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
+                f"and {len(quantity_if_picked)} quantities"
+            )
+
+        if True in [0 in q for q in quantity_if_picked]:
+            raise ValueError(
+                "If an element out of the group is chosen, the quantity with which it is used must be "
+                "larger than 0"
+            )
 
     if pick_at_least > pick_at_most:
         raise ValueError(
@@ -579,14 +586,15 @@ def NChooseKGroup_with_quantity(
     if "pick_none" in keys:
         raise ValueError("pick_none is not allowed as a key")
 
-    if True in [0 in q for q in quantity_if_picked]:
-        raise ValueError(
-            "If an element out of the group is chosen, the quantity with which it is used must be "
-            "larger than 0"
-        )
-
     if True in ["_" in k for k in keys]:
         raise ValueError('"_" is not allowed as an character in the keys')
+
+    if quantity_if_picked is not None and type(quantity_if_picked) != list:
+        quantity_if_picked = [quantity_if_picked for k in keys]
+
+    quantity_var, all_new_constraints = [], []
+    quantity_constraints_lb, quantity_constraints_ub = [], []
+    max_quantity_constraint = None
 
     combined_keys_as_tuple = []
     if pick_at_most > 1:
@@ -595,6 +603,61 @@ def NChooseKGroup_with_quantity(
 
     combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
 
+    if quantity_if_picked:
+        (
+            quantity_var,
+            quantity_constraints_lb,
+            quantity_constraints_ub,
+            max_quantity_constraint,
+        ) = _generate_quantity_var_constr(
+            unique_group_identifier,
+            keys,
+            quantity_if_picked,
+            combined_keys,
+            combined_keys_as_tuple,
+            use_non_relaxable_category_and_non_linear_constraint,
+            combined_quantity_limit,
+            combined_quantity_is_equal_or_less_than,
+        )
+
+    keys.extend(combined_keys)
+    keys = [unique_group_identifier + "_" + k for k in keys]
+
+    if pick_at_least == 0:
+        keys.append(unique_group_identifier + "_pick_none")
+
+    if use_non_relaxable_category_and_non_linear_constraint:
+        category = [CategoricalInput(key=unique_group_identifier, categories=keys)]
+        # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
+        pick_exactly_one_of_group_const = []
+    else:
+        category = [RelaxableBinaryInput(key=k) for k in keys]
+        pick_exactly_one_of_group_const = [
+            LinearEqualityConstraint(
+                features=list(keys), coefficients=[1 for k in keys], rhs=1
+            )
+        ]
+
+    all_new_constraints = (
+        pick_exactly_one_of_group_const
+        + quantity_constraints_lb
+        + quantity_constraints_ub
+    )
+    if max_quantity_constraint is not None:
+        all_new_constraints.append(max_quantity_constraint)
+    return category, quantity_var, all_new_constraints
+
+
+def _generate_quantity_var_constr(
+    unique_group_identifier,
+    keys,
+    quantity_if_picked,
+    combined_keys,
+    combined_keys_as_tuple,
+    use_non_relaxable_category_and_non_linear_constraint,
+    combined_quantity_limit,
+    combined_quantity_is_equal_or_less_than,
+):
     quantity_var = [
         ContinuousInput(
             key=unique_group_identifier + "_" + k + "_quantity", bounds=(0, q[1])
@@ -613,7 +676,7 @@ def NChooseKGroup_with_quantity(
             ]
         )
 
-    if use_legacy_classes:
+    if use_non_relaxable_category_and_non_linear_constraint:
         quantity_constraints_lb = [
             NonlinearInequalityConstraint(
                 expression="".join(
@@ -658,41 +721,24 @@ def NChooseKGroup_with_quantity(
             if len(combi) >= 1
         ]
 
-    keys.extend(combined_keys)
-    keys = [unique_group_identifier + "_" + k for k in keys]
-
-    if quantity_is_equality:
-        max_quantity_constraint = LinearEqualityConstraint(
-            features=[q.key for q in quantity_var],
-            coefficients=[1 for q in quantity_var],
-            rhs=quantity_limit,
-        )
-    else:
-        max_quantity_constraint = LinearInequalityConstraint(
-            features=[q.key for q in quantity_var],
-            coefficients=[1 for q in quantity_var],
-            rhs=quantity_limit,
-        )
-
-    if pick_at_least == 0:
-        keys.append(unique_group_identifier + "_pick_none")
-
-    if use_legacy_classes:
-        category = [CategoricalInput(key=unique_group_identifier, categories=keys)]
-        # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
-        pick_exactly_one_of_group_const = []
-    else:
-        category = [RelaxableBinaryInput(key=k) for k in keys]
-        pick_exactly_one_of_group_const = [
-            LinearEqualityConstraint(
-                features=list(keys), coefficients=[1 for k in keys], rhs=1
+    max_quantity_constraint = None
+    if combined_quantity_limit is not None:
+        if combined_quantity_is_equal_or_less_than:
+            max_quantity_constraint = LinearEqualityConstraint(
+                features=[q.key for q in quantity_var],
+                coefficients=[1 for q in quantity_var],
+                rhs=combined_quantity_limit,
             )
-        ]
+        else:
+            max_quantity_constraint = LinearInequalityConstraint(
+                features=[q.key for q in quantity_var],
+                coefficients=[1 for q in quantity_var],
+                rhs=combined_quantity_limit,
+            )
 
-    all_new_constraints = (
-        [max_quantity_constraint]
-        + pick_exactly_one_of_group_const
-        + quantity_constraints_lb
-        + quantity_constraints_ub
+    return (
+        quantity_var,
+        quantity_constraints_lb,
+        quantity_constraints_ub,
+        max_quantity_constraint,
     )
-    return category, quantity_var, all_new_constraints
