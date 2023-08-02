@@ -1,6 +1,6 @@
 import sys
 from itertools import combinations
-from typing import List, Optional, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -15,11 +15,18 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    ContinuousInput,
+    DiscreteInput,
+    Output,
+    RelaxableDiscreteInput,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.utils.CategoricalToBinaryMapper import generate_mixture_constraints
 
 
 def get_formula_from_string(
@@ -488,3 +495,158 @@ def nchoosek_constraints_as_bounds(
     bounds = [(b[0], b[1]) for b in bounds]
 
     return bounds
+
+
+def discrete_to_relaxable_domain_mapper(domain: Domain) -> Domain:
+    """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
+
+    Args:
+        domain (Domain): Domain with discrete and categorical inputs.
+    """
+
+    # get all discrete and categorical inputs
+    kept_inputs = domain.get_features(
+        excludes=[CategoricalInput, DiscreteInput, Output]
+    ).features
+    discrete_inputs = domain.inputs.get(DiscreteInput).features
+    categorical_inputs = domain.inputs.get(CategoricalInput).features
+
+    # convert discrete inputs to continuous inputs
+    relaxable_discrete_inputs = [
+        RelaxableDiscreteInput(key=d_input.key, values=d_input.values)
+        for d_input in discrete_inputs
+    ]
+
+    # convert categorical inputs to continuous inputs
+    relaxable_categorical_inputs = []
+    new_constraints = []
+    categorical_groups = []
+    for c_input in categorical_inputs:
+        current_group_keys = list(c_input.categories)
+        pick_1_constraint, group_vars = generate_mixture_constraints(current_group_keys)
+        categorical_groups.append(group_vars)
+        relaxable_categorical_inputs.extend(group_vars)
+        new_constraints.append(pick_1_constraint)
+
+    # create new domain with continuous inputs
+    new_domain = Domain(
+        inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,
+        outputs=domain.outputs.features,
+        constraints=domain.constraints.constraints + new_constraints,
+        categorical_groups=categorical_groups,
+    )
+    return new_domain
+
+
+def NChooseKGroup_with_quantity(
+    unique_group_identifier: str,
+    keys: List[str],
+    pick_at_least: int,
+    pick_at_most: int,
+    quantity_limit: float,
+    quantity_if_picked: List[Tuple[float, float]],
+    quantity_is_equality: bool,
+) -> Tuple[CategoricalInput, List[ContinuousInput], List[LinearConstraint]]:
+    if len(keys) != len(quantity_if_picked):
+        raise ValueError(
+            f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
+            f"and {len(quantity_if_picked)} quantities"
+        )
+
+    if pick_at_least > pick_at_most:
+        raise ValueError(
+            f"your upper bound to pick an element should be larger your lower bound. "
+            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}"
+        )
+
+    if pick_at_least < 0:
+        raise ValueError(
+            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}"
+        )
+
+    if pick_at_most > len(keys):
+        raise ValueError(
+            f"you can not pick more elements than are available. "
+            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}"
+        )
+
+    if "pick_none" in keys:
+        raise ValueError("pick_none is not allowed as a key")
+
+    if True in [0 in q for q in quantity_if_picked]:
+        raise ValueError(
+            "If an element out of the group is chosen, the quantity with which it is used must be "
+            "larger than 0"
+        )
+
+    if True in ["_" in k for k in keys]:
+        raise ValueError('"_" is not allowed as an character in the keys')
+
+    combined_keys_as_tuple = []
+    if pick_at_most > 1:
+        for i in range(2, pick_at_most + 1):
+            combined_keys_as_tuple.extend(list(combinations(keys, i)))
+
+    combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
+
+    quantity_var = [
+        ContinuousInput(
+            key=unique_group_identifier + "_" + k + "_quantity", bounds=(0, q[1])
+        )
+        for k, q in zip(keys, quantity_if_picked)
+    ]
+
+    all_quantity_features = []
+    for k in keys:
+        all_quantity_features.append(
+            [
+                state_key
+                for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
+                if k in state_tuple
+            ]
+        )
+
+    quantity_constraints_lb = [
+        LinearInequalityConstraint(
+            features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
+            coefficients=[-1] + [q[0] for i in range(len(combi))],
+            rhs=0,
+        )
+        for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
+        if len(combi) > 1
+    ]
+
+    quantity_constraints_ub = [
+        LinearInequalityConstraint(
+            features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
+            coefficients=[1] + [-q[1] for i in range(len(combi))],
+            rhs=0,
+        )
+        for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
+        if len(combi) > 1
+    ]
+
+    keys.extend(combined_keys)
+    keys = [unique_group_identifier + "_" + k for k in keys]
+
+    if quantity_is_equality:
+        max_quantity_constraint = LinearEqualityConstraint(
+            features=[q.key for q in quantity_var],
+            coefficients=[1 for q in quantity_var],
+            rhs=quantity_limit,
+        )
+    else:
+        max_quantity_constraint = LinearInequalityConstraint(
+            features=[q.key for q in quantity_var],
+            coefficients=[1 for q in quantity_var],
+            rhs=quantity_limit,
+        )
+
+    if pick_at_least == 0:
+        keys.append(unique_group_identifier + "_pick_none")
+    category = CategoricalInput(key=unique_group_identifier, categories=keys)
+
+    all_new_constraints = (
+        [max_quantity_constraint] + quantity_constraints_lb + quantity_constraints_ub
+    )
+    return category, quantity_var, all_new_constraints
