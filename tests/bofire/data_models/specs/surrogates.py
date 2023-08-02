@@ -225,5 +225,6 @@ specs.add_valid(
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3)},
         "dump": None,
+        "hyperconfig": None,
     },
 )
