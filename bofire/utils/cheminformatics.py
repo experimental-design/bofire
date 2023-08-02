@@ -1,14 +1,23 @@
 import warnings
-from typing import List
+from typing import List, Optional
 
 import numpy as np
+import pandas as pd
 
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
-    from sklearn.feature_extraction.text import CountVectorizer
+
+    # from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
+    )
+
+try:
+    from mordred import Calculator, descriptors
+except ImportError:
+    warnings.warn(
+        "mordred not installed. Mordred molecular descriptors cannot be used."
     )
 
 # This code is based on GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/data_featuriser/featurisation.py
@@ -56,7 +65,9 @@ def smiles2fingerprints(
     return np.asarray(fps)
 
 
-def smiles2fragments(smiles: List[str]) -> np.ndarray:
+def smiles2fragments(
+    smiles: List[str], fragments_list: Optional[List[str]] = None
+) -> np.ndarray:
     """Transforms smiles to an array of fragments.
 
     Args:
@@ -68,27 +79,73 @@ def smiles2fragments(smiles: List[str]) -> np.ndarray:
     # descList[115:] contains fragment-based features only
     # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
     # Update: in the new RDKit version the indices are [124:]
-    fragments = {d[0]: d[1] for d in Descriptors.descList[124:]}
+    if fragments_list is None:
+        fragments = {d[0]: d[1] for d in Descriptors.descList[124:]}
+    else:
+        fragments = {
+            d[0]: d[1] for d in Descriptors.descList[124:] if d[0] in fragments_list
+        }
+
     frags = np.zeros((len(smiles), len(fragments)))
-    for i in range(len(smiles)):
-        mol = smiles2mol(smiles[i])
+    for i, smi in enumerate(smiles):
+        mol = smiles2mol(smi)
         features = [fragments[d](mol) for d in fragments]
         frags[i, :] = features
 
     return frags
 
 
-def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
-    """Transforms list of smiles to bag of characters.
+# def smiles2bag_of_characters(smiles: List[str], max_ngram: int = 5) -> np.ndarray:
+#     """Transforms list of smiles to bag of characters.
+#
+#     Args:
+#         smiles (List[str]): List of smiles
+#         max_ngram (int, optional): Maximal ngram value. Defaults to 5.
+#
+#     Returns:
+#         np.ndarray: Array holding the bag of characters.
+#     """
+#     for smi in smiles:
+#         smiles2mol(smi)
+#     cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
+#     return cv.fit_transform(smiles).toarray()
+
+
+def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray:
+    """Transforms list of smiles to mordred moelcular descriptors.
 
     Args:
         smiles (List[str]): List of smiles
-        max_ngram (int, optional): Maximal ngram value. Defaults to 5.
+        descriptors_list (List[str]): List of desired mordred descriptors
 
     Returns:
-        np.ndarray: Array holding the bag of characters.
+        np.ndarray: Array holding the mordred moelcular descriptors.
     """
-    for smi in smiles:
-        smiles2mol(smi)
-    cv = CountVectorizer(ngram_range=(1, max_ngram), analyzer="char", lowercase=False)
-    return cv.fit_transform(smiles).toarray()
+    mols = [smiles2mol(smi) for smi in smiles]
+
+    calc = Calculator(descriptors, ignore_3D=True)
+    calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
+
+    descriptors_df = calc.pandas(mols)
+    nan_list = [
+        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()
+        for col in descriptors_df.columns
+    ]
+    if any(nan_list):
+        raise ValueError(
+            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"
+        )
+
+    return descriptors_df.astype(float).values
+
+
+def smiles2fragments_fingerprints(
+    smiles: List[str],
+    bond_radius: int = 5,
+    n_bits: int = 2048,
+    fragments_list: Optional[List[str]] = None,
+) -> np.ndarray:
+    fingerprints = smiles2fingerprints(smiles, bond_radius=bond_radius, n_bits=n_bits)
+    fragments = smiles2fragments(smiles, fragments_list=fragments_list)
+
+    return np.hstack((fingerprints, fragments))

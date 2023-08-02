@@ -1,3 +1,4 @@
+# import importlib
 import random
 import uuid
 
@@ -5,6 +6,8 @@ import bofire.data_models.features.api as features
 from bofire.data_models.objectives.api import MaximizeObjective
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.specs import Specs
+
+# RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 specs = Specs([])
 
@@ -69,12 +72,6 @@ specs.add_valid(
     },
 )
 specs.add_valid(
-    features.MolecularInput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-    },
-)
-specs.add_valid(
     features.ContinuousOutput,
     lambda: {
         "key": str(uuid.uuid4()),
@@ -89,5 +86,11 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["a", "b", "c"],
         "objective": [0.0, 1.0, 0.0],
+    },
+)
+specs.add_valid(
+    features.MolecularInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
     },
 )

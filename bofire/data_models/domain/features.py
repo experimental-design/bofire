@@ -22,9 +22,11 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
     Input,
+    MolecularInput,
     Output,
     TInputTransformSpecs,
 )
+from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import AbstractObjective, Objective
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
@@ -348,6 +350,18 @@ class Inputs(Features):
                     [f"{feat.key}{_CAT_SEP}{d}" for d in feat.descriptors]
                 )
                 counter += len(feat.descriptors)
+            elif isinstance(specs[feat.key], MolFeatures):
+                assert isinstance(feat, MolecularInput)
+                descriptor_names = specs[
+                    feat.key
+                ].get_descriptor_names()  # type: ignore
+                features2idx[feat.key] = tuple(
+                    (np.array(range(len(descriptor_names))) + counter).tolist()
+                )
+                features2names[feat.key] = tuple(
+                    [f"{feat.key}{_CAT_SEP}{d}" for d in descriptor_names]
+                )
+                counter += len(descriptor_names)
         return features2idx, features2names
 
     def transform(
@@ -383,6 +397,9 @@ class Inputs(Features):
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.to_descriptor_encoding(s))
+            elif isinstance(specs[feat.key], MolFeatures):
+                assert isinstance(feat, MolecularInput)
+                transformed.append(feat.to_descriptor_encoding(specs[feat.key], s))  # type: ignore
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
@@ -420,6 +437,7 @@ class Inputs(Features):
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.from_descriptor_encoding(experiments))
+
         return pd.concat(transformed, axis=1)
 
     def _validate_transform_specs(self, specs: TInputTransformSpecs):
@@ -429,24 +447,47 @@ class Inputs(Features):
             specs (TInputTransformSpecs): Transform specs to be validated.
         """
         # first check that the keys in the specs dict are correct also correct feature keys
-        if len(set(specs.keys()) - set(self.get_keys(CategoricalInput))) > 0:
+        if (
+            len(
+                set(specs.keys())
+                - set(self.get_keys(CategoricalInput))
+                - set(self.get_keys(MolecularInput))
+            )
+            > 0
+        ):
             raise ValueError("Unknown features specified in transform specs.")
-        # next check that all values are of type CategoricalEncodingEnum
+        # next check that all values are of type CategoricalEncodingEnum or MolFeatures
         if not (
-            all(isinstance(enc, CategoricalEncodingEnum) for enc in specs.values())
+            all(
+                isinstance(enc, (CategoricalEncodingEnum, MolFeatures))
+                for enc in specs.values()
+            )
         ):
             raise ValueError("Unknown transform specified.")
-        # next check that only Categoricalwithdescriptor have the value DESCRIPTOR
-        descriptor_keys = [
-            key
-            for key, value in specs.items()
-            if value == CategoricalEncodingEnum.DESCRIPTOR
-        ]
+        # next check that only CategoricalDescriptorInput can have the value DESCRIPTOR
+        descriptor_keys = []
+        for key, value in specs.items():
+            if value == CategoricalEncodingEnum.DESCRIPTOR:
+                descriptor_keys.append(key)
         if (
             len(set(descriptor_keys) - set(self.get_keys(CategoricalDescriptorInput)))
             > 0
         ):
             raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")
+        # next check if MolFeatures have been assigned to feature types other than MolecularInput
+        molfeature_keys = []
+        for key, value in specs.items():
+            if isinstance(value, MolFeatures):
+                molfeature_keys.append(key)
+        if len(set(molfeature_keys) - set(self.get_keys(MolecularInput))) > 0:
+            raise ValueError("Wrong features types assigned to MolFeatures transforms.")
+        # next check that all MolecularInput have MolFeatures transforms
+        for feat in self.get(includes=[MolecularInput]):
+            mol_encoding = specs.get(feat.key)
+            if mol_encoding is None:
+                raise ValueError("No transform assigned to MolecularInput.")
+            elif not isinstance(mol_encoding, MolFeatures):
+                raise ValueError("Incorrect transform assigned to MolecularInput.")
         return specs
 
     def get_bounds(
