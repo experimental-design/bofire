@@ -544,7 +544,9 @@ def NChooseKGroup_with_quantity(
     keys: List[str],
     pick_at_least: int,
     pick_at_most: int,
-    quantity_if_picked: List[Tuple[float, float]],
+    quantity_if_picked: Optional[
+        Union[Tuple[float, float], List[Tuple[float, float]]]
+    ] = None,
     combined_quantity_limit: Optional[float] = None,
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
@@ -554,13 +556,15 @@ def NChooseKGroup_with_quantity(
     List[LinearConstraint],
 ]:
     if quantity_if_picked is not None:
-        if len(keys) != len(quantity_if_picked):
+        if type(quantity_if_picked) is list and len(keys) != len(quantity_if_picked):
             raise ValueError(
                 f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
                 f"and {len(quantity_if_picked)} quantities"
             )
 
-        if True in [0 in q for q in quantity_if_picked]:
+        if type(quantity_if_picked) is list and True in [
+            0 in q for q in quantity_if_picked
+        ]:
             raise ValueError(
                 "If an element out of the group is chosen, the quantity with which it is used must be "
                 "larger than 0"
