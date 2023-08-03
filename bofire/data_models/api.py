@@ -17,6 +17,10 @@ from bofire.data_models.features.api import (
 try:
     # in case of the minimal installation these import are not available
     from bofire.data_models.kernels.api import AnyKernel, Kernel
+    from bofire.data_models.molfeatures.api import (  # noqa: F401
+        AnyMolFeatures,
+        MolFeatures,
+    )
     from bofire.data_models.objectives.api import AnyObjective, Objective
     from bofire.data_models.outlier_detection.api import (
         AnyOutlierDetection,
@@ -49,6 +53,7 @@ try:
         AnyObjective,
         AnyPrior,
         AnyStrategy,
+        AnyMolFeatures,
         Domain,
     ]
 except ImportError:

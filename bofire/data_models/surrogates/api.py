@@ -21,6 +21,7 @@ try:
         SingleTaskGPSurrogate,
     )
     from bofire.data_models.surrogates.surrogate import Surrogate
+    from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
     from bofire.data_models.surrogates.xgb import XGBoostSurrogate
 
     AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
@@ -34,6 +35,7 @@ try:
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
+        TanimotoGPSurrogate,
     ]
 
     AnyTrainableSurrogate = Union[
@@ -44,6 +46,7 @@ try:
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
+        TanimotoGPSurrogate,
     ]
 except ImportError:
     # with the minimal installationwe don't have botorch
