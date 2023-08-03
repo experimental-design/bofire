@@ -11,6 +11,9 @@ try:
     # in case of the minimal installation these import are not available
     from tests.bofire.data_models.specs.conditions import specs as conditions
     from tests.bofire.data_models.specs.kernels import specs as kernels
+    from tests.bofire.data_models.specs.molfeatures import (
+        specs as molfeatures,
+    )
     from tests.bofire.data_models.specs.outlier_detection import (
         specs as outlier_detection,
     )

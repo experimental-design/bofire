@@ -482,7 +482,7 @@ class CrossCoupling(Benchmark):
         data_model = SingleTaskGPSurrogate(
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=[outputs[0]]),
-            input_preprocessing_specs=input_preprocessing_specs,
+            input_preprocessing_specs=input_preprocessing_specs,  # type: ignore
         )
         ground_truth_yield = surrogates.map(data_model)
 

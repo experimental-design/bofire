@@ -52,7 +52,7 @@ setup(
             sklearn_dependency,
         ],
         "xgb": ["xgboost>=1.7.5"],
-        "cheminfo": ["rdkit", sklearn_dependency],
+        "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
         "tests": [
             "mock",
             "mopti",

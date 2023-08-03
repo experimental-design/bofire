@@ -7,6 +7,7 @@ from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
 TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
@@ -141,7 +142,7 @@ def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
 
-TInputTransformSpecs = Dict[str, CategoricalEncodingEnum]
+TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
 
 
 TDescriptors = Annotated[List[str], Field(min_items=1)]
@@ -157,6 +158,5 @@ TCategoricalDescriptorVals = Annotated[
 ]
 
 TDiscreteVals = Annotated[List[float], Field(min_items=1)]
-
 
 _CAT_SEP = "_"

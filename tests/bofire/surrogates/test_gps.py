@@ -1,3 +1,6 @@
+import importlib
+
+import pandas as pd
 import pytest
 import torch
 from botorch.models import MixedSingleTaskGP, SingleTaskGP
@@ -20,12 +23,20 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    MolecularInput,
 )
 from bofire.data_models.kernels.api import (
     HammondDistanceKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
+)
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+    MordredDescriptors,
 )
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
@@ -41,9 +52,12 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable import metrics2objectives
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.utils.torch_tools import tkwargs
+
+RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
 @pytest.mark.parametrize(
@@ -298,6 +312,69 @@ def test_SingleTaskGPHyperconfig():
             surrogate_data.kernel.base_kernel.lengthscale_prior
             == BOTORCH_LENGTHCALE_PRIOR()
         )
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "kernel, specs",
+    [
+        (
+            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
+            {"x_1": Fingerprints(n_bits=32)},
+        ),
+        (
+            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
+            {"x_1": Fragments()},
+        ),
+        (
+            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
+            {"x_1": FingerprintsFragments(n_bits=32)},
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+        ),
+    ],
+)
+def test_TanimotoGP(kernel, specs):
+    inputs = Inputs(features=[MolecularInput(key="x_1")])
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = [
+        ["CC(=O)Oc1ccccc1C(=O)O", 88.0],
+        ["c1ccccc1", 35.0],
+        ["[CH3][CH2][OH]", 69.0],
+        ["N[C@](C)(F)C(=O)O", 20.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_1", "y"])
+    experiments["valid_y"] = 1
+    model = TanimotoGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        input_preprocessing_specs=specs,
+    )
+    model = surrogates.map(model)
+    model.fit(experiments)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    preds = model.predict(experiments.iloc[:-1])
+    assert preds.shape == (3, 2)
+    # check that model is composed correctly
+    assert isinstance(model.model, SingleTaskGP)
+    assert isinstance(model.model.outcome_transform, Standardize)
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = TanimotoGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        input_preprocessing_specs=specs,
+    )
+    model2 = surrogates.map(model2)
+    model2.loads(dump)
+    preds2 = model2.predict(experiments.iloc[:-1])
+    assert_frame_equal(preds, preds2)
 
 
 def test_MixedGPModel_invalid_preprocessing():

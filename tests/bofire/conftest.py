@@ -54,5 +54,9 @@ try:
     def outlier_detection_spec(request) -> specs.Spec:
         return request.param
 
+    @fixture(params=specs.molfeatures.valids)
+    def molfeatures_spec(request) -> specs.Spec:
+        return request.param
+
 except AttributeError:
     pass

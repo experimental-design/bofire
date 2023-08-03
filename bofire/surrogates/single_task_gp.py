@@ -12,6 +12,8 @@ import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
+from bofire.data_models.features.api import TInputTransformSpecs
+from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -21,18 +23,18 @@ from bofire.utils.torch_tools import tkwargs
 
 def get_scaler(
     inputs: Inputs,
-    input_preprocessing_specs: Dict[str, CategoricalEncodingEnum],
+    input_preprocessing_specs: TInputTransformSpecs,
     scaler: ScalerEnum,
     X: pd.DataFrame,
-) -> Union[InputStandardize, Normalize]:
+) -> Union[InputStandardize, Normalize, None]:
     """Returns the instanitated scaler object for a set of input features and
     input_preprocessing_specs.
 
 
     Args:
         inputs (Inputs): Input features.
-        input_preprocessing_specs (Dict[str, CategoricalEncodingEnum]): Dictionary how to treat
-            the categoricals.
+        input_preprocessing_specs (TInputTransformSpecs): Dictionary how to treat
+            the categoricals and/or molecules.
         scaler (ScalerEnum): Enum indicating the scaler of interest.
         X (pd.DataFrame): The dataset of interest.
 
@@ -50,6 +52,7 @@ def get_scaler(
             key
             for key, value in input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
+            and not isinstance(value, MolFeatures)
         ]
 
         ord_dims = []

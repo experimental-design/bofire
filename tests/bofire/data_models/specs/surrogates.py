@@ -7,12 +7,15 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    MolecularInput,
 )
 from bofire.data_models.kernels.api import (
     HammondDistanceKernel,
     MaternKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
+from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
@@ -195,6 +198,32 @@ specs.add_valid(
         "random_state": None,
         "num_parallel_tree": 1,
         "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+)
+specs.add_valid(
+    models.TanimotoGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                MolecularInput(key="mol1"),
+            ]
+        ),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ),
+        "kernel": ScaleKernel(
+            base_kernel=TanimotoKernel(
+                ard=True,
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ),
+        "scaler": ScalerEnum.NORMALIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR(),
+        "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3)},
         "dump": None,
         "hyperconfig": None,
     },

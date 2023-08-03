@@ -6,6 +6,7 @@ import pytest
 import torch
 from pydantic import parse_obj_as
 
+import bofire
 import bofire.kernels.api as kernels
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
@@ -15,6 +16,7 @@ from bofire.data_models.kernels.api import (
     MultiplicativeKernel,
     RBFKernel,
     ScaleKernel,
+    TanimotoKernel,
 )
 from bofire.data_models.priors.api import BOTORCH_SCALE_PRIOR, GammaPrior
 
@@ -34,6 +36,7 @@ EQUIVALENTS = {
     ScaleKernel: gpytorch.kernels.ScaleKernel,
     AdditiveKernel: gpytorch.kernels.AdditiveKernel,
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
+    TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
 }
 
 VALID_RBF_SPEC = {
@@ -54,6 +57,11 @@ VALID_ADDITIVE_SPEC = {"type": "AdditiveKernel", "kernels": [RBFKernel(), RBFKer
 VALID_MULTIPLICATIVE_SPEC = {
     "type": "MultiplicativeKernel",
     "kernels": [RBFKernel(), RBFKernel()],
+}
+
+VALID_TANIMOTO_SPEC = {
+    "type": "TanimotoKernel",
+    "ard": True,
 }
 
 KERNEL_SPECS = {
@@ -97,6 +105,12 @@ KERNEL_SPECS = {
         "valids": [VALID_ADDITIVE_SPEC],
         "invalids": [
             *get_invalids(VALID_SCALE_SPEC),
+        ],
+    },
+    TanimotoKernel: {
+        "valids": [VALID_TANIMOTO_SPEC],
+        "invalids": [
+            *get_invalids(VALID_TANIMOTO_SPEC),
         ],
     },
 }
@@ -207,3 +221,36 @@ def test_continuous_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
 
     if isinstance(kernel, gpytorch.kernels.MaternKernel):
         assert kernel.nu == k.nu
+
+
+@pytest.mark.parametrize(
+    "kernel, ard_num_dims, active_dims, expected_kernel",
+    [
+        (
+            TanimotoKernel(ard=False),
+            10,
+            list(range(5)),
+            bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
+        ),
+        (
+            TanimotoKernel(ard=True),
+            10,
+            list(range(5)),
+            bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
+        ),
+    ],
+)
+def test_molecular_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        ard_num_dims=ard_num_dims,
+        active_dims=active_dims,
+    )
+    assert isinstance(k, expected_kernel)
+
+    if kernel.ard is False:
+        assert k.ard_num_dims is None
+    else:
+        assert k.ard_num_dims == len(active_dims)
+    assert torch.eq(k.active_dims, torch.tensor(active_dims, dtype=torch.int64)).all()
