@@ -36,13 +36,14 @@ class DTLZ2(Benchmark):
     Info about the function: https://pymoo.org/problems/many/dtlz.html
     """
 
-    def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2):
+    def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
         """Initiallizes object of Type DTLZ2 which is a benchmark function.
 
         Args:
             dim (PositiveInt): Dimension of input vector
             num_objectives (PositiveInt, optional): Dimension of output vector. Defaults to 2.
         """
+        super().__init__(**kwargs)
         self.num_objectives = num_objectives
         self.dim = dim
 
@@ -96,7 +97,7 @@ class DTLZ2(Benchmark):
         """
         X = candidates[self.domain.get_feature_keys(Input)].values  # type: ignore
         X_m = X[..., -self.k :]  # type: ignore
-        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
+        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)  # type: ignore
         g_X_plus1 = 1 + g_X
         fs = []
         pi_over_2 = math.pi / 2
@@ -127,8 +128,8 @@ class C2DTLZ2(DTLZ2):
     https://github.com/pytorch/botorch/blob/main/botorch/test_functions/multi_objective.py.
     """
 
-    def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2):
-        super().__init__(dim, num_objectives)
+    def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
+        super().__init__(dim, num_objectives, **kwargs)
         # add also the constraint
         self._domain.outputs.features.append(  # type: ignore
             ContinuousOutput(
@@ -151,7 +152,7 @@ class C2DTLZ2(DTLZ2):
         )
         term1 = (f_X - 1).pow(2)
         mask = ~(torch.eye(f_X.shape[-1], device=f_X.device).bool())
-        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)
+        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)  # type: ignore
         indexer = indices[mask].view(f_X.shape[1], f_X.shape[-1] - 1)
         term2_inner = (
             f_X.unsqueeze(1)
@@ -174,12 +175,13 @@ class SnarBenchmark(Benchmark):
     Solving of a differential equation system with varying intitial values.
     """
 
-    def __init__(self, C_i: Optional[np.ndarray] = None):
+    def __init__(self, C_i: Optional[np.ndarray] = None, **kwargs):
         """Initializes multiobjective test function object of type SnarBenchmark.
 
         Args:
             C_i (Optional[np.ndarray]): Input concentrations. Defaults to [1, 1]
         """
+        super().__init__(**kwargs)
         if C_i is None:
             C_i = np.array([1, 1])
         self.C_i = C_i
@@ -328,12 +330,13 @@ class ZDT1(Benchmark):
     Explanation of the function: https://datacrayon.com/posts/search-and-optimisation/practical-evolutionary-algorithms/synthetic-objective-functions-and-zdt1/
     """
 
-    def __init__(self, n_inputs=30):
+    def __init__(self, n_inputs=30, **kwargs):
         """Initializes class of type ZDT1 which is a benchmark function for optimization problems.
 
         Args:
             n_inputs (int, optional): Number of inputs. Defaults to 30.
         """
+        super().__init__(**kwargs)
         self.n_inputs = n_inputs
         inputs = [
             ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(n_inputs)
@@ -485,6 +488,7 @@ class CrossCoupling(Benchmark):
 
         ground_truth_yield.fit(experiments=data)  # type: ignore
         self.ground_truth_yield = ground_truth_yield
+        super().__init__(**kwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation. Returns output vector.
