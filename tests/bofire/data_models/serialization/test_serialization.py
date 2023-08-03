@@ -70,3 +70,9 @@ def test_outlier_detection_should_be_serializable(outlier_detection_spec: Spec):
     spec = outlier_detection_spec.typed_spec()
     obj = outlier_detection_spec.cls(**spec)
     assert obj.dict() == spec
+
+
+def test_molfeatures_should_be_serializable(molfeatures_spec: Spec):
+    spec = molfeatures_spec.typed_spec()
+    obj = molfeatures_spec.cls(**spec)
+    assert obj.dict() == spec

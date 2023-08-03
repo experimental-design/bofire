@@ -68,3 +68,8 @@ BoFire can be used to generate optimal experimental designs with respect to vari
 For this, the user specifies a design space and a model formula, then chooses an optimality criterion and the desired number of experiments in the design. The resulting optimization problem is then solved by [IPOPT](https://coin-or.github.io/Ipopt/).
 
 The doe subpackage also supports a wide range of constraints on the design space including linear and nonlinear equalities and inequalities as well a (limited) use of NChooseK constraints. The user can provide fixed experiments that will be treated as part of the design but remain fixed during the optimization process. While some of the *optimization* algorithms support non-continuous design variables, the doe subpackage only supports those that are continuous.
+
+By default IPOPT uses the freely available linear solver MUMPS. For large models choosing a different linear solver (e.g. ma57 from Coin-HSL) can vastly reduce optimization time. A free academic license for Coin-HSL can be obtained [here](https://licences.stfc.ac.uk/product/coin-hsl). Instructions on how to install additional linear solvers for IPOPT are given in the [IPOPT documentation](https://coin-or.github.io/Ipopt/INSTALL.html#DOWNLOAD_HSL). For choosing a specific (HSL) linear solver in BoFire you can just pass the name of the solver to `find_local_max_ipopt()` with the `linear_solver` option together with the library's name in the option `hsllib`, e.g.
+```
+find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"linear_solver":"ma57", "hsllib":"libcoinhsl.so"})
+```
