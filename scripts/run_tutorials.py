@@ -70,7 +70,7 @@ def run_tutorials(
 
     # ToDo: take care
     # here are notebooks which are not tested due to random issues
-    blacklist = ["basic_examples.ipynb"]
+    blacklist = []
 
     for tutorial in tutorials:
         print(42 * "#", tutorial)

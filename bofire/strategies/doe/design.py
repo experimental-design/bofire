@@ -6,7 +6,11 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    NChooseKConstraint,
+    NonlinearConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.strategies.api import (
@@ -180,7 +184,7 @@ def find_local_max_ipopt(
             only_inputs=True,
             tol=1e-4,
         )
-    except ValueError:
+    except (ValueError, ConstraintNotFulfilledError):
         warnings.warn(
             "Some points do not lie inside the domain or violate constraints. Please check if the \
                 results lie within your tolerance.",
