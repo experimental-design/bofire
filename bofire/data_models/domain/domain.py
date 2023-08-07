@@ -37,7 +37,6 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
-from bofire.data_models.features.binary import RelaxableBinaryInput
 from bofire.data_models.objectives.api import Objective
 
 
@@ -60,9 +59,6 @@ class Domain(BaseModel):
     outputs: Outputs = Field(default_factory=lambda: Outputs())
 
     constraints: Constraints = Field(default_factory=lambda: Constraints())
-    categorical_groups: List[List[RelaxableBinaryInput]] = Field(
-        default_factory=lambda: []
-    )
 
     """Representation of the optimization problem/domain
 
@@ -70,8 +66,6 @@ class Domain(BaseModel):
         inputs (List[Input], optional): List of input features. Defaults to [].
         outputs (List[Output], optional): List of output features. Defaults to [].
         constraints (List[Constraint], optional): List of constraints. Defaults to [].
-        categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
-            categorical variables. Defaults to [].
     """
 
     @classmethod
@@ -80,17 +74,14 @@ class Domain(BaseModel):
         inputs: Optional[Sequence[AnyInput]] = None,
         outputs: Optional[Sequence[AnyOutput]] = None,
         constraints: Optional[Sequence[AnyConstraint]] = None,
-        categorical_groups: List[List[RelaxableBinaryInput]] = None,
     ):
         inputs = [] if inputs is None else inputs
         outputs = [] if outputs is None else outputs
         constraints = [] if constraints is None else constraints
-        categorical_groups = [] if categorical_groups is None else categorical_groups
         return cls(
             inputs=Inputs(features=inputs),
             outputs=Outputs(features=outputs),
             constraints=Constraints(constraints=constraints),
-            categorical_groups=categorical_groups,
         )
 
     @validator("inputs", always=True, pre=True)
@@ -197,42 +188,6 @@ class Domain(BaseModel):
                 for f in c.features:
                     assert f in continuous_inputs_dict, f"{f} must be continuous."
         return v
-
-    @validator("categorical_groups", always=True)
-    def validate_categorical_groups(cls, categorical_group, values):
-        """Validate if features given as the categorical groups are also features in the domain and if each feature
-        is in exactly one group
-
-        Args: categorical_group (List[List[ContinuousBinaryInput]]) : groups of the different categories
-        values (List[Input]): List of input features of the domain
-
-        Raises
-            ValueError: Feature key not registered in any group or registered too often.
-
-        Returns:
-            List[List[RelaxableBinaryInput]]: groups of the different categories
-        """
-        if "inputs" not in values:
-            return categorical_group
-
-        bin_vars = values["inputs"].get(includes=RelaxableBinaryInput)
-
-        if len(bin_vars) == 0:
-            return categorical_group
-
-        simplified_groups = [[f.key for f in group] for group in categorical_group]
-        keys = [f.key for f in bin_vars]
-        groups_flattened = [var.key for group in categorical_group for var in group]
-        for k in keys:
-            if groups_flattened.count(k) < 1:
-                raise ValueError(
-                    f"feature {k} is not registered in any of the categorical groups {simplified_groups}."
-                )
-            elif groups_flattened.count(k) > 1:
-                raise ValueError(
-                    f"feature {k} is registered to often in the categorical groups {simplified_groups}."
-                )
-        return categorical_group
 
     def get_feature_reps_df(self) -> pd.DataFrame:
         """Returns a pandas dataframe describing the features contained in the optimization domain."""

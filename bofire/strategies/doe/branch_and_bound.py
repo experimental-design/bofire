@@ -9,13 +9,13 @@ import pandas as pd
 
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
 from bofire.data_models.domain.domain import Domain
-from bofire.data_models.features.api import (
-    RelaxableBinaryInput,
-    RelaxableDiscreteInput,
-)
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
+from bofire.strategies.doe.utils_features import (
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
+)
 
 
 @total_ordering

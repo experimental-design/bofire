@@ -13,10 +13,12 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
+)
+from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.strategies.doe.utils_features import (
     RelaxableBinaryInput,
     RelaxableDiscreteInput,
 )
-from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 
 
 class PolytopeSampler(SamplerStrategy):

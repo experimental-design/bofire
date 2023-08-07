@@ -18,13 +18,15 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
     DiscreteInput,
     Output,
-    RelaxableDiscreteInput,
 )
-from bofire.data_models.features.binary import RelaxableBinaryInput
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
+)
+from bofire.strategies.doe.utils_features import (
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
 )
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.utils.CategoricalToBinaryMapper import generate_mixture_constraints
@@ -498,7 +500,9 @@ def nchoosek_constraints_as_bounds(
     return bounds
 
 
-def discrete_to_relaxable_domain_mapper(domain: Domain) -> Domain:
+def discrete_to_relaxable_domain_mapper(
+    domain: Domain,
+) -> Tuple[Domain, List[List[RelaxableBinaryInput]]]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
     Args:
@@ -534,9 +538,9 @@ def discrete_to_relaxable_domain_mapper(domain: Domain) -> Domain:
         inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,
         outputs=domain.outputs.features,
         constraints=domain.constraints.constraints + new_constraints,
-        categorical_groups=domain.categorical_groups + categorical_groups,
     )
-    return new_domain
+
+    return new_domain, categorical_groups
 
 
 def NChooseKGroup_with_quantity(
@@ -632,8 +636,10 @@ def NChooseKGroup_with_quantity(
     # creating possible combination of n choose k
     combined_keys_as_tuple = []
     if pick_at_most > 1:
-        for i in range(2, pick_at_most + 1):
+        for i in range(max(2, pick_at_least), pick_at_most + 1):
             combined_keys_as_tuple.extend(list(combinations(keys, i)))
+    if pick_at_least <= 1:
+        combined_keys_as_tuple.extend([[k] for k in keys])
 
     combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
 
@@ -655,13 +661,12 @@ def NChooseKGroup_with_quantity(
             combined_quantity_is_equal_or_less_than,
         )
 
-    # adding the new possible combinations to the list of keys
-    keys.extend(combined_keys)
-    keys = [unique_group_identifier + "_" + k for k in keys]
-
     # allowing to pick none
     if pick_at_least == 0:
-        keys.append(unique_group_identifier + "_pick_none")
+        combined_keys.append(unique_group_identifier + "_pick_none")
+
+    # adding the new possible combinations to the list of keys
+    keys = [unique_group_identifier + "_" + k for k in combined_keys]
 
     # choosing between CategoricalInput and RelaxableBinaryInput
     if use_non_relaxable_category_and_non_linear_constraint:
@@ -714,8 +719,7 @@ def _generate_quantity_var_constr(
     all_quantity_features = []
     for k in keys:
         all_quantity_features.append(
-            [unique_group_identifier + "_" + k]
-            + [
+            [
                 unique_group_identifier + "_" + state_key
                 for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
                 if k in state_tuple
@@ -788,3 +792,110 @@ def _generate_quantity_var_constr(
         quantity_constraints_ub,
         max_quantity_constraint,
     )
+
+
+def NChooseKGroup(
+    variables: List[ContinuousInput],
+    pick_at_least: int,
+    pick_at_most: int,
+    none_also_valid: bool,
+) -> tuple[list[RelaxableBinaryInput], list[LinearConstraint],]:
+    """
+    helper function to generate an N choose K problem with categorical variables, with an option to connect each
+    element of a category to a corresponding quantity of how much that category should be used.
+
+    Args:
+        variables (List[ContinuousInput]): variables to pick from
+        pick_at_least (int): minimum number of elements to be picked from the category. >=0
+        pick_at_most (int): maximum number of elements to be picked from the category. >=pick_at_least
+        none_also_valid (bool): defines if also none of the elements can be picked
+    Returns:
+        List of RelaxableBinaryInput describing the group,
+        List of either LinearConstraints, which enforce the quantities
+        and group restrictions.
+    """
+
+    keys = [var.key for var in variables]
+    if pick_at_least > pick_at_most:
+        raise ValueError(
+            f"your upper bound to pick an element should be larger your lower bound. "
+            f"Currently: pick_at_least {pick_at_least} > pick_at_most {pick_at_most}"
+        )
+
+    if pick_at_least < 0:
+        raise ValueError(
+            f"you should at least pick 0 elements. Currently  pick_at_least = {pick_at_least}"
+        )
+
+    if pick_at_most > len(keys):
+        raise ValueError(
+            f"you can not pick more elements than are available. "
+            f"Received pick_at_most {pick_at_most} > number of keys {len(keys)}"
+        )
+
+    if "pick_none" in keys:
+        raise ValueError("pick_none is not allowed as a key")
+
+    # creating possible combination of n choose k
+    combined_keys_as_tuple = []
+    if pick_at_most > 1:
+        for i in range(max(2, pick_at_least), pick_at_most + 1):
+            combined_keys_as_tuple.extend(list(combinations(keys, i)))
+    if pick_at_least <= 1:
+        combined_keys_as_tuple.extend([[k] for k in keys])
+
+    combined_keys = ["_".join(w) for w in combined_keys_as_tuple]
+    combined_keys = ["categorical_helper" + "_" + k for k in combined_keys]
+
+    # generating the corresponding constraints
+    valid_states = []
+    for k in keys:
+        valid_states.append(
+            [
+                state_key
+                for state_key, state_tuple in zip(combined_keys, combined_keys_as_tuple)
+                if k in state_tuple
+            ]
+        )
+
+    quantity_constraints_lb = [
+        LinearInequalityConstraint(
+            features=[var.key] + combi,
+            coefficients=[-1] + [var.lower_bound for i in range(len(combi))],
+            rhs=0,
+        )
+        for combi, var in zip(valid_states, variables)
+        if len(combi) >= 1
+    ]
+
+    quantity_constraints_ub = [
+        LinearInequalityConstraint(
+            features=[var.key] + combi,
+            coefficients=[1] + [-var.upper_bound for i in range(len(combi))],
+            rhs=0,
+        )
+        for combi, var in zip(valid_states, variables)
+        if len(combi) >= 1
+    ]
+
+    # allowing to pick none
+    if pick_at_least == 0 or none_also_valid:
+        combined_keys.append("categorical_helper_pick_none_of_" + "".join(keys))
+
+    # adding the new possible combinations to the list of keys
+    keys = combined_keys
+
+    category = [RelaxableBinaryInput(key=k) for k in keys]
+    pick_exactly_one_of_group_const = [
+        LinearEqualityConstraint(
+            features=list(keys), coefficients=[1 for k in keys], rhs=1
+        )
+    ]
+
+    all_new_constraints = (
+        pick_exactly_one_of_group_const
+        + quantity_constraints_lb
+        + quantity_constraints_ub
+    )
+
+    return category, all_new_constraints

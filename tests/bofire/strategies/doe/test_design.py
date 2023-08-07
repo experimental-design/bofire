@@ -15,7 +15,6 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.features.binary import RelaxableBinaryInput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
@@ -24,6 +23,7 @@ from bofire.strategies.doe.design import (
     get_n_experiments,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
+from bofire.strategies.doe.utils_features import RelaxableBinaryInput
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 

@@ -2,7 +2,7 @@ import time
 import warnings
 from itertools import combinations_with_replacement, product
 from queue import PriorityQueue
-from typing import Dict, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -15,8 +15,6 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     Input,
-    RelaxableBinaryInput,
-    RelaxableDiscreteInput,
 )
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -27,6 +25,10 @@ from bofire.strategies.doe.utils import (
     get_formula_from_string,
     metrics,
     nchoosek_constraints_as_bounds,
+)
+from bofire.strategies.doe.utils_features import (
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
 )
 from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
@@ -42,6 +44,7 @@ def find_local_max_ipopt_BaB(
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    categorical_groups: Optional[List[List[RelaxableBinaryInput]]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -62,12 +65,17 @@ def find_local_max_ipopt_BaB(
                 Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
                 Non-fixed variables have to be set to None or nan.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
+                categorical variables. Defaults to [].
             verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
     """
     from bofire.strategies.doe.branch_and_bound import NodeExperiment, bnb
+
+    if categorical_groups is None:
+        categorical_groups = []
 
     # get objective function
     model_formula = get_formula_from_string(
@@ -132,7 +140,7 @@ def find_local_max_ipopt_BaB(
         initial_branch,
         initial_design,
         initial_value,
-        domain.categorical_groups,
+        categorical_groups,
         discrete_vars,
     )
 
@@ -167,6 +175,7 @@ def find_local_max_ipopt_exhaustive(
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
+    categorical_groups: Optional[List[List[RelaxableBinaryInput]]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -187,11 +196,16 @@ def find_local_max_ipopt_exhaustive(
                 Values are set before the optimization. Within one experiment not all variables need to be fixed.
                 Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
                 Non-fixed variables have to be set to None or nan.
+            categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
+                categorical variables. Defaults to [].
             verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
     """
+
+    if categorical_groups is None:
+        categorical_groups = []
 
     if len(domain.get_features(includes=RelaxableDiscreteInput)) > 0:
         raise NotImplementedError(
@@ -213,7 +227,7 @@ def find_local_max_ipopt_exhaustive(
 
     # determine possible fixations of the different categories
     allowed_fixations = []
-    for group in domain.categorical_groups:
+    for group in categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
 
     n_non_fixed_experiments = n_experiments
@@ -244,7 +258,7 @@ def find_local_max_ipopt_exhaustive(
 
     # testing all different fixations
     column_keys = domain.inputs.get_keys()
-    group_keys = [var.key for group in domain.categorical_groups for var in group]
+    group_keys = [var.key for group in categorical_groups for var in group]
     minimum = float("inf")
     optimal_design = None
     len(domain.inputs) - len(binary_vars)

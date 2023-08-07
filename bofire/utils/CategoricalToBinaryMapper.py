@@ -9,7 +9,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
 )
 from bofire.data_models.domain.features import Inputs
-from bofire.data_models.features.api import RelaxableBinaryInput
+from bofire.strategies.doe.utils_features import RelaxableBinaryInput
 
 
 def constraints_mapper(
