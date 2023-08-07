@@ -29,7 +29,6 @@ from bofire.strategies.doe.utils_features import (
     RelaxableDiscreteInput,
 )
 from bofire.strategies.samplers.polytope import PolytopeSampler
-from bofire.utils.CategoricalToBinaryMapper import generate_mixture_constraints
 
 
 def get_formula_from_string(
@@ -899,3 +898,15 @@ def NChooseKGroup(
     )
 
     return category, all_new_constraints
+
+
+def generate_mixture_constraints(
+    keys: List[str],
+) -> Tuple[LinearEqualityConstraint, List[RelaxableBinaryInput]]:
+    binary_vars = (RelaxableBinaryInput(key=x) for x in keys)
+
+    mixture_constraint = LinearEqualityConstraint(
+        features=keys, coefficients=[1 for x in range(len(keys))], rhs=1
+    )
+
+    return mixture_constraint, list(binary_vars)
