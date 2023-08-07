@@ -1,10 +1,11 @@
 import warnings
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, root_validator, validator
-from scipy.stats import fisher_exact, pearsonr, spearmanr
+from scipy.integrate import simps
+from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
     mean_absolute_error,
     mean_absolute_percentage_error,
@@ -173,6 +174,276 @@ def _fisher_exact_test_p(
     return float(p)
 
 
+def _spearman_UQ(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the Spearman correlation coefficient between the models absolute error
+    and the uncertainty - non-linear correlation.
+
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+
+    Returns:
+        float: Spearman correlation coefficient.
+    """
+    if standard_deviation is None:
+        warnings.warn(
+            "Uncertainty quantification without standard deviation is not possible"
+        )
+        return np.nan
+    else:
+        ae = np.abs(observed - predicted)  # type: ignore
+        with np.errstate(invalid="ignore"):
+            rho, _ = spearmanr(ae, standard_deviation)
+        return float(rho)
+
+
+def _pearson_UQ(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the Pearson correlation coefficient between the models absolute error
+    and the uncertainty - linear correlation.
+
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+
+    Returns:
+        float: Pearson correlation coefficient.
+    """
+    if standard_deviation is None:
+        warnings.warn(
+            "Uncertainty quantification without standard deviation is not possible"
+        )
+        return np.nan
+    else:
+        ae = np.abs(observed - predicted)  # type: ignore
+        with np.errstate(invalid="ignore"):
+            rho, _ = pearsonr(ae, standard_deviation)
+        return float(rho)
+
+
+def _kendall_UQ(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the Kendall correlation coefficient between the models absolute error
+    and the uncertainty - linear correlation.
+
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+
+    Returns:
+        float: Kendall correlation coefficient.
+    """
+    if standard_deviation is None:
+        warnings.warn(
+            "Uncertainty quantification without standard deviation is not possible"
+        )
+        return np.nan
+    else:
+        ae = np.abs(observed - predicted)  # type: ignore
+        with np.errstate(invalid="ignore"):
+            rho, _ = kendalltau(ae, standard_deviation)
+        return float(rho)
+
+
+def _NLL(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the Negative log-likelihood of predicted data
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+
+    Returns:
+        float: Negative log-likelihood.
+    """
+    if standard_deviation is None:
+        warnings.warn(
+            "Uncertainty quantification without standard deviation is not possible"
+        )
+        return np.nan
+    else:
+        res = (
+            1.0 / (2.0 * observed.shape[0])
+            + observed.shape[0] * np.log(2 * np.pi)
+            + np.sum(np.log(predicted))
+            + np.sum(np.square(predicted - observed) / standard_deviation)  # type: ignore
+        )
+        return res
+
+
+def _CVPPDiagram(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+    num_bins: int = 10,
+) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+    """Metric introduced in arXiv:2010.01118 [cs.LG] based on cross-validatory
+    predictive p-values.
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+        num_bins (int): number of bins for getting quantiles.
+
+    Returns:
+        np.ndarray: quantiles.
+        np.ndarray: callibration score for each quantile.
+    """
+    if standard_deviation is None:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return None, None
+    else:
+        lhs = np.abs((predicted - observed) / standard_deviation)  # type: ignore
+        qs = np.linspace(0, 1, num_bins)
+        Cqs = np.empty(qs.shape)
+        for ix, q in enumerate(qs):
+            rhs = norm.ppf(((1.0 + q) / 2.0), loc=0.0, scale=1.0)
+            Cqs[ix] = np.sum((lhs < rhs).astype(int)) / observed.shape[0]
+
+        return qs, Cqs
+
+
+def _MaximumMiscalibration(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+    num_bins: int = 10,
+) -> float:
+    """Miscalibration metric with CVPP
+    WARNING - this metric only diagnoses systematic over- or under-
+    confidence, i.e. a model that is overconfident for ~half of the
+    quantiles and under-confident for ~half will still have a MiscalibrationArea
+    of ~0.
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+        num_bins (int): number of bins for getting quantiles.
+
+    Returns:
+        float: maximum miscalibration
+    """
+    if standard_deviation is None:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return np.nan
+    else:
+        qs, Cqs = _CVPPDiagram(
+            observed=observed,
+            predicted=predicted,
+            standard_deviation=standard_deviation,
+            num_bins=num_bins,
+        )
+        res = np.max(np.abs(Cqs - qs))  # type: ignore
+
+        return res
+
+
+def _MiscalibrationArea(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+    num_bins: int = 10,
+) -> float:
+    """Miscalibration area metric with CVPP
+    WARNING - this metric only diagnoses systematic over- or under-
+    confidence, i.e. a model that is overconfident for ~half of the
+    quantiles and under-confident for ~half will still have a MiscalibrationArea
+    of ~0.
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+        num_bins (int): number of bins for getting quantiles.
+
+    Returns:
+        float: total miscalibration area
+    """
+    if standard_deviation is None:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return np.nan
+    else:
+        qs, Cqs = _CVPPDiagram(
+            observed=observed,
+            predicted=predicted,
+            standard_deviation=standard_deviation,
+            num_bins=num_bins,
+        )
+        res = simps(Cqs - qs, qs)  # type: ignore
+
+        return res
+
+
+def _AbsoluteMiscalibrationArea(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+    num_bins: int = 10,
+) -> float:
+    """absolute miscalibration area metric with CVPP
+    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+        num_bins (int): number of bins for getting quantiles.
+
+    Returns:
+        float: absolute miscalibration area
+    """
+    if standard_deviation is None:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return np.nan
+    else:
+        qs, Cqs = _CVPPDiagram(
+            observed=observed,
+            predicted=predicted,
+            standard_deviation=standard_deviation,
+            num_bins=num_bins,
+        )
+        res = simps(np.abs(Cqs - qs), qs)  # type: ignore
+
+        return res
+
+
 metrics = {
     RegressionMetricsEnum.MAE: _mean_absolute_error,
     RegressionMetricsEnum.MSD: _mean_squared_error,
@@ -181,6 +452,7 @@ metrics = {
     RegressionMetricsEnum.PEARSON: _pearson,
     RegressionMetricsEnum.SPEARMAN: _spearman,
     RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
+    RegressionMetricsEnum.CALIBRATION: _AbsoluteMiscalibrationArea,
 }
 
 
@@ -391,6 +663,7 @@ class CvResults(BaseModel):
             RegressionMetricsEnum.PEARSON,
             RegressionMetricsEnum.SPEARMAN,
             RegressionMetricsEnum.FISHER,
+            RegressionMetricsEnum.CALIBRATION,
         ],
         combine_folds: bool = True,
     ) -> pd.DataFrame:

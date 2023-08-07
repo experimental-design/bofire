@@ -43,3 +43,4 @@ class RegressionMetricsEnum(Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+    CALIBRATION = "CALIBRATION"

@@ -19,6 +19,7 @@ metrics2objectives = {
     RegressionMetricsEnum.PEARSON: MaximizeObjective,
     RegressionMetricsEnum.SPEARMAN: MaximizeObjective,
     RegressionMetricsEnum.FISHER: MaximizeObjective,
+    RegressionMetricsEnum.CALIBRATION: MinimizeObjective,
 }
 
 

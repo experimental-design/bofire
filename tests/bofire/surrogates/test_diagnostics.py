@@ -205,6 +205,18 @@ def test_cvresult_get_metric_invalid():
         np.isnan(cv.get_metric(metric=metric))
 
 
+def test_cvresult_get_calibration_metric():
+    cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=True)
+    assert cv.n_samples == 10
+    cv.get_metric(RegressionMetricsEnum.CALIBRATION)
+
+
+def test_cvresult_get_calibration_metric_invalid():
+    cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=False)
+    assert cv.n_samples == 10
+    np.isnan(cv.get_metric(RegressionMetricsEnum.CALIBRATION))
+
+
 def test_cvresults_invalid():
     # test for empty results
     with pytest.raises(ValueError):
@@ -419,7 +431,10 @@ def test_CvResults2CrossValidationValues(cv_results):
         else:
             assert transformed["a"][i].standardDeviation is None
         for m in metrics.columns:
-            assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
+            if cv_results.results[i].standard_deviation is not None:
+                assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
+            else:
+                assert np.allclose(metrics.loc[i, m], transformed["a"][i].metrics[m], equal_nan=True)
 
 
 def test_CvResults2CrossValidationValues_minimal():
