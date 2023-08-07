@@ -434,7 +434,9 @@ def test_CvResults2CrossValidationValues(cv_results):
             if cv_results.results[i].standard_deviation is not None:
                 assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
             else:
-                assert np.allclose(metrics.loc[i, m], transformed["a"][i].metrics[m], equal_nan=True)
+                assert np.allclose(
+                    metrics.loc[i, m], transformed["a"][i].metrics[m], equal_nan=True
+                )
 
 
 def test_CvResults2CrossValidationValues_minimal():
