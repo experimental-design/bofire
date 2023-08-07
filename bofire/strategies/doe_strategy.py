@@ -88,7 +88,6 @@ class DoEStrategy(Strategy):
         )
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
-        categorical_groups = []
         # map categorical/ discrete Domain to a relaxable Domain
         new_domain, categorical_groups = discrete_to_relaxable_domain_mapper(
             self.domain
@@ -97,9 +96,7 @@ class DoEStrategy(Strategy):
         new_vars = []
         new_constr = []
         var_occuring_in_nchoosek = []
-        if (
-            self.data_model.optimization_strategy != "partially-random"
-        ):  # todo diese strategy einbauen
+        if self.data_model.optimization_strategy != "partially-random":
             n_choose_k_constraints = new_domain.constraints.get(
                 includes=NChooseKConstraint
             )
@@ -112,9 +109,7 @@ class DoEStrategy(Strategy):
                 new_relaxable_categorical_vars, new_constraints = NChooseKGroup(
                     current_features, pick_at_least, pick_at_most, none_also_valid
                 )
-                new_vars.append(
-                    new_relaxable_categorical_vars
-                )  # todo pick at least funktioniert nicht
+                new_vars.append(new_relaxable_categorical_vars)
                 new_constr.extend(new_constraints)
 
                 # allow vars to be set to 0
@@ -154,8 +149,14 @@ class DoEStrategy(Strategy):
             new_domain.get_features(includes=[RelaxableDiscreteInput])
         )
 
-        if self.data_model.optimization_strategy == "relaxed" or (
-            num_binary_vars == 0 and num_discrete_vars == 0
+        if (
+            self.data_model.optimization_strategy == "relaxed"
+            or (num_binary_vars == 0 and num_discrete_vars == 0)
+            or (
+                self.data_model.optimization_strategy == "partially-random"
+                and num_binary_vars == 0
+                and num_discrete_vars == 0
+            )
         ):
             design = find_local_max_ipopt(
                 new_domain,
@@ -178,7 +179,11 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
                 categorical_groups=categorical_groups,
             )
-        elif self.data_model.optimization_strategy == "branch-and-bound":
+        elif self.data_model.optimization_strategy in [
+            "branch-and-bound",
+            "default",
+            "partially-random",
+        ]:
             design = find_local_max_ipopt_BaB(
                 domain=new_domain,
                 model_type=self.formula,
@@ -224,14 +229,9 @@ class DoEStrategy(Strategy):
             )
             transformed_design[group.key] = categorical_columns.apply("".join, axis=1)
 
-        transformed_design[
-            self.domain.get_feature_keys(includes=DiscreteInput)
-        ] = transformed_design[
-            self.domain.get_feature_keys(includes=DiscreteInput)
-        ].round(
-            0
-        )
-        # todo ich darf nicht round(0) benutzen, ich kann bei discreten werten nämlich auch werte mit nachkomma stellen angeben, ich sollte ne funktion wie, find_closest benutzen
+        for var in self.domain.get_features(includes=DiscreteInput):
+            closest_solution = var.from_continuous(transformed_design)
+            transformed_design[var.key] = closest_solution
 
         # restart the partially fixed experiments
         self._partially_fixed_experiments_for_next_design = None
