@@ -30,7 +30,7 @@ setup(
     ],
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.8",
+    python_requires=">=3.9.0",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
@@ -42,8 +42,7 @@ setup(
     ],
     extras_require={
         "optimization": [
-            "torch>=1.12",
-            "botorch>=0.8.5",
+            "botorch>=0.9.1",
             "multiprocess",
             "plotly",
             "formulaic>=0.6.0",
