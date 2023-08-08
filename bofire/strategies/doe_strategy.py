@@ -93,7 +93,6 @@ class DoEStrategy(Strategy):
             (
                 new_domain,
                 new_categories,
-                new_variables,
             ) = nchoosek_to_relaxable_domain_mapper(new_domain)
             all_new_categories.extend(new_categories)
 
