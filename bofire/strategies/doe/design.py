@@ -9,8 +9,11 @@ import pandas as pd
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 
-from bofire.data_models.constraints.api import NChooseKConstraint, NonlinearConstraint
-from bofire.data_models.constraints.constraint import ConstraintNotFulfilledError
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    NChooseKConstraint,
+    NonlinearConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
