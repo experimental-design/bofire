@@ -404,7 +404,6 @@ def find_local_max_ipopt(
 
     if sampling is not None:
         sampling.sort_index(axis=1, inplace=True)
-        domain.validate_candidates(sampling, only_inputs=True)
         x0 = sampling.values.flatten()
     else:
         if len(domain.constraints.get(NonlinearConstraint)) == 0:
