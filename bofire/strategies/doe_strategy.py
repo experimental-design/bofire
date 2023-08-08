@@ -1,26 +1,20 @@
-from typing import List
-
-import numpy as np
 import pandas as pd
 from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
-from bofire.data_models.constraints.api import NChooseKConstraint
-from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.api import (
-    CategoricalInput,
-    DiscreteInput,
     Input,
-    Output,
 )
 from bofire.strategies.doe.design import (
     find_local_max_ipopt,
     find_local_max_ipopt_BaB,
     find_local_max_ipopt_exhaustive,
 )
-from bofire.strategies.doe.utils import (
-    NChooseKGroup,
+from bofire.strategies.doe.utils_categorical_discrete import (
+    design_from_new_to_original_domain,
     discrete_to_relaxable_domain_mapper,
+    nchoosek_to_relaxable_domain_mapper,
+    validate_categorical_groups,
 )
 from bofire.strategies.doe.utils_features import (
     RelaxableBinaryInput,
@@ -88,55 +82,27 @@ class DoEStrategy(Strategy):
         )
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+        all_new_categories = []
+
         # map categorical/ discrete Domain to a relaxable Domain
-        new_domain, categorical_groups = discrete_to_relaxable_domain_mapper(
-            self.domain
-        )
+        new_domain, new_categories = discrete_to_relaxable_domain_mapper(self.domain)
+        all_new_categories.extend(new_categories)
+
         # check for NchooseK constraint and solve the problem differently depending on the strategy
-        new_vars = []
-        new_constr = []
-        var_occuring_in_nchoosek = []
         if self.data_model.optimization_strategy != "partially-random":
-            n_choose_k_constraints = new_domain.constraints.get(
-                includes=NChooseKConstraint
-            )
-            for constr in n_choose_k_constraints:
-                current_features = [self.domain.get_feature(k) for k in constr.features]
-                var_occuring_in_nchoosek.extend(constr.features)
-                pick_at_least = constr.min_count
-                pick_at_most = constr.max_count
-                none_also_valid = constr.none_also_valid
-                new_relaxable_categorical_vars, new_constraints = NChooseKGroup(
-                    current_features, pick_at_least, pick_at_most, none_also_valid
-                )
-                new_vars.append(new_relaxable_categorical_vars)
-                new_constr.extend(new_constraints)
+            (
+                new_domain,
+                new_categories,
+                new_variables,
+            ) = nchoosek_to_relaxable_domain_mapper(new_domain)
+            all_new_categories.extend(new_categories)
 
-                # allow vars to be set to 0
-                for var in var_occuring_in_nchoosek:
-                    current_var = new_domain.inputs.get_by_key(var)
-                    if current_var.lower_bound > 0:
-                        current_var.bounds = (0, current_var.upper_bound)
-                    elif current_var.upper_bound < 0:
-                        current_var.bounds = (current_var.lower_bound, 0)
+        # check categorical_groups
+        validate_categorical_groups(all_new_categories, new_domain)
 
-        add_inputs = [var for group in new_vars for var in group]
-        if len(add_inputs) > 0:
-            new_domain.inputs = new_domain.inputs + [
-                var for group in new_vars for var in group
-            ]
-
-        if len(new_constr) > 0:
-            new_domain.constraints = (
-                new_domain.constraints.get(excludes=NChooseKConstraint) + new_constr
-            )
-
-        categorical_groups.extend(new_vars)
         # here we adapt the (partially) fixed experiments to the new domain
         # todo
 
-        # check categorical_groups
-        validate_categorical_groups(categorical_groups, new_domain)
         if self.candidates is not None:
             _fixed_experiments_count = len(self.candidates)
             _candidate_count = candidate_count + len(self.candidates)
@@ -177,7 +143,7 @@ class DoEStrategy(Strategy):
                 fixed_experiments=self.candidates,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
-                categorical_groups=categorical_groups,
+                categorical_groups=all_new_categories,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -191,47 +157,13 @@ class DoEStrategy(Strategy):
                 fixed_experiments=self.candidates,
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
-                categorical_groups=categorical_groups,
+                categorical_groups=all_new_categories,
             )
         else:
             raise RuntimeError("Could not find suitable optimization strategy")
+
         # mapping the solution to the variables from the original domain
-        transformed_design = design[
-            self.domain.get_feature_keys(excludes=[CategoricalInput, Output])
-        ]
-        for group in self.domain.get_features(includes=CategoricalInput):
-            categorical_columns = design[group.categories]
-            mask = ~np.isclose(categorical_columns.to_numpy(), 0)
-
-            for i, row in enumerate(mask):
-                index_to_keep = np.random.choice(np.argwhere(row).flatten())
-                mask[i] = np.zeros_like(row, dtype=bool)
-                mask[i][index_to_keep] = True
-
-            categorical_columns = categorical_columns.where(
-                np.invert(mask),
-                pd.DataFrame(
-                    np.full(
-                        (len(categorical_columns), len(group.categories)),
-                        group.categories,
-                    ),
-                    columns=categorical_columns.columns,
-                    index=categorical_columns.index,
-                ),
-            )
-            categorical_columns = categorical_columns.where(
-                mask,
-                pd.DataFrame(
-                    np.full((len(categorical_columns), len(group.categories)), ""),
-                    columns=categorical_columns.columns,
-                    index=categorical_columns.index,
-                ),
-            )
-            transformed_design[group.key] = categorical_columns.apply("".join, axis=1)
-
-        for var in self.domain.get_features(includes=DiscreteInput):
-            closest_solution = var.from_continuous(transformed_design)
-            transformed_design[var.key] = closest_solution
+        transformed_design = design_from_new_to_original_domain(self.domain, design)
 
         # restart the partially fixed experiments
         self._partially_fixed_experiments_for_next_design = None
@@ -246,38 +178,3 @@ class DoEStrategy(Strategy):
             bool: True if number of passed experiments is sufficient, False otherwise
         """
         return True
-
-
-def validate_categorical_groups(
-    categorical_group: List[List[RelaxableBinaryInput]], domain: Domain
-):
-    """Validate if features given as the categorical groups are also features in the domain and if each feature
-    is in exactly one group
-
-    Args: categorical_group (List[List[RelaxableBinaryInput]]) : groups of the different categories
-    domain (Domain): Domain to test against
-
-    Raises
-        ValueError: Feature key not registered in any group or registered too often.
-
-    Returns:
-        List[List[RelaxableBinaryInput]]: groups of the different categories
-    """
-
-    bin_vars = domain.inputs.get_keys(includes=RelaxableBinaryInput)
-
-    if len(bin_vars) == 0:
-        return categorical_group
-
-    simplified_groups = [[f.key for f in group] for group in categorical_group]
-    groups_flattened = [var.key for group in categorical_group for var in group]
-    for k in bin_vars:
-        if groups_flattened.count(k) < 1:
-            raise ValueError(
-                f"feature {k} is not registered in any of the categorical groups {simplified_groups}."
-            )
-        elif groups_flattened.count(k) > 1:
-            raise ValueError(
-                f"feature {k} is registered to often in the categorical groups {simplified_groups}."
-            )
-    return categorical_group

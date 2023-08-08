@@ -20,7 +20,9 @@ from bofire.data_models.features.api import (
     RelaxableDiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
-from bofire.strategies.doe.utils import generate_mixture_constraints
+from bofire.strategies.doe.utils_categorical_discrete import (
+    generate_mixture_constraints,
+)
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
