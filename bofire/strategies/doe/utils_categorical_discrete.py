@@ -3,7 +3,6 @@ from typing import Any, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from scipy.optimize import LinearConstraint
 
 from bofire.data_models.constraints.linear import (
     LinearEqualityConstraint,
@@ -15,7 +14,7 @@ from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Output
+from bofire.data_models.features.feature import Feature, Output
 from bofire.strategies.doe.utils_features import (
     RelaxableBinaryInput,
     RelaxableDiscreteInput,
@@ -35,8 +34,8 @@ def discrete_to_relaxable_domain_mapper(
     kept_inputs = domain.get_features(
         excludes=[CategoricalInput, DiscreteInput, Output]
     ).features
-    discrete_inputs = domain.inputs.get(DiscreteInput).features
-    categorical_inputs = domain.inputs.get(CategoricalInput).features
+    discrete_inputs: List[DiscreteInput] = domain.inputs.get(DiscreteInput)
+    categorical_inputs: List[CategoricalInput] = domain.inputs.get(CategoricalInput)
 
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = [
@@ -46,7 +45,7 @@ def discrete_to_relaxable_domain_mapper(
 
     # convert categorical inputs to continuous inputs
     relaxable_categorical_inputs = []
-    new_constraints = []
+    new_constraints: List[LinearEqualityConstraint] = []
     categorical_groups = []
     for c_input in categorical_inputs:
         current_group_keys = list(c_input.categories)
@@ -59,7 +58,7 @@ def discrete_to_relaxable_domain_mapper(
     new_domain = Domain(
         inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,
         outputs=domain.outputs.features,
-        constraints=domain.constraints.constraints + new_constraints,
+        constraints=domain.constraints + new_constraints,
     )
 
     return new_domain, categorical_groups
@@ -74,9 +73,12 @@ def nchoosek_to_relaxable_domain_mapper(
     n_choose_k_constraints = domain.constraints.get(includes=NChooseKConstraint)
 
     for constr in n_choose_k_constraints:
+        constr: NChooseKConstraint
         var_occuring_in_nchoosek.extend(constr.features)
 
-        current_features = [domain.get_feature(k) for k in constr.features]
+        current_features: List[Feature] = [
+            domain.get_feature(k) for k in constr.features
+        ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
             current_features, constr.min_count, constr.max_count, constr.none_also_valid
         )
@@ -93,7 +95,7 @@ def nchoosek_to_relaxable_domain_mapper(
 
     new_domain = Domain(
         inputs=domain.inputs + [var for group in new_categories for var in group],
-        outputs=domain.outputs.features,
+        outputs=domain.outputs,
         constraints=domain.constraints.get(excludes=NChooseKConstraint)
         + new_constraints,
     )
@@ -111,10 +113,10 @@ def NChooseKGroup_with_quantity(
     combined_quantity_limit: Optional[float] = None,
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
-) -> tuple[
-    list[CategoricalInput] | list[RelaxableBinaryInput],
-    list[ContinuousInput] | list[Any],
-    list[LinearEqualityConstraint],
+) -> Tuple[
+    List[CategoricalInput] | List[RelaxableBinaryInput],
+    List[ContinuousInput] | List[Any],
+    List[LinearEqualityConstraint],
 ]:
     """
     helper function to generate an N choose K problem with categorical variables, with an option to connect each
@@ -257,10 +259,10 @@ def _generate_quantity_var_constr(
     use_non_relaxable_category_and_non_linear_constraint,
     combined_quantity_limit,
     combined_quantity_is_equal_or_less_than,
-) -> tuple[
-    list[ContinuousInput],
-    list[NonlinearInequalityConstraint] | list[LinearInequalityConstraint],
-    list[NonlinearInequalityConstraint] | list[LinearInequalityConstraint],
+) -> Tuple[
+    List[ContinuousInput],
+    List[NonlinearInequalityConstraint] | List[LinearInequalityConstraint],
+    List[NonlinearInequalityConstraint] | List[LinearInequalityConstraint],
     LinearEqualityConstraint | LinearInequalityConstraint | None,
 ]:
     """
@@ -352,11 +354,14 @@ def _generate_quantity_var_constr(
 
 
 def NChooseKGroup(
-    variables: List[ContinuousInput],
+    variables: List[Feature],
     pick_at_least: int,
     pick_at_most: int,
     none_also_valid: bool,
-) -> tuple[list[RelaxableBinaryInput], list[LinearConstraint],]:
+) -> Tuple[
+    List[RelaxableBinaryInput],
+    List[LinearEqualityConstraint | LinearInequalityConstraint],
+]:
     """
     helper function to generate an N choose K problem with categorical variables, with an option to connect each
     element of a category to a corresponding quantity of how much that category should be used.
@@ -449,11 +454,10 @@ def NChooseKGroup(
         )
     ]
 
-    all_new_constraints = (
-        pick_exactly_one_of_group_const
-        + quantity_constraints_lb
-        + quantity_constraints_ub
-    )
+    all_new_constraints = []
+    all_new_constraints.extend(pick_exactly_one_of_group_const)
+    all_new_constraints.extend(quantity_constraints_lb)
+    all_new_constraints.extend(quantity_constraints_ub)
 
     return category, all_new_constraints
 

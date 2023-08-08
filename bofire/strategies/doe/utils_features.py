@@ -1,6 +1,6 @@
 import math
 import warnings
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -101,7 +101,7 @@ class RelaxableDiscreteInput(ContinuousInput):
 
     def equal_range_split(
         self, lower_bound: float, upper_bound: float
-    ) -> (float, float):
+    ) -> Tuple[float, float]:
         """
         Determines the two identical elements x such that the intervals (lower_bound, x) and (x, upper_bound)
         are of equal length
@@ -117,7 +117,7 @@ class RelaxableDiscreteInput(ContinuousInput):
 
     def equal_count_split(
         self, lower_bound: float, upper_bound: float
-    ) -> (float, float):
+    ) -> Tuple[float, float]:
         """
         Determines the two elements x and y such that the intervals (lower_bound, x) and (y, upper_bound)
         have the same number of elements regarding the values of the discrete variable

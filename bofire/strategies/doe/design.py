@@ -2,7 +2,7 @@ import time
 import warnings
 from itertools import combinations_with_replacement, product
 from queue import PriorityQueue
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -79,6 +79,10 @@ def find_local_max_ipopt_BaB(
 
     if categorical_groups is None:
         categorical_groups = []
+
+    n_experiments = get_n_experiments(
+        domain=domain, model_type=model_type, n_experiments=n_experiments
+    )
 
     # get objective function
     model_formula = get_formula_from_string(
@@ -263,7 +267,7 @@ def find_local_max_ipopt_exhaustive(
     column_keys = domain.inputs.get_keys()
     group_keys = [var.key for group in categorical_groups for var in group]
     minimum = float("inf")
-    optimal_design = None
+    optimal_design = pd.DataFrame()
     len(domain.inputs) - len(binary_vars)
     all_n_fixed_experiments = list(all_n_fixed_experiments)
     for i, binary_fixed_experiments in enumerate(all_n_fixed_experiments):
@@ -448,8 +452,7 @@ def find_local_max_ipopt(
     if fixed_experiments is not None:
         fixed_experiments.sort_index(axis=1, inplace=True)
         domain.validate_candidates(fixed_experiments, only_inputs=True)
-        fixed_experiments = np.array(fixed_experiments.values)
-        for i, val in enumerate(fixed_experiments.flatten()):
+        for i, val in enumerate(fixed_experiments.values.flatten()):
             bounds[i] = (val, val)
             x0[i] = val
 
@@ -513,11 +516,11 @@ def find_local_max_ipopt(
 
 def partially_fix_experiment(
     bounds: list,
-    fixed_experiments: pd.DataFrame,
+    fixed_experiments: Union[pd.DataFrame, None],
     n_experiments: int,
-    partially_fixed_experiments: pd.DataFrame,
-    x0: pd.DataFrame,
-) -> (list, pd.DataFrame):
+    partially_fixed_experiments: Union[pd.DataFrame, None],
+    x0: np.ndarray,
+) -> Tuple[List, np.ndarray]:
     """
     fixes some variables for experiments. Within one experiment not all variables need to be fixed.
     Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
