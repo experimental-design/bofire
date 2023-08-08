@@ -197,6 +197,11 @@ def bnb(
         )
     # solve branched problems
     for _i, branch in enumerate(next_branches):
+        initial_sample = branch.where(
+            ~pd.isnull(branch), current_branch.design_matrix.values
+        )
+        initial_sample = initial_sample.astype("float64")
+        kwargs["sampling"] = initial_sample
         try:
             design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
             value = objective_class.evaluate(design.to_numpy().flatten())
