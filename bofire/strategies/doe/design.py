@@ -501,7 +501,7 @@ def find_local_max_ipopt(
             only_inputs=True,
             tol=1e-4,
         )
-    except ValueError:
+    except (ValueError, ConstraintNotFulfilledError):
         warnings.warn(
             "Some points do not lie inside the domain or violate constraints. Please check if the \
                 results lie within your tolerance.",
