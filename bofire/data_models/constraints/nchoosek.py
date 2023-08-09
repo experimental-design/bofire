@@ -93,7 +93,7 @@ class NChooseKConstraint(Constraint):
         Returns:
             bool: True if fulfilled else False.
         """
-        return pd.Series(True, dtype=bool)
+
         cols = self.features
         sums = (np.abs(experiments[cols]) > tol).sum(axis=1)
 
