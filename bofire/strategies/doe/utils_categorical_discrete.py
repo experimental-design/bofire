@@ -93,7 +93,8 @@ def nchoosek_to_relaxable_domain_mapper(
                 current_var.bounds = (current_var.lower_bound, 0)
 
     new_domain = Domain(
-        inputs=domain.inputs + [var for group in new_categories for var in group],
+        inputs=domain.inputs.features
+        + [var for group in new_categories for var in group],
         outputs=domain.outputs,
         constraints=domain.constraints.get(excludes=NChooseKConstraint)
         + new_constraints,
