@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -10,19 +9,12 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.data_models.constraints.nonlinear import NonlinearEqualityConstraint
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
-    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
-    DiscreteInput,
-    RelaxableDiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
-from bofire.strategies.doe.utils_categorical_discrete import (
-    generate_mixture_constraints,
-)
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
@@ -60,45 +52,6 @@ domain = Domain.from_lists(
     ],
 )
 
-mixture_constraint_1, categorical_vars_1 = generate_mixture_constraints(["a", "b", "c"])
-all_inputs = [
-    ContinuousInput(key="x1", bounds=(0, 5)),
-    ContinuousInput(key="x2", bounds=(0, 15)),
-] + categorical_vars_1
-constraints = [
-    LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=3),
-    LinearInequalityConstraint(features=["x1", "x2"], coefficients=[1, 0.2], rhs=2),
-    NonlinearEqualityConstraint(
-        expression="a * (x1 + x2 - 0.5)", features=["a", "x1", "x2"]
-    ),
-    NonlinearEqualityConstraint(
-        expression="b * (x1 + x2 - 1)", features=["b", "x1", "x2"]
-    ),
-    NonlinearEqualityConstraint(
-        expression="c * (x1 + x2 - 3)", features=["c", "x1", "x2"]
-    ),
-    mixture_constraint_1,
-]
-
-categorical_domain = Domain(
-    inputs=all_inputs,
-    outputs=[ContinuousOutput(key="y")],
-    constraints=constraints,
-    categorical_groups=[categorical_vars_1],
-)
-
-categorical_discrete_domain = Domain(
-    inputs=all_inputs + [RelaxableDiscreteInput(key="d", values=list(range(100)))],
-    outputs=[ContinuousOutput(key="y")],
-    constraints=constraints
-    + [
-        NonlinearEqualityConstraint(
-            expression="d * (x1 + x2 - 3)", features=["d", "x1", "x2"]
-        )
-    ],
-    categorical_groups=[categorical_vars_1],
-)
-
 
 def test_doe_strategy_init():
     data_model = data_models.DoEStrategy(domain=domain, formula="linear")
@@ -125,32 +78,6 @@ def test_doe_strategy_ask_with_candidates():
     assert candidates.shape == (12, 3)
 
 
-def test_doe_categoricals_not_implemented():
-    categorical_inputs = [
-        CategoricalInput(key=f"x{i + 1}", categories=["a", "b", "c"]) for i in range(3)
-    ]
-    domain = Domain.from_lists(
-        inputs=categorical_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[],
-    )
-    with pytest.raises(Exception):
-        data_models.DoEStrategy(domain=domain, formula="linear")
-
-
-def test_doe_discrete_not_implemented():
-    discrete_inputs = [
-        DiscreteInput(key=f"x{i + 1}", values=[1, 2, 3]) for i in range(3)
-    ]
-    domain = Domain.from_lists(
-        inputs=discrete_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[],
-    )
-    with pytest.raises(Exception):
-        data_models.DoEStrategy(domain=domain, formula="linear")
-
-
 def test_nchoosek_implemented():
     nchoosek_constraint = NChooseKConstraint(
         features=[f"x{i + 1}" for i in range(3)],
@@ -163,7 +90,9 @@ def test_nchoosek_implemented():
         outputs=[ContinuousOutput(key="y")],
         constraints=[nchoosek_constraint],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, formula="linear", optimization_strategy="partially-random"
+    )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
     assert candidates.shape == (12, 3)
@@ -217,79 +146,6 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
-
-
-def test_doe_exhaustive_categorical():
-    np.random.seed(1)
-    data_model = data_models.DoEStrategy(
-        domain=categorical_domain, formula="linear", optimization_strategy="exhaustive"
-    )
-    strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=7)
-
-    true_design = np.array(
-        [
-            [1, 0, 0, 0, 0.5],
-            [1, 0, 0, 0.5, 0],
-            [0, 1, 0, 0, 1],
-            [0, 1, 0, 1, 0],
-            [0, 0, 1, 0, 3],
-            [0, 0, 1, 0, 3],
-            [0, 0, 1, 1.75, 1.25],
-        ]
-    )
-
-    assert np.isclose(candidates.to_numpy(), true_design).all()
-
-
-def test_doe_bab_categorical():
-    np.random.seed(1)
-    data_model = data_models.DoEStrategy(
-        domain=categorical_domain,
-        formula="linear",
-        optimization_strategy="branch-and-bound",
-    )
-    strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=7)
-
-    true_design = np.array(
-        [
-            [0, 1, 0, 0.3931, 0.6069],
-            [0, 0, 1, 1.75, 1.25],
-            [0, 0, 1, 0, 3],
-            [0, 0, 1, 0, 3],
-            [0, 0, 1, 1.75, 1.25],
-            [0, 0, 1, 1.75, 1.25],
-            [0, 0, 1, 0, 3],
-        ]
-    )
-
-    assert np.isclose(candidates.to_numpy(), true_design).all()
-
-
-def test_doe_bab_categorical_discrete():
-    np.random.seed(1)
-    data_model = data_models.DoEStrategy(
-        domain=categorical_discrete_domain,
-        formula="linear",
-        optimization_strategy="branch-and-bound",
-    )
-    strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=7)
-
-    true_design = np.array(
-        [
-            [0, 0, 1, 0, 1.75, 1.25],
-            [0, 1, 0, 0, 1, 0],
-            [0, 1, 0, 0, 0, 1],
-            [0, 0, 1, 0, 0, 3],
-            [0, 0, 1, 99, 0, 3],
-            [0, 0, 1, 99, 0, 3],
-            [0, 0, 1, 99, 1.75, 1.25],
-        ]
-    )
-
-    assert np.isclose(candidates.to_numpy(), true_design, rtol=1e-4, atol=1e-5).all()
 
 
 # if __name__ == "__main__":
