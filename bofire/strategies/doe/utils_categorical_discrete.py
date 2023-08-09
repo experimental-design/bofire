@@ -73,7 +73,6 @@ def nchoosek_to_relaxable_domain_mapper(
     n_choose_k_constraints = domain.constraints.get(includes=NChooseKConstraint)
 
     for constr in n_choose_k_constraints:
-        constr: NChooseKConstraint
         var_occuring_in_nchoosek.extend(constr.features)
 
         current_features: List[Feature] = [
@@ -116,7 +115,7 @@ def NChooseKGroup_with_quantity(
 ) -> Tuple[
     List[CategoricalInput] | List[RelaxableBinaryInput],
     List[ContinuousInput] | List[Any],
-    List[LinearEqualityConstraint],
+    List[LinearEqualityConstraint | LinearInequalityConstraint],
 ]:
     """
     helper function to generate an N choose K problem with categorical variables, with an option to connect each
@@ -512,7 +511,9 @@ def validate_categorical_groups(
 def design_from_original_to_new_domain(
     original_domain: Domain, new_domain: Domain, design: pd.DataFrame
 ) -> pd.DataFrame:
-    pass
+    raise NotImplementedError(
+        "mapping a design to a new domain is not implemented yet."
+    )
 
 
 def design_from_new_to_original_domain(
