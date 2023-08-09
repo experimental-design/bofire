@@ -49,3 +49,5 @@ class OutlierDetections(BaseModel):
                     raise ValueError(f"Features with key {feat.key} are incompatible.")
                 if feat.key not in used_feature_keys:
                     used_feature_keys.append(feat.key)
+        if len(used_feature_keys) != len(inputs):
+            raise ValueError("Unused features are present.")

@@ -15,17 +15,15 @@ from bofire.data_models.surrogates.api import (
 class OutlierDetection(BaseModel):
     type: str
 
+    @property
+    @abstractmethod
+    def inputs(self) -> Inputs:  # type: ignore
+        pass
 
-@property
-@abstractmethod
-def inputs(self) -> Inputs:  # type: ignore
-    pass
-
-
-@property
-@abstractmethod
-def outputs(self) -> Outputs:  # type: ignore
-    pass
+    @property
+    @abstractmethod
+    def outputs(self) -> Outputs:  # type: ignore
+        pass
 
 
 class IterativeTrimming(OutlierDetection):

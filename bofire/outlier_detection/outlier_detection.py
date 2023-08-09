@@ -103,9 +103,9 @@ class IterativeTrimming(OutlierDetection):
                 break  # converged
             ix_old = ix_sub
 
-            filtered_experiments = experiments.copy()
-            filtered_experiments.loc[
-                ~ix_sub,
-                f"valid_{self.base_gp.outputs.get_keys()[0]}",  # type: ignore
-            ] = 0
+        filtered_experiments = experiments.copy()
+        filtered_experiments.loc[
+            ~ix_sub,
+            f"valid_{self.base_gp.outputs.get_keys()[0]}",  # type: ignore
+        ] = 0
         return filtered_experiments  # type: ignore

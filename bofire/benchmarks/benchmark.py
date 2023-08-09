@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 from multiprocess.pool import Pool
 from pydantic import Field, PositiveFloat
-from scipy.stats import norm, t, uniform
+from scipy.stats import norm, uniform
 from tqdm import tqdm
 from typing_extensions import Annotated
 
@@ -26,31 +26,33 @@ class UniformOutlierPrior(OutlierPrior):
     type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
     bounds: Tuple[float, float]
 
+    def sample(self, n_samples: int) -> np.ndarray:
+        return uniform(
+            self.bounds[0],
+            self.bounds[1] - self.bounds[0],
+        ).rvs(n_samples)
+
 
 class NormalOutlierPrior(OutlierPrior):
     type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
     loc: float
     scale: PositiveFloat
 
-
-class tOutlierPrior(OutlierPrior):
-    type: Literal["tOutlierPrior"] = "tOutlierPrior"
-    loc: float
-    scale: PositiveFloat
-    df: PositiveFloat
+    def sample(self, n_samples: int) -> np.ndarray:
+        return norm(self.loc, self.scale).rvs(n_samples)
 
 
-AnyOutlierPrior = Union[UniformOutlierPrior, NormalOutlierPrior, tOutlierPrior]
+AnyOutlierPrior = Union[UniformOutlierPrior, NormalOutlierPrior]
 
 
 class Benchmark:
     def __init__(
         self,
         outlier_rate: Annotated[float, Field(ge=0, lt=1)] = 0,
-        OutlierPrior: Optional[AnyOutlierPrior] = None,
+        outlier_prior: Optional[AnyOutlierPrior] = None,
     ):
         self.outlier_rate = outlier_rate
-        self.OutlierPrior = OutlierPrior
+        self.outlier_prior = outlier_prior
 
     def f(
         self,
@@ -58,30 +60,15 @@ class Benchmark:
         return_complete: bool = False,
     ) -> pd.DataFrame:
         Y = self._f(candidates)
-        if self.OutlierPrior is not None:
-            # no_outliers = int(len(Y) * self.outlier_rate)
-            ix2 = np.zeros(len(Y), dtype=bool)
-            ix1 = uniform().rvs(len(Y))
-            # ix2[np.random.choice(len(Y), no_outliers, replace=False)] = True
-            ix2 = ix1 <= self.outlier_rate
-            no_outliers = sum(ix2)
-
-            if self.OutlierPrior.type == "UniformOutlierPrior":
-                Y.loc[ix2, "y"] = Y.loc[ix2, "y"] + uniform(
-                    self.OutlierPrior.bounds[0],
-                    self.OutlierPrior.bounds[1] - self.OutlierPrior.bounds[0],
-                ).rvs(
-                    no_outliers
-                )  # type: ignore
-            if self.OutlierPrior.type == "NormalOutlierPrior":
-                Y.loc[ix2, "y"] = Y.loc[ix2, "y"] + norm(
-                    self.OutlierPrior.loc, self.OutlierPrior.scale
-                ).rvs(no_outliers)
-            if self.OutlierPrior.type == "tOutlierPrior":
-                Y.loc[ix2, "y"] = Y.loc[ix2, "y"] + t(
-                    self.OutlierPrior.df, self.OutlierPrior.loc, self.OutlierPrior.scale
-                ).rvs(no_outliers)
-
+        if self.outlier_prior is not None:
+            for output_feature in self.domain.outputs.get_keys():
+                # no_outliers = int(len(Y) * self.outlier_rate)
+                ix2 = np.zeros(len(Y), dtype=bool)
+                ix1 = uniform().rvs(len(Y))
+                # ix2[np.random.choice(len(Y), no_outliers, replace=False)] = True
+                ix2 = ix1 <= self.outlier_rate
+                n_outliers = sum(ix2)
+                Y.loc[ix2, output_feature] = Y.loc[ix2, output_feature] + self.outlier_prior.sample(n_outliers)  # type: ignore
         if return_complete:
             return pd.concat([candidates, Y], axis=1)
 
