@@ -182,7 +182,7 @@ def _spearman_UQ(
     """Calculates the Spearman correlation coefficient between the models absolute error
     and the uncertainty - non-linear correlation.
 
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -213,7 +213,7 @@ def _pearson_UQ(
     """Calculates the Pearson correlation coefficient between the models absolute error
     and the uncertainty - linear correlation.
 
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -244,7 +244,7 @@ def _kendall_UQ(
     """Calculates the Kendall correlation coefficient between the models absolute error
     and the uncertainty - linear correlation.
 
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -273,7 +273,7 @@ def _NLL(
     standard_deviation: Optional[np.ndarray] = None,
 ) -> float:
     """Calculates the Negative log-likelihood of predicted data
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -294,7 +294,7 @@ def _NLL(
             1.0 / (2.0 * observed.shape[0])
             + observed.shape[0] * np.log(2 * np.pi)
             + np.sum(np.log(predicted))
-            + np.sum(np.square(predicted - observed) / standard_deviation)  # type: ignore
+            + np.sum(np.square((predicted - observed) / standard_deviation))  # type: ignore
         )
         return res
 
@@ -304,10 +304,10 @@ def _CVPPDiagram(
     predicted: np.ndarray,
     standard_deviation: Optional[np.ndarray] = None,
     num_bins: int = 10,
-) -> Tuple[Optional[np.ndarray], Optional[np.ndarray]]:
+) -> Tuple[np.ndarray, np.ndarray]:
     """Metric introduced in arXiv:2010.01118 [cs.LG] based on cross-validatory
     predictive p-values.
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -321,8 +321,9 @@ def _CVPPDiagram(
         np.ndarray: callibration score for each quantile.
     """
     if standard_deviation is None:
-        warnings.warn("Calibration metric without standard deviation is not possible")
-        return None, None
+        raise ValueError(
+            "Calibration metric without standard deviation is not possible"
+        )
     else:
         lhs = np.abs((predicted - observed) / standard_deviation)  # type: ignore
         qs = np.linspace(0, 1, num_bins)
@@ -345,7 +346,7 @@ def _MaximumMiscalibration(
     confidence, i.e. a model that is overconfident for ~half of the
     quantiles and under-confident for ~half will still have a MiscalibrationArea
     of ~0.
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -357,10 +358,7 @@ def _MaximumMiscalibration(
     Returns:
         float: maximum miscalibration
     """
-    if standard_deviation is None:
-        warnings.warn("Calibration metric without standard deviation is not possible")
-        return np.nan
-    else:
+    try:
         qs, Cqs = _CVPPDiagram(
             observed=observed,
             predicted=predicted,
@@ -370,6 +368,9 @@ def _MaximumMiscalibration(
         res = np.max(np.abs(Cqs - qs))  # type: ignore
 
         return res
+    except ValueError:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return np.nan
 
 
 def _MiscalibrationArea(
@@ -383,7 +384,7 @@ def _MiscalibrationArea(
     confidence, i.e. a model that is overconfident for ~half of the
     quantiles and under-confident for ~half will still have a MiscalibrationArea
     of ~0.
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -395,10 +396,7 @@ def _MiscalibrationArea(
     Returns:
         float: total miscalibration area
     """
-    if standard_deviation is None:
-        warnings.warn("Calibration metric without standard deviation is not possible")
-        return np.nan
-    else:
+    try:
         qs, Cqs = _CVPPDiagram(
             observed=observed,
             predicted=predicted,
@@ -408,6 +406,9 @@ def _MiscalibrationArea(
         res = simps(Cqs - qs, qs)  # type: ignore
 
         return res
+    except ValueError:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return np.nan
 
 
 def _AbsoluteMiscalibrationArea(
@@ -417,7 +418,7 @@ def _AbsoluteMiscalibrationArea(
     num_bins: int = 10,
 ) -> float:
     """absolute miscalibration area metric with CVPP
-    This implementation is taken from Ax: https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
+    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
     Args:
@@ -429,10 +430,7 @@ def _AbsoluteMiscalibrationArea(
     Returns:
         float: absolute miscalibration area
     """
-    if standard_deviation is None:
-        warnings.warn("Calibration metric without standard deviation is not possible")
-        return np.nan
-    else:
+    try:
         qs, Cqs = _CVPPDiagram(
             observed=observed,
             predicted=predicted,
@@ -442,6 +440,9 @@ def _AbsoluteMiscalibrationArea(
         res = simps(np.abs(Cqs - qs), qs)  # type: ignore
 
         return res
+    except ValueError:
+        warnings.warn("Calibration metric without standard deviation is not possible")
+        return np.nan
 
 
 metrics = {
@@ -452,7 +453,13 @@ metrics = {
     RegressionMetricsEnum.PEARSON: _pearson,
     RegressionMetricsEnum.SPEARMAN: _spearman,
     RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
-    RegressionMetricsEnum.CALIBRATION: _AbsoluteMiscalibrationArea,
+    RegressionMetricsEnum.PEARSON_UQ: _pearson_UQ,
+    RegressionMetricsEnum.SPEARMAN_UQ: _spearman_UQ,
+    RegressionMetricsEnum.KENDALL_UQ: _kendall_UQ,
+    RegressionMetricsEnum.MAXIMUMCALIBRATION: _MaximumMiscalibration,
+    RegressionMetricsEnum.MISCALIBRATIONAREA: _MiscalibrationArea,
+    RegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
+    RegressionMetricsEnum.NLL: _NLL,
 }
 
 
@@ -663,7 +670,13 @@ class CvResults(BaseModel):
             RegressionMetricsEnum.PEARSON,
             RegressionMetricsEnum.SPEARMAN,
             RegressionMetricsEnum.FISHER,
-            RegressionMetricsEnum.CALIBRATION,
+            RegressionMetricsEnum.PEARSON_UQ,
+            RegressionMetricsEnum.SPEARMAN_UQ,
+            RegressionMetricsEnum.KENDALL_UQ,
+            RegressionMetricsEnum.MAXIMUMCALIBRATION,
+            RegressionMetricsEnum.MISCALIBRATIONAREA,
+            RegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA,
+            RegressionMetricsEnum.NLL,
         ],
         combine_folds: bool = True,
     ) -> pd.DataFrame:

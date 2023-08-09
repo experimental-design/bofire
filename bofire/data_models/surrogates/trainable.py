@@ -19,7 +19,13 @@ metrics2objectives = {
     RegressionMetricsEnum.PEARSON: MaximizeObjective,
     RegressionMetricsEnum.SPEARMAN: MaximizeObjective,
     RegressionMetricsEnum.FISHER: MaximizeObjective,
-    RegressionMetricsEnum.CALIBRATION: MinimizeObjective,
+    RegressionMetricsEnum.PEARSON_UQ: MaximizeObjective,
+    RegressionMetricsEnum.SPEARMAN_UQ: MaximizeObjective,
+    RegressionMetricsEnum.KENDALL_UQ: MaximizeObjective,
+    RegressionMetricsEnum.MAXIMUMCALIBRATION: MinimizeObjective,
+    RegressionMetricsEnum.MISCALIBRATIONAREA: MinimizeObjective,
+    RegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: MinimizeObjective,
+    RegressionMetricsEnum.NLL: MinimizeObjective,
 }
 
 

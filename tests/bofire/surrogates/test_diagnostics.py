@@ -205,16 +205,19 @@ def test_cvresult_get_metric_invalid():
         np.isnan(cv.get_metric(metric=metric))
 
 
-def test_cvresult_get_calibration_metric():
+def test_cvresult_get_UQ_metric_valid():
     cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=True)
     assert cv.n_samples == 10
-    cv.get_metric(RegressionMetricsEnum.CALIBRATION)
+    for metric in metrics.keys():
+        cv.get_metric(metric=metric)
 
 
-def test_cvresult_get_calibration_metric_invalid():
+def test_cvresult_get_UQ_metric_invalid():
     cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=False)
     assert cv.n_samples == 10
-    np.isnan(cv.get_metric(RegressionMetricsEnum.CALIBRATION))
+    for metric in metrics.keys():
+        if pytest.raises(Warning):
+            np.isnan(cv.get_metric(metric=metric))
 
 
 def test_cvresults_invalid():

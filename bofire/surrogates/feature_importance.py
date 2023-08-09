@@ -40,7 +40,13 @@ def permutation_importance(
         RegressionMetricsEnum.MSD: -1.0,
         RegressionMetricsEnum.PEARSON: 1.0,
         RegressionMetricsEnum.SPEARMAN: 1.0,
-        RegressionMetricsEnum.CALIBRATION: -1.0,
+        RegressionMetricsEnum.PEARSON_UQ: 1.0,
+        RegressionMetricsEnum.SPEARMAN_UQ: 1.0,
+        RegressionMetricsEnum.KENDALL_UQ: 1.0,
+        RegressionMetricsEnum.MAXIMUMCALIBRATION: -1.0,
+        RegressionMetricsEnum.MISCALIBRATIONAREA: -1.0,
+        RegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: -1.0,
+        RegressionMetricsEnum.NLL: -1.0,
     }
 
     output_key = model.outputs[0].key
