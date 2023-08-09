@@ -80,6 +80,9 @@ class DoEStrategy(Strategy):
         self.set_candidates(
             self.experiments[self.domain.get_feature_keys(includes=Input)]
         )
+        raise NotImplementedError(
+            "For the DoEStrategy, the tell method is not implemented yet"
+        )
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         all_new_categories = []
