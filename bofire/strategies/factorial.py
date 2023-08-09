@@ -7,14 +7,6 @@ from bofire.strategies.strategy import Strategy
 
 
 class FactorialStrategy(Strategy):
-    """Sampler that generates samples from a Polytope defined by linear equality and ineqality constraints.
-
-    Attributes:
-        domain (Domain): Domain defining the constrained input space
-        fallback_sampling_method: SamplingMethodEnum, optional): Method to use for sampling when no
-            constraints are present. Defaults to UNIFORM.
-    """
-
     def __init__(
         self,
         data_model: DataModel,
