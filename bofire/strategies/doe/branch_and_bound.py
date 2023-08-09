@@ -118,7 +118,7 @@ class NodeExperiment:
 
 
 def is_valid(
-    design_matrix: pd.DataFrame, domain: Domain, tolerance: float = 1e-3
+    design_matrix: pd.DataFrame, domain: Domain, tolerance: float = 1e-2
 ) -> bool:
     """
     test if a design is a valid solution. i.e. binary and discrete variables are valid
@@ -212,6 +212,13 @@ def bnb(
                 current_branch.categorical_groups,
                 current_branch.discrete_vars,
             )
+            domain.validate_candidates(
+                candidates=design.apply(lambda x: np.round(x, 8)),
+                only_inputs=True,
+                tol=1e-4,
+                raise_validation_error=True,
+            )
+
             priority_queue.put(new_node)
         except ConstraintNotFulfilledError:
             if verbose:
