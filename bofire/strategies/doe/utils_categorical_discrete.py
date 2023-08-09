@@ -113,10 +113,10 @@ def NChooseKGroup_with_quantity(
     combined_quantity_limit: Optional[float] = None,
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
-) -> Tuple[
+) -> tuple[
     List[CategoricalInput] | List[RelaxableBinaryInput],
     List[ContinuousInput] | List[Any],
-    List[LinearEqualityConstraint | LinearInequalityConstraint],
+    List[LinearEqualityConstraint],
 ]:
     """
     helper function to generate an N choose K problem with categorical variables, with an option to connect each
@@ -520,7 +520,6 @@ def design_from_original_to_new_domain(
 def design_from_new_to_original_domain(
     original_domain: Domain, design: pd.DataFrame
 ) -> pd.DataFrame:
-
     # map the RelaxableBinaryInputs to the corresponding CategoricalInputs, choose random if for multiple solutions
     transformed_design = design[
         original_domain.get_feature_keys(excludes=[CategoricalInput, Output])
