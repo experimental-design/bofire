@@ -15,7 +15,7 @@ from botorch.acquisition.objective import GenericMCObjective
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import DTLZ2
-from bofire.benchmarks.single import Himmelblau
+from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -268,3 +268,15 @@ def test_custom_dumps_invalid():
     strategy = CustomSoboStrategy(data_model=data_model)
     with pytest.raises(ValueError):
         strategy.dumps()
+
+
+def test_sobo_fully_combinatorical():
+    benchmark = _CategoricalDiscreteHimmelblau()
+
+    strategy_data = data_models.SoboStrategy(domain=benchmark.domain)
+    strategy = SoboStrategy(data_model=strategy_data)
+
+    experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
+
+    strategy.tell(experiments=experiments)
+    strategy.ask(candidate_count=1)

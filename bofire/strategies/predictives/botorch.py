@@ -260,8 +260,9 @@ class BotorchStrategy(PredictiveStrategy):
                 how="left",
                 indicator=True,
             )
-            filtered_choices = merged[merged["_merge"] == "left_only"]
+            filtered_choices = merged[merged["_merge"] == "left_only"].copy()
             filtered_choices.drop(columns=["_merge"], inplace=True)
+
             # translate the filtered choice to torch
             t_choices = torch.from_numpy(
                 self.domain.inputs.transform(

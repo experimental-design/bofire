@@ -1,7 +1,15 @@
 import numpy as np
 import pytest
 
-from bofire.benchmarks.single import Ackley, Branin, Branin30, Hartmann, Himmelblau
+from bofire.benchmarks.single import (
+    Ackley,
+    Branin,
+    Branin30,
+    DiscreteHimmelblau,
+    Hartmann,
+    Himmelblau,
+    _CategoricalDiscreteHimmelblau,
+)
 
 
 def test_hartmann():
@@ -20,6 +28,10 @@ def test_hartmann():
     "cls_benchmark, return_complete, kwargs",
     [
         (Himmelblau, False, {}),
+        (DiscreteHimmelblau, False, {}),
+        (DiscreteHimmelblau, True, {}),
+        (_CategoricalDiscreteHimmelblau, False, {}),
+        (_CategoricalDiscreteHimmelblau, True, {}),
         (Ackley, False, {}),
         (Himmelblau, True, {}),
         (Ackley, True, {}),
