@@ -320,7 +320,12 @@ def find_local_max_ipopt_exhaustive(
                 one_set_of_experiments,
                 objective,
             )
-
+            domain.validate_candidates(
+                candidates=current_design.apply(lambda x: np.round(x, 8)),
+                only_inputs=True,
+                tol=1e-4,
+                raise_validation_error=True,
+            )
             temp_value = objective_class.evaluate(
                 current_design.to_numpy().flatten(),
             )
