@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    DiscreteInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -350,3 +351,39 @@ class Himmelblau(Benchmark):
             np.c_[x, y],
             columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
         )
+
+
+class DiscreteHimmelblau(Himmelblau):
+    def __init__(self):
+        inputs = []
+
+        inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))
+        inputs.append(DiscreteInput(key="x_2", values=np.linspace(-6, 6, 20).tolist()))
+
+        objective = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", objective=objective)
+
+        self._domain = Domain(
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[output_feature]),
+        )
+
+
+class _CategoricalDiscreteHimmelblau(Himmelblau):  # only used for testing
+    def __init__(self):
+        inputs = []
+
+        inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))
+        inputs.append(DiscreteInput(key="x_2", values=np.linspace(-6, 6, 20).tolist()))
+        inputs.append(CategoricalInput(key="x_3", categories=["a", "b", "c"]))
+
+        objective = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", objective=objective)
+
+        self._domain = Domain(
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[output_feature]),
+        )
+
+    def get_optima(self):
+        raise NotImplementedError()
