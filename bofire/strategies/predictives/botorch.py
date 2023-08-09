@@ -11,6 +11,7 @@ from botorch.models.gpytorch import GPyTorchModel
 from botorch.optim.initializers import gen_batch_initial_conditions
 from botorch.optim.optimize import (
     optimize_acqf,
+    optimize_acqf_discrete,
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
@@ -252,6 +253,46 @@ class BotorchStrategy(PredictiveStrategy):
 
         assert candidate_count > 0, "candidate_count has to be larger than zero."
 
+        acqfs = self._get_acqfs(candidate_count)
+
+        # we check here if we have a fully combinatorical search space
+        if len(
+            self.domain.inputs.get(includes=[DiscreteInput, CategoricalInput])
+        ) == len(self.domain.inputs):
+            if len(acqfs) > 1:
+                raise NotImplementedError(
+                    "Multiple Acqfs are currently not supported for purely combinatorical search spaces."
+                )
+            # generate the choices as pandas dataframe
+            choices = pd.DataFrame.from_dict(
+                [
+                    {e[0]: e[1] for e in combi}  # type: ignore
+                    for combi in self.domain.inputs.get_categorical_combinations()
+                ]
+            )
+            # compare the choices with the training data and remove all that are also part
+            # of the training data
+            merged = choices.merge(
+                self.experiments[self.domain.inputs.get_keys()],
+                on=list(choices.columns),
+                how="left",
+                indicator=True,
+            )
+            filtered_choices = merged[merged["_merge"] == "left_only"].copy()
+            filtered_choices.drop(columns=["_merge"], inplace=True)
+
+            # translate the filtered choice to torch
+            t_choices = torch.from_numpy(
+                self.domain.inputs.transform(
+                    filtered_choices, specs=self.input_preprocessing_specs
+                ).values
+            ).to(**tkwargs)
+
+            candidates, _ = optimize_acqf_discrete(
+                acq_function=acqfs[0], q=candidate_count, unique=True, choices=t_choices
+            )
+            return self._postprocess_candidates(candidates=candidates)
+
         (
             bounds,
             ic_generator,
@@ -260,8 +301,6 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features,
             fixed_features_list,
         ) = self._setup_ask()
-
-        acqfs = self._get_acqfs(candidate_count)
 
         if len(acqfs) > 1:
             candidates, _ = optimize_acqf_list(
