@@ -358,7 +358,8 @@ class Himmelblau(Benchmark):
 
 
 class DiscreteHimmelblau(Himmelblau):
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         inputs = []
 
         inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))
@@ -374,7 +375,8 @@ class DiscreteHimmelblau(Himmelblau):
 
 
 class _CategoricalDiscreteHimmelblau(Himmelblau):  # only used for testing
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         inputs = []
 
         inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))
