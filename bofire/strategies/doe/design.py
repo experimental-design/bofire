@@ -96,13 +96,20 @@ def find_local_max_ipopt_BaB(
     # setting up initial node in the branch-and-bound tree
     column_keys = domain.inputs.get_keys()
 
-    subtract = 0
     if fixed_experiments is not None:
         subtract = len(fixed_experiments)
-    initial_branch = pd.DataFrame(
-        np.full((n_experiments - subtract, len(column_keys)), None),
-        columns=column_keys,
-    )
+        initial_branch = pd.DataFrame(
+            np.full((n_experiments - subtract, len(column_keys)), None),
+            columns=column_keys,
+        )
+        initial_branch = pd.concat([fixed_experiments, initial_branch]).reset_index(
+            drop=True
+        )
+    else:
+        initial_branch = pd.DataFrame(
+            np.full((n_experiments, len(column_keys)), None),
+            columns=column_keys,
+        )
 
     if partially_fixed_experiments is not None:
         partially_fixed_experiments = pd.concat(
@@ -134,7 +141,7 @@ def find_local_max_ipopt_BaB(
         delta,
         ipopt_options,
         sampling,
-        fixed_experiments,
+        None,
         partially_fixed_experiments=initial_branch,
         objective=objective,
     )
@@ -164,7 +171,7 @@ def find_local_max_ipopt_BaB(
         delta=delta,
         ipopt_options=ipopt_options,
         sampling=sampling,
-        fixed_experiments=fixed_experiments,
+        fixed_experiments=None,
         objective=objective,
         verbose=verbose,
     )
@@ -268,7 +275,6 @@ def find_local_max_ipopt_exhaustive(
     group_keys = [var.key for group in categorical_groups for var in group]
     minimum = float("inf")
     optimal_design = pd.DataFrame()
-    len(domain.inputs) - len(binary_vars)
     all_n_fixed_experiments = list(all_n_fixed_experiments)
     for i, binary_fixed_experiments in enumerate(all_n_fixed_experiments):
         if verbose:
@@ -304,6 +310,11 @@ def find_local_max_ipopt_exhaustive(
                 inplace=True,
             )
 
+        if fixed_experiments is not None:
+            one_set_of_experiments = pd.concat(
+                [fixed_experiments, one_set_of_experiments]
+            ).reset_index(drop=True)
+
         if sampling is not None:
             sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
 
@@ -316,7 +327,7 @@ def find_local_max_ipopt_exhaustive(
                 delta,
                 ipopt_options,
                 sampling,
-                fixed_experiments,
+                None,
                 one_set_of_experiments,
                 objective,
             )
@@ -529,7 +540,7 @@ def partially_fix_experiment(
     """
     fixes some variables for experiments. Within one experiment not all variables need to be fixed.
     Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
-    Non-fixed variables have to be set to None or nan.
+    Non-fixed variables have to be set to None or nan. Will also fix the experiments provided in fixed_experiments
 
     Args:
         bounds (list): current bounds
