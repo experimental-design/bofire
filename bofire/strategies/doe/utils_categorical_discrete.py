@@ -1,5 +1,5 @@
 from itertools import combinations
-from typing import Any, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -14,7 +14,7 @@ from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Feature, Input, Output
+from bofire.data_models.features.feature import Feature, Output
 from bofire.strategies.doe.utils_features import (
     RelaxableBinaryInput,
     RelaxableDiscreteInput,
@@ -114,8 +114,8 @@ def NChooseKGroup_with_quantity(
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
 ) -> tuple[
-    List[Input],
-    List[ContinuousInput] | List[Any],
+    Union[List[CategoricalInput], List[RelaxableBinaryInput]],
+    List[ContinuousInput],
     List[LinearEqualityConstraint],
 ]:
     """
@@ -261,9 +261,9 @@ def _generate_quantity_var_constr(
     combined_quantity_is_equal_or_less_than,
 ) -> Tuple[
     List[ContinuousInput],
-    List[NonlinearInequalityConstraint] | List[LinearInequalityConstraint],
-    List[NonlinearInequalityConstraint] | List[LinearInequalityConstraint],
-    LinearEqualityConstraint | LinearInequalityConstraint | None,
+    Union[List[NonlinearInequalityConstraint], List[LinearInequalityConstraint]],
+    Union[List[NonlinearInequalityConstraint], List[LinearInequalityConstraint]],
+    Optional[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
 ]:
     """
     Internal helper function just to create the quantity variables and the corresponding constraints.
@@ -360,7 +360,7 @@ def NChooseKGroup(
     none_also_valid: bool,
 ) -> Tuple[
     List[RelaxableBinaryInput],
-    List[LinearEqualityConstraint | LinearInequalityConstraint],
+    List[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
 ]:
     """
     helper function to generate an N choose K problem with categorical variables, with an option to connect each
