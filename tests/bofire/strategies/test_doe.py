@@ -11,8 +11,10 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
+    CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    DiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
 
@@ -146,6 +148,57 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
+
+
+def test_categorical_discrete_doe():
+    quantity_a = [
+        ContinuousInput(key=f"quantity_a_{i}", bounds=(230, 230)) for i in range(3)
+    ]
+    quantity_b = [
+        ContinuousInput(key=f"quantity_b_{i}", bounds=(1, 15)) for i in range(3)
+    ]
+    all_inputs = [
+        CategoricalInput(key="animals", categories=["Whale", "Turtle", "Sloth"]),
+        DiscreteInput(key="discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        ContinuousInput(key="independent", bounds=(3, 10)),
+    ]
+    all_inputs.extend(quantity_a)
+    all_inputs.extend(quantity_b)
+
+    all_constraints = [
+        NChooseKConstraint(
+            features=[var.key for var in quantity_a],
+            min_count=1,
+            max_count=1,
+            none_also_valid=False,
+        ),
+        NChooseKConstraint(
+            features=[var.key for var in quantity_b],
+            min_count=2,
+            max_count=3,
+            none_also_valid=True,
+        ),
+        LinearEqualityConstraint(
+            features=[var.key for var in quantity_b],
+            coefficients=[1 for var in quantity_b],
+            rhs=15,
+        ),
+    ]
+
+    n_experiments = 10
+    domain = Domain(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain, formula="linear", optimization_strategy="relaxed"
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_experiments)
+
+    assert candidates.shape == (10, 9)
 
 
 # if __name__ == "__main__":
