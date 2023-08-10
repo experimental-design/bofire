@@ -48,10 +48,13 @@ def permutation_importance(
         k.name: {feature.key: [] for feature in model.inputs} for k in metrics.keys()
     }
     pred = model.predict(X)
-    original_metrics = {
-        k.name: metrics[k](y[output_key].values, pred[output_key + "_pred"].values)  # type: ignore
-        for k in metrics.keys()
-    }
+    if len(pred) >= 2:
+        original_metrics = {
+            k.name: metrics[k](y[output_key].values, pred[output_key + "_pred"].values)  # type: ignore
+            for k in metrics.keys()
+        }
+    else:
+        original_metrics = {k.name: np.nan for k in metrics.keys()}
 
     for feature in model.inputs:
         for _ in range(n_repeats):
@@ -62,9 +65,13 @@ def permutation_importance(
             pred = model.predict(X_i)
             # compute scores
             for metricenum, metric in metrics.items():
-                prelim_results[metricenum.name][feature.key].append(
-                    metric(y[output_key].values, pred[output_key + "_pred"].values)  # type: ignore
-                )
+                if len(pred) >= 2:
+                    prelim_results[metricenum.name][feature.key].append(
+                        metric(y[output_key].values, pred[output_key + "_pred"].values)  # type: ignore
+                    )
+                else:
+                    prelim_results[metricenum.name][feature.key].append(np.nan)  # type: ignore
+
     # convert dictionaries to dataframe for easier postprocessing and statistics
     # and return
     results = {}

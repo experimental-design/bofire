@@ -96,6 +96,8 @@ class TrainableSurrogate(ABC):
             raise NotImplementedError(
                 "Cross validation not implemented for multi-output models"
             )
+        # first filter the experiments based on the model setting
+        experiments = self._preprocess_experiments(experiments)
         n = len(experiments)
         if folds > n:
             warnings.warn(
@@ -117,8 +119,6 @@ class TrainableSurrogate(ABC):
         # instantiate kfold object
         cv = KFold(n_splits=folds, shuffle=True, random_state=random_state)
         key = self.outputs.get_keys()[0]  # type: ignore
-        # first filter the experiments based on the model setting
-        experiments = self._preprocess_experiments(experiments)
         train_results = []
         test_results = []
         # now get the indices for the split
