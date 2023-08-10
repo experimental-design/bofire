@@ -14,7 +14,7 @@ from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Feature, Output
+from bofire.data_models.features.feature import Feature, Input, Output
 from bofire.strategies.doe.utils_features import (
     RelaxableBinaryInput,
     RelaxableDiscreteInput,
@@ -114,7 +114,7 @@ def NChooseKGroup_with_quantity(
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
 ) -> tuple[
-    List[CategoricalInput] | List[RelaxableBinaryInput],
+    List[Input],
     List[ContinuousInput] | List[Any],
     List[LinearEqualityConstraint],
 ]:
