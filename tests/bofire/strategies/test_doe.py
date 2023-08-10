@@ -151,12 +151,11 @@ def test_doe_strategy_amount_of_candidates():
 
 
 def test_categorical_discrete_doe():
-    np.random.seed(1)
     quantity_a = [
-        ContinuousInput(key=f"quantity_a_{i}", bounds=(230, 230)) for i in range(3)
+        ContinuousInput(key=f"quantity_a_{i}", bounds=(0, 100)) for i in range(3)
     ]
     quantity_b = [
-        ContinuousInput(key=f"quantity_b_{i}", bounds=(1, 15)) for i in range(3)
+        ContinuousInput(key=f"quantity_b_{i}", bounds=(0, 15)) for i in range(3)
     ]
     all_inputs = [
         CategoricalInput(key="animals", categories=["Whale", "Turtle", "Sloth"]),
@@ -169,14 +168,14 @@ def test_categorical_discrete_doe():
     all_constraints = [
         NChooseKConstraint(
             features=[var.key for var in quantity_a],
-            min_count=1,
+            min_count=0,
             max_count=1,
-            none_also_valid=False,
+            none_also_valid=True,
         ),
         NChooseKConstraint(
             features=[var.key for var in quantity_b],
-            min_count=2,
-            max_count=3,
+            min_count=0,
+            max_count=2,
             none_also_valid=True,
         ),
         LinearEqualityConstraint(
@@ -194,7 +193,7 @@ def test_categorical_discrete_doe():
     )
 
     data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", optimization_strategy="relaxed"
+        domain=domain, formula="linear", optimization_strategy="partially-random"
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)
