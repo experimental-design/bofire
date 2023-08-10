@@ -151,6 +151,7 @@ def test_doe_strategy_amount_of_candidates():
 
 
 def test_categorical_discrete_doe():
+    np.random.seed(1)
     quantity_a = [
         ContinuousInput(key=f"quantity_a_{i}", bounds=(230, 230)) for i in range(3)
     ]
