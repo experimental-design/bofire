@@ -430,7 +430,7 @@ def test_DOptimality_instantiation():
 
     assert np.allclose(B, d_optimality._model_jacobian_t(x))
     assert np.shape(
-        d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2]]))
+        d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2]]).flatten())
     ) == (6,)
 
     # 5th order model
@@ -459,7 +459,9 @@ def test_DOptimality_instantiation():
 
     assert np.allclose(B, d_optimality._model_jacobian_t(x))
     assert np.shape(
-        d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]))
+        d_optimality.evaluate_jacobian(
+            np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]).flatten()
+        )
     ) == (9,)
 
 
