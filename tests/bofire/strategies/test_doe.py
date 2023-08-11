@@ -2,6 +2,7 @@ import warnings
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -45,7 +46,7 @@ domain = Domain.from_lists(
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(
-            features=[f"x{i + 1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+            features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
         ),
         LinearInequalityConstraint(features=["x1", "x2"], coefficients=[5, 4], rhs=3.9),
         LinearInequalityConstraint(
@@ -80,21 +81,43 @@ def test_doe_strategy_ask_with_candidates():
     assert candidates.shape == (12, 3)
 
 
+def test_doe_categoricals_not_implemented():
+    categorical_inputs = [
+        CategoricalInput(key=f"x{i+1}", categories=["a", "b", "c"]) for i in range(3)
+    ]
+    domain = Domain.from_lists(
+        inputs=categorical_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[],
+    )
+    with pytest.raises(Exception):
+        data_models.DoEStrategy(domain=domain, formula="linear")
+
+
+def test_doe_discrete_not_implemented():
+    discrete_inputs = [DiscreteInput(key=f"x{i+1}", values=[1, 2, 3]) for i in range(3)]
+    domain = Domain.from_lists(
+        inputs=discrete_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[],
+    )
+    with pytest.raises(Exception):
+        data_models.DoEStrategy(domain=domain, formula="linear")
+
+
 def test_nchoosek_implemented():
     nchoosek_constraint = NChooseKConstraint(
-        features=[f"x{i + 1}" for i in range(3)],
+        features=[f"x{i+1}" for i in range(3)],
         min_count=0,
         max_count=2,
         none_also_valid=True,
     )
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(3)],
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.0, 1.0)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[nchoosek_constraint],
     )
-    data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", optimization_strategy="partially-random"
-    )
+    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
     assert candidates.shape == (12, 3)
@@ -148,57 +171,6 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
-
-
-def test_categorical_discrete_doe():
-    quantity_a = [
-        ContinuousInput(key=f"quantity_a_{i}", bounds=(0, 100)) for i in range(3)
-    ]
-    quantity_b = [
-        ContinuousInput(key=f"quantity_b_{i}", bounds=(0, 15)) for i in range(3)
-    ]
-    all_inputs = [
-        CategoricalInput(key="animals", categories=["Whale", "Turtle", "Sloth"]),
-        DiscreteInput(key="discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
-        ContinuousInput(key="independent", bounds=(3, 10)),
-    ]
-    all_inputs.extend(quantity_a)
-    all_inputs.extend(quantity_b)
-
-    all_constraints = [
-        NChooseKConstraint(
-            features=[var.key for var in quantity_a],
-            min_count=0,
-            max_count=1,
-            none_also_valid=True,
-        ),
-        NChooseKConstraint(
-            features=[var.key for var in quantity_b],
-            min_count=0,
-            max_count=2,
-            none_also_valid=True,
-        ),
-        LinearEqualityConstraint(
-            features=[var.key for var in quantity_b],
-            coefficients=[1 for var in quantity_b],
-            rhs=15,
-        ),
-    ]
-
-    n_experiments = 10
-    domain = Domain(
-        inputs=all_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=all_constraints,
-    )
-
-    data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", optimization_strategy="partially-random"
-    )
-    strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=n_experiments)
-
-    assert candidates.shape == (10, 9)
 
 
 # if __name__ == "__main__":
