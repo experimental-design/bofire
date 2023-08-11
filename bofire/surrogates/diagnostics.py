@@ -1,5 +1,5 @@
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -338,7 +338,7 @@ def _MaximumMiscalibration(
         )
         res = np.max(np.abs(Cqs - qs))  # type: ignore
 
-        return res
+        return float(res)
     except ValueError:
         warnings.warn(
             "Calibration metric without standard deviation is not possible", UserWarning
@@ -378,7 +378,7 @@ def _MiscalibrationArea(
         )
         res = simps(Cqs - qs, qs)  # type: ignore
 
-        return res
+        return float(res)
     except ValueError:
         warnings.warn(
             "Calibration metric without standard deviation is not possible", UserWarning
@@ -414,7 +414,7 @@ def _AbsoluteMiscalibrationArea(
         )
         res = simps(np.abs(Cqs - qs), qs)  # type: ignore
 
-        return res
+        return float(res)
     except ValueError:
         warnings.warn(
             "Calibration metric without standard deviation is not possible", UserWarning
@@ -440,6 +440,8 @@ UQ_metrics = {
     UQRegressionMetricsEnum.MISCALIBRATIONAREA: _MiscalibrationArea,
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
 }
+
+All_metrics = {**metrics, **UQ_metrics}
 
 
 class CvResult(BaseModel):
@@ -511,7 +513,9 @@ class CvResult(BaseModel):
         """
         return len(self.observed)
 
-    def get_metric(self, metric: RegressionMetricsEnum) -> float:
+    def get_metric(
+        self, metric: Union[RegressionMetricsEnum, UQRegressionMetricsEnum]
+    ) -> float:
         """Calculates a metric for the fold.
 
         Args:
@@ -525,23 +529,7 @@ class CvResult(BaseModel):
                 "Metric cannot be calculated for only one sample. Null value will be returned"
             )
             return np.nan
-        return metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
-
-    def get_UQ_metric(self, metric: UQRegressionMetricsEnum) -> float:
-        """Calculates an uncertainty metric for the fold.
-
-        Args:
-            metric (UQRegressionMetricsEnum): Metric to calculate.
-
-        Returns:
-            float: Metric value.
-        """
-        if self.n_samples == 1:
-            warnings.warn(
-                "Metric cannot be calculated for only one sample. Null value will be returned"
-            )
-            return np.nan
-        return UQ_metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
+        return All_metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
 
 class CvResults(BaseModel):
@@ -634,7 +622,9 @@ class CvResults(BaseModel):
         )
 
     def get_metric(
-        self, metric: RegressionMetricsEnum, combine_folds: bool = True
+        self,
+        metric: Union[RegressionMetricsEnum, UQRegressionMetricsEnum],
+        combine_folds: bool = True,
     ) -> pd.Series:
         """Calculates a metric for every fold and returns them as pd.Series.
 
@@ -655,31 +645,9 @@ class CvResults(BaseModel):
             [cv.get_metric(metric) for cv in self.results], name=metric.name
         )
 
-    def get_UQ_metric(
-        self, metric: UQRegressionMetricsEnum, combine_folds: bool = True
-    ) -> pd.Series:
-        """Calculates an uncertainty metric for every fold and returns them as pd.Series.
-
-        Args:
-            metric (UQRegressionMetricsEnum): Metrics to calculate.
-            combine_folds (bool, optional): If True the data in the split is combined before
-                the metric is calculated. In this case only a single number is returned. If False
-                the metric is calculated per fold. Defaults to True.
-
-        Returns:
-            pd.Series: Object containing the metric value for every fold.
-        """
-        if self.is_loo or combine_folds:
-            return pd.Series(
-                self._combine_folds().get_UQ_metric(metric=metric), name=metric.name
-            )
-        return pd.Series(
-            [cv.get_UQ_metric(metric) for cv in self.results], name=metric.name
-        )
-
     def get_metrics(
         self,
-        metrics: Sequence[RegressionMetricsEnum] = [
+        metrics: Sequence[Union[RegressionMetricsEnum, UQRegressionMetricsEnum]] = [
             RegressionMetricsEnum.MAE,
             RegressionMetricsEnum.MSD,
             RegressionMetricsEnum.R2,
@@ -702,33 +670,6 @@ class CvResults(BaseModel):
             pd.DataFrame: Dataframe containing the metric values for all folds.
         """
         return pd.concat([self.get_metric(m, combine_folds) for m in metrics], axis=1)
-
-    def get_UQ_metrics(
-        self,
-        metrics: Sequence[UQRegressionMetricsEnum] = [
-            UQRegressionMetricsEnum.PEARSON_UQ,
-            UQRegressionMetricsEnum.SPEARMAN_UQ,
-            UQRegressionMetricsEnum.KENDALL_UQ,
-            UQRegressionMetricsEnum.MAXIMUMCALIBRATION,
-            UQRegressionMetricsEnum.MISCALIBRATIONAREA,
-            UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA,
-        ],
-        combine_folds: bool = True,
-    ) -> pd.DataFrame:
-        """Calculates all metrics provided as list for every fold and returns all as pd.DataFrame.
-
-        Args:
-            metrics (Sequence[RegressionMetricsEnum], optional): Metrics to calculate. Defaults to R2, MAE, MSD, R2, MAPE.
-            combine_folds (bool, optional): If True the data in the split is combined before
-                the metric is calculated. In this case only a single number per metric is returned. If False
-                the metric is calculated per fold. Defaults to True.
-
-        Returns:
-            pd.DataFrame: Dataframe containing the metric values for all folds.
-        """
-        return pd.concat(
-            [self.get_UQ_metric(m, combine_folds) for m in metrics], axis=1
-        )
 
 
 # the following methods tranform a CvResults object to a CrossValidationValues object
