@@ -1,8 +1,11 @@
-from typing import ClassVar, List, Literal, Optional, Tuple
+import warnings
+from typing import ClassVar, List, Literal, Optional, Sequence, Tuple, Union
 
 import pandas as pd
+from pydantic import validator
 
-from bofire.data_models.features.categorical import _CAT_SEP
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.categorical import _CAT_SEP, CategoricalInput
 from bofire.data_models.features.feature import Input
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.utils.cheminformatics import smiles2mol
@@ -68,3 +71,54 @@ class MolecularInput(Input):
         descriptor_values.index = values.index
 
         return descriptor_values
+
+
+class CategoricalMolecularInput(CategoricalInput, MolecularInput):
+    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
+    order: ClassVar[int] = 7
+
+    @validator("categories")
+    def validate_categories_unique(cls, categories: Sequence[str]):
+        """validates that categories are valid smiles. Note that this check can only
+        be executed when rdkit is available.
+
+        Args:
+            categories (List[str]): List of smiles
+
+        Raises:
+            ValueError: when string is not a smiles
+
+        Returns:
+            List[str]: List of the smiles
+        """
+        # check on rdkit availability:
+        try:
+            smiles2mol(categories[0])
+        except NameError:
+            warnings.warn("rdkit not installed, categories cannot be validated.")
+            return categories
+
+        for cat in categories:
+            smiles2mol(cat)
+        return categories
+
+    def get_bounds(
+        self,
+        transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        if isinstance(transform_type, CategoricalEncodingEnum):
+            # we are just using the standard categorical transformations
+            return super().get_bounds(transform_type=transform_type, values=values)
+        else:
+            # in case that values is None, we return the optimization bounds
+            # else we return the complete bounds
+            data = self.to_descriptor_encoding(
+                transform_type=transform_type,
+                values=values if values is not None else self.get_allowed_categories(),
+            )
+
+        lower = data.min(axis=0).values.tolist()
+        upper = data.max(axis=0).values.tolist()
+
+        return lower, upper
