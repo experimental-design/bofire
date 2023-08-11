@@ -128,6 +128,8 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().dict(),
         "formula": "linear",
+        "optimization_strategy": "default",
+        "verbose": False,
         "seed": 42,
     },
 )

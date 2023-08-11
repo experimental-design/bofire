@@ -1,5 +1,8 @@
+import time
 import warnings
-from typing import Dict, Optional, Union
+from itertools import combinations_with_replacement, product
+from queue import PriorityQueue
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -13,6 +16,9 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
+from bofire.data_models.features.api import (
+    Input,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -23,8 +29,317 @@ from bofire.strategies.doe.utils import (
     metrics,
     nchoosek_constraints_as_bounds,
 )
+from bofire.strategies.doe.utils_features import (
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
+)
 from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
+
+
+def find_local_max_ipopt_BaB(
+    domain: Domain,
+    model_type: Union[str, Formula],
+    n_experiments: Optional[int] = None,
+    delta: float = 1e-7,
+    ipopt_options: Optional[Dict] = None,
+    sampling: Optional[pd.DataFrame] = None,
+    fixed_experiments: Optional[pd.DataFrame] = None,
+    partially_fixed_experiments: Optional[pd.DataFrame] = None,
+    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    categorical_groups: Optional[List[List[RelaxableBinaryInput]]] = None,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Function computing a d-optimal design" for a given domain and model.
+    It allows for the problem to have categorical values which is solved by Branch-and-Bound
+        Args:
+            domain (Domain): domain containing the inputs and constraints.
+            model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
+                are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
+            n_experiments (int): Number of experiments. By default the value corresponds to
+                the number of model terms - dimension of ker() + 3.
+            delta (float): Regularization parameter. Default value is 1e-3.
+            ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+            sampling (pd.DataFrame): dataframe containing the initial guess.
+            fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
+                Values are set before the optimization.
+            partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+                Values are set before the optimization. Within one experiment not all variables need to be fixed.
+                Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+                Non-fixed variables have to be set to None or nan.
+            objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
+                categorical variables. Defaults to [].
+            verbose (bool): if true, print information during the optimization process
+        Returns:
+            A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
+            local optimum.
+    """
+    from bofire.strategies.doe.branch_and_bound import NodeExperiment, bnb
+
+    if categorical_groups is None:
+        categorical_groups = []
+
+    n_experiments = get_n_experiments(
+        domain=domain, model_type=model_type, n_experiments=n_experiments
+    )
+
+    # get objective function
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
+    )
+    objective_class = get_objective_class(objective)
+    objective_class = objective_class(
+        domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
+    )
+
+    # setting up initial node in the branch-and-bound tree
+    column_keys = domain.inputs.get_keys()
+
+    subtract = 0
+    if fixed_experiments is not None:
+        subtract = len(fixed_experiments)
+    initial_branch = pd.DataFrame(
+        np.full((n_experiments - subtract, len(column_keys)), None),
+        columns=column_keys,
+    )
+
+    if partially_fixed_experiments is not None:
+        partially_fixed_experiments = pd.concat(
+            [
+                partially_fixed_experiments,
+                pd.DataFrame(
+                    np.full(
+                        (
+                            n_experiments - len(partially_fixed_experiments),
+                            len(domain.inputs),
+                        ),
+                        None,
+                    ),
+                    columns=domain.get_feature_keys(includes=Input),
+                ),
+            ]
+        ).reset_index(drop=True)
+
+        initial_branch.mask(
+            partially_fixed_experiments.notnull(),
+            other=partially_fixed_experiments,
+            inplace=True,
+        )
+
+    initial_design = find_local_max_ipopt(
+        domain,
+        model_type,
+        n_experiments,
+        delta,
+        ipopt_options,
+        sampling,
+        fixed_experiments,
+        partially_fixed_experiments=initial_branch,
+        objective=objective,
+    )
+    initial_value = objective_class.evaluate(
+        initial_design.to_numpy().flatten(),
+    )
+
+    discrete_vars = domain.inputs.get(includes=RelaxableDiscreteInput)
+    initial_node = NodeExperiment(
+        initial_branch,
+        initial_design,
+        initial_value,
+        categorical_groups,
+        discrete_vars,
+    )
+
+    # initializing branch-and-bound queue
+    initial_queue = PriorityQueue()
+    initial_queue.put(initial_node)
+
+    # starting branch-and-bound
+    result_node = bnb(
+        initial_queue,
+        domain=domain,
+        model_type=model_type,
+        n_experiments=n_experiments,
+        delta=delta,
+        ipopt_options=ipopt_options,
+        sampling=sampling,
+        fixed_experiments=fixed_experiments,
+        objective=objective,
+        verbose=verbose,
+    )
+
+    return result_node.design_matrix
+
+
+def find_local_max_ipopt_exhaustive(
+    domain: Domain,
+    model_type: Union[str, Formula],
+    n_experiments: Optional[int] = None,
+    delta: float = 1e-7,
+    ipopt_options: Optional[Dict] = None,
+    sampling: Optional[pd.DataFrame] = None,
+    fixed_experiments: Optional[pd.DataFrame] = None,
+    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    partially_fixed_experiments: Optional[pd.DataFrame] = None,
+    categorical_groups: Optional[List[List[RelaxableBinaryInput]]] = None,
+    verbose: bool = False,
+) -> pd.DataFrame:
+    """Function computing a d-optimal design" for a given domain and model.
+    It allows for the problem to have categorical values which is solved by exhaustive search
+        Args:
+            domain (Domain): domain containing the inputs and constraints.
+            model_type (str, Formula): keyword or formulaic Formula describing the model. Known keywords
+                are "linear", "linear-and-interactions", "linear-and-quadratic", "fully-quadratic".
+            n_experiments (int): Number of experiments. By default the value corresponds to
+                the number of model terms - dimension of ker() + 3.
+            delta (float): Regularization parameter. Default value is 1e-3.
+            ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
+            sampling (pd.DataFrame): dataframe containing the initial guess.
+            fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
+                Values are set before the optimization.
+            objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+            partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+                Values are set before the optimization. Within one experiment not all variables need to be fixed.
+                Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+                Non-fixed variables have to be set to None or nan.
+            categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
+                categorical variables. Defaults to [].
+            verbose (bool): if true, print information during the optimization process
+        Returns:
+            A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
+            local optimum.
+    """
+
+    if categorical_groups is None:
+        categorical_groups = []
+
+    if len(domain.get_features(includes=RelaxableDiscreteInput)) > 0:
+        raise NotImplementedError(
+            "Exhaustive search for discrete variables is not implemented yet."
+        )
+
+    # get objective function
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
+    )
+    objective_class = get_objective_class(objective)
+    objective_class = objective_class(
+        domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
+    )
+
+    # get binary variables
+    binary_vars = domain.get_features(RelaxableBinaryInput)
+    list_keys = binary_vars.get_keys()
+
+    # determine possible fixations of the different categories
+    allowed_fixations = []
+    for group in categorical_groups:
+        allowed_fixations.append(np.eye(len(group)))
+
+    n_non_fixed_experiments = n_experiments
+    if fixed_experiments is not None:
+        n_non_fixed_experiments -= len(fixed_experiments)
+
+    allowed_fixations = product(*allowed_fixations)
+    all_n_fixed_experiments = combinations_with_replacement(
+        allowed_fixations, n_non_fixed_experiments
+    )
+
+    if partially_fixed_experiments is not None:
+        partially_fixed_experiments = pd.concat(
+            [
+                partially_fixed_experiments,
+                pd.DataFrame(
+                    np.full(
+                        (
+                            n_non_fixed_experiments - len(partially_fixed_experiments),
+                            len(domain.inputs),
+                        ),
+                        None,
+                    ),
+                    columns=domain.get_feature_keys(includes=Input),
+                ),
+            ]
+        ).reset_index(drop=True)
+
+    # testing all different fixations
+    column_keys = domain.inputs.get_keys()
+    group_keys = [var.key for group in categorical_groups for var in group]
+    minimum = float("inf")
+    optimal_design = pd.DataFrame()
+    len(domain.inputs) - len(binary_vars)
+    all_n_fixed_experiments = list(all_n_fixed_experiments)
+    for i, binary_fixed_experiments in enumerate(all_n_fixed_experiments):
+        if verbose:
+            start_time = time.time()
+        # setting up the pd.Dataframe for the partially fixed experiment
+        binary_fixed_experiments = np.array(
+            [
+                var
+                for experiment in binary_fixed_experiments
+                for group in experiment
+                for var in group
+            ]
+        ).reshape(n_non_fixed_experiments, len(binary_vars))
+
+        binary_fixed_experiments = pd.DataFrame(
+            binary_fixed_experiments, columns=group_keys
+        )
+        one_set_of_experiments = pd.DataFrame(
+            np.full((n_non_fixed_experiments, len(domain.inputs)), None),
+            columns=column_keys,
+        )
+
+        one_set_of_experiments.mask(
+            binary_fixed_experiments.notnull(),
+            other=binary_fixed_experiments,
+            inplace=True,
+        )
+
+        if partially_fixed_experiments is not None:
+            one_set_of_experiments.mask(
+                partially_fixed_experiments.notnull(),
+                other=partially_fixed_experiments,
+                inplace=True,
+            )
+
+        if sampling is not None:
+            sampling.loc[:, list_keys] = one_set_of_experiments[list_keys].to_numpy()
+
+        # minimizing with the current fixation
+        try:
+            current_design = find_local_max_ipopt(
+                domain,
+                model_type,
+                n_experiments,
+                delta,
+                ipopt_options,
+                sampling,
+                fixed_experiments,
+                one_set_of_experiments,
+                objective,
+            )
+            domain.validate_candidates(
+                candidates=current_design.apply(lambda x: np.round(x, 8)),
+                only_inputs=True,
+                tol=1e-4,
+                raise_validation_error=True,
+            )
+            temp_value = objective_class.evaluate(
+                current_design.to_numpy().flatten(),
+            )
+            if minimum is None or minimum > temp_value:
+                minimum = temp_value
+                optimal_design = current_design
+            if verbose:
+                print(
+                    f"branch: {i} / {len(all_n_fixed_experiments)}, time: {time.time() - start_time} solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
+                )
+        except ConstraintNotFulfilledError:
+            if verbose:
+                print("skipping branch because of not fulfilling constraints")
+    return optimal_design
 
 
 def find_local_max_ipopt(
@@ -35,6 +350,7 @@ def find_local_max_ipopt(
     ipopt_options: Optional[Dict] = None,
     sampling: Optional[pd.DataFrame] = None,
     fixed_experiments: Optional[pd.DataFrame] = None,
+    partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
@@ -46,9 +362,13 @@ def find_local_max_ipopt(
             the number of model terms - dimension of ker() + 3.
         delta (float): Regularization parameter. Default value is 1e-3.
         ipopt_options (Dict, optional): options for IPOPT. For more information see [this link](https://coin-or.github.io/Ipopt/OPTIONS.html)
-        sampling (Sampling, np.ndarray): Sampling class or a np.ndarray object containing the initial guess.
+        sampling (pd.DataFrame): dataframe containing the initial guess.
         fixed_experiments (pd.DataFrame): dataframe containing experiments that will be definitely part of the design.
             Values are set before the optimization.
+        partially_fixed_experiments (pd.DataFrame): dataframe containing (some) fixed variables for experiments.
+            Values are set before the optimization. Within one experiment not all variables need to be fixed.
+            Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+            Non-fixed variables have to be set to None or nan.
         objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -95,8 +415,8 @@ def find_local_max_ipopt(
     #
 
     if sampling is not None:
-        domain.validate_candidates(sampling, only_inputs=True)
-        x0 = sampling.values
+        sampling.sort_index(axis=1, inplace=True)
+        x0 = sampling.values.flatten()
     else:
         if len(domain.constraints.get(NonlinearConstraint)) == 0:
             sampler = PolytopeSampler(
@@ -135,11 +455,16 @@ def find_local_max_ipopt(
 
     # fix experiments if any are given
     if fixed_experiments is not None:
+        fixed_experiments.sort_index(axis=1, inplace=True)
         domain.validate_candidates(fixed_experiments, only_inputs=True)
-        fixed_experiments = np.array(fixed_experiments.values)
-        for i, val in enumerate(fixed_experiments.flatten()):
+        for i, val in enumerate(fixed_experiments.values.flatten()):
             bounds[i] = (val, val)
             x0[i] = val
+
+    # partially fix experiments if any are given
+    bounds, x0 = partially_fix_experiment(
+        bounds, fixed_experiments, n_experiments, partially_fixed_experiments, x0
+    )
 
     # set ipopt options
     if ipopt_options is None:
@@ -194,6 +519,56 @@ def find_local_max_ipopt(
     return design
 
 
+def partially_fix_experiment(
+    bounds: list,
+    fixed_experiments: Union[pd.DataFrame, None],
+    n_experiments: int,
+    partially_fixed_experiments: Union[pd.DataFrame, None],
+    x0: np.ndarray,
+) -> Tuple[List, np.ndarray]:
+    """
+    fixes some variables for experiments. Within one experiment not all variables need to be fixed.
+    Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
+    Non-fixed variables have to be set to None or nan.
+
+    Args:
+        bounds (list): current bounds
+        fixed_experiments (pd.Dataframe): experiments which are guaranteed to be part of the design and are fully fixed
+        n_experiments (int): number of experiments
+        partially_fixed_experiments (pd.Dataframe): experiments which are partially fixed
+        x0: initial guess
+
+    Returns: Tuple of list and pd.Dataframe containing the new bounds for each variable and an adapted initial guess
+        which comply with the bounds
+
+    """
+
+    shift = 0
+    if partially_fixed_experiments is not None:
+        partially_fixed_experiments.sort_index(axis=1, inplace=True)
+        if fixed_experiments is not None:
+            if (
+                len(fixed_experiments) + len(partially_fixed_experiments)
+                > n_experiments
+            ):
+                raise AttributeError(
+                    "Number of fixed experiments and partially fixed experiments exceeds the number of total "
+                    "experiments"
+                )
+            shift = len(fixed_experiments)
+
+        shift = shift * len(partially_fixed_experiments.columns)
+        for i, val in enumerate(np.array(partially_fixed_experiments.values).flatten()):
+            index = shift + i
+            if type(val) is tuple:
+                bounds[index] = (val[0], val[1])
+                x0[index] = val[0]
+            elif val is not None and not np.isnan(val):
+                bounds[index] = (val, val)
+                x0[index] = val
+    return bounds, x0
+
+
 def check_fixed_experiments(
     domain: Domain, n_experiments: int, fixed_experiments: np.ndarray
 ) -> None:
@@ -214,6 +589,41 @@ def check_fixed_experiments(
     if D != len(domain.inputs):
         raise ValueError(
             f"Invalid shape of fixed_experiments. Length along axis 1 is {D}, but must be {len(domain.inputs)}"
+        )
+
+
+def check_partially_and_fully_fixed_experiments(
+    domain: Domain,
+    n_experiments: int,
+    fixed_experiments: np.ndarray,
+    paritally_fixed_experiments: np.ndarray,
+) -> None:
+    """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
+    Args:
+        domain (Domain): domain defining the input variables used for the check.
+        n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
+        fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
+        paritally_fixed_experiments (np.ndarray): partially fixed experiment proposals to be checked.
+    """
+
+    check_fixed_experiments(domain, n_experiments, fixed_experiments)
+    n_fixed_experiments, dim = np.array(fixed_experiments).shape
+
+    n_partially_fixed_experiments, partially_dim = np.array(
+        paritally_fixed_experiments
+    ).shape
+
+    if partially_dim != len(domain.inputs):
+        raise ValueError(
+            f"Invalid shape of partially_fixed_experiments. Length along axis 1 is {partially_dim}, but must be {len(domain.inputs)}"
+        )
+
+    if n_fixed_experiments + n_partially_fixed_experiments > n_experiments:
+        warnings.warn(
+            UserWarning(
+                "The number of fixed experiments and partially fixed experiments exceeds the amount "
+                "of the overall count of experiments. Partially fixed experiments may be cut of"
+            )
         )
 
 
