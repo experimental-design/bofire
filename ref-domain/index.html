@@ -856,7 +856,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="c1"># gather continuous inputs in dictionary</span>
         <span class="n">continuous_inputs_dict</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
                 <span class="n">continuous_inputs_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
 
         <span class="c1"># check if non continuous input features appear in linear constraints</span>
@@ -2827,7 +2827,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
     <span class="c1"># gather continuous inputs in dictionary</span>
     <span class="n">continuous_inputs_dict</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">f</span><span class="p">)</span> <span class="ow">is</span> <span class="n">ContinuousInput</span><span class="p">:</span>
             <span class="n">continuous_inputs_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
 
     <span class="c1"># check if non continuous input features appear in linear constraints</span>
