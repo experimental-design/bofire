@@ -2,6 +2,8 @@ from typing import Literal, Type, Union
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
+    CategoricalInput,
+    DiscreteInput,
     Feature,
     MolecularInput,
 )
@@ -20,11 +22,6 @@ class DoEStrategy(Strategy):
         ],
         str,
     ]
-    optimization_strategy: Literal[
-        "default", "exhaustive", "branch-and-bound", "partially-random", "relaxed"
-    ] = "default"
-
-    verbose: bool = False
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -32,7 +29,7 @@ class DoEStrategy(Strategy):
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
-        if my_type in [MolecularInput]:
+        if my_type in [CategoricalInput, DiscreteInput, MolecularInput]:
             return False
         return True
 
