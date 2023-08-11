@@ -34,8 +34,8 @@ def discrete_to_relaxable_domain_mapper(
     kept_inputs = domain.get_features(
         excludes=[CategoricalInput, DiscreteInput, Output]
     ).features
-    discrete_inputs: List[DiscreteInput] = domain.inputs.get(DiscreteInput)
-    categorical_inputs: List[CategoricalInput] = domain.inputs.get(CategoricalInput)
+    discrete_inputs = domain.inputs.get(DiscreteInput)
+    categorical_inputs = domain.inputs.get(CategoricalInput)
 
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = [
@@ -45,7 +45,7 @@ def discrete_to_relaxable_domain_mapper(
 
     # convert categorical inputs to continuous inputs
     relaxable_categorical_inputs = []
-    new_constraints: List[LinearEqualityConstraint] = []
+    new_constraints = []
     categorical_groups = []
     for c_input in categorical_inputs:
         current_group_keys = list(c_input.categories)
@@ -116,7 +116,13 @@ def NChooseKGroup_with_quantity(
 ) -> tuple[
     Union[List[CategoricalInput], List[RelaxableBinaryInput]],
     List[ContinuousInput],
-    List[LinearEqualityConstraint],
+    List[
+        Union[
+            LinearEqualityConstraint,
+            LinearInequalityConstraint,
+            NonlinearInequalityConstraint,
+        ]
+    ],
 ]:
     """
     helper function to generate an N choose K problem with categorical variables, with an option to connect each
@@ -313,7 +319,7 @@ def _generate_quantity_var_constr(
         quantity_constraints_lb = [
             LinearInequalityConstraint(
                 features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-                coefficients=[-1] + [q[0] for i in range(len(combi))],
+                coefficients=[-1.0] + [q[0] for i in range(len(combi))],
                 rhs=0,
             )
             for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
@@ -323,7 +329,7 @@ def _generate_quantity_var_constr(
         quantity_constraints_ub = [
             LinearInequalityConstraint(
                 features=[unique_group_identifier + "_" + k + "_quantity"] + combi,
-                coefficients=[1] + [-q[1] for i in range(len(combi))],
+                coefficients=[1.0] + [-q[1] for i in range(len(combi))],
                 rhs=0,
             )
             for combi, k, q in zip(all_quantity_features, keys, quantity_if_picked)
@@ -423,7 +429,7 @@ def NChooseKGroup(
     quantity_constraints_lb = [
         LinearInequalityConstraint(
             features=[var.key] + combi,
-            coefficients=[-1] + [var.lower_bound for i in range(len(combi))],
+            coefficients=[-1.0] + [var.lower_bound for i in range(len(combi))],
             rhs=0,
         )
         for combi, var in zip(valid_states, variables)
@@ -433,7 +439,7 @@ def NChooseKGroup(
     quantity_constraints_ub = [
         LinearInequalityConstraint(
             features=[var.key] + combi,
-            coefficients=[1] + [-var.upper_bound for i in range(len(combi))],
+            coefficients=[1.0] + [-var.upper_bound for i in range(len(combi))],
             rhs=0,
         )
         for combi, var in zip(valid_states, variables)

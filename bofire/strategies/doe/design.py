@@ -244,6 +244,9 @@ def find_local_max_ipopt_exhaustive(
     for group in categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
 
+    n_experiments = get_n_experiments(
+        domain=domain, model_type=model_type, n_experiments=n_experiments
+    )
     n_non_fixed_experiments = n_experiments
     if fixed_experiments is not None:
         n_non_fixed_experiments -= len(fixed_experiments)
