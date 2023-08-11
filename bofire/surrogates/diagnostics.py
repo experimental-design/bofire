@@ -441,7 +441,7 @@ UQ_metrics = {
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
 }
 
-All_metrics = {**metrics, **UQ_metrics}
+all_metrics = {**metrics, **UQ_metrics}
 
 
 class CvResult(BaseModel):
