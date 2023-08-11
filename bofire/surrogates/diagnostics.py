@@ -15,7 +15,7 @@ from sklearn.metrics import (
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.domain import is_numeric
-from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
 from bofire.data_models.validated import ValidatedDataFrame, ValidatedSeries
 
 
@@ -195,7 +195,8 @@ def _spearman_UQ(
     """
     if standard_deviation is None:
         warnings.warn(
-            "Uncertainty quantification without standard deviation is not possible"
+            "Uncertainty quantification without standard deviation is not possible",
+            UserWarning,
         )
         return np.nan
     else:
@@ -226,7 +227,8 @@ def _pearson_UQ(
     """
     if standard_deviation is None:
         warnings.warn(
-            "Uncertainty quantification without standard deviation is not possible"
+            "Uncertainty quantification without standard deviation is not possible",
+            UserWarning,
         )
         return np.nan
     else:
@@ -257,7 +259,8 @@ def _kendall_UQ(
     """
     if standard_deviation is None:
         warnings.warn(
-            "Uncertainty quantification without standard deviation is not possible"
+            "Uncertainty quantification without standard deviation is not possible",
+            UserWarning,
         )
         return np.nan
     else:
@@ -265,38 +268,6 @@ def _kendall_UQ(
         with np.errstate(invalid="ignore"):
             rho, _ = kendalltau(ae, standard_deviation)
         return float(rho)
-
-
-def _NLL(
-    observed: np.ndarray,
-    predicted: np.ndarray,
-    standard_deviation: Optional[np.ndarray] = None,
-) -> float:
-    """Calculates the Negative log-likelihood of predicted data
-    This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
-
-
-    Args:
-        observed (np.ndarray): Observed data.
-        predicted (np.ndarray): Predicted data.
-        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
-
-    Returns:
-        float: Negative log-likelihood.
-    """
-    if standard_deviation is None:
-        warnings.warn(
-            "Uncertainty quantification without standard deviation is not possible"
-        )
-        return np.nan
-    else:
-        res = (
-            1.0 / (2.0 * observed.shape[0])
-            + observed.shape[0] * np.log(2 * np.pi)
-            + np.sum(np.log(predicted))
-            + np.sum(np.square((predicted - observed) / standard_deviation))  # type: ignore
-        )
-        return res
 
 
 def _CVPPDiagram(
@@ -369,7 +340,9 @@ def _MaximumMiscalibration(
 
         return res
     except ValueError:
-        warnings.warn("Calibration metric without standard deviation is not possible")
+        warnings.warn(
+            "Calibration metric without standard deviation is not possible", UserWarning
+        )
         return np.nan
 
 
@@ -407,7 +380,9 @@ def _MiscalibrationArea(
 
         return res
     except ValueError:
-        warnings.warn("Calibration metric without standard deviation is not possible")
+        warnings.warn(
+            "Calibration metric without standard deviation is not possible", UserWarning
+        )
         return np.nan
 
 
@@ -441,7 +416,9 @@ def _AbsoluteMiscalibrationArea(
 
         return res
     except ValueError:
-        warnings.warn("Calibration metric without standard deviation is not possible")
+        warnings.warn(
+            "Calibration metric without standard deviation is not possible", UserWarning
+        )
         return np.nan
 
 
@@ -453,13 +430,15 @@ metrics = {
     RegressionMetricsEnum.PEARSON: _pearson,
     RegressionMetricsEnum.SPEARMAN: _spearman,
     RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
-    RegressionMetricsEnum.PEARSON_UQ: _pearson_UQ,
-    RegressionMetricsEnum.SPEARMAN_UQ: _spearman_UQ,
-    RegressionMetricsEnum.KENDALL_UQ: _kendall_UQ,
-    RegressionMetricsEnum.MAXIMUMCALIBRATION: _MaximumMiscalibration,
-    RegressionMetricsEnum.MISCALIBRATIONAREA: _MiscalibrationArea,
-    RegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
-    RegressionMetricsEnum.NLL: _NLL,
+}
+
+UQ_metrics = {
+    UQRegressionMetricsEnum.PEARSON_UQ: _pearson_UQ,
+    UQRegressionMetricsEnum.SPEARMAN_UQ: _spearman_UQ,
+    UQRegressionMetricsEnum.KENDALL_UQ: _kendall_UQ,
+    UQRegressionMetricsEnum.MAXIMUMCALIBRATION: _MaximumMiscalibration,
+    UQRegressionMetricsEnum.MISCALIBRATIONAREA: _MiscalibrationArea,
+    UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
 }
 
 
@@ -547,6 +526,22 @@ class CvResult(BaseModel):
             )
             return np.nan
         return metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
+
+    def get_UQ_metric(self, metric: UQRegressionMetricsEnum) -> float:
+        """Calculates an uncertainty metric for the fold.
+
+        Args:
+            metric (UQRegressionMetricsEnum): Metric to calculate.
+
+        Returns:
+            float: Metric value.
+        """
+        if self.n_samples == 1:
+            warnings.warn(
+                "Metric cannot be calculated for only one sample. Null value will be returned"
+            )
+            return np.nan
+        return UQ_metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
 
 class CvResults(BaseModel):
@@ -660,6 +655,28 @@ class CvResults(BaseModel):
             [cv.get_metric(metric) for cv in self.results], name=metric.name
         )
 
+    def get_UQ_metric(
+        self, metric: UQRegressionMetricsEnum, combine_folds: bool = True
+    ) -> pd.Series:
+        """Calculates an uncertainty metric for every fold and returns them as pd.Series.
+
+        Args:
+            metric (UQRegressionMetricsEnum): Metrics to calculate.
+            combine_folds (bool, optional): If True the data in the split is combined before
+                the metric is calculated. In this case only a single number is returned. If False
+                the metric is calculated per fold. Defaults to True.
+
+        Returns:
+            pd.Series: Object containing the metric value for every fold.
+        """
+        if self.is_loo or combine_folds:
+            return pd.Series(
+                self._combine_folds().get_UQ_metric(metric=metric), name=metric.name
+            )
+        return pd.Series(
+            [cv.get_UQ_metric(metric) for cv in self.results], name=metric.name
+        )
+
     def get_metrics(
         self,
         metrics: Sequence[RegressionMetricsEnum] = [
@@ -670,13 +687,6 @@ class CvResults(BaseModel):
             RegressionMetricsEnum.PEARSON,
             RegressionMetricsEnum.SPEARMAN,
             RegressionMetricsEnum.FISHER,
-            RegressionMetricsEnum.PEARSON_UQ,
-            RegressionMetricsEnum.SPEARMAN_UQ,
-            RegressionMetricsEnum.KENDALL_UQ,
-            RegressionMetricsEnum.MAXIMUMCALIBRATION,
-            RegressionMetricsEnum.MISCALIBRATIONAREA,
-            RegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA,
-            RegressionMetricsEnum.NLL,
         ],
         combine_folds: bool = True,
     ) -> pd.DataFrame:
@@ -692,6 +702,33 @@ class CvResults(BaseModel):
             pd.DataFrame: Dataframe containing the metric values for all folds.
         """
         return pd.concat([self.get_metric(m, combine_folds) for m in metrics], axis=1)
+
+    def get_UQ_metrics(
+        self,
+        metrics: Sequence[UQRegressionMetricsEnum] = [
+            UQRegressionMetricsEnum.PEARSON_UQ,
+            UQRegressionMetricsEnum.SPEARMAN_UQ,
+            UQRegressionMetricsEnum.KENDALL_UQ,
+            UQRegressionMetricsEnum.MAXIMUMCALIBRATION,
+            UQRegressionMetricsEnum.MISCALIBRATIONAREA,
+            UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA,
+        ],
+        combine_folds: bool = True,
+    ) -> pd.DataFrame:
+        """Calculates all metrics provided as list for every fold and returns all as pd.DataFrame.
+
+        Args:
+            metrics (Sequence[RegressionMetricsEnum], optional): Metrics to calculate. Defaults to R2, MAE, MSD, R2, MAPE.
+            combine_folds (bool, optional): If True the data in the split is combined before
+                the metric is calculated. In this case only a single number per metric is returned. If False
+                the metric is calculated per fold. Defaults to True.
+
+        Returns:
+            pd.DataFrame: Dataframe containing the metric values for all folds.
+        """
+        return pd.concat(
+            [self.get_UQ_metric(m, combine_folds) for m in metrics], axis=1
+        )
 
 
 # the following methods tranform a CvResults object to a CrossValidationValues object

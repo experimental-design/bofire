@@ -34,7 +34,7 @@ def test_Hyperopt(n_candidates: int):
     assert f"valid_{hy.target_metric.name}" in results.columns
     for e in RegressionMetricsEnum:
         assert e.name in results.columns
-    assert len(results.columns) == 15
+    assert len(results.columns) == 8
 
 
 def test_hyperoptimize_warning():

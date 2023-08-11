@@ -15,6 +15,7 @@ from bofire.surrogates.diagnostics import (
     CvResult,
     CvResults,
     CvResults2CrossValidationValues,
+    UQ_metrics,
     _mean_absolute_error,
     _mean_absolute_percentage_error,
     _mean_squared_error,
@@ -208,16 +209,16 @@ def test_cvresult_get_metric_invalid():
 def test_cvresult_get_UQ_metric_valid():
     cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=True)
     assert cv.n_samples == 10
-    for metric in metrics.keys():
-        cv.get_metric(metric=metric)
+    for metric in UQ_metrics.keys():
+        cv.get_UQ_metric(metric=metric)
 
 
 def test_cvresult_get_UQ_metric_invalid():
     cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=False)
     assert cv.n_samples == 10
-    for metric in metrics.keys():
-        if pytest.raises(Warning):
-            np.isnan(cv.get_metric(metric=metric))
+    for metric in UQ_metrics.keys():
+        with pytest.warns(UserWarning):
+            np.isnan(cv.get_UQ_metric(metric=metric))
 
 
 def test_cvresults_invalid():
@@ -434,12 +435,7 @@ def test_CvResults2CrossValidationValues(cv_results):
         else:
             assert transformed["a"][i].standardDeviation is None
         for m in metrics.columns:
-            if cv_results.results[i].standard_deviation is not None:
-                assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
-            else:
-                assert np.allclose(
-                    metrics.loc[i, m], transformed["a"][i].metrics[m], equal_nan=True
-                )
+            assert metrics.loc[i, m] == transformed["a"][i].metrics[m]
 
 
 def test_CvResults2CrossValidationValues_minimal():

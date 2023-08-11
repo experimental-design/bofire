@@ -43,10 +43,14 @@ class RegressionMetricsEnum(Enum):
     PEARSON = "PEARSON"
     SPEARMAN = "SPEARMAN"
     FISHER = "FISHER"
+
+
+class UQRegressionMetricsEnum(Enum):
+    """Enumeration class for ucertainty regression metrics."""
+
     PEARSON_UQ = "PEARSON_UQ"
     SPEARMAN_UQ = "SPEARMAN_UQ"
     KENDALL_UQ = "KENDALL_UQ"
     MAXIMUMCALIBRATION = "MAXIMUMCALIBRATION"
     MISCALIBRATIONAREA = "MISCALIBRATIONAREA"
     ABSOLUTEMISCALIBRATIONAREA = "ABSOLUTEMISCALIBRATIONAREA"
-    NLL = "NLL"
