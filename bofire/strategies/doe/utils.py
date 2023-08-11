@@ -12,10 +12,10 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
-from bofire.data_models.constraints.nonlinear import NonlinearInequalityConstraint
-from bofire.data_models.domain.domain import Domain
-from bofire.data_models.features.continuous import ContinuousInput
+from bofire.data_models.domain.api import Domain
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
