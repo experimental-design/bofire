@@ -1,5 +1,7 @@
 import itertools
-from typing import List
+from typing import Annotated, List
+
+from pydantic import Field, validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -13,7 +15,7 @@ class OutlierDetections(BaseModel):
 
     Behaves similar to a outlier_detector."""
 
-    detectors: List[AnyOutlierDetector]
+    detectors: Annotated[List[AnyOutlierDetector], Field(min_items=1)]
 
     @property
     def outputs(self) -> Outputs:
@@ -24,6 +26,17 @@ class OutlierDetections(BaseModel):
                 )
             )
         )
+
+    @validator("detectors")
+    def validate_detectors(cls, v, values):
+        used_output_feature_keys = list(
+            itertools.chain.from_iterable(
+                [detector.outputs.get_keys() for detector in v]
+            )
+        )
+        if len(set(used_output_feature_keys)) != len(used_output_feature_keys):
+            raise ValueError("Output feature keys are not unique across detectors.")
+        return v
 
     def _check_compability(self, inputs: Inputs, outputs: Outputs):
         # TODO: add sync option
