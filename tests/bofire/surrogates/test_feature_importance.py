@@ -61,6 +61,22 @@ def test_permutation_importance():
         assert list(results[m.name].index) == ["mean", "std"]
 
 
+def test_permutation_importance_nan():
+    model, experiments = get_model_and_data()
+    X = experiments[model.inputs.get_keys()][:1]
+    y = experiments[["y"]][:1]
+    model.fit(experiments=experiments)
+    results = permutation_importance(model=model, X=X, y=y, n_repeats=5)
+    assert isinstance(results, dict)
+    assert len(results) == len(metrics)
+    for m in metrics.keys():
+        assert m.name in results.keys()
+        assert isinstance(results[m.name], pd.DataFrame)
+        assert list(results[m.name].columns) == model.inputs.get_keys()
+        assert list(results[m.name].index) == ["mean", "std"]
+        assert len(results[m.name].dropna()) == 0
+
+
 @pytest.mark.parametrize("use_test", [True, False])
 def test_permutation_importance_hook(use_test):
     model, experiments = get_model_and_data()

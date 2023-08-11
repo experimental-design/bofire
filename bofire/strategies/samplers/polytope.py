@@ -132,7 +132,7 @@ class PolytopeSampler(SamplerStrategy):
 
             # check that the random generated candidates are not always the same
             if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
-                raise ValueError("Generated candidates are not unique!")
+                warnings.warn("Generated candidates are not unique!")
 
             free_continuals = [
                 feat.key
