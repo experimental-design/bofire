@@ -529,7 +529,7 @@ class CvResult(BaseModel):
                 "Metric cannot be calculated for only one sample. Null value will be returned"
             )
             return np.nan
-        return All_metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
+        return all_metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
 
 
 class CvResults(BaseModel):
