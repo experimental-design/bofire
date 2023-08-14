@@ -1,6 +1,7 @@
 import warnings
 from typing import ClassVar, List, Literal, Optional, Sequence, Tuple, Union
 
+import numpy as np
 import pandas as pd
 from pydantic import validator
 
@@ -88,7 +89,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     order: ClassVar[int] = 7
 
     @validator("categories")
-    def validate_categories_unique(cls, categories: Sequence[str]):
+    def validate_smiles(cls, categories: Sequence[str]):
         """validates that categories are valid smiles. Note that this check can only
         be executed when rdkit is available.
 
@@ -134,10 +135,56 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
             # else we return the complete bounds
             data = self.to_descriptor_encoding(
                 transform_type=transform_type,
-                values=values if values is not None else self.get_allowed_categories(),
+                values=pd.Series(self.get_allowed_categories())
+                if values is None
+                else pd.Series(self.categories),
             )
-
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
-
         return lower, upper
+
+    def from_descriptor_encoding(
+        self, transform_type: AnyMolFeatures, values: pd.DataFrame
+    ) -> pd.Series:
+        """Converts values back from descriptor encoding.
+
+        Args:
+            values (pd.DataFrame): Descriptor encoded dataframe.
+
+        Raises:
+            ValueError: If descriptor columns not found in the dataframe.
+
+        Returns:
+            pd.Series: Series with categorical values.
+        """
+
+        # This method is modified based on the categorical descriptor feature
+        # TODO: move it to more central place
+        cat_cols = [
+            f"{self.key}{_CAT_SEP}{d}" for d in transform_type.get_descriptor_names()
+        ]
+        # we allow here explicitly that the dataframe can have more columns than needed to have it
+        # easier in the backtransform.
+        if np.any([c not in values.columns for c in cat_cols]):
+            raise ValueError(
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+            )
+        s = pd.DataFrame(
+            data=np.sqrt(
+                np.sum(
+                    (
+                        values[cat_cols].to_numpy()[:, np.newaxis, :]
+                        - self.to_descriptor_encoding(
+                            transform_type=transform_type,
+                            values=pd.Series(self.get_allowed_categories()),
+                        ).to_numpy()
+                    )
+                    ** 2,
+                    axis=2,
+                )
+            ),
+            columns=self.get_allowed_categories(),
+            index=values.index,
+        ).idxmin(1)
+        s.name = self.key
+        return s
