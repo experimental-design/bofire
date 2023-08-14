@@ -14,7 +14,6 @@ from bofire.strategies.doe.utils_categorical_discrete import (
     design_from_new_to_original_domain,
     discrete_to_relaxable_domain_mapper,
     nchoosek_to_relaxable_domain_mapper,
-    validate_categorical_groups,
 )
 from bofire.strategies.strategy import Strategy
 
@@ -96,9 +95,6 @@ class DoEStrategy(Strategy):
                 new_categories,
             ) = nchoosek_to_relaxable_domain_mapper(new_domain)
             all_new_categories.extend(new_categories)
-
-        # check categorical_groups
-        validate_categorical_groups(all_new_categories, new_domain)
 
         # here we adapt the (partially) fixed experiments to the new domain
         # todo

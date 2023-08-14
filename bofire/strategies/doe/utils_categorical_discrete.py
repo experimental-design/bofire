@@ -481,42 +481,6 @@ def generate_mixture_constraints(
     return mixture_constraint, list(binary_vars)
 
 
-def validate_categorical_groups(
-    categorical_group: List[List[ContinuousInput]], domain: Domain
-):
-    """Validate if features given as the categorical groups are also features in the domain and if each feature
-    is in exactly one group
-
-    Args: categorical_group (List[List[ContinuousInput]]) : groups of the different categories
-    domain (Domain): Domain to test against
-
-    Raises
-        ValueError: Feature key not registered in any group or registered too often.
-
-    Returns:
-        List[List[ContinuousInput]]: groups of the different categories
-    """
-    return True
-    # todo dieser code mach keinen sinn mehr
-    bin_vars = domain.inputs.get_keys(includes=CategoricalInput)
-
-    if len(bin_vars) == 0:
-        return categorical_group
-
-    simplified_groups = [[f.key for f in group] for group in categorical_group]
-    groups_flattened = [var.key for group in categorical_group for var in group]
-    for k in bin_vars:
-        if groups_flattened.count(k) < 1:
-            raise ValueError(
-                f"feature {k} is not registered in any of the categorical groups {simplified_groups}."
-            )
-        elif groups_flattened.count(k) > 1:
-            raise ValueError(
-                f"feature {k} is registered to often in the categorical groups {simplified_groups}."
-            )
-    return categorical_group
-
-
 def design_from_original_to_new_domain(
     original_domain: Domain, new_domain: Domain, design: pd.DataFrame
 ) -> pd.DataFrame:
