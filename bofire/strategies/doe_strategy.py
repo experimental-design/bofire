@@ -16,10 +16,6 @@ from bofire.strategies.doe.utils_categorical_discrete import (
     nchoosek_to_relaxable_domain_mapper,
     validate_categorical_groups,
 )
-from bofire.strategies.doe.utils_features import (
-    RelaxableBinaryInput,
-    RelaxableDiscreteInput,
-)
 from bofire.strategies.strategy import Strategy
 
 
@@ -88,7 +84,9 @@ class DoEStrategy(Strategy):
         all_new_categories = []
 
         # map categorical/ discrete Domain to a relaxable Domain
-        new_domain, new_categories = discrete_to_relaxable_domain_mapper(self.domain)
+        new_domain, new_categories, new_discretes = discrete_to_relaxable_domain_mapper(
+            self.domain
+        )
         all_new_categories.extend(new_categories)
 
         # check for NchooseK constraint and solve the problem differently depending on the strategy
@@ -112,10 +110,8 @@ class DoEStrategy(Strategy):
             _fixed_experiments_count = 0
             _candidate_count = candidate_count
 
-        num_binary_vars = len(new_domain.get_features(includes=[RelaxableBinaryInput]))
-        num_discrete_vars = len(
-            new_domain.get_features(includes=[RelaxableDiscreteInput])
-        )
+        num_binary_vars = len([var for group in new_categories for var in group])
+        num_discrete_vars = len(new_discretes)
 
         if (
             self.data_model.optimization_strategy == "relaxed"
