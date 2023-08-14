@@ -16,9 +16,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.features.api import (
-    Input,
-)
+from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -28,10 +26,6 @@ from bofire.strategies.doe.utils import (
     get_formula_from_string,
     metrics,
     nchoosek_constraints_as_bounds,
-)
-from bofire.strategies.doe.utils_features import (
-    PrivateRelaxableBinaryInput,
-    PrivateRelaxableDiscreteInput,
 )
 from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.samplers.polytope import PolytopeSampler
@@ -47,7 +41,8 @@ def find_local_max_ipopt_BaB(
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
-    categorical_groups: Optional[List[List[PrivateRelaxableBinaryInput]]] = None,
+    categorical_groups: Optional[List[List[ContinuousInput]]] = None,
+    discrete_variables: Optional[List[ContinuousInput]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -149,13 +144,12 @@ def find_local_max_ipopt_BaB(
         initial_design.to_numpy().flatten(),
     )
 
-    discrete_vars = domain.inputs.get(includes=PrivateRelaxableDiscreteInput)
     initial_node = NodeExperiment(
         initial_branch,
         initial_design,
         initial_value,
         categorical_groups,
-        discrete_vars,  # type: ignore
+        discrete_variables,  # type: ignore
     )
 
     # initializing branch-and-bound queue
@@ -189,7 +183,8 @@ def find_local_max_ipopt_exhaustive(
     fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
-    categorical_groups: Optional[List[List[PrivateRelaxableBinaryInput]]] = None,
+    categorical_groups: Optional[List[List[ContinuousInput]]] = None,
+    discrete_variables: Optional[List[ContinuousInput]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -221,7 +216,7 @@ def find_local_max_ipopt_exhaustive(
     if categorical_groups is None:
         categorical_groups = []
 
-    if len(domain.get_features(includes=PrivateRelaxableDiscreteInput)) > 0:
+    if len(discrete_variables) > 0:
         raise NotImplementedError(
             "Exhaustive search for discrete variables is not implemented yet."
         )
@@ -236,7 +231,7 @@ def find_local_max_ipopt_exhaustive(
     )
 
     # get binary variables
-    binary_vars = domain.get_features(PrivateRelaxableBinaryInput)
+    binary_vars = [var for group in categorical_groups for var in group]
     list_keys = binary_vars.get_keys()
 
     # determine possible fixations of the different categories

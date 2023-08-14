@@ -16,10 +16,6 @@ from bofire.strategies.doe.utils_categorical_discrete import (
     nchoosek_to_relaxable_domain_mapper,
     validate_categorical_groups,
 )
-from bofire.strategies.doe.utils_features import (
-    PrivateRelaxableBinaryInput,
-    PrivateRelaxableDiscreteInput,
-)
 from bofire.strategies.strategy import Strategy
 
 
@@ -88,11 +84,13 @@ class DoEStrategy(Strategy):
         all_new_categories = []
 
         # map categorical/ discrete Domain to a relaxable Domain
-        new_domain, new_categories = discrete_to_relaxable_domain_mapper(self.domain)
+        new_domain, new_categories, new_discretes = discrete_to_relaxable_domain_mapper(
+            self.domain
+        )
         all_new_categories.extend(new_categories)
 
         # check for NchooseK constraint and solve the problem differently depending on the strategy
-        if self.data_model.optimization_strategy != "random-nchoosek-realization":
+        if self.data_model.optimization_strategy != "partially-random":
             (
                 new_domain,
                 new_categories,
@@ -112,18 +110,14 @@ class DoEStrategy(Strategy):
             _fixed_experiments_count = 0
             _candidate_count = candidate_count
 
-        num_binary_vars = len(
-            new_domain.get_features(includes=[PrivateRelaxableBinaryInput])
-        )
-        num_discrete_vars = len(
-            new_domain.get_features(includes=[PrivateRelaxableDiscreteInput])
-        )
+        num_binary_vars = len([var for group in new_categories for var in group])
+        num_discrete_vars = len(new_discretes)
 
         if (
             self.data_model.optimization_strategy == "relaxed"
             or (num_binary_vars == 0 and num_discrete_vars == 0)
             or (
-                self.data_model.optimization_strategy == "random-nchoosek-realization"
+                self.data_model.optimization_strategy == "partially-random"
                 and num_binary_vars == 0
                 and num_discrete_vars == 0
             )
@@ -152,7 +146,7 @@ class DoEStrategy(Strategy):
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
             "default",
-            "random-nchoosek-realization",
+            "partially-random",
         ]:
             design = find_local_max_ipopt_BaB(
                 domain=new_domain,

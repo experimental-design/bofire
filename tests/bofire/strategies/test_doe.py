@@ -93,9 +93,7 @@ def test_nchoosek_implemented():
         constraints=[nchoosek_constraint],
     )
     data_model = data_models.DoEStrategy(
-        domain=domain,
-        formula="linear",
-        optimization_strategy="random-nchoosek-realization",
+        domain=domain, formula="linear", optimization_strategy="partially-random"
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
@@ -195,9 +193,7 @@ def test_categorical_discrete_doe():
     )
 
     data_model = data_models.DoEStrategy(
-        domain=domain,
-        formula="linear",
-        optimization_strategy="random-nchoosek-realization",
+        domain=domain, formula="linear", optimization_strategy="partially-random"
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=n_experiments)

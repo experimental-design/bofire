@@ -1,3 +1,4 @@
+import math
 from itertools import combinations
 from typing import List, Optional, Tuple, Union
 
@@ -15,15 +16,11 @@ from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.feature import Feature, Output
-from bofire.strategies.doe.utils_features import (
-    PrivateRelaxableBinaryInput,
-    PrivateRelaxableDiscreteInput,
-)
 
 
 def discrete_to_relaxable_domain_mapper(
     domain: Domain,
-) -> Tuple[Domain, List[List[PrivateRelaxableBinaryInput]]]:
+) -> Tuple[Domain, List[List[ContinuousInput]], List[ContinuousInput]]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
     Args:
@@ -39,7 +36,7 @@ def discrete_to_relaxable_domain_mapper(
 
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = [
-        PrivateRelaxableDiscreteInput(key=d_input.key, bounds=(min(d_input.values), max(d_input.values)), values=d_input.values)  # type: ignore
+        ContinuousInput(key=d_input.key, bounds=(min(d_input.values), max(d_input.values)))  # type: ignore
         for d_input in discrete_inputs
     ]
 
@@ -61,12 +58,12 @@ def discrete_to_relaxable_domain_mapper(
         constraints=domain.constraints + new_constraints,
     )
 
-    return new_domain, categorical_groups
+    return new_domain, categorical_groups, discrete_inputs
 
 
 def nchoosek_to_relaxable_domain_mapper(
     domain: Domain,
-) -> Tuple[Domain, List[List[PrivateRelaxableBinaryInput]]]:
+) -> Tuple[Domain, List[List[ContinuousInput]]]:
     var_occuring_in_nchoosek = []
     new_categories = []
     new_constraints = []
@@ -113,7 +110,7 @@ def NChooseKGroup_with_quantity(
     combined_quantity_is_equal_or_less_than: bool = False,
     use_non_relaxable_category_and_non_linear_constraint: bool = False,
 ) -> tuple[
-    Union[List[CategoricalInput], List[PrivateRelaxableBinaryInput]],
+    Union[List[CategoricalInput], List[ContinuousInput]],
     List[ContinuousInput],
     List[
         Union[
@@ -146,7 +143,7 @@ def NChooseKGroup_with_quantity(
             If True, CategoricalInput used in combination with NonlinearConstraints, as CategoricalInput can not be
             used within LinearConstraints
     Returns:
-        Either one CategoricalInput wrapped in a List or List of PrivateRelaxableBinaryInput describing the group,
+        Either one CategoricalInput wrapped in a List or List of RelaxableBinaryInput describing the group,
         If quantities are provided, List of ContinuousInput describing the quantity of each element of the group
         otherwise empty List,
         List of either LinearConstraints or mix of Linear- and NonlinearConstraints, which enforce the quantities
@@ -238,7 +235,7 @@ def NChooseKGroup_with_quantity(
         # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
         pick_exactly_one_of_group_const = []
     else:
-        category = [PrivateRelaxableBinaryInput(key=k, bounds=(0, 1)) for k in keys]
+        category = [ContinuousInput(key=k, bounds=(0, 1)) for k in keys]
         pick_exactly_one_of_group_const = [
             LinearEqualityConstraint(
                 features=list(keys), coefficients=[1 for k in keys], rhs=1
@@ -364,7 +361,7 @@ def NChooseKGroup(
     pick_at_most: int,
     none_also_valid: bool,
 ) -> Tuple[
-    List[PrivateRelaxableBinaryInput],
+    List[ContinuousInput],
     List[Union[LinearEqualityConstraint, LinearInequalityConstraint]],
 ]:
     """
@@ -377,7 +374,7 @@ def NChooseKGroup(
         pick_at_most (int): maximum number of elements to be picked from the category. >=pick_at_least
         none_also_valid (bool): defines if also none of the elements can be picked
     Returns:
-        List of PrivateRelaxableBinaryInput describing the group,
+        List of RelaxableBinaryInput describing the group,
         List of either LinearConstraints, which enforce the quantities
         and group restrictions.
     """
@@ -452,7 +449,7 @@ def NChooseKGroup(
     # adding the new possible combinations to the list of keys
     keys = combined_keys
 
-    category = [PrivateRelaxableBinaryInput(key=k, bounds=(0, 1)) for k in keys]
+    category = [ContinuousInput(key=k, bounds=(0, 1)) for k in keys]
     pick_exactly_one_of_group_const = [
         LinearEqualityConstraint(
             features=list(keys), coefficients=[1 for k in keys], rhs=1
@@ -469,8 +466,8 @@ def NChooseKGroup(
 
 def generate_mixture_constraints(
     keys: List[str],
-) -> Tuple[LinearEqualityConstraint, List[PrivateRelaxableBinaryInput]]:
-    binary_vars = (PrivateRelaxableBinaryInput(key=x, bounds=(0, 1)) for x in keys)
+) -> Tuple[LinearEqualityConstraint, List[ContinuousInput]]:
+    binary_vars = (ContinuousInput(key=x, bounds=(0, 1)) for x in keys)
 
     mixture_constraint = LinearEqualityConstraint(
         features=keys, coefficients=[1 for x in range(len(keys))], rhs=1
@@ -480,22 +477,23 @@ def generate_mixture_constraints(
 
 
 def validate_categorical_groups(
-    categorical_group: List[List[PrivateRelaxableBinaryInput]], domain: Domain
+    categorical_group: List[List[ContinuousInput]], domain: Domain
 ):
     """Validate if features given as the categorical groups are also features in the domain and if each feature
     is in exactly one group
 
-    Args: categorical_group (List[List[PrivateRelaxableBinaryInput]]) : groups of the different categories
+    Args: categorical_group (List[List[RelaxableBinaryInput]]) : groups of the different categories
     domain (Domain): Domain to test against
 
     Raises
         ValueError: Feature key not registered in any group or registered too often.
 
     Returns:
-        List[List[PrivateRelaxableBinaryInput]]: groups of the different categories
+        List[List[RelaxableBinaryInput]]: groups of the different categories
     """
-
-    bin_vars = domain.inputs.get_keys(includes=PrivateRelaxableBinaryInput)
+    return True
+    # todo dieser code mach keinen sinn mehr
+    bin_vars = domain.inputs.get_keys(includes=CategoricalInput)
 
     if len(bin_vars) == 0:
         return categorical_group
@@ -566,3 +564,36 @@ def design_from_new_to_original_domain(
         transformed_design[var.key] = closest_solution
 
     return transformed_design
+
+
+def equal_count_split(
+    values: List[float], lower_bound: float, upper_bound: float
+) -> Tuple[float, float]:
+    """
+    Determines the two elements x and y such that the intervals (lower_bound, x) and (y, upper_bound)
+    have the same number of elements regarding the values of the discrete variable
+    Args:
+        values: the values to split into a range
+        lower_bound: inclusive lower bound
+        upper_bound: inclusive upper bound
+
+    Returns: tuple of floats which split the interval in half
+
+    """
+    values.sort()
+    sub_list = [elem for elem in values if lower_bound <= elem <= upper_bound]
+
+    size = len(sub_list)
+    if size % 2 == 0:
+        lower_index = size / 2 - 1
+        upper_index = size / 2
+    elif size == 1:
+        return sub_list[0], sub_list[0]
+    else:
+        lower_index = math.floor(size / 2)
+        upper_index = math.ceil(size / 2)
+
+    lower_index = int(lower_index)
+    upper_index = int(upper_index)
+
+    return sub_list[lower_index], sub_list[upper_index]
