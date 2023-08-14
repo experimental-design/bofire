@@ -19,6 +19,7 @@ from bofire.data_models.features.api import (
     AnyOutput,
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -380,6 +381,7 @@ class Inputs(Features):
         Returns:
             pd.DataFrame: Transformed dataframe. Only input features are included.
         """
+        # TODO: clean this up and move it into the individual classes
         specs = self._validate_transform_specs(specs)
         transformed = []
         for feat in self.get():
@@ -419,6 +421,7 @@ class Inputs(Features):
         Returns:
             pd.DataFrame: Back transformed dataframe. Only input features are included.
         """
+        # TODO: clean this up and move it into the individual classes
         self._validate_transform_specs(specs=specs)
         transformed = []
         for feat in self.get():
@@ -438,6 +441,9 @@ class Inputs(Features):
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
                 assert isinstance(feat, CategoricalDescriptorInput)
                 transformed.append(feat.from_descriptor_encoding(experiments))
+            elif isinstance(specs[feat.key], MolFeatures):
+                assert isinstance(feat, CategoricalMolecularInput)
+                transformed.append(feat.from_descriptor_encoding(specs[feat.key], experiments))  # type: ignore
 
         return pd.concat(transformed, axis=1)
 
