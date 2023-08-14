@@ -467,6 +467,7 @@ class Inputs(Features):
             # TODO
             # this is ugly, on the long run we have to get rid of the transform enums
             # and replace them with classes, then the following lines collapse into just two
+            assert isinstance(feat, Input)
             enums = [t for t in feat.valid_transform_types() if isinstance(t, Enum)]
             no_enums = [
                 t for t in feat.valid_transform_types() if not isinstance(t, Enum)
@@ -481,7 +482,7 @@ class Inputs(Features):
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}"
                     )
-                if not isinstance(value, tuple(no_enums)):
+                if not isinstance(value, tuple(no_enums)):  # type: ignore
                     raise ValueError(
                         f"Forbidden transform type for feature with key {key}"
                     )

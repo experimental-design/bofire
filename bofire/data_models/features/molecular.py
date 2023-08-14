@@ -24,7 +24,7 @@ class MolecularInput(Input):
 
     @staticmethod
     def valid_transform_types() -> List[AnyMolFeatures]:
-        return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]
+        return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]  # type: ignore
 
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
@@ -119,7 +119,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
             Fingerprints,
             FingerprintsFragments,
             Fragments,
-            MordredDescriptors,
+            MordredDescriptors,  # type: ignore
         ]
 
     def get_bounds(
