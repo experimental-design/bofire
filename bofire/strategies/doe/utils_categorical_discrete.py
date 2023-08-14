@@ -191,7 +191,7 @@ def NChooseKGroup_with_quantity(
         raise ValueError('"_" is not allowed as an character in the keys')
 
     if quantity_if_picked is not None and type(quantity_if_picked) != list:
-        quantity_if_picked = [quantity_if_picked for k in keys]
+        quantity_if_picked = [quantity_if_picked for k in keys]  # type: ignore
 
     quantity_var, all_new_constraints = [], []
     quantity_constraints_lb, quantity_constraints_ub = [], []
@@ -251,7 +251,7 @@ def NChooseKGroup_with_quantity(
         + quantity_constraints_ub
     )
     if max_quantity_constraint is not None:
-        all_new_constraints.append(max_quantity_constraint)
+        all_new_constraints.append(max_quantity_constraint)  # type: ignore
     return category, quantity_var, all_new_constraints
 
 
@@ -428,7 +428,7 @@ def NChooseKGroup(
     quantity_constraints_lb = [
         LinearInequalityConstraint(
             features=[var.key] + combi,
-            coefficients=[-1.0] + [var.lower_bound for i in range(len(combi))],
+            coefficients=[-1.0] + [var.lower_bound for i in range(len(combi))],  # type: ignore
             rhs=0,
         )
         for combi, var in zip(valid_states, variables)
@@ -438,7 +438,7 @@ def NChooseKGroup(
     quantity_constraints_ub = [
         LinearInequalityConstraint(
             features=[var.key] + combi,
-            coefficients=[1.0] + [-var.upper_bound for i in range(len(combi))],
+            coefficients=[1.0] + [-var.upper_bound for i in range(len(combi))],  # type: ignore
             rhs=0,
         )
         for combi, var in zip(valid_states, variables)
