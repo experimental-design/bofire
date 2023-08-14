@@ -7,7 +7,7 @@ from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.enum import RegressionMetricsEnum
+from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
 from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
@@ -19,6 +19,12 @@ metrics2objectives = {
     RegressionMetricsEnum.PEARSON: MaximizeObjective,
     RegressionMetricsEnum.SPEARMAN: MaximizeObjective,
     RegressionMetricsEnum.FISHER: MaximizeObjective,
+    UQRegressionMetricsEnum.PEARSON_UQ: MaximizeObjective,
+    UQRegressionMetricsEnum.SPEARMAN_UQ: MaximizeObjective,
+    UQRegressionMetricsEnum.KENDALL_UQ: MaximizeObjective,
+    UQRegressionMetricsEnum.MAXIMUMCALIBRATION: MinimizeObjective,
+    UQRegressionMetricsEnum.MISCALIBRATIONAREA: MinimizeObjective,
+    UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: MinimizeObjective,
 }
 
 
