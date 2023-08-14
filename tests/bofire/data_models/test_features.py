@@ -13,6 +13,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     CategoricalOutput,
     ContinuousDescriptorInput,
     ContinuousInput,
@@ -1637,6 +1638,33 @@ def test_inputs_transform(specs):
     )
     samples = inps.sample(n=100)
     samples = samples.sample(40)
+    transformed = inps.transform(experiments=samples, specs=specs)
+    untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
+    assert_frame_equal(samples, untransformed)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_input_reverse_transform_molecular():
+    inps = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
+            CategoricalMolecularInput(
+                key="x3",
+                categories=[
+                    "CC(=O)Oc1ccccc1C(=O)O",
+                    "c1ccccc1",
+                    "[CH3][CH2][OH]",
+                    "N[C@](C)(F)C(=O)O",
+                ],
+            ),
+        ],
+    )
+    specs = {
+        "x3": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+        "x2": CategoricalEncodingEnum.ONE_HOT,
+    }
+    samples = inps.sample(n=20)
     transformed = inps.transform(experiments=samples, specs=specs)
     untransformed = inps.inverse_transform(experiments=transformed, specs=specs)
     assert_frame_equal(samples, untransformed)
