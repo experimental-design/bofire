@@ -1,9 +1,12 @@
+import numpy as np
 import pandas as pd
 
 import bofire.benchmarks.benchmark as benchmark
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import ZDT1
+from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.strategies.api import PolytopeSampler
 from bofire.data_models.strategies.api import (
     QparegoStrategy as QparegoStrategyDataModel,
 )
@@ -48,3 +51,23 @@ def test_benchmark():
         assert best.shape[0] == n_iterations
         assert isinstance(best, pd.Series)
         assert isinstance(experiments, pd.DataFrame)
+
+
+def test_benchmark_generate_outliers():
+    def sample(domain):
+        datamodel = PolytopeSampler(domain=domain)
+        sampler = strategies.map(data_model=datamodel)
+        sampled = sampler.ask(10)
+        return sampled
+
+    outlier_rate = 0.5
+    Benchmark = Himmelblau()
+    sampled = sample(Benchmark.domain)
+    sampled_xy = Benchmark.f(sampled, return_complete=True)
+    Benchmark = Himmelblau(
+        outlier_rate=outlier_rate,
+        outlier_prior=benchmark.UniformOutlierPrior(bounds=(50, 100)),
+    )
+    sampled_xy1 = Benchmark.f(sampled, return_complete=True)
+    assert np.sum(sampled_xy["y"] != sampled_xy1["y"]) != 0
+    assert isinstance(Benchmark.outlier_prior, benchmark.UniformOutlierPrior)

@@ -2,24 +2,73 @@ import json
 import os
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Callable, List, Optional, Protocol, Tuple
+from typing import Callable, List, Literal, Optional, Protocol, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from multiprocess.pool import Pool
+from pydantic import Field, PositiveFloat
+from scipy.stats import norm, uniform
 from tqdm import tqdm
+from typing_extensions import Annotated
 
 import bofire.strategies.api as strategies
+from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import AnyStrategy
 
 
+class OutlierPrior(BaseModel):
+    type: str
+
+
+class UniformOutlierPrior(OutlierPrior):
+    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
+    bounds: Tuple[float, float]
+
+    def sample(self, n_samples: int) -> np.ndarray:
+        return uniform(
+            self.bounds[0],
+            self.bounds[1] - self.bounds[0],
+        ).rvs(n_samples)
+
+
+class NormalOutlierPrior(OutlierPrior):
+    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
+    loc: float
+    scale: PositiveFloat
+
+    def sample(self, n_samples: int) -> np.ndarray:
+        return norm(self.loc, self.scale).rvs(n_samples)
+
+
+AnyOutlierPrior = Union[UniformOutlierPrior, NormalOutlierPrior]
+
+
 class Benchmark:
+    def __init__(
+        self,
+        outlier_rate: Annotated[float, Field(ge=0, lt=1)] = 0,
+        outlier_prior: Optional[AnyOutlierPrior] = None,
+    ):
+        self.outlier_rate = outlier_rate
+        self.outlier_prior = outlier_prior
+
     def f(
-        self, candidates: pd.DataFrame, return_complete: bool = False
+        self,
+        candidates: pd.DataFrame,
+        return_complete: bool = False,
     ) -> pd.DataFrame:
         Y = self._f(candidates)
-
+        if self.outlier_prior is not None:
+            for output_feature in self.domain.outputs.get_keys():
+                # no_outliers = int(len(Y) * self.outlier_rate)
+                ix2 = np.zeros(len(Y), dtype=bool)
+                ix1 = uniform().rvs(len(Y))
+                # ix2[np.random.choice(len(Y), no_outliers, replace=False)] = True
+                ix2 = ix1 <= self.outlier_rate
+                n_outliers = sum(ix2)
+                Y.loc[ix2, output_feature] = Y.loc[ix2, output_feature] + self.outlier_prior.sample(n_outliers)  # type: ignore
         if return_complete:
             return pd.concat([candidates, Y], axis=1)
 
@@ -50,7 +99,9 @@ def _single_run(
     metric: Callable[[Domain, pd.DataFrame], float],
     n_candidates_per_proposals: int,
     safe_intervall: int,
-    initial_sampler: Optional[Callable[[Domain], pd.DataFrame]] = None,
+    initial_sampler: Optional[
+        Union[Callable[[Domain], pd.DataFrame], pd.DataFrame]
+    ] = None,
 ) -> Tuple[pd.DataFrame, pd.Series]:
     def autosafe_results(benchmark):
         """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
@@ -74,11 +125,14 @@ def _single_run(
 
     # sample initial values
     if initial_sampler is not None:
-        X = initial_sampler(benchmark.domain)
-        XY = benchmark.f(X, return_complete=True)
+        if isinstance(initial_sampler, Callable):
+            X = initial_sampler(benchmark.domain)
+            XY = benchmark.f(X, return_complete=True)
+        else:
+            XY = initial_sampler
     strategy_data = strategy_factory(domain=benchmark.domain)
     # map it
-    strategy = strategies.map(strategy_data)
+    strategy = strategies.map(strategy_data)  # type: ignore
     # tell it
     if initial_sampler is not None:
         strategy.tell(XY)  # type: ignore

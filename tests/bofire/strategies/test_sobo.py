@@ -176,7 +176,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
         num_experiments,
         len(set(chain(*names.values()))),
     )
-    assert X_pending.shape == (
+    assert X_pending.shape == (  # type: ignore
         num_candidates,
         len(set(chain(*names.values()))),
     )

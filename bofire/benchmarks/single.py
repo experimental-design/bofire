@@ -54,6 +54,7 @@ class Ackley(Benchmark):
         upper: float = 32.768,
         best_possible_f: float = 0.0,
         evaluated_points: Optional[list] = None,
+        **kwargs,
     ):
         """Initializes benchmark function of type Ackley.
 
@@ -67,7 +68,7 @@ class Ackley(Benchmark):
             best_possible_f (float, optional): Best possible function value. Defaults to 0.0.
             evaluated_points (list, optional): Evaluated points. Defaults to [].
         """
-
+        super().__init__(**kwargs)
         self.num_categories = num_categories
         self.categorical = categorical
         self.descriptor = descriptor
@@ -163,8 +164,8 @@ class Ackley(Benchmark):
 
 
 class Hartmann(Benchmark):
-    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None) -> None:
-        super().__init__()
+    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._domain = Domain(
             inputs=Inputs(
                 features=[
@@ -217,7 +218,8 @@ class Hartmann(Benchmark):
 
 
 class Branin(Benchmark):
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._domain = Domain(
             inputs=Inputs(
                 features=[
@@ -260,7 +262,8 @@ class Branin30(Benchmark):
     evaluate the actual Branin. Source: https://github.com/pytorch/botorch/blob/main/tutorials/saasbo.ipynb.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, **kwargs) -> None:
+        super().__init__(**kwargs)
         self._domain = Domain(
             inputs=Inputs(
                 features=[
@@ -292,7 +295,7 @@ class Himmelblau(Benchmark):
     Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
     """
 
-    def __init__(self, use_constraints: bool = False):
+    def __init__(self, use_constraints: bool = False, **kwargs):
         """Initialiszes class of type Himmelblau.
 
         Args:
@@ -302,6 +305,7 @@ class Himmelblau(Benchmark):
         Raises:
             ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
         """
+        super().__init__(**kwargs)
         self.use_constraints = use_constraints
         inputs = []
 
@@ -354,7 +358,8 @@ class Himmelblau(Benchmark):
 
 
 class DiscreteHimmelblau(Himmelblau):
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         inputs = []
 
         inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))
@@ -370,7 +375,8 @@ class DiscreteHimmelblau(Himmelblau):
 
 
 class _CategoricalDiscreteHimmelblau(Himmelblau):  # only used for testing
-    def __init__(self):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         inputs = []
 
         inputs.append(DiscreteInput(key="x_1", values=np.linspace(-6, 6, 20).tolist()))

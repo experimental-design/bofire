@@ -17,7 +17,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     Objective,
 )
-from bofire.strategies.api import PredictiveStrategy, Strategy
+from bofire.strategies.api import BotorchStrategy, PredictiveStrategy, Strategy
 
 
 class DummyStrategyDataModel(data_models.BotorchStrategy):
@@ -144,6 +144,58 @@ class DummyPredictiveStrategy(PredictiveStrategy):
         raise NotImplementedError(
             f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
         )
+
+    def _choose_from_pool(
+        self,
+        candidate_pool: pd.DataFrame,
+        candidate_count: Optional[NonNegativeInt] = None,
+    ) -> pd.DataFrame:
+        candidates = candidate_pool.sample(candidate_count, replace=False)
+        for feat in self.domain.outputs.get_by_objective(Objective):
+            candidates[f"{feat.key}_pred"] = np.nan
+            candidates[f"{feat.key}_sd"] = np.nan
+            candidates[f"{feat.key}_des"] = np.nan
+        return candidates
+
+    @property
+    def input_preprocessing_specs(self):
+        return {}
+
+    def has_sufficient_experiments(
+        self,
+    ) -> bool:
+        return len(self.experiments) >= 3
+
+
+class DummyBotorchPredictiveStrategy(BotorchStrategy):
+    def __init__(
+        self,
+        data_model: DummyStrategyDataModel,
+        **kwargs,
+    ):
+        super().__init__(data_model=data_model, **kwargs)
+
+    def _init_domain(
+        self,
+    ) -> None:
+        pass
+
+    def _predict(self, experiments: pd.DataFrame):
+        return (
+            np.ones([len(experiments), len(self.domain.outputs)]) * 4,
+            np.ones([len(experiments), len(self.domain.outputs)]) * 5,
+        )
+
+    def _ask(
+        self,
+        candidate_count: int,
+    ) -> Tuple[pd.DataFrame, List[dict]]:
+        raise NotImplementedError(
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+        )
+
+    def _get_acqfs(self, n: int):
+        pass
 
     def _choose_from_pool(
         self,

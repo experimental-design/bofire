@@ -10,6 +10,9 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
+from bofire.data_models.outlier_detection.api import (
+    OutlierDetections,
+)
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -30,6 +33,9 @@ class BotorchStrategy(PredictiveStrategy):
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     surrogate_specs: Optional[BotorchSurrogates] = None
+    outlier_detection_specs: Optional[OutlierDetections] = None
+    min_experiments_before_outlier_check: PositiveInt = 1
+    frequency_check: PositiveInt = 1
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -87,6 +93,15 @@ class BotorchStrategy(PredictiveStrategy):
                         )
         return values
 
+    @root_validator(pre=False, skip_on_failure=True)
+    def validate_outlier_detection_specs_for_domain(cls, values):
+        """Ensures that a outlier_detection model is specified for each output feature"""
+        if values["outlier_detection_specs"] is not None:
+            values["outlier_detection_specs"]._check_compability(
+                inputs=values["domain"].inputs, outputs=values["domain"].outputs
+            )
+        return values
+
     @staticmethod
     def _generate_surrogate_specs(
         domain: Domain,
@@ -125,6 +140,6 @@ class BotorchStrategy(PredictiveStrategy):
                         outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
                     )
                 )
-        surrogate_specs = BotorchSurrogates(surrogates=_surrogate_specs)
+        surrogate_specs = BotorchSurrogates(surrogates=_surrogate_specs)  # type: ignore
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs

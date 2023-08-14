@@ -59,7 +59,10 @@ class PredictiveStrategy(Strategy):
         return candidates
 
     def tell(
-        self, experiments: pd.DataFrame, replace: bool = False, retrain: bool = True
+        self,
+        experiments: pd.DataFrame,
+        replace: bool = False,
+        retrain: bool = True,
     ):
         """This function passes new experimental data to the optimizer.
 

@@ -1,16 +1,26 @@
 from abc import ABC, abstractmethod
-from typing import Tuple
 
 import numpy as np
 import pandas as pd
 from scipy.stats import chi2  # type: ignore
 
-from bofire.surrogates.api import SingleTaskGPSurrogate
+import bofire.surrogates.api as surrogates
+from bofire.data_models.domain.api import Inputs, Outputs
 
 
 class OutlierDetection(ABC):
     @abstractmethod
-    def detect(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    def detect(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        pass
+
+    @property
+    @abstractmethod
+    def inputs(self) -> Inputs:
+        pass
+
+    @property
+    @abstractmethod
+    def outputs(self) -> Outputs:
         pass
 
 
@@ -22,10 +32,18 @@ class IterativeTrimming(OutlierDetection):
         self.ncc = data_model.ncc
         self.nrw = data_model.nrw
         self.base_gp = data_model.base_gp
+        self.surrogate = surrogates.map(self.base_gp)
         super().__init__()
 
-    def detect(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        model = SingleTaskGPSurrogate(data_model=self.base_gp)
+    @property
+    def inputs(self) -> Inputs:
+        return self.base_gp.inputs
+
+    @property
+    def outputs(self) -> Outputs:
+        return self.base_gp.outputs
+
+    def detect(self, experiments: pd.DataFrame) -> pd.DataFrame:
         n = len(experiments)
         indices = experiments.index.to_numpy()
         p = 1
@@ -58,10 +76,10 @@ class IterativeTrimming(OutlierDetection):
                 break  # converged
             ix_old = ix_sub
 
-            model.fit(experiments[experiments.index.isin(indices[ix_sub])])
+            self.surrogate.fit(experiments[experiments.index.isin(indices[ix_sub])])  # type: ignore
 
             # make prediction
-            pred = model.predict(experiments)
+            pred = self.surrogate.predict(experiments)
             d_sq = (
                 (
                     experiments[self.base_gp.outputs.get_keys()[0]]
@@ -84,7 +102,10 @@ class IterativeTrimming(OutlierDetection):
             if (ix_sub == ix_old).all():
                 break  # converged
             ix_old = ix_sub
-        return (
-            experiments[experiments.index.isin(indices[ix_sub])],  # type: ignore
-            experiments[~experiments.index.isin(indices[ix_sub])],  # type: ignore
-        )
+
+        filtered_experiments = experiments.copy()
+        filtered_experiments.loc[
+            ~ix_sub,  # type: ignore
+            f"valid_{self.base_gp.outputs.get_keys()[0]}",  # type: ignore
+        ] = 0
+        return filtered_experiments  # type: ignore

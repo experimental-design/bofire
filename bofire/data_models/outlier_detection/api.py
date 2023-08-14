@@ -4,5 +4,9 @@ from bofire.data_models.outlier_detection.outlier_detection import (
     IterativeTrimming,
     OutlierDetection,
 )
+from bofire.data_models.outlier_detection.outlier_detections import (
+    OutlierDetections,
+)
 
-AnyOutlierDetection = Union[OutlierDetection, IterativeTrimming]
+AnyOutlierDetection = IterativeTrimming
+AnyAbstractOutlierDetection = OutlierDetection

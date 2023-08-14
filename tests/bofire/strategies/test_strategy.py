@@ -1,6 +1,7 @@
 from typing import List
 
 import mock
+import numpy as np
 import pandas as pd
 import pytest
 from _pytest.fixtures import fixture
@@ -13,13 +14,16 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
 )
 from bofire.data_models.objectives.api import TargetObjective
+from bofire.data_models.outlier_detection.api import OutlierDetections
+from bofire.data_models.outlier_detection.outlier_detection import IterativeTrimming
+from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.strategies.strategy import Strategy
 from tests.bofire.data_models.test_domain_validators import (
     generate_candidates,
@@ -51,13 +55,13 @@ of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }
+    }  # type: ignore
 )
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }
+    }  # type: ignore
 )
 of3 = ContinuousOutput(key="of3", objective=None)
 
@@ -88,7 +92,7 @@ c3 = NChooseKConstraint(
 )
 
 
-@fixture
+@fixture  # type: ignore
 def strategy():
     data_model = dummy.DummyStrategyDataModel(
         domain=Domain.from_lists(
@@ -262,7 +266,7 @@ def test_strategy_set_experiments():
     experiments = generate_experiments(domain, 2)
     strategy.set_experiments(experiments=experiments)
     assert_frame_equal(strategy.experiments, experiments)
-    assert_frame_equal(strategy._experiments, experiments)
+    assert_frame_equal(strategy._experiments, experiments)  # type: ignore
     assert strategy.num_experiments == 2
 
 
@@ -291,7 +295,7 @@ def test_strategy_set_candidates():
     candidates = generate_candidates(domain, 2)
     strategy.set_candidates(candidates=candidates)
     assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
-    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
+    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])  # type: ignore
     assert strategy.num_candidates == 2
     strategy.reset_candidates()
     assert strategy.num_candidates == 0
@@ -359,6 +363,45 @@ def test_strategy_tell_replace(
         strategy.tell(experiments=experiments, replace=True)
         expected_len = len(experiments)
         assert len(strategy.experiments) == expected_len
+
+
+@pytest.mark.parametrize(
+    "domain",
+    [domain],
+)
+def test_strategy_tell_outliers(
+    domain: Domain,
+):
+    experiments = generate_experiments(domain=domain, row_count=200)
+    outlier_detectors = []
+    for i, key in enumerate(domain.outputs.get_keys()):
+        experiments.loc[:59, key] = experiments.loc[:59, key] + np.random.randn(60) * 1
+        outlier_detectors.append(
+            IterativeTrimming(
+                base_gp=SingleTaskGPSurrogate(
+                    inputs=domain.inputs, outputs=Outputs(features=[domain.outputs[i]])
+                )
+            )
+        )
+    experiments = domain.validate_experiments(experiments=experiments)
+    experiments1 = experiments.copy()
+    strategy = dummy.DummyBotorchPredictiveStrategy(
+        data_model=dummy.DummyStrategyDataModel(
+            domain=domain,
+            outlier_detection_specs=OutlierDetections(detectors=outlier_detectors),
+        )
+    )
+    strategy1 = dummy.DummyBotorchPredictiveStrategy(
+        data_model=dummy.DummyStrategyDataModel(
+            domain=domain,
+        )
+    )
+    strategy.tell(experiments=experiments)
+    assert_frame_equal(
+        experiments1, experiments
+    )  # test that experiments don't get changed outside detect_outliers
+    strategy1.tell(experiments=experiments)
+    assert str(strategy.model.state_dict()) != str(strategy1.model.state_dict())  # type: ignore # test if two fitted surrogates are different
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])
