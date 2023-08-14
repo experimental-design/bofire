@@ -39,7 +39,7 @@ def discrete_to_relaxable_domain_mapper(
 
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = [
-        RelaxableDiscreteInput(key=d_input.key, values=d_input.values)
+        RelaxableDiscreteInput(key=d_input.key, values=d_input.values)  # type: ignore
         for d_input in discrete_inputs
     ]
 
@@ -48,7 +48,7 @@ def discrete_to_relaxable_domain_mapper(
     new_constraints = []
     categorical_groups = []
     for c_input in categorical_inputs:
-        current_group_keys = list(c_input.categories)
+        current_group_keys = list(c_input.categories)  # type: ignore
         pick_1_constraint, group_vars = generate_mixture_constraints(current_group_keys)
         categorical_groups.append(group_vars)
         relaxable_categorical_inputs.extend(group_vars)
@@ -56,8 +56,8 @@ def discrete_to_relaxable_domain_mapper(
 
     # create new domain with continuous inputs
     new_domain = Domain(
-        inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,
-        outputs=domain.outputs.features,
+        inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,  # type: ignore
+        outputs=domain.outputs.features,  # type: ignore
         constraints=domain.constraints + new_constraints,
     )
 
@@ -73,13 +73,13 @@ def nchoosek_to_relaxable_domain_mapper(
     n_choose_k_constraints = domain.constraints.get(includes=NChooseKConstraint)
 
     for constr in n_choose_k_constraints:
-        var_occuring_in_nchoosek.extend(constr.features)
+        var_occuring_in_nchoosek.extend(constr.features)  # type: ignore
 
         current_features: List[Feature] = [
-            domain.get_feature(k) for k in constr.features
+            domain.get_feature(k) for k in constr.features  # type: ignore
         ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
-            current_features, constr.min_count, constr.max_count, constr.none_also_valid
+            current_features, constr.min_count, constr.max_count, constr.none_also_valid  # type: ignore
         )
         new_categories.append(new_relaxable_categorical_vars)
         new_constraints.extend(new_nchoosek_constraints)
@@ -87,18 +87,17 @@ def nchoosek_to_relaxable_domain_mapper(
         # allow vars to be set to 0
         for var in var_occuring_in_nchoosek:
             current_var = domain.inputs.get_by_key(var)
-            if current_var.lower_bound > 0:
-                current_var.bounds = (0, current_var.upper_bound)
-            elif current_var.upper_bound < 0:
-                current_var.bounds = (current_var.lower_bound, 0)
+            if current_var.lower_bound > 0:  # type: ignore
+                current_var.bounds = (0, current_var.upper_bound)  # type: ignore
+            elif current_var.upper_bound < 0:  # type: ignore
+                current_var.bounds = (current_var.lower_bound, 0)  # type: ignore
 
     new_domain = Domain(
-        inputs=domain.inputs.features
-        + [var for group in new_categories for var in group],
+        inputs=domain.inputs.features + [var for group in new_categories for var in group],  # type: ignore
         outputs=domain.outputs,
         constraints=domain.constraints.get(excludes=NChooseKConstraint)
         + new_constraints,
-    )
+    )  # type: ignore
     return new_domain, new_categories
 
 
@@ -532,7 +531,7 @@ def design_from_new_to_original_domain(
     ]
 
     for group in original_domain.get_features(includes=CategoricalInput):
-        categorical_columns = design[group.categories]
+        categorical_columns = design[group.categories]  # type: ignore
         mask = ~np.isclose(categorical_columns.to_numpy(), 0)
 
         for i, row in enumerate(mask):
@@ -544,8 +543,8 @@ def design_from_new_to_original_domain(
             np.invert(mask),
             pd.DataFrame(
                 np.full(
-                    (len(categorical_columns), len(group.categories)),
-                    group.categories,
+                    (len(categorical_columns), len(group.categories)),  # type: ignore
+                    group.categories,  # type: ignore
                 ),
                 columns=categorical_columns.columns,
                 index=categorical_columns.index,
@@ -554,7 +553,7 @@ def design_from_new_to_original_domain(
         categorical_columns = categorical_columns.where(
             mask,
             pd.DataFrame(
-                np.full((len(categorical_columns), len(group.categories)), ""),
+                np.full((len(categorical_columns), len(group.categories)), ""),  # type: ignore
                 columns=categorical_columns.columns,
                 index=categorical_columns.index,
             ),
@@ -563,7 +562,7 @@ def design_from_new_to_original_domain(
 
     # map the RelaxableDiscreteInput to the closest valid value
     for var in original_domain.get_features(includes=DiscreteInput):
-        closest_solution = var.from_continuous(transformed_design)
+        closest_solution = var.from_continuous(transformed_design)  # type: ignore
         transformed_design[var.key] = closest_solution
 
     return transformed_design

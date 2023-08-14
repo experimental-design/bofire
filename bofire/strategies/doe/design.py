@@ -129,7 +129,7 @@ def find_local_max_ipopt_BaB(
         ).reset_index(drop=True)
 
         initial_branch.mask(
-            partially_fixed_experiments.notnull(),
+            partially_fixed_experiments.notnull(),  # type: ignore
             other=partially_fixed_experiments,
             inplace=True,
         )
@@ -155,7 +155,7 @@ def find_local_max_ipopt_BaB(
         initial_design,
         initial_value,
         categorical_groups,
-        discrete_vars,
+        discrete_vars,  # type: ignore
     )
 
     # initializing branch-and-bound queue
@@ -348,7 +348,7 @@ def find_local_max_ipopt_exhaustive(
                 optimal_design = current_design
             if verbose:
                 print(
-                    f"branch: {i} / {len(all_n_fixed_experiments)}, time: {time.time() - start_time} solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"
+                    f"branch: {i} / {len(all_n_fixed_experiments)}, time: {time.time() - start_time} solution: {temp_value}, minimum after run {minimum}, difference: {temp_value - minimum}"  # type: ignore
                 )
         except ConstraintNotFulfilledError:
             if verbose:

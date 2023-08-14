@@ -144,7 +144,7 @@ def is_valid(
     discrete_vars = domain.get_features(includes=RelaxableDiscreteInput)
     for var in discrete_vars:
         value = design_matrix.get(var.key)
-        if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:
+        if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:  # type: ignore
             return False
     return True
 
