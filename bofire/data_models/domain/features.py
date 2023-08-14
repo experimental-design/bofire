@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import itertools
 import warnings
+from enum import Enum
 from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast
 
 import numpy as np
@@ -440,54 +441,44 @@ class Inputs(Features):
 
         return pd.concat(transformed, axis=1)
 
-    def _validate_transform_specs(self, specs: TInputTransformSpecs):
+    def _validate_transform_specs(
+        self, specs: TInputTransformSpecs
+    ) -> TInputTransformSpecs:
         """Checks the validity of the transform specs .
 
         Args:
             specs (TInputTransformSpecs): Transform specs to be validated.
         """
         # first check that the keys in the specs dict are correct also correct feature keys
-        if (
-            len(
-                set(specs.keys())
-                - set(self.get_keys(CategoricalInput))
-                - set(self.get_keys(MolecularInput))
-            )
-            > 0
-        ):
-            raise ValueError("Unknown features specified in transform specs.")
         # next check that all values are of type CategoricalEncodingEnum or MolFeatures
-        if not (
-            all(
-                isinstance(enc, (CategoricalEncodingEnum, MolFeatures))
-                for enc in specs.values()
-            )
-        ):
-            raise ValueError("Unknown transform specified.")
-        # next check that only CategoricalDescriptorInput can have the value DESCRIPTOR
-        descriptor_keys = []
         for key, value in specs.items():
-            if value == CategoricalEncodingEnum.DESCRIPTOR:
-                descriptor_keys.append(key)
-        if (
-            len(set(descriptor_keys) - set(self.get_keys(CategoricalDescriptorInput)))
-            > 0
-        ):
-            raise ValueError("Wrong features types assigned to DESCRIPTOR transform.")
-        # next check if MolFeatures have been assigned to feature types other than MolecularInput
-        molfeature_keys = []
-        for key, value in specs.items():
-            if isinstance(value, MolFeatures):
-                molfeature_keys.append(key)
-        if len(set(molfeature_keys) - set(self.get_keys(MolecularInput))) > 0:
-            raise ValueError("Wrong features types assigned to MolFeatures transforms.")
-        # next check that all MolecularInput have MolFeatures transforms
-        for feat in self.get(includes=[MolecularInput]):
-            mol_encoding = specs.get(feat.key)
-            if mol_encoding is None:
-                raise ValueError("No transform assigned to MolecularInput.")
-            elif not isinstance(mol_encoding, MolFeatures):
-                raise ValueError("Incorrect transform assigned to MolecularInput.")
+            try:
+                feat = self.get_by_key(key)
+            except KeyError:
+                raise ValueError(
+                    f"Unknown feature with key {key} specified in transform specs."
+                )
+            # TODO
+            # this is ugly, on the long run we have to get rid of the transform enums
+            # and replace them with classes, then the following lines collapse into just two
+            enums = [t for t in feat.valid_transform_types() if isinstance(t, Enum)]
+            no_enums = [
+                t for t in feat.valid_transform_types() if not isinstance(t, Enum)
+            ]
+            if isinstance(value, Enum):
+                if value not in enums:
+                    raise ValueError(
+                        f"Forbidden transform type for feature with key {key}"
+                    )
+            else:
+                if len(no_enums) == 0:
+                    raise ValueError(
+                        f"Forbidden transform type for feature with key {key}"
+                    )
+                if not isinstance(value, tuple(no_enums)):
+                    raise ValueError(
+                        f"Forbidden transform type for feature with key {key}"
+                    )
         return specs
 
     def get_bounds(

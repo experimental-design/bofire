@@ -7,13 +7,23 @@ from pydantic import validator
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import _CAT_SEP, CategoricalInput
 from bofire.data_models.features.feature import Input
-from bofire.data_models.molfeatures.api import AnyMolFeatures
+from bofire.data_models.molfeatures.api import (
+    AnyMolFeatures,
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+    MordredDescriptors,
+)
 from bofire.utils.cheminformatics import smiles2mol
 
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
     order: ClassVar[int] = 6
+
+    @staticmethod
+    def valid_transform_types() -> List[AnyMolFeatures]:
+        return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]
 
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
@@ -101,6 +111,15 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
         for cat in categories:
             smiles2mol(cat)
         return categories
+
+    @staticmethod
+    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
+        return CategoricalInput.valid_transform_types() + [
+            Fingerprints,
+            FingerprintsFragments,
+            Fragments,
+            MordredDescriptors,
+        ]
 
     def get_bounds(
         self,
