@@ -42,7 +42,7 @@ def find_local_max_ipopt_BaB(
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
-    discrete_variables: Optional[List[ContinuousInput]] = None,
+    discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -63,8 +63,10 @@ def find_local_max_ipopt_BaB(
                 Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
                 Non-fixed variables have to be set to None or nan.
             objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
-            categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
-                categorical variables. Defaults to [].
+            categorical_groups (Optional[List[List[ContinuousInput]]]). Represents the different groups of the
+               relaxed categorical variables. Defaults to None.
+            discrete_variables (Optional[Dict[str, Tuple[ContinuousInput, List[float]]]]): dict of relaxed discrete inputs
+                with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -184,7 +186,7 @@ def find_local_max_ipopt_exhaustive(
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
-    discrete_variables: Optional[List[ContinuousInput]] = None,
+    discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
@@ -205,8 +207,10 @@ def find_local_max_ipopt_exhaustive(
                 Values are set before the optimization. Within one experiment not all variables need to be fixed.
                 Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
                 Non-fixed variables have to be set to None or nan.
-            categorical_groups (List[List[ContinuousBinaryInput]], optional). Represents the different groups of the
-                categorical variables. Defaults to [].
+            categorical_groups (Optional[List[List[ContinuousInput]]]). Represents the different groups of the
+               relaxed categorical variables. Defaults to None.
+            discrete_variables (Optional[Dict[str, Tuple[ContinuousInput, List[float]]]]): dict of relaxed discrete inputs
+                with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a

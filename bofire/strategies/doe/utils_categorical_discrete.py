@@ -1,6 +1,6 @@
 import math
 from itertools import combinations
-from typing import List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -20,7 +20,9 @@ from bofire.data_models.features.feature import Feature, Output
 
 def discrete_to_relaxable_domain_mapper(
     domain: Domain,
-) -> Tuple[Domain, List[List[ContinuousInput]], List[ContinuousInput]]:
+) -> Tuple[
+    Domain, List[List[ContinuousInput]], Dict[str, Tuple[ContinuousInput, List[float]]]
+]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
     Args:
@@ -35,10 +37,13 @@ def discrete_to_relaxable_domain_mapper(
     categorical_inputs = domain.inputs.get(CategoricalInput)
 
     # convert discrete inputs to continuous inputs
-    relaxable_discrete_inputs = [
-        ContinuousInput(key=d_input.key, bounds=(min(d_input.values), max(d_input.values)))  # type: ignore
+    relaxable_discrete_inputs = {
+        d_input.key: (  # type: ignore
+            ContinuousInput(key=d_input.key, bounds=(min(d_input.values), max(d_input.values))),  # type: ignore
+            d_input.values,
+        )  # type: ignore
         for d_input in discrete_inputs
-    ]
+    }
 
     # convert categorical inputs to continuous inputs
     relaxable_categorical_inputs = []
@@ -53,12 +58,12 @@ def discrete_to_relaxable_domain_mapper(
 
     # create new domain with continuous inputs
     new_domain = Domain(
-        inputs=kept_inputs + relaxable_discrete_inputs + relaxable_categorical_inputs,  # type: ignore
+        inputs=kept_inputs + [var for key, (var, values) in relaxable_discrete_inputs.items()] + relaxable_categorical_inputs,  # type: ignore
         outputs=domain.outputs.features,  # type: ignore
         constraints=domain.constraints + new_constraints,
     )
 
-    return new_domain, categorical_groups, discrete_inputs
+    return new_domain, categorical_groups, relaxable_discrete_inputs
 
 
 def nchoosek_to_relaxable_domain_mapper(
@@ -139,11 +144,11 @@ def NChooseKGroup_with_quantity(
             of the sum of all quantities. If False, it is a upper bound, i.e. the sum of the quantities can be lower.
             Default is False
         use_non_relaxable_category_and_non_linear_constraint (bool): Default is False.
-            If False, RelaxableCategoricalInput is used in combination with LinearConstraints.
+            If False, ContinuousInput is used in combination with LinearConstraints as a relaxation.
             If True, CategoricalInput used in combination with NonlinearConstraints, as CategoricalInput can not be
             used within LinearConstraints
     Returns:
-        Either one CategoricalInput wrapped in a List or List of RelaxableBinaryInput describing the group,
+        Either one CategoricalInput wrapped in a List or List of ContinuousInput describing the group,
         If quantities are provided, List of ContinuousInput describing the quantity of each element of the group
         otherwise empty List,
         List of either LinearConstraints or mix of Linear- and NonlinearConstraints, which enforce the quantities
@@ -229,7 +234,7 @@ def NChooseKGroup_with_quantity(
     # adding the new possible combinations to the list of keys
     keys = [unique_group_identifier + "_" + k for k in combined_keys]
 
-    # choosing between CategoricalInput and RelaxableBinaryInput
+    # choosing between CategoricalInput and ContinuousInput
     if use_non_relaxable_category_and_non_linear_constraint:
         category = [CategoricalInput(key=unique_group_identifier, categories=keys)]
         # if we use_legacy_class is true this constraint will be added by the discrete_to_relaxable_domain_mapper function
@@ -374,7 +379,7 @@ def NChooseKGroup(
         pick_at_most (int): maximum number of elements to be picked from the category. >=pick_at_least
         none_also_valid (bool): defines if also none of the elements can be picked
     Returns:
-        List of RelaxableBinaryInput describing the group,
+        List of ContinuousInput describing the group,
         List of either LinearConstraints, which enforce the quantities
         and group restrictions.
     """
@@ -482,14 +487,14 @@ def validate_categorical_groups(
     """Validate if features given as the categorical groups are also features in the domain and if each feature
     is in exactly one group
 
-    Args: categorical_group (List[List[RelaxableBinaryInput]]) : groups of the different categories
+    Args: categorical_group (List[List[ContinuousInput]]) : groups of the different categories
     domain (Domain): Domain to test against
 
     Raises
         ValueError: Feature key not registered in any group or registered too often.
 
     Returns:
-        List[List[RelaxableBinaryInput]]: groups of the different categories
+        List[List[ContinuousInput]]: groups of the different categories
     """
     return True
     # todo dieser code mach keinen sinn mehr
@@ -523,7 +528,7 @@ def design_from_original_to_new_domain(
 def design_from_new_to_original_domain(
     original_domain: Domain, design: pd.DataFrame
 ) -> pd.DataFrame:
-    # map the RelaxableBinaryInputs to the corresponding CategoricalInputs, choose random if for multiple solutions
+    # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random if for multiple solutions
     transformed_design = design[
         original_domain.get_feature_keys(excludes=[CategoricalInput, Output])
     ]
@@ -558,7 +563,7 @@ def design_from_new_to_original_domain(
         )
         transformed_design[group.key] = categorical_columns.apply("".join, axis=1)
 
-    # map the RelaxableDiscreteInput to the closest valid value
+    # map the ContinuousInput describing the discrete to the closest valid value
     for var in original_domain.get_features(includes=DiscreteInput):
         closest_solution = var.from_continuous(transformed_design)  # type: ignore
         transformed_design[var.key] = closest_solution

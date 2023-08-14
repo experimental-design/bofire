@@ -142,6 +142,7 @@ class DoEStrategy(Strategy):
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
                 categorical_groups=all_new_categories,
+                discrete_variables=new_discretes,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -156,6 +157,7 @@ class DoEStrategy(Strategy):
                 verbose=self.data_model.verbose,
                 partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
                 categorical_groups=all_new_categories,
+                discrete_variables=new_discretes,
             )
         else:
             raise RuntimeError("Could not find suitable optimization strategy")

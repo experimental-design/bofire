@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import total_ordering
 from queue import PriorityQueue
-from typing import List
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -12,6 +12,7 @@ from bofire.data_models.features.api import ContinuousInput
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
+from bofire.strategies.doe.utils_categorical_discrete import equal_count_split
 
 
 @total_ordering
@@ -21,8 +22,8 @@ class NodeExperiment:
         partially_fixed_experiments: pd.DataFrame,
         design_matrix: pd.DataFrame,
         value: float,
-        categorical_groups: List[List[ContinuousInput]],
-        discrete_vars: List[ContinuousInput],
+        categorical_groups: Optional[List[List[ContinuousInput]]] = None,
+        discrete_vars: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     ):
         """
 
@@ -31,13 +32,19 @@ class NodeExperiment:
             design_matrix: optimal design for given the fixed and partially fixed experiments
             value: value of the objective function evaluated with the design_matrix
             categorical_groups: Represents the different groups of the categorical variables
-            discrete_vars: List of discrete variables in the optimization problem
+            discrete_vars: Dict of discrete variables and the corresponding valid values in the optimization problem
         """
         self.partially_fixed_experiments = partially_fixed_experiments
         self.design_matrix = design_matrix
         self.value = value
-        self.categorical_groups = categorical_groups
-        self.discrete_vars = discrete_vars
+        if categorical_groups is not None:
+            self.categorical_groups = categorical_groups
+        else:
+            self.categorical_groups = []
+        if discrete_vars is not None:
+            self.discrete_vars = discrete_vars
+        else:
+            self.discrete_vars = {}
 
     def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
         """
@@ -64,22 +71,20 @@ class NodeExperiment:
                     return branches
 
         # branching for the discrete variables
-        for var in self.discrete_vars:
+        for key, (var, values) in self.discrete_vars.items():
             for row_index, _exp in self.partially_fixed_experiments.iterrows():
-                current_fixation = self.partially_fixed_experiments.iloc[row_index][
-                    var.key
-                ]
+                current_fixation = self.partially_fixed_experiments.iloc[row_index][key]
                 first_fixation, second_fixation = None, None
                 if current_fixation is None:
-                    lower_split, upper_split = var.equal_count_split(
-                        var.lower_bound, var.upper_bound
+                    lower_split, upper_split = equal_count_split(
+                        values, var.lower_bound, var.upper_bound
                     )
                     first_fixation = (var.lower_bound, lower_split)
                     second_fixation = (upper_split, var.upper_bound)
 
                 elif current_fixation[0] != current_fixation[1]:
-                    lower_split, upper_split = var.equal_count_split(
-                        current_fixation[0], current_fixation[1]
+                    lower_split, upper_split = equal_count_split(
+                        values, current_fixation[0], current_fixation[1]
                     )
                     first_fixation = (current_fixation[0], lower_split)
                     second_fixation = (upper_split, current_fixation[1])
@@ -88,8 +93,8 @@ class NodeExperiment:
                     first_branch = self.partially_fixed_experiments.copy()
                     second_branch = self.partially_fixed_experiments.copy()
 
-                    first_branch.loc[row_index, var.key] = first_fixation
-                    second_branch.loc[row_index, var.key] = second_fixation
+                    first_branch.loc[row_index, key] = first_fixation
+                    second_branch.loc[row_index, key] = second_fixation
 
                     return [first_branch, second_branch]
 
@@ -117,8 +122,7 @@ def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
     """
     test if a design is a valid solution. i.e. binary and discrete variables are valid
     Args:
-        design_matrix (pd.DataFrame): the design to test
-        domain (Domain): the domain for which the design should be tested
+        node: the current node of the branch to be tested
         tolerance: absolute tolerance between valid values and values in the design
 
     Returns: True if the design is valid, else False
@@ -137,9 +141,9 @@ def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
             return False
 
     discrete_vars = node.discrete_vars
-    for var in discrete_vars:
+    for _key, (var, values) in discrete_vars.items():
         value = design_matrix.get(var.key)
-        if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:  # type: ignore
+        if False in [True in np.isclose(v, values, atol=tolerance) for v in value]:  # type: ignore
             return False
     return True
 
@@ -192,11 +196,7 @@ def bnb(
         )
     # solve branched problems
     for _i, branch in enumerate(next_branches):
-        initial_sample = branch.where(
-            ~pd.isnull(branch), current_branch.design_matrix.values
-        )
-        initial_sample = initial_sample.astype("float64")
-        kwargs["sampling"] = initial_sample
+        kwargs["sampling"] = current_branch.design_matrix
         try:
             design = find_local_max_ipopt(partially_fixed_experiments=branch, **kwargs)
             value = objective_class.evaluate(design.to_numpy().flatten())
