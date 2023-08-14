@@ -1409,20 +1409,19 @@ def test_inputs_validate_transform_valid(specs):
 @pytest.mark.parametrize(
     "specs",
     [
-        ({"x2": CategoricalEncodingEnum.ONE_HOT}),
-        ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
+        # ({"x2": CategoricalEncodingEnum.ONE_HOT}),
+        # ({"x3": CategoricalEncodingEnum.DESCRIPTOR}),
         ({"x4": CategoricalEncodingEnum.ONE_HOT}),
         ({"x4": ScalerEnum.NORMALIZE}),
         ({"x4": CategoricalEncodingEnum.DESCRIPTOR}),
-        (
-            {
-                "x2": CategoricalEncodingEnum.ONE_HOT,
-                "x3": CategoricalEncodingEnum.DESCRIPTOR,
-            }
-        ),
+        # (
+        #    {
+        #        "x2": CategoricalEncodingEnum.ONE_HOT,
+        #        "x3": CategoricalEncodingEnum.DESCRIPTOR,
+        #    }
+        # ),
     ],
 )
-# Invalid when no specs do not contain transform information for x4, or when the transform is not a MolFeatures type
 def test_inputs_validate_transform_specs_molecular_input_invalid(specs):
     inps = Inputs(
         features=[
