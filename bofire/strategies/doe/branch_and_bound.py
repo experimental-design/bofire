@@ -8,10 +8,14 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.constraints.api import ConstraintNotFulfilledError
-from bofire.data_models.features.api import ContinuousInput
+from bofire.data_models.domain.domain import Domain
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
+from bofire.strategies.doe.utils_features import (
+    RelaxableBinaryInput,
+    RelaxableDiscreteInput,
+)
 
 
 @total_ordering
@@ -21,8 +25,8 @@ class NodeExperiment:
         partially_fixed_experiments: pd.DataFrame,
         design_matrix: pd.DataFrame,
         value: float,
-        categorical_groups: List[List[ContinuousInput]],
-        discrete_vars: List[ContinuousInput],
+        categorical_groups: List[List[RelaxableBinaryInput]],
+        discrete_vars: List[RelaxableDiscreteInput],
     ):
         """
 
@@ -113,7 +117,9 @@ class NodeExperiment:
         )
 
 
-def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
+def is_valid(
+    design_matrix: pd.DataFrame, domain: Domain, tolerance: float = 1e-2
+) -> bool:
     """
     test if a design is a valid solution. i.e. binary and discrete variables are valid
     Args:
@@ -124,8 +130,7 @@ def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
     Returns: True if the design is valid, else False
 
     """
-    categorical_vars = [var for group in node.categorical_groups for var in group]
-    design_matrix = node.design_matrix
+    categorical_vars = domain.get_features(includes=RelaxableBinaryInput)
     for var in categorical_vars:
         value = design_matrix.get(var.key)
         if not (
@@ -136,7 +141,7 @@ def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
         ):
             return False
 
-    discrete_vars = node.discrete_vars
+    discrete_vars = domain.get_features(includes=RelaxableDiscreteInput)
     for var in discrete_vars:
         value = design_matrix.get(var.key)
         if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:  # type: ignore
@@ -179,7 +184,7 @@ def bnb(
     pre_size = priority_queue.qsize()
     current_branch = priority_queue.get()
     # test if current solution is already valid
-    if is_valid(current_branch):
+    if is_valid(current_branch.design_matrix, domain):
         return current_branch
 
     # branch current solutions in sub-problems

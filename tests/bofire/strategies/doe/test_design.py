@@ -22,6 +22,7 @@ from bofire.strategies.doe.design import (
     get_n_experiments,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
+from bofire.strategies.doe.utils_features import RelaxableBinaryInput
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
@@ -485,8 +486,8 @@ def test_partially_fixed_experiments():
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
             ContinuousInput(key="x2", bounds=(0, 15)),
-            ContinuousInput(key="a1", bounds=(0, 1)),
-            ContinuousInput(key="a2", bounds=(0, 1)),
+            RelaxableBinaryInput(key="a1"),
+            RelaxableBinaryInput(key="a2"),
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
