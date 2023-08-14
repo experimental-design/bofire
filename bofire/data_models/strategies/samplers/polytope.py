@@ -16,8 +16,8 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
 from bofire.strategies.doe.utils_features import (
-    RelaxableBinaryInput,
-    RelaxableDiscreteInput,
+    PrivateRelaxableBinaryInput,
+    PrivateRelaxableDiscreteInput,
 )
 
 
@@ -49,6 +49,6 @@ class PolytopeSampler(SamplerStrategy):
             CategoricalInput,
             DiscreteInput,
             CategoricalDescriptorInput,
-            RelaxableBinaryInput,
-            RelaxableDiscreteInput,
+            PrivateRelaxableBinaryInput,
+            PrivateRelaxableDiscreteInput,
         ]

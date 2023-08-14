@@ -13,8 +13,8 @@ from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import get_formula_from_string
 from bofire.strategies.doe.utils_features import (
-    RelaxableBinaryInput,
-    RelaxableDiscreteInput,
+    PrivateRelaxableBinaryInput,
+    PrivateRelaxableDiscreteInput,
 )
 
 
@@ -25,8 +25,8 @@ class NodeExperiment:
         partially_fixed_experiments: pd.DataFrame,
         design_matrix: pd.DataFrame,
         value: float,
-        categorical_groups: List[List[RelaxableBinaryInput]],
-        discrete_vars: List[RelaxableDiscreteInput],
+        categorical_groups: List[List[PrivateRelaxableBinaryInput]],
+        discrete_vars: List[PrivateRelaxableDiscreteInput],
     ):
         """
 
@@ -130,7 +130,7 @@ def is_valid(
     Returns: True if the design is valid, else False
 
     """
-    categorical_vars = domain.get_features(includes=RelaxableBinaryInput)
+    categorical_vars = domain.get_features(includes=PrivateRelaxableBinaryInput)
     for var in categorical_vars:
         value = design_matrix.get(var.key)
         if not (
@@ -141,7 +141,7 @@ def is_valid(
         ):
             return False
 
-    discrete_vars = domain.get_features(includes=RelaxableDiscreteInput)
+    discrete_vars = domain.get_features(includes=PrivateRelaxableDiscreteInput)
     for var in discrete_vars:
         value = design_matrix.get(var.key)
         if False in [True in np.isclose(v, var.values, atol=tolerance) for v in value]:  # type: ignore
