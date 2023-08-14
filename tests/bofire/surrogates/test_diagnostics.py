@@ -15,6 +15,8 @@ from bofire.surrogates.diagnostics import (
     CvResult,
     CvResults,
     CvResults2CrossValidationValues,
+    UQ_metrics,
+    _CVPPDiagram,
     _mean_absolute_error,
     _mean_absolute_percentage_error,
     _mean_squared_error,
@@ -203,6 +205,45 @@ def test_cvresult_get_metric_invalid():
     cv = CvResult(key=feature.key, observed=observed, predicted=predicted)
     for metric in metrics.keys():
         np.isnan(cv.get_metric(metric=metric))
+
+
+def test_cvresult_get_UQ_metric_valid():
+    cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=True)
+    assert cv.n_samples == 10
+    for metric in UQ_metrics.keys():
+        m = cv.get_metric(metric=metric)
+        assert type(m) == float
+
+
+def test_cvresult_get_UQ_metric_invalid():
+    cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=False)
+    assert cv.n_samples == 10
+    for metric in UQ_metrics.keys():
+        with pytest.warns(UserWarning):
+            np.isnan(cv.get_metric(metric=metric))
+
+
+def test_CVPPDiagram_valid():
+    cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=True)
+    q, Cq = _CVPPDiagram(
+        observed=cv.observed.values,
+        predicted=cv.predicted.values,
+        standard_deviation=cv.standard_deviation,
+    )
+    assert len(q) == len(Cq)
+
+
+def test_CVPPDiagram_invalid():
+    cv = generate_cvresult(key="a", n_samples=10, include_standard_deviation=False)
+    with pytest.raises(
+        ValueError,
+        match="Calibration metric without standard deviation is not possible",
+    ):
+        _CVPPDiagram(
+            observed=cv.observed.values,
+            predicted=cv.predicted.values,
+            standard_deviation=cv.standard_deviation,
+        )
 
 
 def test_cvresults_invalid():
