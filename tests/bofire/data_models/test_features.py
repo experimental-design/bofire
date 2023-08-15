@@ -576,7 +576,12 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
         (
             "__c_alpha_c_",
             ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-            ["__c_alpha_c___A_a", "__c_alpha_c___A_a", "__c_alpha_c__C_c_", "__c_alpha_c__B_b"],
+            [
+                "__c_alpha_c___A_a",
+                "__c_alpha_c___A_a",
+                "__c_alpha_c__C_c_",
+                "__c_alpha_c__B_b",
+            ],
         ),
     ],
 )
@@ -600,7 +605,10 @@ def test_categorical_to_one_hot_encoding(key, categories, samples):
     [
         ("c", ["B", "A", "C"]),
         ("c_alpha", ["B_b", "_A_a", "C_c_"]),
-        ("__c_alpha_c_", ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"]),
+        (
+            "__c_alpha_c_",
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
+        ),
     ],
 )
 def test_categorical_from_one_hot_encoding(key, categories):
@@ -638,7 +646,12 @@ def test_categorical_from_one_hot_encoding_invalid():
         (
             "__c_alpha_c_",
             ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-            ["__c_alpha_c___A_a", "__c_alpha_c___A_a", "__c_alpha_c__C_c_", "__c_alpha_c__B_b"],
+            [
+                "__c_alpha_c___A_a",
+                "__c_alpha_c___A_a",
+                "__c_alpha_c__C_c_",
+                "__c_alpha_c__B_b",
+            ],
         ),
     ],
 )
@@ -662,7 +675,10 @@ def test_categorical_to_dummy_encoding(key, categories, samples):
     [
         ("c", ["B", "A", "C"]),
         ("c_alpha", ["B_b", "_A_a", "C_c_"]),
-        ("__c_alpha_c_", ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"]),
+        (
+            "__c_alpha_c_",
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
+        ),
     ],
 )
 def test_categorical_from_dummy_encoding(key, categories):
@@ -739,19 +755,33 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
 
+
 @pytest.mark.parametrize(
     "key, categories, samples_in, descriptors",
     [
         ("c", ["B", "A", "C"], ["A", "A", "C", "B"], ["d1", "d2"]),
-        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_A_a", "_A_a", "C_c_", "B_b"], ["_d1_d", "d2_d_2_"]),
+        (
+            "c_alpha",
+            ["B_b", "_A_a", "C_c_"],
+            ["_A_a", "_A_a", "C_c_", "B_b"],
+            ["_d1_d", "d2_d_2_"],
+        ),
         (
             "__c_alpha_c_",
             ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
-            ["__c_alpha_c___A_a", "__c_alpha_c___A_a", "__c_alpha_c__C_c_", "__c_alpha_c__B_b"], ["__c_alpha_c__d1_d", "__c_alpha_c_d2_d_2_"]
+            [
+                "__c_alpha_c___A_a",
+                "__c_alpha_c___A_a",
+                "__c_alpha_c__C_c_",
+                "__c_alpha_c__B_b",
+            ],
+            ["__c_alpha_c__d1_d", "__c_alpha_c_d2_d_2_"],
         ),
     ],
 )
-def test_categorical_descriptor_to_descriptor_encoding(key, categories, samples_in, descriptors):
+def test_categorical_descriptor_to_descriptor_encoding(
+    key, categories, samples_in, descriptors
+):
     c = CategoricalDescriptorInput(
         key=key,
         categories=categories,
@@ -770,6 +800,7 @@ def test_categorical_descriptor_to_descriptor_encoding(key, categories, samples_
     untransformed = c.from_descriptor_encoding(t_samples)
     assert np.all(samples == untransformed)
 
+
 @pytest.mark.parametrize(
     "key, categories, descriptors",
     [
@@ -777,7 +808,8 @@ def test_categorical_descriptor_to_descriptor_encoding(key, categories, samples_
         ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_d1_d", "d2_d_2_"]),
         (
             "__c_alpha_c_",
-            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"], ["__c_alpha_c__d1_d", "__c_alpha_c_d2_d_2_"]
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
+            ["__c_alpha_c__d1_d", "__c_alpha_c_d2_d_2_"],
         ),
     ],
 )
