@@ -77,42 +77,13 @@ class DoEStrategy(Strategy):
         fixed_experiments_count = 0
         _candidate_count = candidate_count
         adapted_partially_fixed_candidates = None
+        adapted_partially_fixed_candidates = self._transform_candidates_to_new_domain(
+            new_domain, self.candidates
+        )
+
         if self.candidates is not None:
-            intermediate_candidates = self.candidates.copy()
-            missing_columns = [
-                key
-                for key in new_domain.inputs.get_keys()
-                if key not in self.candidates.columns
-            ]
-
-            for col in missing_columns:
-                intermediate_candidates.insert(0, col, None)
-
-            cat_columns = self.domain.get_features(includes=CategoricalInput)
-            for cat in cat_columns:
-                for row_index, c in enumerate(intermediate_candidates[cat.key].values):
-                    if pd.isnull(c):
-                        continue
-                    if c not in cat.categories:  # type: ignore
-                        raise AttributeError(
-                            f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
-                        )
-                    intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
-                    intermediate_candidates.loc[row_index, c] = 1
-
-            intermediate_candidates = intermediate_candidates.drop(
-                [cat.key for cat in cat_columns], axis=1
-            )
-
             fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
             _candidate_count = candidate_count + fixed_experiments_count
-
-            adapted_partially_fixed_candidates = pd.concat(
-                [
-                    intermediate_candidates[self.candidates.notnull().all(axis=1)],
-                    intermediate_candidates[self.candidates.isnull().any(axis=1)],
-                ]
-            )
 
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
@@ -180,3 +151,40 @@ class DoEStrategy(Strategy):
             bool: True if number of passed experiments is sufficient, False otherwise
         """
         return True
+
+    def _transform_candidates_to_new_domain(self, new_domain, candidates):
+        if candidates is not None:
+            intermediate_candidates = candidates.copy()
+            missing_columns = [
+                key
+                for key in new_domain.inputs.get_keys()
+                if key not in candidates.columns
+            ]
+
+            for col in missing_columns:
+                intermediate_candidates.insert(0, col, None)
+
+            cat_columns = self.domain.get_features(includes=CategoricalInput)
+            for cat in cat_columns:
+                for row_index, c in enumerate(intermediate_candidates[cat.key].values):
+                    if pd.isnull(c):
+                        continue
+                    if c not in cat.categories:  # type: ignore
+                        raise AttributeError(
+                            f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
+                        )
+                    intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
+                    intermediate_candidates.loc[row_index, c] = 1
+
+            intermediate_candidates = intermediate_candidates.drop(
+                [cat.key for cat in cat_columns], axis=1
+            )
+
+            adapted_partially_fixed_candidates = pd.concat(
+                [
+                    intermediate_candidates[candidates.notnull().all(axis=1)],
+                    intermediate_candidates[candidates.isnull().any(axis=1)],
+                ]
+            )
+            return adapted_partially_fixed_candidates
+        return None
