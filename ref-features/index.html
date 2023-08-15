@@ -1113,6 +1113,47 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.CategoricalMolecularInput" class="md-nav__link">
+    CategoricalMolecularInput
+  </a>
+  
+    <nav class="md-nav" aria-label="CategoricalMolecularInput">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.CategoricalMolecularInput.__json_encoder__" class="md-nav__link">
+    __json_encoder__()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.CategoricalMolecularInput.from_descriptor_encoding" class="md-nav__link">
+    from_descriptor_encoding()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.CategoricalMolecularInput.get_bounds" class="md-nav__link">
+    get_bounds()
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.molecular.CategoricalMolecularInput.validate_smiles" class="md-nav__link">
+    validate_smiles()
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.data_models.features.molecular.MolecularInput" class="md-nav__link">
     MolecularInput
   </a>
@@ -1489,6 +1530,14 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
         <span class="k">if</span> <span class="nb">sum</span><span class="p">(</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;allowed&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no category is allowed&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">values</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">,</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">DUMMY</span><span class="p">,</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">,</span>
+        <span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns True if there is only one allowed category.</span>
@@ -2876,6 +2925,7 @@ that can be used in the optimization</p>
     </div>
 
   </div>
+
 
 
 
@@ -4389,6 +4439,15 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No variation for descriptor </span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">v</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">,</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">DUMMY</span><span class="p">,</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ORDINAL</span><span class="p">,</span>
+            <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">DESCRIPTOR</span><span class="p">,</span>
+        <span class="p">]</span>
+
     <span class="k">def</span> <span class="nf">to_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;tabular overview of the feature as DataFrame</span>
 
@@ -5015,6 +5074,7 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
     </div>
 
   </div>
+
 
 
 
@@ -6597,6 +6657,11 @@ Input            (<a class="autorefs autorefs-internal" title="bofire.data_model
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Input</span><span class="p">(</span><span class="n">Feature</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all input features.&quot;&quot;&quot;</span>
 
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">,</span> <span class="n">AnyMolFeatures</span><span class="p">]]:</span>
+        <span class="k">pass</span>
+
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Indicates if a variable is set to a fixed value.</span>
@@ -6961,6 +7026,7 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
@@ -7261,6 +7327,488 @@ of the given arguments and keywords.</p>
 
 
 
+<h3 id="bofire.data_models.features.molecular.CategoricalMolecularInput" class="doc doc-heading">
+        <code>
+CategoricalMolecularInput            (<a class="autorefs autorefs-internal" title="bofire.data_models.features.categorical.CategoricalInput" href="#bofire.data_models.features.categorical.CategoricalInput">CategoricalInput</a>, <a class="autorefs autorefs-internal" title="bofire.data_models.features.molecular.MolecularInput" href="#bofire.data_models.features.molecular.MolecularInput">MolecularInput</a>)
+        </code>
+
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalMolecularInput</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">,</span> <span class="n">MolecularInput</span><span class="p">):</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalMolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalMolecularInput&quot;</span>
+    <span class="n">order</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span>
+
+    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_smiles</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates that categories are valid smiles. Note that this check can only</span>
+<span class="sd">        be executed when rdkit is available.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            categories (List[str]): List of smiles</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: when string is not a smiles</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]: List of the smiles</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># check on rdkit availability:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">smiles2mol</span><span class="p">(</span><span class="n">categories</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;rdkit not installed, categories cannot be validated.&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">categories</span>
+
+        <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+            <span class="n">smiles2mol</span><span class="p">(</span><span class="n">cat</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">categories</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">]]:</span>
+        <span class="k">return</span> <span class="n">CategoricalInput</span><span class="o">.</span><span class="n">valid_transform_types</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="n">Fingerprints</span><span class="p">,</span>
+            <span class="n">FingerprintsFragments</span><span class="p">,</span>
+            <span class="n">Fragments</span><span class="p">,</span>
+            <span class="n">MordredDescriptors</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+        <span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transform_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">,</span> <span class="n">AnyMolFeatures</span><span class="p">],</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">):</span>
+            <span class="c1"># we are just using the standard categorical transformations</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># in case that values is None, we return the optimization bounds</span>
+            <span class="c1"># else we return the complete bounds</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_descriptor_encoding</span><span class="p">(</span>
+                <span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">())</span>
+                <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
+
+    <span class="k">def</span> <span class="nf">from_descriptor_encoding</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Converts values back from descriptor encoding.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            values (pd.DataFrame): Descriptor encoded dataframe.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If descriptor columns not found in the dataframe.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            pd.Series: Series with categorical values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># This method is modified based on the categorical descriptor feature</span>
+        <span class="c1"># TODO: move it to more central place</span>
+        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
+        <span class="c1"># easier in the backtransform.</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">]):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">: Column names don&#39;t match categorical levels: </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">columns</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">cat_cols</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="n">values</span><span class="p">[</span><span class="n">cat_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
+                        <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_descriptor_encoding</span><span class="p">(</span>
+                            <span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span>
+                            <span class="n">values</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()),</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                    <span class="p">)</span>
+                    <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                    <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">(),</span>
+            <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">idxmin</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span>
+        <span class="k">return</span> <span class="n">s</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.CategoricalMolecularInput.__json_encoder__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
+of the given arguments and keywords.</p>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.CategoricalMolecularInput.from_descriptor_encoding" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_descriptor_encoding</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Converts values back from descriptor encoding.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>Descriptor encoded dataframe.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>If descriptor columns not found in the dataframe.</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>pd.Series</code></td>
+      <td><p>Series with categorical values.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">from_descriptor_encoding</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts values back from descriptor encoding.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        values (pd.DataFrame): Descriptor encoded dataframe.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If descriptor columns not found in the dataframe.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        pd.Series: Series with categorical values.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># This method is modified based on the categorical descriptor feature</span>
+    <span class="c1"># TODO: move it to more central place</span>
+    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+    <span class="p">]</span>
+    <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
+    <span class="c1"># easier in the backtransform.</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">]):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">: Column names don&#39;t match categorical levels: </span><span class="si">{</span><span class="n">values</span><span class="o">.</span><span class="n">columns</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">cat_cols</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">values</span><span class="p">[</span><span class="n">cat_cols</span><span class="p">]</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:]</span>
+                    <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_descriptor_encoding</span><span class="p">(</span>
+                        <span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span>
+                        <span class="n">values</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()),</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+                <span class="p">)</span>
+                <span class="o">**</span> <span class="mi">2</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">),</span>
+        <span class="n">columns</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">(),</span>
+        <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">idxmin</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">s</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">key</span>
+    <span class="k">return</span> <span class="n">s</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.CategoricalMolecularInput.get_bounds" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns the bounds of an input feature depending on the requested transform type.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>transform_type</code></td>
+        <td><code>Optional[TTransform]</code></td>
+        <td><p>The requested transform type. Defaults to None.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>values</code></td>
+        <td><code>Optional[pd.Series]</code></td>
+        <td><p>If values are provided the bounds are returned taking
+the most extreme values for the feature into account. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[float], List[float]]</code></td>
+      <td><p>List of lower bound values, list of upper bound values.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">transform_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">,</span> <span class="n">AnyMolFeatures</span><span class="p">],</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">):</span>
+        <span class="c1"># we are just using the standard categorical transformations</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># in case that values is None, we return the optimization bounds</span>
+        <span class="c1"># else we return the complete bounds</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_descriptor_encoding</span><span class="p">(</span>
+            <span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">),</span>
+        <span class="p">)</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.features.molecular.CategoricalMolecularInput.validate_smiles" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_smiles</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>validates that categories are valid smiles. Note that this check can only
+be executed when rdkit is available.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>categories</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List of smiles</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>when string is not a smiles</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[str]</code></td>
+      <td><p>List of the smiles</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_smiles</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates that categories are valid smiles. Note that this check can only</span>
+<span class="sd">    be executed when rdkit is available.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        categories (List[str]): List of smiles</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: when string is not a smiles</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]: List of the smiles</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># check on rdkit availability:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">smiles2mol</span><span class="p">(</span><span class="n">categories</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">except</span> <span class="ne">NameError</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;rdkit not installed, categories cannot be validated.&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">categories</span>
+
+    <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">categories</span><span class="p">:</span>
+        <span class="n">smiles2mol</span><span class="p">(</span><span class="n">cat</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">categories</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
 <h3 id="bofire.data_models.features.molecular.MolecularInput" class="doc doc-heading">
         <code>
 MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.data_models.features.feature.Input" href="#bofire.data_models.features.feature.Input">Input</a>)
@@ -7281,6 +7829,10 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">MolecularInput</span><span class="p">(</span><span class="n">Input</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MolecularInput&quot;</span>
     <span class="n">order</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Fingerprints</span><span class="p">,</span> <span class="n">FingerprintsFragments</span><span class="p">,</span> <span class="n">Fragments</span><span class="p">,</span> <span class="n">MordredDescriptors</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
 
     <span class="k">def</span> <span class="nf">validate_experimental</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -7678,6 +8230,7 @@ the most extreme values for the feature into account. Defaults to None.</p></td>
 
 
 
+
   <div class="doc doc-object doc-method">
 
 
@@ -7883,6 +8436,10 @@ NumericalInput            (<a class="autorefs autorefs-internal" title="bofire.d
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for all numerical (ordinal) input features.&quot;&quot;&quot;</span>
 
     <span class="n">unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
 
     <span class="k">def</span> <span class="nf">to_unit_range</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">use_real_bounds</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
@@ -8418,6 +8975,7 @@ Defaults to False.</p></td>
     </div>
 
   </div>
+
 
 
 
