@@ -74,42 +74,45 @@ class DoEStrategy(Strategy):
             all_new_categories.extend(new_categories)
 
         # here we adapt the (partially) fixed experiments to the new domain
+        fixed_experiments_count = 0
+        _candidate_count = candidate_count
+        adapted_partially_fixed_candidates = None
+        if self.candidates is not None:
+            intermediate_candidates = self.candidates.copy()
+            missing_columns = [
+                key
+                for key in new_domain.inputs.get_keys()
+                if key not in self.candidates.columns
+            ]
 
-        intermediate_candidates = self.candidates.copy()
-        missing_columns = [
-            key
-            for key in new_domain.inputs.get_keys()
-            if key not in self.candidates.columns
-        ]
-        if intermediate_candidates is not None:
             for col in missing_columns:
                 intermediate_candidates.insert(0, col, None)
 
-        cat_columns = self.domain.get_features(includes=CategoricalInput)
-        for cat in cat_columns:
-            for row_index, c in enumerate(intermediate_candidates[cat.key].values):
-                if pd.isnull(c):
-                    continue
-                if c not in cat.categories:  # type: ignore
-                    raise AttributeError(
-                        f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
-                    )
-                intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
-                intermediate_candidates.loc[row_index, c] = 1
+            cat_columns = self.domain.get_features(includes=CategoricalInput)
+            for cat in cat_columns:
+                for row_index, c in enumerate(intermediate_candidates[cat.key].values):
+                    if pd.isnull(c):
+                        continue
+                    if c not in cat.categories:  # type: ignore
+                        raise AttributeError(
+                            f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
+                        )
+                    intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
+                    intermediate_candidates.loc[row_index, c] = 1
 
-        intermediate_candidates = intermediate_candidates.drop(
-            [cat.key for cat in cat_columns], axis=1
-        )
+            intermediate_candidates = intermediate_candidates.drop(
+                [cat.key for cat in cat_columns], axis=1
+            )
 
-        fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
-        _candidate_count = candidate_count + fixed_experiments_count
+            fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
+            _candidate_count = candidate_count + fixed_experiments_count
 
-        adapted_partially_fixed_candidates = pd.concat(
-            [
-                intermediate_candidates[self.candidates.notnull().all(axis=1)],
-                intermediate_candidates[self.candidates.isnull().any(axis=1)],
-            ]
-        )
+            adapted_partially_fixed_candidates = pd.concat(
+                [
+                    intermediate_candidates[self.candidates.notnull().all(axis=1)],
+                    intermediate_candidates[self.candidates.isnull().any(axis=1)],
+                ]
+            )
 
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
