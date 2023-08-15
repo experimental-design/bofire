@@ -11,6 +11,10 @@ class NumericalInput(Input):
 
     unit: Optional[str] = None
 
+    @staticmethod
+    def valid_transform_types() -> List:
+        return []
+
     def to_unit_range(
         self, values: Union[pd.Series, np.ndarray], use_real_bounds: bool = False
     ) -> Union[pd.Series, np.ndarray]:

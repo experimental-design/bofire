@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import List, Literal, Optional
 
 import pandas as pd
@@ -18,6 +19,14 @@ class MolFeatures(BaseModel):
     """Base class for all molecular features"""
 
     type: str
+
+    @abstractmethod
+    def get_descriptor_names(self) -> List[str]:
+        pass
+
+    @abstractmethod
+    def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
+        pass
 
 
 class Fingerprints(MolFeatures):

@@ -42,6 +42,11 @@ class Feature(BaseModel):
 class Input(Feature):
     """Base class for all input features."""
 
+    @staticmethod
+    @abstractmethod
+    def valid_transform_types() -> List[Union[CategoricalEncodingEnum, AnyMolFeatures]]:
+        pass
+
     @abstractmethod
     def is_fixed(self) -> bool:
         """Indicates if a variable is set to a fixed value.
