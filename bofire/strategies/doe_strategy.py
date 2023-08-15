@@ -76,7 +76,6 @@ class DoEStrategy(Strategy):
         # here we adapt the (partially) fixed experiments to the new domain
         fixed_experiments_count = 0
         _candidate_count = candidate_count
-        adapted_partially_fixed_candidates = None
         adapted_partially_fixed_candidates = self._transform_candidates_to_new_domain(
             new_domain, self.candidates
         )
