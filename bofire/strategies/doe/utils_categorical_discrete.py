@@ -15,13 +15,15 @@ from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Feature, Output
+from bofire.data_models.features.feature import Feature, Output, TDiscreteVals
 
 
 def discrete_to_relaxable_domain_mapper(
     domain: Domain,
 ) -> Tuple[
-    Domain, List[List[ContinuousInput]], Dict[str, Tuple[ContinuousInput, List[float]]]
+    Domain,
+    List[List[ContinuousInput]],
+    Dict[str, Tuple[ContinuousInput, TDiscreteVals]],
 ]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
@@ -63,7 +65,7 @@ def discrete_to_relaxable_domain_mapper(
         constraints=domain.constraints + new_constraints,
     )
 
-    return new_domain, categorical_groups, relaxable_discrete_inputs
+    return new_domain, categorical_groups, relaxable_discrete_inputs  # type: ignore
 
 
 def nchoosek_to_relaxable_domain_mapper(
