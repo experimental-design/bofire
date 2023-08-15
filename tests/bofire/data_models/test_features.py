@@ -567,31 +567,49 @@ def test_categorical_input_feature_validate_candidental_invalid(input_feature, v
         input_feature.validate_candidental(values)
 
 
-@pytest.mark.parametrize("key", ["c", "c_alpha"])
-def test_categorical_to_one_hot_encoding(key):
-    c = CategoricalInput(key=key, categories=["B", "A", "C"])
-    samples = pd.Series(["A", "A", "C", "B"])
+@pytest.mark.parametrize(
+    "key, categories, samples",
+    [
+        ("c", ["B", "A", "C"], ["A", "A", "C", "B"]),
+        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_A_a", "_A_a", "C_c_", "B_b"]),
+        (
+            "__c_alpha_c_",
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
+            ["__c_alpha_c___A_a", "__c_alpha_c___A_a", "__c_alpha_c__C_c_", "__c_alpha_c__B_b"],
+        ),
+    ],
+)
+def test_categorical_to_one_hot_encoding(key, categories, samples):
+    c = CategoricalInput(key=key, categories=categories)
+    samples = pd.Series(samples)
     t_samples = c.to_onehot_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[0.0, 1.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]],
-            columns=[f"{key}_B", f"{key}_A", f"{key}_C"],
+            columns=[f"{key}_{cat_str}" for cat_str in categories],
         ),
     )
     untransformed = c.from_onehot_encoding(t_samples)
     assert np.all(samples == untransformed)
 
 
-@pytest.mark.parametrize("key", ["c", "c_alpha"])
-def test_categorical_from_one_hot_encoding(key):
-    c = CategoricalInput(key=key, categories=["B", "A", "C"])
+@pytest.mark.parametrize(
+    "key, categories",
+    [
+        ("c", ["B", "A", "C"]),
+        ("c_alpha", ["B_b", "_A_a", "C_c_"]),
+        ("__c_alpha_c_", ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"]),
+    ],
+)
+def test_categorical_from_one_hot_encoding(key, categories):
+    c = CategoricalInput(key=key, categories=categories)
     one_hot_values = pd.DataFrame(
-        columns=[f"{key}_B", f"{key}_A", f"{key}_C", "misc"],
+        columns=[f"{key}_{cat_str}" for cat_str in categories] + ["misc"],
         data=[[0.9, 0.4, 0.2, 6], [0.8, 0.7, 0.9, 9]],
     )
     samples = c.from_onehot_encoding(one_hot_values)
-    assert np.all(samples == pd.Series(["B", "C"]))
+    assert np.all(samples == pd.Series([categories[0], categories[2]]))
 
 
 def test_categorical_from_one_hot_encoding_invalid():
@@ -611,31 +629,49 @@ def test_categorical_from_one_hot_encoding_invalid():
         c.from_onehot_encoding(one_hot_values)
 
 
-@pytest.mark.parametrize("key", ["c", "c_alpha"])
-def test_categorical_to_dummy_encoding(key):
-    c = CategoricalInput(key=key, categories=["B", "A", "C"])
-    samples = pd.Series(["A", "A", "C", "B"])
+@pytest.mark.parametrize(
+    "key, categories, samples",
+    [
+        ("c", ["B", "A", "C"], ["A", "A", "C", "B"]),
+        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_A_a", "_A_a", "C_c_", "B_b"]),
+        (
+            "__c_alpha_c_",
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
+            ["__c_alpha_c___A_a", "__c_alpha_c___A_a", "__c_alpha_c__C_c_", "__c_alpha_c__B_b"],
+        ),
+    ],
+)
+def test_categorical_to_dummy_encoding(key, categories, samples):
+    c = CategoricalInput(key=key, categories=categories)
+    samples = pd.Series(samples)
     t_samples = c.to_dummy_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[1.0, 0.0], [1.0, 0.0], [0.0, 1.0], [0.0, 0.0]],
-            columns=[f"{key}_A", f"{key}_C"],
+            columns=[f"{key}_{cat_str}" for cat_str in categories[1:]],
         ),
     )
     untransformed = c.from_dummy_encoding(t_samples)
     assert np.all(samples == untransformed)
 
 
-@pytest.mark.parametrize("key", ["c", "c_alpha"])
-def test_categorical_from_dummy_encoding(key):
-    c = CategoricalInput(key=key, categories=["B", "A", "C"])
+@pytest.mark.parametrize(
+    "key, categories",
+    [
+        ("c", ["B", "A", "C"]),
+        ("c_alpha", ["B_b", "_A_a", "C_c_"]),
+        ("__c_alpha_c_", ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"]),
+    ],
+)
+def test_categorical_from_dummy_encoding(key, categories):
+    c = CategoricalInput(key=key, categories=categories)
     one_hot_values = pd.DataFrame(
-        columns=[f"{key}_A", f"{key}_C", "misc"],
+        columns=[f"{key}_{cat_str}" for cat_str in categories[1:]] + ["misc"],
         data=[[0.9, 0.05, 6], [0.1, 0.1, 9]],
     )
     samples = c.from_dummy_encoding(one_hot_values)
-    assert np.all(samples == pd.Series(["A", "B"]))
+    assert np.all(samples == pd.Series([categories[1], categories[0]]))
 
 
 def test_categorical_to_label_encoding():
@@ -702,53 +738,74 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
 
-
-def test_categorical_descriptor_to_descriptor_encoding():
+@pytest.mark.parametrize(
+    "key, categories, samples_in, descriptors",
+    [
+        ("c", ["B", "A", "C"], ["A", "A", "C", "B"], ["d1", "d2"]),
+        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_A_a", "_A_a", "C_c_", "B_b"], ["_d1_d", "d2_d_2_"]),
+        (
+            "__c_alpha_c_",
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"],
+            ["__c_alpha_c___A_a", "__c_alpha_c___A_a", "__c_alpha_c__C_c_", "__c_alpha_c__B_b"], ["__c_alpha_c__d1_d", "__c_alpha_c_d2_d_2_"]
+        ),
+    ],
+)
+def test_categorical_descriptor_to_descriptor_encoding(key, categories, samples_in, descriptors):
     c = CategoricalDescriptorInput(
-        key="c",
-        categories=["B", "A", "C"],
-        descriptors=["d1", "d2"],
+        key=key,
+        categories=categories,
+        descriptors=descriptors,
         values=[[1, 2], [3, 4], [5, 6]],
     )
-    samples = pd.Series(["A", "A", "C", "B"])
+    samples = pd.Series(samples_in)
     t_samples = c.to_descriptor_encoding(samples)
     assert_frame_equal(
         t_samples,
         pd.DataFrame(
             data=[[3.0, 4.0], [3.0, 4.0], [5.0, 6.0], [1.0, 2.0]],
-            columns=["c_d1", "c_d2"],
+            columns=[f"{key}_{des_str}" for des_str in descriptors],
         ),
     )
     untransformed = c.from_descriptor_encoding(t_samples)
     assert np.all(samples == untransformed)
 
-
-def test_categorical_descriptor_from_descriptor_encoding():
+@pytest.mark.parametrize(
+    "key, categories, descriptors",
+    [
+        ("c", ["B", "A", "C"], ["d1", "d2"]),
+        ("c_alpha", ["B_b", "_A_a", "C_c_"], ["_d1_d", "d2_d_2_"]),
+        (
+            "__c_alpha_c_",
+            ["__c_alpha_c__B_b", "__c_alpha_c___A_a", "__c_alpha_c__C_c_"], ["__c_alpha_c__d1_d", "__c_alpha_c_d2_d_2_"]
+        ),
+    ],
+)
+def test_categorical_descriptor_from_descriptor_encoding(key, categories, descriptors):
     c1 = CategoricalDescriptorInput(
-        key="c",
-        categories=["B", "A", "C"],
-        descriptors=["d1", "d2"],
+        key=key,
+        categories=categories,
+        descriptors=descriptors,
         values=[[1, 2], [3, 4], [5, 6]],
     )
     descriptor_values = pd.DataFrame(
-        columns=["c_d1", "c_d2", "misc"],
+        columns=[f"{key}_{des_str}" for des_str in descriptors] + ["misc"],
         data=[[1.05, 2.5, 6], [4, 4.5, 9]],
     )
     samples = c1.from_descriptor_encoding(descriptor_values)
     print(samples)
-    assert np.all(samples == pd.Series(["B", "A"]))
+    assert np.all(samples == pd.Series([categories[0], categories[1]]))
 
     c2 = CategoricalDescriptorInput(
-        key="c",
-        categories=["B", "A", "C"],
-        descriptors=["d1", "d2"],
+        key=key,
+        categories=categories,
+        descriptors=descriptors,
         values=[[1, 2], [3, 4], [5, 6]],
         allowed=[False, True, True],
     )
 
     samples = c2.from_descriptor_encoding(descriptor_values)
     print(samples)
-    assert np.all(samples == pd.Series(["A", "A"]))
+    assert np.all(samples == pd.Series([categories[1], categories[1]]))
 
 
 def test_categorical_descriptor_to_descriptor_encoding_1d():
