@@ -6,7 +6,11 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
-from bofire.data_models.features.molecular import MolecularInput
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.molecular import (
+    CategoricalMolecularInput,
+    MolecularInput,
+)
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
     FingerprintsFragments,
@@ -541,3 +545,69 @@ def test_molfeatures_type_get_descriptor_values_mordreddescriptors():
 def test_molfeatures_type_mordreddescriptors_invalid(mordred_list):
     with pytest.raises(ValueError):
         MordredDescriptors(descriptors=mordred_list)
+
+
+### tests for CategoricalMolecularInput
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_categorical_molecular_input_invalid_smiles():
+    with pytest.raises(ValueError, match="abcd is not a valid smiles string."):
+        CategoricalMolecularInput(
+            key="a", categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"]
+        )
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_categorical_molecular_input_valid_smiles():
+    CategoricalMolecularInput(key="a", categories=VALID_SMILES.tolist())
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_categorical_molecular_input_from_descriptor_encoding():
+    feat = CategoricalMolecularInput(key="a", categories=VALID_SMILES.to_list())
+    values = pd.Series(data=["c1ccccc1", "[CH3][CH2][OH]"], name="a")
+    for transform_type in [
+        Fingerprints(),
+        FingerprintsFragments(),
+        Fragments(),
+        MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+    ]:
+        encoded = feat.to_descriptor_encoding(transform_type, values=values)
+        decoded = feat.from_descriptor_encoding(transform_type, values=encoded)
+        assert np.all(decoded == values)
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+def test_categorical_molecular_input_get_bounds():
+    # first test with onehot
+    feat = CategoricalMolecularInput(
+        key="a", categories=VALID_SMILES.to_list(), allowed=[True, True, True, True]
+    )
+    lower, upper = feat.get_bounds(transform_type=CategoricalEncodingEnum.ONE_HOT)
+    assert lower == [0 for _ in range(len(feat.categories))]
+    assert upper == [1 for _ in range(len(feat.categories))]
+    # now test it with descriptors,
+    feat = CategoricalMolecularInput(
+        key="a", categories=VALID_SMILES.to_list(), allowed=[True, True, False, False]
+    )
+    lower, upper = feat.get_bounds(
+        transform_type=MordredDescriptors(
+            descriptors=[
+                "nAromAtom",
+                "nAromBond",
+            ]
+        )
+    )
+    assert lower == [6.0, 6.0]
+    assert upper == [6.0, 6.0]
+
+    lower, upper = feat.get_bounds(
+        transform_type=MordredDescriptors(
+            descriptors=[
+                "nAromAtom",
+                "nAromBond",
+            ]
+        ),
+        values=VALID_SMILES,
+    )
+    assert lower == [0.0, 0.0]
+    assert upper == [6.0, 6.0]

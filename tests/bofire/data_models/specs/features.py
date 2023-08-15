@@ -94,3 +94,17 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
     },
 )
+
+specs.add_valid(
+    features.CategoricalMolecularInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": [
+            "CC(=O)Oc1ccccc1C(=O)O",
+            "c1ccccc1",
+            "[CH3][CH2][OH]",
+            "N[C@](C)(F)C(=O)O",
+        ],
+        "allowed": [True, True, True, True],
+    },
+)
