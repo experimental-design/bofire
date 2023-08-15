@@ -136,6 +136,15 @@ class CategoricalDescriptorInput(CategoricalInput):
                 raise ValueError(f"No variation for descriptor {d}.")
         return v
 
+    @staticmethod
+    def valid_transform_types() -> List[CategoricalEncodingEnum]:
+        return [
+            CategoricalEncodingEnum.ONE_HOT,
+            CategoricalEncodingEnum.DUMMY,
+            CategoricalEncodingEnum.ORDINAL,
+            CategoricalEncodingEnum.DESCRIPTOR,
+        ]
+
     def to_df(self):
         """tabular overview of the feature as DataFrame
 

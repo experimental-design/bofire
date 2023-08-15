@@ -72,6 +72,14 @@ class CategoricalInput(Input):
             raise ValueError("no category is allowed")
         return values
 
+    @staticmethod
+    def valid_transform_types() -> List[CategoricalEncodingEnum]:
+        return [
+            CategoricalEncodingEnum.ONE_HOT,
+            CategoricalEncodingEnum.DUMMY,
+            CategoricalEncodingEnum.ORDINAL,
+        ]
+
     def is_fixed(self) -> bool:
         """Returns True if there is only one allowed category.
 
