@@ -492,7 +492,7 @@ def design_from_original_to_new_domain(
 def design_from_new_to_original_domain(
     original_domain: Domain, design: pd.DataFrame
 ) -> pd.DataFrame:
-    # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random if for multiple solutions
+    # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random for multiple solutions
     transformed_design = design[
         original_domain.get_feature_keys(excludes=[CategoricalInput, Output])
     ]
@@ -502,7 +502,11 @@ def design_from_new_to_original_domain(
         mask = ~np.isclose(categorical_columns.to_numpy(), 0)
 
         for i, row in enumerate(mask):
-            index_to_keep = np.random.choice(np.argwhere(row).flatten())
+            non_zero_indices = np.argwhere(row)
+            if non_zero_indices.size != 0:
+                index_to_keep = np.random.choice(np.argwhere(row).flatten())
+            else:
+                index_to_keep = list(range(len(row)))
             mask[i] = np.zeros_like(row, dtype=bool)
             mask[i][index_to_keep] = True
 

@@ -201,6 +201,88 @@ def test_categorical_discrete_doe():
     assert candidates.shape == (10, 9)
 
 
+def test_partially_fixed_experiments():
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=(100, 230)) for i in range(2)
+    ]
+
+    all_constraints = [
+        NChooseKConstraint(
+            features=[var.key for var in continuous_var],
+            min_count=1,
+            max_count=2,
+            none_also_valid=True,
+        ),
+    ]
+    all_inputs = [
+        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
+        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+    ]
+    n_experiments = 10
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        formula="linear",
+        optimization_strategy="relaxed",
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    strategy.set_candidates(
+        pd.DataFrame(
+            [
+                [150, 100, 0.3, 0.2, None, None],
+                [0, 100, 0.3, 0.2, None, "tulip"],
+                [0, 100, None, 0.2, "dog", None],
+                [0, 100, 0.3, 0.2, "cat", "tulip"],
+                [None, 100, 0.3, None, None, None],
+            ],
+            columns=[
+                "continuous_var_0",
+                "continuous_var_1",
+                "a_discrete",
+                "b_discrete",
+                "animal",
+                "plant",
+            ],
+        )
+    )
+
+    only_partially_fixed = pd.DataFrame(
+        [
+            [150, 100, 0.3, 0.2, None, None],
+            [0, 100, 0.3, 0.2, None, "tulip"],
+            [0, 100, None, 0.2, "dog", None],
+            [None, 100, 0.3, None, None, None],
+        ],
+        columns=[
+            "continuous_var_0",
+            "continuous_var_1",
+            "a_discrete",
+            "b_discrete",
+            "animal",
+            "plant",
+        ],
+    )
+
+    candidates = strategy.ask(candidate_count=n_experiments)
+    print(candidates)
+    only_partially_fixed = only_partially_fixed.mask(
+        only_partially_fixed.isnull(), candidates[:4]
+    )
+    test_df = pd.DataFrame(np.ones((4, 6)))
+    test_df = test_df.where(candidates[:4] == only_partially_fixed, 0)
+    assert test_df.sum().sum() == 0
+
+
 # if __name__ == "__main__":
 #     test_doe_strategy_ask()
 #     test_doe_strategy_ask_with_candidates()

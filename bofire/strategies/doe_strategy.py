@@ -2,9 +2,7 @@ import pandas as pd
 from pydantic.types import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
-from bofire.data_models.features.api import (
-    Input,
-)
+from bofire.data_models.features.api import CategoricalInput, Input
 from bofire.strategies.doe.design import (
     find_local_max_ipopt,
     find_local_max_ipopt_BaB,
@@ -33,51 +31,30 @@ class DoEStrategy(Strategy):
         super().__init__(data_model=data_model, **kwargs)
         self.formula = data_model.formula
         self.data_model = data_model
-        self._partially_fixed_experiments_for_next_design = None
+        self._partially_fixed_candidates = None
+        self._fixed_candidates = None
 
-    def tell(
-        self,
-        experiments: pd.DataFrame,
-        replace: bool = False,
-    ) -> None:
-        """This function passes new experimental data to the optimizer
-
-        Args:
-            experiments (pd.DataFrame): DataFrame with experimental data
-            replace (bool, optional): Boolean to decide if the experimental data should replace the former DataFrame or if the new experiments should be attached. Defaults to False.
-        """
-
-        self._partially_fixed_experiments_for_next_design = experiments[
-            experiments.isnull().any(axis=1)
-        ][self.domain.get_feature_keys(includes=Input)]
-        experiments = experiments[experiments.notnull().all(axis=1)]
-
-        if len(experiments) == 0:
-            return
-        if replace:
-            self.set_experiments(experiments=experiments)
-        else:
-            self.add_experiments(experiments=experiments)
-        # we check here that the experiments do not have completely fixed columns
-        cleaned_experiments = (
-            self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                experiments=experiments
+    def set_candidates(self, candidates: pd.DataFrame):
+        original_columns = self.domain.get_feature_keys(includes=Input)
+        to_many_columns = []
+        for col in candidates.columns:
+            if col not in original_columns:
+                to_many_columns.append(col)
+        if len(to_many_columns) > 0:
+            raise AttributeError(
+                f"provided candidates have columns: {*to_many_columns,},  which do not exist in original domain"
             )
-        )
-        for feature in self.domain.inputs.get_fixed():
-            if (cleaned_experiments[feature.key] == feature.fixed_value()[0]).all():  # type: ignore
-                raise ValueError(
-                    f"No variance in experiments for fixed feature {feature.key}"
-                )
-        self._tell()
 
-    def _tell(self) -> None:
-        self.set_candidates(
-            self.experiments[self.domain.get_feature_keys(includes=Input)]
-        )
-        raise NotImplementedError(
-            "For the DoEStrategy, the tell method is not implemented yet"
-        )
+        to_few_columns = []
+        for col in original_columns:
+            if col not in candidates.columns:
+                to_few_columns.append(col)
+        if len(to_few_columns) > 0:
+            raise AttributeError(
+                f"provided candidates are missing columns: {*to_few_columns,} which exist in original domain"
+            )
+
+        self._candidates = candidates
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         all_new_categories = []
@@ -97,14 +74,42 @@ class DoEStrategy(Strategy):
             all_new_categories.extend(new_categories)
 
         # here we adapt the (partially) fixed experiments to the new domain
-        # todo
 
-        if self.candidates is not None:
-            _fixed_experiments_count = len(self.candidates)
-            _candidate_count = candidate_count + len(self.candidates)
-        else:
-            _fixed_experiments_count = 0
-            _candidate_count = candidate_count
+        intermediate_candidates = self.candidates.copy()
+        missing_columns = [
+            key
+            for key in new_domain.inputs.get_keys()
+            if key not in self.candidates.columns
+        ]
+        if intermediate_candidates is not None:
+            for col in missing_columns:
+                intermediate_candidates.insert(0, col, None)
+
+        cat_columns = self.domain.get_features(includes=CategoricalInput)
+        for cat in cat_columns:
+            for row_index, c in enumerate(intermediate_candidates[cat.key].values):
+                if pd.isnull(c):
+                    continue
+                if c not in cat.categories:
+                    raise AttributeError(
+                        f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories} "
+                    )
+                intermediate_candidates.loc[row_index, cat.categories] = 0
+                intermediate_candidates.loc[row_index, c] = 1
+
+        intermediate_candidates = intermediate_candidates.drop(
+            [cat.key for cat in cat_columns], axis=1
+        )
+
+        fixed_experiments_count = self.candidates.notnull().all(axis=1).sum()
+        _candidate_count = candidate_count + fixed_experiments_count
+
+        adapted_partially_fixed_candidates = pd.concat(
+            [
+                intermediate_candidates[self.candidates.notnull().all(axis=1)],
+                intermediate_candidates[self.candidates.isnull().any(axis=1)],
+            ]
+        )
 
         num_binary_vars = len([var for group in new_categories for var in group])
         num_discrete_vars = len(new_discretes)
@@ -122,8 +127,8 @@ class DoEStrategy(Strategy):
                 new_domain,
                 self.formula,
                 n_experiments=_candidate_count,
-                fixed_experiments=self.candidates,
-                partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
+                fixed_experiments=None,
+                partially_fixed_experiments=adapted_partially_fixed_candidates,
             )
         # todo adapt to when exhaustive search accepts discrete variables
         elif (
@@ -134,9 +139,9 @@ class DoEStrategy(Strategy):
                 domain=new_domain,
                 model_type=self.formula,
                 n_experiments=_candidate_count,
-                fixed_experiments=self.candidates,
+                fixed_experiments=None,
                 verbose=self.data_model.verbose,
-                partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
+                partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
             )
@@ -149,9 +154,9 @@ class DoEStrategy(Strategy):
                 domain=new_domain,
                 model_type=self.formula,
                 n_experiments=_candidate_count,
-                fixed_experiments=self.candidates,
+                fixed_experiments=None,
                 verbose=self.data_model.verbose,
-                partially_fixed_experiments=self._partially_fixed_experiments_for_next_design,
+                partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
             )
@@ -161,9 +166,7 @@ class DoEStrategy(Strategy):
         # mapping the solution to the variables from the original domain
         transformed_design = design_from_new_to_original_domain(self.domain, design)
 
-        # restart the partially fixed experiments
-        self._partially_fixed_experiments_for_next_design = None
-        return transformed_design.iloc[_fixed_experiments_count:, :]  # type: ignore
+        return transformed_design.iloc[fixed_experiments_count:, :].reset_index(drop=True)  # type: ignore
 
     def has_sufficient_experiments(
         self,
