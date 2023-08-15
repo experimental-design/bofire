@@ -40,7 +40,7 @@ def discrete_to_relaxable_domain_mapper(
     relaxable_discrete_inputs = {
         d_input.key: (  # type: ignore
             ContinuousInput(key=d_input.key, bounds=(min(d_input.values), max(d_input.values))),  # type: ignore
-            d_input.values,
+            d_input.values,  # type: ignore
         )  # type: ignore
         for d_input in discrete_inputs
     }
@@ -48,7 +48,7 @@ def discrete_to_relaxable_domain_mapper(
     # convert categorical inputs to continuous inputs
     relaxable_categorical_inputs = []
     new_constraints = []
-    categorical_groups = []
+    categorical_groups: List[List[ContinuousInput]] = []
     for c_input in categorical_inputs:
         current_group_keys = list(c_input.categories)  # type: ignore
         pick_1_constraint, group_vars = generate_mixture_constraints(current_group_keys)

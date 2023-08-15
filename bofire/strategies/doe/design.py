@@ -220,7 +220,7 @@ def find_local_max_ipopt_exhaustive(
     if categorical_groups is None:
         categorical_groups = []
 
-    if len(discrete_variables) > 0:
+    if discrete_variables is not None or len(discrete_variables) > 0:  # type: ignore
         raise NotImplementedError(
             "Exhaustive search for discrete variables is not implemented yet."
         )
@@ -236,7 +236,7 @@ def find_local_max_ipopt_exhaustive(
 
     # get binary variables
     binary_vars = [var for group in categorical_groups for var in group]
-    list_keys = binary_vars.get_keys()
+    list_keys = [var.key for var in binary_vars]
 
     # determine possible fixations of the different categories
     allowed_fixations = []

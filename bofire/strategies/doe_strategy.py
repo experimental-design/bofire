@@ -90,11 +90,11 @@ class DoEStrategy(Strategy):
             for row_index, c in enumerate(intermediate_candidates[cat.key].values):
                 if pd.isnull(c):
                     continue
-                if c not in cat.categories:
+                if c not in cat.categories:  # type: ignore
                     raise AttributeError(
-                        f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories} "
+                        f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
                     )
-                intermediate_candidates.loc[row_index, cat.categories] = 0
+                intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
                 intermediate_candidates.loc[row_index, c] = 1
 
         intermediate_candidates = intermediate_candidates.drop(
