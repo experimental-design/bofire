@@ -109,15 +109,15 @@ class TrainableSurrogate(ABC):
 
         if stratified_feature is not None:
             if stratified_feature not in (
-                self.inputs.get_keys() + self.outputs.get_keys()
+                self.inputs.get_keys() + self.outputs.get_keys()  # type: ignore
             ):
                 raise ValueError(
                     "The feature to be stratified is not in the model inputs or outputs"
                 )
             try:
-                feat = self.inputs.get_by_key(stratified_feature)
+                feat = self.inputs.get_by_key(stratified_feature)  # type: ignore
             except KeyError:
-                feat = self.outputs.get_by_key(stratified_feature)
+                feat = self.outputs.get_by_key(stratified_feature)  # type: ignore
             if not isinstance(
                 feat,
                 (DiscreteInput, CategoricalInput, CategoricalOutput, ContinuousOutput),
