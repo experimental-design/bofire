@@ -6,6 +6,12 @@ import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold
 
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    CategoricalOutput,
+    ContinuousOutput,
+    DiscreteInput,
+)
 from bofire.surrogates.diagnostics import CvResult, CvResults
 from bofire.surrogates.surrogate import Surrogate
 
@@ -78,10 +84,11 @@ class TrainableSurrogate(ABC):
             experiments (pd.DataFrame): Data on which the cross validation should be performed.
             folds (int, optional): Number of folds. -1 is equal to LOO CV. Defaults to -1.
             include_X (bool, optional): If true the X values of the fold are written to respective CvResult objects for
-                later analysis. Defaults ot False.
+                later analysis. Defaults to False.
             random_state (int, optional): Controls the randomness of the indices in the train and test sets of each fold.
+                Defaults to None.
             stratified_feature (str, optional): The feature name to preserve the percentage of samples for each class in
-                the stratified folds.
+                the stratified folds. Defaults to None.
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.
@@ -101,9 +108,22 @@ class TrainableSurrogate(ABC):
             )
 
         if stratified_feature is not None:
-            if stratified_feature not in experiments.columns:
+            if stratified_feature not in (
+                self.inputs.get_keys() + self.outputs.get_keys()
+            ):
                 raise ValueError(
-                    "The column to be stratified is not in the provided experiments"
+                    "The feature to be stratified is not in the model inputs or outputs"
+                )
+            try:
+                feat = self.inputs.get_by_key(stratified_feature)
+            except KeyError:
+                feat = self.outputs.get_by_key(stratified_feature)
+            if not isinstance(
+                feat,
+                (DiscreteInput, CategoricalInput, CategoricalOutput, ContinuousOutput),
+            ):
+                raise ValueError(
+                    "The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput"
                 )
 
         # first filter the experiments based on the model setting
