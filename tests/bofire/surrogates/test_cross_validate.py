@@ -335,3 +335,55 @@ def test_model_cross_validate_stratified(random_state):
     )
     for cvresults in test_cv.results:
         assert any(i in cvresults.observed.index for i in zero_indexes)
+
+
+def test_model_cross_validate_stratified_invalid():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [
+            CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
+            CategoricalDescriptorInput(
+                key="cat_x_4",
+                categories=["a", "b", "c"],
+                descriptors=["alpha"],
+                values=[[1], [2], [3]],
+            ),
+        ]
+    )
+    outputs = Outputs(features=[CategoricalOutput(key="y", categories=[1, 0], objective=[1.0, 0.0])])  # type: ignore
+    experiments = pd.DataFrame(
+        [
+            [-4, -4, "category1", "a", 1],
+            [-3, -3, "category1", "a", 1],
+            [-2, -2, "category1", "a", 1],
+            [-1, -1, "category1", "b", 1],
+            [0, 0, "category1", "b", 1],
+            [1, 1, "category1", "b", 1],
+            [2, 2, "category1", "c", 1],
+            [3, 3, "category1", "c", 1],
+            [2, 3, "category1", "c", 1],
+            [3, 1, "category1", "a", 1],
+            [3, 4, "category1", "a", 0],
+            [4, 4, "category2", "b", 0],
+            [1, 4, "category2", "b", 0],
+            [1, 0, "category2", "c", 0],
+            [1, 2, "category2", "c", 0],
+            [2, 4, "category2", "a", 1],
+        ],
+        columns=["x_1", "x_2", "cat_x_3", "cat_x_4", "y"],
+    )
+    experiments["valid_y"] = 1
+
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    model = surrogates.map(model)
+    with pytest.raises(ValueError):
+        model.cross_validate(experiments, folds=5, stratified_feature="name")
