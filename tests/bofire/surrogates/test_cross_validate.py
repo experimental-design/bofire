@@ -271,7 +271,7 @@ def test_model_cross_validate_stratified(random_state):
             for i in range(2)
         ]
         + [
-            CategoricalInput(key=f"cat_x_3", categories=["category1", "category2"]),
+            CategoricalInput(key="cat_x_3", categories=["category1", "category2"]),
             CategoricalDescriptorInput(
                 key="cat_x_4",
                 categories=["a", "b", "c"],
@@ -321,17 +321,17 @@ def test_model_cross_validate_stratified(random_state):
         experiments, folds=5, random_state=random_state, stratified_feature="cat_x_3"
     )
     for cvresults in test_cv.results:
-        assert any([i in cvresults.observed.index for i in cat_x_3_category2_indexes])
+        assert any(i in cvresults.observed.index for i in cat_x_3_category2_indexes)
 
     _, test_cv, _ = model.cross_validate(
         experiments, folds=5, random_state=random_state, stratified_feature="cat_x_4"
     )
     for cvresults in test_cv.results:
-        assert any([i in cvresults.observed.index for i in cat_x_4_b_indexes])
-        assert any([i in cvresults.observed.index for i in cat_x_4_c_indexes])
+        assert any(i in cvresults.observed.index for i in cat_x_4_b_indexes)
+        assert any(i in cvresults.observed.index for i in cat_x_4_c_indexes)
 
     _, test_cv, _ = model.cross_validate(
         experiments, folds=5, random_state=random_state, stratified_feature="y"
     )
     for cvresults in test_cv.results:
-        assert any([i in cvresults.observed.index for i in zero_indexes])
+        assert any(i in cvresults.observed.index for i in zero_indexes)
