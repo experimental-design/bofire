@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.constraints.api import (
@@ -46,7 +45,7 @@ domain = Domain.from_lists(
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(
-            features=[f"x{i+1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
+            features=[f"x{i + 1}" for i in range(3)], coefficients=[1, 1, 1], rhs=1
         ),
         LinearInequalityConstraint(features=["x1", "x2"], coefficients=[5, 4], rhs=3.9),
         LinearInequalityConstraint(
@@ -81,43 +80,21 @@ def test_doe_strategy_ask_with_candidates():
     assert candidates.shape == (12, 3)
 
 
-def test_doe_categoricals_not_implemented():
-    categorical_inputs = [
-        CategoricalInput(key=f"x{i+1}", categories=["a", "b", "c"]) for i in range(3)
-    ]
-    domain = Domain.from_lists(
-        inputs=categorical_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[],
-    )
-    with pytest.raises(Exception):
-        data_models.DoEStrategy(domain=domain, formula="linear")
-
-
-def test_doe_discrete_not_implemented():
-    discrete_inputs = [DiscreteInput(key=f"x{i+1}", values=[1, 2, 3]) for i in range(3)]
-    domain = Domain.from_lists(
-        inputs=discrete_inputs,
-        outputs=[ContinuousOutput(key="y")],
-        constraints=[],
-    )
-    with pytest.raises(Exception):
-        data_models.DoEStrategy(domain=domain, formula="linear")
-
-
 def test_nchoosek_implemented():
     nchoosek_constraint = NChooseKConstraint(
-        features=[f"x{i+1}" for i in range(3)],
+        features=[f"x{i + 1}" for i in range(3)],
         min_count=0,
         max_count=2,
         none_also_valid=True,
     )
     domain = Domain.from_lists(
-        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0.0, 1.0)) for i in range(3)],
+        inputs=[ContinuousInput(key=f"x{i + 1}", bounds=(0.0, 1.0)) for i in range(3)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[nchoosek_constraint],
     )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    data_model = data_models.DoEStrategy(
+        domain=domain, formula="linear", optimization_strategy="partially-random"
+    )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=12)
     assert candidates.shape == (12, 3)
@@ -171,6 +148,139 @@ def test_doe_strategy_amount_of_candidates():
     np.random.seed(1)
     num_candidates_expected = 12
     assert len(candidates) == num_candidates_expected
+
+
+def test_categorical_discrete_doe():
+    quantity_a = [
+        ContinuousInput(key=f"quantity_a_{i}", bounds=(0, 100)) for i in range(3)
+    ]
+    quantity_b = [
+        ContinuousInput(key=f"quantity_b_{i}", bounds=(0, 15)) for i in range(3)
+    ]
+    all_inputs = [
+        CategoricalInput(key="animals", categories=["Whale", "Turtle", "Sloth"]),
+        DiscreteInput(key="discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        ContinuousInput(key="independent", bounds=(3, 10)),
+    ]
+    all_inputs.extend(quantity_a)
+    all_inputs.extend(quantity_b)
+
+    all_constraints = [
+        NChooseKConstraint(
+            features=[var.key for var in quantity_a],
+            min_count=0,
+            max_count=1,
+            none_also_valid=True,
+        ),
+        NChooseKConstraint(
+            features=[var.key for var in quantity_b],
+            min_count=0,
+            max_count=2,
+            none_also_valid=True,
+        ),
+        LinearEqualityConstraint(
+            features=[var.key for var in quantity_b],
+            coefficients=[1 for var in quantity_b],
+            rhs=15,
+        ),
+    ]
+
+    n_experiments = 10
+    domain = Domain(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain, formula="linear", optimization_strategy="partially-random"
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=n_experiments)
+
+    assert candidates.shape == (10, 9)
+
+
+def test_partially_fixed_experiments():
+    continuous_var = [
+        ContinuousInput(key=f"continuous_var_{i}", bounds=(100, 230)) for i in range(2)
+    ]
+
+    all_constraints = [
+        NChooseKConstraint(
+            features=[var.key for var in continuous_var],
+            min_count=1,
+            max_count=2,
+            none_also_valid=True,
+        ),
+    ]
+    all_inputs = [
+        CategoricalInput(key="animal", categories=["dog", "whale", "cat"]),
+        CategoricalInput(key="plant", categories=["tulip", "sunflower"]),
+        DiscreteInput(key="a_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+        DiscreteInput(key="b_discrete", values=[0.1, 0.2, 0.3, 1.6, 2]),
+    ]
+    n_experiments = 10
+
+    all_inputs = all_inputs + continuous_var
+    domain = Domain(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        formula="linear",
+        optimization_strategy="relaxed",
+        verbose=True,
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    strategy.set_candidates(
+        pd.DataFrame(
+            [
+                [150, 100, 0.3, 0.2, None, None],
+                [0, 100, 0.3, 0.2, None, "tulip"],
+                [0, 100, None, 0.2, "dog", None],
+                [0, 100, 0.3, 0.2, "cat", "tulip"],
+                [None, 100, 0.3, None, None, None],
+            ],
+            columns=[
+                "continuous_var_0",
+                "continuous_var_1",
+                "a_discrete",
+                "b_discrete",
+                "animal",
+                "plant",
+            ],
+        )
+    )
+
+    only_partially_fixed = pd.DataFrame(
+        [
+            [150, 100, 0.3, 0.2, None, None],
+            [0, 100, 0.3, 0.2, None, "tulip"],
+            [0, 100, None, 0.2, "dog", None],
+            [None, 100, 0.3, None, None, None],
+        ],
+        columns=[
+            "continuous_var_0",
+            "continuous_var_1",
+            "a_discrete",
+            "b_discrete",
+            "animal",
+            "plant",
+        ],
+    )
+
+    candidates = strategy.ask(candidate_count=n_experiments)
+    print(candidates)
+    only_partially_fixed = only_partially_fixed.mask(
+        only_partially_fixed.isnull(), candidates[:4]
+    )
+    test_df = pd.DataFrame(np.ones((4, 6)))
+    test_df = test_df.where(candidates[:4] == only_partially_fixed, 0)
+    assert test_df.sum().sum() == 0
 
 
 # if __name__ == "__main__":
