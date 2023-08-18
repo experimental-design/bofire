@@ -210,7 +210,7 @@ def bnb(
             domain.validate_candidates(
                 candidates=design.apply(lambda x: np.round(x, 8)),
                 only_inputs=True,
-                tol=1e-4,
+                tol=1e-5,
                 raise_validation_error=True,
             )
 
