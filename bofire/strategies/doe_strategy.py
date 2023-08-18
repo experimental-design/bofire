@@ -146,6 +146,7 @@ class DoEStrategy(Strategy):
                 num_adapted_partially_fixed_candidates = len(
                     adapted_partially_fixed_candidates
                 )
+            _design = None
             for i in range(_candidate_count):
                 _design = find_local_max_ipopt_BaB(
                     domain=new_domain,
