@@ -135,21 +135,6 @@ def test_doe_strategy_correctness():
         assert any(np.allclose(o, row, atol=1e-2) for row in candidates.to_numpy())
 
 
-def test_doe_strategy_amount_of_candidates():
-    candidates_fixed = pd.DataFrame(
-        np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
-        columns=["x1", "x2", "x3"],
-    )
-    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
-    strategy = DoEStrategy(data_model=data_model)
-    strategy.set_candidates(candidates_fixed)
-    candidates = strategy.ask(candidate_count=12)
-
-    np.random.seed(1)
-    num_candidates_expected = 12
-    assert len(candidates) == num_candidates_expected
-
-
 def test_categorical_discrete_doe():
     quantity_a = [
         ContinuousInput(key=f"quantity_a_{i}", bounds=(0, 100)) for i in range(3)
@@ -283,7 +268,61 @@ def test_partially_fixed_experiments():
     assert test_df.sum().sum() == 0
 
 
+def test_doe_strategy_amount_of_candidates():
+    candidates_fixed = pd.DataFrame(
+        np.array([[0.2, 0.2, 0.6], [0.3, 0.6, 0.1], [0.7, 0.1, 0.2], [0.3, 0.1, 0.6]]),
+        columns=["x1", "x2", "x3"],
+    )
+    data_model = data_models.DoEStrategy(domain=domain, formula="linear")
+    strategy = DoEStrategy(data_model=data_model)
+    strategy.set_candidates(candidates_fixed)
+    candidates = strategy.ask(candidate_count=12)
+
+    np.random.seed(1)
+    num_candidates_expected = 12
+    assert len(candidates) == num_candidates_expected
+
+
+def test_categorical_doe_iterative():
+    quantity_a = [
+        ContinuousInput(key=f"quantity_a_{i}", bounds=(20, 100)) for i in range(2)
+    ]
+    all_inputs = [
+        ContinuousInput(key="independent", bounds=(3, 10)),
+    ]
+    all_inputs.extend(quantity_a)
+
+    all_constraints = [
+        NChooseKConstraint(
+            features=[var.key for var in quantity_a],
+            min_count=1,
+            max_count=1,
+            none_also_valid=False,
+        ),
+    ]
+
+    n_experiments = 5
+    domain = Domain(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        formula="linear",
+        optimization_strategy="experiment-wise-branch-and-bound",
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(
+        candidate_count=n_experiments, raise_validation_error=False
+    )
+
+    assert candidates.shape == (5, 3)
+
+
 # if __name__ == "__main__":
+#     test_categorical_doe_iterative()
 #     test_doe_strategy_ask()
 #     test_doe_strategy_ask_with_candidates()
 #     test_doe_categoricals_not_implemented()

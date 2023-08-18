@@ -21,7 +21,12 @@ class DoEStrategy(Strategy):
         str,
     ]
     optimization_strategy: Literal[
-        "default", "exhaustive", "branch-and-bound", "partially-random", "relaxed"
+        "default",
+        "exhaustive",
+        "branch-and-bound",
+        "partially-random",
+        "relaxed",
+        "experiment-wise-branch-and-bound",
     ] = "default"
 
     verbose: bool = False

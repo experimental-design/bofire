@@ -160,11 +160,15 @@ class DoEStrategy(Strategy):
                 )
                 _adapted_partially_fixed_candidates = pd.concat(
                     [
-                        adapted_partially_fixed_candidates,
+                        _adapted_partially_fixed_candidates,
                         _design.round(6).tail(1),
                     ],
                     axis=0,
                     ignore_index=True,
+                )
+                print(
+                    f"Status: {i+1} of {_candidate_count} experiments determined \n"
+                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, _design)}"
                 )
             design = _design
         else:
