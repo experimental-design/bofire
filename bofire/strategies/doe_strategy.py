@@ -20,7 +20,6 @@ class DoEStrategy(Strategy):
     """Strategy for design of experiments. This strategy is used to generate a set of
     experiments for a given domain.
     The experiments are generated via minimization of the D-optimality criterion.
-
     """
 
     def __init__(
@@ -183,7 +182,6 @@ class DoEStrategy(Strategy):
         self,
     ) -> bool:
         """Abstract method to check if sufficient experiments are available.
-
         Returns:
             bool: True if number of passed experiments is sufficient, False otherwise
         """
