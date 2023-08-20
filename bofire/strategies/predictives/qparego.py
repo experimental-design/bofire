@@ -105,7 +105,6 @@ class QparegoStrategy(BotorchStrategy):
                 X_observed=X_train,
                 X_pending=X_pending if i == 0 else None,
                 mc_samples=self.num_sobol_samples,
-                qmc=True,
                 prune_baseline=True,
             )
             acqfs.append(acqf)
