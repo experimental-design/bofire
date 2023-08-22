@@ -11,9 +11,13 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    ContinuousInput,
+    ContinuousOutput,
+)
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
+    check_partially_and_fully_fixed_experiments,
     find_local_max_ipopt,
     get_n_experiments,
 )
@@ -473,3 +477,76 @@ def test_get_n_experiments():
     # user provided n_experiment
     with pytest.warns(UserWarning):
         assert get_n_experiments(domain, "linear", 4) == 4
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_partially_fixed_experiments():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousInput(key="a1", bounds=(0, 1)),
+            ContinuousInput(key="a2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            # Case 1: a and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+            ),
+            # Case 2: a and c are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+            ),
+            # Case 3: c and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+            ),
+        ],
+    )
+    fixed_experiments = pd.DataFrame(
+        np.array([[1, 0, 0, 0], [0, 1, 0, 0]]), columns=domain.inputs.get_keys()
+    )
+    partially_fixed_experiments = pd.DataFrame(
+        np.array([[1, None, None, None], [0, 1, 0, 0]]),
+        columns=domain.inputs.get_keys(),
+    )
+    # all fine
+    check_partially_and_fully_fixed_experiments(
+        domain, 10, fixed_experiments, partially_fixed_experiments
+    )
+
+    # all fine
+    check_partially_and_fully_fixed_experiments(
+        domain, 4, fixed_experiments, partially_fixed_experiments
+    )
+
+    # partially fixed will be cut of
+    with pytest.warns(UserWarning):
+        check_partially_and_fully_fixed_experiments(
+            domain, 3, fixed_experiments, partially_fixed_experiments
+        )
+
+    # to few experiments
+    with pytest.raises(ValueError):
+        check_partially_and_fully_fixed_experiments(
+            domain, 2, fixed_experiments, partially_fixed_experiments
+        )
