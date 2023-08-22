@@ -18,9 +18,12 @@ class NumberOfExperimentsCondition(Condition):
         self.n_experiments = data_model.n_experiments
 
     def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
-        n_experiments = len(
-            domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
-        )
+        if experiments is None:
+            n_experiments = 0
+        else:
+            n_experiments = len(
+                domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
+            )
         return n_experiments <= self.n_experiments
 
 
