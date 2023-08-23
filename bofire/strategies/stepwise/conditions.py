@@ -17,10 +17,13 @@ class NumberOfExperimentsCondition(Condition):
     def __init__(self, data_model: data_models.NumberOfExperimentsCondition):
         self.n_experiments = data_model.n_experiments
 
-    def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
-        n_experiments = len(
-            domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
-        )
+    def evaluate(self, domain: Domain, experiments: Union[pd.DataFrame, None]) -> bool:
+        if experiments is None:
+            n_experiments = 0
+        else:
+            n_experiments = len(
+                domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
+            )
         return n_experiments <= self.n_experiments
 
 

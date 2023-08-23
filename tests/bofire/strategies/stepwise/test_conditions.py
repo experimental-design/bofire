@@ -15,6 +15,12 @@ def test_RequiredExperimentsCondition():
     assert condition.evaluate(benchmark.domain, experiments=experiments) is False
 
 
+def test_RequiredExperimentsCondition_no_experiments():
+    data_model = data_models.NumberOfExperimentsCondition(n_experiments=3)
+    condition = conditions.map(data_model=data_model)
+    assert condition.evaluate(Himmelblau().domain, experiments=None) is True
+
+
 def test_AlwaysTrueCondition():
     benchmark = Himmelblau()
     experiments = benchmark.f(benchmark.domain.inputs.sample(3), return_complete=True)
