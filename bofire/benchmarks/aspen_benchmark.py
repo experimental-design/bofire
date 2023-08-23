@@ -39,6 +39,7 @@ class Aspen_benchmark(Benchmark):
         translate_into_aspen_readable: Optional[
             Callable[[Domain, pd.DataFrame], pd.DataFrame]
         ] = None,
+        **kwargs,
     ) -> None:
         """Initializes Aspen_benchmark. A class that connects to Aspen plus.
 
@@ -53,6 +54,7 @@ class Aspen_benchmark(Benchmark):
         Raises:
             ValueError: In case the number of provided variable names does not match the number of provided Aspen variable tree paths.
         """
+        super().__init__(**kwargs)
         if os.path.exists(filename):
             self.filename = filename
         else:

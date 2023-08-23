@@ -14,6 +14,7 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
 from bofire.data_models.surrogates.mlp import MLPEnsemble
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
+from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
@@ -22,6 +23,7 @@ AnyBotorchSurrogate = Union[
     MixedSingleTaskGPSurrogate,
     MLPEnsemble,
     SaasSingleTaskGPSurrogate,
+    TanimotoGPSurrogate,
 ]
 
 
@@ -110,7 +112,7 @@ class BotorchSurrogates(BaseModel):
             ]
             if all(features) is False:
                 raise ValueError(f"Features with key {key} are incompatible.")
-            if len(set(preproccessing)) > 1:
+            if all(i == preproccessing[0] for i in preproccessing) is False:
                 raise ValueError(
                     f"Preprocessing steps for features with {key} are incompatible."
                 )
