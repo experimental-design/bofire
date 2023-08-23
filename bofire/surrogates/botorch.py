@@ -55,6 +55,8 @@ class BotorchSurrogate(Surrogate):
 
     def _dumps(self) -> str:
         """Dumps the actual model to a string via pickle as this is not directly json serializable."""
+        # empty internal caches to get smaller dumps
+        self.model.prediction_strategy = None
         buffer = io.BytesIO()
         torch.save(self.model, buffer)
         return base64.b64encode(buffer.getvalue()).decode()
