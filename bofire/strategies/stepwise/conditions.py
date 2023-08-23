@@ -17,7 +17,7 @@ class NumberOfExperimentsCondition(Condition):
     def __init__(self, data_model: data_models.NumberOfExperimentsCondition):
         self.n_experiments = data_model.n_experiments
 
-    def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
+    def evaluate(self, domain: Domain, experiments: Union[pd.DataFrame, None]) -> bool:
         if experiments is None:
             n_experiments = 0
         else:
