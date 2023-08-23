@@ -35,7 +35,7 @@ class Molecule_benchmark(Benchmark):
         if os.path.exists(filename):
             self.filename = filename
         else:
-            raise ValueError("Unable to find file " + filename)
+            raise ValueError("Unable to find file " + os.path.abspath(filename))
         if not self.filename.endswith(".csv"):
             raise ValueError("file not in .csv format")
         df = pd.read_csv(self.filename)
