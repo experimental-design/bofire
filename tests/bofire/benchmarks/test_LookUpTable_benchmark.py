@@ -17,7 +17,7 @@ from bofire.data_models.objectives.api import MaximizeObjective
         (LookupTableBenchmark),
     ],
 )
-def test_LookUpTable_benchmark(cls_benchmark: LookupTableBenchmark):
+def test_LookupTable_benchmark(cls_benchmark: LookupTableBenchmark):
     """Tests the initializer of Aspen_benchmark and whether the filename, domain and paths are set up correctly.
 
     Args:
