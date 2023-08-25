@@ -13,8 +13,16 @@ class qNEI(AcquisitionFunction):
     type: Literal["qNEI"] = "qNEI"
 
 
+class qLogNEI(AcquisitionFunction):
+    type: Literal["qLogNEI"] = "qLogNEI"
+
+
 class qEI(AcquisitionFunction):
     type: Literal["qEI"] = "qEI"
+
+
+class qLogEI(AcquisitionFunction):
+    type: Literal["qLogEI"] = "qLogEI"
 
 
 class qSR(AcquisitionFunction):
