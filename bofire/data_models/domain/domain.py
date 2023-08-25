@@ -400,7 +400,11 @@ class Domain(BaseModel):
         return experiments
 
     def aggregate_by_duplicates(
-        self, experiments: pd.DataFrame, prec: int, delimiter: str = "-"
+        self,
+        experiments: pd.DataFrame,
+        prec: int,
+        delimiter: str = "-",
+        method: Literal["mean", "median"] = "mean",
     ) -> Tuple[pd.DataFrame, list]:
         """Aggregate the dataframe by duplicate experiments
 
@@ -417,6 +421,8 @@ class Domain(BaseModel):
             Tuple[pd.DataFrame, list]: Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates
         """
         # prepare the parent frame
+        if method not in ["mean", "median"]:
+            raise ValueError(f"Unknown aggregation type provided: {method}")
 
         preprocessed = self.outputs.preprocess_experiments_any_valid_output(experiments)
         assert preprocessed is not None
@@ -437,7 +443,7 @@ class Domain(BaseModel):
 
         # group and aggregate
         agg: Dict[str, Any] = {
-            feat: "mean" for feat in self.get_feature_keys(ContinuousOutput)
+            feat: method for feat in self.get_feature_keys(ContinuousOutput)
         }
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
         for feat in self.get_feature_keys(Output):
