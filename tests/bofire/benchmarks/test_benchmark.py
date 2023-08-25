@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+from pandas.testing import assert_frame_equal
 
 import bofire.benchmarks.benchmark as benchmark
 import bofire.strategies.api as strategies
+from bofire.benchmarks.api import GenericBenchmark
 from bofire.benchmarks.multi import ZDT1
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.domain.api import Domain
@@ -14,6 +16,15 @@ from bofire.data_models.strategies.api import (
     RejectionSampler as RejectionSamplerDataModel,
 )
 from bofire.utils.multiobjective import compute_hypervolume
+
+
+def test_generic_benchmark():
+    bench = ZDT1(n_inputs=5)
+    genbench = GenericBenchmark(domain=bench.domain, func=bench._f)
+    candidates = bench.domain.inputs.sample(5)
+    samples1 = bench.f(candidates=candidates)
+    samples2 = genbench.f(candidates=candidates)
+    assert_frame_equal(samples1, samples2)
 
 
 def test_benchmark():
