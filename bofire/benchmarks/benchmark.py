@@ -86,6 +86,22 @@ class Benchmark:
         return self._domain  # type: ignore
 
 
+class GenericBenchmark(Benchmark):
+    def __init__(
+        self,
+        domain: Domain,
+        func: Callable[[pd.DataFrame], pd.DataFrame],
+        outlier_rate: Annotated[float, Field(ge=0, lt=1)] = 0,
+        outlier_prior: Optional[AnyOutlierPrior] = None,
+    ):
+        super().__init__(outlier_prior=outlier_prior, outlier_rate=outlier_rate)
+        self._domain = domain
+        self.func = func
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        return self.func(candidates)
+
+
 class StrategyFactory(Protocol):
     def __call__(self, domain: Domain) -> AnyStrategy:
         ...
