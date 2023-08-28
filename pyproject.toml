@@ -29,3 +29,4 @@ max-complexity = 18
 "bofire/data_models/api.py" = ["F401"]
 "bofire/data_models/surrogates/api.py" = ["F401"]
 "bofire/benchmarks/api.py" = ["F401"]
+"bofire/benchmarks/data/photoswitches.py" = ["F821","B018","W605","W292"]
