@@ -1,9 +1,9 @@
 from typing import List, Union
 
 import torch
+from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
-from botorch.acquisition.utils import get_acquisition_function
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
