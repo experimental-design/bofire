@@ -53,8 +53,9 @@ class LookupTableBenchmark(Benchmark):
                 df._merge == "left_only", df.columns != "_merge"
             ].proxy_index.to_list()
             raise ValueError(f"Input combination {indices} not found in Look up table")
-        Y = X_temp[self.domain.outputs.get_keys()]
-        Z = X_temp[[f"valid_{k}" for k in self.domain.outputs.get_keys()]]
-        YZ = pd.concat([Y, Z], axis=1)
-        YZ.index = pd.RangeIndex(len(YZ))
-        return YZ
+        Y = X_temp[
+            self.domain.outputs.get_keys()
+            + [f"valid_{k}" for k in self.domain.outputs.get_keys()]
+        ]
+        Y.index = pd.RangeIndex(len(Y))
+        return Y
