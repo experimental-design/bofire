@@ -13,6 +13,7 @@ ignore = [
     "B028",
     "B904",
     "B905"
+    "F821" # required for nulls in photoswitches.py
 ]
 line-length = 88
 select = ["B", "C", "E", "F", "W", "I"]
