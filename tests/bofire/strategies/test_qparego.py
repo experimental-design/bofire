@@ -3,12 +3,24 @@ from itertools import chain
 
 import pytest
 import torch
+from botorch.acquisition import (
+    qExpectedImprovement,
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
+    qNoisyExpectedImprovement,
+)
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
+from bofire.data_models.acquisition_functions.api import (
+    qEI,
+    qLogEI,
+    qLogNEI,
+    qNEI,
+)
 from bofire.data_models.domain.api import Outputs
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -109,7 +121,18 @@ def test_qparego(num_test_candidates):
     )
     experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
     # init strategy
-    data_model = data_models.QparegoStrategy(domain=benchmark.domain)
+    acqfs = [qEI(), qLogEI(), qLogNEI(), qNEI()]
+    b_acqfs = [
+        qExpectedImprovement,
+        qLogExpectedImprovement,
+        qLogNoisyExpectedImprovement,
+        qNoisyExpectedImprovement,
+    ]
+    i = random.choice([0, 1, 2, 3])
+
+    data_model = data_models.QparegoStrategy(
+        domain=benchmark.domain, acquisition_function=acqfs[i]
+    )
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
     # test get objective
@@ -117,6 +140,8 @@ def test_qparego(num_test_candidates):
     assert isinstance(objective, GenericMCObjective)
     acqfs = my_strategy._get_acqfs(2)
     assert len(acqfs) == 2
+    assert isinstance(acqfs[0], b_acqfs[i])
+    assert isinstance(acqfs[1], b_acqfs[i])
     # ask
     candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates

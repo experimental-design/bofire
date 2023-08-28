@@ -599,7 +599,8 @@ def test_coerce_invalids():
     assert_frame_equal(experiments, expected, check_dtype=False)
 
 
-def test_aggregate_by_duplicates():
+@pytest.mark.parametrize("method", ["mean", "median"])
+def test_aggregate_by_duplicates(method):
     # dataframe with duplicates
     full = pd.DataFrame.from_dict(
         {
@@ -625,7 +626,9 @@ def test_aggregate_by_duplicates():
     domain = Domain(
         inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
     )
-    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(full, prec=2)
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full, prec=2, method=method
+    )
     assert duplicated_labcodes == [["1", "4"]]
     assert_frame_equal(
         aggregated, expected_aggregated, check_dtype=False, check_like=True
@@ -655,8 +658,28 @@ def test_aggregate_by_duplicates():
     domain = Domain(
         inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
     )
-    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(full, prec=2)
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full, prec=2, method=method
+    )
     assert duplicated_labcodes == []
+
+
+def test_aggregate_by_duplicates_error():
+    full = pd.DataFrame.from_dict(
+        {
+            "x1": [1.0, 2.0, 3.0, 1.0],
+            "x2": [1.0, 2.0, 3.0, 1.0],
+            "out1": [4.0, 5.0, 6.0, 3.0],
+            "out2": [-4.0, -5.0, -6.0, -3.0],
+            "valid_out1": [1, 1, 1, 1],
+            "valid_out2": [1, 1, 1, 1],
+        }
+    )
+    domain = Domain(
+        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+    )
+    with pytest.raises(ValueError, match="Unknown aggregation type provided: 25"):
+        domain.aggregate_by_duplicates(full, prec=2, method="25")
 
 
 domain = Domain(
