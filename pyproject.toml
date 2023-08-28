@@ -13,7 +13,6 @@ ignore = [
     "B028",
     "B904",
     "B905",
-    "bofire/benchmarks/data/photoswitches.py", # required for nulls in photoswitches.py
 ]
 line-length = 88
 select = ["B", "C", "E", "F", "W", "I"]

@@ -2,4 +2,7 @@
     "include": [
         "bofire"
     ],
+    "exclude": [
+        "bofire/benchmarks/data/photoswitches.py"
+    ],
 }
