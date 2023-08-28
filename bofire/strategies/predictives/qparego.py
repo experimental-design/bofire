@@ -4,6 +4,7 @@ import torch
 from botorch.acquisition.acquisition import AcquisitionFunction
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.acquisition.utils import get_acquisition_function
+from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
 
@@ -32,6 +33,7 @@ class QparegoStrategy(BotorchStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
+        self.acquisition_function = data_model.acquisition_function
 
     def _get_objective(
         self,
@@ -99,13 +101,16 @@ class QparegoStrategy(BotorchStrategy):
         assert self.model is not None
         for i in range(n):
             acqf = get_acquisition_function(
-                acquisition_function_name="qNEI",
+                acquisition_function_name=self.acquisition_function.__class__.__name__,
                 model=self.model,
                 objective=self._get_objective(),
                 X_observed=X_train,
                 X_pending=X_pending if i == 0 else None,
+                constraints=None,
+                eta=None,
                 mc_samples=self.num_sobol_samples,
                 prune_baseline=True,
+                cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             )
             acqfs.append(acqf)
         return acqfs

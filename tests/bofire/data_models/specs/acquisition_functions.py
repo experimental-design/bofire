@@ -11,9 +11,20 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    acquisition_functions.qLogEI,
+    lambda: {},
+)
+
+specs.add_valid(
     acquisition_functions.qNEI,
     lambda: {},
 )
+
+specs.add_valid(
+    acquisition_functions.qLogNEI,
+    lambda: {},
+)
+
 
 specs.add_valid(
     acquisition_functions.qPI,

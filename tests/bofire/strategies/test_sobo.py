@@ -5,6 +5,8 @@ import pytest
 import torch
 from botorch.acquisition import (
     qExpectedImprovement,
+    qLogExpectedImprovement,
+    qLogNoisyExpectedImprovement,
     qNoisyExpectedImprovement,
     qProbabilityOfImprovement,
     qSimpleRegret,
@@ -16,7 +18,15 @@ import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
-from bofire.data_models.acquisition_functions.api import qEI, qNEI, qPI, qSR, qUCB
+from bofire.data_models.acquisition_functions.api import (
+    qEI,
+    qLogEI,
+    qLogNEI,
+    qNEI,
+    qPI,
+    qSR,
+    qUCB,
+)
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -73,6 +83,8 @@ def test_SOBO_not_fitted(domain, acqf):
             (qPI(), qProbabilityOfImprovement),
             (qUCB(), qUpperConfidenceBound),
             (qSR(), qSimpleRegret),
+            (qLogEI(), qLogExpectedImprovement),
+            (qLogNEI(), qLogNoisyExpectedImprovement),
         ]
         for num_test_candidates in range(1, 3)
     ],
