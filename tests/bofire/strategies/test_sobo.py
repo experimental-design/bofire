@@ -12,7 +12,7 @@ from botorch.acquisition import (
     qSimpleRegret,
     qUpperConfidenceBound,
 )
-from botorch.acquisition.objective import GenericMCObjective
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
@@ -26,6 +26,12 @@ from bofire.data_models.acquisition_functions.api import (
     qPI,
     qSR,
     qUCB,
+)
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MaximizeSigmoidObjective,
 )
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -293,3 +299,51 @@ def test_sobo_fully_combinatorical(candidate_count):
 
     strategy.tell(experiments=experiments)
     strategy.ask(candidate_count=candidate_count)
+
+
+@pytest.mark.parametrize(
+    "outputs, expected_objective",
+    [
+        (
+            Outputs(
+                features=[ContinuousOutput(key="alpha", objective=MaximizeObjective())]
+            ),
+            GenericMCObjective,
+        ),
+        (
+            Outputs(
+                features=[
+                    ContinuousOutput(
+                        key="alpha",
+                        objective=MaximizeSigmoidObjective(steepness=1, tp=1),
+                    )
+                ]
+            ),
+            GenericMCObjective,
+        ),
+    ],
+)
+def test_sobo_get_obective(outputs, expected_objective):
+    strategy_data = data_models.SoboStrategy(
+        domain=Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=outputs,
+        )
+    )
+    strategy = SoboStrategy(data_model=strategy_data)
+    obj = strategy._get_objective()
+    assert isinstance(obj, expected_objective)
+
+
+def test_sobo_get_constrained_objective():
+    benchmark = DTLZ2(dim=6)
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
+    domain = benchmark.domain
+    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(
+        tp=1.5, steepness=2.0
+    )
+    strategy_data = data_models.SoboStrategy(domain=domain)
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments=experiments)
+    obj = strategy._get_objective()
+    assert isinstance(obj, ConstrainedMCObjective)

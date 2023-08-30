@@ -12,11 +12,14 @@ except ModuleNotFoundError:
 import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.objective import (
+    ConstrainedMCObjective,
+    GenericMCObjective,
+)
 from botorch.models.gpytorch import GPyTorchModel
 
 from bofire.data_models.acquisition_functions.api import qPI, qUCB
-from bofire.data_models.objectives.api import ConstrainedObjective
+from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
 from bofire.data_models.strategies.api import (
@@ -67,18 +70,21 @@ class SoboStrategy(BotorchStrategy):
         return [acqf]
 
     def _get_objective(self) -> GenericMCObjective:
-        # TODO: test this
-        # here we get the actual objective
-        target_feature = self.domain.outputs.get_by_objective(
-            excludes=ConstrainedObjective
-        )[0]
+        try:
+            target_feature = self.domain.outputs.get_by_objective(
+                excludes=ConstrainedObjective
+            )[0]
+        except IndexError:
+            target_feature = self.domain.outputs.get_by_objective(includes=Objective)[0]
         target_index = self.domain.outputs.get_keys().index(target_feature.key)
         objective_callable = get_objective_callable(
             idx=target_index, objective=target_feature.objective
         )
 
         # in case that constraints are present we return a constrained botorch objective
-        if len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0:
+        if (len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0) and (
+            len(self.domain.outputs.get_by_objective(Objective)) > 1
+        ):
             constraints, etas = get_output_constraints(outputs=self.domain.outputs)
 
             return ConstrainedMCObjective(
