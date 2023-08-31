@@ -21,7 +21,7 @@ class Strategy(ABC):
         data_model: DataModel,
     ):
         self.domain = data_model.domain
-        self.seed = data_model.seed
+        self.seed = data_model.seed or np.random.default_rng().integers(1000)
         self.rng = np.random.default_rng(self.seed)  # type: ignore
         self._experiments = None
         self._candidates = None
