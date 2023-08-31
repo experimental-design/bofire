@@ -1,6 +1,6 @@
 import base64
 import warnings
-from typing import List, Union
+from typing import List, Union, Tuple
 
 try:
     import cloudpickle
@@ -18,7 +18,7 @@ from botorch.acquisition.objective import (
 )
 from botorch.models.gpytorch import GPyTorchModel
 
-from bofire.data_models.acquisition_functions.api import qPI, qUCB
+from bofire.data_models.acquisition_functions.api import qPI, qUCB, qSR
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
@@ -45,11 +45,19 @@ class SoboStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
+        self.constraint_callables = None
+        self.etas = 1e-3 # set a default value
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
 
         X_train, X_pending = self.get_acqf_input_tensors()
+
+        # get the constraints
+        if (len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0) and (
+            len(self.domain.outputs.get_by_objective(Objective)) > 1
+        ):
+            self.constraint_callables, self.etas = get_output_constraints(outputs=self.domain.outputs)
 
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
@@ -57,7 +65,7 @@ class SoboStrategy(BotorchStrategy):
             self._get_objective(),
             X_observed=X_train,
             X_pending=X_pending,
-            constraints=None,
+            constraints=self.constraint_callables,
             mc_samples=self.num_sobol_samples,
             beta=self.acquisition_function.beta
             if isinstance(self.acquisition_function, qUCB)
@@ -65,11 +73,12 @@ class SoboStrategy(BotorchStrategy):
             tau=self.acquisition_function.tau
             if isinstance(self.acquisition_function, qPI)
             else 1e-3,
+            eta=torch.tensor(self.etas).to(**tkwargs),
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
         )
         return [acqf]
 
-    def _get_objective(self) -> GenericMCObjective:
+    def _get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
         try:
             target_feature = self.domain.outputs.get_by_objective(
                 excludes=ConstrainedObjective
@@ -81,20 +90,18 @@ class SoboStrategy(BotorchStrategy):
             idx=target_index, objective=target_feature.objective
         )
 
-        # in case that constraints are present we return a constrained botorch objective
-        if (len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0) and (
-            len(self.domain.outputs.get_by_objective(Objective)) > 1
+        # special cases of qUCB and qSR do not work with separate constraints
+        if (isinstance(self.acquisition_function, qUCB) or isinstance(self.acquisition_function, qSR)) and (
+            self.constraint_callables is not None
         ):
-            constraints, etas = get_output_constraints(outputs=self.domain.outputs)
-
             return ConstrainedMCObjective(
-                objective=objective_callable,
-                constraints=constraints,
-                eta=torch.tensor(etas).to(**tkwargs),
-                infeasible_cost=self.get_infeasible_cost(objective=objective_callable),
+                objective=objective_callable,  # type: ignore
+                constraints=self.constraint_callables,
+                eta=torch.tensor(self.etas).to(**tkwargs),
+                infeasible_cost=self.get_infeasible_cost(objective=objective_callable)
             )
-
-        # else the generic one
+        
+        # return regular objective
         return GenericMCObjective(objective=objective_callable)
 
 
@@ -109,20 +116,24 @@ class AdditiveSoboStrategy(SoboStrategy):
 
     def _get_objective(self) -> Union[GenericMCObjective, ConstrainedMCObjective]:
         # TODO: test this
-        if (
-            self.use_output_constraints
-            and len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0
-        ):
-            constraints, etas = get_output_constraints(outputs=self.domain.outputs)
-            objective = get_additive_botorch_objective(
+        if self.use_output_constraints and (self.constraint_callables is not None):
+            objective_callable = get_additive_botorch_objective(
                 outputs=self.domain.outputs, exclude_constraints=True
             )
-            return ConstrainedMCObjective(
-                objective=objective,  # type: ignore
-                constraints=constraints,
-                eta=torch.tensor(etas).to(**tkwargs),
-                infeasible_cost=self.get_infeasible_cost(objective=objective),
-            )
+
+            # special cases of qUCB and qSR do not work with separate constraints
+            if isinstance(self.acquisition_function, qUCB) or isinstance(self.acquisition_function, qSR):
+                return ConstrainedMCObjective(
+                    objective=objective_callable,  # type: ignore
+                    constraints=self.constraint_callables,
+                    eta=torch.tensor(self.etas).to(**tkwargs),
+                    infeasible_cost=self.get_infeasible_cost(objective=objective_callable)
+                )
+            else:
+                return GenericMCObjective(objective=objective_callable)
+            
+        # we absorb all constraints into the objective
+        self.constraint_callables = None
         return GenericMCObjective(
             objective=get_additive_botorch_objective(  # type: ignore
                 outputs=self.domain.outputs, exclude_constraints=False
@@ -163,21 +174,23 @@ class CustomSoboStrategy(SoboStrategy):
         if self.f is None:
             raise ValueError("No function has been provided for the strategy")
 
-        if (
-            self.use_output_constraints
-            and len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0
-        ):
-            constraints, etas = get_output_constraints(outputs=self.domain.outputs)
-            objective = get_custom_botorch_objective(
+        if self.use_output_constraints and (self.constraint_callables is not None):
+            objective_callable = get_custom_botorch_objective(
                 outputs=self.domain.outputs, f=self.f, exclude_constraints=True
             )
-            return ConstrainedMCObjective(
-                objective=objective,  # type: ignore
-                constraints=constraints,
-                eta=torch.tensor(etas).to(**tkwargs),
-                infeasible_cost=self.get_infeasible_cost(objective=objective),
-            )
+            # special cases of qUCB and qSR do not work with separate constraints
+            if isinstance(self.acquisition_function, qUCB) or isinstance(self.acquisition_function, qSR):
+                return ConstrainedMCObjective(
+                    objective=objective_callable,  # type: ignore
+                    constraints=self.constraint_callables,
+                    eta=torch.tensor(self.etas).to(**tkwargs),
+                    infeasible_cost=self.get_infeasible_cost(objective=objective_callable)
+                )
+            else:
+                return GenericMCObjective(objective=objective_callable)
 
+        # we absorb all constraints into the objective
+        self.constraint_callables = None
         return GenericMCObjective(
             objective=get_custom_botorch_objective(
                 outputs=self.domain.outputs, f=self.f, exclude_constraints=False
