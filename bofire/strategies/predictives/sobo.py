@@ -45,19 +45,19 @@ class SoboStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
-        self.constraint_callables = None
-        self.etas = 1e-3 # set a default value
+        if (len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0) and (
+            len(self.domain.outputs.get_by_objective(Objective)) > 1
+        ):
+            self.constraint_callables, self.etas = get_output_constraints(
+                outputs=self.domain.outputs
+            )
+        else:
+            self.constraint_callables, self.etas = None, 1e-3
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
 
         X_train, X_pending = self.get_acqf_input_tensors()
-
-        # get the constraints
-        if (len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0) and (
-            len(self.domain.outputs.get_by_objective(Objective)) > 1
-        ):
-            self.constraint_callables, self.etas = get_output_constraints(outputs=self.domain.outputs)
 
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
@@ -91,16 +91,17 @@ class SoboStrategy(BotorchStrategy):
         )
 
         # special cases of qUCB and qSR do not work with separate constraints
-        if (isinstance(self.acquisition_function, qUCB) or isinstance(self.acquisition_function, qSR)) and (
-            self.constraint_callables is not None
-        ):
+        if (
+            isinstance(self.acquisition_function, qUCB)
+            or isinstance(self.acquisition_function, qSR)
+        ) and (self.constraint_callables is not None):
             return ConstrainedMCObjective(
                 objective=objective_callable,  # type: ignore
                 constraints=self.constraint_callables,
                 eta=torch.tensor(self.etas).to(**tkwargs),
-                infeasible_cost=self.get_infeasible_cost(objective=objective_callable)
+                infeasible_cost=self.get_infeasible_cost(objective=objective_callable),
             )
-        
+
         # return regular objective
         return GenericMCObjective(objective=objective_callable)
 
@@ -122,16 +123,20 @@ class AdditiveSoboStrategy(SoboStrategy):
             )
 
             # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, qUCB) or isinstance(self.acquisition_function, qSR):
+            if isinstance(self.acquisition_function, qUCB) or isinstance(
+                self.acquisition_function, qSR
+            ):
                 return ConstrainedMCObjective(
                     objective=objective_callable,  # type: ignore
                     constraints=self.constraint_callables,
                     eta=torch.tensor(self.etas).to(**tkwargs),
-                    infeasible_cost=self.get_infeasible_cost(objective=objective_callable)
+                    infeasible_cost=self.get_infeasible_cost(
+                        objective=objective_callable
+                    ),
                 )
             else:
                 return GenericMCObjective(objective=objective_callable)
-            
+
         # we absorb all constraints into the objective
         self.constraint_callables = None
         return GenericMCObjective(
@@ -179,12 +184,16 @@ class CustomSoboStrategy(SoboStrategy):
                 outputs=self.domain.outputs, f=self.f, exclude_constraints=True
             )
             # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, qUCB) or isinstance(self.acquisition_function, qSR):
+            if isinstance(self.acquisition_function, qUCB) or isinstance(
+                self.acquisition_function, qSR
+            ):
                 return ConstrainedMCObjective(
                     objective=objective_callable,  # type: ignore
                     constraints=self.constraint_callables,
                     eta=torch.tensor(self.etas).to(**tkwargs),
-                    infeasible_cost=self.get_infeasible_cost(objective=objective_callable)
+                    infeasible_cost=self.get_infeasible_cost(
+                        objective=objective_callable
+                    ),
                 )
             else:
                 return GenericMCObjective(objective=objective_callable)

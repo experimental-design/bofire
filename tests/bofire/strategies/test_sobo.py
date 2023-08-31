@@ -342,8 +342,22 @@ def test_sobo_get_constrained_objective():
     domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(
         tp=1.5, steepness=2.0
     )
-    strategy_data = data_models.SoboStrategy(domain=domain)
+    strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qUCB())
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments=experiments)
     obj = strategy._get_objective()
     assert isinstance(obj, ConstrainedMCObjective)
+
+
+def test_sobo_get_constrained_objective2():
+    benchmark = DTLZ2(dim=6)
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
+    domain = benchmark.domain
+    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(
+        tp=1.5, steepness=2.0
+    )
+    strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qEI())
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments=experiments)
+    obj = strategy._get_objective()
+    assert isinstance(obj, GenericMCObjective)
