@@ -9,6 +9,7 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -48,4 +49,5 @@ class RejectionSampler(SamplerStrategy):
             DiscreteInput,
             CategoricalInput,
             CategoricalDescriptorInput,
+            CategoricalMolecularInput,
         ]

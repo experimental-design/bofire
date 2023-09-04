@@ -1,8 +1,7 @@
 from abc import abstractmethod
-from typing import Optional, Type
+from typing import Annotated, Optional, Type
 
-import numpy as np
-from pydantic import validator
+from pydantic import Field, validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -13,16 +12,7 @@ from bofire.data_models.features.api import Feature
 class Strategy(BaseModel):
     type: str
     domain: Domain
-    seed: Optional[int] = None
-
-    @validator("seed", always=True)
-    def validate_seed(cls, v, values):
-        if v is None:
-            return int(np.random.default_rng().integers(1000))
-        else:
-            if v < 0:
-                raise ValueError("Seed has to be greater or equal than zero.")
-        return v
+    seed: Optional[Annotated[int, Field(ge=0)]] = None
 
     @validator("domain")
     def validate_constraints(cls, domain: Domain):

@@ -1,5 +1,8 @@
-from typing import Literal, Type
+from typing import Literal, Type, Union
 
+from pydantic import Field
+
+from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -17,6 +20,9 @@ from bofire.data_models.strategies.predictives.multiobjective import (
 
 class QparegoStrategy(MultiobjectiveStrategy):
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
+    acquisition_function: Union[qEI, qLogEI, qLogNEI, qNEI] = Field(
+        default_factory=lambda: qNEI()
+    )
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:

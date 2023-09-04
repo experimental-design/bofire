@@ -12,7 +12,7 @@ ignore = [
     "B027",  # required for optional _tell method
     "B028",
     "B904",
-    "B905"
+    "B905",
 ]
 line-length = 88
 select = ["B", "C", "E", "F", "W", "I"]
