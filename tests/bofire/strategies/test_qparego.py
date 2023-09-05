@@ -9,7 +9,7 @@ from botorch.acquisition import (
     qLogNoisyExpectedImprovement,
     qNoisyExpectedImprovement,
 )
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.objective import GenericMCObjective
 from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
@@ -164,7 +164,7 @@ def test_qparego_constraints(num_test_candidates):
     my_strategy.tell(experiments)
     # test get objective
     objective = my_strategy._get_objective()
-    assert isinstance(objective, ConstrainedMCObjective)
+    assert isinstance(objective, GenericMCObjective)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates

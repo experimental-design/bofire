@@ -1,9 +1,9 @@
-from typing import List, Union
+from typing import List
 
 import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.objective import GenericMCObjective
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
@@ -34,14 +34,15 @@ class QparegoStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
+        self.constraint_callables, self.etas = None, 1e-3
 
     def _get_objective(
         self,
-    ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+    ) -> GenericMCObjective:
         """Returns the scalarized objective.
 
         Returns:
-            Union[GenericMCObjective, ConstrainedMCObjective]: the botorch objective.
+            GenericMCObjective: the botorch objective.
         """
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs
@@ -78,18 +79,15 @@ class QparegoStrategy(BotorchStrategy):
             weights=weights, Y=obj_callable(preds, None) * ref_point_mask
         )
 
-        def objective(Z, X=None):
+        def objective_callable(Z, X=None):
             return scalarization(obj_callable(Z, None) * ref_point_mask, X)
 
         if len(weights) != len(self.domain.outputs):
-            constraints, etas = get_output_constraints(self.domain.outputs)
-            return ConstrainedMCObjective(
-                objective=objective,
-                constraints=constraints,
-                eta=torch.tensor(etas).to(**tkwargs),
-                infeasible_cost=self.get_infeasible_cost(objective=objective),
+            self.constraint_callables, self.etas = get_output_constraints(
+                self.domain.outputs
             )
-        return GenericMCObjective(scalarization)
+
+        return GenericMCObjective(objective=objective_callable)
 
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
@@ -106,8 +104,8 @@ class QparegoStrategy(BotorchStrategy):
                 objective=self._get_objective(),
                 X_observed=X_train,
                 X_pending=X_pending if i == 0 else None,
-                constraints=None,
-                eta=None,
+                constraints=self.constraint_callables,
+                eta=torch.tensor(self.etas).to(**tkwargs),
                 mc_samples=self.num_sobol_samples,
                 prune_baseline=True,
                 cache_root=True if isinstance(self.model, GPyTorchModel) else False,
