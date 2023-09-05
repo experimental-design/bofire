@@ -18,7 +18,7 @@ from botorch.acquisition.objective import (
 )
 from botorch.models.gpytorch import GPyTorchModel
 
-from bofire.data_models.acquisition_functions.api import qPI, qUCB, qSR
+from bofire.data_models.acquisition_functions.api import qPI, qSR, qUCB
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
