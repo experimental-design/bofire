@@ -155,6 +155,8 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         super().__init__(data_model=data_model, **kwargs)
 
     def _get_objective(self) -> GenericMCObjective:
+        # we absorb all constraints into the objective
+        self.constraint_callables = None
         return GenericMCObjective(
             objective=get_multiplicative_botorch_objective(  # type: ignore
                 outputs=self.domain.outputs
