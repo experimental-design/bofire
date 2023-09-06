@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple, Union
 
 import torch
 from botorch.acquisition import get_acquisition_function
@@ -10,8 +10,10 @@ from botorch.utils.sampling import sample_simplex
 
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
+    ConstrainedObjective,
     MaximizeObjective,
     MinimizeObjective,
+    Objective,
 )
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -36,13 +38,17 @@ class QparegoStrategy(BotorchStrategy):
         self.acquisition_function = data_model.acquisition_function
         self.constraint_callables, self.etas = None, 1e-3
 
-    def _get_objective(
+    def _get_objective_and_constraints(
         self,
-    ) -> GenericMCObjective:
+    ) -> Tuple[
+        GenericMCObjective, Union[ConstrainedObjective, None], Union[List, float]
+    ]:
         """Returns the scalarized objective.
 
         Returns:
             GenericMCObjective: the botorch objective.
+            Union[ConstrainedObjective, None]: the botorch constraints.
+            Union[List, float]: etas used in the botorch constraints.
         """
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs
@@ -82,12 +88,16 @@ class QparegoStrategy(BotorchStrategy):
         def objective_callable(Z, X=None):
             return scalarization(obj_callable(Z, None) * ref_point_mask, X)
 
-        if len(weights) != len(self.domain.outputs):
-            self.constraint_callables, self.etas = get_output_constraints(
-                self.domain.outputs
-            )
+        if len(weights) != len(self.domain.outputs.get_by_objective(Objective)):
+            constraint_callables, etas = get_output_constraints(self.domain.outputs)
+        else:
+            constraint_callables, etas = None, 1e-3
 
-        return GenericMCObjective(objective=objective_callable)
+        return (
+            GenericMCObjective(objective=objective_callable),
+            constraint_callables,
+            etas,
+        )
 
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
@@ -96,16 +106,22 @@ class QparegoStrategy(BotorchStrategy):
 
         X_train, X_pending = self.get_acqf_input_tensors()
 
+        (
+            objective_callable,
+            constraint_callables,
+            etas,
+        ) = self._get_objective_and_constraints()
+
         assert self.model is not None
         for i in range(n):
             acqf = get_acquisition_function(
                 acquisition_function_name=self.acquisition_function.__class__.__name__,
                 model=self.model,
-                objective=self._get_objective(),
+                objective=objective_callable,
                 X_observed=X_train,
                 X_pending=X_pending if i == 0 else None,
-                constraints=self.constraint_callables,
-                eta=torch.tensor(self.etas).to(**tkwargs),
+                constraints=constraint_callables,
+                eta=torch.tensor(etas).to(**tkwargs),
                 mc_samples=self.num_sobol_samples,
                 prune_baseline=True,
                 cache_root=True if isinstance(self.model, GPyTorchModel) else False,

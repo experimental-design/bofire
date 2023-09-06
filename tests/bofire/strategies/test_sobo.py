@@ -215,7 +215,7 @@ def test_custom_get_objective():
     )
     strategy = CustomSoboStrategy(data_model=data_model)
     strategy.f = f
-    generic_objective = strategy._get_objective()
+    generic_objective, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(generic_objective, GenericMCObjective)
 
 
@@ -227,7 +227,7 @@ def test_custom_get_objective_invalid():
     strategy = CustomSoboStrategy(data_model=data_model)
 
     with pytest.raises(ValueError):
-        strategy._get_objective()
+        strategy._get_objective_and_constraints()
 
 
 def test_custom_dumps_loads():
@@ -267,11 +267,11 @@ def test_custom_dumps_loads():
     assert isinstance(strategy3.f, type(f))
 
     samples = torch.rand(30, 2, requires_grad=True) * 5
-    objective1 = strategy1._get_objective()
+    objective1, _, _ = strategy1._get_objective_and_constraints()
     output1 = objective1.forward(samples)
-    objective2 = strategy2._get_objective()
+    objective2, _, _ = strategy2._get_objective_and_constraints()
     output2 = objective2.forward(samples)
-    objective3 = strategy3._get_objective()
+    objective3, _, _ = strategy3._get_objective_and_constraints()
     output3 = objective3.forward(samples)
 
     torch.testing.assert_close(output1, output2)
@@ -331,7 +331,7 @@ def test_sobo_get_obective(outputs, expected_objective):
         )
     )
     strategy = SoboStrategy(data_model=strategy_data)
-    obj = strategy._get_objective()
+    obj, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(obj, expected_objective)
 
 
@@ -345,7 +345,7 @@ def test_sobo_get_constrained_objective():
     strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qUCB())
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments=experiments)
-    obj = strategy._get_objective()
+    obj, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(obj, ConstrainedMCObjective)
 
 
@@ -359,5 +359,5 @@ def test_sobo_get_constrained_objective2():
     strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qEI())
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments=experiments)
-    obj = strategy._get_objective()
+    obj, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(obj, GenericMCObjective)
