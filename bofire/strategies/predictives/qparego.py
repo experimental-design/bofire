@@ -1,4 +1,4 @@
-from typing import List, Tuple, Union
+from typing import Callable, List, Tuple, Union
 
 import torch
 from botorch.acquisition import get_acquisition_function
@@ -10,7 +10,6 @@ from botorch.utils.sampling import sample_simplex
 
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
-    ConstrainedObjective,
     MaximizeObjective,
     MinimizeObjective,
     Objective,
@@ -41,7 +40,9 @@ class QparegoStrategy(BotorchStrategy):
     def _get_objective_and_constraints(
         self,
     ) -> Tuple[
-        GenericMCObjective, Union[ConstrainedObjective, None], Union[List, float]
+        GenericMCObjective,
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
+        Union[List, float],
     ]:
         """Returns the scalarized objective.
 

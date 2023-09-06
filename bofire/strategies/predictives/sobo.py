@@ -1,6 +1,6 @@
 import base64
 import warnings
-from typing import List, Tuple, Union
+from typing import Callable, List, Tuple, Union
 
 try:
     import cloudpickle
@@ -80,7 +80,7 @@ class SoboStrategy(BotorchStrategy):
         self,
     ) -> Tuple[
         Union[GenericMCObjective, ConstrainedMCObjective],
-        Union[ConstrainedObjective, None],
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
         try:
@@ -143,7 +143,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         self,
     ) -> Tuple[
         Union[GenericMCObjective, ConstrainedMCObjective],
-        Union[ConstrainedObjective, None],
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
         # get the constraints
@@ -209,7 +209,9 @@ class MultiplicativeSoboStrategy(SoboStrategy):
     def _get_objective_and_constraints(
         self,
     ) -> Tuple[
-        GenericMCObjective, Union[ConstrainedObjective, None], Union[List, float]
+        GenericMCObjective,
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
+        Union[List, float],
     ]:
         # we absorb all constraints into the objective
         return (
@@ -240,7 +242,7 @@ class CustomSoboStrategy(SoboStrategy):
         self,
     ) -> Tuple[
         Union[GenericMCObjective, ConstrainedMCObjective],
-        Union[ConstrainedObjective, None],
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
         if self.f is None:
