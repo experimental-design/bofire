@@ -105,10 +105,9 @@ class SoboStrategy(BotorchStrategy):
             constraint_callables, etas = None, 1e-3
 
         # special cases of qUCB and qSR do not work with separate constraints
-        if (
-            isinstance(self.acquisition_function, qUCB)
-            or isinstance(self.acquisition_function, qSR)
-        ) and (constraint_callables is not None):
+        if (isinstance(self.acquisition_function, (qSR, qUCB))) and (
+            constraint_callables is not None
+        ):
             return (
                 ConstrainedMCObjective(
                     objective=objective_callable,  # type: ignore
@@ -164,9 +163,7 @@ class AdditiveSoboStrategy(SoboStrategy):
             )
 
             # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, qUCB) or isinstance(
-                self.acquisition_function, qSR
-            ):
+            if isinstance(self.acquisition_function, (qSR, qUCB)):
                 return (
                     ConstrainedMCObjective(
                         objective=objective_callable,  # type: ignore
@@ -264,9 +261,7 @@ class CustomSoboStrategy(SoboStrategy):
                 outputs=self.domain.outputs, f=self.f, exclude_constraints=True
             )
             # special cases of qUCB and qSR do not work with separate constraints
-            if isinstance(self.acquisition_function, qUCB) or isinstance(
-                self.acquisition_function, qSR
-            ):
+            if isinstance(self.acquisition_function, (qSR, qUCB)):
                 return (
                     ConstrainedMCObjective(
                         objective=objective_callable,  # type: ignore
