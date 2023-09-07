@@ -5,7 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
-from pydantic import validator
+from pydantic import field_validator
 from pydantic.types import PositiveInt
 from scipy.integrate import solve_ivp
 from scipy.special import gamma
@@ -65,7 +65,8 @@ class DTLZ2(Benchmark):
         }
         self._domain = domain
 
-    @validator("dim")
+    @field_validator("dim")
+    @classmethod
     def validate_dim(cls, dim, values):
         num_objectives = values["num_objectives"]
         if dim <= values["num_objectives"]:

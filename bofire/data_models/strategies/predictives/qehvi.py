@@ -1,6 +1,6 @@
 from typing import Dict, Literal, Optional, Type
 
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import (
@@ -18,7 +18,8 @@ class QehviStrategy(MultiobjectiveStrategy):
 
     ref_point: Optional[Dict[str, float]] = None
 
-    @validator("ref_point")
+    @field_validator("ref_point")
+    @classmethod
     def validate_ref_point(cls, v, values):
         """Validate that the provided refpoint matches the provided domain."""
         if v is None:

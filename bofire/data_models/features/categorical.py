@@ -2,7 +2,7 @@ from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import Field, field_validator, model_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -30,7 +30,8 @@ class CategoricalInput(Input):
     categories: TCategoryVals
     allowed: TAllowedVals = None
 
-    @validator("categories")
+    @field_validator("categories")
+    @classmethod
     def validate_categories_unique(cls, categories):
         """validates that categories have unique names
 
@@ -48,7 +49,8 @@ class CategoricalInput(Input):
             raise ValueError("categories must be unique")
         return categories
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @model_validator(mode="after")
+    @classmethod
     def init_allowed(cls, values):
         """validates the list of allowed/not allowed categories
 
@@ -359,11 +361,10 @@ class CategoricalOutput(Output):
     order_id: ClassVar[int] = 8
 
     categories: TCategoryVals
-    objective: Annotated[
-        List[Annotated[float, Field(type=float, ge=0, le=1)]], Field(min_items=2)
-    ]
+    objective: Annotated[List[Annotated[float, Field(ge=0, le=1)]], Field(min_length=2)]
 
-    @validator("categories")
+    @field_validator("categories")
+    @classmethod
     def validate_categories_unique(cls, categories):
         """validates that categories have unique names
 
@@ -381,7 +382,8 @@ class CategoricalOutput(Output):
             raise ValueError("categories must be unique")
         return categories
 
-    @validator("objective")
+    @field_validator("objective")
+    @classmethod
     def validate_objective(cls, objective, values):
         if len(objective) != len(values["categories"]):
             raise ValueError("Length of objectives and categories do not match.")

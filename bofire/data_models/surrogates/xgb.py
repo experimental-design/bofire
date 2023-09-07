@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -43,7 +43,8 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
     random_state: Optional[Annotated[int, Field(ge=0)]] = None
     num_parallel_tree: Annotated[int, Field(gt=0)] = 1
 
-    @validator("input_preprocessing_specs", always=True)
+    @field_validator("input_preprocessing_specs")
+    @classmethod
     def validate_input_preprocessing_specs(cls, v, values):
         inputs = values["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)

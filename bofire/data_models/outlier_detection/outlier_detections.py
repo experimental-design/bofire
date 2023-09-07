@@ -1,7 +1,7 @@
 import itertools
 from typing import Annotated, List
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -15,7 +15,7 @@ class OutlierDetections(BaseModel):
 
     Behaves similar to a outlier_detector."""
 
-    detectors: Annotated[List[AnyOutlierDetector], Field(min_items=1)]
+    detectors: Annotated[List[AnyOutlierDetector], Field(min_length=1)]
 
     @property
     def outputs(self) -> Outputs:
@@ -27,7 +27,8 @@ class OutlierDetections(BaseModel):
             )
         )
 
-    @validator("detectors")
+    @field_validator("detectors")
+    @classmethod
     def validate_detectors(cls, v, values):
         used_output_feature_keys = list(
             itertools.chain.from_iterable(

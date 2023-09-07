@@ -2,7 +2,7 @@ from typing import Literal, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator
+from pydantic import model_validator
 
 from bofire.data_models.objectives.objective import Objective, TWeight
 
@@ -28,7 +28,8 @@ class IdentityObjective(Objective):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @model_validator(mode="after")
+    @classmethod
     def validate_lower_upper(cls, values):
         """Validation function to ensure that lower bound is always greater the upper bound
 

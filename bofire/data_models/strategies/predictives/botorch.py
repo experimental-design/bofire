@@ -1,6 +1,6 @@
 from typing import Optional, Type
 
-from pydantic import PositiveInt, root_validator, validator
+from pydantic import PositiveInt, field_validator, model_validator
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -51,7 +51,8 @@ class BotorchStrategy(PredictiveStrategy):
             return False
         return True
 
-    @validator("num_sobol_samples")
+    @field_validator("num_sobol_samples")
+    @classmethod
     def validate_num_sobol_samples(cls, v):
         if is_power_of_two(v) is False:
             raise ValueError(
@@ -59,7 +60,8 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return v
 
-    @validator("num_raw_samples")
+    @field_validator("num_raw_samples")
+    @classmethod
     def validate_num_raw_samples(cls, v):
         if is_power_of_two(v) is False:
             raise ValueError(
@@ -67,7 +69,8 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return v
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @model_validator(mode="after")
+    @classmethod
     def update_surrogate_specs_for_domain(cls, values):
         """Ensures that a prediction model is specified for each output feature"""
         values["surrogate_specs"] = BotorchStrategy._generate_surrogate_specs(
@@ -93,7 +96,8 @@ class BotorchStrategy(PredictiveStrategy):
                         )
         return values
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @model_validator(mode="after")
+    @classmethod
     def validate_outlier_detection_specs_for_domain(cls, values):
         """Ensures that a outlier_detection model is specified for each output feature"""
         if values["outlier_detection_specs"] is not None:

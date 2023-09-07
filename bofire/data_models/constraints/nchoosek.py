@@ -2,7 +2,7 @@ from typing import List, Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import field_validator, model_validator
 
 from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
 
@@ -28,14 +28,16 @@ class NChooseKConstraint(Constraint):
     max_count: int
     none_also_valid: bool
 
-    @validator("features")
+    @field_validator("features")
+    @classmethod
     def validate_features_unique(cls, features: List[str]):
         """Validates that provided feature keys are unique."""
         if len(features) != len(set(features)):
             raise ValueError("features must be unique")
         return features
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @model_validator(mode="after")
+    @classmethod
     def validate_counts(cls, values):
         """Validates if the minimum and maximum of allowed features are smaller than the overall number of features."""
         features = values["features"]

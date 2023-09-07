@@ -1,6 +1,6 @@
 from typing import Literal
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.kernels.api import (
@@ -24,7 +24,8 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
-    @validator("input_preprocessing_specs")
+    @field_validator("input_preprocessing_specs")
+    @classmethod
     def validate_categoricals(cls, v, values):
         """Checks that at least one one-hot encoded categorical feauture is present."""
         if CategoricalEncodingEnum.ONE_HOT not in v.values():

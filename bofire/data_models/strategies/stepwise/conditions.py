@@ -1,6 +1,6 @@
 from typing import List, Literal, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -29,11 +29,12 @@ class CombiCondition(Condition):
         List[
             Union[NumberOfExperimentsCondition, "CombiCondition", AlwaysTrueCondition]
         ],
-        Field(min_items=2),
+        Field(min_length=2),
     ]
     n_required_conditions: Annotated[int, Field(ge=0)]
 
-    @validator("n_required_conditions")
+    @field_validator("n_required_conditions")
+    @classmethod
     def validate_n_required_conditions(cls, v, values):
         if v > len(values["conditions"]):
             raise ValueError(

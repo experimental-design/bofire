@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import Literal, Optional
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -35,7 +35,8 @@ class Hyperconfig(BaseModel):
     n_iterations: Optional[Annotated[int, Field(ge=1)]] = None
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
 
-    @validator("n_iterations", always=True)
+    @field_validator("n_iterations")
+    @classmethod
     def validate_n_iterations(cls, v, values):
         if v is None:
             if values["hyperstrategy"] == "FactorialStrategy":

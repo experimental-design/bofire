@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import Field, model_validator, validator
 from scipy.integrate import simps
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
@@ -462,7 +462,8 @@ class CvResult(BaseModel):
     labcodes: Optional[ValidatedSeries] = None
     X: Optional[ValidatedDataFrame] = None
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def validate_shapes(cls, values):
         if not len(values["predicted"]) == len(values["observed"]):
             raise ValueError(
@@ -485,18 +486,24 @@ class CvResult(BaseModel):
                 )
         return values
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("observed")
     def validate_observed(cls, v, values):
         if not is_numeric(v):
             raise ValueError("Not all values of observed are numerical")
         return v
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("predicted")
     def validate_predicted(cls, v, values):
         if not is_numeric(v):
             raise ValueError("Not all values of predicted are numerical")
         return v
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("standard_deviation")
     def validate_standard_deviation(cls, v, values):
         if v is not None:
@@ -541,6 +548,8 @@ class CvResults(BaseModel):
 
     results: Sequence[CvResult]
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("results")
     def validate_results(cls, v, values):
         if len(v) <= 1:

@@ -1,4 +1,4 @@
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -9,7 +9,8 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class MultiobjectiveStrategy(BotorchStrategy):
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_domain_is_multiobjective(cls, v, values):
         """Validate that the domain is multiobjective."""
         feats = v.outputs.get_by_objective(

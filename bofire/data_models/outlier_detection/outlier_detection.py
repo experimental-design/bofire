@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Literal, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -49,7 +49,8 @@ class IterativeTrimming(OutlierDetection):
     nrw: Annotated[int, Field(ge=1)] = 1
     base_gp: Union[SingleTaskGPSurrogate, MixedSingleTaskGPSurrogate]
 
-    @validator("base_gp")
+    @field_validator("base_gp")
+    @classmethod
     def validate_base_gp(cls, v, values):
         # validate that all base_gps are single output surrogates
         # TODO: this restriction has to be removed at some point

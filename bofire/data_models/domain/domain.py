@@ -17,7 +17,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -84,7 +84,8 @@ class Domain(BaseModel):
             constraints=Constraints(constraints=constraints),
         )
 
-    @validator("inputs", always=True, pre=True)
+    @field_validator("inputs", mode="before")
+    @classmethod
     def validate_inputs_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
@@ -94,7 +95,8 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("outputs", always=True, pre=True)
+    @field_validator("outputs", mode="before")
+    @classmethod
     def validate_outputs_list(cls, v, values):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
@@ -103,7 +105,8 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("constraints", always=True, pre=True)
+    @field_validator("constraints", mode="before")
+    @classmethod
     def validate_constraints_list(cls, v, values):
         if isinstance(v, list):
             return Constraints(constraints=v)
@@ -112,7 +115,8 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("outputs", always=True)
+    @field_validator("outputs")
+    @classmethod
     def validate_unique_feature_keys(cls, v: Outputs, values) -> Outputs:
         """Validates if provided input and output feature keys are unique
 
@@ -134,7 +138,8 @@ class Domain(BaseModel):
             raise ValueError("feature keys are not unique")
         return v
 
-    @validator("constraints", always=True)
+    @field_validator("constraints")
+    @classmethod
     def validate_constraints(cls, v, values):
         """Validate if all features included in the constraints are also defined as features for the domain.
 
@@ -158,7 +163,8 @@ class Domain(BaseModel):
                         raise ValueError(f"feature {f} in constraint unknown ({keys})")
         return v
 
-    @validator("constraints", always=True)
+    @field_validator("constraints")
+    @classmethod
     def validate_linear_constraints(cls, v, values):
         """Validate if all features included in linear constraints are continuous ones.
 

@@ -2,7 +2,7 @@ from typing import ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
@@ -33,7 +33,8 @@ class ContinuousDescriptorInput(ContinuousInput):
     descriptors: TDescriptors
     values: TDiscreteVals
 
-    @validator("descriptors")
+    @field_validator("descriptors")
+    @classmethod
     def descriptors_to_keys(cls, descriptors):
         """validates the descriptor names and transforms it to valid keys
 
@@ -45,7 +46,8 @@ class ContinuousDescriptorInput(ContinuousInput):
         """
         return list(descriptors)
 
-    @root_validator(pre=False, skip_on_failure=True)
+    @model_validator(mode="after")
+    @classmethod
     def validate_list_lengths(cls, values):
         """compares the length of the defined descriptors list with the provided values
 
@@ -91,7 +93,8 @@ class CategoricalDescriptorInput(CategoricalInput):
     descriptors: TDescriptors
     values: TCategoricalDescriptorVals
 
-    @validator("descriptors")
+    @field_validator("descriptors")
+    @classmethod
     def validate_descriptors(cls, descriptors):
         """validates that descriptors have unique names
 
@@ -109,7 +112,8 @@ class CategoricalDescriptorInput(CategoricalInput):
             raise ValueError("descriptors must be unique")
         return descriptors
 
-    @validator("values")
+    @field_validator("values")
+    @classmethod
     def validate_values(cls, v, values):
         """validates the compatability of passed values for the descriptors and the defined categories
 

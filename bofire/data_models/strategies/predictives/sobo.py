@@ -1,6 +1,6 @@
 from typing import Literal, Optional, Type
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction, qNEI
 from bofire.data_models.features.api import CategoricalOutput, Feature
@@ -41,7 +41,8 @@ class SoboBaseStrategy(BotorchStrategy):
 class SoboStrategy(SoboBaseStrategy):
     type: Literal["SoboStrategy"] = "SoboStrategy"
 
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_is_singleobjective(cls, v, values):
         if len(v.outputs) == 1:
             return v
