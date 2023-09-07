@@ -553,11 +553,13 @@ class BotorchStrategy(PredictiveStrategy):
         sampler = PolytopeSampler(
             data_model=PolytopeSamplerDataModel(domain=self.domain)
         )
-        samples = torch.from_numpy(
-            sampler.ask(candidate_count=n_samples, return_all=False).values
+        samples = sampler.ask(candidate_count=n_samples, return_all=False)
+        # we need to transform the samples
+        transformed_samples = torch.from_numpy(
+            self.domain.inputs.transform(samples, self.input_preprocessing_specs).values
         ).to(**tkwargs)
         X = (
-            torch.cat((X_train, X_pending, samples))
+            torch.cat((X_train, X_pending, transformed_samples))
             if X_pending is not None
             else torch.cat((X_train, samples))
         )
