@@ -2,6 +2,7 @@ from typing import Dict, Type
 
 import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe_strategy import DoEStrategy  # noqa: F401
+from bofire.strategies.entmoot.enting import EntingStrategy  # noqa: F401
 from bofire.strategies.factorial import FactorialStrategy
 from bofire.strategies.predictives.botorch import BotorchStrategy  # noqa: F401
 from bofire.strategies.predictives.predictive import PredictiveStrategy  # noqa: F401
@@ -35,6 +36,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.DoEStrategy: DoEStrategy,
     data_models.StepwiseStrategy: StepwiseStrategy,
     data_models.FactorialStrategy: FactorialStrategy,
+    data_models.EntingStrategy: EntingStrategy,
 }
 
 
