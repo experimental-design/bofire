@@ -561,7 +561,7 @@ class BotorchStrategy(PredictiveStrategy):
         X = (
             torch.cat((X_train, X_pending, transformed_samples))
             if X_pending is not None
-            else torch.cat((X_train, samples))
+            else torch.cat((X_train, transformed_samples))
         )
         return get_infeasible_cost(
             X=X, model=self.model, objective=objective  # type: ignore
