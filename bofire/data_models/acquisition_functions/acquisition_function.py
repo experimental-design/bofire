@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import PositiveFloat
+from pydantic import Field, PositiveFloat
 
 from bofire.data_models.base import BaseModel
 
@@ -31,7 +31,7 @@ class qSR(AcquisitionFunction):
 
 class qUCB(AcquisitionFunction):
     type: Literal["qUCB"] = "qUCB"
-    beta: PositiveFloat = 0.2
+    beta: Annotated[float, Field(ge=0)] = 0.2
 
 
 class qPI(AcquisitionFunction):
