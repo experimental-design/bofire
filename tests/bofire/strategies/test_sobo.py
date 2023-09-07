@@ -65,6 +65,35 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
     ],
 }
 
+VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC = {
+    "domain": domains[2],
+    "acquisition_function": specs.acquisition_functions.valid().obj(),
+    "descriptor_method": "EXHAUSTIVE",
+    "categorical_method": "EXHAUSTIVE",
+}
+
+BOTORCH_ADDITIVE_AND_MULTIPLICATIVE_SOBO_STRATEGY_SPECS = {
+    "valids": [
+        VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
+        {**VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC, "seed": 1},
+    ],
+    "invalids": [
+        {
+            **VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
+            "acquisition_function": None,
+        },
+        {
+            **VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
+            "descriptor_method": None,
+        },
+        {
+            **VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC,
+            "categorical_method": None,
+        },
+        {**VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC, "seed": -1},
+    ],
+}
+
 
 @pytest.mark.parametrize(
     "domain, acqf",
