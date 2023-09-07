@@ -34,7 +34,7 @@ class LinearConstraint(Constraint):
             raise ValueError("features must be unique")
         return features
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def validate_list_lengths(cls, values):
         """Validate that length of the feature and coefficient lists have the same length."""

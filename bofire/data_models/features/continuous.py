@@ -2,7 +2,7 @@ from typing import ClassVar, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.features.feature import Output
 from bofire.data_models.features.numerical import NumericalInput
@@ -71,9 +71,9 @@ class ContinuousInput(NumericalInput):
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
 
-    @model_validator(mode="after")
+    @field_validator("bounds")
     @classmethod
-    def validate_lower_upper(cls, values):
+    def validate_lower_upper(cls, bounds):
         """Validates that the lower bound is lower than the upper bound
 
         Args:
@@ -85,11 +85,11 @@ class ContinuousInput(NumericalInput):
         Returns:
             Dict: The attributes as dictionary
         """
-        if values["bounds"][0] > values["bounds"][1]:
+        if bounds[0] > bounds[1]:
             raise ValueError(
-                f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
+                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
             )
-        return values
+        return bounds
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates

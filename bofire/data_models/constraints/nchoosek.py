@@ -36,7 +36,7 @@ class NChooseKConstraint(Constraint):
             raise ValueError("features must be unique")
         return features
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def validate_counts(cls, values):
         """Validates if the minimum and maximum of allowed features are smaller than the overall number of features."""
