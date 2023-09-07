@@ -120,7 +120,7 @@ class BotorchStrategy(PredictiveStrategy):
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X)  # type: ignore
+            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
         if len(posterior.mean.shape) == 2:
             preds = posterior.mean.cpu().detach().numpy()
             stds = np.sqrt(posterior.variance.cpu().detach().numpy())
