@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import numpy as np
 import pyomo.environ as pyo
 from entmoot.problem_config import ProblemConfig
@@ -22,7 +24,7 @@ from bofire.data_models.features.api import (
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
 
-def domain_to_problem_config(domain: Domain) -> ProblemConfig:
+def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.ConcreteModel]:
     """Convert a set of features and constraints from BoFire to Entmoot"""
     problem_config = ProblemConfig()
 
@@ -52,7 +54,6 @@ def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput):
 
     elif isinstance(feature, DiscreteInput):
         x = feature.values
-        print(x)
         assert (
             np.all(np.diff(x) == 1) and x[0] % 1 == 0
         ), "Discrete values must be consecutive integers"
@@ -63,6 +64,9 @@ def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput):
         feat_type = "categorical"
         bounds = feature.categories
 
+    else:
+        raise NotImplementedError(f"Did not recognise input {feature}")
+
     problem_config.add_feature(feat_type, bounds, name)
 
 
@@ -71,8 +75,11 @@ def _bofire_output_to_entmoot(problem_config: ProblemConfig, feature: AnyOutput)
     if isinstance(feature.objective, MinimizeObjective):
         problem_config.add_min_objective(name=feature.key)
 
-    if isinstance(feature.objective, MaximizeObjective):
+    elif isinstance(feature.objective, MaximizeObjective):
         raise NotImplementedError("Only minimization problems are supported in Entmoot")
+
+    else:
+        raise NotImplementedError(f"Did not recognise output {feature}")
 
 
 def _bofire_constraint_to_entmoot(
@@ -99,5 +106,4 @@ def _bofire_constraint_to_entmoot(
         constr_expr = lhs <= constraint.rhs
     else:
         raise NotImplementedError(f"Did not recognise constraint {constraint.type}")
-    print(constr_expr)
     model_core.constr.add(expr=constr_expr)

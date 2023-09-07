@@ -1,18 +1,17 @@
-
-from typing import Tuple
-import pyomo.environ as pyo
 import pandas as pd
-from pydantic import PositiveInt
+import pyomo.environ as pyo
 from entmoot.models.enting import Enting
+from entmoot.optimizers.pyomo_opt import PyomoOptimizer
 from entmoot.problem_config import ProblemConfig
-from bofire.strategies.strategy import Strategy
-from bofire.data_models.domain.api import Domain
+from pydantic import PositiveInt
+
+import bofire.data_models.strategies.api as data_models
 from bofire.strategies.entmoot.problem_config import domain_to_problem_config
-import bofire.data_models.strategies.api as data_models 
+from bofire.strategies.strategy import Strategy
+
 
 class EntingStrategy(Strategy):
-    """Strategy for selecting new candidates using ENTMOOT
-    """
+    """Strategy for selecting new candidates using ENTMOOT"""
 
     def __init__(
         self,
@@ -21,7 +20,8 @@ class EntingStrategy(Strategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self._init_problem_config()
-        self._enting = Enting(self._problem_config, kwargs)
+        self._enting = Enting(self._problem_config, data_model.enting_params)
+        self._solver_params = data_model.solver_params
 
     def _init_problem_config(self) -> None:
         cfg = domain_to_problem_config(self.domain)
@@ -29,18 +29,23 @@ class EntingStrategy(Strategy):
         self._model_pyo: pyo.ConcreteModel = cfg[1]
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
-        # Uses the Entmoot sampler, which is uniform and does not use constraints
-        candidates = self._problem_config.get_rnd_sample_numpy(candidate_count)
+        if candidate_count > 1:
+            raise NotImplementedError("Can currently only handle one at a time")
+        opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
+        res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
+        candidate = res.opt_point
+        objective_value = res.opt_val
+        unc_unscaled = res.unc_unscaled
 
         keys = [feat.name for feat in self._problem_config.feat_list]
-        samples = pd.DataFrame(
-            data=candidates.reshape(candidate_count, -1),
+        candidates = pd.DataFrame(
+            data=[candidate + [objective_value, unc_unscaled]],
             index=range(candidate_count),
-            columns=keys
+            columns=keys + ["y_pred", "y_sd"],
         )
 
-        return samples
-    
+        return candidates
+
     def _tell(self):
         input_keys = self.domain.inputs.get_keys()
         output_keys = self.domain.outputs.get_keys()
@@ -50,4 +55,13 @@ class EntingStrategy(Strategy):
         self._enting.fit(X, y)
 
     def has_sufficient_experiments(self) -> bool:
-        return True
+        if self.experiments is None:
+            return False
+        return (
+            len(
+                self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                    experiments=self.experiments
+                )
+            )
+            > 1
+        )

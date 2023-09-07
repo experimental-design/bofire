@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Any, Dict, Literal, Type
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -19,6 +19,8 @@ from bofire.data_models.strategies.strategy import Strategy
 
 class EntingStrategy(Strategy):
     type: Literal["EntingStrategy"] = "EntingStrategy"
+    enting_params: Dict[str, Any] = {}
+    solver_params: Dict[str, Any] = {}
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
