@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -10,6 +10,7 @@ from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import TInputTransformSpecs
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.strategies.entmoot.problem_config import domain_to_problem_config
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 
@@ -54,8 +55,11 @@ class EntingStrategy(PredictiveStrategy):
         )
 
         preds = self.predict(df_candidate)
-        return pd.concat((df_candidate, preds), axis=1)
+        maximize_keys = self.domain.outputs.get_keys_by_objective(MaximizeObjective)
+        maximize_keys_pred = ["%s_pred" % key for key in maximize_keys]
+        preds[maximize_keys_pred] *= -1
 
+        return pd.concat((df_candidate, preds), axis=1)
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         if candidate_count > 1:
@@ -70,8 +74,12 @@ class EntingStrategy(PredictiveStrategy):
         input_keys = self.domain.inputs.get_keys()
         output_keys = self.domain.outputs.get_keys()
 
-        X = experiments[input_keys].to_numpy()
-        y = experiments[output_keys].to_numpy()
+        maximize_keys = self.domain.outputs.get_keys_by_objective(MaximizeObjective)
+        experiments_obj = experiments.copy()
+        experiments_obj[maximize_keys] *= -1
+
+        X = experiments_obj[input_keys].to_numpy()
+        y = experiments_obj[output_keys].to_numpy()
         self._enting.fit(X, y)
 
     def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
@@ -81,6 +89,8 @@ class EntingStrategy(PredictiveStrategy):
         m, v = zip(*pred)
         mean = np.array(m)
         std = np.sqrt(np.array(v)).reshape(-1, 1)
+        # std is given combined - copy for each objective
+        std = np.tile(std, mean.shape[1])
         return mean, std
 
     def has_sufficient_experiments(self) -> bool:

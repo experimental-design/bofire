@@ -72,11 +72,10 @@ def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput):
 
 def _bofire_output_to_entmoot(problem_config: ProblemConfig, feature: AnyOutput):
     """Given a Bofire output feature, create an entmoot constraint"""
-    if isinstance(feature.objective, MinimizeObjective):
+    if isinstance(feature.objective, MinimizeObjective) or isinstance(
+        feature.objective, MaximizeObjective
+    ):
         problem_config.add_min_objective(name=feature.key)
-
-    elif isinstance(feature.objective, MaximizeObjective):
-        raise NotImplementedError("Only minimization problems are supported in Entmoot")
 
     else:
         raise NotImplementedError(f"Did not recognise output {feature}")

@@ -13,7 +13,11 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Feature,
 )
-from bofire.data_models.objectives.api import MinimizeObjective, Objective
+from bofire.data_models.objectives.api import (
+    MaximizeObjective,
+    MinimizeObjective,
+    Objective,
+)
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 
 
@@ -38,4 +42,4 @@ class EntingStrategy(PredictiveStrategy):
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
-        return my_type in [MinimizeObjective]
+        return my_type in [MinimizeObjective, MaximizeObjective]
