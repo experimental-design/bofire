@@ -11,7 +11,7 @@ from pydantic import PositiveInt
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.objectives.api import MaximizeObjective
-from bofire.strategies.entmoot.problem_config import domain_to_problem_config
+from bofire.utils.entmoot import domain_to_problem_config
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 

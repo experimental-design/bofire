@@ -62,7 +62,7 @@ def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput):
 
     elif isinstance(feature, CategoricalInput):
         feat_type = "categorical"
-        bounds = feature.categories
+        bounds = tuple(feature.categories)
 
     else:
         raise NotImplementedError(f"Did not recognise input {feature}")

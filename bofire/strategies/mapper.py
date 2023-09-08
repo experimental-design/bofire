@@ -2,9 +2,9 @@ from typing import Dict, Type
 
 import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe_strategy import DoEStrategy  # noqa: F401
-from bofire.strategies.entmoot.enting import EntingStrategy  # noqa: F401
 from bofire.strategies.factorial import FactorialStrategy
 from bofire.strategies.predictives.botorch import BotorchStrategy  # noqa: F401
+from bofire.strategies.predictives.enting import EntingStrategy  # noqa: F401
 from bofire.strategies.predictives.predictive import PredictiveStrategy  # noqa: F401
 from bofire.strategies.predictives.qehvi import QehviStrategy  # noqa: F401
 from bofire.strategies.predictives.qnehvi import QnehviStrategy  # noqa: F401
