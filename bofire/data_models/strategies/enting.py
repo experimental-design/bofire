@@ -14,10 +14,10 @@ from bofire.data_models.features.api import (
     Feature,
 )
 from bofire.data_models.objectives.api import MinimizeObjective, Objective
-from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 
 
-class EntingStrategy(Strategy):
+class EntingStrategy(PredictiveStrategy):
     type: Literal["EntingStrategy"] = "EntingStrategy"
     enting_params: Dict[str, Any] = {}
     solver_params: Dict[str, Any] = {}

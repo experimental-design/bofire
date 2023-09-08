@@ -48,6 +48,7 @@ AnyStrategy = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
+    EntingStrategy,
     PolytopeSampler,
     RejectionSampler,
     RandomStrategy,
@@ -64,6 +65,7 @@ AnyPredictive = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
+    EntingStrategy,
 ]
 
 AnySampler = Union[PolytopeSampler, RejectionSampler]

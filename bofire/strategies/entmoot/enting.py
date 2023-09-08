@@ -1,3 +1,6 @@
+from typing import Tuple, List
+
+import numpy as np
 import pandas as pd
 import pyomo.environ as pyo
 from entmoot.models.enting import Enting
@@ -6,11 +9,12 @@ from entmoot.problem_config import ProblemConfig
 from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
+from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.strategies.entmoot.problem_config import domain_to_problem_config
-from bofire.strategies.strategy import Strategy
+from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
-class EntingStrategy(Strategy):
+class EntingStrategy(PredictiveStrategy):
     """Strategy for selecting new candidates using ENTMOOT"""
 
     def __init__(
@@ -28,31 +32,56 @@ class EntingStrategy(Strategy):
         self._problem_config: ProblemConfig = cfg[0]
         self._model_pyo: pyo.ConcreteModel = cfg[1]
 
+    @property
+    def input_preprocessing_specs(self) -> TInputTransformSpecs:
+        # TODO: implement this properly
+        # return self.surrogate_specs.input_preprocessing_specs  # type: ignore
+        return {}  # type: ignore
+
+    def _postprocess_candidate(self, candidate: List) -> pd.DataFrame:
+        """Converts a single candidate to a pandas Dataframe with prediction.
+
+        Args:
+            candidate (List): List containing the features of the candidate.
+
+        Returns:
+            pd.DataFrame: Dataframe with candidate.
+        """
+        keys = [feat.name for feat in self._problem_config.feat_list]
+        df_candidate = pd.DataFrame(
+            data=[candidate],
+            columns=keys,
+        )
+
+        preds = self.predict(df_candidate)
+        return pd.concat((df_candidate, preds), axis=1)
+
+
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
         if candidate_count > 1:
-            raise NotImplementedError("Can currently only handle one at a time")
+            raise NotImplementedError("Only one candidate can be generated.")
         opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
         res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
         candidate = res.opt_point
-        objective_value = res.opt_val
-        unc_unscaled = res.unc_unscaled
 
-        keys = [feat.name for feat in self._problem_config.feat_list]
-        candidates = pd.DataFrame(
-            data=[candidate + [objective_value, unc_unscaled]],
-            index=range(candidate_count),
-            columns=keys + ["y_pred", "y_sd"],
-        )
+        return self._postprocess_candidate(candidate)
 
-        return candidates
-
-    def _tell(self):
+    def _fit(self, experiments: pd.DataFrame):
         input_keys = self.domain.inputs.get_keys()
         output_keys = self.domain.outputs.get_keys()
 
-        X = self._experiments[input_keys].values
-        y = self._experiments[output_keys].values
+        X = experiments[input_keys].to_numpy()
+        y = experiments[output_keys].to_numpy()
         self._enting.fit(X, y)
+
+    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+        X = transformed.to_numpy()
+        pred = self._enting.predict(X)
+        # pred has shape [([mu1], std1), ([mu2], std2), ... ]
+        m, v = zip(*pred)
+        mean = np.array(m)
+        std = np.sqrt(np.array(v)).reshape(-1, 1)
+        return mean, std
 
     def has_sufficient_experiments(self) -> bool:
         if self.experiments is None:
