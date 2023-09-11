@@ -1,4 +1,4 @@
-from typing import List, Literal, Union
+from typing import List, Union
 
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
@@ -27,5 +27,4 @@ class BotorchSurrogates(Surrogates):
 
     Behaves similar to a Surrogate."""
 
-    type: Literal["BotorchSurrogates"] = "BotorchSurrogates"
     surrogates: List[AnyBotorchSurrogate]
