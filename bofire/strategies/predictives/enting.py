@@ -61,7 +61,15 @@ class EntingStrategy(PredictiveStrategy):
 
         return pd.concat((df_candidate, preds), axis=1)
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+    def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:
+        """Generate a single optimal candidate.
+
+        Args:
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to 1. 
+
+        Returns:
+            pd.DataFrame: DataFrame with a single candidate (proposed experiment).
+        """
         if candidate_count > 1:
             raise NotImplementedError("Only one candidate can be generated.")
         opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)

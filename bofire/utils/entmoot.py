@@ -11,9 +11,6 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-
-# from bofire.data_models.domain.constraints import Constraints
-# from bofire.data_models.domain.features import Features, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyInput,
     AnyOutput,
@@ -25,7 +22,18 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 
 
 def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.ConcreteModel]:
-    """Convert a set of features and constraints from BoFire to Entmoot"""
+    """Convert a set of features and constraints from BoFire to ENTMOOT.
+
+    Problems in BoFire are defined as `Domain`s. Before running an ENTMOOT strategy,
+    the problem must be converted to an `entmoot.ProblemConfig`.
+
+    Args:
+        domain (Domain): the definition of the optimization problem.
+
+    Returns:
+        A tuple (problem_config, model_pyo), where problem_config is the problem definition
+        in an ENTMOOT-friendly format, and model_pyo is the Pyomo model containing constraints.
+    """
     problem_config = ProblemConfig()
 
     for input_feature in domain.inputs:
@@ -42,8 +50,13 @@ def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.Concret
     return problem_config, model_pyo
 
 
-def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput):
-    """Given a Bofire feature, create an entmoot feature"""
+def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput) -> None:
+    """Given a Bofire `Input`, create an ENTMOOT `FeatureType`.
+
+    Args:
+        problem_config (ProblemConfig): An ENTMOOT problem definition, modified in-place.
+        feature (AnyInput): An input feature to be added to the problem_config object.
+    """
     feat_type = None
     bounds = None
     name = feature.key
@@ -70,11 +83,19 @@ def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput):
     problem_config.add_feature(feat_type, bounds, name)
 
 
-def _bofire_output_to_entmoot(problem_config: ProblemConfig, feature: AnyOutput):
-    """Given a Bofire output feature, create an entmoot constraint"""
-    if isinstance(feature.objective, MinimizeObjective) or isinstance(
-        feature.objective, MaximizeObjective
-    ):
+def _bofire_output_to_entmoot(
+    problem_config: ProblemConfig, feature: AnyOutput
+) -> None:
+    """Given a Bofire `Output`, create an ENTMOOT `MinObjective`.
+
+    If the output feature has a maximise objective, this is added to the problem config as a
+    `MinObjective`, and a factor of -1 is introduced in `EntingStrategy`.
+
+    Args:
+        problem_config (ProblemConfig): An ENTMOOT problem definition, modified in-place.
+        feature (AnyOutput): An output feature to be added to the problem_config object.
+    """
+    if isinstance(feature.objective, (MinimizeObjective, MaximizeObjective)):
         problem_config.add_min_objective(name=feature.key)
 
     else:
@@ -85,15 +106,23 @@ def _bofire_constraint_to_entmoot(
     problem_config: ProblemConfig,
     constraint: AnyConstraint,
     model_core: pyo.ConcreteModel,
-):
-    """Apply bofire constraints to entmoot model.
+) -> None:
+    """Apply a Bofire `Constraint` to an ENTMOOT model.
 
-    TODO: Make this optimiser-agnostic"""
+    To apply a constraint, the Pyomo model must be accessed. A reference to this model
+    core should be retained to keep the constraints.
+
+    Args:
+        problem_config (ProblemConfig): An ENTMOOT problem definition.
+        constraint (AnyConstraint): A constraint to be applied to the Pyomo model.
+        model_core (pyo.ConcreteModel): The underlying solver model.
+    """
     if not isinstance(constraint, LinearConstraint):
         raise NotImplementedError("Non-linear constraints are not supported")
 
-    # feat_idxs = [i for i, feat in enumerate(problem_config.feat_list) if feat.name in constraint.features]
-    # retain order of constraints.features
+    # get references to the Pyomo variables to create the constraint, keeping
+    # the order of the variables in the Constraint
+
     feat_keys = [feat.name for feat in problem_config.feat_list]
     feat_idxs = [feat_keys.index(key) for key in constraint.features]
     features = [model_core._all_feat[i] for i in feat_idxs]
