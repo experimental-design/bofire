@@ -21,7 +21,11 @@ from bofire.data_models.priors.api import (
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
 )
-from bofire.data_models.surrogates.api import ScalerEnum
+from bofire.data_models.surrogates.api import (
+    MeanAggregation,
+    ScalerEnum,
+    SumAggregation,
+)
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -29,27 +33,38 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
-    models.SaasSingleTaskGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
-                features.valid(ContinuousInput).obj(),
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
             ]
-            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
         ),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
-        "aggregations": None,
-        "warmup_steps": 16,
-        "num_samples": 4,
-        "thinning": 2,
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ),
+        "aggregations": [
+            random.choice(
+                [
+                    SumAggregation(features=["a", "b"]),
+                    MeanAggregation(features=["a", "b"]),
+                ]
+            )
+        ],
         "scaler": ScalerEnum.NORMALIZE,
-        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "noise_prior": BOTORCH_NOISE_PRIOR(),
+        "input_preprocessing_specs": {},
         "dump": None,
-        "hyperconfig": None,
+        "hyperconfig": SingleTaskGPHyperconfig(),
     },
 )
 

@@ -1,5 +1,6 @@
+import warnings
 from abc import abstractmethod
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, Union
 
 import pandas as pd
 from pydantic import Field, root_validator, validator
@@ -8,7 +9,7 @@ from typing_extensions import Annotated
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
 metrics2objectives = {
@@ -40,6 +41,9 @@ class SumAggregation(Aggregation):
 
 class MeanAggregation(Aggregation):
     type: Literal["MeanAggregation"] = "MeanAggregation"
+
+
+AnyAggregation = Union[SumAggregation, MeanAggregation]
 
 
 class Hyperconfig(BaseModel):
@@ -88,15 +92,24 @@ class Hyperconfig(BaseModel):
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
-    aggregations: Optional[Annotated[List[Aggregation], Field(min_items=1)]] = None
+    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_items=1)]] = None
 
     @root_validator
     def validate_aggregations(cls, values):
         if values["aggregations"] is None:
             return values
         for agg in values["aggregations"]:
-            if len(set(agg.features) - set(values["inputs"].get_keys())) > 0:
-                raise ValueError("Unkown feature keys provided in aggregation(s).")
+            for key in agg.features:
+                if key not in values["inputs"].get_keys():
+                    raise ValueError(
+                        f"Unkown feature key {key} provided in aggregations."
+                    )
+                feat = values["inputs"].get_by_key(key)
+                if not isinstance(feat, ContinuousInput):
+                    raise ValueError(
+                        f"Feature with key {key} is not of type ContinuousInput"
+                    )
+        warnings.warn("Aggregations currently only implemented in the data models.")
         return values
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
