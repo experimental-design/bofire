@@ -1,5 +1,6 @@
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.surrogates.empirical import EmpiricalSurrogate
+from bofire.surrogates.enting import EntingSurrogate
 from bofire.surrogates.mapper import map
 from bofire.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate
 from bofire.surrogates.mlp import MLPEnsemble

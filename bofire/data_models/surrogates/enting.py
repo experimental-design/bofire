@@ -1,14 +1,8 @@
-from typing import Literal, Optional
+from typing import Literal
 
-from pydantic import Field, validator
+from pydantic import Field
 from typing_extensions import Annotated
 
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    NumericalInput,
-)
 from bofire.data_models.surrogates.surrogate import Surrogate
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
@@ -31,6 +25,3 @@ class EntingSurrogate(Surrogate, TrainableSurrogate):
     dist_trafo: Literal["normal", "standard"] = "normal"
     dist_metric: Literal["euclidean_squared", "l1", "l2"] = "euclidean_squared"
     cat_metric: Literal["overlap", "of", "goodall4"] = "overlap"
-
-
-
