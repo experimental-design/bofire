@@ -1,8 +1,8 @@
 from abc import abstractmethod
-from typing import Literal, Optional
+from typing import List, Literal, Optional
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, root_validator, validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -26,6 +26,20 @@ metrics2objectives = {
     UQRegressionMetricsEnum.MISCALIBRATIONAREA: MinimizeObjective,
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: MinimizeObjective,
 }
+
+
+class Aggregation(BaseModel):
+    type: str
+    features: Annotated[List[str], Field(min_items=2)]
+    keep_features: bool = False
+
+
+class SumAggregation(Aggregation):
+    type: Literal["SumAggregation"] = "SumAggregation"
+
+
+class MeanAggregation(Aggregation):
+    type: Literal["MeanAggregation"] = "MeanAggregation"
 
 
 class Hyperconfig(BaseModel):
@@ -74,6 +88,16 @@ class Hyperconfig(BaseModel):
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
+    aggregations: Optional[Annotated[List[Aggregation], Field(min_items=1)]] = None
+
+    @root_validator
+    def validate_aggregations(cls, values):
+        if values["aggregations"] is None:
+            return values
+        for agg in values["aggregations"]:
+            if len(set(agg.features) - set(values["inputs"].get_keys())) > 0:
+                raise ValueError("Unkown feature keys provided in aggregation(s).")
+        return values
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         if self.hyperconfig is not None:

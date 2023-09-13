@@ -42,6 +42,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "warmup_steps": 16,
         "num_samples": 4,
         "thinning": 2,
@@ -66,6 +67,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
@@ -93,6 +95,7 @@ specs.add_valid(
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
         ),
+        "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
@@ -113,6 +116,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "input_preprocessing_specs": {},
         "n_estimators": 100,
         "criterion": "squared_error",
@@ -145,6 +149,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
@@ -175,6 +180,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "n_estimators": 10,
         "max_depth": 6,
         "max_leaves": 0,
@@ -221,6 +227,7 @@ specs.add_valid(
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
         ),
+        "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3)},
