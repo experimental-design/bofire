@@ -25,6 +25,7 @@ class EntingStrategy(PredictiveStrategy):
     type: Literal["EntingStrategy"] = "EntingStrategy"
     enting_params: Dict[str, Any] = {}
     solver_params: Dict[str, Any] = {}
+    learn_from_candidates_coeff: float = -10.0
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

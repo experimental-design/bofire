@@ -11,8 +11,8 @@ from pydantic import PositiveInt
 import bofire.data_models.strategies.api as data_models
 from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.objectives.api import MaximizeObjective
-from bofire.utils.entmoot import domain_to_problem_config
 from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.utils.entmoot import domain_to_problem_config
 
 
 class EntingStrategy(PredictiveStrategy):
@@ -27,6 +27,7 @@ class EntingStrategy(PredictiveStrategy):
         self._init_problem_config()
         self._enting = Enting(self._problem_config, data_model.enting_params)
         self._solver_params = data_model.solver_params
+        self._learn_from_candidates_coeff = data_model.learn_from_candidates_coeff
 
     def _init_problem_config(self) -> None:
         cfg = domain_to_problem_config(self.domain)
@@ -61,22 +62,36 @@ class EntingStrategy(PredictiveStrategy):
 
         return pd.concat((df_candidate, preds), axis=1)
 
+    def _add_candidate_as_experiment(self, candidate: pd.DataFrame):
+        gamma = self._learn_from_candidates_coeff
+        as_experiment = candidate.assign(
+            **{
+                key: candidate[f"{key}_pred"] + gamma * candidate[f"{key}_sd"]
+                for key in self.domain.outputs.get_keys()
+            }
+        )
+        self.tell(as_experiment)
+
     def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:
         """Generate a single optimal candidate.
 
         Args:
-            candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to 1. 
+            candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to 1.
 
         Returns:
             pd.DataFrame: DataFrame with a single candidate (proposed experiment).
         """
-        if candidate_count > 1:
-            raise NotImplementedError("Only one candidate can be generated.")
-        opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
-        res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
-        candidate = res.opt_point
+        candidate_lst = []
+        for _ in range(candidate_count):
+            opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
+            res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
+            candidate = self._postprocess_candidate(res.opt_point)
+            candidate_lst.append(candidate)
+            # only refit if generating multiple
+            if candidate_count > 1:
+                self._add_candidate_as_experiment(candidate)
 
-        return self._postprocess_candidate(candidate)
+        return pd.concat(candidate_lst)
 
     def _fit(self, experiments: pd.DataFrame):
         input_keys = self.domain.inputs.get_keys()
