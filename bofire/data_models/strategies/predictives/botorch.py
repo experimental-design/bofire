@@ -1,6 +1,6 @@
-from typing import Optional, Type
+from typing import Annotated, Optional, Type
 
-from pydantic import PositiveInt, root_validator, validator
+from pydantic import Field, PositiveInt, root_validator, validator
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -33,9 +33,13 @@ class BotorchStrategy(PredictiveStrategy):
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     surrogate_specs: Optional[BotorchSurrogates] = None
+    # outlier detection params
     outlier_detection_specs: Optional[OutlierDetections] = None
     min_experiments_before_outlier_check: PositiveInt = 1
     frequency_check: PositiveInt = 1
+    # hyperopt params
+    frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # indicates no hyperopt
+    folds: int = 5
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

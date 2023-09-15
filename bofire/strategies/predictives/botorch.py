@@ -35,6 +35,7 @@ from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.outlier_detection.outlier_detections import OutlierDetections
+from bofire.runners.hyperoptimize import hyperoptimize
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
@@ -63,7 +64,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.descriptor_method = data_model.descriptor_method
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
-        self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
+        self.surrogate_specs = data_model.surrogate_specs
         if data_model.outlier_detection_specs is not None:
             self.outlier_detection_specs = OutlierDetections(
                 data_model=data_model.outlier_detection_specs
@@ -74,6 +75,8 @@ class BotorchStrategy(PredictiveStrategy):
             data_model.min_experiments_before_outlier_check
         )
         self.frequency_check = data_model.frequency_check
+        self.frequency_hyperopt = data_model.frequency_hyperopt
+        self.folds = data_model.folds
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -102,15 +105,30 @@ class BotorchStrategy(PredictiveStrategy):
         Args:
             transformed (pd.DataFrame): [description]
         """
+        # perform outlier detection
         if self.outlier_detection_specs is not None:
             if (
                 self.num_experiments >= self.min_experiments_before_outlier_check
                 and self.num_experiments % self.frequency_check == 0
             ):
                 experiments = self.outlier_detection_specs.detect(experiments)
+        # perform hyperopt
+        if (self.frequency_hyperopt > 0) and (
+            self.num_experiments % self.frequency_hyperopt == 0
+        ):
+            self.surrogate_specs.surrogates = [
+                hyperoptimize(
+                    surrogate_data=surrogate_data,
+                    training_data=experiments,
+                    folds=self.folds,
+                )[0]
+                for surrogate_data in self.surrogate_specs.surrogates
+            ]
+        # map the surrogate spec
+        surrogates = BotorchSurrogates(data_model=self.surrogate_specs)  # type: ignore
 
-        self.surrogate_specs.fit(experiments)  # type: ignore
-        self.model = self.surrogate_specs.compatibilize(  # type: ignore
+        surrogates.fit(experiments)  # type: ignore
+        self.model = surrogates.compatibilize(  # type: ignore
             inputs=self.domain.inputs,  # type: ignore
             outputs=self.domain.outputs,  # type: ignore
         )
