@@ -10,9 +10,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
-from bofire.data_models.outlier_detection.api import (
-    OutlierDetections,
-)
+from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
@@ -38,7 +36,7 @@ class BotorchStrategy(PredictiveStrategy):
     min_experiments_before_outlier_check: PositiveInt = 1
     frequency_check: PositiveInt = 1
     # hyperopt params
-    frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # indicates no hyperopt
+    frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
 
     @classmethod
