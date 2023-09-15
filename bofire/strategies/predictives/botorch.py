@@ -34,6 +34,7 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
+from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.runners.hyperoptimize import hyperoptimize
 from bofire.strategies.predictives.predictive import PredictiveStrategy
@@ -116,14 +117,17 @@ class BotorchStrategy(PredictiveStrategy):
         if (self.frequency_hyperopt > 0) and (
             self.num_experiments % self.frequency_hyperopt == 0
         ):
-            self.surrogate_specs.surrogates = [
+            self.surrogate_specs.surrogates = [  # type: ignore
                 hyperoptimize(
                     surrogate_data=surrogate_data,
                     training_data=experiments,
                     folds=self.folds,
                 )[0]
-                for surrogate_data in self.surrogate_specs.surrogates
+                if isinstance(surrogate_data, AnyTrainableSurrogate)
+                else surrogate_data
+                for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
             ]
+
         # map the surrogate spec
         surrogates = BotorchSurrogates(data_model=self.surrogate_specs)  # type: ignore
 
