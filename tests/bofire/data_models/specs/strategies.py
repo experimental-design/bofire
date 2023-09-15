@@ -26,6 +26,8 @@ strategy_commons = {
     "seed": 42,
     "min_experiments_before_outlier_check": 1,
     "frequency_check": 1,
+    "frequency_hyperopt": 0,
+    "folds": 5,
 }
 
 
