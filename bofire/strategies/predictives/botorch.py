@@ -123,7 +123,7 @@ class BotorchStrategy(PredictiveStrategy):
                     training_data=experiments,
                     folds=self.folds,
                 )[0]
-                if isinstance(surrogate_data, AnyTrainableSurrogate)
+                if isinstance(surrogate_data, AnyTrainableSurrogate)  # type: ignore
                 else surrogate_data
                 for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
             ]
