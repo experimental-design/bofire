@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, get_args
 
 import numpy as np
 import pandas as pd
@@ -122,11 +122,11 @@ class BotorchStrategy(PredictiveStrategy):
 
             self.surrogate_specs.surrogates = [  # type: ignore
                 hyperoptimize(
-                    surrogate_data=surrogate_data,
+                    surrogate_data=surrogate_data,  # type: ignore
                     training_data=experiments,
                     folds=self.folds,
                 )[0]
-                if isinstance(surrogate_data, AnyTrainableSurrogate)  # type: ignore
+                if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
                 else surrogate_data
                 for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
             ]
