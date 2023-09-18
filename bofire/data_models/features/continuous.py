@@ -20,7 +20,7 @@ class ContinuousInput(NumericalInput):
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
-    bounds: Tuple[float, float]
+    bounds: Tuple[float, float] = Field(default_factory=lambda: (0.0, 1.0))
     stepsize: Optional[float] = None
 
     @property
