@@ -36,7 +36,6 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
-from bofire.runners.hyperoptimize import hyperoptimize
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
@@ -78,6 +77,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_check = data_model.frequency_check
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
+        self.surrogates = None
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -117,6 +117,9 @@ class BotorchStrategy(PredictiveStrategy):
         if (self.frequency_hyperopt > 0) and (
             self.num_experiments % self.frequency_hyperopt == 0
         ):
+            # we have to import here to avoid circular imports
+            from bofire.runners.hyperoptimize import hyperoptimize
+
             self.surrogate_specs.surrogates = [  # type: ignore
                 hyperoptimize(
                     surrogate_data=surrogate_data,
@@ -128,11 +131,12 @@ class BotorchStrategy(PredictiveStrategy):
                 for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
             ]
 
-        # map the surrogate spec
-        surrogates = BotorchSurrogates(data_model=self.surrogate_specs)  # type: ignore
+        # map the surrogate spec, we keep it here as attribute to be able to save/dump
+        # the surrogate
+        self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs)  # type: ignore
 
-        surrogates.fit(experiments)  # type: ignore
-        self.model = surrogates.compatibilize(  # type: ignore
+        self.surrogates.fit(experiments)  # type: ignore
+        self.model = self.surrogates.compatibilize(  # type: ignore
             inputs=self.domain.inputs,  # type: ignore
             outputs=self.domain.outputs,  # type: ignore
         )
