@@ -3,7 +3,7 @@ from abc import abstractmethod
 from copy import deepcopy
 
 import pandas as pd
-from pydantic import validate_arguments
+from pydantic import validate_call
 
 from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.api import Domain
@@ -30,7 +30,7 @@ class SamplerStrategy(Strategy):
     def duplicate(self, domain: Domain) -> "SamplerStrategy":
         pass
 
-    @validate_arguments
+    @validate_call
     def ask(
         self,
         candidate_count: int,

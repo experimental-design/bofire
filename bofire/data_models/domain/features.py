@@ -7,7 +7,7 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, 
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validate_arguments
+from pydantic import Field, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
@@ -181,7 +181,7 @@ class Inputs(Features):
         """
         return Inputs(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
 
-    @validate_arguments
+    @validate_call
     def sample(
         self,
         n: int = 1,

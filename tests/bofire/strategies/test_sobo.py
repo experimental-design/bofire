@@ -347,3 +347,7 @@ def test_sobo_get_constrained_objective():
     strategy.tell(experiments=experiments)
     obj = strategy._get_objective()
     assert isinstance(obj, ConstrainedMCObjective)
+
+
+if __name__ == "__main__":
+    pytest.main([__file__, "--exitfirst", "-s", "--pdb"])

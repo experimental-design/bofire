@@ -16,7 +16,6 @@ from sklearn.metrics import (
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
-from bofire.data_models.validated import ValidatedDataFrame, ValidatedSeries
 
 
 def _mean_absolute_error(
@@ -456,11 +455,12 @@ class CvResult(BaseModel):
     """
 
     key: str
-    observed: ValidatedSeries
-    predicted: ValidatedSeries
-    standard_deviation: Optional[ValidatedSeries] = None
-    labcodes: Optional[ValidatedSeries] = None
-    X: Optional[ValidatedDataFrame] = None
+    observed: pd.Series
+    predicted: pd.Series
+    standard_deviation: Optional[pd.Series] = None
+    labcodes: Optional[pd.Series] = None
+    X: Optional[pd.DataFrame] = None
+    model_config: Optional[Dict] = {"arbitrary_types_allowed": True}
 
     @model_validator(mode="before")
     @classmethod

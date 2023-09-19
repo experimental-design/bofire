@@ -114,7 +114,7 @@ class CategoricalDescriptorInput(CategoricalInput):
 
     @field_validator("values")
     @classmethod
-    def validate_values(cls, v, values):
+    def validate_values(cls, v, info):
         """validates the compatability of passed values for the descriptors and the defined categories
 
         Args:
@@ -129,13 +129,13 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             List[List[float]]: Nested list with descriptor values
         """
-        if len(v) != len(values["categories"]):
+        if len(v) != len(info.data["categories"]):
             raise ValueError("values must have same length as categories")
         for row in v:
-            if len(row) != len(values["descriptors"]):
+            if len(row) != len(info.data["descriptors"]):
                 raise ValueError("rows in values must have same length as descriptors")
         a = np.array(v)
-        for i, d in enumerate(values["descriptors"]):
+        for i, d in enumerate(info.data["descriptors"]):
             if len(set(a[:, i])) == 1:
                 raise ValueError(f"No variation for descriptor {d}.")
         return v

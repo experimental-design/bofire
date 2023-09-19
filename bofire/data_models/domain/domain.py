@@ -117,7 +117,7 @@ class Domain(BaseModel):
 
     @field_validator("outputs")
     @classmethod
-    def validate_unique_feature_keys(cls, v: Outputs, values) -> Outputs:
+    def validate_unique_feature_keys(cls, v: Outputs, info) -> Outputs:
         """Validates if provided input and output feature keys are unique
 
         Args:
@@ -130,9 +130,9 @@ class Domain(BaseModel):
         Returns:
             Outputs: Keeps output features as given.
         """
-        if "inputs" not in values:
+        if "inputs" not in info.data:
             return v
-        features = v + values["inputs"]
+        features = v + info.data["inputs"]
         keys = [f.key for f in features]
         if len(set(keys)) != len(keys):
             raise ValueError("feature keys are not unique")
@@ -140,7 +140,7 @@ class Domain(BaseModel):
 
     @field_validator("constraints")
     @classmethod
-    def validate_constraints(cls, v, values):
+    def validate_constraints(cls, v, info):
         """Validate if all features included in the constraints are also defined as features for the domain.
 
         Args:
@@ -153,9 +153,9 @@ class Domain(BaseModel):
         Returns:
             List[Constraint]: List of constraints defined for the domain
         """
-        if "inputs" not in values:
+        if "inputs" not in info.data:
             return v
-        keys = [f.key for f in values["inputs"]]
+        keys = [f.key for f in info.data["inputs"]]
         for c in v:
             if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
                 for f in c.features:
@@ -165,7 +165,7 @@ class Domain(BaseModel):
 
     @field_validator("constraints")
     @classmethod
-    def validate_linear_constraints(cls, v, values):
+    def validate_linear_constraints(cls, v, info):
         """Validate if all features included in linear constraints are continuous ones.
 
         Args:
@@ -179,12 +179,12 @@ class Domain(BaseModel):
         Returns:
            List[Constraint]: List of constraints defined for the domain
         """
-        if "inputs" not in values:
+        if "inputs" not in info.data:
             return v
 
         # gather continuous inputs in dictionary
         continuous_inputs_dict = {}
-        for f in values["inputs"]:
+        for f in info.data["inputs"]:
             if isinstance(f, ContinuousInput):
                 continuous_inputs_dict[f.key] = f
 
@@ -683,3 +683,7 @@ class Domain(BaseModel):
         if isinstance(constraints, Constraints):
             constraints = constraints.constraints
         self.constraints.constraints = constraints
+
+
+if __name__ == "__main__":
+    pass
