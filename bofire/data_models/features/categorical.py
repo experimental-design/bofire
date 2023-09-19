@@ -384,8 +384,8 @@ class CategoricalOutput(Output):
 
     @field_validator("objective")
     @classmethod
-    def validate_objective(cls, objective, values):
-        if len(objective) != len(values["categories"]):
+    def validate_objective(cls, objective, info):
+        if len(objective) != len(info.data["categories"]):
             raise ValueError("Length of objectives and categories do not match.")
         for o in objective:
             if o > 1:

@@ -69,13 +69,13 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return v
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def update_surrogate_specs_for_domain(cls, values):
         """Ensures that a prediction model is specified for each output feature"""
         values["surrogate_specs"] = BotorchStrategy._generate_surrogate_specs(
             values["domain"],
-            values["surrogate_specs"],
+            values["surrogate_specs"] if "surrogate_specs" in values else None,
         )
         # we also have to checke here that the categorical method is compatible with the chosen models
         if values["categorical_method"] == CategoricalMethodEnum.FREE:
@@ -96,11 +96,14 @@ class BotorchStrategy(PredictiveStrategy):
                         )
         return values
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def validate_outlier_detection_specs_for_domain(cls, values):
         """Ensures that a outlier_detection model is specified for each output feature"""
-        if values["outlier_detection_specs"] is not None:
+        if (
+            "outlier_detection_specs" in values
+            and values["outlier_detection_specs"] is not None
+        ):
             values["outlier_detection_specs"]._check_compability(
                 inputs=values["domain"].inputs, outputs=values["domain"].outputs
             )

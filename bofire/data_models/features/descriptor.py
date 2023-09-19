@@ -46,7 +46,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         """
         return list(descriptors)
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def validate_list_lengths(cls, values):
         """compares the length of the defined descriptors list with the provided values
