@@ -29,3 +29,7 @@ max-complexity = 18
 "bofire/data_models/api.py" = ["F401"]
 "bofire/data_models/surrogates/api.py" = ["F401"]
 "bofire/benchmarks/api.py" = ["F401"]
+
+[tool.pyright]
+include = ["bofire"]
+exclude = ["bofire/version.py"]
