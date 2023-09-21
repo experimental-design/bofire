@@ -358,3 +358,32 @@ def test_domain_validate_candidates_constraint_not_fulfilled(
             ),
             pd.DataFrame,
         )
+
+
+def test_outputs_add_valid_columns():
+    experiments = generate_experiments(domain=domain0)
+    assert "valid_out1" not in experiments.columns
+    assert "valid_out2" not in experiments.columns
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert "valid_out1" in experiments.columns
+    assert "valid_out2" in experiments.columns
+    #
+    experiments["valid_out1"] = "1"
+    experiments["valid_out2"] = "0"
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert (experiments["valid_out1"] == 1).all()
+    assert (experiments["valid_out2"] == 0).all()
+    experiments["valid_out1"] = 0
+    experiments["valid_out2"] = 1
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert (experiments["valid_out1"] == 0).all()
+    assert (experiments["valid_out2"] == 1).all()
+    experiments["valid_out1"] = 0.0
+    experiments["valid_out2"] = 1.0
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert (experiments["valid_out1"] == 0).all()
+    assert (experiments["valid_out2"] == 1).all()
+    for _test_val in ["1.0", "1.2"]:
+        experiments["valid_out1"] = _test_val
+        with pytest.raises(ValueError):
+            domain0.outputs.add_valid_columns(experiments)
