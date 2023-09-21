@@ -20,12 +20,13 @@ class TrainableSurrogate(ABC):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
 
     def fit(self, experiments: pd.DataFrame, options: Optional[Dict] = None):
-        # preprocess
-        experiments = self._preprocess_experiments(experiments)
         # validate
         experiments = self.inputs.validate_experiments(  # type: ignore
             experiments, strict=False
         )
+        experiments = self.outputs.validate_experiments(experiments)  # type: ignore
+        # preprocess
+        experiments = self._preprocess_experiments(experiments)
         X = experiments[self.inputs.get_keys()]  # type: ignore
         # TODO: output feature validation
         Y = experiments[self.outputs.get_keys()]  # type: ignore
@@ -34,6 +35,7 @@ class TrainableSurrogate(ABC):
         self._fit(X=X, Y=Y, **options)  # type: ignore
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        # in case that the valid column is missing we are adding it here
         if self._output_filtering is None:
             return experiments
         elif self._output_filtering == OutputFilteringEnum.ALL:

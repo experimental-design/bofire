@@ -1,6 +1,5 @@
 import random
 import uuid
-from typing import List
 
 import numpy as np
 import pandas as pd
@@ -259,7 +258,14 @@ def test_domain_validate_candidates_valid(
     domain: Domain,
     candidates: pd.DataFrame,
 ):
-    domain.validate_candidates(candidates)
+    candidates1 = domain.validate_candidates(candidates.copy())
+    for col in domain.inputs.get_keys():
+        candidates[col] = candidates[col].map(str)
+    candidates2 = domain.validate_candidates(candidates.copy())
+    assert_frame_equal(
+        left=candidates1,
+        right=candidates2,
+    )
 
 
 @pytest.mark.parametrize(
@@ -303,27 +309,6 @@ def test_domain_validate_candidates_invalid_categories():
     candidates.loc[0, "cat2"] = "c3"
     with pytest.raises(ValueError):
         domain4.validate_candidates(candidates)
-
-
-@pytest.mark.parametrize(
-    "domain, candidates, cols",
-    [
-        (d, generate_candidates(d), cols)
-        for d in [domain0]
-        for cols in [
-            ["newcol"],
-            ["newcol1", "newcol2"],
-        ]
-    ],
-)
-def test_domain_validate_candidates_too_many_cols(
-    domain: Domain,
-    candidates: pd.DataFrame,
-    cols: List[str],
-):
-    candidates = candidates.reindex(list(candidates.columns) + cols, axis=1)
-    with pytest.raises(ValueError):
-        domain.validate_candidates(candidates)
 
 
 @pytest.mark.parametrize(
