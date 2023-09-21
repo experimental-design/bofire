@@ -16,7 +16,6 @@ nav:
     - Objectives: ref-objectives.md
     - Features: ref-features.md
     - Domain Util: ref-domain-util.md
-    - Mappers: ref-mappers.md
     - Utils: ref-utils.md
 
 theme:
