@@ -5,6 +5,7 @@ from typing import List
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.constraints.api import (
@@ -198,7 +199,14 @@ def test_domain_validate_experiments_valid(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
-    domain.validate_experiments(experiments)
+    experiments1 = domain.validate_experiments(experiments.copy())
+    for col in experiments.columns:
+        experiments[col] = experiments[col].map(str)
+    experiments2 = domain.validate_experiments(experiments)
+    assert_frame_equal(
+        left=experiments1,
+        right=experiments2,
+    )
 
 
 @pytest.mark.parametrize(

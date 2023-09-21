@@ -98,10 +98,13 @@ class NumericalInput(Input):
         Returns:
             pd.Series: A dataFrame with experiments
         """
-        if not is_numeric(values):
+        try:
+            values = pd.to_numeric(values, errors="raise")
+        except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
             )
+        values = values.astype("float64")
         if strict:
             lower, upper = self.get_bounds(transform_type=None, values=values)
             if lower == upper:
