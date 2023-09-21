@@ -672,6 +672,7 @@ class Outputs(Features):
 
     def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         # for each continuous output feature with an attached objective object
+        # ToDo: adjust it for the CategoricalOutput
         cols = list(
             itertools.chain.from_iterable(
                 [
@@ -691,12 +692,12 @@ class Outputs(Features):
             if col not in candidates:
                 raise ValueError(f"missing column {col}")
             try:
-                candidates[col] = pd.to_numeric(candidates[col], errors="raise")
+                candidates[col] = pd.to_numeric(candidates[col], errors="raise").astype(
+                    "float64"
+                )
             except ValueError:
                 raise ValueError(f"Not all values of column `{col}` are numerical.")
             if candidates[col].isnull().to_numpy().any():
-                print(candidates[col])
-                print(candidates[col].isnull().to_numpy().any())
                 raise ValueError(f"Nan values are present in {col}.")
         return candidates
 

@@ -165,12 +165,11 @@ class ContinuousOutput(Output):
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         try:
-            values = pd.to_numeric(values, errors="raise")
+            values = pd.to_numeric(values, errors="raise").astype("float64")
         except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
             )
-        values = values.astype("float64")
         return values
 
     def __str__(self) -> str:

@@ -99,7 +99,7 @@ class NumericalInput(Input):
             pd.Series: A dataFrame with experiments
         """
         try:
-            values = pd.to_numeric(values, errors="raise")
+            values = pd.to_numeric(values, errors="raise").astype("float64")
         except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
@@ -126,7 +126,7 @@ class NumericalInput(Input):
             pd.Series: the original provided candidates
         """
         try:
-            values = pd.to_numeric(values, errors="raise")
+            values = pd.to_numeric(values, errors="raise").astype("float64")
         except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
