@@ -198,7 +198,7 @@ class Inputs(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         if method == SamplingMethodEnum.UNIFORM:
-            return self.validate_inputs(
+            return self.validate_candidates(
                 pd.concat([feat.sample(n) for feat in self.get(Input)], axis=1)  # type: ignore
             )
         free_features = self.get_free()
@@ -230,14 +230,13 @@ class Inputs(Features):
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
             samples[feat.key] = feat.fixed_value()[0]  # type: ignore
-        return self.validate_inputs(samples)[self.get_keys(Input)]
+        return self.validate_candidates(samples)[self.get_keys(Input)]
 
-    # validate candidates, TODO rename and tidy up
-    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
+    def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.
 
         Args:
-            inputs (pd.Dataframe): Inputs to validate.
+            candidates (pd.Dataframe): Inputs to validate.
 
         Raises:
             ValueError: Raises a Valueerror if a feature based validation raises an exception.
@@ -246,10 +245,10 @@ class Inputs(Features):
             pd.Dataframe: Validated dataframe
         """
         for feature in self:
-            if feature.key not in inputs:
+            if feature.key not in candidates:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            feature.validate_candidental(inputs[feature.key])  # type: ignore
-        return inputs
+            candidates[feature.key] = feature.validate_candidental(candidates[feature.key])  # type: ignore
+        return candidates
 
     def validate_experiments(
         self, experiments: pd.DataFrame, strict=False

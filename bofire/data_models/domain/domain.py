@@ -523,11 +523,9 @@ class Domain(BaseModel):
         if experiments[self.get_feature_keys(Input)].isna().to_numpy().any():
             raise ValueError("there are na values")
         # run the individual validators
-        for feat in self.get_features(Input):
-            assert isinstance(feat, Input)
-            experiments[feat.key] = feat.validate_experimental(
-                experiments[feat.key], strict=strict
-            )
+        experiments = self.inputs.validate_experiments(
+            experiments=experiments, strict=strict
+        )
         for feat in self.get_features(Output):
             experiments[feat.key] = feat.validate_experimental(experiments[feat.key])
         return experiments
@@ -588,7 +586,7 @@ class Domain(BaseModel):
         """
         # check that each input feature has a col and is valid in itself
         assert isinstance(self.inputs, Inputs)
-        self.inputs.validate_inputs(candidates)
+        candidates = self.inputs.validate_candidates(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates, tol=tol).all():
             if raise_validation_error:

@@ -105,7 +105,7 @@ class ContinuousInput(NumericalInput):
         """
 
         noise = 10e-6
-        super().validate_candidental(values)
+        values = super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
                 f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` "

@@ -166,6 +166,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
+        values = values.map(str)
         if sum(values.isin(self.get_allowed_categories())) != len(values):
             raise ValueError(
                 f"not all values of input feature `{self.key}` are a valid allowed category from {self.get_allowed_categories()}"
