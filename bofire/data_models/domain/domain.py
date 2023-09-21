@@ -504,10 +504,8 @@ class Domain(BaseModel):
         for valid_key in valid_keys:
             if valid_key not in experiments:
                 experiments[valid_key] = True
-        # check all cols
-        cols = list(experiments.columns)
         # we allow here for a column named labcode used to identify experiments
-        if "labcode" in cols:
+        if "labcode" in experiments.columns:
             # test that labcodes are not na
             if experiments.labcode.isnull().to_numpy().any():
                 raise ValueError("there are labcodes with null value")
@@ -519,9 +517,7 @@ class Domain(BaseModel):
                 != experiments.shape[0]
             ):
                 raise ValueError("labcodes are not unique")
-            # we remove the labcode from the cols list to proceed as before
-            cols.remove("labcode")
-        # check values of continuous input features
+        # check values of input features
         if experiments[self.get_feature_keys(Input)].isnull().to_numpy().any():
             raise ValueError("there are null values")
         if experiments[self.get_feature_keys(Input)].isna().to_numpy().any():
@@ -529,7 +525,11 @@ class Domain(BaseModel):
         # run the individual validators
         for feat in self.get_features(Input):
             assert isinstance(feat, Input)
-            feat.validate_experimental(experiments[feat.key], strict=strict)
+            experiments[feat.key] = feat.validate_experimental(
+                experiments[feat.key], strict=strict
+            )
+        for feat in self.get_features(Output):
+            experiments[feat.key] = feat.validate_experimental(experiments[feat.key])
         return experiments
 
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:

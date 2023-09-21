@@ -392,6 +392,14 @@ class CategoricalOutput(Output):
                 raise ValueError("Objective values has to be larger equal than zero")
         return objective
 
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
+        if sum(values.isin(self.categories)) != len(values):
+            raise ValueError(
+                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
+            )
+        return values
+
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""
         return dict(zip(self.categories, self.objective))
