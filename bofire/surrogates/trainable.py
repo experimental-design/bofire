@@ -35,7 +35,6 @@ class TrainableSurrogate(ABC):
         self._fit(X=X, Y=Y, **options)  # type: ignore
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        # in case that the valid column is missing we are adding it here
         if self._output_filtering is None:
             return experiments
         elif self._output_filtering == OutputFilteringEnum.ALL:
