@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.3.2">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.0">
     
     
       
@@ -26,10 +26,10 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.30068a00.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.9f615399.min.css">
       
         
-        <link rel="stylesheet" href="../assets/stylesheets/palette.85d0ee34.min.css">
+        <link rel="stylesheet" href="../assets/stylesheets/palette.649f08f9.min.css">
       
       
 
@@ -1240,19 +1240,6 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no experiments provided (empty dataframe)&quot;</span><span class="p">)</span>
-        <span class="c1"># check that each feature is a col</span>
-        <span class="n">feature_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">feature_key</span> <span class="ow">in</span> <span class="n">feature_keys</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">feature_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col in experiments for feature </span><span class="si">{</span><span class="n">feature_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="c1"># add valid_{key} cols if missing</span>
-        <span class="n">valid_keys</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sa">f</span><span class="s2">&quot;valid_</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Output</span><span class="p">)</span>
-        <span class="p">]</span>
-        <span class="k">for</span> <span class="n">valid_key</span> <span class="ow">in</span> <span class="n">valid_keys</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">valid_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">:</span>
-                <span class="n">experiments</span><span class="p">[</span><span class="n">valid_key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="c1"># we allow here for a column named labcode used to identify experiments</span>
         <span class="k">if</span> <span class="s2">&quot;labcode&quot;</span> <span class="ow">in</span> <span class="n">experiments</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="c1"># test that labcodes are not na</span>
@@ -1266,19 +1253,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                 <span class="o">!=</span> <span class="n">experiments</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;labcodes are not unique&quot;</span><span class="p">)</span>
-        <span class="c1"># check values of input features</span>
-        <span class="k">if</span> <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Input</span><span class="p">)]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;there are null values&quot;</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Input</span><span class="p">)]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;there are na values&quot;</span><span class="p">)</span>
         <span class="c1"># run the individual validators</span>
-        <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">Input</span><span class="p">):</span>
-            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">Input</span><span class="p">)</span>
-            <span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">validate_experimental</span><span class="p">(</span>
-                <span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
-            <span class="p">)</span>
-        <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
-            <span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">validate_experimental</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+        <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span>
+            <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
+        <span class="p">)</span>
+        <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">experiments</span>
 
     <span class="k">def</span> <span class="nf">describe_experiments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
@@ -1337,7 +1316,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># check that each input feature has a col and is valid in itself</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
         <span class="c1"># check if all constraints are fulfilled</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">raise_validation_error</span><span class="p">:</span>
@@ -1348,38 +1327,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="c1"># for each continuous output feature with an attached objective object</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span> <span class="n">Outputs</span><span class="p">)</span>
-
-            <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-                <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-                    <span class="p">[</span>
-                        <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]</span>
-                        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
-                    <span class="p">]</span>
-                    <span class="o">+</span> <span class="p">[</span>
-                        <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">]</span>
-                        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span>
-                            <span class="n">excludes</span><span class="o">=</span><span class="n">Objective</span><span class="p">,</span> <span class="n">includes</span><span class="o">=</span><span class="kc">None</span>  <span class="c1"># type: ignore</span>
-                        <span class="p">)</span>
-                    <span class="p">]</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-
-            <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
-            <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
-                <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;missing column </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-                <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_numeric</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]))</span> <span class="ow">and</span> <span class="p">(</span>
-                    <span class="ow">not</span> <span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-                <span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;not all values of column `</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">` are numerical&quot;</span><span class="p">)</span>
-
-            <span class="c1"># validate no additional cols exist</span>
-            <span class="n">if_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">Input</span><span class="p">))</span>
-            <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">Objective</span><span class="p">))</span>
-            <span class="n">of_count_w</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_objective</span><span class="p">(</span><span class="n">excludes</span><span class="o">=</span><span class="n">Objective</span><span class="p">,</span> <span class="n">includes</span><span class="o">=</span><span class="kc">None</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
-            <span class="c1"># input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy</span>
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">if_count</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">of_count</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">of_count_w</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional columns found&quot;</span><span class="p">)</span>
+            <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="o">=</span><span class="n">candidates</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">candidates</span>
 
     <span class="nd">@property</span>
@@ -2485,7 +2433,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># check that each input feature has a col and is valid in itself</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
-    <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
+    <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="p">)</span>
     <span class="c1"># check if all constraints are fulfilled</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">raise_validation_error</span><span class="p">:</span>
@@ -2496,38 +2444,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
     <span class="c1"># for each continuous output feature with an attached objective object</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">only_inputs</span><span class="p">:</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span> <span class="n">Outputs</span><span class="p">)</span>
-
-        <span class="n">cols</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-                <span class="p">[</span>
-                    <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_des&quot;</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
-                <span class="p">]</span>
-                <span class="o">+</span> <span class="p">[</span>
-                    <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">]</span>
-                    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span>
-                        <span class="n">excludes</span><span class="o">=</span><span class="n">Objective</span><span class="p">,</span> <span class="n">includes</span><span class="o">=</span><span class="kc">None</span>  <span class="c1"># type: ignore</span>
-                    <span class="p">)</span>
-                <span class="p">]</span>
-            <span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="c1"># check that pred, sd, and des cols are specified and numerical</span>
-        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">cols</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">col</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">candidates</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;missing column </span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-            <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_numeric</span><span class="p">(</span><span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]))</span> <span class="ow">and</span> <span class="p">(</span>
-                <span class="ow">not</span> <span class="n">candidates</span><span class="p">[</span><span class="n">col</span><span class="p">]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>
-            <span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;not all values of column `</span><span class="si">{</span><span class="n">col</span><span class="si">}</span><span class="s2">` are numerical&quot;</span><span class="p">)</span>
-
-        <span class="c1"># validate no additional cols exist</span>
-        <span class="n">if_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">Input</span><span class="p">))</span>
-        <span class="n">of_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_objective</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="n">Objective</span><span class="p">))</span>
-        <span class="n">of_count_w</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_objective</span><span class="p">(</span><span class="n">excludes</span><span class="o">=</span><span class="n">Objective</span><span class="p">,</span> <span class="n">includes</span><span class="o">=</span><span class="kc">None</span><span class="p">))</span>  <span class="c1"># type: ignore</span>
-        <span class="c1"># input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">candidates</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span> <span class="o">!=</span> <span class="n">if_count</span> <span class="o">+</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">of_count</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">of_count_w</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;additional columns found&quot;</span><span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_candidates</span><span class="p">(</span><span class="n">candidates</span><span class="o">=</span><span class="n">candidates</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">candidates</span>
 </code></pre></div>
         </details>
@@ -2767,19 +2684,6 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no experiments provided (empty dataframe)&quot;</span><span class="p">)</span>
-    <span class="c1"># check that each feature is a col</span>
-    <span class="n">feature_keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">feature_key</span> <span class="ow">in</span> <span class="n">feature_keys</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">feature_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;no col in experiments for feature </span><span class="si">{</span><span class="n">feature_key</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="c1"># add valid_{key} cols if missing</span>
-    <span class="n">valid_keys</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">f</span><span class="s2">&quot;valid_</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Output</span><span class="p">)</span>
-    <span class="p">]</span>
-    <span class="k">for</span> <span class="n">valid_key</span> <span class="ow">in</span> <span class="n">valid_keys</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">valid_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">experiments</span><span class="p">:</span>
-            <span class="n">experiments</span><span class="p">[</span><span class="n">valid_key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
     <span class="c1"># we allow here for a column named labcode used to identify experiments</span>
     <span class="k">if</span> <span class="s2">&quot;labcode&quot;</span> <span class="ow">in</span> <span class="n">experiments</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="c1"># test that labcodes are not na</span>
@@ -2793,19 +2697,11 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
             <span class="o">!=</span> <span class="n">experiments</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;labcodes are not unique&quot;</span><span class="p">)</span>
-    <span class="c1"># check values of input features</span>
-    <span class="k">if</span> <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Input</span><span class="p">)]</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;there are null values&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">Input</span><span class="p">)]</span><span class="o">.</span><span class="n">isna</span><span class="p">()</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">any</span><span class="p">():</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;there are na values&quot;</span><span class="p">)</span>
     <span class="c1"># run the individual validators</span>
-    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">Input</span><span class="p">):</span>
-        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">Input</span><span class="p">)</span>
-        <span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">validate_experimental</span><span class="p">(</span>
-            <span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
-        <span class="p">)</span>
-    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_features</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
-        <span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">validate_experimental</span><span class="p">(</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">])</span>
+    <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span>
+        <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
+    <span class="p">)</span>
+    <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">experiments</span>
 </code></pre></div>
         </details>
@@ -3090,10 +2986,10 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
       <div class="md-dialog__inner md-typeset"></div>
     </div>
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.dfff1995.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.a264c092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.dff1b7c8.min.js"></script>
+      <script src="../assets/javascripts/bundle.4e0fa4ba.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
