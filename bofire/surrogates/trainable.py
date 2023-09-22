@@ -20,12 +20,13 @@ class TrainableSurrogate(ABC):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
 
     def fit(self, experiments: pd.DataFrame, options: Optional[Dict] = None):
-        # preprocess
-        experiments = self._preprocess_experiments(experiments)
         # validate
         experiments = self.inputs.validate_experiments(  # type: ignore
             experiments, strict=False
         )
+        experiments = self.outputs.validate_experiments(experiments)  # type: ignore
+        # preprocess
+        experiments = self._preprocess_experiments(experiments)
         X = experiments[self.inputs.get_keys()]  # type: ignore
         # TODO: output feature validation
         Y = experiments[self.outputs.get_keys()]  # type: ignore
