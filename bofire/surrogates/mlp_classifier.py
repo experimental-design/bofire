@@ -70,7 +70,7 @@ class MLPClassifier(nn.Module):
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
-        return self.layers(x)
+        return nn.functional.sigmoid(self.layers(x))
 
 
 class _MLPClassifierEnsemble(EnsembleModel):
@@ -87,7 +87,6 @@ class _MLPClassifierEnsemble(EnsembleModel):
         # put all models in eval mode
         for mlp in self.mlps:
             mlp.eval()
-        self.activation = nn.Sigmoid()
 
     def forward(self, X: Tensor):
         r"""Compute the model output at X.
@@ -129,7 +128,7 @@ def fit_mlp(
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    loss_function = nn.BCEWithLogitsLoss()
+    loss_function = nn.BCELoss()
     optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
     for _ in range(n_epoches):
         current_loss = 0.0
@@ -183,7 +182,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
         # Convert Y to classification tensor
         Y = pd.DataFrame.from_dict({col: np.unique(Y[col].values, return_inverse=True)[1] for col in Y.columns})
         # Y = Y.apply(lambda x: pd.factorize(x, sort=True)[0])
-        print(f"X: {X}, Y={Y}")
+        # print(f"X: {X}, Y={Y}")
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])
         for _ in range(self.n_estimators):

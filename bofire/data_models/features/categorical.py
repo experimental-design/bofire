@@ -402,6 +402,10 @@ class CategoricalOutput(Output):
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""
         return dict(zip(self.categories, self.objective))
+    
+    def to_dict_numeric(self) -> Dict:
+        """Returns the catergories and corresponding objective values as dictionary"""
+        return dict(zip(self.objective, self.categories))
 
     def __call__(self, values: pd.Series) -> pd.Series:
-        return values.map(self.to_dict()).astype(float)
+        return values.round().map(self.to_dict_numeric())

@@ -547,13 +547,11 @@ class Outputs(Features):
         self,
         includes: Union[
             List[Type[AbstractObjective]],
-            Tuple[Type[AbstractObjective]],
             Type[AbstractObjective],
             Type[Objective],
         ] = Objective,
         excludes: Union[
             List[Type[AbstractObjective]],
-            Tuple[Type[AbstractObjective]],
             Type[AbstractObjective],
             None,
         ] = None,
@@ -677,22 +675,16 @@ class Outputs(Features):
     def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         # for each continuous output feature with an attached objective object
         # ToDo: adjust it for the CategoricalOutput
-        cols = list(
+        continuous_cols = list(
             itertools.chain.from_iterable(
                 [
                     [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                    for key in self.get_keys_by_objective(Objective)
-                ]
-                + [
-                    [f"{key}_pred", f"{key}_sd"]
-                    for key in self.get_keys_by_objective(
-                        excludes=Objective, includes=None  # type: ignore
-                    )
+                    for key in self.get_keys_by_objective(includes=Objective)
                 ]
             )
         )
         # check that pred, sd, and des cols are specified and numerical
-        for col in cols:
+        for col in continuous_cols:
             if col not in candidates:
                 raise ValueError(f"missing column {col}")
             try:
@@ -703,6 +695,20 @@ class Outputs(Features):
                 raise ValueError(f"Not all values of column `{col}` are numerical.")
             if candidates[col].isnull().to_numpy().any():
                 raise ValueError(f"Nan values are present in {col}.")
+        # Check for categorical output
+        categorical_objectives = self.get_by_objective(excludes=Objective, includes=None)
+        if len(categorical_objectives) == 0:
+            return candidates
+        categorical_cols = [
+                f"{key}_pred"
+                for key in [categorical_output.key for categorical_output in categorical_objectives.features]
+        ]
+        categorical_values = [categorical_output.categories for categorical_output in categorical_objectives.features]
+        for ind, col in enumerate(categorical_cols):
+            if col not in candidates:
+                raise ValueError(f"missing column {col}")
+            if len(candidates[col]) - candidates[col].isin(categorical_values[ind]).sum() > 0:
+                raise ValueError(f"values present are not in {categorical_values[ind]}")
         return candidates
 
     def preprocess_experiments_one_valid_output(
