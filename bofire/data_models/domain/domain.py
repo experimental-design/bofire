@@ -604,7 +604,7 @@ class Domain(BaseModel):
                 itertools.chain.from_iterable(
                     [
                         [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                        for key in self.outputs.get_keys_by_objective(Objective)
+                        for key in self.outputs.get_keys_by_objective([Objective, List])
                     ]
                     + [
                         [f"{key}_pred", f"{key}_sd"]
@@ -626,8 +626,8 @@ class Domain(BaseModel):
 
             # validate no additional cols exist
             if_count = len(self.get_features(Input))
-            of_count = len(self.outputs.get_by_objective(includes=Objective))
-            of_count_w = len(self.outputs.get_by_objective(excludes=Objective, includes=None))  # type: ignore
+            of_count = len(self.outputs.get_by_objective(includes=[Objective, List]))
+            of_count_w = len(self.outputs.get_by_objective(excludes=[Objective, List], includes=None))  # type: ignore
             # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
             if len(candidates.columns) != if_count + 3 * of_count + 2 * of_count_w:
                 raise ValueError("additional columns found")

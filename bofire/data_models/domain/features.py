@@ -20,6 +20,7 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalMolecularInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -103,8 +104,8 @@ class Features(BaseModel):
 
     def get(
         self,
-        includes: Union[Type, List[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type]] = None,
+        includes: Union[Type, List[Type], Tuple[Type]] = AnyFeature,
+        excludes: Union[Type, List[Type], Tuple[Type]] = None,
         exact: bool = False,
     ) -> Features:
         """get features of the domain
@@ -131,8 +132,8 @@ class Features(BaseModel):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type]] = None,
+        includes: Union[Type, List[Type], Tuple[Type]] = AnyFeature,
+        excludes: Union[Type, List[Type], Tuple[Type]] = None,
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
@@ -262,8 +263,8 @@ class Inputs(Features):
 
     def get_categorical_combinations(
         self,
-        include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,
+        include: Union[Type, List[Type], Tuple[Type]] = Input,
+        exclude: Union[Type, List[Type], Tuple[Type]] = None,
     ):
         """get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -539,11 +540,13 @@ class Outputs(Features):
         self,
         includes: Union[
             List[Type[AbstractObjective]],
+            Tuple[Type[AbstractObjective]],
             Type[AbstractObjective],
             Type[Objective],
         ] = Objective,
         excludes: Union[
             List[Type[AbstractObjective]],
+            Tuple[Type[AbstractObjective]],
             Type[AbstractObjective],
             None,
         ] = None,
@@ -566,7 +569,7 @@ class Outputs(Features):
             return Outputs(
                 features=sorted(
                     filter_by_attribute(
-                        self.get(ContinuousOutput).features,
+                        self.get([ContinuousOutput, CategoricalOutput]).features,
                         lambda of: of.objective,
                         includes,
                         excludes,
@@ -579,11 +582,12 @@ class Outputs(Features):
         self,
         includes: Union[
             List[Type[AbstractObjective]],
+            Tuple[Type[AbstractObjective]],
             Type[AbstractObjective],
             Type[Objective],
         ] = Objective,
         excludes: Union[
-            List[Type[AbstractObjective]], Type[AbstractObjective], None
+            List[Type[AbstractObjective]], Tuple[Type[AbstractObjective]], Type[AbstractObjective], None
         ] = None,
         exact: bool = False,
     ) -> List[str]:

@@ -20,8 +20,8 @@ class CategoricalInput(Input):
     """Base class for all categorical input features.
 
     Attributes:
-        categories (List[str]): Names of the categories.
-        allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
+        categories (Tuple[str]): Names of the categories.
+        allowed (Tuple[bool]): List of bools indicating if a category is allowed within the optimization.
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
@@ -35,18 +35,17 @@ class CategoricalInput(Input):
         """validates that categories have unique names
 
         Args:
-            categories (List[str]): List of category names
+            categories (Union[List[str], Tuple[str]]): List or tuple of category names
 
         Raises:
             ValueError: when categories have non-unique names
 
         Returns:
-            List[str]: List of the categories
+            Tuple[str]: Tuple of the categories
         """
-        categories = list(categories)
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
-        return categories
+        return tuple(categories)
 
     @root_validator(pre=False, skip_on_failure=True)
     def init_allowed(cls, values):
@@ -65,7 +64,7 @@ class CategoricalInput(Input):
         if "categories" not in values or values["categories"] is None:
             return values
         if "allowed" not in values or values["allowed"] is None:
-            values["allowed"] = [True for _ in range(len(values["categories"]))]
+            values["allowed"] = tuple([True for _ in range(len(values["categories"]))])
         if len(values["allowed"]) != len(values["categories"]):
             raise ValueError("allowed must have same length as categories")
         if sum(values["allowed"]) == 0:
@@ -368,18 +367,17 @@ class CategoricalOutput(Output):
         """validates that categories have unique names
 
         Args:
-            categories (List[str]): List of category names
+            categories (Union[List[str], Tuple[str]]): List or tuple of category names
 
         Raises:
             ValueError: when categories have non-unique names
 
         Returns:
-            List[str]: List of the categories
+            Tuple[str]: Tuple of the categories
         """
-        categories = list(categories)
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
-        return categories
+        return tuple(categories)
 
     @validator("objective")
     def validate_objective(cls, objective, values):

@@ -4,7 +4,8 @@ from bofire.data_models.surrogates import api as data_models
 from bofire.surrogates.empirical import EmpiricalSurrogate
 from bofire.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate
-from bofire.surrogates.mlp import MLPEnsemble
+# from bofire.surrogates.mlp import MLPEnsemble
+from bofire.surrogates.mlp_classifier import MLPEnsemble
 from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate

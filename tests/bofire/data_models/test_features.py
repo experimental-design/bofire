@@ -1193,9 +1193,9 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
 @pytest.mark.parametrize(
     "categories, descriptors, values",
     [
-        (["c1", "c2"], ["d1", "d2", "d3"], [[1, 2, 3], [4, 5, 6]]),
+        (("c1", "c2"), ["d1", "d2", "d3"], [[1, 2, 3], [4, 5, 6]]),
         (
-            ["c1", "c2", "c3", "c4"],
+            ("c1", "c2", "c3", "c4"),
             ["d1", "d2", "d3"],
             [
                 [1, 2, 3],

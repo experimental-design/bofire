@@ -21,9 +21,7 @@ class SoboBaseStrategy(BotorchStrategy):
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
         """
-        if my_type not in [CategoricalOutput]:
-            return True
-        return False
+        return True
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:
