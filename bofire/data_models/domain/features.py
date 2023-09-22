@@ -199,7 +199,7 @@ class Inputs(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         if method == SamplingMethodEnum.UNIFORM:
-            return self.validate_inputs(
+            return self.validate_candidates(
                 pd.concat([feat.sample(n) for feat in self.get(Input)], axis=1)  # type: ignore
             )
         free_features = self.get_free()
@@ -231,14 +231,13 @@ class Inputs(Features):
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
             samples[feat.key] = feat.fixed_value()[0]  # type: ignore
-        return self.validate_inputs(samples)[self.get_keys(Input)]
+        return self.validate_candidates(samples)[self.get_keys(Input)]
 
-    # validate candidates, TODO rename and tidy up
-    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
+    def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.
 
         Args:
-            inputs (pd.Dataframe): Inputs to validate.
+            candidates (pd.Dataframe): Inputs to validate.
 
         Raises:
             ValueError: Raises a Valueerror if a feature based validation raises an exception.
@@ -247,10 +246,14 @@ class Inputs(Features):
             pd.Dataframe: Validated dataframe
         """
         for feature in self:
-            if feature.key not in inputs:
+            if feature.key not in candidates:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            feature.validate_candidental(inputs[feature.key])  # type: ignore
-        return inputs
+            candidates[feature.key] = feature.validate_candidental(candidates[feature.key])  # type: ignore
+        if candidates[self.get_keys()].isnull().to_numpy().any():
+            raise ValueError("there are null values")
+        if candidates[self.get_keys()].isna().to_numpy().any():
+            raise ValueError("there are na values")
+        return candidates
 
     def validate_experiments(
         self, experiments: pd.DataFrame, strict=False
@@ -259,6 +262,10 @@ class Inputs(Features):
             if feature.key not in experiments:
                 raise ValueError(f"no col for input feature `{feature.key}`")
             experiments[feature.key] = feature.validate_experimental(experiments[feature.key], strict=strict)  # type: ignore
+        if experiments[self.get_keys()].isnull().to_numpy().any():
+            raise ValueError("there are null values")
+        if experiments[self.get_keys()].isna().to_numpy().any():
+            raise ValueError("there are na values")
         return experiments
 
     def get_categorical_combinations(
@@ -634,6 +641,70 @@ class Outputs(Features):
             axis=1,
         )
 
+    def add_valid_columns(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """Add the `valid_{feature.key}` columns to the experiments dataframe,
+        in case that they are not present.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe holding the experiments.
+
+        Returns:
+            pd.DataFrame: Dataframe holding the experiments.
+        """
+        valid_keys = [
+            f"valid_{output_feature_key}" for output_feature_key in self.get_keys()
+        ]
+        for valid_key in valid_keys:
+            if valid_key not in experiments:
+                experiments[valid_key] = True
+            else:
+                try:
+                    experiments[valid_key] = (
+                        experiments[valid_key].astype(int).astype(bool)
+                    )
+                except ValueError:
+                    raise ValueError(f"Column {valid_key} cannot casted to dtype bool.")
+        return experiments
+
+    def validate_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        for feat in self.get():
+            if feat.key not in experiments:
+                raise ValueError(f"no col for input feature `{feat.key}`")
+            experiments[feat.key] = feat.validate_experimental(experiments[feat.key])
+        experiments = self.add_valid_columns(experiments=experiments)
+        return experiments
+
+    def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        # for each continuous output feature with an attached objective object
+        # ToDo: adjust it for the CategoricalOutput
+        cols = list(
+            itertools.chain.from_iterable(
+                [
+                    [f"{key}_pred", f"{key}_sd", f"{key}_des"]
+                    for key in self.get_keys_by_objective(Objective)
+                ]
+                + [
+                    [f"{key}_pred", f"{key}_sd"]
+                    for key in self.get_keys_by_objective(
+                        excludes=Objective, includes=None  # type: ignore
+                    )
+                ]
+            )
+        )
+        # check that pred, sd, and des cols are specified and numerical
+        for col in cols:
+            if col not in candidates:
+                raise ValueError(f"missing column {col}")
+            try:
+                candidates[col] = pd.to_numeric(candidates[col], errors="raise").astype(
+                    "float64"
+                )
+            except ValueError:
+                raise ValueError(f"Not all values of column `{col}` are numerical.")
+            if candidates[col].isnull().to_numpy().any():
+                raise ValueError(f"Nan values are present in {col}.")
+        return candidates
+
     def preprocess_experiments_one_valid_output(
         self,
         output_feature_key: str,
@@ -705,5 +776,4 @@ class Outputs(Features):
                 ]
             )
         )
-
         return clean_exp

@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-from bofire.data_models.features.feature import Input, TTransform, is_numeric
+from bofire.data_models.features.feature import Input, TTransform
 
 
 class NumericalInput(Input):
@@ -99,7 +99,7 @@ class NumericalInput(Input):
             pd.Series: A dataFrame with experiments
         """
         try:
-            values = pd.to_numeric(values, errors="raise")
+            values = pd.to_numeric(values, errors="raise").astype("float64")
         except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
@@ -125,7 +125,9 @@ class NumericalInput(Input):
         Returns:
             pd.Series: the original provided candidates
         """
-        if not is_numeric(values):
+        try:
+            values = pd.to_numeric(values, errors="raise").astype("float64")
+        except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
             )

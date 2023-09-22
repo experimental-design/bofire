@@ -105,7 +105,7 @@ class ContinuousInput(NumericalInput):
         """
 
         noise = 10e-6
-        super().validate_candidental(values)
+        values = super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
                 f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` "
@@ -165,12 +165,11 @@ class ContinuousOutput(Output):
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         try:
-            values = pd.to_numeric(values, errors="raise")
+            values = pd.to_numeric(values, errors="raise").astype("float64")
         except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
             )
-        values = values.astype("float64")
         return values
 
     def __str__(self) -> str:

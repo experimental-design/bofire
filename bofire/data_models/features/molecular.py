@@ -36,6 +36,7 @@ class MolecularInput(Input):
         return values
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
         for smi in values:
             smiles2mol(smi)
         return values

@@ -68,7 +68,7 @@ class DiscreteInput(NumericalInput):
         Returns:
             pd.Series: _uggested candidates for the feature
         """
-        super().validate_candidental(values)
+        values = super().validate_candidental(values)
         if not np.isin(values.to_numpy(), np.array(self.values)).all():
             raise ValueError(
                 f"Not allowed values in candidates for feature {self.key}."

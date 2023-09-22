@@ -179,21 +179,25 @@ class Strategy(ABC):
         ]
 
     def set_candidates(self, candidates: pd.DataFrame):
-        """Set candidates of the strategy. Overwrites existing ones.
+        """Set pending candidates of the strategy. Overwrites existing ones.
 
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
+        candidates = self.domain.inputs.validate_experiments(
+            candidates[self.domain.inputs.get_keys()], strict=False
+        )
         self._candidates = candidates[self.domain.inputs.get_keys()]
 
     def add_candidates(self, candidates: pd.DataFrame):
-        """Add candidates to the strategy. Appends to existing ones.
+        """Add pending candidates to the strategy. Appends to existing ones.
 
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
+        candidates = self.domain.inputs.validate_experiments(
+            candidates[self.domain.inputs.get_keys()], strict=False
+        )
         if self.candidates is None:
             self._candidates = candidates[self.domain.inputs.get_keys()]
         else:
