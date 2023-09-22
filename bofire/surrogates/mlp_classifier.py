@@ -73,7 +73,7 @@ class MLPClassifier(nn.Module):
         return self.layers(x)
 
 
-class _MLPEnsemble(EnsembleModel):
+class _MLPClassifierEnsemble(EnsembleModel):
     def __init__(self, mlps: Sequence[MLPClassifier]):
         super().__init__()
         if len(mlps) == 0:
@@ -87,6 +87,7 @@ class _MLPEnsemble(EnsembleModel):
         # put all models in eval mode
         for mlp in self.mlps:
             mlp.eval()
+        self.activation = nn.Sigmoid()
 
     def forward(self, X: Tensor):
         r"""Compute the model output at X.
@@ -173,19 +174,23 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
         super().__init__(data_model, **kwargs)
 
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
-    model: Optional[_MLPEnsemble] = None
+    model: Optional[_MLPClassifierEnsemble] = None
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
+        # Convert Y to classification tensor
+        Y = pd.DataFrame.from_dict({col: np.unique(Y[col].values, return_inverse=True)[1] for col in Y.columns})
+        # Y = Y.apply(lambda x: pd.factorize(x, sort=True)[0])
+        print(f"X: {X}, Y={Y}")
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])
         for _ in range(self.n_estimators):
             # resample X and Y
             sample_idx = np.random.choice(X.shape[0], replace=True, size=subsample_size)
             tX = torch.from_numpy(transformed_X.values[sample_idx]).to(**tkwargs)
-            ty = torch.from_numpy(Y.values[sample_idx].astype(int)).to(**tkwargs)
+            ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
 
             dataset = ClassificationDataSet(
                 X=scaler.transform(tX) if scaler is not None else tX,
@@ -208,6 +213,6 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
                 weight_decay=self.weight_decay,
             )
             mlps.append(mlp)
-        self.model = _MLPEnsemble(mlps=mlps)
+        self.model = _MLPClassifierEnsemble(mlps=mlps)
         if scaler is not None:
             self.model.input_transform = scaler

@@ -64,7 +64,7 @@ class CategoricalInput(Input):
         if "categories" not in values or values["categories"] is None:
             return values
         if "allowed" not in values or values["allowed"] is None:
-            values["allowed"] = tuple([True for _ in range(len(values["categories"]))])
+            values["allowed"] = [True for _ in range(len(values["categories"]))]
         if len(values["allowed"]) != len(values["categories"]):
             raise ValueError("allowed must have same length as categories")
         if sum(values["allowed"]) == 0:
