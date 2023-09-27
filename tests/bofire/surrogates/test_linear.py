@@ -1,4 +1,5 @@
 import numpy as np
+from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -32,3 +33,11 @@ def test_LinearSurrogate():
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
     assert isinstance(surrogate.kernel, LinearKernel)
+
+    # check dump
+    surrogate.fit(experiments=experiments)
+    preds = surrogate.predict(experiments)
+    dump = surrogate.dumps()
+    surrogate.loads(dump)
+    preds2 = surrogate.predict(experiments)
+    assert_frame_equal(preds, preds2)
