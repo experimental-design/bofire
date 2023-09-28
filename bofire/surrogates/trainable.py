@@ -206,7 +206,7 @@ class TrainableSurrogate(ABC):
             for hookname, hook in hooks.items():
                 hook_results[hookname].append(
                     hook(
-                        model=self,  # type: ignore
+                        surrogate=self,  # type: ignore
                         X_train=X_train,
                         y_train=y_train,
                         X_test=X_test,
