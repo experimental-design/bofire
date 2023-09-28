@@ -1,4 +1,4 @@
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence
 
 import numpy as np
 import pandas as pd
@@ -34,11 +34,12 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
 
 def lengthscale_importance_hook(
     surrogate: SingleTaskGPSurrogate,
-    X_train: pd.DataFrame,
-    y_train: pd.DataFrame,
-    X_test: pd.DataFrame,
-    y_test: pd.DataFrame,
+    X_train: Optional[pd.DataFrame] = None,
+    y_train: Optional[pd.DataFrame] = None,
+    X_test: Optional[pd.DataFrame] = None,
+    y_test: Optional[pd.DataFrame] = None,
 ):
+    """Hook that can be used within `model.cross_validate` to compute a cross validated permutation feature importance."""
     return lengthscale_importance(surrogate=surrogate)
 
 

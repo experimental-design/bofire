@@ -12,6 +12,7 @@ from bofire.surrogates.feature_importance import (
     combine_lengthscale_importances,
     combine_permutation_importances,
     lengthscale_importance,
+    lengthscale_importance_hook,
     permutation_importance,
     permutation_importance_hook,
 )
@@ -63,6 +64,9 @@ def test_lengthscale_importance():
     surrogate, experiments = get_model_and_data()
     surrogate.fit(experiments)
     importance = lengthscale_importance(surrogate=surrogate)
+    assert isinstance(importance, pd.Series)
+    assert list(importance.index) == surrogate.inputs.get_keys()
+    importance = lengthscale_importance_hook(surrogate=surrogate)
     assert isinstance(importance, pd.Series)
     assert list(importance.index) == surrogate.inputs.get_keys()
 
