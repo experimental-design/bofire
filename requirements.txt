@@ -1,0 +1,17 @@
+rdkit
+mordred
+xgboost
+pandas
+numpy
+matplotlib
+formulaic
+torch
+botorch
+bofire
+ipywidgets
+plotly
+cloudpickle
+nbformat
+multiprocess
+ipopt
+cyipopt
