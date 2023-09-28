@@ -678,8 +678,8 @@ class Outputs(Features):
         continuous_cols = list(
             itertools.chain.from_iterable(
                 [
-                    [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                    for key in self.get_keys_by_objective(includes=Objective)
+                    [f"{obj.key}_pred", f"{obj.key}_sd", f"{obj.key}_des"]
+                    for obj in self.get_by_objective(includes=Objective) if not isinstance(obj.type, CategoricalOutput)
                 ]
             )
         )
@@ -696,7 +696,7 @@ class Outputs(Features):
             if candidates[col].isnull().to_numpy().any():
                 raise ValueError(f"Nan values are present in {col}.")
         # Check for categorical output
-        categorical_objectives = self.get_by_objective(excludes=Objective, includes=None)
+        categorical_objectives = [obj for obj in self.get_by_objective(excludes=Objective, includes=None) if isinstance(obj.type, CategoricalOutput)]
         if len(categorical_objectives) == 0:
             return candidates
         categorical_cols = [

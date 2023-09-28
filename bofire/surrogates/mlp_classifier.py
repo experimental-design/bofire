@@ -70,7 +70,7 @@ class MLPClassifier(nn.Module):
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
-        return nn.functional.sigmoid(self.layers(x))
+        return nn.functional.log_softmax(self.layers(x), dim=1)
 
 
 class _MLPClassifierEnsemble(EnsembleModel):
@@ -98,7 +98,7 @@ class _MLPClassifierEnsemble(EnsembleModel):
             A `batch_shape x s x n x m`-dimensional output tensor where
             `s` is the size of the ensemble.
         """
-        return torch.stack([mlp(X) for mlp in self.mlps], dim=-3)
+        return torch.stack([torch.argmax(mlp(X), dim=-1).unsqueeze(-1).float() for mlp in self.mlps], dim=-3)
 
     @property
     def num_outputs(self) -> int:
@@ -128,15 +128,13 @@ def fit_mlp(
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    loss_function = nn.BCELoss()
+    loss_function = nn.NLLLoss(reduction='mean')
     optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
     for _ in range(n_epoches):
         current_loss = 0.0
         for data in train_loader:
             # Get and prepare inputs
             inputs, targets = data
-            if len(targets.shape) == 1:
-                targets = targets.reshape((targets.shape[0], 1))
 
             # Zero the gradients
             optimizer.zero_grad()
@@ -145,7 +143,7 @@ def fit_mlp(
             outputs = mlp(inputs)
 
             # Compute loss
-            loss = loss_function(outputs, targets)
+            loss = loss_function(outputs, targets.flatten().long())
 
             # Perform backward pass
             loss.backward()
@@ -157,7 +155,7 @@ def fit_mlp(
             current_loss += loss.item()
 
 
-class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
+class MLPClassifierEnsemble(BotorchSurrogate, TrainableSurrogate):
     def __init__(self, data_model: DataModel, **kwargs):
         self.n_estimators = data_model.n_estimators
         self.hidden_layer_sizes = data_model.hidden_layer_sizes
@@ -178,11 +176,12 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+        # Map dictionary to objective values - gives what is feasible and to labels - to perform opt
+        label_mapping = self.outputs[0].to_dict_label()
 
         # Convert Y to classification tensor
-        Y = pd.DataFrame.from_dict({col: np.unique(Y[col].values, return_inverse=True)[1] for col in Y.columns})
-        # Y = Y.apply(lambda x: pd.factorize(x, sort=True)[0])
-        # print(f"X: {X}, Y={Y}")
+        Y = pd.DataFrame.from_dict({col: Y[col].map(label_mapping) for col in Y.columns})
+
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])
         for _ in range(self.n_estimators):
@@ -197,7 +196,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
             )
             mlp = MLPClassifier(
                 input_size=transformed_X.shape[1],
-                output_size=1,
+                output_size=len(label_mapping), # Set outputs based on number of categories
                 hidden_layer_sizes=self.hidden_layer_sizes,
                 activation=self.activation,  # type: ignore
                 dropout=self.dropout,

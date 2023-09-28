@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
-from bofire.data_models.features.api import TInputTransformSpecs
+from bofire.data_models.features.api import CategoricalOutput, TInputTransformSpecs
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
@@ -98,13 +98,6 @@ class PredictiveStrategy(Strategy):
             raise ValueError("Model not yet fitted.")
         # TODO: validate also here the experiments but only for the input_columns
         # transformed = self.transformer.transform(experiments)
-
-        ############################
-        # TODO: Here, we need to separate by domain.outputs into continuous and categorical outputs. For continuous outputs, we leave as is, for categorical, we perform the desired mapping
-        # We then need to modify the input to the ._fit method for the surrogates to be categorically appropriate based on domain.outputs
-        # Finally, we need to modify the acquisition function to handle hard constraints (see how we can modify based on CBO's implementation and and remedy with BoTorch only using differentiable constraints in the `constraints` argument)
-        # Then, write tests/specs
-        ############################
         transformed = self.domain.inputs.transform(
             experiments=experiments, specs=self.input_preprocessing_specs
         )
@@ -120,6 +113,9 @@ class PredictiveStrategy(Strategy):
                 data=preds,
                 columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()],
             )
+        categorical_df = pd.DataFrame.from_dict({f"{feat.key}_pred": feat.map_to_categories(predictions[f"{feat.key}_pred"]) for feat in self.domain.outputs.get() if isinstance(feat, CategoricalOutput)})
+        if not categorical_df.empty:
+            predictions.update(categorical_df)
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index

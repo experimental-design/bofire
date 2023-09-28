@@ -403,9 +403,18 @@ class CategoricalOutput(Output):
         """Returns the catergories and corresponding objective values as dictionary"""
         return dict(zip(self.categories, self.objective))
     
-    def to_dict_numeric(self) -> Dict:
-        """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.objective, self.categories))
+    def to_dict_label(self) -> Dict:
+        """Returns the catergories and label location of categories"""
+        return dict(zip(self.categories, [i for i in range(len(self.categories))]))
+    
+    def from_dict_label(self) -> Dict:
+        """Returns the label location and the categories"""
+        d = self.to_dict_label()
+        return dict(zip(d.values(), d.keys()))
+    
+    def map_to_categories(self, values: pd.Series) -> pd.Series:
+        """Maps the input array to the categories"""
+        return values.round().astype(int).map(self.from_dict_label())
 
     def __call__(self, values: pd.Series) -> pd.Series:
-        return values.round().map(self.to_dict_numeric())
+        return values.map(self.to_dict())
