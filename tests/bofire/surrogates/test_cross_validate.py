@@ -121,13 +121,13 @@ def test_model_cross_validate_include_X(include_X, include_labcodes):
 
 
 def test_model_cross_validate_hooks():
-    def hook1(model, X_train, y_train, X_test, y_test):
-        assert isinstance(model, surrogates.SingleTaskGPSurrogate)
+    def hook1(surrogate, X_train, y_train, X_test, y_test):
+        assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
         assert y_train.shape == (8, 1)
         assert y_test.shape == (2, 1)
         return X_train.shape
 
-    def hook2(model, X_train, y_train, X_test, y_test, return_test=True):
+    def hook2(surrogate, X_train, y_train, X_test, y_test, return_test=True):
         if return_test:
             return X_test.shape
         return X_train.shape
