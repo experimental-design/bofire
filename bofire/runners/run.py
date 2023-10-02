@@ -8,14 +8,13 @@ import pandas as pd
 from multiprocess.pool import Pool
 from tqdm import tqdm
 
-import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Benchmark
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.strategies.api import AnyStrategy
+from bofire.strategies.api import Strategy
 
 
 class StrategyFactory(Protocol):
-    def __call__(self, domain: Domain) -> AnyStrategy:
+    def __call__(self, domain: Domain) -> Strategy:
         ...
 
 
@@ -58,9 +57,7 @@ def _single_run(
             XY = benchmark.f(X, return_complete=True)
         else:
             XY = initial_sampler
-    strategy_data = strategy_factory(domain=benchmark.domain)
-    # map it
-    strategy = strategies.map(strategy_data)  # type: ignore
+    strategy = strategy_factory(domain=benchmark.domain)
     # tell it
     if initial_sampler is not None:
         strategy.tell(XY)  # type: ignore
