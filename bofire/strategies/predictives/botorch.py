@@ -296,6 +296,9 @@ class BotorchStrategy(PredictiveStrategy):
                     for combi in self.domain.inputs.get_categorical_combinations()
                 ]
             )
+            # adding categorical features that are fixed 
+            for feat in self.domain.inputs.get_fixed():
+                choices[feat.key] = feat.fixed_value()[0]  # type: ignore             
             # compare the choices with the training data and remove all that are also part
             # of the training data
             merged = choices.merge(
