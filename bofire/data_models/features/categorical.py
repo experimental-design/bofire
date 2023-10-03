@@ -3,7 +3,6 @@ from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, root_validator, validator
-from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -14,6 +13,7 @@ from bofire.data_models.features.feature import (
     TCategoryVals,
     TTransform,
 )
+from bofire.data_models.objectives.categorical import CategoricalObjective
 
 
 class CategoricalInput(Input):
@@ -359,9 +359,9 @@ class CategoricalOutput(Output):
     order_id: ClassVar[int] = 8
 
     categories: TCategoryVals
-    objective: Annotated[
-        List[Annotated[float, Field(type=float, ge=0, le=1)]], Field(min_items=2)
-    ]
+    objective: CategoricalObjective = Field(
+        default_factory=lambda: CategoricalObjective(w=1.0)
+    )
 
     @validator("categories")
     def validate_categories_unique(cls, categories):
@@ -382,13 +382,20 @@ class CategoricalOutput(Output):
 
     @validator("objective")
     def validate_objective(cls, objective, values):
-        if len(objective) != len(values["categories"]):
+        weights = objective.weights
+        if len(weights) != len(values["categories"]):
             raise ValueError("Length of objectives and categories do not match.")
-        for o in objective:
-            if o > 1:
-                raise ValueError("Objective values has to be smaller equal than 1.")
-            if o < 0:
-                raise ValueError("Objective values has to be larger equal than zero")
+        for w in weights:
+            if w > 1:
+                raise ValueError("Objective weight has to be smaller equal than 1.")
+            if w < 0:
+                raise ValueError("Objective weight has to be larger equal than zero")
+        # Save the categories to the objective if they do not exist
+        objective.categories = (
+            list(values["categories"])
+            if objective.categories is None
+            else objective.categories
+        )
         return objective
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
@@ -399,22 +406,33 @@ class CategoricalOutput(Output):
             )
         return values
 
+    def __str__(self) -> str:
+        return "CategoricalOutputFeature"
+
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.categories, self.objective))
-    
+        return dict(zip(self.categories, self.objective.weights))
+
     def to_dict_label(self) -> Dict:
         """Returns the catergories and label location of categories"""
-        return dict(zip(self.categories, [i for i in range(len(self.categories))]))
-    
+        return {c: i for i, c in enumerate(self.categories)}
+
     def from_dict_label(self) -> Dict:
         """Returns the label location and the categories"""
         d = self.to_dict_label()
         return dict(zip(d.values(), d.keys()))
-    
-    def map_to_categories(self, values: pd.Series) -> pd.Series:
-        """Maps the input array to the categories"""
-        return values.round().astype(int).map(self.from_dict_label())
+
+    def map_to_categories(self, values: pd.DataFrame) -> pd.Series:
+        """Maps the input matrix of probabilities to the categories via argmax"""
+        return values.idxmax(1).str.replace(f"{self.key}_pred_", "").values
+
+    def compute_objective(self, values: pd.DataFrame) -> pd.Series:
+        """Computes the objective value as: (p.o).sum() where p is the vector of probabilities and o is the vector of objective values"""
+        values.columns = values.columns.str.replace(f"{self.key}_pred_", "")
+        scale_series = pd.Series(self.to_dict())
+        return pd.Series(
+            data=(values * scale_series).sum(1).values, name=f"{self.key}_pred"
+        )
 
     def __call__(self, values: pd.Series) -> pd.Series:
-        return values.map(self.to_dict())
+        return self.objective(values)

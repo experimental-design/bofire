@@ -212,7 +212,7 @@ def test_cvresult_get_UQ_metric_valid():
     assert cv.n_samples == 10
     for metric in UQ_metrics.keys():
         m = cv.get_metric(metric=metric)
-        assert type(m) == float
+        assert isinstance(m, float)
 
 
 def test_cvresult_get_UQ_metric_invalid():

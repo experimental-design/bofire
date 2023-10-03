@@ -30,7 +30,11 @@ from bofire.data_models.features.api import (
     TInputTransformSpecs,
 )
 from bofire.data_models.molfeatures.api import MolFeatures
-from bofire.data_models.objectives.api import AbstractObjective, Objective
+from bofire.data_models.objectives.api import (
+    AbstractObjective,
+    CategoricalObjective,
+    Objective,
+)
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
 
@@ -592,7 +596,10 @@ class Outputs(Features):
             Type[Objective],
         ] = Objective,
         excludes: Union[
-            List[Type[AbstractObjective]], Tuple[Type[AbstractObjective]], Type[AbstractObjective], None
+            List[Type[AbstractObjective]],
+            Tuple[Type[AbstractObjective]],
+            Type[AbstractObjective],
+            None,
         ] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -627,6 +634,14 @@ class Outputs(Features):
                 feat(experiments[f"{feat.key}_pred" if predictions else feat.key])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
+                and not isinstance(feat, CategoricalOutput)
+            ]
+            + [
+                feat.compute_objective(experiments.filter(regex=f"{feat.key}_pred_"))  # type: ignore
+                if predictions
+                else experiments[feat.key]
+                for feat in self.features
+                if isinstance(feat, CategoricalOutput)
             ],
             axis=1,
         )
@@ -674,12 +689,13 @@ class Outputs(Features):
 
     def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         # for each continuous output feature with an attached objective object
-        # ToDo: adjust it for the CategoricalOutput
         continuous_cols = list(
             itertools.chain.from_iterable(
                 [
                     [f"{obj.key}_pred", f"{obj.key}_sd", f"{obj.key}_des"]
-                    for obj in self.get_by_objective(includes=Objective) if not isinstance(obj.type, CategoricalOutput)
+                    for obj in self.get_by_objective(
+                        includes=Objective, excludes=CategoricalObjective
+                    )
                 ]
             )
         )
@@ -696,19 +712,17 @@ class Outputs(Features):
             if candidates[col].isnull().to_numpy().any():
                 raise ValueError(f"Nan values are present in {col}.")
         # Check for categorical output
-        categorical_objectives = [obj for obj in self.get_by_objective(excludes=Objective, includes=None) if isinstance(obj.type, CategoricalOutput)]
-        if len(categorical_objectives) == 0:
-            return candidates
         categorical_cols = [
-                f"{key}_pred"
-                for key in [categorical_output.key for categorical_output in categorical_objectives.features]
+            (f"{obj.key}_pred", obj.categories)
+            for obj in self.get_by_objective(includes=CategoricalObjective)
         ]
-        categorical_values = [categorical_output.categories for categorical_output in categorical_objectives.features]
-        for ind, col in enumerate(categorical_cols):
-            if col not in candidates:
+        if len(categorical_cols) == 0:
+            return candidates
+        for col in categorical_cols:
+            if col[0] not in candidates:
                 raise ValueError(f"missing column {col}")
-            if len(candidates[col]) - candidates[col].isin(categorical_values[ind]).sum() > 0:
-                raise ValueError(f"values present are not in {categorical_values[ind]}")
+            if len(candidates[col[0]]) - candidates[col[0]].isin(col[1]).sum() > 0:
+                raise ValueError(f"values present are not in {col[1]}")
         return candidates
 
     def preprocess_experiments_one_valid_output(

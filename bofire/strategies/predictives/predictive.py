@@ -1,3 +1,4 @@
+import itertools
 from abc import abstractmethod
 from typing import List, Optional, Tuple
 
@@ -102,20 +103,48 @@ class PredictiveStrategy(Strategy):
             experiments=experiments, specs=self.input_preprocessing_specs
         )
         preds, stds = self._predict(transformed)
+        column_names = list(
+            itertools.chain(
+                *[
+                    [f"{feat.key}_pred"]
+                    if not isinstance(feat, CategoricalOutput)
+                    else [f"{feat.key}_pred_{cat}" for cat in feat.categories]
+                    for feat in self.domain.outputs.get()
+                ]
+            )
+        )
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)),
-                columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()]
-                + ["%s_sd" % feat.key for feat in self.domain.outputs.get()],
+                columns=column_names
+                + list(
+                    itertools.chain(
+                        *[
+                            [f"{feat.key}_sd"]
+                            if not isinstance(feat, CategoricalOutput)
+                            else [f"{feat.key}_sd_{cat}" for cat in feat.categories]
+                            for feat in self.domain.outputs.get()
+                        ]
+                    )
+                ),
             )
         else:
             predictions = pd.DataFrame(
                 data=preds,
-                columns=["%s_pred" % feat.key for feat in self.domain.outputs.get()],
+                columns=column_names,
             )
-        categorical_df = pd.DataFrame.from_dict({f"{feat.key}_pred": feat.map_to_categories(predictions[f"{feat.key}_pred"]) for feat in self.domain.outputs.get() if isinstance(feat, CategoricalOutput)})
-        if not categorical_df.empty:
-            predictions.update(categorical_df)
+        categorical_preds = {
+            f"{feat.key}_pred": (
+                ind,
+                feat.map_to_categories(predictions.filter(regex=f"{feat.key}_pred_")),
+            )
+            for ind, feat in enumerate(self.domain.outputs.get())
+            if isinstance(feat, CategoricalOutput)
+        }
+        for key in categorical_preds.keys():
+            predictions.insert(
+                categorical_preds[key][0], key, categorical_preds[key][1]
+            )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index

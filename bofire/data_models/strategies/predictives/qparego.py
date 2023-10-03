@@ -3,7 +3,7 @@ from typing import Literal, Type, Union
 from pydantic import Field
 
 from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
-from bofire.data_models.features.api import CategoricalOutput, Feature
+from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     MaximizeObjective,

@@ -678,7 +678,7 @@ def test_get_initial_conditions_generator(sequential: bool):
     ],
 )
 def test_constrained_objective2botorch(objective):
-    cs, etas = constrained_objective2botorch(idx=0, objective=objective)
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=objective)
 
     x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
     y = torch.ones([500])

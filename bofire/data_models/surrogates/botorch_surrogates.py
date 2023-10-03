@@ -12,8 +12,8 @@ from bofire.data_models.surrogates.linear import LinearSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.mlp_classifier import MLPClassifierEnsemble
 from bofire.data_models.surrogates.mlp import MLPEnsemble
+from bofire.data_models.surrogates.mlp_classifier import MLPClassifierEnsemble
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate

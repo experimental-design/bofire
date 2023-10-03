@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
+    CategoricalObjective,
     CloseToTargetObjective,
     ConstrainedObjective,
     MaximizeObjective,
@@ -138,7 +139,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 def constrained_objective2botorch(
     idx: int,
     objective: ConstrainedObjective,
-) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
+) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
     to setup ouput constrained optimizations.
 
@@ -147,24 +148,50 @@ def constrained_objective2botorch(
         objective (BotorchConstrainedObjective): The objective that should be transformed.
 
     Returns:
-        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
-            list of the corresponding botorch eta values.
+        Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,
+            list of the corresponding botorch eta values, final index used by the method (to track for categorical variables)
     """
     assert isinstance(
         objective, ConstrainedObjective
     ), "Objective is not a `ConstrainedObjective`."
     if isinstance(objective, MaximizeSigmoidObjective):
-        return [lambda Z: (Z[..., idx] - objective.tp) * -1.0], [
-            1.0 / objective.steepness
-        ]
+        return (
+            [lambda Z: (Z[..., idx] - objective.tp) * -1.0],
+            [1.0 / objective.steepness],
+            idx + 1,
+        )
     elif isinstance(objective, MinimizeSigmoidObjective):
-        return [lambda Z: (Z[..., idx] - objective.tp)], [1.0 / objective.steepness]
+        return (
+            [lambda Z: (Z[..., idx] - objective.tp)],
+            [1.0 / objective.steepness],
+            idx + 1,
+        )
     elif isinstance(objective, TargetObjective):
-        return [
-            lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
-            * -1.0,
-            lambda Z: (Z[..., idx] - (objective.target_value + objective.tolerance)),
-        ], [1.0 / objective.steepness, 1.0 / objective.steepness]
+        return (
+            [
+                lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
+                * -1.0,
+                lambda Z: (
+                    Z[..., idx] - (objective.target_value + objective.tolerance)
+                ),
+            ],
+            [1.0 / objective.steepness, 1.0 / objective.steepness],
+            idx + 1,
+        )
+    elif isinstance(objective, CategoricalObjective):
+        # The output of a categorical objective has final dim `c` where `c` is number of classes
+        return (
+            [
+                lambda Z: -1.0
+                * objective.w
+                * (
+                    Z[..., idx : idx + len(objective.weights)]
+                    * torch.tensor(objective.weights).to(**tkwargs)
+                ).sum(-1)
+            ],
+            [objective.eta],
+            idx + len(objective.weights),
+        )
     else:
         raise ValueError(f"Objective {objective.__class__.__name__} not known.")
 
@@ -185,13 +212,16 @@ def get_output_constraints(
     """
     constraints = []
     etas = []
-    for idx, feat in enumerate(outputs.get()):
+    idx = 0
+    for feat in outputs.get():
         if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
-            iconstraints, ietas = constrained_objective2botorch(
+            iconstraints, ietas, idx = constrained_objective2botorch(
                 idx, objective=feat.objective  # type: ignore
             )
             constraints += iconstraints
             etas += ietas
+        else:
+            idx += 1
     return constraints, etas
 
 

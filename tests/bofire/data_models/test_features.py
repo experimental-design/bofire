@@ -29,7 +29,11 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.objectives.api import MinimizeObjective, Objective
+from bofire.data_models.objectives.api import (
+    CategoricalObjective,
+    MinimizeObjective,
+    Objective,
+)
 from bofire.data_models.surrogates.api import ScalerEnum
 
 objective = MinimizeObjective(w=1)
@@ -2215,7 +2219,9 @@ mixed_data["of4"] = ["a", "a", "b", "b", "a"]
                     of2,
                     of3,
                     CategoricalOutput(
-                        key="of4", categories=["a", "b"], objective=[1.0, 0.0]
+                        key="of4",
+                        categories=["a", "b"],
+                        objective=CategoricalObjective(weights=[1.0, 0.0]),
                     ),
                 ]
             ),
@@ -2225,21 +2231,17 @@ mixed_data["of4"] = ["a", "a", "b", "b", "a"]
 )
 def test_outputs_call(features, samples):
     o = features(samples)
-    assert o.shape == (
-        len(samples),
-        len(features.get_keys_by_objective(Objective))
-        + len(features.get_keys(CategoricalOutput)),
-    )
+    assert o.shape == (len(samples), len(features.get_keys_by_objective(Objective)))
     assert list(o.columns) == [
-        f"{key}_des"
-        for key in features.get_keys_by_objective(Objective)
-        + features.get_keys(CategoricalOutput)
+        f"{key}_des" for key in features.get_keys_by_objective(Objective)
     ]
 
 
 def test_categorical_output():
     feature = CategoricalOutput(
-        key="a", categories=["alpha", "beta", "gamma"], objective=[1.0, 0.0, 0.1]
+        key="a",
+        categories=["alpha", "beta", "gamma"],
+        objective=CategoricalObjective(weights=[1.0, 0.0, 0.1]),
     )
 
     assert feature.to_dict() == {"alpha": 1.0, "beta": 0.0, "gamma": 0.1}

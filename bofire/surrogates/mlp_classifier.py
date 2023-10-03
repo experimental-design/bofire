@@ -95,10 +95,10 @@ class _MLPClassifierEnsemble(EnsembleModel):
             X: A `batch_shape x n x d`-dim input tensor `X`.
 
         Returns:
-            A `batch_shape x s x n x m`-dimensional output tensor where
-            `s` is the size of the ensemble.
+            A `batch_shape x s x n x m x C`-dimensional output tensor where
+            `s` is the size of the ensemble and `C` is the number of classes.
         """
-        return torch.stack([torch.argmax(mlp(X), dim=-1).unsqueeze(-1).float() for mlp in self.mlps], dim=-3)
+        return torch.stack([torch.softmax(mlp(X), dim=-1) for mlp in self.mlps], dim=-3)
 
     @property
     def num_outputs(self) -> int:
@@ -128,7 +128,7 @@ def fit_mlp(
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    loss_function = nn.NLLLoss(reduction='mean')
+    loss_function = nn.NLLLoss(reduction="mean")
     optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
     for _ in range(n_epoches):
         current_loss = 0.0
@@ -180,7 +180,9 @@ class MLPClassifierEnsemble(BotorchSurrogate, TrainableSurrogate):
         label_mapping = self.outputs[0].to_dict_label()
 
         # Convert Y to classification tensor
-        Y = pd.DataFrame.from_dict({col: Y[col].map(label_mapping) for col in Y.columns})
+        Y = pd.DataFrame.from_dict(
+            {col: Y[col].map(label_mapping) for col in Y.columns}
+        )
 
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])
@@ -196,7 +198,9 @@ class MLPClassifierEnsemble(BotorchSurrogate, TrainableSurrogate):
             )
             mlp = MLPClassifier(
                 input_size=transformed_X.shape[1],
-                output_size=len(label_mapping), # Set outputs based on number of categories
+                output_size=len(
+                    label_mapping
+                ),  # Set outputs based on number of categories
                 hidden_layer_sizes=self.hidden_layer_sizes,
                 activation=self.activation,  # type: ignore
                 dropout=self.dropout,
