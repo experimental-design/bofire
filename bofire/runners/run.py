@@ -50,17 +50,16 @@ def _single_run(
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
-    # sample initial values
+    strategy = strategy_factory(domain=benchmark.domain)
+    # sample initial values and tell
     if initial_sampler is not None:
         if isinstance(initial_sampler, Callable):
             X = initial_sampler(benchmark.domain)
             XY = benchmark.f(X, return_complete=True)
         else:
             XY = initial_sampler
-    strategy = strategy_factory(domain=benchmark.domain)
-    # tell it
-    if initial_sampler is not None:
-        strategy.tell(XY)  # type: ignore
+        strategy.tell(XY)
+
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
@@ -77,7 +76,7 @@ def _single_run(
         )
         if (i + 1) % safe_intervall == 0:
             autosafe_results(benchmark=benchmark)
-    return strategy.experiments, pd.Series(metric_values)  # type: ignore
+    return strategy.experiments, pd.Series(metric_values)
 
 
 def run(
