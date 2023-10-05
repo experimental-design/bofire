@@ -8,14 +8,13 @@ import pandas as pd
 from multiprocess.pool import Pool
 from tqdm import tqdm
 
-import bofire.strategies.api as strategies
 from bofire.benchmarks.api import Benchmark
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.strategies.api import AnyStrategy
+from bofire.strategies.api import Strategy
 
 
 class StrategyFactory(Protocol):
-    def __call__(self, domain: Domain) -> AnyStrategy:
+    def __call__(self, domain: Domain) -> Strategy:
         ...
 
 
@@ -51,19 +50,16 @@ def _single_run(
         with open(filename, "w") as file:
             json.dump(parsed_domain, file)
 
-    # sample initial values
+    strategy = strategy_factory(domain=benchmark.domain)
+    # sample initial values and tell
     if initial_sampler is not None:
         if isinstance(initial_sampler, Callable):
             X = initial_sampler(benchmark.domain)
             XY = benchmark.f(X, return_complete=True)
         else:
             XY = initial_sampler
-    strategy_data = strategy_factory(domain=benchmark.domain)
-    # map it
-    strategy = strategies.map(strategy_data)  # type: ignore
-    # tell it
-    if initial_sampler is not None:
-        strategy.tell(XY)  # type: ignore
+        strategy.tell(XY)
+
     metric_values = np.zeros(n_iterations)
     pbar = tqdm(range(n_iterations), position=run_idx)
     for i in pbar:
@@ -80,7 +76,7 @@ def _single_run(
         )
         if (i + 1) % safe_intervall == 0:
             autosafe_results(benchmark=benchmark)
-    return strategy.experiments, pd.Series(metric_values)  # type: ignore
+    return strategy.experiments, pd.Series(metric_values)
 
 
 def run(
