@@ -156,7 +156,7 @@ def test_scale_kernel():
 
 
 def test_poly_kernel():
-    kernel = PolynomialKernel(degree=2, offset_prior=BOTORCH_SCALE_PRIOR())
+    kernel = PolynomialKernel(power=2, offset_prior=BOTORCH_SCALE_PRIOR())
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),
@@ -165,7 +165,7 @@ def test_poly_kernel():
     )
     assert hasattr(k, "offset_prior")
     assert isinstance(k.offset_prior, gpytorch.priors.GammaPrior)
-    kernel = PolynomialKernel(degree=2)
+    kernel = PolynomialKernel(power=2)
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),
