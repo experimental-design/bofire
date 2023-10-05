@@ -29,4 +29,4 @@ class LinearKernel(ContinuousKernel):
 class PolynomialKernel(ContinuousKernel):
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
     offset_prior: Optional[AnyPrior] = None
-    degree: int = 2
+    power: int = 2

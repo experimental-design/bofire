@@ -25,6 +25,7 @@ AnyContinuousKernel = Union[
     MaternKernel,
     LinearKernel,
     PolynomialKernel,
+    PolynomialKernel,
     RBFKernel,
 ]
 
