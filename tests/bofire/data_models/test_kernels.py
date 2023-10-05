@@ -14,6 +14,7 @@ from bofire.data_models.kernels.api import (
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
+    PolynomialKernel,
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -152,6 +153,26 @@ def test_scale_kernel():
         active_dims=list(range(5)),
     )
     assert hasattr(k, "outputscale_prior") is False
+
+
+def test_poly_kernel():
+    kernel = PolynomialKernel(degree=2, offset_prior=BOTORCH_SCALE_PRIOR())
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        ard_num_dims=10,
+        active_dims=list(range(5)),
+    )
+    assert hasattr(k, "offset_prior")
+    assert isinstance(k.offset_prior, gpytorch.priors.GammaPrior)
+    kernel = PolynomialKernel(degree=2)
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        ard_num_dims=10,
+        active_dims=list(range(5)),
+    )
+    assert hasattr(k, "offset_prior") is False
 
 
 @pytest.mark.parametrize(

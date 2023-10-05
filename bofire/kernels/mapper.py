@@ -57,6 +57,20 @@ def map_LinearKernel(
     )
 
 
+def map_PolynomialKernel(
+    data_model: data_models.PolynomialKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> gpytorch.kernels.PolynomialKernel:
+    return gpytorch.kernels.PolynomialKernel(
+        batch_shape=batch_shape,
+        active_dims=active_dims,
+        power=data_model.power,
+        offset_prior=priors.map(data_model.offset_prior),
+    )
+
+
 def map_AdditiveKernel(
     data_model: data_models.AdditiveKernel,
     batch_shape: torch.Size,
@@ -131,6 +145,7 @@ KERNEL_MAP = {
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
     data_models.LinearKernel: map_LinearKernel,
+    data_models.PolynomialKernel: map_PolynomialKernel,
     data_models.AdditiveKernel: map_AdditiveKernel,
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
