@@ -7,6 +7,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
+    ContinuousOutput,
     NumericalInput,
 )
 from bofire.data_models.surrogates.surrogate import Surrogate
@@ -75,3 +76,18 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
             if v.get(key) is not None:
                 raise ValueError("Currently no numeric transforms are supported.")
         return v
+
+    @validator("outputs")
+    def validate_outputs(cls, outputs):
+        """validates outputs
+
+        Raises:
+            ValueError: if output type is not ContinuousOutput
+
+        Returns:
+            List[ContinuousOutput]
+        """
+        for o in outputs:
+            if not isinstance(o, ContinuousOutput):
+                raise ValueError("all outputs need to be continuous")
+        return outputs

@@ -1,7 +1,8 @@
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, validator
 
+from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.priors.api import (
@@ -27,3 +28,18 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
+
+    @validator("outputs")
+    def validate_outputs(cls, outputs):
+        """validates outputs
+
+        Raises:
+            ValueError: if output type is not ContinuousOutput
+
+        Returns:
+            List[ContinuousOutput]
+        """
+        for o in outputs:
+            if not isinstance(o, ContinuousOutput):
+                raise ValueError("all outputs need to be continuous")
+        return outputs

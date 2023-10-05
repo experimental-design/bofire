@@ -3,6 +3,7 @@ from typing import Literal
 from pydantic import Field, validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernal,
     AnyContinuousKernel,
@@ -32,3 +33,18 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present."
             )
         return v
+
+    @validator("outputs")
+    def validate_outputs(cls, outputs):
+        """validates outputs
+
+        Raises:
+            ValueError: if output type is not ContinuousOutput
+
+        Returns:
+            List[ContinuousOutput]
+        """
+        for o in outputs:
+            if not isinstance(o, ContinuousOutput):
+                raise ValueError("all outputs need to be continuous")
+        return outputs

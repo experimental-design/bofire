@@ -85,7 +85,7 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ("a", "b", "c"),
-        "objective": CategoricalObjective(weights=[0.0, 1.0, 0.0]),
+        "objective": CategoricalObjective(desirability=(0.0, 1.0, 0.0)),
     },
 )
 specs.add_valid(

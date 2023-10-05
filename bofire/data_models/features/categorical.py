@@ -382,20 +382,18 @@ class CategoricalOutput(Output):
 
     @validator("objective")
     def validate_objective(cls, objective, values):
-        weights = objective.weights
-        if len(weights) != len(values["categories"]):
-            raise ValueError("Length of objectives and categories do not match.")
-        for w in weights:
-            if w > 1:
-                raise ValueError("Objective weight has to be smaller equal than 1.")
-            if w < 0:
-                raise ValueError("Objective weight has to be larger equal than zero")
-        # Save the categories to the objective if they do not exist
-        objective.categories = (
-            list(values["categories"])
-            if objective.categories is None
-            else objective.categories
-        )
+        """validates that objective desirabilities are the same length as categories
+
+        Raises:
+            ValueError: when len(objective.desirability) != len(categories)
+
+        Returns:
+            CategoricalObjective
+        """
+        if len(objective.desirability) != len(values["categories"]):
+            raise ValueError(
+                f"{len(objective.desirability)} desirabilities and {len(values['categories'])} categories"
+            )
         return objective
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
@@ -411,7 +409,7 @@ class CategoricalOutput(Output):
 
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.categories, self.objective.weights))
+        return dict(zip(self.categories, self.objective.desirability))
 
     def to_dict_label(self) -> Dict:
         """Returns the catergories and label location of categories"""
@@ -435,4 +433,4 @@ class CategoricalOutput(Output):
         )
 
     def __call__(self, values: pd.Series) -> pd.Series:
-        return self.objective(values)
+        return values.map(self.to_dict())

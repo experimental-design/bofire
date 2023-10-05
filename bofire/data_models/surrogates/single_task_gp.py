@@ -1,11 +1,13 @@
 from typing import Literal, Optional
 
 import pandas as pd
-from pydantic import Field
+from pydantic import Field, validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
-from bofire.data_models.features.api import CategoricalInput
+
+# from bofire.data_models.strategies.api import FactorialStrategy
+from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
 from bofire.data_models.kernels.api import (
     AnyKernel,
     MaternKernel,
@@ -21,8 +23,6 @@ from bofire.data_models.priors.api import (
     MBO_OUTPUTSCALE_PRIOR,
     AnyPrior,
 )
-
-# from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable import Hyperconfig, TrainableSurrogate
@@ -110,3 +110,18 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
+
+    @validator("outputs")
+    def validate_outputs(cls, outputs):
+        """validates outputs
+
+        Raises:
+            ValueError: if output type is not ContinuousOutput
+
+        Returns:
+            List[ContinuousOutput]
+        """
+        for o in outputs:
+            if not isinstance(o, ContinuousOutput):
+                raise ValueError("all outputs need to be continuous")
+        return outputs

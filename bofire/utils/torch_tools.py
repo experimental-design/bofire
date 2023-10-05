@@ -183,14 +183,13 @@ def constrained_objective2botorch(
         return (
             [
                 lambda Z: -1.0
-                * objective.w
                 * (
-                    Z[..., idx : idx + len(objective.weights)]
-                    * torch.tensor(objective.weights).to(**tkwargs)
+                    Z[..., idx : idx + len(objective.desirability)]
+                    * torch.tensor(objective.desirability).to(**tkwargs)
                 ).sum(-1)
             ],
             [objective.eta],
-            idx + len(objective.weights),
+            idx + len(objective.desirability),
         )
     else:
         raise ValueError(f"Objective {objective.__class__.__name__} not known.")

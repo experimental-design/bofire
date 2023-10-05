@@ -1,8 +1,9 @@
 from typing import Literal, Optional, Union
 
-from pydantic import Field
+from pydantic import Field, validator
 from typing_extensions import Annotated
 
+from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
@@ -30,3 +31,18 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
     random_state: Optional[int] = None
     ccp_alpha: Annotated[float, Field(ge=0)] = 0.0
     max_samples: Optional[Union[int, float]] = None
+
+    @validator("outputs")
+    def validate_outputs(cls, outputs):
+        """validates outputs
+
+        Raises:
+            ValueError: if output type is not ContinuousOutput
+
+        Returns:
+            List[ContinuousOutput]
+        """
+        for o in outputs:
+            if not isinstance(o, ContinuousOutput):
+                raise ValueError("all outputs need to be continuous")
+        return outputs

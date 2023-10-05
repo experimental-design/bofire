@@ -95,10 +95,10 @@ class _MLPClassifierEnsemble(EnsembleModel):
             X: A `batch_shape x n x d`-dim input tensor `X`.
 
         Returns:
-            A `batch_shape x s x n x m x C`-dimensional output tensor where
+            A `batch_shape x s x n x C`-dimensional output tensor where
             `s` is the size of the ensemble and `C` is the number of classes.
         """
-        return torch.stack([torch.softmax(mlp(X), dim=-1) for mlp in self.mlps], dim=-3)
+        return torch.stack([mlp(X).exp() for mlp in self.mlps], dim=-3)
 
     @property
     def num_outputs(self) -> int:

@@ -2221,7 +2221,7 @@ mixed_data["of4"] = ["a", "a", "b", "b", "a"]
                     CategoricalOutput(
                         key="of4",
                         categories=["a", "b"],
-                        objective=CategoricalObjective(weights=[1.0, 0.0]),
+                        objective=CategoricalObjective(desirability=[1.0, 0.0]),
                     ),
                 ]
             ),
@@ -2241,7 +2241,7 @@ def test_categorical_output():
     feature = CategoricalOutput(
         key="a",
         categories=["alpha", "beta", "gamma"],
-        objective=CategoricalObjective(weights=[1.0, 0.0, 0.1]),
+        objective=CategoricalObjective(desirability=[1.0, 0.0, 0.1]),
     )
 
     assert feature.to_dict() == {"alpha": 1.0, "beta": 0.0, "gamma": 0.1}
