@@ -67,7 +67,9 @@ def map_PolynomialKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
         power=data_model.power,
-        offset_prior=priors.map(data_model.offset_prior),
+        offset_prior=priors.map(data_model.offset_prior)
+        if data_model.offset_prior is not None
+        else None,
     )
 
 
