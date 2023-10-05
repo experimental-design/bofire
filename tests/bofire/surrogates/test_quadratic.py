@@ -32,7 +32,7 @@ def test_QuadraticSurrogate():
     surrogate = surrogates.map(surrogate_data)
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
-    assert isinstance(surrogate.kernel, PolynomialKernel(power=2))
+    assert isinstance(surrogate.kernel, PolynomialKernel)
 
     # check dump
     surrogate.fit(experiments=experiments)
