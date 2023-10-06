@@ -13,6 +13,7 @@ from bofire.data_models.kernels.continuous import (
     ContinuousKernel,
     LinearKernel,
     MaternKernel,
+    PolynomialKernel,
     RBFKernel,
 )
 from bofire.data_models.kernels.kernel import Kernel
@@ -23,6 +24,7 @@ AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKer
 AnyContinuousKernel = Union[
     MaternKernel,
     LinearKernel,
+    PolynomialKernel,
     RBFKernel,
 ]
 
@@ -36,6 +38,7 @@ AnyKernel = Union[
     ScaleKernel,
     HammondDistanceKernel,
     LinearKernel,
+    PolynomialKernel,
     MaternKernel,
     RBFKernel,
     TanimotoKernel,
