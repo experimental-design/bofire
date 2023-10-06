@@ -21,13 +21,11 @@ class PolynomialSurrogate(BotorchSurrogate, TrainableSurrogate):
 
     def __init__(
         self,
-        type: str,
         inputs: Inputs,
         outputs: Outputs,
         power: int,
     ):
         super().__init__(
-            type=type,
             inputs=inputs,
             outputs=outputs,
         )
