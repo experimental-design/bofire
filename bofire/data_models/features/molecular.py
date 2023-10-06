@@ -29,12 +29,14 @@ class MolecularInput(Input):
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
     ) -> pd.Series:
+        values = values.map(str)
         for smi in values:
             smiles2mol(smi)
 
         return values
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
         for smi in values:
             smiles2mol(smi)
         return values

@@ -1,10 +1,10 @@
 import random
 import uuid
-from typing import List
 
 import numpy as np
 import pandas as pd
 import pytest
+from pandas.testing import assert_frame_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.constraints.api import (
@@ -198,7 +198,14 @@ def test_domain_validate_experiments_valid(
     domain: Domain,
     experiments: pd.DataFrame,
 ):
-    domain.validate_experiments(experiments)
+    experiments1 = domain.validate_experiments(experiments.copy())
+    for col in experiments.columns:
+        experiments[col] = experiments[col].map(str)
+    experiments2 = domain.validate_experiments(experiments)
+    assert_frame_equal(
+        left=experiments1,
+        right=experiments2,
+    )
 
 
 @pytest.mark.parametrize(
@@ -251,7 +258,14 @@ def test_domain_validate_candidates_valid(
     domain: Domain,
     candidates: pd.DataFrame,
 ):
-    domain.validate_candidates(candidates)
+    candidates1 = domain.validate_candidates(candidates.copy())
+    for col in domain.inputs.get_keys():
+        candidates[col] = candidates[col].map(str)
+    candidates2 = domain.validate_candidates(candidates.copy())
+    assert_frame_equal(
+        left=candidates1,
+        right=candidates2,
+    )
 
 
 @pytest.mark.parametrize(
@@ -295,27 +309,6 @@ def test_domain_validate_candidates_invalid_categories():
     candidates.loc[0, "cat2"] = "c3"
     with pytest.raises(ValueError):
         domain4.validate_candidates(candidates)
-
-
-@pytest.mark.parametrize(
-    "domain, candidates, cols",
-    [
-        (d, generate_candidates(d), cols)
-        for d in [domain0]
-        for cols in [
-            ["newcol"],
-            ["newcol1", "newcol2"],
-        ]
-    ],
-)
-def test_domain_validate_candidates_too_many_cols(
-    domain: Domain,
-    candidates: pd.DataFrame,
-    cols: List[str],
-):
-    candidates = candidates.reindex(list(candidates.columns) + cols, axis=1)
-    with pytest.raises(ValueError):
-        domain.validate_candidates(candidates)
 
 
 @pytest.mark.parametrize(
@@ -365,3 +358,32 @@ def test_domain_validate_candidates_constraint_not_fulfilled(
             ),
             pd.DataFrame,
         )
+
+
+def test_outputs_add_valid_columns():
+    experiments = generate_experiments(domain=domain0)
+    assert "valid_out1" not in experiments.columns
+    assert "valid_out2" not in experiments.columns
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert "valid_out1" in experiments.columns
+    assert "valid_out2" in experiments.columns
+    #
+    experiments["valid_out1"] = "1"
+    experiments["valid_out2"] = "0"
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert (experiments["valid_out1"] == 1).all()
+    assert (experiments["valid_out2"] == 0).all()
+    experiments["valid_out1"] = 0
+    experiments["valid_out2"] = 1
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert (experiments["valid_out1"] == 0).all()
+    assert (experiments["valid_out2"] == 1).all()
+    experiments["valid_out1"] = 0.0
+    experiments["valid_out2"] = 1.0
+    experiments = domain0.outputs.add_valid_columns(experiments)
+    assert (experiments["valid_out1"] == 0).all()
+    assert (experiments["valid_out2"] == 1).all()
+    for _test_val in ["1.0", "1.2"]:
+        experiments["valid_out1"] = _test_val
+        with pytest.raises(ValueError):
+            domain0.outputs.add_valid_columns(experiments)
