@@ -8,7 +8,7 @@ from bofire.data_models.kernels.api import PolynomialKernel
 from bofire.data_models.surrogates.api import PolynomialSurrogate
 
 
-def test_QuadraticSurrogate():
+def test_polynomial_surrogate():
     N_EXPERIMENTS = 10
 
     inputs = Inputs(
