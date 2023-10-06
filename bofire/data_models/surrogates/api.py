@@ -15,7 +15,7 @@ try:
         MixedSingleTaskGPSurrogate,
     )
     from bofire.data_models.surrogates.mlp import MLPEnsemble
-    from bofire.data_models.surrogates.quadratic import QuadraticSurrogate
+    from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
         SingleTaskGPHyperconfig,
@@ -37,7 +37,7 @@ try:
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
-        QuadraticSurrogate,
+        PolynomialSurrogate,
         TanimotoGPSurrogate,
     ]
 
@@ -49,7 +49,7 @@ try:
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
-        QuadraticSurrogate,
+        PolynomialSurrogate,
         TanimotoGPSurrogate,
     ]
 except ImportError:
