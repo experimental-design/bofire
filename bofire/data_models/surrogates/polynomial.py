@@ -16,19 +16,13 @@ from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 class PolynomialSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["PolynomialSurrogate"] = "PolynomialSurrogate"
+
+    kernel: PolynomialKernel = Field(default_factory=lambda: PolynomialKernel(power=2))
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
-    def __init__(
-        self,
-        inputs: Inputs,
-        outputs: Outputs,
-        power: int,
-    ):
-        super().__init__(
-            inputs=inputs,
-            outputs=outputs,
-        )
-        self.kernel: PolynomialKernel = Field(
-            default_factory=lambda: PolynomialKernel(power=power)
+    @staticmethod
+    def from_power(power: int, inputs: Inputs, outputs: Outputs):
+        return PolynomialSurrogate(
+            kernel=PolynomialKernel(power=power), inputs=inputs, outputs=outputs
         )

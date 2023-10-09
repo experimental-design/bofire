@@ -28,7 +28,9 @@ def test_polynomial_surrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = PolynomialSurrogate(inputs=inputs, outputs=outputs, power=2)
+    surrogate_data = PolynomialSurrogate.from_power(
+        power=2, inputs=inputs, outputs=outputs
+    )
     surrogate = surrogates.map(surrogate_data)
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
