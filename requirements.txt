@@ -13,5 +13,3 @@ plotly
 cloudpickle
 nbformat
 multiprocess
-ipopt
-cyipopt
