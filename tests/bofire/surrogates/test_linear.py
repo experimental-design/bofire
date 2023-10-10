@@ -47,7 +47,7 @@ def test_can_define_botorch_surrogate():
     inputs = Inputs(
         features=[
             ContinuousInput(key="a", bounds=(0, 40)),
-            ContinuousInput(key="b", bounds=(20, 60)),
+            ContinuousInput(key="b", bounds=(20, 80)),
         ]
     )
     outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
