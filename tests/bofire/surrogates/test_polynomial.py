@@ -5,10 +5,10 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import PolynomialKernel
-from bofire.data_models.surrogates.api import QuadraticSurrogate
+from bofire.data_models.surrogates.api import PolynomialSurrogate
 
 
-def test_QuadraticSurrogate():
+def test_polynomial_surrogate():
     N_EXPERIMENTS = 10
 
     inputs = Inputs(
@@ -28,7 +28,9 @@ def test_QuadraticSurrogate():
     )
     experiments["valid_c"] = 1
 
-    surrogate_data = QuadraticSurrogate(inputs=inputs, outputs=outputs)
+    surrogate_data = PolynomialSurrogate.from_power(
+        power=2, inputs=inputs, outputs=outputs
+    )
     surrogate = surrogates.map(surrogate_data)
 
     assert isinstance(surrogate, surrogates.SingleTaskGPSurrogate)
