@@ -50,7 +50,7 @@ def test_can_define_botorch_surrogate():
             ContinuousInput(key="b", bounds=(20, 60)),
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key="c"), ContinuousOutput(key="d")])
+    outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
     _ = (
         BotorchSurrogates(
             surrogates=[
