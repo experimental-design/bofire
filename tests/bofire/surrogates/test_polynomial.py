@@ -44,7 +44,7 @@ def test_polynomial_surrogate():
     preds2 = surrogate.predict(experiments)
     assert_frame_equal(preds, preds2)
 
-
+    
 def test_can_define_botorch_surrogate():
     inputs = Inputs(
         features=[
@@ -66,3 +66,4 @@ def test_can_define_botorch_surrogate():
         ),
     )
     assert True
+
