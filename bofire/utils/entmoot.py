@@ -1,14 +1,15 @@
 from typing import Tuple
 
+import entmoot.constraints as entconstr
 import numpy as np
 import pyomo.environ as pyo
-from entmoot.problem_config import ProblemConfig
+from entmoot import ProblemConfig
 
 from bofire.data_models.constraints.api import (
     AnyConstraint,
-    LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -43,7 +44,7 @@ def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.Concret
         _bofire_output_to_entmoot(problem_config, output_feature)
 
     model_pyo = problem_config.get_pyomo_model_core()
-    model_pyo.constr = pyo.ConstraintList()
+    model_pyo.problem_constraints = pyo.ConstraintList()
     for constraint in domain.constraints:
         _bofire_constraint_to_entmoot(problem_config, constraint, model_pyo)
 
@@ -117,21 +118,39 @@ def _bofire_constraint_to_entmoot(
         constraint (AnyConstraint): A constraint to be applied to the Pyomo model.
         model_core (pyo.ConcreteModel): The underlying solver model.
     """
-    if not isinstance(constraint, LinearConstraint):
-        raise NotImplementedError("Non-linear constraints are not supported")
 
-    # get references to the Pyomo variables to create the constraint, keeping
-    # the order of the variables in the Constraint
-
-    feat_keys = [feat.name for feat in problem_config.feat_list]
-    feat_idxs = [feat_keys.index(key) for key in constraint.features]
-    features = [model_core._all_feat[i] for i in feat_idxs]
-
-    lhs = sum(feat * coeff for feat, coeff in zip(features, constraint.coefficients))
     if isinstance(constraint, LinearEqualityConstraint):
-        constr_expr = lhs == constraint.rhs
+        ent_constraint = entconstr.LinearEqualityConstraint(
+            feature_keys=constraint.features,
+            coefficients=constraint.coefficients,
+            rhs=constraint.rhs,
+        )
+
     elif isinstance(constraint, LinearInequalityConstraint):
-        constr_expr = lhs <= constraint.rhs
+        ent_constraint = entconstr.LinearEqualityConstraint(
+            feature_keys=constraint.features,
+            coefficients=constraint.coefficients,
+            rhs=constraint.rhs,
+        )
+
+    elif isinstance(constraint, NChooseKConstraint):
+        ent_constraint = entconstr.NChooseKConstraint(
+            feature_keys=constraint.features,
+            min_count=constraint.min_count,
+            max_count=constraint.max_count,
+            none_also_valid=constraint.none_also_valid,
+        )
+
     else:
-        raise NotImplementedError(f"Did not recognise constraint {constraint.type}")
-    model_core.constr.add(expr=constr_expr)
+        raise NotImplementedError("Only linear and nchoosek constraints are supported.")
+
+    # add constraint to a pyo.ConstraintList object
+    # TODO: expose a nicer API in entmoot
+    features = ent_constraint._get_feature_vars(model_core, problem_config.feat_list)
+    if isinstance(ent_constraint, entconstr.ExpressionConstraint):
+        expr = ent_constraint._get_expr(features)
+        model_core.problem_constraints.add(expr=expr)
+
+    elif isinstance(ent_constraint, entconstr.FunctionalConstraint):
+        rule = ent_constraint._get_function(model_core, features)
+        model_core.problem_constraints.add(rule=rule)
