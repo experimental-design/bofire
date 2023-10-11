@@ -44,12 +44,12 @@ def test_polynomial_surrogate():
     preds2 = surrogate.predict(experiments)
     assert_frame_equal(preds, preds2)
 
-    
+
 def test_can_define_botorch_surrogate():
     inputs = Inputs(
         features=[
             ContinuousInput(key="a", bounds=(0, 40)),
-            ContinuousInput(key="b", bounds=(20, 60)),
+            ContinuousInput(key="b", bounds=(20, 80)),
         ]
     )
     outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
@@ -66,4 +66,3 @@ def test_can_define_botorch_surrogate():
         ),
     )
     assert True
-
