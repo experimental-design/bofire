@@ -1,4 +1,4 @@
-name: bofire
+name: base
 channels:
   - defaults
   - conda-forge

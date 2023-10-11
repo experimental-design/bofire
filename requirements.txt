@@ -13,3 +13,5 @@ plotly
 cloudpickle
 nbformat
 multiprocess
+jupyterlab
+notebook
