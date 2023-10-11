@@ -96,8 +96,11 @@ def _bofire_output_to_entmoot(
         problem_config (ProblemConfig): An ENTMOOT problem definition, modified in-place.
         feature (AnyOutput): An output feature to be added to the problem_config object.
     """
-    if isinstance(feature.objective, (MinimizeObjective, MaximizeObjective)):
+    if isinstance(feature.objective, MinimizeObjective):
         problem_config.add_min_objective(name=feature.key)
+
+    elif isinstance(feature.objective, MaximizeObjective):
+        problem_config.add_max_objective(name=feature.key)
 
     else:
         raise NotImplementedError(f"Did not recognise output {feature}")
