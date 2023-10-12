@@ -53,7 +53,7 @@ def test_can_define_botorch_surrogate():
         ]
     )
     outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
-    _ = (
+    (
         BotorchSurrogates(
             surrogates=[
                 PolynomialSurrogate(
@@ -65,4 +65,3 @@ def test_can_define_botorch_surrogate():
             ]
         ),
     )
-    assert True
