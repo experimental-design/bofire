@@ -497,23 +497,8 @@ class Domain(BaseModel):
 
         if len(experiments) == 0:
             raise ValueError("no experiments provided (empty dataframe)")
-        # check that each feature is a col
-        feature_keys = self.get_feature_keys()
-        for feature_key in feature_keys:
-            if feature_key not in experiments:
-                raise ValueError(f"no col in experiments for feature {feature_key}")
-        # add valid_{key} cols if missing
-        valid_keys = [
-            f"valid_{output_feature_key}"
-            for output_feature_key in self.get_feature_keys(Output)
-        ]
-        for valid_key in valid_keys:
-            if valid_key not in experiments:
-                experiments[valid_key] = True
-        # check all cols
-        cols = list(experiments.columns)
         # we allow here for a column named labcode used to identify experiments
-        if "labcode" in cols:
+        if "labcode" in experiments.columns:
             # test that labcodes are not na
             if experiments.labcode.isnull().to_numpy().any():
                 raise ValueError("there are labcodes with null value")
@@ -525,17 +510,11 @@ class Domain(BaseModel):
                 != experiments.shape[0]
             ):
                 raise ValueError("labcodes are not unique")
-            # we remove the labcode from the cols list to proceed as before
-            cols.remove("labcode")
-        # check values of continuous input features
-        if experiments[self.get_feature_keys(Input)].isnull().to_numpy().any():
-            raise ValueError("there are null values")
-        if experiments[self.get_feature_keys(Input)].isna().to_numpy().any():
-            raise ValueError("there are na values")
         # run the individual validators
-        for feat in self.get_features(Input):
-            assert isinstance(feat, Input)
-            feat.validate_experimental(experiments[feat.key], strict=strict)
+        experiments = self.inputs.validate_experiments(
+            experiments=experiments, strict=strict
+        )
+        experiments = self.outputs.validate_experiments(experiments=experiments)
         return experiments
 
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -594,7 +573,7 @@ class Domain(BaseModel):
         """
         # check that each input feature has a col and is valid in itself
         assert isinstance(self.inputs, Inputs)
-        self.inputs.validate_inputs(candidates)
+        candidates = self.inputs.validate_candidates(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates, tol=tol).all():
             if raise_validation_error:
@@ -605,38 +584,7 @@ class Domain(BaseModel):
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.outputs, Outputs)
-
-            cols = list(
-                itertools.chain.from_iterable(
-                    [
-                        [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                        for key in self.outputs.get_keys_by_objective(Objective)
-                    ]
-                    + [
-                        [f"{key}_pred", f"{key}_sd"]
-                        for key in self.outputs.get_keys_by_objective(
-                            excludes=Objective, includes=None  # type: ignore
-                        )
-                    ]
-                )
-            )
-
-            # check that pred, sd, and des cols are specified and numerical
-            for col in cols:
-                if col not in candidates:
-                    raise ValueError(f"missing column {col}")
-                if (not is_numeric(candidates[col])) and (
-                    not candidates[col].isnull().to_numpy().all()
-                ):
-                    raise ValueError(f"not all values of column `{col}` are numerical")
-
-            # validate no additional cols exist
-            if_count = len(self.get_features(Input))
-            of_count = len(self.outputs.get_by_objective(includes=Objective))
-            of_count_w = len(self.outputs.get_by_objective(excludes=Objective, includes=None))  # type: ignore
-            # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
-            if len(candidates.columns) != if_count + 3 * of_count + 2 * of_count_w:
-                raise ValueError("additional columns found")
+            candidates = self.outputs.validate_candidates(candidates=candidates)
         return candidates
 
     @property

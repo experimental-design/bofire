@@ -1,14 +1,15 @@
+import warnings
 from abc import abstractmethod
-from typing import Literal, Optional
+from typing import List, Literal, Optional, Union
 
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, root_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
 metrics2objectives = {
@@ -26,6 +27,23 @@ metrics2objectives = {
     UQRegressionMetricsEnum.MISCALIBRATIONAREA: MinimizeObjective,
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: MinimizeObjective,
 }
+
+
+class Aggregation(BaseModel):
+    type: str
+    features: Annotated[List[str], Field(min_items=2)]
+    keep_features: bool = False
+
+
+class SumAggregation(Aggregation):
+    type: Literal["SumAggregation"] = "SumAggregation"
+
+
+class MeanAggregation(Aggregation):
+    type: Literal["MeanAggregation"] = "MeanAggregation"
+
+
+AnyAggregation = Union[SumAggregation, MeanAggregation]
 
 
 class Hyperconfig(BaseModel):
@@ -75,6 +93,25 @@ class Hyperconfig(BaseModel):
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
+    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_items=1)]] = None
+
+    @root_validator
+    def validate_aggregations(cls, values):
+        if values["aggregations"] is None:
+            return values
+        for agg in values["aggregations"]:
+            for key in agg.features:
+                if key not in values["inputs"].get_keys():
+                    raise ValueError(
+                        f"Unkown feature key {key} provided in aggregations."
+                    )
+                feat = values["inputs"].get_by_key(key)
+                if not isinstance(feat, ContinuousInput):
+                    raise ValueError(
+                        f"Feature with key {key} is not of type ContinuousInput"
+                    )
+        warnings.warn("Aggregations currently only implemented in the data models.")
+        return values
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         if self.hyperconfig is not None:

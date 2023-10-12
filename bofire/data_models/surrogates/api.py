@@ -22,6 +22,7 @@ try:
     )
     from bofire.data_models.surrogates.surrogate import Surrogate
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+    from bofire.data_models.surrogates.trainable import MeanAggregation, SumAggregation
     from bofire.data_models.surrogates.xgb import XGBoostSurrogate
 
     AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]

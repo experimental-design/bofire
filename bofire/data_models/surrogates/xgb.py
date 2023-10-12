@@ -15,7 +15,7 @@ from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 class XGBoostSurrogate(Surrogate, TrainableSurrogate):
     type: Literal["XGBoostSurrogate"] = "XGBoostSurrogate"
-    n_estimators: int
+    n_estimators: Annotated[int, Field(ge=1)] = 100
     max_depth: Annotated[int, Field(ge=0)] = 6
     max_leaves: Annotated[int, Field(ge=0)] = 0
     max_bin: Annotated[int, Field(ge=0)] = 256

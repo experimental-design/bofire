@@ -136,6 +136,18 @@ class Output(Feature):
     def __call__(self, values: pd.Series) -> pd.Series:
         pass
 
+    @abstractmethod
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        """Abstract method to validate the experimental Series
+
+        Args:
+            values (pd.Series): A dataFrame with values for the outcome
+
+        Returns:
+            pd.Series: The passed dataFrame with experiments
+        """
+        pass
+
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
