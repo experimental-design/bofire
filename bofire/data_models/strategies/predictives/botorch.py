@@ -75,12 +75,16 @@ class BotorchStrategy(PredictiveStrategy):
     @classmethod
     def update_surrogate_specs_for_domain(cls, values):
         """Ensures that a prediction model is specified for each output feature"""
+
         values["surrogate_specs"] = BotorchStrategy._generate_surrogate_specs(
             values["domain"],
             values["surrogate_specs"] if "surrogate_specs" in values else None,
         )
         # we also have to checke here that the categorical method is compatible with the chosen models
-        if values["categorical_method"] == CategoricalMethodEnum.FREE:
+        categorical_method = (
+            values["categorical_method"] if "categorical_method" in values else None
+        )
+        if categorical_method == CategoricalMethodEnum.FREE:
             for m in values["surrogate_specs"].surrogates:
                 if isinstance(m, MixedSingleTaskGPSurrogate):
                     raise ValueError(
@@ -88,11 +92,19 @@ class BotorchStrategy(PredictiveStrategy):
                     )
         #  we also check that if a categorical with descriptor method is used as one hot encoded the same method is
         # used for the descriptor as for the categoricals
+        descriptor_method = (
+            values["descriptor_method"] if "descriptor_method" in values else None
+        )
         for m in values["surrogate_specs"].surrogates:
             keys = m.inputs.get_keys(CategoricalDescriptorInput)
             for k in keys:
-                if m.input_preprocessing_specs[k] == CategoricalEncodingEnum.ONE_HOT:
-                    if values["categorical_method"] != values["descriptor_method"]:
+                input_proc_specs = (
+                    m.input_preprocessing_specs[k]
+                    if k in m.input_preprocessing_specs
+                    else None
+                )
+                if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
+                    if categorical_method != descriptor_method:
                         raise ValueError(
                             "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals."
                         )

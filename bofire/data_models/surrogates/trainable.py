@@ -3,7 +3,7 @@ from abc import abstractmethod
 from typing import List, Literal, Optional, Union
 
 import pandas as pd
-from pydantic import Field, field_validator, root_validator
+from pydantic import Field, field_validator, model_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -31,7 +31,7 @@ metrics2objectives = {
 
 class Aggregation(BaseModel):
     type: str
-    features: Annotated[List[str], Field(min_items=2)]
+    features: Annotated[List[str], Field(min_length=2)]
     keep_features: bool = False
 
 
@@ -93,11 +93,11 @@ class Hyperconfig(BaseModel):
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
-    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_items=1)]] = None
+    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_length=1)]] = None
 
-    @root_validator
+    @model_validator(mode="before")
     def validate_aggregations(cls, values):
-        if values["aggregations"] is None:
+        if "aggregations" not in values or values["aggregations"] is None:
             return values
         for agg in values["aggregations"]:
             for key in agg.features:

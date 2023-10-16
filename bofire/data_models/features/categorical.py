@@ -49,7 +49,7 @@ class CategoricalInput(Input):
             raise ValueError("categories must be unique")
         return categories
 
-    @model_validator(mode="after")
+    @model_validator(mode="before")
     @classmethod
     def init_allowed(cls, values):
         """validates the list of allowed/not allowed categories
@@ -309,9 +309,8 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: drawn samples.
         """
-        return pd.Series(
-            name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
-        )
+        allowed_categories = self.get_allowed_categories()
+        return pd.Series(name=self.key, data=np.random.choice(allowed_categories, n))
 
     def get_bounds(
         self,
