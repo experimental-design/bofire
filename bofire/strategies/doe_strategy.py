@@ -140,38 +140,37 @@ class DoEStrategy(Strategy):
             assert (
                 _candidate_count is not None
             ), "strategy iterative requires number of experiments to be set!"
-            _adapted_partially_fixed_candidates = adapted_partially_fixed_candidates
 
             num_adapted_partially_fixed_candidates = 0
             if adapted_partially_fixed_candidates is not None:
                 num_adapted_partially_fixed_candidates = len(
                     adapted_partially_fixed_candidates
                 )
-            _design = None
+            design = None
             for i in range(_candidate_count):
-                _design = find_local_max_ipopt_BaB(
+                design = find_local_max_ipopt_BaB(
                     domain=new_domain,
                     model_type=self.formula,
                     n_experiments=num_adapted_partially_fixed_candidates + i + 1,
                     fixed_experiments=None,
                     verbose=self.data_model.verbose,
-                    partially_fixed_experiments=_adapted_partially_fixed_candidates,
+                    partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
                 )
-                _adapted_partially_fixed_candidates = pd.concat(
+                adapted_partially_fixed_candidates = pd.concat(
                     [
-                        _adapted_partially_fixed_candidates,
-                        _design.round(6).tail(1),
+                        adapted_partially_fixed_candidates,
+                        design.round(6).tail(1),
                     ],
                     axis=0,
                     ignore_index=True,
                 )
                 print(
                     f"Status: {i+1} of {_candidate_count} experiments determined \n"
-                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, _design)}"
+                    f"Current experimental plan:\n {design_from_new_to_original_domain(self.domain, design)}"
                 )
-            design = _design
+
         else:
             raise RuntimeError("Could not find suitable optimization strategy")
 
