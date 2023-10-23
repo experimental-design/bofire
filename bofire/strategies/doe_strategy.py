@@ -133,9 +133,7 @@ class DoEStrategy(Strategy):
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
             )
-        elif self.data_model.optimization_strategy in [
-            "iterative",
-        ]:
+        elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
             assert (
                 _candidate_count is not None
