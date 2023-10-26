@@ -465,22 +465,22 @@ def nchoosek_constraints_as_bounds(
         for constraint in domain.constraints:
             if isinstance(constraint, NChooseKConstraint):
                 n_inactive = len(constraint.features) - constraint.max_count
-
-                # find indices of constraint.names in names
-                ind = [
-                    i
-                    for i, p in enumerate(domain.inputs.get_keys())
-                    if p in constraint.features
-                ]
-
-                # find and shuffle all combinations of elements of ind of length max_active
-                ind = np.array(list(combinations(ind, r=n_inactive)))
-                np.random.shuffle(ind)
-
-                # set bounds to zero in each experiments for the variables that should be inactive
-                for i in range(n_experiments):
-                    ind_vanish = ind[i % len(ind)]
-                    bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
+                if (n_inactive > 0):
+                    # find indices of constraint.names in names
+                    ind = [
+                        i
+                        for i, p in enumerate(domain.inputs.get_keys())
+                        if p in constraint.features
+                    ]
+    
+                    # find and shuffle all combinations of elements of ind of length max_active
+                    ind = np.array(list(combinations(ind, r=n_inactive)))
+                    np.random.shuffle(ind)
+    
+                    # set bounds to zero in each experiments for the variables that should be inactive
+                    for i in range(n_experiments):
+                        ind_vanish = ind[i % len(ind)]
+                        bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
     else:
         pass
 
