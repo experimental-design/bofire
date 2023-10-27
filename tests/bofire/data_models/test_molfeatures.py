@@ -8,12 +8,14 @@ RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
-def test_framents():
+def test_fragments():
     from rdkit.Chem import Descriptors
 
-    assert names.fragments == [
-        rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]
+    fragment_list = [
+        item[0] for item in Descriptors.descList if item[0].startswith("fr_")
     ]
+
+    assert names.fragments == fragment_list
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
