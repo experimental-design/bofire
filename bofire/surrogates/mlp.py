@@ -5,11 +5,13 @@ import pandas as pd
 import torch
 import torch.nn as nn
 from botorch.models.ensemble import EnsembleModel
+from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import MLPEnsemble as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
@@ -74,7 +76,9 @@ class MLP(nn.Module):
 
 
 class _MLPEnsemble(EnsembleModel):
-    def __init__(self, mlps: Sequence[MLP]):
+    def __init__(
+        self, mlps: Sequence[MLP], output_scaler: Optional[OutcomeTransform] = None
+    ):
         super().__init__()
         if len(mlps) == 0:
             raise ValueError("List of mlps is empty.")
@@ -84,6 +88,8 @@ class _MLPEnsemble(EnsembleModel):
             assert mlp.layers[0].in_features == num_in_features
             assert mlp.layers[-1].out_features == num_out_features
         self.mlps = mlps
+        if output_scaler is not None:
+            self.outcome_transform = output_scaler
         # put all models in eval mode
         for mlp in self.mlps:
             mlp.eval()
@@ -170,6 +176,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
         self.subsample_fraction = data_model.subsample_fraction
         self.shuffle = data_model.shuffle
         self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
         super().__init__(data_model, **kwargs)
 
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
@@ -178,6 +185,15 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+
+        if self.output_scaler == ScalerEnum.IDENTITY:
+            output_scaler = None
+        elif self.output_scaler == ScalerEnum.STANDARDIZE:
+            output_scaler = Standardize(m=Y.shape[-1])
+        elif self.output_scaler == ScalerEnum.NORMALIZE:
+            raise ValueError("Normalize is not supported as an outcome transform.")
+        else:
+            raise ValueError("Scaler enum not known.")
 
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])
@@ -189,7 +205,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
 
             dataset = RegressionDataSet(
                 X=scaler.transform(tX) if scaler is not None else tX,
-                y=ty,
+                y=output_scaler(ty)[0] if output_scaler is not None else ty,
             )
             mlp = MLP(
                 input_size=transformed_X.shape[1],
@@ -208,6 +224,6 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
                 weight_decay=self.weight_decay,
             )
             mlps.append(mlp)
-        self.model = _MLPEnsemble(mlps=mlps)
+        self.model = _MLPEnsemble(mlps, output_scaler=output_scaler)
         if scaler is not None:
             self.model.input_transform = scaler

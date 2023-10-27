@@ -20,3 +20,4 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
     shuffle: bool = True
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
+    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
