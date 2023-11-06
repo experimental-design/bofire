@@ -1,28 +1,9 @@
 import importlib
 import random
-import warnings
 
 import bofire.data_models.molfeatures.api as molfeatures
+import bofire.data_models.molfeatures.names as names
 from tests.bofire.data_models.specs.specs import Specs
-
-try:
-    from rdkit.Chem import Descriptors
-
-    fragments_list = [fragment[0] for fragment in Descriptors.descList[124:]]
-except ImportError:
-    warnings.warn(
-        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
-    )
-
-try:
-    from mordred import Calculator, descriptors
-
-    calc = Calculator(descriptors, ignore_3D=False)
-    mordred_descriptors = [str(d) for d in calc.descriptors]
-except ImportError:
-    warnings.warn(
-        "mordred not installed. Mordred molecular descriptors cannot be used."
-    )
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 MORDRED_AVAILABLE = importlib.util.find_spec("mordred") is not None
@@ -42,7 +23,7 @@ if RDKIT_AVAILABLE:
         molfeatures.Fragments,
         lambda: {
             "fragments": random.sample(
-                fragments_list, k=random.randrange(1, len(fragments_list))
+                names.fragments, k=random.randrange(1, len(names.fragments))
             )
         },
     )
@@ -52,7 +33,7 @@ if RDKIT_AVAILABLE:
             "bond_radius": random.randrange(1, 6),
             "n_bits": random.randrange(32, 2048),
             "fragments": random.sample(
-                fragments_list, k=random.randrange(1, len(fragments_list))
+                names.fragments, k=random.randrange(1, len(names.fragments))
             ),
         },
     )
@@ -61,8 +42,6 @@ if RDKIT_AVAILABLE:
         specs.add_valid(
             molfeatures.MordredDescriptors,
             lambda: {
-                "descriptors": random.sample(
-                    mordred_descriptors, k=random.randrange(1, 10)
-                )
+                "descriptors": random.sample(names.mordred, k=random.randrange(1, 10))
             },
         )
