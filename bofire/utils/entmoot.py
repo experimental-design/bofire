@@ -43,10 +43,16 @@ def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.Concret
     for output_feature in domain.outputs:
         _bofire_output_to_entmoot(problem_config, output_feature)
 
+    constraints = []
+    for constraint in domain.constraints:
+        constraints.append(_bofire_constraint_to_entmoot(problem_config, constraint))
+
+    # apply constraints to model
     model_pyo = problem_config.get_pyomo_model_core()
     model_pyo.problem_constraints = pyo.ConstraintList()
-    for constraint in domain.constraints:
-        _bofire_constraint_to_entmoot(problem_config, constraint, model_pyo)
+    entconstr.ConstraintList(constraints).apply_pyomo_constraints(
+        model_pyo, problem_config.feat_list, model_pyo.problem_constraints
+    )
 
     return problem_config, model_pyo
 
@@ -109,17 +115,12 @@ def _bofire_output_to_entmoot(
 def _bofire_constraint_to_entmoot(
     problem_config: ProblemConfig,
     constraint: AnyConstraint,
-    model_core: pyo.ConcreteModel,
 ) -> None:
-    """Apply a Bofire `Constraint` to an ENTMOOT model.
-
-    To apply a constraint, the Pyomo model must be accessed. A reference to this model
-    core should be retained to keep the constraints.
+    """Convert a Bofire `Constraint` to an ENTMOOT `Constraint`.
 
     Args:
         problem_config (ProblemConfig): An ENTMOOT problem definition.
         constraint (AnyConstraint): A constraint to be applied to the Pyomo model.
-        model_core (pyo.ConcreteModel): The underlying solver model.
     """
 
     if isinstance(constraint, LinearEqualityConstraint):
@@ -147,13 +148,4 @@ def _bofire_constraint_to_entmoot(
     else:
         raise NotImplementedError("Only linear and nchoosek constraints are supported.")
 
-    # add constraint to a pyo.ConstraintList object
-    # TODO: expose a nicer API in entmoot
-    features = ent_constraint._get_feature_vars(model_core, problem_config.feat_list)
-    if isinstance(ent_constraint, entconstr.ExpressionConstraint):
-        expr = ent_constraint._get_expr(features)
-        model_core.problem_constraints.add(expr=expr)
-
-    elif isinstance(ent_constraint, entconstr.FunctionalConstraint):
-        rule = ent_constraint._get_function(model_core, features)
-        model_core.problem_constraints.add(rule=rule)
+    return ent_constraint

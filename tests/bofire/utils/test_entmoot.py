@@ -100,4 +100,4 @@ def test_convert_constraint_to_entmoot():
     )
     _, model = domain_to_problem_config(domain)
 
-    assert len(constraints) == len(model.constr)
+    assert len(constraints) == len(model.problem_constraints)
