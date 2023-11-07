@@ -35,11 +35,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
         Returns:
             ScalerEnum: Scaler used to transform the output
         """
-        if output_scaler in (ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE):
-            pass
-        elif output_scaler == ScalerEnum.NORMALIZE:
+        if output_scaler == ScalerEnum.NORMALIZE:
             raise ValueError("Normalize is not supported as an output transform.")
-        else:
-            raise ValueError("Scaler enum not known.")
 
         return output_scaler
