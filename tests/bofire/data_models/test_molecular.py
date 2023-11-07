@@ -1,11 +1,11 @@
 import importlib
-import warnings
 
 import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal, assert_series_equal
 
+import bofire.data_models.molfeatures.names as names
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
@@ -17,13 +17,6 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-
-try:
-    from rdkit.Chem import Descriptors
-except ImportError:
-    warnings.warn(
-        "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
-    )
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
@@ -71,7 +64,7 @@ def test_molecular_input_fixed():
         (Fingerprints(n_bits=32), [f"fingerprint_{i}" for i in range(32)]),
         (
             Fragments(),
-            [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]],
+            names.fragments,
         ),
         (
             Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
@@ -79,8 +72,7 @@ def test_molecular_input_fixed():
         ),
         (
             FingerprintsFragments(),
-            [f"fingerprint_{i}" for i in range(2048)]
-            + [rdkit_fragment[0] for rdkit_fragment in Descriptors.descList[124:]],
+            [f"fingerprint_{i}" for i in range(2048)] + names.fragments,
         ),
         (
             FingerprintsFragments(
