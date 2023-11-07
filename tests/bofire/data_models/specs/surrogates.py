@@ -176,6 +176,7 @@ specs.add_valid(
         "subsample_fraction": 1.0,
         "shuffle": True,
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": None,
