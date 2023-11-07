@@ -11,10 +11,12 @@ class AcquisitionFunction(BaseModel):
 
 class qNEI(AcquisitionFunction):
     type: Literal["qNEI"] = "qNEI"
+    prune_baseline: bool = True
 
 
 class qLogNEI(AcquisitionFunction):
     type: Literal["qLogNEI"] = "qLogNEI"
+    prune_baseline: bool = True
 
 
 class qEI(AcquisitionFunction):
@@ -37,3 +39,25 @@ class qUCB(AcquisitionFunction):
 class qPI(AcquisitionFunction):
     type: Literal["qPI"] = "qPI"
     tau: PositiveFloat = 1e-3
+
+
+class qEHVI(AcquisitionFunction):
+    type: Literal["qEHVI"] = "qEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+
+
+class qLogEHVI(AcquisitionFunction):
+    type: Literal["qLogEHVI"] = "qLogEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+
+
+class qNEHVI(AcquisitionFunction):
+    type: Literal["qNEHVI"] = "qNEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    prune_baseline: bool = True
+
+
+class qLogNEHVI(AcquisitionFunction):
+    type: Literal["qLogNEHVI"] = "qLogNEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    prune_baseline: bool = True

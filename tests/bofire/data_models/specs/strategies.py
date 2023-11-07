@@ -1,6 +1,6 @@
 import bofire.data_models.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.acquisition_functions.api import qEI, qPI
+from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
 from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
@@ -51,6 +51,14 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().dict(),
         "acquisition_function": qEI().dict(),
+        **strategy_commons,
+    },
+)
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().dict(),
+        "acquisition_function": qLogNEHVI().dict(),
         **strategy_commons,
     },
 )

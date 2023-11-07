@@ -17,12 +17,12 @@ specs.add_valid(
 
 specs.add_valid(
     acquisition_functions.qNEI,
-    lambda: {},
+    lambda: {"prune_baseline": random.choice([True, False])},
 )
 
 specs.add_valid(
     acquisition_functions.qLogNEI,
-    lambda: {},
+    lambda: {"prune_baseline": random.choice([True, False])},
 )
 
 
@@ -43,4 +43,28 @@ specs.add_valid(
     lambda: {
         "beta": random.random(),
     },
+)
+
+specs.add_valid(
+    acquisition_functions.qEHVI,
+    lambda: {
+        "alpha": random.random(),
+    },
+)
+
+specs.add_valid(
+    acquisition_functions.qLogEHVI,
+    lambda: {
+        "alpha": random.random(),
+    },
+)
+
+specs.add_valid(
+    acquisition_functions.qNEHVI,
+    lambda: {"alpha": random.random(), "prune_baseline": random.choice([True, False])},
+)
+
+specs.add_valid(
+    acquisition_functions.qLogNEHVI,
+    lambda: {"alpha": random.random(), "prune_baseline": random.choice([True, False])},
 )
