@@ -186,14 +186,10 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
-        if self.output_scaler == ScalerEnum.IDENTITY:
-            output_scaler = None
-        elif self.output_scaler == ScalerEnum.STANDARDIZE:
+        if self.output_scaler == ScalerEnum.STANDARDIZE:
             output_scaler = Standardize(m=Y.shape[-1])
-        elif self.output_scaler == ScalerEnum.NORMALIZE:
-            raise ValueError("Normalize is not supported as an outcome transform.")
         else:
-            raise ValueError("Scaler enum not known.")
+            output_scaler = None
 
         mlps = []
         subsample_size = round(self.subsample_fraction * X.shape[0])

@@ -208,27 +208,6 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
-def test_mlp_ensemble_fit_invalid_output_scaler():
-    bench = Himmelblau()
-    samples = bench.domain.inputs.sample(10)
-    experiments = bench.f(samples, return_complete=True)
-    ens = MLPEnsemble(
-        inputs=bench.domain.inputs,
-        outputs=bench.domain.outputs,
-        n_estimators=2,
-        n_epochs=5,
-        scaler=ScalerEnum.NORMALIZE,
-        output_scaler=ScalerEnum.NORMALIZE,
-    )
-    surrogate = surrogates.map(ens)
-
-    with pytest.raises(
-        ValueError,
-        match="Normalize is not supported as an outcome transform.",
-    ):
-        surrogate.fit(experiments=experiments)
-
-
 @pytest.mark.parametrize(
     "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY]
 )
