@@ -45,7 +45,7 @@ from tests.bofire.strategies.test_base import domains
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[1],
     "acquisition_function": specs.acquisition_functions.valid(
-        SingleObjectiveAcquisitionFunction
+        SingleObjectiveAcquisitionFunction, exact=False
     ).obj(),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
@@ -71,7 +71,7 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
 VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[2],
     "acquisition_function": specs.acquisition_functions.valid(
-        SingleObjectiveAcquisitionFunction
+        SingleObjectiveAcquisitionFunction, exact=False
     ).obj(),
     "descriptor_method": "EXHAUSTIVE",
     "categorical_method": "EXHAUSTIVE",
