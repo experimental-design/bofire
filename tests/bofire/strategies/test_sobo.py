@@ -19,6 +19,7 @@ import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
+    SingleObjectiveAcquisitionFunction,
     qEI,
     qLogEI,
     qLogNEI,
@@ -43,7 +44,9 @@ from tests.bofire.strategies.test_base import domains
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[1],
-    "acquisition_function": specs.acquisition_functions.valid().obj(),
+    "acquisition_function": specs.acquisition_functions.valid(
+        SingleObjectiveAcquisitionFunction
+    ).obj(),
     # "num_sobol_samples": 1024,
     # "num_restarts": 8,
     # "num_raw_samples": 1024,
@@ -67,7 +70,9 @@ BOTORCH_SOBO_STRATEGY_SPECS = {
 
 VALID_ADDITIVE_AND_MULTIPLICATIVE_BOTORCH_SOBO_STRATEGY_SPEC = {
     "domain": domains[2],
-    "acquisition_function": specs.acquisition_functions.valid().obj(),
+    "acquisition_function": specs.acquisition_functions.valid(
+        SingleObjectiveAcquisitionFunction
+    ).obj(),
     "descriptor_method": "EXHAUSTIVE",
     "categorical_method": "EXHAUSTIVE",
 }

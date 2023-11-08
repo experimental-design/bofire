@@ -73,7 +73,7 @@ class Specs:
 
     def _get_spec(self, specs: List[Spec], cls: Type = None):
         if cls is not None:
-            specs = [s for s in specs if s.cls == cls]
+            specs = [s for s in specs if issubclass(s.cls, cls)]
         if len(specs) == 0 and cls is None:
             raise TypeError("no spec found")
         elif len(specs) == 0:
