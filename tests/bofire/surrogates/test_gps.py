@@ -378,7 +378,7 @@ def test_TanimotoGP(kernel, specs):
     assert preds.shape == (3, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
-    assert not hasattr(model.model, "outcome_transform")
+    assert isinstance(model.model.outcome_transform, Standardize)
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = TanimotoGPSurrogate(

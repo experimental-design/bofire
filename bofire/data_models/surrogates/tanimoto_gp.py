@@ -27,7 +27,7 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
-    output_scaler: ScalerEnum = ScalerEnum.IDENTITY
+    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
 
     @validator("output_scaler")
     def validate_output_scaler(cls, output_scaler):
