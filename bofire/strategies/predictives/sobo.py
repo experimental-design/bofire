@@ -12,13 +12,10 @@ except ModuleNotFoundError:
 import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import (
-    ConstrainedMCObjective,
-    GenericMCObjective,
-)
+from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
 from botorch.models.gpytorch import GPyTorchModel
 
-from bofire.data_models.acquisition_functions.api import qPI, qSR, qUCB
+from bofire.data_models.acquisition_functions.api import qLogNEI, qNEI, qPI, qSR, qUCB
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.api import AdditiveSoboStrategy as AdditiveDataModel
 from bofire.data_models.strategies.api import CustomSoboStrategy as CustomDataModel
@@ -57,9 +54,11 @@ class SoboStrategy(BotorchStrategy):
             etas,
         ) = self._get_objective_and_constraints()
 
+        assert self.model is not None
+
         acqf = get_acquisition_function(
             self.acquisition_function.__class__.__name__,
-            self.model,  # type: ignore
+            self.model,
             objective_callable,
             X_observed=X_train,
             X_pending=X_pending,
@@ -73,6 +72,9 @@ class SoboStrategy(BotorchStrategy):
             else 1e-3,
             eta=torch.tensor(etas).to(**tkwargs),
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
+            prune_baseline=self.acquisition_function.prune_baseline
+            if isinstance(self.acquisition_function, (qNEI, qLogNEI))
+            else True,
         )
         return [acqf]
 
