@@ -239,7 +239,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert isinstance(model.model, SingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
-    elif output_scaler == ScalerEnum.STANDARDIZE:
+    elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, Normalize)
@@ -463,7 +463,7 @@ def test_MixedGPModel(kernel, scaler, output_scaler):
     assert isinstance(model.model, MixedSingleTaskGP)
     if output_scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.outcome_transform, Standardize)
-    elif output_scaler == ScalerEnum.STANDARDIZE:
+    elif output_scaler == ScalerEnum.IDENTITY:
         assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
