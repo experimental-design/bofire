@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 
 import pandas as pd
-from pydantic import Field
+from pydantic import Field, validator
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -107,6 +107,25 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
+    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
+
+    @validator("output_scaler")
+    def validate_output_scaler(cls, output_scaler):
+        """validates that output_scaler is a valid type
+
+        Args:
+            output_scaler (ScalerEnum): Scaler used to transform the output
+
+        Raises:
+            ValueError: when ScalerEnum.NORMALIZE is used
+
+        Returns:
+            ScalerEnum: Scaler used to transform the output
+        """
+        if output_scaler == ScalerEnum.NORMALIZE:
+            raise ValueError("Normalize is not supported as an output transform.")
+
+        return output_scaler
