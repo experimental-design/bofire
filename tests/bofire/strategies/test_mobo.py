@@ -74,7 +74,7 @@ def test_mobo_get_adjusted_refpoint(domain, ref_point, experiments, expected):
 
 
 @pytest.mark.parametrize(
-    "strategy, use_ref_point, acqf, num_test_candidates",
+    "strategy, use_ref_point, acqf",
     [
         (data_models.MoboStrategy, use_ref_point, acqf)
         for use_ref_point in [True, False]
