@@ -1,6 +1,7 @@
 from abc import abstractmethod
 from typing import List, Literal, Optional
 
+import numpy as np
 import pandas as pd
 from pydantic import Field, validator
 from typing_extensions import Annotated
@@ -86,6 +87,22 @@ class Fragments(MolFeatures):
             columns=self.get_descriptor_names(),
             index=values.index,
         )
+
+    def get_contained_fragments(self, values: pd.Series) -> List[str]:
+        """Returns the list of fragments that containied in the provided list of smiles.
+
+        Args:
+            values (pd.Series): Series of smiles.
+
+        Returns:
+            List[str]: List of the contained fragments.
+        """
+        fragments = self.fragments or names.fragments
+        descriptor_values = smiles2fragments(
+            smiles=values.tolist(), fragments_list=fragments
+        )
+        nonzero_cols = np.any(descriptor_values, axis=0).nonzero()[0].tolist()
+        return [fragments[i] for i in nonzero_cols]
 
 
 class FingerprintsFragments(Fingerprints, Fragments):
