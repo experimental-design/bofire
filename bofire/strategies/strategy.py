@@ -32,22 +32,22 @@ class Strategy(ABC):
         return cls(data_model=data_model)
 
     @property
-    def experiments(self) -> pd.DataFrame:
+    def experiments(self) -> Optional[pd.DataFrame]:
         """Returns the experiments of the strategy.
 
         Returns:
             pd.DataFrame: Current experiments.
         """
-        return self._experiments  # type: ignore
+        return self._experiments
 
     @property
-    def candidates(self) -> pd.DataFrame:
+    def candidates(self) -> Optional[pd.DataFrame]:
         """Returns the (pending) candidates of the strategy.
 
         Returns:
             pd.DataFrame: Pending experiments.
         """
-        return self._candidates  # type: ignore
+        return self._candidates
 
     def tell(
         self,

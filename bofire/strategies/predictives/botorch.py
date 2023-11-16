@@ -278,6 +278,8 @@ class BotorchStrategy(PredictiveStrategy):
         """
 
         assert candidate_count > 0, "candidate_count has to be larger than zero."
+        if self.experiments is None:
+            raise ValueError("No experiments have been provided yet.")
 
         acqfs = self._get_acqfs(candidate_count)
 
