@@ -19,6 +19,7 @@ from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
+from bofire.data_models.molfeatures.api import MordredDescriptors
 
 
 def get_scaler(
@@ -52,7 +53,8 @@ def get_scaler(
             key
             for key, value in input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
-            and not isinstance(value, MolFeatures)
+            # and not isinstance(value, MolFeatures)
+            and not isinstance(value, MordredDescriptors)
         ]
 
         ord_dims = []
