@@ -237,12 +237,13 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
-        "kernel": ScaleKernel(
-            base_kernel=TanimotoKernel(
-                ard=True,
-            ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        ),
+        # "kernel": ScaleKernel(
+        #    base_kernel=TanimotoKernel(
+        #        ard=True,
+        #    ),
+        #    outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        #),
+        "kernel": TanimotoKernel(ard=True),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
@@ -269,7 +270,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
-        #"aggregations": None,
+        "aggregations": None,
         "molecular_kernel": TanimotoKernel(ard=True),
         "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
         "categorical_kernel": HammondDistanceKernel(ard=True),
@@ -277,6 +278,6 @@ specs.add_valid(
         "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3),
                                       "cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
-        #"hyperconfig": None,
+        "hyperconfig": None,
     },
 )

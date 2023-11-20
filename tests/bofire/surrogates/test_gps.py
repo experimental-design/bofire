@@ -182,6 +182,94 @@ def test_get_scaler(
             with pytest.raises(AttributeError):
                 assert (scaler.coefficient == expected_coefficient).all()
 
+@pytest.mark.parametrize(
+    "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices_length",
+    [
+        (
+            ScalerEnum.NORMALIZE,
+            {
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            Normalize,
+            4,
+        ),
+        (
+            ScalerEnum.NORMALIZE,
+            {
+                "x_mol": Fingerprints(n_bits=32),
+            },
+            Normalize,
+            2,
+        ),
+        (
+            ScalerEnum.STANDARDIZE,
+            {
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            InputStandardize,
+            4,
+        ),
+        (
+            ScalerEnum.STANDARDIZE,
+            {
+                "x_mol": Fragments(),
+            },
+            InputStandardize,
+            2,
+        ),
+        (
+            ScalerEnum.IDENTITY,
+            {
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            type(None),
+            0,
+        ),
+        (
+            ScalerEnum.IDENTITY,
+            {
+                "x_mol": FingerprintsFragments(n_bits=32),
+            },
+            type(None),
+            0,
+        ),
+    ],
+)
+def test_get_scaler_molecular(
+    scaler_enum,
+    input_preprocessing_specs,
+    expected_scaler,
+    expected_indices_length,
+):
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(0, 5),
+            )
+            for i in range(2)
+        ] + [MolecularInput(key='x_mol')]
+    )
+    experiments = [
+        [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O"],
+        [4.0, 2.0, "c1ccccc1"],
+        [3.0, 0.5, "[CH3][CH2][OH]"],
+        [1.5, 4.5, "N[C@](C)(F)C(=O)O"],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_mol"])
+    scaler = get_scaler(
+        inputs=inputs,
+        input_preprocessing_specs=input_preprocessing_specs,
+        scaler=scaler_enum,
+        X=experiments[inputs.get_keys()],
+    )
+    assert isinstance(scaler, expected_scaler)
+    if expected_indices_length != 0:
+        assert (len(scaler.indices) == expected_indices_length)
+    else:
+        with pytest.raises(AttributeError):
+            assert (scaler.indices == None)
+
 
 @pytest.mark.parametrize(
     "kernel, scaler",
@@ -321,21 +409,21 @@ def test_SingleTaskGPHyperconfig():
     "kernel, specs",
     [
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
+            TanimotoKernel(ard=False),
             {"x_1": Fingerprints(n_bits=32)},
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
+            TanimotoKernel(ard=True),
             {"x_1": Fragments()},
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
+            TanimotoKernel(ard=False),
             {"x_1": FingerprintsFragments(n_bits=32)},
         ),
-        (
-            ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
-        ),
+        # (
+        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
+        #     {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+        # ),
     ],
 )
 def test_TanimotoGP(kernel, specs):
@@ -378,6 +466,25 @@ def test_TanimotoGP(kernel, specs):
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
+def test_TanimotoGPModel_invalid_preprocessing_mordred():
+    inputs = Inputs(
+        features=[MolecularInput(key='x_mol')]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = [
+        ["CC(=O)Oc1ccccc1C(=O)O", 1.5],
+        ["c1ccccc1", 3.5],
+        ["[CH3][CH2][OH]", 2.0],
+        ["N[C@](C)(F)C(=O)O", 4.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_mol", "y"])
+    experiments["valid_y"] = 1
+    with pytest.raises(ValidationError):
+        MixedTanimotoGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            input_preprocessing_specs={"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+        )
 
 def test_MixedGPModel_invalid_preprocessing():
     inputs = Inputs(
@@ -501,38 +608,64 @@ def test_MixedTanimotoGPModel_invalid_preprocessing():
             outputs=outputs,
         )
 
+def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(0, 5),
+            )
+            for i in range(2)
+        ] + [MolecularInput(key='x_mol')]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = [
+        [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O", 1.5],
+        [4.0, 2.0, "c1ccccc1", 3.5],
+        [3.0, 0.5, "[CH3][CH2][OH]", 2.0],
+        [1.5, 4.5, "N[C@](C)(F)C(=O)O", 4.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_mol", "y"])
+    experiments["valid_y"] = 1
+    with pytest.raises(ValidationError):
+        MixedTanimotoGPSurrogate(
+            inputs=inputs,
+            outputs=outputs,
+            input_preprocessing_specs={"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+        )
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, specs, scaler",
     [
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": Fingerprints(n_bits=32)},
+            TanimotoKernel(ard=True),
+            {"x_mol": Fingerprints(n_bits=32)},
             ScalerEnum.NORMALIZE,
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": Fragments()},
+            TanimotoKernel(ard=False),
+            {"x_mol": Fragments()},
             ScalerEnum.IDENTITY,
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": FingerprintsFragments(n_bits=32)},
+            TanimotoKernel(ard=True),
+            {"x_mol": FingerprintsFragments(n_bits=32)},
             ScalerEnum.STANDARDIZE,
         ),
-        (
-            ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
-            ScalerEnum.NORMALIZE,
-        ),
+        # (
+        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
+        #     {"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+        #     ScalerEnum.NORMALIZE,
+        # ),
     ],
 )
 def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
     inputs = Inputs(
-        features=[MolecularInput(key="x_1")]
+        features=[MolecularInput(key="x_mol")]
         + [
             ContinuousInput(
-                key=f"x_{i+2}",
+                key=f"x_{i+1}",
                 bounds=(0, 5.0),
             )
             for i in range(2)
@@ -545,7 +678,7 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
         ["[CH3][CH2][OH]", 3.0, 0.5, 69.0],
         ["N[C@](C)(F)C(=O)O", 1.5, 4.5, 20.0],
     ]
-    experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_3", "y"])
+    experiments = pd.DataFrame(experiments, columns=["x_mol", "x_1", "x_2", "y"])
     experiments["valid_y"] = 1
     model = MixedTanimotoGPSurrogate(
         inputs=inputs,
@@ -567,12 +700,12 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
-        #assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
+        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, InputStandardize)
-        #assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
+        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:
         assert isinstance(model.model.input_transform, OneHotToNumeric)
@@ -594,31 +727,31 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
     "kernel, specs, scaler",
     [
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": Fingerprints(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            TanimotoKernel(ard=True),
+            {"x_mol": Fingerprints(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
             ScalerEnum.NORMALIZE,
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": Fragments(), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            TanimotoKernel(ard=False),
+            {"x_mol": Fragments(), "x_cat": CategoricalEncodingEnum.ONE_HOT},
             ScalerEnum.IDENTITY,
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            TanimotoKernel(ard=True),
+            {"x_mol": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
             ScalerEnum.STANDARDIZE,
         ),
-        (
-            ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-            ScalerEnum.NORMALIZE,
-        ),
+        # (
+        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
+        #     {"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+        #     ScalerEnum.NORMALIZE,
+        # ),
     ],
 )
 def test_MixedTanimotoGP(kernel, specs, scaler):
     inputs = Inputs(
-        features=[MolecularInput(key="x_1")]
-        + [ContinuousInput(key=f"x_2",bounds=(0, 5.0),)]
+        features=[MolecularInput(key="x_mol")]
+        + [ContinuousInput(key=f"x_1",bounds=(0, 5.0),)]
         + [CategoricalInput(key="x_cat", categories=["a", "b"])]
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
@@ -628,7 +761,7 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
         ["[CH3][CH2][OH]", 3.0, "b", 69.0],
         ["N[C@](C)(F)C(=O)O", 1.5, "b", 20.0],
     ]
-    experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_cat", "y"])
+    experiments = pd.DataFrame(experiments, columns=["x_mol", "x_1", "x_cat", "y"])
     experiments["valid_y"] = 1
     model = MixedTanimotoGPSurrogate(
         inputs=inputs,
@@ -650,12 +783,12 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
-        #assert model.model.input_transform.tf1.indices.shape == torch.Size([1])
+        assert model.model.input_transform.tf1.indices.shape == torch.Size([1])
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, InputStandardize)
-        #assert model.model.input_transform.tf1.indices.shape == torch.Size([1])
+        assert model.model.input_transform.tf1.indices.shape == torch.Size([1])
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:
         assert isinstance(model.model.input_transform, OneHotToNumeric)
@@ -674,33 +807,30 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "kernel, specs, scaler",
+    "kernel, specs",
     [
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": Fingerprints(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-            ScalerEnum.IDENTITY,
+            TanimotoKernel(ard=True),
+            {"x_mol": Fingerprints(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": Fragments(), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-            ScalerEnum.IDENTITY,
+            TanimotoKernel(ard=False),
+            {"x_mol": Fragments(), "x_cat": CategoricalEncodingEnum.ONE_HOT},
         ),
         (
-            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
-            {"x_1": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-            ScalerEnum.IDENTITY,
+            TanimotoKernel(ard=True),
+            {"x_mol": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
         ),
-        (
-            ScaleKernel(base_kernel=RBFKernel(ard=True)),
-            {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-            ScalerEnum.NORMALIZE,
-        ),
+        # (
+        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
+        #     {"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+        #     ScalerEnum.NORMALIZE,
+        # ),
     ],
 )
-def test_MixedTanimotoGP_categorical(kernel, specs, scaler):
+def test_MixedTanimotoGP_categorical(kernel, specs):
     inputs = Inputs(
-        features=[MolecularInput(key="x_1")]
+        features=[MolecularInput(key="x_mol")]
         + [CategoricalInput(key="x_cat", categories=["a", "b"])]
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
@@ -710,12 +840,83 @@ def test_MixedTanimotoGP_categorical(kernel, specs, scaler):
         ["[CH3][CH2][OH]", "b", 69.0],
         ["N[C@](C)(F)C(=O)O", "b", 20.0],
     ]
-    experiments = pd.DataFrame(experiments, columns=["x_1", "x_cat", "y"])
+    experiments = pd.DataFrame(experiments, columns=["x_mol", "x_cat", "y"])
     experiments["valid_y"] = 1
     model = MixedTanimotoGPSurrogate(
         inputs=inputs,
         outputs=outputs,
         molecular_kernel=kernel,
+        input_preprocessing_specs=specs,
+    )
+    model = surrogates.map(model)
+    model.fit(experiments)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    preds = model.predict(experiments.iloc[:-1])
+    assert preds.shape == (3, 2)
+    # check that model is composed correctly
+    assert isinstance(model.model, MixedTanimotoGP)
+    assert isinstance(model.model.outcome_transform, Standardize)
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = MixedTanimotoGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        input_preprocessing_specs=specs,
+    )
+    model2 = surrogates.map(model2)
+    model2.loads(dump)
+    preds2 = model2.predict(experiments.iloc[:-1])
+    assert_frame_equal(preds, preds2)
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "molecular_kernel, continuous_kernel, specs, scaler",
+    [
+        (
+            TanimotoKernel(ard=True),
+            RBFKernel(ard=True),
+            {"x_1": Fingerprints(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            ScalerEnum.NORMALIZE,
+        ),
+        (
+            TanimotoKernel(ard=False),
+            MaternKernel(nu=0.5, ard=True),
+            {"x_1": Fingerprints(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            ScalerEnum.IDENTITY,
+        ),
+        (
+            TanimotoKernel(ard=True),
+            MaternKernel(nu=2.5, ard=False),
+            {"x_1": Fingerprints(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            ScalerEnum.STANDARDIZE,
+        ),
+    ],
+)
+def test_MixedTanimotoGP_with_mordred(molecular_kernel, continuous_kernel, specs, scaler):
+    inputs = Inputs(
+        features=[
+           MolecularInput(
+                key=f"x_{i+1}",
+            )
+            for i in range(2)
+        ]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = [
+        ["CC(=O)Oc1ccccc1C(=O)O", "CC(=O)Oc1ccccc1C(=O)O", 88.0],
+        ["c1ccccc1", "c1ccccc1", 35.0],
+        ["[CH3][CH2][OH]", "[CH3][CH2][OH]", 69.0],
+        ["N[C@](C)(F)C(=O)O", "N[C@](C)(F)C(=O)O", 20.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "y"])
+    experiments["valid_y"] = 1
+    model = MixedTanimotoGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        molecular_kernel=molecular_kernel,
+        continuous_kernel=continuous_kernel,
         scaler=scaler,
         input_preprocessing_specs=specs,
     )
@@ -732,12 +933,12 @@ def test_MixedTanimotoGP_categorical(kernel, specs, scaler):
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
-        #assert model.model.input_transform.tf1.indices.shape == torch.Size([1])
+        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     elif scaler == ScalerEnum.STANDARDIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, InputStandardize)
-        #assert model.model.input_transform.tf1.indices.shape == torch.Size([1])
+        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
         assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
     else:
         assert isinstance(model.model.input_transform, OneHotToNumeric)
@@ -746,7 +947,8 @@ def test_MixedTanimotoGP_categorical(kernel, specs, scaler):
     model2 = MixedTanimotoGPSurrogate(
         inputs=inputs,
         outputs=outputs,
-        molecular_kernel=kernel,
+        molecular_kernel=molecular_kernel,
+        continuous_kernel=continuous_kernel,
         input_preprocessing_specs=specs,
     )
     model2 = surrogates.map(model2)
