@@ -16,10 +16,11 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.single_task_gp import ScalerEnum
 from bofire.data_models.features.molecular import MolecularInput
+from bofire.data_models.surrogates.trainable import TrainableSurrogate
 from bofire.data_models.molfeatures.api import *
 
 
-class MixedTanimotoGPSurrogate(BotorchSurrogate):
+class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["MixedTanimotoGPSurrogate"] = "MixedTanimotoGPSurrogate"
 
     continuous_kernel: AnyContinuousKernel = Field(
@@ -28,29 +29,31 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate):
     categorical_kernel: AnyCategoricalKernal = Field(
         default_factory=lambda: ScaleKernel(base_kernel=HammondDistanceKernel(ard=True))
     )
-    # Modify the default kernel for Mordred descriptors
-    molecular_kernel: AnyKernel = Field(
+    # Molecular kernel will only be imposed on fingerprints, fragments, or fingerprintsfragments
+    molecular_kernel: AnyMolecularKernel = Field(
         default_factory=lambda: ScaleKernel(base_kernel=TanimotoKernel(ard=True))
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
     @validator("input_preprocessing_specs")
     def validate_moleculars(cls, v, values):
-        """Checks that at least one of fingerprints, fragments, fingerprints_fragments, or Mordred descriptor features are present."""
+        """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
         if not any (
-            [ isinstance(value, MolFeatures)
-              for value in v.values()
+            [isinstance(value, Fingerprints)
+            or isinstance(value, Fragments)
+            or isinstance(value, FingerprintsFragments)
+            for value in v.values()
             ]
         ):
             raise ValueError(
-                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, fingerprints_fragments, or Mordred descriptor features are present."
+                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
             )
-        molecular_features = [
-            value for value in v.values() if isinstance(value, MolFeatures)
-        ]
-        if any ([isinstance(feature, MordredDescriptors) for feature in molecular_features]) and \
-        any ([isinstance(feature, Fingerprints) or isinstance(feature, Fragments) or isinstance(feature, FingerprintsFragments) for feature in molecular_features]): 
-            raise ValueError(
-                "Fingerprints, Fragments, or FingerprintsFragments and Mordred Descriptors cannot present simultaneously in MixedTanimotoGPSurrogate."
-            )
+        # molecular_features = [
+        #     value for value in v.values() if isinstance(value, MolFeatures)
+        # ]
+        # if any ([isinstance(feature, MordredDescriptors) for feature in molecular_features]) and \
+        # any ([isinstance(feature, Fingerprints) or isinstance(feature, Fragments) or isinstance(feature, FingerprintsFragments) for feature in molecular_features]): 
+        #     raise ValueError(
+        #         "Fingerprints, Fragments, or FingerprintsFragments and Mordred Descriptors cannot present simultaneously in MixedTanimotoGPSurrogate."
+        #     )
         return v

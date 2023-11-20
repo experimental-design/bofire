@@ -237,7 +237,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             and not isinstance(value, MordredDescriptors)
         ]
 
-        # All Molecular Features (need to specify kernel for mordred descriptors)
+        # Molecular features only include fingerprints, fragments, and fingerprintsfragments
         molecular_features_list = [
             key
             for key, value in self.input_preprocessing_specs.items()
@@ -247,27 +247,28 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             if isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
             or isinstance(value, FingerprintsFragments)
-            or isinstance(value, MordredDescriptors)
+            # or isinstance(value, MordredDescriptors)
         ]
         
 
-        # Will be Continuous inputs and Categorical with descriptors only
+        # Continuous features include continuous inputs, categorical with descriptors, and Mordred descriptors
         continuous_features_list = [
             feat.key
             for feat in self.inputs.get()
             if feat.key not in categorical_features_list and feat.key not in molecular_features_list
         ]
 
-        # Scaler will only act on Continuous inputs, Categorical with descriptors and Molecular with Mordred descriptors
-        # Check whether there are any inputs mentioned above
-        mordred_features_list = [
-            key
-            for key, value in self.input_preprocessing_specs.items()
-            if isinstance(value, MordredDescriptors)
-        ]
+        # # Scaler will only act on Continuous inputs, Categorical with descriptors and Molecular with Mordred descriptors
+        # # Check whether there are any inputs mentioned above
+        # mordred_features_list = [
+        #     key
+        #     for key, value in self.input_preprocessing_specs.items()
+        #     if isinstance(value, MordredDescriptors)
+        # ]
 
-        if len(mordred_features_list)==0 and len(continuous_features_list)==0:
-            scaler = None
+        # if len(mordred_features_list)==0 and len(continuous_features_list)==0:
+        if len(continuous_features_list) == 0:
+            scaler = None # skip the scaler
         else:
             scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
 
@@ -281,13 +282,13 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             self.input_preprocessing_specs
         )
     
-        # List of indexes for Molecular features using Fingerprints, Fragment, FingerprintsFragments, Mordred descriptors
+        # List of indexes for Molecular features using Fingerprints, Fragment, FingerprintsFragments
         mol_dims = []
         for mol_feat in (molecular_features_list):
             for i in features2idx[mol_feat]:
                 mol_dims.append(i)
 
-        # List of indexes for Continuous inputs, Categorical with descriptors
+        # List of indexes for Continuous inputs, Categorical with descriptors, Mordred descriptors
         ord_dims = []
         for feat in self.inputs.get():
             if feat.key not in categorical_features_list and feat.key not in molecular_features_list:
