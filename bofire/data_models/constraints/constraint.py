@@ -13,6 +13,10 @@ class Constraint(BaseModel):
 
     type: str
 
+
+class IntrapointConstraint(Constraint):
+    type: str
+
     @abstractmethod
     def is_fulfilled(
         self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6

@@ -4,6 +4,7 @@ import pandas as pd
 import pytest
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -218,3 +219,41 @@ def get_row(features, value: float = None, values: List[float] = None):
 )
 def test_fulfillment(df, constraint, fulfilled):
     assert constraint.is_fulfilled(df).all() == fulfilled
+
+
+@pytest.mark.parametrize(
+    "df, constraint, fulfilled",
+    [
+        (
+            pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [1.0, 2.0, 3.0]}),
+            InterpointEqualityConstraint(feature="a"),
+            True,
+        ),
+        (
+            pd.DataFrame({"a": [1.0, 1.0, 2.0], "b": [1.0, 2.0, 3.0]}),
+            InterpointEqualityConstraint(feature="a"),
+            False,
+        ),
+        (
+            pd.DataFrame({"a": [1.0, 1.0, 2.0, 2.0], "b": [1.0, 2.0, 3.0, 4.0]}),
+            InterpointEqualityConstraint(feature="a", multiplicity=2),
+            True,
+        ),
+        (
+            pd.DataFrame(
+                {"a": [1.0, 1.0, 2.0, 2.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]}
+            ),
+            InterpointEqualityConstraint(feature="a", multiplicity=2),
+            True,
+        ),
+        (
+            pd.DataFrame(
+                {"a": [1.0, 1.0, 2.0, 3.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]}
+            ),
+            InterpointEqualityConstraint(feature="a", multiplicity=2),
+            False,
+        ),
+    ],
+)
+def test_fulfillment_intrapoint(df, constraint, fulfilled):
+    assert constraint.is_fulfilled(df) == fulfilled

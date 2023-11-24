@@ -46,3 +46,11 @@ specs.add_valid(
         "none_also_valid": False,
     },
 )
+
+specs.add_valid(
+    constraints.InterpointEqualityConstraint,
+    lambda: {
+        "feature": "f1",
+        "multiplicity": 1,
+    },
+)
