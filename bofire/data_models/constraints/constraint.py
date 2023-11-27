@@ -13,10 +13,6 @@ class Constraint(BaseModel):
 
     type: str
 
-
-class IntrapointConstraint(Constraint):
-    type: str
-
     @abstractmethod
     def is_fulfilled(
         self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
@@ -54,6 +50,10 @@ class IntrapointConstraint(Constraint):
             pd.DataFrame: the i-th row contains the jacobian evaluated at the i-th experiment
         """
         pass
+
+
+class IntrapointConstraint(Constraint):
+    type: str
 
 
 class ConstraintError(Exception):

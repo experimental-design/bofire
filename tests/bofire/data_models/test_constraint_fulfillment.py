@@ -215,15 +215,6 @@ def get_row(features, value: float = None, values: List[float] = None):
             ),
             True,
         ),
-    ],
-)
-def test_fulfillment(df, constraint, fulfilled):
-    assert constraint.is_fulfilled(df).all() == fulfilled
-
-
-@pytest.mark.parametrize(
-    "df, constraint, fulfilled",
-    [
         (
             pd.DataFrame({"a": [1.0, 1.0, 1.0], "b": [1.0, 2.0, 3.0]}),
             InterpointEqualityConstraint(feature="a"),
@@ -255,5 +246,5 @@ def test_fulfillment(df, constraint, fulfilled):
         ),
     ],
 )
-def test_fulfillment_intrapoint(df, constraint, fulfilled):
-    assert constraint.is_fulfilled(df) == fulfilled
+def test_fulfillment(df, constraint, fulfilled):
+    assert constraint.is_fulfilled(df).all() == fulfilled

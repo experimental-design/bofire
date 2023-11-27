@@ -1,5 +1,4 @@
 import math
-from abc import abstractmethod
 from typing import Annotated, Literal, Optional
 
 import numpy as np
@@ -10,44 +9,47 @@ from bofire.data_models.constraints.constraint import Constraint
 
 
 class InterpointConstraint(Constraint):
+    """An interpoint constraint describes required relationships between individual
+    candidates when asking a strategy for returning more than one candidate.
+    """
+
     type: str
-
-    @abstractmethod
-    def is_fulfilled(
-        self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
-    ) -> bool:
-        """Abstract method to check if a constraint is fulfilled for the whole set of experiments.
-
-        Args:
-            experiments (pd.DataFrame): Dataframe to check constraint fulfillment.
-            tol (float, optional): tolerance parameter. A constraint is considered as not fulfilled if
-                the violation is larger than tol. Defaults to 1e-6.
-
-        Returns:
-            bool: True if fulfilled else False
-        """
-        pass
 
 
 class InterpointEqualityConstraint(InterpointConstraint):
+    """Constraint that forces that values of a certain feature of a set/batch of
+    candidates should have the same value.
+
+    Attributes:
+        feature(str): The constrained feature.
+        multiplicity(int): The multiplicity of the constraint, stating how many
+            values of the feature in the batch should have always the same value.
+    """
+
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
     feature: str
     multiplicity: Optional[Annotated[int, Field(ge=2)]]
 
     def is_fulfilled(
         self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
-    ) -> bool:
+    ) -> pd.Series:
         multiplicity = self.multiplicity or len(experiments)
         for i in range(math.floor(len(experiments) / multiplicity)):
             batch = experiments[self.feature].values[
                 i * multiplicity : (i + 1) * multiplicity
             ]
             if not np.allclose(batch, batch[0]):
-                return False
+                return pd.Series([False])
         if len(experiments) % multiplicity > 0:
             batch = experiments[self.feature].values[
                 -(len(experiments) % multiplicity) :
             ]
             print(batch)
-            return np.allclose(batch, batch[0])
-        return True
+            return pd.Series([np.allclose(batch, batch[0])])
+        return pd.Series([True])
+
+    def __call__(self, experiments: pd.DataFrame) -> pd.Series:
+        raise NotImplementedError("Method `__call__` currently not implemented.")
+
+    def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        raise NotImplementedError("Method `jacobian` currently not implemented.")
