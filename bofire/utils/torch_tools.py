@@ -1,3 +1,4 @@
+import math
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
@@ -6,6 +7,7 @@ from torch import Tensor
 
 from bofire.data_models.api import AnyObjective, Domain, Outputs
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -82,6 +84,43 @@ def get_linear_constraints(
                     -(rhs + c.rhs),  # type: ignore
                 )
             )
+    return constraints
+
+
+def get_interpoint_constraints(
+    domain: Domain, n_candidates: int
+) -> List[Tuple[Tensor, Tensor, float]]:
+    """Converts interpoint equality constraints to linear equality constraints,
+        that can be processed by botorch.
+
+    Args:
+        domain (Domain): Optimization problem definition.
+        n_candidates (int): Number of candidates that should be requested.
+
+    Returns:
+        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists
+            of a tensor with the feature indices, coefficients and a float for the rhs.
+    """
+    constraints = []
+    for constraint in domain.constraints.get(InterpointEqualityConstraint):
+        assert isinstance(constraint, InterpointEqualityConstraint)
+        coefficients = torch.tensor([1.0, -1.0]).to(**tkwargs)
+        feat_idx = domain.get_feature_keys(Input).index(constraint.feature)
+        feat = domain.inputs.get_by_key(constraint.feature)
+        assert isinstance(feat, ContinuousInput)
+        if feat.is_fixed():
+            continue
+        multiplicity = constraint.multiplicity or n_candidates
+        for i in range(math.ceil(n_candidates / multiplicity)):
+            all_indices = torch.arange(
+                i * multiplicity, min((i + 1) * multiplicity, n_candidates)
+            )
+            for k in range(len(all_indices) - 1):
+                indices = torch.tensor(
+                    [[all_indices[0], feat_idx], [all_indices[k + 1], feat_idx]],
+                    dtype=torch.int64,
+                )
+                constraints.append((indices, coefficients, 0.0))
     return constraints
 
 
@@ -188,7 +227,8 @@ def get_output_constraints(
     for idx, feat in enumerate(outputs.get()):
         if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
             iconstraints, ietas = constrained_objective2botorch(
-                idx, objective=feat.objective  # type: ignore
+                idx,
+                objective=feat.objective,  # type: ignore
             )
             constraints += iconstraints
             etas += ietas
@@ -214,15 +254,11 @@ def get_objective_callable(
         )
     if isinstance(objective, MinimizeSigmoidObjective):
         return lambda y, X=None: (
-            (
+            1.0
+            - 1.0
+            / (
                 1.0
-                - 1.0
-                / (
-                    1.0
-                    + torch.exp(
-                        -1.0 * objective.steepness * (y[..., idx] - objective.tp)
-                    )
-                )
+                + torch.exp(-1.0 * objective.steepness * (y[..., idx] - objective.tp))
             )
         )
     if isinstance(objective, MaximizeSigmoidObjective):
@@ -230,7 +266,7 @@ def get_objective_callable(
             1.0
             / (
                 1.0
-                + torch.exp(-1.0 * objective.steepness * ((y[..., idx] - objective.tp)))
+                + torch.exp(-1.0 * objective.steepness * (y[..., idx] - objective.tp))
             )
         )
     if isinstance(objective, TargetObjective):

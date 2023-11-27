@@ -3,7 +3,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import torch
-from botorch.utils.sampling import get_polytope_samples
+from botorch.optim.initializers import sample_q_batches_from_polytope
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -17,7 +17,11 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.strategies.api import PolytopeSampler as DataModel
 from bofire.strategies.samplers.sampler import SamplerStrategy
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_interpoint_constraints,
+    get_linear_constraints,
+    tkwargs,
+)
 
 
 class PolytopeSampler(SamplerStrategy):
@@ -35,6 +39,8 @@ class PolytopeSampler(SamplerStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
+        self.n_burnin = data_model.n_burnin
+        self.n_thinning = data_model.n_thinning
         self.fallback_sampling_method = data_model.fallback_sampling_method
 
     def _ask(self, n: int) -> pd.DataFrame:
@@ -111,6 +117,9 @@ class PolytopeSampler(SamplerStrategy):
                     ineq[0].max() <= counter
                 ), "Something went wrong when transforming the linear constraints. Revisit the problem."
 
+            # TODO: check for pseudofixed
+            interpoints = get_interpoint_constraints(domain=self.domain, n_candidates=n)
+
             # map the indice of the equality constraints
             for eq in cleaned_eqs:
                 for key, value in feature_map.items():
@@ -120,14 +129,18 @@ class PolytopeSampler(SamplerStrategy):
                     eq[0].max() <= counter
                 ), "Something went wrong when transforming the linear constraints. Revisit the problem."
 
+            combined_eqs = interpoints + cleaned_eqs
+
             # now use the hit and run sampler
-            candidates = get_polytope_samples(
-                n=n,
+            candidates = sample_q_batches_from_polytope(
+                n=1,
+                q=n,
                 bounds=bounds.to(**tkwargs),
                 inequality_constraints=ineqs if len(ineqs) > 0 else None,
-                equality_constraints=cleaned_eqs if len(cleaned_eqs) > 0 else None,
-                n_burnin=1000,
-                # thinning=200
+                equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
+                n_burnin=self.n_burnin,
+                thinning=self.n_thinning,
+                seed=self.seed,
             )
 
             # check that the random generated candidates are not always the same
