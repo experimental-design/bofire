@@ -34,18 +34,12 @@ class InterpointEqualityConstraint(InterpointConstraint):
         self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
     ) -> pd.Series:
         multiplicity = self.multiplicity or len(experiments)
-        for i in range(math.floor(len(experiments) / multiplicity)):
+        for i in range(math.ceil(len(experiments) / multiplicity)):
             batch = experiments[self.feature].values[
-                i * multiplicity : (i + 1) * multiplicity
+                i * multiplicity : min((i + 1) * multiplicity, len(experiments))
             ]
             if not np.allclose(batch, batch[0]):
                 return pd.Series([False])
-        if len(experiments) % multiplicity > 0:
-            batch = experiments[self.feature].values[
-                -(len(experiments) % multiplicity) :
-            ]
-            print(batch)
-            return pd.Series([np.allclose(batch, batch[0])])
         return pd.Series([True])
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
