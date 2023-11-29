@@ -3,6 +3,7 @@ import pytest
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -143,6 +144,16 @@ def test_PolytopeSampler(domain, candidate_count):
     samples = sampler.ask(candidate_count)
     if len(domain.constraints.get(NChooseKConstraint)) == 0:
         assert len(samples) == candidate_count
+
+
+def test_PolytopeSampler_interpoint():
+    domain = Domain.from_lists(
+        inputs=[if1, if2, if3],
+        constraints=[InterpointEqualityConstraint(feature="if1", multiplicity=3)],
+    )
+    data_model = data_models.PolytopeSampler(domain=domain)
+    sampler = strategies.PolytopeSampler(data_model=data_model)
+    sampler.ask(9)
 
 
 def test_PolytopeSampler_all_fixed():

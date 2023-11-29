@@ -32,7 +32,7 @@ class PolytopeSampler(SamplerStrategy):
 
     type: Literal["PolytopeSampler"] = "PolytopeSampler"
     fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
-    n_burnin: Annotated[int, Field(ge=1)] = 10_000
+    n_burnin: Annotated[int, Field(ge=1)] = 1000
     n_thinning: Annotated[int, Field(ge=1)] = 32
 
     @classmethod
