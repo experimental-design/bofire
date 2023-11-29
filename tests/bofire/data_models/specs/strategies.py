@@ -116,6 +116,8 @@ specs.add_valid(
         ),
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
         "seed": 42,
+        "n_burnin": 1000,
+        "n_thinning": 32,
     },
 )
 specs.add_valid(
