@@ -51,6 +51,6 @@ specs.add_valid(
     constraints.InterpointEqualityConstraint,
     lambda: {
         "feature": "f1",
-        "multiplicity": 1,
+        "multiplicity": 3,
     },
 )

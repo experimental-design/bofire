@@ -91,7 +91,9 @@ def get_interpoint_constraints(
     domain: Domain, n_candidates: int
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Converts interpoint equality constraints to linear equality constraints,
-        that can be processed by botorch.
+        that can be processed by botorch. For more information, see the docstring
+        of `optimize_acqf` in botorch
+        (https://github.com/pytorch/botorch/blob/main/botorch/optim/optimize.py).
 
     Args:
         domain (Domain): Optimization problem definition.

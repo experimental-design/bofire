@@ -53,6 +53,10 @@ class Constraint(BaseModel):
 
 
 class IntrapointConstraint(Constraint):
+    """An intrapoint constraint describes required relationships within a candidate
+    when asking a strategy to return one or more candidates.
+    """
+
     type: str
 
 
