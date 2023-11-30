@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.8">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.4.14">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.4b4a2bd9.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.fad675c6.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.356b1318.min.css">
@@ -269,6 +269,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href=".." class="md-nav__link">
         
@@ -285,6 +286,7 @@
     
       
       
+  
   
   
   
@@ -307,6 +309,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href="../getting_started/" class="md-nav__link">
         
@@ -326,6 +329,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href="../examples/" class="md-nav__link">
         
@@ -342,6 +346,7 @@
     
       
       
+  
   
   
   
@@ -381,6 +386,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href="../data_models_functionals/" class="md-nav__link">
         
@@ -408,6 +414,7 @@
   
   
     
+  
   
   
     
@@ -446,6 +453,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href="../ref-domain/" class="md-nav__link">
         
@@ -466,6 +474,7 @@
   
   
     
+  
   
   
     <li class="md-nav__item md-nav__item--active">
@@ -514,14 +523,18 @@
       
         <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints" class="md-nav__link">
-    bofire.data_models.domain.constraints
+    <span class="md-ellipsis">
+      bofire.data_models.domain.constraints
+    </span>
   </a>
   
 </li>
       
         <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints" class="md-nav__link">
-    Constraints
+    <span class="md-ellipsis">
+      Constraints
+    </span>
   </a>
   
     <nav class="md-nav" aria-label="Constraints">
@@ -529,35 +542,45 @@
         
           <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.__call__" class="md-nav__link">
-    __call__()
+    <span class="md-ellipsis">
+      __call__()
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.__json_encoder__" class="md-nav__link">
-    __json_encoder__()
+    <span class="md-ellipsis">
+      __json_encoder__()
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.get" class="md-nav__link">
-    get()
+    <span class="md-ellipsis">
+      get()
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.is_fulfilled" class="md-nav__link">
-    is_fulfilled()
+    <span class="md-ellipsis">
+      is_fulfilled()
+    </span>
   </a>
   
 </li>
         
           <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.jacobian" class="md-nav__link">
-    jacobian()
+    <span class="md-ellipsis">
+      jacobian()
+    </span>
   </a>
   
 </li>
@@ -581,6 +604,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href="../ref-objectives/" class="md-nav__link">
         
@@ -598,6 +622,7 @@
             
               
                 
+  
   
   
   
@@ -621,6 +646,7 @@
   
   
   
+  
     <li class="md-nav__item">
       <a href="../ref-domain-util/" class="md-nav__link">
         
@@ -638,6 +664,7 @@
             
               
                 
+  
   
   
   
@@ -779,9 +806,13 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+            <span class="p">)</span>
+            <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -1089,9 +1120,13 @@ the violation is larger than tol. Defaults to 0.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
-    <span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -1228,7 +1263,7 @@ the violation is larger than tol. Defaults to 0.</p></td>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.81fa17fe.min.js"></script>
+      <script src="../assets/javascripts/bundle.cd18aaf1.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
