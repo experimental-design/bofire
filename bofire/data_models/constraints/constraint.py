@@ -52,6 +52,14 @@ class Constraint(BaseModel):
         pass
 
 
+class IntrapointConstraint(Constraint):
+    """An intrapoint constraint describes required relationships within a candidate
+    when asking a strategy to return one or more candidates.
+    """
+
+    type: str
+
+
 class ConstraintError(Exception):
     """Base Error for Constraints"""
 
