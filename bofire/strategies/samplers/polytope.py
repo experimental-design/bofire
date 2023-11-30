@@ -143,7 +143,7 @@ class PolytopeSampler(SamplerStrategy):
                 n_burnin=self.n_burnin,
                 thinning=self.n_thinning,
                 seed=self.seed,
-            )
+            ).squeeze(dim=0)
 
             # check that the random generated candidates are not always the same
             if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
@@ -154,10 +154,9 @@ class PolytopeSampler(SamplerStrategy):
                 for feat in self.domain.get_features(ContinuousInput)
                 if feat.key not in fixed_features.keys()  # type: ignore
             ]
-
             # setup the output
             samples = pd.DataFrame(
-                data=candidates.detach().numpy().reshape(n, len(free_continuals)),
+                data=candidates.detach().numpy(),
                 index=range(n),
                 columns=free_continuals,
             )
