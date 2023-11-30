@@ -103,6 +103,7 @@ c6 = NChooseKConstraint(
     max_count=2,
     none_also_valid=False,
 )
+c7 = LinearEqualityConstraint(features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=1.0)
 
 domains = [
     Domain.from_lists(inputs=[if1, if2, if3], constraints=[c2]),
@@ -167,7 +168,7 @@ def test_PolytopeSampler_all_fixed():
 def test_PolytopeSampler_nchoosek():
     domain = Domain.from_lists(
         inputs=[if1, if2, if3, if4, if6, If7],
-        constraints=[c6, c2],
+        constraints=[c6, c2, c7],
     )
     data_model = data_models.PolytopeSampler(domain=domain)
     sampler = strategies.PolytopeSampler(data_model=data_model)
