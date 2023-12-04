@@ -1,4 +1,5 @@
-import codecs
+import base64
+import io
 import pickle
 from typing import Optional
 
@@ -161,10 +162,11 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
 
     def _dumps(self) -> str:
         """Dumps the random forest to a string via pickle as this is not directly json serializable."""
-        return codecs.encode(pickle.dumps(self.model._rf), "base64").decode()  # type: ignore
+        buffer = io.BytesIO()
+        torch.save(self.model, buffer)
+        return base64.b64encode(buffer.getvalue()).decode()
 
     def loads(self, data: str):
         """Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
-        self.model = _RandomForest(
-            rf=pickle.loads(codecs.decode(data.encode(), "base64"))
-        )
+        buffer = io.BytesIO(base64.b64decode(data.encode()))
+        self.model = torch.load(buffer)
