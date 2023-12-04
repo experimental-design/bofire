@@ -4,7 +4,6 @@ from pydantic import Field
 from typing_extensions import Annotated
 
 from bofire.data_models.surrogates.scaler import ScalerEnum
-
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
