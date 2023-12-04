@@ -1,6 +1,5 @@
 import base64
 import io
-import pickle
 from typing import Optional
 
 import numpy as np
