@@ -1,14 +1,16 @@
 from typing import Literal
 
-from pydantic import Field, validator
+from pydantic import Field
 
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
-from bofire.data_models.priors.api import (BOTORCH_NOISE_PRIOR,
-                                           BOTORCH_SCALE_PRIOR, AnyPrior)
+from bofire.data_models.priors.api import (
+    BOTORCH_NOISE_PRIOR,
+    BOTORCH_SCALE_PRIOR,
+    AnyPrior,
+)
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable_botorch import \
-    TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class TanimotoGPSurrogate(TrainableBotorchSurrogate):

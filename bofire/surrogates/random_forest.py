@@ -25,7 +25,11 @@ class _RandomForest(EnsembleModel):
     Predictions of the individual trees are interpreted as uncertainty.
     """
 
-    def __init__(self, rf: RandomForestRegressor, output_scaler: Optional[OutcomeTransform] = None):
+    def __init__(
+        self,
+        rf: RandomForestRegressor,
+        output_scaler: Optional[OutcomeTransform] = None,
+    ):
         """Constructs the model.
 
         Args:
@@ -38,7 +42,6 @@ class _RandomForest(EnsembleModel):
         self._rf = rf
         if output_scaler is not None:
             self.outcome_transform = output_scaler
-
 
     def forward(self, X: Tensor):
         r"""Compute the model output at X.
@@ -120,7 +123,11 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
-        tX = scaler.transform(torch.from_numpy(transformed_X.values)).numpy() if scaler is not None else transformed_X.values
+        tX = (
+            scaler.transform(torch.from_numpy(transformed_X.values)).numpy()
+            if scaler is not None
+            else transformed_X.values
+        )
 
         if self.output_scaler == ScalerEnum.STANDARDIZE:
             output_scaler = Standardize(m=Y.shape[-1])
@@ -147,7 +154,7 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
             max_samples=self.max_samples,
         )
         rf.fit(X=tX, y=ty.ravel())
-        
+
         self.model = _RandomForest(rf=rf, output_scaler=output_scaler)
         if scaler is not None:
             self.model.input_transform = scaler

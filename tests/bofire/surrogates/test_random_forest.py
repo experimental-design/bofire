@@ -70,7 +70,7 @@ def test_random_forest(scaler, output_scaler):
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     rf = RandomForestSurrogate(
-        inputs=bench.domain.inputs, 
+        inputs=bench.domain.inputs,
         outputs=bench.domain.outputs,
         scaler=scaler,
         output_scaler=output_scaler,

@@ -2,8 +2,7 @@ from typing import Literal
 
 from pydantic import conint, validator
 
-from bofire.data_models.surrogates.trainable_botorch import \
-    TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):

@@ -9,8 +9,7 @@ from bofire.data_models.kernels.api import (
     HammondDistanceKernel,
     MaternKernel,
 )
-from bofire.data_models.surrogates.trainable_botorch import \
-    TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):

@@ -1,9 +1,9 @@
 from typing import Annotated, Literal, Sequence
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from bofire.data_models.surrogates.trainable_botorch import \
-    TrainableBotorchSurrogate
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class MLPEnsemble(TrainableBotorchSurrogate):
@@ -18,3 +18,4 @@ class MLPEnsemble(TrainableBotorchSurrogate):
     weight_decay: Annotated[float, Field(ge=0.0)] = 0.0
     subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
     shuffle: bool = True
+    scaler: ScalerEnum = ScalerEnum.STANDARDIZE

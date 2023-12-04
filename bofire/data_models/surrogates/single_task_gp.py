@@ -1,7 +1,7 @@
 from typing import Literal, Optional
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -23,11 +23,8 @@ from bofire.data_models.priors.api import (
 )
 
 # from bofire.data_models.strategies.api import FactorialStrategy
-# from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import Hyperconfig #TrainableSurrogate
-from bofire.data_models.surrogates.trainable_botorch import \
-    TrainableBotorchSurrogate
+from bofire.data_models.surrogates.trainable import Hyperconfig
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class SingleTaskGPHyperconfig(Hyperconfig):
