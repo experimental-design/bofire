@@ -152,6 +152,8 @@ specs.add_valid(
         "max_samples": None,
         "dump": None,
         "hyperconfig": None,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
     },
 )
 specs.add_valid(

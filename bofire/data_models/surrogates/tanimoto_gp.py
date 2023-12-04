@@ -4,17 +4,14 @@ from pydantic import Field, validator
 
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
-from bofire.data_models.priors.api import (
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
-    AnyPrior,
-)
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
+from bofire.data_models.priors.api import (BOTORCH_NOISE_PRIOR,
+                                           BOTORCH_SCALE_PRIOR, AnyPrior)
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import \
+    TrainableBotorchSurrogate
 
 
-class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -27,22 +24,3 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
-
-    @validator("output_scaler")
-    def validate_output_scaler(cls, output_scaler):
-        """validates that output_scaler is a valid type
-
-        Args:
-            output_scaler (ScalerEnum): Scaler used to transform the output
-
-        Raises:
-            ValueError: when ScalerEnum.NORMALIZE is used
-
-        Returns:
-            ScalerEnum: Scaler used to transform the output
-        """
-        if output_scaler == ScalerEnum.NORMALIZE:
-            raise ValueError("Normalize is not supported as an output transform.")
-
-        return output_scaler

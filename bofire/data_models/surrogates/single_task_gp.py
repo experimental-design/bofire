@@ -23,9 +23,11 @@ from bofire.data_models.priors.api import (
 )
 
 # from bofire.data_models.strategies.api import FactorialStrategy
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
+# from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import Hyperconfig, TrainableSurrogate
+from bofire.data_models.surrogates.trainable import Hyperconfig #TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import \
+    TrainableBotorchSurrogate
 
 
 class SingleTaskGPHyperconfig(Hyperconfig):
@@ -92,7 +94,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -106,26 +108,6 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
-    output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
-
-    @validator("output_scaler")
-    def validate_output_scaler(cls, output_scaler):
-        """validates that output_scaler is a valid type
-
-        Args:
-            output_scaler (ScalerEnum): Scaler used to transform the output
-
-        Raises:
-            ValueError: when ScalerEnum.NORMALIZE is used
-
-        Returns:
-            ScalerEnum: Scaler used to transform the output
-        """
-        if output_scaler == ScalerEnum.NORMALIZE:
-            raise ValueError("Normalize is not supported as an output transform.")
-
-        return output_scaler

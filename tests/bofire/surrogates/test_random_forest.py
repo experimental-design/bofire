@@ -14,7 +14,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.surrogates.api import RandomForestSurrogate
+from bofire.data_models.surrogates.api import RandomForestSurrogate, ScalerEnum
 from bofire.surrogates.random_forest import _RandomForest
 
 
@@ -55,12 +55,26 @@ def test_random_forest_forward():
     assert rf.num_outputs == 1
 
 
-def test_random_forest():
+@pytest.mark.parametrize(
+    "scaler, output_scaler",
+    [
+        [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
+        [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
+        [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
+        [ScalerEnum.IDENTITY, ScalerEnum.IDENTITY],
+    ],
+)
+def test_random_forest(scaler, output_scaler):
     # test only continuous
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
-    rf = RandomForestSurrogate(inputs=bench.domain.inputs, outputs=bench.domain.outputs)
+    rf = RandomForestSurrogate(
+        inputs=bench.domain.inputs, 
+        outputs=bench.domain.outputs,
+        scaler=scaler,
+        output_scaler=output_scaler,
+    )
     rf = surrogates.map(rf)
     rf.fit(experiments=experiments)
     # test with categoricals
