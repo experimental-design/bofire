@@ -47,19 +47,6 @@ class LinearConstraint(Constraint):
             experiments[self.features] @ self.coefficients - self.rhs
         ) / np.linalg.norm(self.coefficients)
 
-    # def lhs(self, df_data: pd.DataFrame) -> float:
-    #     """Evaluate the left-hand side of the constraint on each row of a dataframe
-
-    #     Args:
-    #         df_data (pd.DataFrame): Dataframe on which the left-hand side should be evaluated.
-
-    #     Returns:
-    #         np.array: 1-dim array with left-hand side of each row of the provided dataframe.
-    #     """
-    #     cols = self.features
-    #     coefficients = self.coefficients
-    #     return np.sum(df_data[cols].values * np.array(coefficients), axis=1)
-
     def __str__(self) -> str:
         """Generate string representation of the constraint.
 

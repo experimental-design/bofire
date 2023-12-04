@@ -90,12 +90,6 @@ supported_domains = [
         outputs=[of1],
         constraints=[c2],
     ),
-    Domain.from_lists(
-        # all feature types, nonlinear inequality
-        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
-        outputs=[of1],
-        constraints=[c4],
-    ),
 ]
 
 unsupported_domains = [

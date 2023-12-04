@@ -67,9 +67,13 @@ class Constraints(BaseModel):
         """
         if len(self.constraints) == 0:
             return pd.Series([True] * len(experiments), index=experiments.index)
-        return pd.concat(
-            [c.is_fulfilled(experiments, tol) for c in self.constraints], axis=1
-        ).all(axis=1)
+        return (
+            pd.concat(
+                [c.is_fulfilled(experiments, tol) for c in self.constraints], axis=1
+            )
+            .fillna(True)
+            .all(axis=1)
+        )
 
     def get(
         self,
