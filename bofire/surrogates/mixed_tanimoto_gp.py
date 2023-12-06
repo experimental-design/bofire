@@ -339,7 +339,6 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         buffer = io.BytesIO()
         torch.save(self.model, buffer, pickle_module=cloudpickle_module)  # type: ignore
         return base64.b64encode(buffer.getvalue()).decode()
-        # return codecs.encode(pickle.dumps(self.model), "base64").decode()
 
     def loads(self, data: str):
         """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""

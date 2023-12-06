@@ -53,7 +53,6 @@ def get_scaler(
             key
             for key, value in input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
-            # and not isinstance(value, MolFeatures)
             and not isinstance(value, MordredDescriptors)
         ]
 

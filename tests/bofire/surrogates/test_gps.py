@@ -267,7 +267,7 @@ def test_get_scaler_molecular(
     if expected_indices_length != 0:
         assert (len(scaler.indices) == expected_indices_length)
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(AttributeError, match="'NoneType' object has no attribute 'indices'"):
             assert (scaler.indices == None)
 
 
@@ -477,7 +477,7 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
     experiments["valid_y"] = 1
     with pytest.raises(
         ValidationError, match="TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
-        MixedTanimotoGPSurrogate(
+        TanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
             input_preprocessing_specs={"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
@@ -698,7 +698,7 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
         assert isinstance(model.model.input_transform, InputStandardize)
         assert model.model.input_transform.indices.shape == torch.Size([2])
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(AttributeError, match="'MixedTanimotoGP' object has no attribute 'input_transform'"):
             assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
@@ -919,7 +919,7 @@ def test_MixedTanimotoGP_with_mordred(molecular_kernel, continuous_kernel, specs
         assert isinstance(model.model.input_transform, InputStandardize)
         assert model.model.input_transform.indices.shape == torch.Size([2])
     else:
-        with pytest.raises(AttributeError):
+        with pytest.raises(AttributeError, match="'MixedTanimotoGP' object has no attribute 'input_transform'"):
             assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
