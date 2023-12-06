@@ -44,7 +44,6 @@ from torch import Tensor
 from bofire.data_models.molfeatures.api import *
 from sklearn.preprocessing import StandardScaler
 
-# unable to map categorical kernel HammondDistanceKernel
 from botorch.models.kernels.categorical import CategoricalKernel
 
 class MixedTanimotoGP(SingleTaskGP):
@@ -57,7 +56,7 @@ class MixedTanimotoGP(SingleTaskGP):
         cat_dims: Optional[List[int]] = None,
         #cat_kernel_factory: Optional[
         #    Callable[[torch.Size, int, List[int]], Kernel]
-        #] = None,
+        #] = None, --> BoTorch forced to use CategoricalKernel
         cont_kernel_factory: Optional[
             Callable[[torch.Size, int, List[int]], Kernel]
         ] = None,
@@ -80,12 +79,7 @@ class MixedTanimotoGP(SingleTaskGP):
         ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims))
 
         if cont_kernel_factory is None:
-            scale_kernel_data_model = ScaleKernel(base_kernel=MaternKernel(ard=True, nu=2.5))
-            cont_kernel_factory = kernels.map_ScaleKernel(data_model=scale_kernel_data_model, batch_shape=aug_batch_shape, ard_num_dims=len(ord_dim), active_dims=ord_dims)
-
-        #if cat_kernel_factory is None:
-        #    scale_kernel_data_model = ScaleKernel(base_kernel=HammondDistanceKernel(ard=True))
-        #    cat_kernel_factory = kernels.map_ScaleKernel(data_model=scale_kernel_data_model, batch_shape=aug_batch_shape, ard_num_dims=len(cat_dims), active_dims=cat_dims)
+            cont_kernel_factory = kernels.map_MaternKernel(data_model=MaternKernel(ard=True, nu=2.5), batch_shape=aug_batch_shape, ard_num_dims=len(ord_dim), active_dims=ord_dims)
 
         if likelihood is None:
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
@@ -105,11 +99,13 @@ class MixedTanimotoGP(SingleTaskGP):
                     active_dims=cat_dims,
                     lengthscale_constraint=GreaterThan(1e-06),
                     )
-                ) + mol_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(mol_dims),
-                active_dims=mol_dims,
-            )
+                ) + ScaleKernel(
+                mol_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(mol_dims),
+                    active_dims=mol_dims,
+                    )
+                )
 
             prod_kernel = ScaleKernel(
                 CategoricalKernel(
@@ -118,48 +114,62 @@ class MixedTanimotoGP(SingleTaskGP):
                     active_dims=cat_dims,
                     lengthscale_constraint=GreaterThan(1e-06),
                     )
-                ) * mol_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(mol_dims),
-                active_dims=mol_dims,
-            )
+                ) * ScaleKernel(
+                mol_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(mol_dims),
+                    active_dims=mol_dims,
+                    )
+                )
 
             covar_module = sum_kernel + prod_kernel
 
         elif len(cat_dims) == 0:
-            sum_kernel = cont_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(ord_dims),
-                active_dims=ord_dims,
-            ) + mol_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(mol_dims),
-                active_dims=mol_dims,
+            sum_kernel = ScaleKernel(
+                cont_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(ord_dims),
+                    active_dims=ord_dims,
+                )
+            ) + ScaleKernel(
+                mol_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(mol_dims),
+                    active_dims=mol_dims,
+                )
             )
 
-            prod_kernel = cont_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(ord_dims),
-                active_dims=ord_dims,
-            ) * mol_kernel_factory(
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(mol_dims),
-                active_dims=mol_dims,
+            prod_kernel = ScaleKernel(
+                cont_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(ord_dims),
+                    active_dims=ord_dims,
+                )
+            ) * ScaleKernel(
+                mol_kernel_factory(
+                    batch_shape=aug_batch_shape,
+                    ard_num_dims=len(mol_dims),
+                    active_dims=mol_dims,
+                )
             )
 
             covar_module = sum_kernel + prod_kernel
 
         else:
             sum_kernel = (
-                cont_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(ord_dims),
-                    active_dims=ord_dims,
+                ScaleKernel(
+                    cont_kernel_factory(
+                        batch_shape=aug_batch_shape,
+                        ard_num_dims=len(ord_dims),
+                        active_dims=ord_dims,
+                    )
                 )
-                + mol_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(mol_dims),
-                    active_dims=mol_dims,
+                + ScaleKernel(
+                    mol_kernel_factory(
+                        batch_shape=aug_batch_shape,
+                        ard_num_dims=len(mol_dims),
+                        active_dims=mol_dims,
+                    )
                 )
                 + ScaleKernel(
                     CategoricalKernel(
@@ -172,15 +182,19 @@ class MixedTanimotoGP(SingleTaskGP):
             )
 
             prod_kernel = (
-                cont_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(ord_dims),
-                    active_dims=ord_dims,
+                ScaleKernel(
+                    cont_kernel_factory(
+                        batch_shape=aug_batch_shape,
+                        ard_num_dims=len(ord_dims),
+                        active_dims=ord_dims,
+                    )
                 )
-                * mol_kernel_factory(
-                    batch_shape=aug_batch_shape,
-                    ard_num_dims=len(mol_dims),
-                    active_dims=mol_dims,
+                * ScaleKernel(
+                    mol_kernel_factory(
+                        batch_shape=aug_batch_shape,
+                        ard_num_dims=len(mol_dims),
+                        active_dims=mol_dims,
+                    )
                 )
                 * ScaleKernel(
                     CategoricalKernel(
@@ -213,7 +227,6 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.categorical_kernel = data_model.categorical_kernel
         self.molecular_kernel = data_model.molecular_kernel
         self.scaler = data_model.scaler
-        # self.molecular_scaler = data_model.molecular_scaler
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[MixedTanimotoGP] = None
@@ -222,15 +235,10 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         # Categorical inputs that are not descriptor-based
-        # non_numerical_features = [
         categorical_features_list = [
             key
             for key, value in self.input_preprocessing_specs.items()
             if value != CategoricalEncodingEnum.DESCRIPTOR
-            # and value != MolecularEncodingEnum.FINGERPRINTS
-            # and value != MolecularEncodingEnum.FRAGMENTS
-            # and value != MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
-            # and value != MolecularEncodingEnum.MOL_DESCRIPTOR
             and not isinstance(value, Fingerprints)
             and not isinstance(value, Fragments)
             and not isinstance(value, FingerprintsFragments)
@@ -241,32 +249,19 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         molecular_features_list = [
             key
             for key, value in self.input_preprocessing_specs.items()
-            # if value == MolecularEncodingEnum.FINGERPRINTS
-            # or value == MolecularEncodingEnum.FRAGMENTS
-            # or value == MolecularEncodingEnum.FINGERPRINTS_FRAGMENTS
             if isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
             or isinstance(value, FingerprintsFragments)
-            # or isinstance(value, MordredDescriptors)
         ]
         
 
-        # Continuous features include continuous inputs, categorical with descriptors, and Mordred descriptors
+        # Continuous features include continuous inputs, categorical inputs with descriptors, and Mordred descriptors
         continuous_features_list = [
             feat.key
             for feat in self.inputs.get()
             if feat.key not in categorical_features_list and feat.key not in molecular_features_list
         ]
 
-        # # Scaler will only act on Continuous inputs, Categorical with descriptors and Molecular with Mordred descriptors
-        # # Check whether there are any inputs mentioned above
-        # mordred_features_list = [
-        #     key
-        #     for key, value in self.input_preprocessing_specs.items()
-        #     if isinstance(value, MordredDescriptors)
-        # ]
-
-        # if len(mordred_features_list)==0 and len(continuous_features_list)==0:
         if len(continuous_features_list) == 0:
             scaler = None # skip the scaler
         else:
@@ -288,40 +283,43 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             for i in features2idx[mol_feat]:
                 mol_dims.append(i)
 
-        # List of indexes for Continuous inputs, Categorical with descriptors, Mordred descriptors
+        # List of indexes for Continuous inputs, Categorical inputs with descriptors, Mordred descriptors
         ord_dims = []
-        for feat in self.inputs.get():
-            if feat.key not in categorical_features_list and feat.key not in molecular_features_list:
-                ord_dims += features2idx[feat.key]
+        for ord_feat in (continuous_features_list):
+            for i in features2idx[ord_feat]:
+                ord_dims.append(i)
 
         # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(len(ord_dims)+len(mol_dims), len(ord_dims)+len(mol_dims) + len(categorical_features_list))
         )
-        # these are the categorical features within the OneHotToNumeric transform
-        categorical_features = {
-            features2idx[feat][0]: len(features2idx[feat])
-            for feat in categorical_features_list
-        }
 
-        o2n = OneHotToNumeric(
-            dim=tX.shape[1],
-            categorical_features=categorical_features,
-            transform_on_train=False,
-        )
-        tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
+        if len(categorical_features_list) == 0:
+            tf = scaler
+            tXX = tX
+        else:
+            # these are the categorical features within the OneHotToNumeric transform
+            categorical_features = {
+                features2idx[feat][0]: len(features2idx[feat])
+                for feat in categorical_features_list
+            }
+
+            o2n = OneHotToNumeric(
+                dim=tX.shape[1],
+                categorical_features=categorical_features,
+                transform_on_train=False,
+            )
+            tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
+            tXX = o2n.transform(tX)
 
         # fit the model
         self.model = MixedTanimotoGP(
-            train_X=o2n.transform(tX),
+            train_X=tXX,
             train_Y=tY,
             cat_dims=cat_dims,
             mol_dims=mol_dims,
-            #cont_kernel_factory=self.continuous_kernel.to_gpytorch,
             cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
-            #cat_kernel_factory=self.categorical_kernel.to_gpytorch,
-            #cat_kernel_factory=partial(kernels.map, data_model=self.categorical_kernel),
-            #mol_kernel_factory=self.molecular_kernel.to_gpytorch,
+            #cat_kernel_factory=partial(kernels.map, data_model=self.categorical_kernel), BoTorch forced to use CategoricalKernel
             mol_kernel_factory=partial(kernels.map, data_model=self.molecular_kernel),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=tf,

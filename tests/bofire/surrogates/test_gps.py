@@ -409,21 +409,17 @@ def test_SingleTaskGPHyperconfig():
     "kernel, specs",
     [
         (
-            TanimotoKernel(ard=False),
+            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
             {"x_1": Fingerprints(n_bits=32)},
         ),
         (
-            TanimotoKernel(ard=True),
+            ScaleKernel(base_kernel=TanimotoKernel(ard=True)),
             {"x_1": Fragments()},
         ),
         (
-            TanimotoKernel(ard=False),
+            ScaleKernel(base_kernel=TanimotoKernel(ard=False)),
             {"x_1": FingerprintsFragments(n_bits=32)},
         ),
-        # (
-        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
-        #     {"x_1": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
-        # ),
     ],
 )
 def test_TanimotoGP(kernel, specs):
@@ -479,7 +475,8 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
     ]
     experiments = pd.DataFrame(experiments, columns=["x_mol", "y"])
     experiments["valid_y"] = 1
-    with pytest.raises(ValidationError):
+    with pytest.raises(
+        ValidationError, match="TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
         MixedTanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
@@ -602,7 +599,8 @@ def test_MixedTanimotoGPModel_invalid_preprocessing():
     experiments.loc[experiments.x_cat == "mama", "y"] *= 5.0
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
-    with pytest.raises(ValidationError):
+    with pytest.raises(
+        ValidationError,match="MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
         MixedTanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
@@ -627,7 +625,8 @@ def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
     ]
     experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_mol", "y"])
     experiments["valid_y"] = 1
-    with pytest.raises(ValidationError):
+    with pytest.raises(
+        ValidationError, match="MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
         MixedTanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
@@ -653,11 +652,6 @@ def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
             {"x_mol": FingerprintsFragments(n_bits=32)},
             ScalerEnum.STANDARDIZE,
         ),
-        # (
-        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
-        #     {"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
-        #     ScalerEnum.NORMALIZE,
-        # ),
     ],
 )
 def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
@@ -698,17 +692,14 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
     assert isinstance(model.model, MixedTanimotoGP)
     assert isinstance(model.model.outcome_transform, Standardize)
     if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, Normalize)
-        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+        assert isinstance(model.model.input_transform, Normalize)
+        assert model.model.input_transform.indices.shape == torch.Size([2])
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, InputStandardize)
-        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+        assert isinstance(model.model.input_transform, InputStandardize)
+        assert model.model.input_transform.indices.shape == torch.Size([2])
     else:
-        assert isinstance(model.model.input_transform, OneHotToNumeric)
+        with pytest.raises(AttributeError):
+            assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedTanimotoGPSurrogate(
@@ -741,11 +732,6 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
             {"x_mol": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
             ScalerEnum.STANDARDIZE,
         ),
-        # (
-        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
-        #     {"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-        #     ScalerEnum.NORMALIZE,
-        # ),
     ],
 )
 def test_MixedTanimotoGP(kernel, specs, scaler):
@@ -821,11 +807,6 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
             TanimotoKernel(ard=True),
             {"x_mol": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
         ),
-        # (
-        #     ScaleKernel(base_kernel=RBFKernel(ard=True)),
-        #     {"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]), "x_cat": CategoricalEncodingEnum.ONE_HOT},
-        #     ScalerEnum.NORMALIZE,
-        # ),
     ],
 )
 def test_MixedTanimotoGP_categorical(kernel, specs):
@@ -858,6 +839,7 @@ def test_MixedTanimotoGP_categorical(kernel, specs):
     # check that model is composed correctly
     assert isinstance(model.model, MixedTanimotoGP)
     assert isinstance(model.model.outcome_transform, Standardize)
+    assert isinstance(model.model.input_transform, OneHotToNumeric)
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedTanimotoGPSurrogate(
@@ -883,13 +865,13 @@ def test_MixedTanimotoGP_categorical(kernel, specs):
         (
             TanimotoKernel(ard=False),
             MaternKernel(nu=0.5, ard=True),
-            {"x_1": Fingerprints(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            {"x_1": Fragments(), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
             ScalerEnum.IDENTITY,
         ),
         (
             TanimotoKernel(ard=True),
             MaternKernel(nu=2.5, ard=False),
-            {"x_1": Fingerprints(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            {"x_1": FingerprintsFragments(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
             ScalerEnum.STANDARDIZE,
         ),
     ],
@@ -931,17 +913,14 @@ def test_MixedTanimotoGP_with_mordred(molecular_kernel, continuous_kernel, specs
     assert isinstance(model.model, MixedTanimotoGP)
     assert isinstance(model.model.outcome_transform, Standardize)
     if scaler == ScalerEnum.NORMALIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, Normalize)
-        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+        assert isinstance(model.model.input_transform, Normalize)
+        assert model.model.input_transform.indices.shape == torch.Size([2])
     elif scaler == ScalerEnum.STANDARDIZE:
-        assert isinstance(model.model.input_transform, ChainedInputTransform)
-        assert isinstance(model.model.input_transform.tf1, InputStandardize)
-        assert model.model.input_transform.tf1.indices.shape == torch.Size([2])
-        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+        assert isinstance(model.model.input_transform, InputStandardize)
+        assert model.model.input_transform.indices.shape == torch.Size([2])
     else:
-        assert isinstance(model.model.input_transform, OneHotToNumeric)
+        with pytest.raises(AttributeError):
+            assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
     model2 = MixedTanimotoGPSurrogate(

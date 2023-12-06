@@ -83,7 +83,7 @@ specs.add_valid(
             ]
         ),
         "aggregations": None,
-        "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
+        "continuous_kernel": MaternKernel(ard=True, nu=random.choice([0.5, 1.5, 2.5])),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
@@ -237,13 +237,12 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
-        # "kernel": ScaleKernel(
-        #    base_kernel=TanimotoKernel(
-        #        ard=True,
-        #    ),
-        #    outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        #),
-        "kernel": TanimotoKernel(ard=True),
+        "kernel": ScaleKernel(
+           base_kernel=TanimotoKernel(
+               ard=True,
+           ),
+           outputscale_prior=BOTORCH_SCALE_PRIOR(),
+           ),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
@@ -272,7 +271,7 @@ specs.add_valid(
         ),
         "aggregations": None,
         "molecular_kernel": TanimotoKernel(ard=True),
-        "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
+        "continuous_kernel": MaternKernel(ard=True, nu=random.choice([0.5, 1.5, 2.5])),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
         "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3),

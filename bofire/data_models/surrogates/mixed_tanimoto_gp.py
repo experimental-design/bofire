@@ -24,14 +24,14 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["MixedTanimotoGPSurrogate"] = "MixedTanimotoGPSurrogate"
 
     continuous_kernel: AnyContinuousKernel = Field(
-        default_factory=lambda: ScaleKernel(base_kernel=MaternKernel(ard=True, nu=2.5))
+        default_factory=lambda: MaternKernel(ard=True, nu=2.5)
     )
     categorical_kernel: AnyCategoricalKernal = Field(
-        default_factory=lambda: ScaleKernel(base_kernel=HammondDistanceKernel(ard=True))
+        default_factory=lambda: HammondDistanceKernel(ard=True)
     )
     # Molecular kernel will only be imposed on fingerprints, fragments, or fingerprintsfragments
     molecular_kernel: AnyMolecularKernel = Field(
-        default_factory=lambda: ScaleKernel(base_kernel=TanimotoKernel(ard=True))
+        default_factory=lambda: TanimotoKernel(ard=True)
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
@@ -48,12 +48,4 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             raise ValueError(
                 "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
             )
-        # molecular_features = [
-        #     value for value in v.values() if isinstance(value, MolFeatures)
-        # ]
-        # if any ([isinstance(feature, MordredDescriptors) for feature in molecular_features]) and \
-        # any ([isinstance(feature, Fingerprints) or isinstance(feature, Fragments) or isinstance(feature, FingerprintsFragments) for feature in molecular_features]): 
-        #     raise ValueError(
-        #         "Fingerprints, Fragments, or FingerprintsFragments and Mordred Descriptors cannot present simultaneously in MixedTanimotoGPSurrogate."
-        #     )
         return v

@@ -19,7 +19,7 @@ from bofire.data_models.molfeatures.api import *
 class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     type: Literal["TanimotoGPSurrogate"] = "TanimotoGPSurrogate"
 
-    kernel: AnyMolecularKernel = Field(
+    kernel: AnyKernel = Field(
         default_factory=lambda: ScaleKernel(
             base_kernel=TanimotoKernel(
                 ard=True,
@@ -42,6 +42,6 @@ class TanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             ]
         ):
             raise ValueError(
-                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
+                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
             )
         return v
