@@ -61,6 +61,7 @@ specs.add_valid(
             )
         ],
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
         "dump": None,
@@ -86,6 +87,7 @@ specs.add_valid(
         "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
         "hyperconfig": None,
@@ -112,6 +114,7 @@ specs.add_valid(
         ),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
         "dump": None,
@@ -149,6 +152,8 @@ specs.add_valid(
         "max_samples": None,
         "dump": None,
         "hyperconfig": None,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
     },
 )
 specs.add_valid(
@@ -244,7 +249,8 @@ specs.add_valid(
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
         ),
         "aggregations": None,
-        "scaler": ScalerEnum.NORMALIZE,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3)},
         "dump": None,

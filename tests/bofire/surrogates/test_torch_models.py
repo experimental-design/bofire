@@ -305,6 +305,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y")]),
                     scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.STANDARDIZE,
                     input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
                 data_models.SingleTaskGPSurrogate(
@@ -327,6 +328,7 @@ def test_botorch_models_invalid_number_of_outputs(surrogate_list):
                     ),
                     outputs=Outputs(features=[ContinuousOutput(key="y2")]),
                     scaler=ScalerEnum.NORMALIZE,
+                    output_scaler=ScalerEnum.STANDARDIZE,
                     input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
                 ),
             ]
@@ -359,6 +361,7 @@ def test_botorch_models_check_compatibility():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         scaler=ScalerEnum.NORMALIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
         input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
     )
     data_model2 = data_models.SingleTaskGPSurrogate(
@@ -381,6 +384,7 @@ def test_botorch_models_check_compatibility():
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y2")]),
         scaler=ScalerEnum.NORMALIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
         input_preprocessing_specs={"cat": CategoricalEncodingEnum.ONE_HOT},
     )
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -608,6 +612,7 @@ def test_botorch_models_fit_and_compatibilize():
         inputs=inputs,
         outputs=outputs,
         scaler=ScalerEnum.NORMALIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
     )
     # model 2
     inputs = Inputs(
@@ -633,6 +638,7 @@ def test_botorch_models_fit_and_compatibilize():
         outputs=outputs,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=ScalerEnum.STANDARDIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])
@@ -721,6 +727,7 @@ def test_botorch_models_rf_fit_and_compatibilize():
         inputs=inputs,
         outputs=outputs,
         scaler=ScalerEnum.NORMALIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
     )
     # model 2
     inputs = Inputs(
@@ -867,6 +874,7 @@ def test_empirical_model():
         outputs=outputs,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=ScalerEnum.STANDARDIZE,
+        output_scaler=ScalerEnum.STANDARDIZE,
     )
     # create models
     data_model = data_models.BotorchSurrogates(surrogates=[data_model1, data_model2])

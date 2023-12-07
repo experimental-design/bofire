@@ -3,11 +3,11 @@ from typing import Literal, Optional, Union
 from pydantic import Field
 from typing_extensions import Annotated
 
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
+class RandomForestSurrogate(TrainableBotorchSurrogate):
     type: Literal["RandomForestSurrogate"] = "RandomForestSurrogate"
 
     # hyperparams passed down to `RandomForestRegressor`
@@ -30,3 +30,5 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
     random_state: Optional[int] = None
     ccp_alpha: Annotated[float, Field(ge=0)] = 0.0
     max_samples: Optional[Union[int, float]] = None
+    scaler: ScalerEnum = ScalerEnum.IDENTITY
+    output_scaler: ScalerEnum = ScalerEnum.IDENTITY

@@ -9,12 +9,10 @@ from bofire.data_models.kernels.api import (
     HammondDistanceKernel,
     MaternKernel,
 )
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.single_task_gp import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: MaternKernel(ard=True, nu=2.5)
@@ -22,7 +20,6 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     categorical_kernel: AnyCategoricalKernal = Field(
         default_factory=lambda: HammondDistanceKernel(ard=True)
     )
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
     @validator("input_preprocessing_specs")
     def validate_categoricals(cls, v, values):
