@@ -92,6 +92,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     ):
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
         super().__init__(data_model=data_model, **kwargs)
 
@@ -116,7 +117,9 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 active_dims=list(range(tX.shape[1])),
                 ard_num_dims=1,  # this keyword is ingored
             ),
-            outcome_transform=Standardize(m=tY.shape[-1]),
+            outcome_transform=Standardize(m=tY.shape[-1])
+            if self.output_scaler == ScalerEnum.STANDARDIZE
+            else None,
             input_transform=scaler,
         )
 

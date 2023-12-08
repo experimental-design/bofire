@@ -9,17 +9,14 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.priors.api import BOTORCH_NOISE_PRIOR, AnyPrior
 
 # from bofire.data_models.strategies.api import FactorialStrategy
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class PolynomialSurrogate(BotorchSurrogate, TrainableSurrogate):
+class PolynomialSurrogate(TrainableBotorchSurrogate):
     type: Literal["PolynomialSurrogate"] = "PolynomialSurrogate"
 
     kernel: PolynomialKernel = Field(default_factory=lambda: PolynomialKernel(power=2))
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
     @staticmethod
     def from_power(power: int, inputs: Inputs, outputs: Outputs):

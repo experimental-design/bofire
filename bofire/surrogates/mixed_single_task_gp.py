@@ -12,6 +12,7 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 import bofire.kernels.api as kernels
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
@@ -27,6 +28,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.continuous_kernel = data_model.continuous_kernel
         self.categorical_kernel = data_model.categorical_kernel
         self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.MixedSingleTaskGP] = None
@@ -81,7 +83,9 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             cat_dims=cat_dims,
             # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
             cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
-            outcome_transform=Standardize(m=tY.shape[-1]),
+            outcome_transform=Standardize(m=tY.shape[-1])
+            if self.output_scaler == ScalerEnum.STANDARDIZE
+            else None,
             input_transform=tf,
         )
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
