@@ -356,6 +356,90 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     assert_frame_equal(preds, preds2)
 
 
+@pytest.mark.parametrize(
+    "kernel, scaler, output_scaler",
+    [
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            ScalerEnum.NORMALIZE,
+            ScalerEnum.STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.IDENTITY,
+        ),
+    ],
+)
+def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
+    inputs = Inputs(
+        features=[MolecularInput(key="x_mol")]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = [
+        ["CC(=O)Oc1ccccc1C(=O)O", 88.0],
+        ["c1ccccc1", 35.0],
+        ["[CH3][CH2][OH]", 69.0],
+        ["N[C@](C)(F)C(=O)O", 20.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_mol", "y"])
+    experiments["valid_y"] = 1
+    model = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        scaler=scaler,
+        output_scaler=output_scaler,
+        input_preprocessing_specs={
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            },
+    )
+    model = surrogates.map(model)
+    model.fit(experiments)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    preds = model.predict(experiments.iloc[:-1])
+    assert preds.shape == (3, 2)
+    # check that model is composed correctly
+    assert isinstance(model.model, SingleTaskGP)
+    if output_scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.IDENTITY:
+        assert not hasattr(model.model, "outcome_transform")
+    if scaler == ScalerEnum.NORMALIZE:
+        assert isinstance(model.model.input_transform, Normalize)
+    elif scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.input_transform, InputStandardize)
+    else:
+        with pytest.raises(
+            AttributeError,
+            match="'SingleTaskGP' object has no attribute 'input_transform'",
+        ):
+            assert model.model.input_transform is None
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = SingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        kernel=kernel,
+        scaler=scaler,
+        output_scaler=output_scaler,
+        input_preprocessing_specs={
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            },
+    )
+    model2 = surrogates.map(model2)
+    model2.loads(dump)
+    preds2 = model2.predict(experiments.iloc[:-1])
+    assert_frame_equal(preds, preds2)
+
+
 @pytest.mark.parametrize("target_metric", list(RegressionMetricsEnum))
 def test_hyperconfig_domain(target_metric: RegressionMetricsEnum):
     # we test here also the abstract methods from the corresponding base class
@@ -507,7 +591,7 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
         )
 
 
-def test_MixedGPModel_invalid_preprocessing():
+def test_MixedSingleTaskGPModel_invalid_preprocessing():
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -536,7 +620,7 @@ def test_MixedGPModel_invalid_preprocessing():
         (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
     ],
 )
-def test_MixedGPModel(kernel, scaler, output_scaler):
+def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -609,6 +693,90 @@ def test_MixedGPModel(kernel, scaler, output_scaler):
     model2 = surrogates.map(model2)
     model2.loads(dump)
     preds2 = model2.predict(samples)
+    assert_frame_equal(preds, preds2)
+
+
+@pytest.mark.parametrize(
+    "kernel, scaler, output_scaler",
+    [
+        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
+    ],
+)
+def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
+    inputs = Inputs(
+        features=[MolecularInput(key="x_mol")] +
+        [CategoricalInput(key="x_cat", categories=["a", "b"])]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    experiments = [
+        ["CC(=O)Oc1ccccc1C(=O)O", "a", 88.0],
+        ["c1ccccc1", "a", 35.0],
+        ["[CH3][CH2][OH]", "b", 69.0],
+        ["N[C@](C)(F)C(=O)O", "b", 20.0],
+    ]
+    experiments = pd.DataFrame(experiments, columns=["x_mol", "x_cat", "y"])
+    experiments["valid_y"] = 1
+    model = MixedSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        scaler=scaler,
+        output_scaler=output_scaler,
+        continuous_kernel=kernel,
+        categorical_kernel=HammondDistanceKernel(),
+        input_preprocessing_specs={
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            },
+    )
+    model = surrogates.map(model)
+    model.fit(experiments)
+    # dump the model
+    dump = model.dumps()
+    # make predictions
+    preds = model.predict(experiments.iloc[:-1])
+    assert preds.shape == (3, 2)
+    # check that model is composed correctly
+    assert isinstance(model.model, MixedSingleTaskGP)
+    if output_scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.IDENTITY:
+        assert not hasattr(model.model, "outcome_transform")
+    if scaler == ScalerEnum.NORMALIZE:
+        assert isinstance(model.model.input_transform, ChainedInputTransform)
+        assert isinstance(model.model.input_transform.tf1, Normalize)
+        assert torch.eq(
+            model.model.input_transform.tf1.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    elif scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.input_transform, ChainedInputTransform)
+        assert isinstance(model.model.input_transform.tf1, InputStandardize)
+        assert torch.eq(
+            model.model.input_transform.tf1.indices,
+            torch.tensor([0, 1], dtype=torch.int64),
+        ).all()
+        assert isinstance(model.model.input_transform.tf2, OneHotToNumeric)
+    else:
+        assert isinstance(model.model.input_transform, OneHotToNumeric)
+    assert model.is_compatibilized is False
+    # reload the model from dump and check for equality in predictions
+    model2 = MixedSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+        continuous_kernel=kernel,
+        scaler=scaler,
+        output_scaler=output_scaler,
+        input_preprocessing_specs={
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            },
+    )
+    model2 = surrogates.map(model2)
+    model2.loads(dump)
+    preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
 

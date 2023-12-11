@@ -63,8 +63,8 @@ class MixedTanimotoGP(SingleTaskGP):
             Callable[[torch.Size, int, List[int]], Kernel]
         ] = None,
         likelihood: Optional[Likelihood] = None,
-        outcome_transform: Optional[OutcomeTransform] = None,  # TODO
-        input_transform: Optional[InputTransform] = None,  # TODO
+        outcome_transform: Optional[OutcomeTransform] = None,
+        input_transform: Optional[InputTransform] = None,
     ) -> None:
         if len(mol_dims) == 0:
             raise ValueError("Must specify molecular dimensions for MixedTanimotoGP")
