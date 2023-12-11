@@ -1,4 +1,4 @@
-from typing import Literal, Dict, Union
+from typing import Literal
 
 from pydantic import Field, validator
 
@@ -7,20 +7,20 @@ from bofire.data_models.kernels.api import (
     AnyCategoricalKernal,
     AnyContinuousKernel,
     AnyMolecularKernel,
-    AnyKernel,
     HammondDistanceKernel,
-    TanimotoKernel,
     MaternKernel,
-    ScaleKernel,
+    TanimotoKernel,
 )
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.single_task_gp import ScalerEnum
-from bofire.data_models.features.molecular import MolecularInput
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
-from bofire.data_models.molfeatures.api import *
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+)
+from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedTanimotoGPSurrogate"] = "MixedTanimotoGPSurrogate"
 
     continuous_kernel: AnyContinuousKernel = Field(
@@ -38,12 +38,11 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     @validator("input_preprocessing_specs")
     def validate_moleculars(cls, v, values):
         """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
-        if not any (
-            [isinstance(value, Fingerprints)
+        if not any(
+            isinstance(value, Fingerprints)
             or isinstance(value, Fragments)
             or isinstance(value, FingerprintsFragments)
             for value in v.values()
-            ]
         ):
             raise ValueError(
                 "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."

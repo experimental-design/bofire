@@ -13,13 +13,14 @@ import bofire.priors.api as priors
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
 from bofire.data_models.features.api import TInputTransformSpecs
-from bofire.data_models.molfeatures.api import MolFeatures
+from bofire.data_models.molfeatures.api import MordredDescriptors
+
+# from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
-from bofire.data_models.molfeatures.api import MordredDescriptors
 
 
 def get_scaler(

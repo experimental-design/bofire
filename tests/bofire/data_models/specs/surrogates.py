@@ -243,11 +243,11 @@ specs.add_valid(
             ]
         ),
         "kernel": ScaleKernel(
-           base_kernel=TanimotoKernel(
-               ard=True,
-           ),
-           outputscale_prior=BOTORCH_SCALE_PRIOR(),
-           ),
+            base_kernel=TanimotoKernel(
+                ard=True,
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ),
         "aggregations": None,
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
@@ -262,9 +262,7 @@ specs.add_valid(
     models.MixedTanimotoGPSurrogate,
     lambda: {
         "inputs": Inputs(
-            features=[
-                MolecularInput(key="mol1")
-            ] 
+            features=[MolecularInput(key="mol1")]
             + [
                 features.valid(ContinuousInput).obj(),
             ]
@@ -280,8 +278,11 @@ specs.add_valid(
         "continuous_kernel": MaternKernel(ard=True, nu=random.choice([0.5, 1.5, 2.5])),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
-        "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3),
-                                      "cat1": CategoricalEncodingEnum.ONE_HOT},
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {
+            "mol1": Fingerprints(n_bits=32, bond_radius=3),
+            "cat1": CategoricalEncodingEnum.ONE_HOT,
+        },
         "dump": None,
         "hyperconfig": None,
     },

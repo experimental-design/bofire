@@ -52,10 +52,10 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
-from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGP
+from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable import metrics2objectives
+from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGP
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
@@ -182,6 +182,7 @@ def test_get_scaler(
             with pytest.raises(AttributeError):
                 assert (scaler.coefficient == expected_coefficient).all()
 
+
 @pytest.mark.parametrize(
     "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices_length",
     [
@@ -248,7 +249,8 @@ def test_get_scaler_molecular(
                 bounds=(0, 5),
             )
             for i in range(2)
-        ] + [MolecularInput(key='x_mol')]
+        ]
+        + [MolecularInput(key="x_mol")]
     )
     experiments = [
         [5.0, 2.5, "CC(=O)Oc1ccccc1C(=O)O"],
@@ -265,10 +267,12 @@ def test_get_scaler_molecular(
     )
     assert isinstance(scaler, expected_scaler)
     if expected_indices_length != 0:
-        assert (len(scaler.indices) == expected_indices_length)
+        assert len(scaler.indices) == expected_indices_length
     else:
-        with pytest.raises(AttributeError, match="'NoneType' object has no attribute 'indices'"):
-            assert (scaler.indices == None)
+        with pytest.raises(
+            AttributeError, match="'NoneType' object has no attribute 'indices'"
+        ):
+            assert scaler.indices is None
 
 
 @pytest.mark.parametrize(
@@ -478,10 +482,9 @@ def test_TanimotoGP(kernel, specs):
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
+
 def test_TanimotoGPModel_invalid_preprocessing_mordred():
-    inputs = Inputs(
-        features=[MolecularInput(key='x_mol')]
-    )
+    inputs = Inputs(features=[MolecularInput(key="x_mol")])
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
         ["CC(=O)Oc1ccccc1C(=O)O", 1.5],
@@ -492,12 +495,17 @@ def test_TanimotoGPModel_invalid_preprocessing_mordred():
     experiments = pd.DataFrame(experiments, columns=["x_mol", "y"])
     experiments["valid_y"] = 1
     with pytest.raises(
-        ValidationError, match="TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
+        ValidationError,
+        match="TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
+    ):
         TanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            input_preprocessing_specs={"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            input_preprocessing_specs={
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            },
         )
+
 
 def test_MixedGPModel_invalid_preprocessing():
     inputs = Inputs(
@@ -603,6 +611,7 @@ def test_MixedGPModel(kernel, scaler, output_scaler):
     preds2 = model2.predict(samples)
     assert_frame_equal(preds, preds2)
 
+
 def test_MixedTanimotoGPModel_invalid_preprocessing():
     inputs = Inputs(
         features=[
@@ -621,11 +630,14 @@ def test_MixedTanimotoGPModel_invalid_preprocessing():
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
     with pytest.raises(
-        ValidationError,match="MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
+        ValidationError,
+        match="MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
+    ):
         MixedTanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
         )
+
 
 def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
     inputs = Inputs(
@@ -635,7 +647,8 @@ def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
                 bounds=(0, 5),
             )
             for i in range(2)
-        ] + [MolecularInput(key='x_mol')]
+        ]
+        + [MolecularInput(key="x_mol")]
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
@@ -647,12 +660,17 @@ def test_MixedTanimotoGPModel_invalid_preprocessing_mordred():
     experiments = pd.DataFrame(experiments, columns=["x_1", "x_2", "x_mol", "y"])
     experiments["valid_y"] = 1
     with pytest.raises(
-        ValidationError, match="MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."):
+        ValidationError,
+        match="MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
+    ):
         MixedTanimotoGPSurrogate(
             inputs=inputs,
             outputs=outputs,
-            input_preprocessing_specs={"x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            input_preprocessing_specs={
+                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            },
         )
+
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
@@ -719,7 +737,10 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
         assert isinstance(model.model.input_transform, InputStandardize)
         assert model.model.input_transform.indices.shape == torch.Size([2])
     else:
-        with pytest.raises(AttributeError, match="'MixedTanimotoGP' object has no attribute 'input_transform'"):
+        with pytest.raises(
+            AttributeError,
+            match="'MixedTanimotoGP' object has no attribute 'input_transform'",
+        ):
             assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions
@@ -734,13 +755,17 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, specs, scaler",
     [
         (
             TanimotoKernel(ard=True),
-            {"x_mol": Fingerprints(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            {
+                "x_mol": Fingerprints(n_bits=32),
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            },
             ScalerEnum.NORMALIZE,
         ),
         (
@@ -750,7 +775,10 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
         ),
         (
             TanimotoKernel(ard=True),
-            {"x_mol": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            {
+                "x_mol": FingerprintsFragments(n_bits=32),
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            },
             ScalerEnum.STANDARDIZE,
         ),
     ],
@@ -758,7 +786,12 @@ def test_MixedTanimotoGP_continuous(kernel, specs, scaler):
 def test_MixedTanimotoGP(kernel, specs, scaler):
     inputs = Inputs(
         features=[MolecularInput(key="x_mol")]
-        + [ContinuousInput(key=f"x_1",bounds=(0, 5.0),)]
+        + [
+            ContinuousInput(
+                key="x_1",
+                bounds=(0, 5.0),
+            )
+        ]
         + [CategoricalInput(key="x_cat", categories=["a", "b"])]
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
@@ -812,13 +845,17 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "kernel, specs",
     [
         (
             TanimotoKernel(ard=True),
-            {"x_mol": Fingerprints(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            {
+                "x_mol": Fingerprints(n_bits=32),
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            },
         ),
         (
             TanimotoKernel(ard=False),
@@ -826,7 +863,10 @@ def test_MixedTanimotoGP(kernel, specs, scaler):
         ),
         (
             TanimotoKernel(ard=True),
-            {"x_mol": FingerprintsFragments(n_bits=32), "x_cat": CategoricalEncodingEnum.ONE_HOT},
+            {
+                "x_mol": FingerprintsFragments(n_bits=32),
+                "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            },
         ),
     ],
 )
@@ -873,6 +913,7 @@ def test_MixedTanimotoGP_categorical(kernel, specs):
     preds2 = model2.predict(experiments.iloc[:-1])
     assert_frame_equal(preds, preds2)
 
+
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
     "molecular_kernel, continuous_kernel, specs, scaler",
@@ -880,27 +921,38 @@ def test_MixedTanimotoGP_categorical(kernel, specs):
         (
             TanimotoKernel(ard=True),
             RBFKernel(ard=True),
-            {"x_1": Fingerprints(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            {
+                "x_1": Fingerprints(n_bits=32),
+                "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
             ScalerEnum.NORMALIZE,
         ),
         (
             TanimotoKernel(ard=False),
             MaternKernel(nu=0.5, ard=True),
-            {"x_1": Fragments(), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            {
+                "x_1": Fragments(),
+                "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
             ScalerEnum.IDENTITY,
         ),
         (
             TanimotoKernel(ard=True),
             MaternKernel(nu=2.5, ard=False),
-            {"x_1": FingerprintsFragments(n_bits=32), "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])},
+            {
+                "x_1": FingerprintsFragments(n_bits=32),
+                "x_2": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
             ScalerEnum.STANDARDIZE,
         ),
     ],
 )
-def test_MixedTanimotoGP_with_mordred(molecular_kernel, continuous_kernel, specs, scaler):
+def test_MixedTanimotoGP_with_mordred(
+    molecular_kernel, continuous_kernel, specs, scaler
+):
     inputs = Inputs(
         features=[
-           MolecularInput(
+            MolecularInput(
                 key=f"x_{i+1}",
             )
             for i in range(2)
@@ -940,7 +992,10 @@ def test_MixedTanimotoGP_with_mordred(molecular_kernel, continuous_kernel, specs
         assert isinstance(model.model.input_transform, InputStandardize)
         assert model.model.input_transform.indices.shape == torch.Size([2])
     else:
-        with pytest.raises(AttributeError, match="'MixedTanimotoGP' object has no attribute 'input_transform'"):
+        with pytest.raises(
+            AttributeError,
+            match="'MixedTanimotoGP' object has no attribute 'input_transform'",
+        ):
             assert model.model.input_transform is None
     assert model.is_compatibilized is False
     # reload the model from dump and check for equality in predictions

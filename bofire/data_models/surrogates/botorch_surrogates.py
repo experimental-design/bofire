@@ -20,7 +20,6 @@ from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
-from bofire.data_models.surrogates.xgb import XGBoostSurrogate
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
@@ -33,7 +32,6 @@ AnyBotorchSurrogate = Union[
     TanimotoGPSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
-    XGBoostSurrogate,
 ]
 
 

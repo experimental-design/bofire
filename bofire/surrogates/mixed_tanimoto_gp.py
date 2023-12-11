@@ -1,36 +1,20 @@
-from functools import partial
-import bofire.kernels.api as kernels
-from typing import Callable, Dict, List, Optional
-
 import base64
 import io
 import warnings
+from functools import partial
+from typing import Callable, Dict, List, Optional
 
-import botorch
 import pandas as pd
-from botorch.fit import fit_gpytorch_mll
-from botorch.models.transforms.input import ChainedInputTransform, OneHotToNumeric
-from botorch.models.transforms.outcome import Standardize
-from gpytorch.mlls import ExactMarginalLogLikelihood
-
-from bofire.data_models.enum import (
-    CategoricalEncodingEnum,
-    OutputFilteringEnum,
-    # MolecularEncodingEnum,
-)
-from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataModel
-from bofire.data_models.kernels.continuous import MaternKernel
-from bofire.data_models.kernels.aggregation import ScaleKernel
-from bofire.data_models.kernels.categorical import HammondDistanceKernel
-from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.single_task_gp import get_scaler
-from bofire.surrogates.trainable import TrainableSurrogate
-from bofire.utils.torch_tools import tkwargs
-
 import torch
+from botorch.fit import fit_gpytorch_mll
 from botorch.models.gp_regression import SingleTaskGP
-from botorch.models.transforms.input import InputTransform
-from botorch.models.transforms.outcome import OutcomeTransform
+from botorch.models.kernels.categorical import CategoricalKernel
+from botorch.models.transforms.input import (
+    ChainedInputTransform,
+    InputTransform,
+    OneHotToNumeric,
+)
+from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from botorch.utils.transforms import normalize_indices
 from gpytorch.constraints import GreaterThan
 from gpytorch.kernels.kernel import Kernel
@@ -38,13 +22,31 @@ from gpytorch.kernels.matern_kernel import MaternKernel
 from gpytorch.kernels.scale_kernel import ScaleKernel
 from gpytorch.likelihoods.gaussian_likelihood import GaussianLikelihood
 from gpytorch.likelihoods.likelihood import Likelihood
+from gpytorch.mlls import ExactMarginalLogLikelihood
 from gpytorch.priors import GammaPrior
 from torch import Tensor
 
-from bofire.data_models.molfeatures.api import *
-from sklearn.preprocessing import StandardScaler
+import bofire.kernels.api as kernels
+from bofire.data_models.enum import (
+    CategoricalEncodingEnum,
+    OutputFilteringEnum,
+)
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+    MordredDescriptors,
+)
 
-from botorch.models.kernels.categorical import CategoricalKernel
+# MolecularEncodingEnum,
+from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataModel
+
+# from bofire.data_models.kernels.categorical import HammondDistanceKernel
+from bofire.surrogates.botorch import BotorchSurrogate
+from bofire.surrogates.single_task_gp import get_scaler
+from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.utils.torch_tools import tkwargs
+
 
 class MixedTanimotoGP(SingleTaskGP):
     def __init__(
@@ -54,9 +56,9 @@ class MixedTanimotoGP(SingleTaskGP):
         mol_dims: List[int],
         mol_kernel_factory: Callable[[torch.Size, int, List[int]], Kernel],
         cat_dims: Optional[List[int]] = None,
-        #cat_kernel_factory: Optional[
+        # cat_kernel_factory: Optional[
         #    Callable[[torch.Size, int, List[int]], Kernel]
-        #] = None, --> BoTorch forced to use CategoricalKernel
+        # ] = None, --> BoTorch forced to use CategoricalKernel
         cont_kernel_factory: Optional[
             Callable[[torch.Size, int, List[int]], Kernel]
         ] = None,
@@ -79,7 +81,12 @@ class MixedTanimotoGP(SingleTaskGP):
         ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims))
 
         if cont_kernel_factory is None:
-            cont_kernel_factory = kernels.map_MaternKernel(data_model=MaternKernel(ard=True, nu=2.5), batch_shape=aug_batch_shape, ard_num_dims=len(ord_dim), active_dims=ord_dims)
+            cont_kernel_factory = kernels.map_MaternKernel(
+                data_model=MaternKernel(ard=True, nu=2.5),
+                batch_shape=aug_batch_shape,
+                ard_num_dims=len(ord_dims),
+                active_dims=ord_dims,
+            )
 
         if likelihood is None:
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
@@ -98,14 +105,14 @@ class MixedTanimotoGP(SingleTaskGP):
                     ard_num_dims=len(cat_dims),
                     active_dims=cat_dims,
                     lengthscale_constraint=GreaterThan(1e-06),
-                    )
-                ) + ScaleKernel(
+                )
+            ) + ScaleKernel(
                 mol_kernel_factory(
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
-                    )
                 )
+            )
 
             prod_kernel = ScaleKernel(
                 CategoricalKernel(
@@ -113,14 +120,14 @@ class MixedTanimotoGP(SingleTaskGP):
                     ard_num_dims=len(cat_dims),
                     active_dims=cat_dims,
                     lengthscale_constraint=GreaterThan(1e-06),
-                    )
-                ) * ScaleKernel(
+                )
+            ) * ScaleKernel(
                 mol_kernel_factory(
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
-                    )
                 )
+            )
 
             covar_module = sum_kernel + prod_kernel
 
@@ -253,22 +260,24 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             or isinstance(value, Fragments)
             or isinstance(value, FingerprintsFragments)
         ]
-        
 
         # Continuous features include continuous inputs, categorical inputs with descriptors, and Mordred descriptors
         continuous_features_list = [
             feat.key
             for feat in self.inputs.get()
-            if feat.key not in categorical_features_list and feat.key not in molecular_features_list
+            if feat.key not in categorical_features_list
+            and feat.key not in molecular_features_list
         ]
 
         if len(continuous_features_list) == 0:
-            scaler = None # skip the scaler
+            scaler = None  # skip the scaler
         else:
-            scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+            scaler = get_scaler(
+                self.inputs, self.input_preprocessing_specs, self.scaler, X
+            )
 
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
-            
+
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values
         ).to(**tkwargs)
@@ -276,22 +285,25 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         features2idx, _ = self.inputs._get_transform_info(
             self.input_preprocessing_specs
         )
-    
+
         # List of indexes for Molecular features using Fingerprints, Fragment, FingerprintsFragments
         mol_dims = []
-        for mol_feat in (molecular_features_list):
+        for mol_feat in molecular_features_list:
             for i in features2idx[mol_feat]:
                 mol_dims.append(i)
 
         # List of indexes for Continuous inputs, Categorical inputs with descriptors, Mordred descriptors
         ord_dims = []
-        for ord_feat in (continuous_features_list):
+        for ord_feat in continuous_features_list:
             for i in features2idx[ord_feat]:
                 ord_dims.append(i)
 
         # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
-            range(len(ord_dims)+len(mol_dims), len(ord_dims)+len(mol_dims) + len(categorical_features_list))
+            range(
+                len(ord_dims) + len(mol_dims),
+                len(ord_dims) + len(mol_dims) + len(categorical_features_list),
+            )
         )
 
         if len(categorical_features_list) == 0:
@@ -309,7 +321,11 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 categorical_features=categorical_features,
                 transform_on_train=False,
             )
-            tf = ChainedInputTransform(tf1=scaler, tf2=o2n) if scaler is not None else o2n
+            tf = (
+                ChainedInputTransform(tf1=scaler, tf2=o2n)
+                if scaler is not None
+                else o2n
+            )
             tXX = o2n.transform(tX)
 
         # fit the model
@@ -319,7 +335,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             cat_dims=cat_dims,
             mol_dims=mol_dims,
             cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
-            #cat_kernel_factory=partial(kernels.map, data_model=self.categorical_kernel), BoTorch forced to use CategoricalKernel
+            # cat_kernel_factory=partial(kernels.map, data_model=self.categorical_kernel), BoTorch forced to use CategoricalKernel
             mol_kernel_factory=partial(kernels.map, data_model=self.molecular_kernel),
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=tf,
@@ -351,5 +367,3 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
         buffer = io.BytesIO(base64.b64decode(data.encode()))
         self.model = torch.load(buffer, pickle_module=cloudpickle_module)  # type: ignore
-    
-
