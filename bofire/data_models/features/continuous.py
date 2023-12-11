@@ -67,7 +67,7 @@ class ContinuousInput(NumericalInput):
         )
         idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(
             axis=1
-        )  # type: ignore
+        )
         return pd.Series(
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
