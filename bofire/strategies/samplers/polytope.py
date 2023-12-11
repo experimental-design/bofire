@@ -142,7 +142,7 @@ class PolytopeSampler(SamplerStrategy):
                 equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
                 n_burnin=self.n_burnin,
                 thinning=self.n_thinning,
-                seed=self.seed,
+                seed=self.rng.integers(1, 1000),
             ).squeeze(dim=0)
 
             # check that the random generated candidates are not always the same
