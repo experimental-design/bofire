@@ -377,9 +377,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     ],
 )
 def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
-    inputs = Inputs(
-        features=[MolecularInput(key="x_mol")]
-    )
+    inputs = Inputs(features=[MolecularInput(key="x_mol")])
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
         ["CC(=O)Oc1ccccc1C(=O)O", 88.0],
@@ -396,8 +394,8 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
-            },
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+        },
     )
     model = surrogates.map(model)
     model.fit(experiments)
@@ -431,8 +429,8 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
-            },
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+        },
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)
@@ -706,8 +704,8 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 )
 def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     inputs = Inputs(
-        features=[MolecularInput(key="x_mol")] +
-        [CategoricalInput(key="x_cat", categories=["a", "b"])]
+        features=[MolecularInput(key="x_mol")]
+        + [CategoricalInput(key="x_cat", categories=["a", "b"])]
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
@@ -726,9 +724,9 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         continuous_kernel=kernel,
         categorical_kernel=HammondDistanceKernel(),
         input_preprocessing_specs={
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-            },
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_cat": CategoricalEncodingEnum.ONE_HOT,
+        },
     )
     model = surrogates.map(model)
     model.fit(experiments)
@@ -770,9 +768,9 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-                "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
-                "x_cat": CategoricalEncodingEnum.ONE_HOT,
-            },
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            "x_cat": CategoricalEncodingEnum.ONE_HOT,
+        },
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)
