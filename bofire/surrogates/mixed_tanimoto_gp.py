@@ -78,10 +78,10 @@ class MixedTanimotoGP(SingleTaskGP):
         d = train_X.shape[-1]
         mol_dims = normalize_indices(indices=mol_dims, d=d)
         cat_dims = normalize_indices(indices=cat_dims, d=d)
-        ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims))
+        ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims)) # type: ignore
 
         if cont_kernel_factory is None:
-            cont_kernel_factory = kernels.map_MaternKernel(
+            cont_kernel_factory = kernels.map_MaternKernel( # type: ignore
                 data_model=MaternKernel(ard=True, nu=2.5),
                 batch_shape=aug_batch_shape,
                 ard_num_dims=len(ord_dims),
@@ -102,13 +102,13 @@ class MixedTanimotoGP(SingleTaskGP):
             sum_kernel = ScaleKernel(
                 CategoricalKernel(
                     batch_shape=aug_batch_shape,
-                    ard_num_dims=len(cat_dims),
+                    ard_num_dims=len(cat_dims), # type: ignore
                     active_dims=cat_dims,
                     lengthscale_constraint=GreaterThan(1e-06),
                 )
             ) + ScaleKernel(
                 mol_kernel_factory(
-                    batch_shape=aug_batch_shape,
+                    batch_shape=aug_batch_shape, # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
                 )
@@ -117,13 +117,13 @@ class MixedTanimotoGP(SingleTaskGP):
             prod_kernel = ScaleKernel(
                 CategoricalKernel(
                     batch_shape=aug_batch_shape,
-                    ard_num_dims=len(cat_dims),
+                    ard_num_dims=len(cat_dims), # type: ignore
                     active_dims=cat_dims,
                     lengthscale_constraint=GreaterThan(1e-06),
                 )
             ) * ScaleKernel(
                 mol_kernel_factory(
-                    batch_shape=aug_batch_shape,
+                    batch_shape=aug_batch_shape, # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
                 )
@@ -131,16 +131,16 @@ class MixedTanimotoGP(SingleTaskGP):
 
             covar_module = sum_kernel + prod_kernel
 
-        elif len(cat_dims) == 0:
+        elif len(cat_dims) == 0: # type: ignore
             sum_kernel = ScaleKernel(
                 cont_kernel_factory(
-                    batch_shape=aug_batch_shape,
+                    batch_shape=aug_batch_shape, # type: ignore
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
                 )
             ) + ScaleKernel(
                 mol_kernel_factory(
-                    batch_shape=aug_batch_shape,
+                    batch_shape=aug_batch_shape, # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
                 )
@@ -148,13 +148,13 @@ class MixedTanimotoGP(SingleTaskGP):
 
             prod_kernel = ScaleKernel(
                 cont_kernel_factory(
-                    batch_shape=aug_batch_shape,
+                    batch_shape=aug_batch_shape, # type: ignore
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
                 )
             ) * ScaleKernel(
                 mol_kernel_factory(
-                    batch_shape=aug_batch_shape,
+                    batch_shape=aug_batch_shape, # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
                 )
@@ -166,14 +166,14 @@ class MixedTanimotoGP(SingleTaskGP):
             sum_kernel = (
                 ScaleKernel(
                     cont_kernel_factory(
-                        batch_shape=aug_batch_shape,
+                        batch_shape=aug_batch_shape, # type: ignore
                         ard_num_dims=len(ord_dims),
                         active_dims=ord_dims,
                     )
                 )
                 + ScaleKernel(
                     mol_kernel_factory(
-                        batch_shape=aug_batch_shape,
+                        batch_shape=aug_batch_shape, # type: ignore
                         ard_num_dims=len(mol_dims),
                         active_dims=mol_dims,
                     )
@@ -181,7 +181,7 @@ class MixedTanimotoGP(SingleTaskGP):
                 + ScaleKernel(
                     CategoricalKernel(
                         batch_shape=aug_batch_shape,
-                        ard_num_dims=len(cat_dims),
+                        ard_num_dims=len(cat_dims), # type: ignore
                         active_dims=cat_dims,
                         lengthscale_constraint=GreaterThan(1e-06),
                     )
@@ -191,14 +191,14 @@ class MixedTanimotoGP(SingleTaskGP):
             prod_kernel = (
                 ScaleKernel(
                     cont_kernel_factory(
-                        batch_shape=aug_batch_shape,
+                        batch_shape=aug_batch_shape, # type: ignore
                         ard_num_dims=len(ord_dims),
                         active_dims=ord_dims,
                     )
                 )
                 * ScaleKernel(
                     mol_kernel_factory(
-                        batch_shape=aug_batch_shape,
+                        batch_shape=aug_batch_shape, # type: ignore
                         ard_num_dims=len(mol_dims),
                         active_dims=mol_dims,
                     )
@@ -206,7 +206,7 @@ class MixedTanimotoGP(SingleTaskGP):
                 * ScaleKernel(
                     CategoricalKernel(
                         batch_shape=aug_batch_shape,
-                        ard_num_dims=len(cat_dims),
+                        ard_num_dims=len(cat_dims), # type: ignore
                         active_dims=cat_dims,
                         lengthscale_constraint=GreaterThan(1e-06),
                     )
