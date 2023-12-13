@@ -28,7 +28,13 @@ from bofire.data_models.features.api import (
     Output,
     TInputTransformSpecs,
 )
-from bofire.data_models.molfeatures.api import MolFeatures
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+    MolFeatures,
+    MordredDescriptors,
+)
 from bofire.data_models.objectives.api import AbstractObjective, Objective
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
@@ -530,6 +536,106 @@ class Inputs(Features):
             lower += lo
             upper += up
         return lower, upper
+
+    def get_molecular_features(
+        self,
+        specs: TInputTransformSpecs,
+    ) -> List[str]:
+        """Returns a list of molecular features in the input data.
+        These features are of type Fingerprints, Fragments, or FingerprintsFragments.
+
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+
+        Returns:
+            List[str]: The list of molecular features.
+        """
+        molecular_features_list = [
+            key
+            for key, value in specs.items()
+            if isinstance(value, Fingerprints)
+            or isinstance(value, Fragments)
+            or isinstance(value, FingerprintsFragments)
+        ]
+        return molecular_features_list
+
+    def get_continuous_features(
+        self,
+        specs: TInputTransformSpecs,
+    ) -> List[str]:
+        """Returns a list of continuous features in the input data.
+        These features include continuous inputs, categorical inputs with descriptors, and Mordred descriptors.
+
+
+            Args:
+                specs (TInputTransformSpecs): Dictionary specifying which
+                    input feature is transformed by which encoder.
+
+            Returns:
+                List[str]: The list of continuous features.
+        """
+        non_continuous_features_list = [
+            key
+            for key, value in specs.items()
+            if value != CategoricalEncodingEnum.DESCRIPTOR
+            and not isinstance(value, MordredDescriptors)
+        ]
+        continuous_features_list = [
+            feat.key
+            for feat in self.get()
+            if feat.key not in non_continuous_features_list
+        ]
+        return continuous_features_list
+
+    def get_categorical_features(
+        self,
+        specs: TInputTransformSpecs,
+    ) -> List[str]:
+        """Returns a list of categorical features in the input data.
+        These features are not descriptor-based and are not of type Fingerprints, Fragments, FingerprintsFragments,
+        or MordredDescriptors.
+
+            Args:
+                specs (TInputTransformSpecs): Dictionary specifying which
+                    input feature is transformed by which encoder.
+
+            Returns:
+                List[str]: The list of categorical features.
+        """
+        categorical_features_list = [
+            key
+            for key, value in specs.items()
+            if value != CategoricalEncodingEnum.DESCRIPTOR
+            and not isinstance(value, Fingerprints)
+            and not isinstance(value, Fragments)
+            and not isinstance(value, FingerprintsFragments)
+            and not isinstance(value, MordredDescriptors)
+        ]
+        return categorical_features_list
+
+    def get_feature_indices(
+        self,
+        specs: TInputTransformSpecs,
+        feature_list: List[str],
+    ) -> List[int]:
+        """Returns a list of indices of the given feature list.
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+            feature_list (List[str]): List of features
+
+        Returns:
+            List[int]: The list of indices.
+        """
+        features2idx, _ = self._get_transform_info(specs)
+        feat_dims = []
+        for feat in feature_list:
+            for i in features2idx[feat]:
+                feat_dims.append(i)
+        return feat_dims
 
 
 class Outputs(Features):

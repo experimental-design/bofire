@@ -1,6 +1,3 @@
-import base64
-import io
-import warnings
 from functools import partial
 from typing import Callable, Dict, List, Optional
 
@@ -27,18 +24,10 @@ from gpytorch.priors import GammaPrior
 from torch import Tensor
 
 import bofire.kernels.api as kernels
+import bofire.priors.api as priors
 from bofire.data_models.enum import (
-    CategoricalEncodingEnum,
     OutputFilteringEnum,
 )
-from bofire.data_models.molfeatures.api import (
-    Fingerprints,
-    FingerprintsFragments,
-    Fragments,
-    MordredDescriptors,
-)
-
-# MolecularEncodingEnum,
 from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataModel
 
 # from bofire.data_models.kernels.categorical import HammondDistanceKernel
@@ -69,8 +58,7 @@ class MixedTanimotoGP(SingleTaskGP):
         if len(mol_dims) == 0:
             raise ValueError("Must specify molecular dimensions for MixedTanimotoGP")
 
-        if cat_dims is None:
-            cat_dims = []
+        cat_dims = cat_dims or []
         self._ignore_X_dims_scaling_check = cat_dims
 
         _, aug_batch_shape = self.get_batch_dimensions(train_X=train_X, train_Y=train_Y)
@@ -234,6 +222,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.categorical_kernel = data_model.categorical_kernel
         self.molecular_kernel = data_model.molecular_kernel
         self.scaler = data_model.scaler
+        self.noise_prior = data_model.noise_prior
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[MixedTanimotoGP] = None
@@ -241,33 +230,28 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        # Categorical inputs that are not descriptor-based
-        categorical_features_list = [
-            key
-            for key, value in self.input_preprocessing_specs.items()
-            if value != CategoricalEncodingEnum.DESCRIPTOR
-            and not isinstance(value, Fingerprints)
-            and not isinstance(value, Fragments)
-            and not isinstance(value, FingerprintsFragments)
-            and not isinstance(value, MordredDescriptors)
-        ]
+        molecular_features_list = self.inputs.get_molecular_features(
+            self.input_preprocessing_specs
+        )
+        continuous_features_list = self.inputs.get_continuous_features(
+            self.input_preprocessing_specs
+        )
+        categorical_features_list = self.inputs.get_categorical_features(
+            self.input_preprocessing_specs
+        )
 
-        # Molecular features only include fingerprints, fragments, and fingerprintsfragments
-        molecular_features_list = [
-            key
-            for key, value in self.input_preprocessing_specs.items()
-            if isinstance(value, Fingerprints)
-            or isinstance(value, Fragments)
-            or isinstance(value, FingerprintsFragments)
-        ]
-
-        # Continuous features include continuous inputs, categorical inputs with descriptors, and Mordred descriptors
-        continuous_features_list = [
-            feat.key
-            for feat in self.inputs.get()
-            if feat.key not in categorical_features_list
-            and feat.key not in molecular_features_list
-        ]
+        mol_dims = self.inputs.get_feature_indices(
+            self.input_preprocessing_specs, molecular_features_list
+        )
+        ord_dims = self.inputs.get_feature_indices(
+            self.input_preprocessing_specs, continuous_features_list
+        )
+        cat_dims = list(
+            range(
+                len(ord_dims) + len(mol_dims),
+                len(ord_dims) + len(mol_dims) + len(categorical_features_list),
+            )
+        )
 
         if len(continuous_features_list) == 0:
             scaler = None  # skip the scaler
@@ -282,34 +266,13 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y.values
         ).to(**tkwargs)
 
-        features2idx, _ = self.inputs._get_transform_info(
-            self.input_preprocessing_specs
-        )
-
-        # List of indexes for Molecular features using Fingerprints, Fragment, FingerprintsFragments
-        mol_dims = []
-        for mol_feat in molecular_features_list:
-            for i in features2idx[mol_feat]:
-                mol_dims.append(i)
-
-        # List of indexes for Continuous inputs, Categorical inputs with descriptors, Mordred descriptors
-        ord_dims = []
-        for ord_feat in continuous_features_list:
-            for i in features2idx[ord_feat]:
-                ord_dims.append(i)
-
-        # these are the categorical dimensions after applying the OneHotToNumeric transform
-        cat_dims = list(
-            range(
-                len(ord_dims) + len(mol_dims),
-                len(ord_dims) + len(mol_dims) + len(categorical_features_list),
-            )
-        )
-
         if len(categorical_features_list) == 0:
             tf = scaler
             tXX = tX
         else:
+            features2idx, _ = self.inputs._get_transform_info(
+                self.input_preprocessing_specs
+            )
             # these are the categorical features within the OneHotToNumeric transform
             categorical_features = {
                 features2idx[feat][0]: len(features2idx[feat])
@@ -340,30 +303,8 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             outcome_transform=Standardize(m=tY.shape[-1]),
             input_transform=tf,
         )
+
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
-
-    def _dumps(self) -> str:
-        """Dumps the actual model to a string via pickle as this is not directly json serializable."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            import bofire.surrogates.cloudpickle_module as cloudpickle_module
-
-            if len(w) == 1:
-                raise ModuleNotFoundError("Cloudpickle is not available.")
-
-        buffer = io.BytesIO()
-        torch.save(self.model, buffer, pickle_module=cloudpickle_module)  # type: ignore
-        return base64.b64encode(buffer.getvalue()).decode()
-
-    def loads(self, data: str):
-        """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            import bofire.surrogates.cloudpickle_module as cloudpickle_module
-
-            if len(w) == 1:
-                raise ModuleNotFoundError("Cloudpickle is not available.")
-
-        buffer = io.BytesIO(base64.b64decode(data.encode()))
-        self.model = torch.load(buffer, pickle_module=cloudpickle_module)  # type: ignore

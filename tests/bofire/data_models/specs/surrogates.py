@@ -283,6 +283,7 @@ specs.add_valid(
             "mol1": Fingerprints(n_bits=32, bond_radius=3),
             "cat1": CategoricalEncodingEnum.ONE_HOT,
         },
+        "noise_prior": BOTORCH_NOISE_PRIOR(),
         "dump": None,
         "hyperconfig": None,
     },

@@ -16,6 +16,11 @@ from bofire.data_models.molfeatures.api import (
     FingerprintsFragments,
     Fragments,
 )
+from bofire.data_models.priors.api import (
+    BOTORCH_LENGTHCALE_PRIOR,
+    BOTORCH_NOISE_PRIOR,
+    AnyPrior,
+)
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -24,7 +29,11 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedTanimotoGPSurrogate"] = "MixedTanimotoGPSurrogate"
 
     continuous_kernel: AnyContinuousKernel = Field(
-        default_factory=lambda: MaternKernel(ard=True, nu=2.5)
+        default_factory=lambda: MaternKernel(
+            ard=True,
+            nu=2.5,
+            lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
+        )
     )
     categorical_kernel: AnyCategoricalKernal = Field(
         default_factory=lambda: HammondDistanceKernel(ard=True)
@@ -34,6 +43,7 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: TanimotoKernel(ard=True)
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
+    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
 
     @validator("input_preprocessing_specs")
     def validate_moleculars(cls, v, values):

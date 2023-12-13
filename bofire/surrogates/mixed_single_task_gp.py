@@ -10,7 +10,7 @@ from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
+from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
@@ -45,28 +45,29 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y.values
         ).to(**tkwargs)
 
+        continuous_features_list = self.inputs.get_continuous_features(
+            self.input_preprocessing_specs
+        )
+        ord_dims = self.inputs.get_feature_indices(
+            self.input_preprocessing_specs, continuous_features_list
+        )
+
+        categorical_features_list = self.inputs.get_categorical_features(
+            self.input_preprocessing_specs
+        )
+        # these are the categorical dimesions after applying the OneHotToNumeric transform
+        cat_dims = list(
+            range(len(ord_dims), len(ord_dims) + len(categorical_features_list))
+        )
+
         features2idx, _ = self.inputs._get_transform_info(
             self.input_preprocessing_specs
         )
-        non_numerical_features = [
-            key
-            for key, value in self.input_preprocessing_specs.items()
-            if value != CategoricalEncodingEnum.DESCRIPTOR
-        ]
 
-        ord_dims = []
-        for feat in self.inputs.get():
-            if feat.key not in non_numerical_features:
-                ord_dims += features2idx[feat.key]
-
-        # these are the categorical dimesions after applying the OneHotToNumeric transform
-        cat_dims = list(
-            range(len(ord_dims), len(ord_dims) + len(non_numerical_features))
-        )
         # these are the categorical features within the the OneHotToNumeric transform
         categorical_features = {
             features2idx[feat][0]: len(features2idx[feat])
-            for feat in non_numerical_features
+            for feat in categorical_features_list
         }
 
         o2n = OneHotToNumeric(

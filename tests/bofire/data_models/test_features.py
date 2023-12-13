@@ -2181,6 +2181,119 @@ def test_inputs_get_bounds_fit():
     assert fit_bounds[1][-2] == 1
 
 
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "specs, expected_molecular_features, expected_continuous_features, expected_categorical_features, expected_molecular_indices, expected_continuous_indices",
+    [
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": Fingerprints(n_bits=2),
+            },
+            ["x4"],
+            ["x1"],
+            ["x2", "x3"],
+            [0, 1],
+            [2],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+            },
+            ["x4"],
+            ["x1"],
+            ["x2", "x3"],
+            [0, 1],
+            [2],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            [],
+            ["x4", "x1"],
+            ["x2", "x3"],
+            [],
+            [0, 1, 2],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": Fingerprints(n_bits=2),
+            },
+            ["x4"],
+            ["x1", "x3"],
+            ["x2"],
+            [0, 1],
+            [2, 3, 4],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+            },
+            ["x4"],
+            ["x1", "x3"],
+            ["x2"],
+            [0, 1],
+            [2, 3, 4],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            [],
+            ["x4", "x1", "x3"],
+            ["x2"],
+            [],
+            [0, 1, 2, 3, 4],
+        ),
+    ],
+)
+def test_inputs_get_features_and_indices(
+    specs,
+    expected_molecular_features,
+    expected_continuous_features,
+    expected_categorical_features,
+    expected_molecular_indices,
+    expected_continuous_indices,
+):
+    inps = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana", "orange", "cherry"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+            ),
+            MolecularInput(key="x4"),
+        ]
+    )
+    molecular_features_list = inps.get_molecular_features(specs)
+    continuous_features_list = inps.get_continuous_features(specs)
+    categorical_features_list = inps.get_categorical_features(specs)
+
+    mol_dims = inps.get_feature_indices(specs, molecular_features_list)
+    ord_dims = inps.get_feature_indices(specs, continuous_features_list)
+
+    assert molecular_features_list == expected_molecular_features
+    assert continuous_features_list == expected_continuous_features
+    assert categorical_features_list == expected_categorical_features
+    assert mol_dims == expected_molecular_indices
+    assert ord_dims == expected_continuous_indices
+
+
 mixed_data = pd.DataFrame(
     columns=["of1", "of2", "of3"],
     index=range(5),
