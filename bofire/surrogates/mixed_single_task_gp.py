@@ -10,6 +10,7 @@ from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
+from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -52,7 +53,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             self.input_preprocessing_specs, continuous_features_list
         )
 
-        categorical_features_list = self.inputs.get_categorical_features(
+        categorical_features_list = Inputs.get_categorical_features(
             self.input_preprocessing_specs
         )
         # these are the categorical dimesions after applying the OneHotToNumeric transform

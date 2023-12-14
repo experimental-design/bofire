@@ -537,8 +537,8 @@ class Inputs(Features):
             upper += up
         return lower, upper
 
+    @staticmethod
     def get_molecular_features(
-        self,
         specs: TInputTransformSpecs,
     ) -> List[str]:
         """Returns a list of molecular features in the input data.
@@ -589,8 +589,8 @@ class Inputs(Features):
         ]
         return continuous_features_list
 
+    @staticmethod
     def get_categorical_features(
-        self,
         specs: TInputTransformSpecs,
     ) -> List[str]:
         """Returns a list of categorical features in the input data.

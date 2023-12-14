@@ -2280,9 +2280,9 @@ def test_inputs_get_features_and_indices(
             MolecularInput(key="x4"),
         ]
     )
-    molecular_features_list = inps.get_molecular_features(specs)
+    molecular_features_list = Inputs.get_molecular_features(specs)
     continuous_features_list = inps.get_continuous_features(specs)
-    categorical_features_list = inps.get_categorical_features(specs)
+    categorical_features_list = Inputs.get_categorical_features(specs)
 
     mol_dims = inps.get_feature_indices(specs, molecular_features_list)
     ord_dims = inps.get_feature_indices(specs, continuous_features_list)

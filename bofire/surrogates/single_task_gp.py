@@ -11,9 +11,8 @@ from gpytorch.mlls import ExactMarginalLogLikelihood
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.domain.api import Inputs
-from bofire.data_models.enum import CategoricalEncodingEnum, OutputFilteringEnum
+from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import TInputTransformSpecs
-from bofire.data_models.molfeatures.api import MordredDescriptors
 
 # from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate as DataModel
@@ -50,17 +49,12 @@ def get_scaler(
         for indices in features2idx.values():
             d += len(indices)
 
-        non_numerical_features = [
-            key
-            for key, value in input_preprocessing_specs.items()
-            if value != CategoricalEncodingEnum.DESCRIPTOR
-            and not isinstance(value, MordredDescriptors)
-        ]
-
-        ord_dims = []
-        for feat in inputs.get():
-            if feat.key not in non_numerical_features:
-                ord_dims += features2idx[feat.key]
+        continuous_features_list = inputs.get_continuous_features(
+            specs=input_preprocessing_specs
+        )
+        ord_dims = inputs.get_feature_indices(
+            specs=input_preprocessing_specs, feature_list=continuous_features_list
+        )
 
         if scaler == ScalerEnum.NORMALIZE:
             lower, upper = inputs.get_bounds(

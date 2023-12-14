@@ -25,6 +25,7 @@ from torch import Tensor
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
+from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import (
     OutputFilteringEnum,
 )
@@ -230,13 +231,13 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        molecular_features_list = self.inputs.get_molecular_features(
+        molecular_features_list = Inputs.get_molecular_features(
             self.input_preprocessing_specs
         )
         continuous_features_list = self.inputs.get_continuous_features(
             self.input_preprocessing_specs
         )
-        categorical_features_list = self.inputs.get_categorical_features(
+        categorical_features_list = Inputs.get_categorical_features(
             self.input_preprocessing_specs
         )
 
