@@ -544,7 +544,6 @@ class Inputs(Features):
         """Returns a list of molecular features in the input data.
         These features are of type Fingerprints, Fragments, or FingerprintsFragments.
 
-
         Args:
             specs (TInputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
@@ -568,13 +567,12 @@ class Inputs(Features):
         """Returns a list of continuous features in the input data.
         These features include continuous inputs, categorical inputs with descriptors, and Mordred descriptors.
 
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
 
-            Args:
-                specs (TInputTransformSpecs): Dictionary specifying which
-                    input feature is transformed by which encoder.
-
-            Returns:
-                List[str]: The list of continuous features.
+        Returns:
+            List[str]: The list of continuous features.
         """
         non_continuous_features_list = [
             key
@@ -597,12 +595,12 @@ class Inputs(Features):
         These features are not descriptor-based and are not of type Fingerprints, Fragments, FingerprintsFragments,
         or MordredDescriptors.
 
-            Args:
-                specs (TInputTransformSpecs): Dictionary specifying which
-                    input feature is transformed by which encoder.
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
 
-            Returns:
-                List[str]: The list of categorical features.
+        Returns:
+            List[str]: The list of categorical features.
         """
         categorical_features_list = [
             key
