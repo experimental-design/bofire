@@ -402,6 +402,25 @@ def find_local_max_ipopt(
         )
         raise e
 
+        # assert no columns from partially fixed experiments which are not in the domain
+    input_set = set(domain.inputs.get_keys())
+    if partially_fixed_experiments is not None:
+        column_set_partial = set(partially_fixed_experiments.columns)
+        assert column_set_partial.issubset(input_set), (
+            "Partially fixed experiments contain columns which are not in the domain. "
+            f"Columns in domain: {input_set}, columns in partially fixed experiments: {column_set_partial}"
+            f"Please remove the columns from the partially fixed experiments which are not in the domain: {column_set_partial - input_set}"
+        )
+
+    # assert no from fixed experiments which are not in the domain
+    if fixed_experiments is not None:
+        column_set = set(fixed_experiments.columns)
+        assert column_set.issubset(input_set), (
+            "Fixed experiments contain columns which are not in the domain. "
+            f"Columns in domain: {input_set}, columns in fixed experiments: {column_set}"
+            f"Please remove the columns from the fixed experiments which are not in the domain: {column_set - input_set}"
+        )
+
     # warn user about usage of nonlinear constraints
     if domain.constraints:
         if np.any([isinstance(c, NonlinearConstraint) for c in domain.constraints]):

@@ -550,3 +550,112 @@ def test_partially_fixed_experiments():
         check_partially_and_fully_fixed_experiments(
             domain, 2, fixed_experiments, partially_fixed_experiments
         )
+
+
+def test_fixed_experiments_correctness():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousInput(key="a1", bounds=(0, 1)),
+            ContinuousInput(key="a2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            # Case 1: a and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+            ),
+            # Case 2: a and c are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+            ),
+            # Case 3: c and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+            ),
+        ],
+    )
+    fixed_experiments = pd.DataFrame(
+        np.array([[1, 0, 0, 0], [0, 1, 0.7, 1]]), columns=domain.inputs.get_keys()
+    )
+
+    doe = find_local_max_ipopt(
+        domain, "linear", n_experiments=2, fixed_experiments=fixed_experiments
+    )
+
+    assert doe.shape == (2, 4)
+    assert np.allclose(doe["x1"], fixed_experiments["x1"])
+    assert np.allclose(doe["x2"], fixed_experiments["x2"])
+    assert np.allclose(doe["a1"], fixed_experiments["a1"])
+    assert np.allclose(doe["a2"], fixed_experiments["a2"])
+
+
+def test_fixed_experiments_too_many_columns():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousInput(key="a1", bounds=(0, 1)),
+            ContinuousInput(key="a2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            # Case 1: a and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+            ),
+            # Case 2: a and c are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+            ),
+            # Case 3: c and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+            ),
+        ],
+    )
+    fixed_experiments = pd.DataFrame(
+        np.array([[1, 0, 0, 0], [0, 1, 0.7, 1]]), columns=domain.inputs.get_keys()
+    )
+
+    with pytest.raises(AssertionError):
+        find_local_max_ipopt(
+            domain, "linear", n_experiments=10, fixed_experiments=fixed_experiments
+        )
