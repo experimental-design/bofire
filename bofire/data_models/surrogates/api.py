@@ -15,6 +15,7 @@ try:
         MixedSingleTaskGPSurrogate,
     )
     from bofire.data_models.surrogates.mlp import MLPEnsemble
+    from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
         SingleTaskGPHyperconfig,
@@ -22,6 +23,7 @@ try:
     )
     from bofire.data_models.surrogates.surrogate import Surrogate
     from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+    from bofire.data_models.surrogates.trainable import MeanAggregation, SumAggregation
     from bofire.data_models.surrogates.xgb import XGBoostSurrogate
 
     AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
@@ -35,6 +37,7 @@ try:
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
+        PolynomialSurrogate,
         TanimotoGPSurrogate,
     ]
 
@@ -46,6 +49,7 @@ try:
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
+        PolynomialSurrogate,
         TanimotoGPSurrogate,
     ]
 except ImportError:

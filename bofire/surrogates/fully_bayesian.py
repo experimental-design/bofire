@@ -9,6 +9,7 @@ from botorch.models.transforms.outcome import Standardize
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import SaasSingleTaskGPSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
@@ -25,6 +26,7 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.num_samples = data_model.num_samples
         self.thinning = data_model.thinning
         self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[SaasFullyBayesianSingleTaskGP] = None
@@ -42,7 +44,9 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.model = SaasFullyBayesianSingleTaskGP(
             train_X=tX,
             train_Y=tY,
-            outcome_transform=Standardize(m=1),
+            outcome_transform=Standardize(m=1)
+            if self.output_scaler == ScalerEnum.STANDARDIZE
+            else None,
             input_transform=scaler,
         )
         fit_fully_bayesian_model_nuts(
@@ -57,7 +61,7 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X)  # type: ignore
+            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
 
         preds = posterior.mixture_mean.detach().numpy()
         stds = np.sqrt(posterior.mixture_variance.detach().numpy())

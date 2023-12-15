@@ -1,11 +1,7 @@
-from typing import Union
-
 from pydantic import Field
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
-
-Value = Union[float, str, int]
 
 
 class InputValue(BaseModel):
@@ -15,7 +11,7 @@ class InputValue(BaseModel):
         value (Union[float, str, int]): The input value.
     """
 
-    value: Value
+    value: str
 
 
 class OutputValue(BaseModel):
@@ -27,6 +23,6 @@ class OutputValue(BaseModel):
         objective (float): The objective value.
     """
 
-    predictedValue: Value
+    predictedValue: str
     standardDeviation: Annotated[float, Field(ge=0)]
     objective: float

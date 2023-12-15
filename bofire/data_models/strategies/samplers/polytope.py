@@ -1,6 +1,9 @@
-from typing import Literal, Type
+from typing import Annotated, Literal, Type
+
+from pydantic import Field
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -29,6 +32,8 @@ class PolytopeSampler(SamplerStrategy):
 
     type: Literal["PolytopeSampler"] = "PolytopeSampler"
     fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
+    n_burnin: Annotated[int, Field(ge=1)] = 1000
+    n_thinning: Annotated[int, Field(ge=1)] = 32
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
@@ -36,6 +41,7 @@ class PolytopeSampler(SamplerStrategy):
             LinearInequalityConstraint,
             LinearEqualityConstraint,
             NChooseKConstraint,
+            InterpointEqualityConstraint,
         ]
 
     @classmethod

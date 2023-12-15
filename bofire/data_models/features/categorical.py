@@ -166,6 +166,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
+        values = values.map(str)
         if sum(values.isin(self.get_allowed_categories())) != len(values):
             raise ValueError(
                 f"not all values of input feature `{self.key}` are a valid allowed category from {self.get_allowed_categories()}"
@@ -391,6 +392,14 @@ class CategoricalOutput(Output):
             if o < 0:
                 raise ValueError("Objective values has to be larger equal than zero")
         return objective
+
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
+        if sum(values.isin(self.categories)) != len(values):
+            raise ValueError(
+                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
+            )
+        return values
 
     def to_dict(self) -> Dict:
         """Returns the catergories and corresponding objective values as dictionary"""

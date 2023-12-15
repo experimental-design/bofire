@@ -182,14 +182,26 @@ def test_get_scaler(
 
 
 @pytest.mark.parametrize(
-    "kernel, scaler",
+    "kernel, scaler, output_scaler",
     [
-        (ScaleKernel(base_kernel=RBFKernel(ard=True)), ScalerEnum.NORMALIZE),
-        (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.STANDARDIZE),
-        (ScaleKernel(base_kernel=RBFKernel(ard=False)), ScalerEnum.IDENTITY),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=True)),
+            ScalerEnum.NORMALIZE,
+            ScalerEnum.STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.STANDARDIZE,
+            ScalerEnum.STANDARDIZE,
+        ),
+        (
+            ScaleKernel(base_kernel=RBFKernel(ard=False)),
+            ScalerEnum.IDENTITY,
+            ScalerEnum.IDENTITY,
+        ),
     ],
 )
-def test_SingleTaskGPModel(kernel, scaler):
+def test_SingleTaskGPModel(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -208,6 +220,7 @@ def test_SingleTaskGPModel(kernel, scaler):
         outputs=outputs,
         kernel=kernel,
         scaler=scaler,
+        output_scaler=output_scaler,
     )
     model = surrogates.map(model)
     samples = inputs.sample(5)
@@ -224,7 +237,10 @@ def test_SingleTaskGPModel(kernel, scaler):
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, SingleTaskGP)
-    assert isinstance(model.model.outcome_transform, Standardize)
+    if output_scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.IDENTITY:
+        assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
@@ -399,14 +415,14 @@ def test_MixedGPModel_invalid_preprocessing():
 
 
 @pytest.mark.parametrize(
-    "kernel, scaler",
+    "kernel, scaler, output_scaler",
     [
-        (RBFKernel(ard=True), ScalerEnum.NORMALIZE),
-        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.IDENTITY),
+        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
+        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
     ],
 )
-def test_MixedGPModel(kernel, scaler):
+def test_MixedGPModel(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[
             ContinuousInput(
@@ -429,6 +445,7 @@ def test_MixedGPModel(kernel, scaler):
         outputs=outputs,
         input_preprocessing_specs={"x_cat": CategoricalEncodingEnum.ONE_HOT},
         scaler=scaler,
+        output_scaler=output_scaler,
         continuous_kernel=kernel,
         categorical_kernel=HammondDistanceKernel(),
     )
@@ -444,7 +461,10 @@ def test_MixedGPModel(kernel, scaler):
     assert preds.shape == (5, 2)
     # check that model is composed correctly
     assert isinstance(model.model, MixedSingleTaskGP)
-    assert isinstance(model.model.outcome_transform, Standardize)
+    if output_scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(model.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.IDENTITY:
+        assert not hasattr(model.model, "outcome_transform")
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(model.model.input_transform, ChainedInputTransform)
         assert isinstance(model.model.input_transform.tf1, Normalize)
@@ -470,6 +490,7 @@ def test_MixedGPModel(kernel, scaler):
         outputs=outputs,
         continuous_kernel=kernel,
         scaler=scaler,
+        output_scaler=output_scaler,
     )
     model2 = surrogates.map(model2)
     model2.loads(dump)

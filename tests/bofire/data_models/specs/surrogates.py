@@ -21,7 +21,11 @@ from bofire.data_models.priors.api import (
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
 )
-from bofire.data_models.surrogates.api import ScalerEnum
+from bofire.data_models.surrogates.api import (
+    MeanAggregation,
+    ScalerEnum,
+    SumAggregation,
+)
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -29,26 +33,39 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
-    models.SaasSingleTaskGPSurrogate,
+    models.SingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
             features=[
-                features.valid(ContinuousInput).obj(),
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
             ]
-            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
         ),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
-        "warmup_steps": 16,
-        "num_samples": 4,
-        "thinning": 2,
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ),
+        "aggregations": [
+            random.choice(
+                [
+                    SumAggregation(features=["a", "b"]),
+                    MeanAggregation(features=["a", "b"]),
+                ]
+            )
+        ],
         "scaler": ScalerEnum.NORMALIZE,
-        "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR(),
+        "input_preprocessing_specs": {},
         "dump": None,
-        "hyperconfig": None,
+        "hyperconfig": SingleTaskGPHyperconfig(),
     },
 )
 
@@ -66,9 +83,11 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "continuous_kernel": MaternKernel(ard=True, nu=random.random()),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
         "hyperconfig": None,
@@ -93,7 +112,9 @@ specs.add_valid(
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
         ),
+        "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {},
         "dump": None,
@@ -113,6 +134,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "input_preprocessing_specs": {},
         "n_estimators": 100,
         "criterion": "squared_error",
@@ -130,6 +152,8 @@ specs.add_valid(
         "max_samples": None,
         "dump": None,
         "hyperconfig": None,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
     },
 )
 specs.add_valid(
@@ -145,6 +169,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
@@ -156,6 +181,7 @@ specs.add_valid(
         "subsample_fraction": 1.0,
         "shuffle": True,
         "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": None,
@@ -175,6 +201,7 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ),
+        "aggregations": None,
         "n_estimators": 10,
         "max_depth": 6,
         "max_leaves": 0,
@@ -221,7 +248,9 @@ specs.add_valid(
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
         ),
-        "scaler": ScalerEnum.NORMALIZE,
+        "aggregations": None,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3)},
         "dump": None,

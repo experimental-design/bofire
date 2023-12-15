@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple, get_args
 
 import numpy as np
 import pandas as pd
@@ -34,6 +34,7 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
+from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
@@ -63,7 +64,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.descriptor_method = data_model.descriptor_method
         self.categorical_method = data_model.categorical_method
         self.discrete_method = data_model.discrete_method
-        self.surrogate_specs = BotorchSurrogates(data_model=data_model.surrogate_specs)  # type: ignore
+        self.surrogate_specs = data_model.surrogate_specs
         if data_model.outlier_detection_specs is not None:
             self.outlier_detection_specs = OutlierDetections(
                 data_model=data_model.outlier_detection_specs
@@ -74,6 +75,9 @@ class BotorchStrategy(PredictiveStrategy):
             data_model.min_experiments_before_outlier_check
         )
         self.frequency_check = data_model.frequency_check
+        self.frequency_hyperopt = data_model.frequency_hyperopt
+        self.folds = data_model.folds
+        self.surrogates = None
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -102,15 +106,37 @@ class BotorchStrategy(PredictiveStrategy):
         Args:
             transformed (pd.DataFrame): [description]
         """
+        # perform outlier detection
         if self.outlier_detection_specs is not None:
             if (
                 self.num_experiments >= self.min_experiments_before_outlier_check
                 and self.num_experiments % self.frequency_check == 0
             ):
                 experiments = self.outlier_detection_specs.detect(experiments)
+        # perform hyperopt
+        if (self.frequency_hyperopt > 0) and (
+            self.num_experiments % self.frequency_hyperopt == 0
+        ):
+            # we have to import here to avoid circular imports
+            from bofire.runners.hyperoptimize import hyperoptimize
 
-        self.surrogate_specs.fit(experiments)  # type: ignore
-        self.model = self.surrogate_specs.compatibilize(  # type: ignore
+            self.surrogate_specs.surrogates = [  # type: ignore
+                hyperoptimize(
+                    surrogate_data=surrogate_data,  # type: ignore
+                    training_data=experiments,
+                    folds=self.folds,
+                )[0]
+                if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
+                else surrogate_data
+                for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
+            ]
+
+        # map the surrogate spec, we keep it here as attribute to be able to save/dump
+        # the surrogate
+        self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs)  # type: ignore
+
+        self.surrogates.fit(experiments)  # type: ignore
+        self.model = self.surrogates.compatibilize(  # type: ignore
             inputs=self.domain.inputs,  # type: ignore
             outputs=self.domain.outputs,  # type: ignore
         )
@@ -120,7 +146,7 @@ class BotorchStrategy(PredictiveStrategy):
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X)  # type: ignore
+            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
         if len(posterior.mean.shape) == 2:
             preds = posterior.mean.cpu().detach().numpy()
             stds = np.sqrt(posterior.variance.cpu().detach().numpy())
@@ -252,6 +278,8 @@ class BotorchStrategy(PredictiveStrategy):
         """
 
         assert candidate_count > 0, "candidate_count has to be larger than zero."
+        if self.experiments is None:
+            raise ValueError("No experiments have been provided yet.")
 
         acqfs = self._get_acqfs(candidate_count)
 
@@ -270,6 +298,9 @@ class BotorchStrategy(PredictiveStrategy):
                     for combi in self.domain.inputs.get_categorical_combinations()
                 ]
             )
+            # adding categorical features that are fixed
+            for feat in self.domain.inputs.get_fixed():
+                choices[feat.key] = feat.fixed_value()[0]  # type: ignore
             # compare the choices with the training data and remove all that are also part
             # of the training data
             merged = choices.merge(
@@ -553,13 +584,15 @@ class BotorchStrategy(PredictiveStrategy):
         sampler = PolytopeSampler(
             data_model=PolytopeSamplerDataModel(domain=self.domain)
         )
-        samples = torch.from_numpy(
-            sampler.ask(candidate_count=n_samples, return_all=False).values
+        samples = sampler.ask(candidate_count=n_samples, return_all=False)
+        # we need to transform the samples
+        transformed_samples = torch.from_numpy(
+            self.domain.inputs.transform(samples, self.input_preprocessing_specs).values
         ).to(**tkwargs)
         X = (
-            torch.cat((X_train, X_pending, samples))
+            torch.cat((X_train, X_pending, transformed_samples))
             if X_pending is not None
-            else torch.cat((X_train, samples))
+            else torch.cat((X_train, transformed_samples))
         )
         return get_infeasible_cost(
             X=X, model=self.model, objective=objective  # type: ignore

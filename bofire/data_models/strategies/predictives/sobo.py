@@ -2,14 +2,19 @@ from typing import Literal, Optional, Type
 
 from pydantic import Field, validator
 
-from bofire.data_models.acquisition_functions.api import AnyAcquisitionFunction, qNEI
+from bofire.data_models.acquisition_functions.api import (
+    AnySingleObjectiveAcquisitionFunction,
+    qLogNEI,
+)
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class SoboBaseStrategy(BotorchStrategy):
-    acquisition_function: AnyAcquisitionFunction = Field(default_factory=lambda: qNEI())
+    acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
+        default_factory=lambda: qLogNEI()
+    )
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
@@ -59,9 +64,25 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
     type: Literal["AdditiveSoboStrategy"] = "AdditiveSoboStrategy"
     use_output_constraints: bool = True
 
+    @validator("domain")
+    def validate_is_multiobjective(cls, v, values):
+        if (len(v.outputs.get_by_objective(Objective))) < 2:
+            raise ValueError(
+                "Additive SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead."
+            )
+        return v
+
 
 class MultiplicativeSoboStrategy(SoboBaseStrategy):
     type: Literal["MultiplicativeSoboStrategy"] = "MultiplicativeSoboStrategy"
+
+    @validator("domain")
+    def validate_is_multiobjective(cls, v, values):
+        if (len(v.outputs.get_by_objective(Objective))) < 2:
+            raise ValueError(
+                "Multiplicative SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead."
+            )
+        return v
 
 
 class CustomSoboStrategy(SoboBaseStrategy):

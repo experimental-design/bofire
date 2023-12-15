@@ -1,6 +1,6 @@
 import bofire.data_models.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.acquisition_functions.api import qEI, qPI
+from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
 from bofire.data_models.domain.api import Domain, Inputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
@@ -26,6 +26,8 @@ strategy_commons = {
     "seed": 42,
     "min_experiments_before_outlier_check": 1,
     "frequency_check": 1,
+    "frequency_hyperopt": 0,
+    "folds": 5,
 }
 
 
@@ -49,6 +51,14 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().dict(),
         "acquisition_function": qEI().dict(),
+        **strategy_commons,
+    },
+)
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().dict(),
+        "acquisition_function": qLogNEHVI().dict(),
         **strategy_commons,
     },
 )
@@ -106,6 +116,8 @@ specs.add_valid(
         ),
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
         "seed": 42,
+        "n_burnin": 1000,
+        "n_thinning": 32,
     },
 )
 specs.add_valid(

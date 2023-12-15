@@ -76,15 +76,13 @@ def smiles2fragments(
     Returns:
         np.ndarray: Array holding the fragment information.
     """
-    # descList[115:] contains fragment-based features only
-    # (https://www.rdkit.org/docs/source/rdkit.Chem.Fragments.html)
-    # Update: in the new RDKit version the indices are [124:]
+    rdkit_fragment_list = [
+        item for item in Descriptors.descList if item[0].startswith("fr_")
+    ]
     if fragments_list is None:
-        fragments = {d[0]: d[1] for d in Descriptors.descList[124:]}
+        fragments = {d[0]: d[1] for d in rdkit_fragment_list}
     else:
-        fragments = {
-            d[0]: d[1] for d in Descriptors.descList[124:] if d[0] in fragments_list
-        }
+        fragments = {d[0]: d[1] for d in rdkit_fragment_list if d[0] in fragments_list}
 
     frags = np.zeros((len(smiles), len(fragments)))
     for i, smi in enumerate(smiles):

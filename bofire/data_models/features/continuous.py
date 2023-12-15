@@ -65,7 +65,9 @@ class ContinuousInput(NumericalInput):
         allowed_values = np.arange(
             self.lower_bound, self.upper_bound + self.stepsize, self.stepsize
         )
-        idx = abs(values.values.reshape([3, 1]) - allowed_values).argmin(axis=1)  # type: ignore
+        idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(
+            axis=1
+        )
         return pd.Series(
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
@@ -105,7 +107,7 @@ class ContinuousInput(NumericalInput):
         """
 
         noise = 10e-6
-        super().validate_candidental(values)
+        values = super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
                 f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` "
@@ -162,6 +164,15 @@ class ContinuousOutput(Output):
                 name=values.name,
             )
         return self.objective(values)  # type: ignore
+
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        try:
+            values = pd.to_numeric(values, errors="raise").astype("float64")
+        except ValueError:
+            raise ValueError(
+                f"not all values of input feature `{self.key}` are numerical"
+            )
+        return values
 
     def __str__(self) -> str:
         return "ContinuousOutputFeature"
