@@ -652,7 +652,8 @@ def test_fixed_experiments_too_many_columns():
         ],
     )
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0, 0], [0, 1, 0.7, 1]]), columns=domain.inputs.get_keys()
+        np.array([[1, 0, 0, 0, 1], [0, 1, 0.7, 1, 2]]),
+        columns=domain.inputs.get_keys() + ["c0"],
     )
 
     with pytest.raises(AssertionError):
