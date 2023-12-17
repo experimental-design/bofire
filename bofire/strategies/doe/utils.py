@@ -305,31 +305,35 @@ def get_constraint_function_and_bounds(
 
     elif isinstance(c, InterpointEqualityConstraint):
         # write lower/upper bound as vector
-        n_batches = int(np.ceil(n_experiments / c.multiplicity))
-        lb = np.zeros(n_batches * (c.multiplicity - 1))
-        ub = np.zeros(n_batches * (c.multiplicity - 1))
+        multiplicity = c.multiplicity or len(domain.inputs)
+        n_batches = int(np.ceil(n_experiments / multiplicity))
+        lb = np.zeros(n_batches * (multiplicity - 1))
+        ub = np.zeros(n_batches * (multiplicity - 1))
 
         # write constraint as matrix
+        feature_idx = 0
+        if c.feature not in domain.inputs.get_keys():
+            raise ValueError(f"Feature {c.feature} is not part of the domain {domain}.")
         for i, name in enumerate(domain.inputs.get_keys()):
             if name == c.feature:
                 feature_idx = i
 
-        A = np.zeros(shape=(n_batches * (c.multiplicity - 1), D * n_experiments))
+        A = np.zeros(shape=(n_batches * (multiplicity - 1), D * n_experiments))
         for batch in range(n_batches):
-            for i in range(c.multiplicity - 1):
-                if batch * c.multiplicity + i + 2 <= n_experiments:
+            for i in range(multiplicity - 1):
+                if batch * multiplicity + i + 2 <= n_experiments:
                     A[
-                        batch * (c.multiplicity - 1) + i,
-                        batch * c.multiplicity * D + feature_idx,
+                        batch * (multiplicity - 1) + i,
+                        batch * multiplicity * D + feature_idx,
                     ] = 1.0
                     A[
-                        batch * (c.multiplicity - 1) + i,
-                        (batch * c.multiplicity + i + 1) * D + feature_idx,
+                        batch * (multiplicity - 1) + i,
+                        (batch * multiplicity + i + 1) * D + feature_idx,
                     ] = -1.0
 
         # remove overflow in last batch
-        if (n_experiments % c.multiplicity) != 0:
-            n_overflow = c.multiplicity - (n_experiments % c.multiplicity)
+        if (n_experiments % multiplicity) != 0:
+            n_overflow = multiplicity - (n_experiments % multiplicity)
             A = A[:-n_overflow, :]
             lb = lb[:-n_overflow]
             ub = ub[:-n_overflow]
