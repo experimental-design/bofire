@@ -205,12 +205,14 @@ def constraints_as_scipy_constraints(
     if len(domain.constraints) == 0:
         return constraints
     for c in domain.constraints:
-        if isinstance(c, Union[LinearEqualityConstraint, LinearInequalityConstraint]):
+        if isinstance(c, LinearEqualityConstraint) or isinstance(
+            c, LinearInequalityConstraint
+        ):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
             constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
-        elif isinstance(
-            c, Union[NonlinearEqualityConstraint, NonlinearInequalityConstraint]
+        elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
+            c, NonlinearInequalityConstraint
         ):
             fun, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
             if c.jacobian_expression is not None:
@@ -252,7 +254,9 @@ def get_constraint_function_and_bounds(
     """
     D = len(domain.inputs)
 
-    if isinstance(c, Union[LinearEqualityConstraint, LinearInequalityConstraint]):
+    if isinstance(c, LinearEqualityConstraint) or isinstance(
+        c, LinearInequalityConstraint
+    ):
         # write constraint as matrix
         lhs = {
             c.features[i]: c.coefficients[i] / np.linalg.norm(c.coefficients)
@@ -275,8 +279,8 @@ def get_constraint_function_and_bounds(
 
         return [A, lb, ub]
 
-    elif isinstance(
-        c, Union[NonlinearEqualityConstraint, NonlinearInequalityConstraint]
+    elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
+        c, NonlinearInequalityConstraint
     ):
         # define constraint evaluation (and gradient if provided)
         fun = ConstraintWrapper(
