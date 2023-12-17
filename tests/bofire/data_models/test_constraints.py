@@ -154,7 +154,9 @@ def test_constraints_call(constraints, num_candidates):
     max_num_batches = 0
     for c in constraints:
         if isinstance(c, InterpointConstraint):
-            max_num_batches = max(max_num_batches, num_candidates // c.multiplicity + 1)
+            max_num_batches = max(
+                max_num_batches, int(np.ceil(num_candidates / c.multiplicity))
+            )
     num_rows += max_num_batches
 
     assert returned.shape == (num_rows, len(constraints))

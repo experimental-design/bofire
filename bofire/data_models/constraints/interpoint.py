@@ -53,7 +53,7 @@ class InterpointEqualityConstraint(InterpointConstraint):
             pd.Series: Distance to reach constraint fulfillment.
         """
         multiplicity = self.multiplicity or len(experiments)
-        n_batches = (experiments.shape[0] + self.multiplicity - 1) // multiplicity
+        n_batches = int(np.ceil((experiments.shape[0] / multiplicity)))
         feature_values = np.zeros(n_batches * multiplicity)
         feature_values[: experiments.shape[0]] = experiments[self.feature].values
         feature_values[experiments.shape[0] :] = feature_values[-multiplicity]
