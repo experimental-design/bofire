@@ -617,7 +617,7 @@ def check_fixed_experiments(
         fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
     """
 
-    n_fixed_experiments, D = np.array(fixed_experiments).shape
+    n_fixed_experiments, _ = np.array(fixed_experiments).shape
 
     if n_fixed_experiments >= n_experiments:
         raise ValueError(
@@ -635,14 +635,25 @@ def check_fixed_experiments(
 
 def check_partially_fixed_experiments(
     domain: Domain,
-    paritally_fixed_experiments: np.ndarray,
+    partially_fixed_experiments: np.ndarray,
+    n_experiments: int,
 ) -> None:
+
+    n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
+
     input_set = set(domain.get_feature_keys())
-    column_set = set(paritally_fixed_experiments.columns)
+    column_set = set(partially_fixed_experiments.columns)
 
     if not column_set.issubset(input_set):
         raise ValueError(
             f"Invalid partially fixed experiments. Each experiment in {input_set} needs to be in columns."
+        )
+    if n_partially_fixed_experiments > n_experiments:
+        warnings.warn(
+            UserWarning(
+                "The number of partially fixed experiments exceeds the amount "
+                "of the overall count of experiments. Partially fixed experiments may be cut of"
+            )
         )
 
 
@@ -650,21 +661,21 @@ def check_partially_and_fully_fixed_experiments(
     domain: Domain,
     n_experiments: int,
     fixed_experiments: np.ndarray,
-    paritally_fixed_experiments: np.ndarray,
+    partially_fixed_experiments: np.ndarray,
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
         domain (Domain): domain defining the input variables used for the check.
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
         fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
-        paritally_fixed_experiments (np.ndarray): partially fixed experiment proposals to be checked.
+        partially_fixed_experiments (np.ndarray): partially fixed experiment proposals to be checked.
     """
 
     check_fixed_experiments(domain, n_experiments, fixed_experiments)
-    check_partially_fixed_experiments(domain, paritally_fixed_experiments)
+    check_partially_fixed_experiments(domain, partially_fixed_experiments)
     n_fixed_experiments, _ = np.array(fixed_experiments).shape
 
-    n_partially_fixed_experiments, _ = np.array(paritally_fixed_experiments).shape
+    n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
 
     if n_fixed_experiments + n_partially_fixed_experiments > n_experiments:
         warnings.warn(
