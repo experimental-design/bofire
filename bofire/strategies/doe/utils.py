@@ -298,7 +298,7 @@ def constraints_as_scipy_constraints(  # noqa: C901
             ub = np.zeros(n_experiments)
 
             A = np.zeros(shape=(n_experiments, D * n_experiments))
-            multiplicity = c.multiplicity
+            multiplicity = c.multiplicity or len(n_experiments)
             n_max_batch_reps = int(np.ceil(n_experiments / multiplicity))
             for i in range(n_max_batch_reps):
                 dummy = i * multiplicity
