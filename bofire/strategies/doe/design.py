@@ -407,20 +407,20 @@ def find_local_max_ipopt(
         domain=domain, model_type=model_type, n_experiments=n_experiments
     )
 
-    # no columns from partially fixed experiments which are not in the domain
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
             domain, n_experiments, partially_fixed_experiments
         )
+        # no columns from partially fixed experiments which are not in the domain
         partially_fixed_experiments = partially_fixed_experiments[
             domain.inputs.get_keys()
         ]
 
-    # no columns from fixed experiments which are not in the domain
     if fixed_experiments is not None:
         # check if  fixed experiments are valid
         check_fixed_experiments(domain, n_experiments, fixed_experiments)
+        # no columns from fixed experiments which are not in the domain
         fixed_experiments = fixed_experiments[domain.inputs.get_keys()]
 
     if partially_fix_experiment is not None and fixed_experiments is not None:
