@@ -5,11 +5,11 @@ import pandas as pd
 import pytest
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearInequalityConstraint,
-    InterpointEqualityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -26,23 +26,19 @@ from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
+
 def test_interpoint_constraint():
     inputs = [
-    ContinuousInput(
-        key=f"x{i+1}",
-        bounds=(0, 1),
-    )
-    for i in range(4)
+        ContinuousInput(
+            key=f"x{i+1}",
+            bounds=(0, 1),
+        )
+        for i in range(4)
     ]
     domain = Domain.from_lists(
         inputs=inputs,
         outputs=[ContinuousOutput(key="y")],
-        constraints=[
-            InterpointEqualityConstraint(
-                feature="x1",
-                multiplicity= 2
-            )
-        ],
+        constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=2)],
     )
     find_local_max_ipopt(domain, "linear")
     assert True
