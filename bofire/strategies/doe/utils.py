@@ -9,11 +9,11 @@ from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
-    InterpointEqualityConstraint,
 )
 from bofire.data_models.constraints.nonlinear import NonlinearInequalityConstraint
 from bofire.data_models.domain.domain import Domain
@@ -184,7 +184,7 @@ def n_zero_eigvals(
     return len(eigvals) - len(eigvals[eigvals > epsilon])
 
 
-def constraints_as_scipy_constraints(
+def constraints_as_scipy_constraints(  # noqa: C901
     domain: Domain,
     n_experiments: int,
     ignore_nchoosek: bool = True,
@@ -301,11 +301,13 @@ def constraints_as_scipy_constraints(
             A = np.zeros(shape=(n_experiments, D * n_experiments))
             for i in range(math.ceil(n_experiments / c.multiplicity)):
                 for j, p in enumerate(domain.inputs.get_keys()):
-                    if p in c.feature: 
-                        for k in range(i*c.multiplicity+1, min((i+1) * c.multiplicity, n_experiments)):
-                            A[k-1, (k-1)*D+j]=1
-                            A[k-1, k*D+j] = -A[k-1, (k-1)*D+j]
-            
+                    if p in c.feature:
+                        for k in range(
+                            i * c.multiplicity + 1,
+                            min((i + 1) * c.multiplicity, n_experiments),
+                        ):
+                            A[k - 1, (k - 1) * D + j] = 1
+                            A[k - 1, k * D + j] = -A[k - 1, (k - 1) * D + j]
             constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
