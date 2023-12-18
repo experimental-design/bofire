@@ -308,6 +308,7 @@ def constraints_as_scipy_constraints(  # noqa: C901
                         ):
                             A[k - 1, (k - 1) * D + j] = 1
                             A[k - 1, k * D + j] = -A[k - 1, (k - 1) * D + j]
+
             constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
