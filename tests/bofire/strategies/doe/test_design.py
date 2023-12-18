@@ -566,6 +566,15 @@ def test_partially_fixed_experiments():
     assert np.allclose(doe["a2"], fixed_experiments["a2"])
 
     fixed_experiments = pd.DataFrame(
+        np.array([[1, 0, 0], [0, 1, 0.7]]), columns=domain.inputs.get_keys()[:-1]
+    )
+
+    with pytest.raises(ValueError):
+        doe = find_local_max_ipopt(
+            domain, "linear", n_experiments=2, fixed_experiments=fixed_experiments
+        )
+
+    fixed_experiments = pd.DataFrame(
         np.array([[1, 0, 0, 0, 1], [0, 1, 0.7, 1, 2]]),
         columns=domain.inputs.get_keys() + ["c0"],
     )

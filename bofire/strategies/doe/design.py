@@ -402,18 +402,35 @@ def find_local_max_ipopt(
         )
         raise e
 
-        # assert no columns from partially fixed experiments which are not in the domain
+    # determine number of experiments (only relevant if n_experiments is not provided by the user)
+    n_experiments = get_n_experiments(
+        domain=domain, model_type=model_type, n_experiments=n_experiments
+    )
+
+    # no columns from partially fixed experiments which are not in the domain
     input_set = set(domain.inputs.get_keys())
     if partially_fixed_experiments is not None:
+        # check if partially fixed experiments are valid
+        check_partially_fixed_experiments(
+            domain, n_experiments, partially_fixed_experiments
+        )
         column_set_partial = set(partially_fixed_experiments.columns)
         partially_fixed_experiments = partially_fixed_experiments[
             list(input_set.intersection(column_set_partial))
         ]
 
-    # assert no from fixed experiments which are not in the domain
+    # no columns from fixed experiments which are not in the domain
     if fixed_experiments is not None:
+        # check if  fixed experiments are valid
+        check_fixed_experiments(domain, n_experiments, fixed_experiments)
         column_set = set(fixed_experiments.columns)
         fixed_experiments = fixed_experiments[list(input_set.intersection(column_set))]
+
+    if partially_fix_experiment is not None and fixed_experiments is not None:
+        # check if partially fixed experiments and fixed experiments are valid
+        check_partially_and_fully_fixed_experiments(
+            domain, n_experiments, fixed_experiments, partially_fixed_experiments
+        )
 
     # warn user about usage of nonlinear constraints
     if domain.constraints:
@@ -430,11 +447,6 @@ def find_local_max_ipopt(
         for c in domain.constraints
         if isinstance(c, NChooseKConstraint)
     ), "NChooseKConstraint with min_count !=0 is not supported!"
-
-    # determine number of experiments (only relevant if n_experiments is not provided by the user)
-    n_experiments = get_n_experiments(
-        domain=domain, model_type=model_type, n_experiments=n_experiments
-    )
 
     #
     # Sampling initital values
@@ -612,9 +624,25 @@ def check_fixed_experiments(
             "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
         )
 
-    if D != len(domain.inputs):
+    input_set = set(domain.get_feature_keys())
+    column_set = set(fixed_experiments.columns)
+
+    if not column_set.issubset(input_set):
         raise ValueError(
-            f"Invalid shape of fixed_experiments. Length along axis 1 is {D}, but must be {len(domain.inputs)}"
+            f"Invalid fixed_experiments. Each experiment needs to be fixed for all variables in {input_set}"
+        )
+
+
+def check_partially_fixed_experiments(
+    domain: Domain,
+    paritally_fixed_experiments: np.ndarray,
+) -> None:
+    input_set = set(domain.get_feature_keys())
+    column_set = set(paritally_fixed_experiments.columns)
+
+    if not column_set.issubset(input_set):
+        raise ValueError(
+            f"Invalid partially fixed experiments. Each experiment in {input_set} needs to be in columns."
         )
 
 
@@ -633,16 +661,10 @@ def check_partially_and_fully_fixed_experiments(
     """
 
     check_fixed_experiments(domain, n_experiments, fixed_experiments)
-    n_fixed_experiments, dim = np.array(fixed_experiments).shape
+    check_partially_fixed_experiments(domain, paritally_fixed_experiments)
+    n_fixed_experiments, _ = np.array(fixed_experiments).shape
 
-    n_partially_fixed_experiments, partially_dim = np.array(
-        paritally_fixed_experiments
-    ).shape
-
-    if partially_dim != len(domain.inputs):
-        raise ValueError(
-            f"Invalid shape of partially_fixed_experiments. Length along axis 1 is {partially_dim}, but must be {len(domain.inputs)}"
-        )
+    n_partially_fixed_experiments, _ = np.array(paritally_fixed_experiments).shape
 
     if n_fixed_experiments + n_partially_fixed_experiments > n_experiments:
         warnings.warn(
