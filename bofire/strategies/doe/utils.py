@@ -1,4 +1,3 @@
-import math
 import sys
 from itertools import combinations
 from typing import List, Optional, Union
@@ -299,15 +298,16 @@ def constraints_as_scipy_constraints(  # noqa: C901
             ub = np.zeros(n_experiments)
 
             A = np.zeros(shape=(n_experiments, D * n_experiments))
-            temp = math.ceil(n_experiments / c.multiplicity)
+            temp = np.ceil(n_experiments / c.multiplicity)
             n_max_batch_reps = int(temp)
             for i in range(n_max_batch_reps):
+                dummy = i * c.multiplicity
                 for j, p in enumerate(domain.inputs.get_keys()):
                     if p in c.feature:
-                        dummy = i * c.multiplicity + 1
-                        temp_lb = int(dummy)
-                        dummy2 = min((i + 1) * c.multiplicity, n_experiments)
-                        temp_ub = int(dummy2)
+                        # dummy = i * c.multiplicity + 1
+                        # dummy2 = min((i + 1) * c.multiplicity, n_experiments)
+                        temp_lb = int(dummy + 1)
+                        temp_ub = int(min(dummy + c.multiplicity, n_experiments))
                         for k in range(
                             temp_lb,
                             temp_ub,
