@@ -1429,10 +1429,15 @@ def test_inputs_get_free(features, expected):
     ],
 )
 def test_inputs_sample(features: Inputs, num_samples, method):
+    samples = features.sample(num_samples, method=method, seed=None)
+    assert samples.shape == (num_samples, len(features))
+    assert list(samples.columns) == features.get_keys()
     samples = features.sample(num_samples, method=method, seed=42)
     assert samples.shape == (num_samples, len(features))
     assert list(samples.columns) == features.get_keys()
     samples2 = features.sample(num_samples, method=method, seed=42)
+    assert samples.shape == (num_samples, len(features))
+    assert list(samples.columns) == features.get_keys()
     assert_frame_equal(samples2, samples)
 
 
