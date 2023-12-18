@@ -410,7 +410,7 @@ def find_local_max_ipopt(
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
-            domain, partially_fixed_experiments, n_experiments
+            domain, n_experiments, partially_fixed_experiments
         )
         # no columns from partially fixed experiments which are not in the domain
         partially_fixed_experiments = partially_fixed_experiments[
@@ -632,8 +632,8 @@ def check_fixed_experiments(
 
 def check_partially_fixed_experiments(
     domain: Domain,
-    partially_fixed_experiments: np.ndarray,
     n_experiments: int,
+    partially_fixed_experiments: np.ndarray,
 ) -> None:
 
     n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
@@ -669,7 +669,9 @@ def check_partially_and_fully_fixed_experiments(
     """
 
     check_fixed_experiments(domain, n_experiments, fixed_experiments)
-    check_partially_fixed_experiments(domain, partially_fixed_experiments)
+    check_partially_fixed_experiments(
+        domain, n_experiments, partially_fixed_experiments
+    )
     n_fixed_experiments, _ = np.array(fixed_experiments).shape
 
     n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
