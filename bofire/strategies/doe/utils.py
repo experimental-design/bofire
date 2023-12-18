@@ -1,3 +1,4 @@
+import math
 import sys
 from itertools import combinations
 from typing import List, Optional, Union
@@ -12,6 +13,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
+    InterpointEqualityConstraint,
 )
 from bofire.data_models.constraints.nonlinear import NonlinearInequalityConstraint
 from bofire.data_models.domain.domain import Domain
@@ -290,7 +292,21 @@ def constraints_as_scipy_constraints(
                 )
 
                 constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+        elif isinstance(c, InterpointEqualityConstraint):
+            # similar to linear constraint but with diferent A
+            # write lower/upper bound as vector
+            lb = np.zeros(n_experiments)
+            ub = np.zeros(n_experiments)
 
+            A = np.zeros(shape=(n_experiments, D * n_experiments))
+            for i in range(math.ceil(n_experiments / c.multiplicity)):
+                for j, p in enumerate(domain.inputs.get_keys()):
+                    if p in c.feature: 
+                        for k in range(i*c.multiplicity+1, min((i+1) * c.multiplicity, n_experiments)):
+                            A[k-1, (k-1)*D+j]=1
+                            A[k-1, k*D+j] = -A[k-1, (k-1)*D+j]
+            
+            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
 
