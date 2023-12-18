@@ -299,12 +299,15 @@ def constraints_as_scipy_constraints(  # noqa: C901
             ub = np.zeros(n_experiments)
 
             A = np.zeros(shape=(n_experiments, D * n_experiments))
-            n_int_repetitions = int(math.ceil(n_experiments / c.multiplicity))
-            for i in range(n_int_repetitions):
+            temp = math.ceil(n_experiments / c.multiplicity)
+            n_max_batch_reps = int(temp)
+            for i in range(n_max_batch_reps):
                 for j, p in enumerate(domain.inputs.get_keys()):
                     if p in c.feature:
-                        temp_lb = int(i * c.multiplicity + 1)
-                        temp_ub = int(min((i + 1) * c.multiplicity, n_experiments))
+                        dummy = i * c.multiplicity + 1
+                        temp_lb = int(dummy)
+                        dummy2 = min((i + 1) * c.multiplicity, n_experiments)
+                        temp_ub = int(dummy2)
                         for k in range(
                             temp_lb,
                             temp_ub,
