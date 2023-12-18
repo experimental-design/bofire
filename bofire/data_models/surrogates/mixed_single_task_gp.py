@@ -11,6 +11,11 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
+from bofire.data_models.priors.api import (
+    BOTORCH_NOISE_PRIOR,
+    AnyPrior,
+)
+
 
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
@@ -20,6 +25,8 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     categorical_kernel: AnyCategoricalKernal = Field(
         default_factory=lambda: HammondDistanceKernel(ard=True)
     )
+    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+
 
     @validator("input_preprocessing_specs")
     def validate_categoricals(cls, v, values):

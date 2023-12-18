@@ -27,6 +27,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     ):
         self.continuous_kernel = data_model.continuous_kernel
         self.categorical_kernel = data_model.categorical_kernel
+        self.noise_prior = data_model.noise_prior
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         super().__init__(data_model=data_model, **kwargs)
@@ -88,5 +89,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             else None,
             input_transform=tf,
         )
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs)
