@@ -410,7 +410,7 @@ def find_local_max_ipopt(
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
         check_partially_fixed_experiments(
-            domain, n_experiments, partially_fixed_experiments
+            domain, partially_fixed_experiments, n_experiments
         )
         # no columns from partially fixed experiments which are not in the domain
         partially_fixed_experiments = partially_fixed_experiments[
