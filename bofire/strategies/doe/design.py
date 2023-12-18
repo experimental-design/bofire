@@ -621,7 +621,7 @@ def check_fixed_experiments(
             "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
         )
 
-    input_set = set(domain.get_feature_keys())
+    input_set = set(domain.inputs.get_keys())
     column_set = set(fixed_experiments.columns)
 
     if not column_set.issubset(input_set):
@@ -638,7 +638,7 @@ def check_partially_fixed_experiments(
 
     n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
 
-    input_set = set(domain.get_feature_keys())
+    input_set = set(domain.inputs.get_keys())
     column_set = set(partially_fixed_experiments.columns)
 
     if not column_set.issubset(input_set):
