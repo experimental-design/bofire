@@ -199,9 +199,17 @@ class Inputs(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         if method == SamplingMethodEnum.UNIFORM:
+            # we cannot just propagate the provided seed to
+            # the sample methods as they would then sample
+            # always the same value if the bounds are the same
+            # for a feature.
+            rng = np.random.default_rng(seed=seed)
             return self.validate_candidates(
                 pd.concat(
-                    [feat.sample(n, seed=seed) for feat in self.get(Input)],  # type: ignore
+                    [
+                        feat.sample(n, seed=int(rng.integers(1, 1000000)))  # type: ignore
+                        for feat in self.get(Input)
+                    ],
                     axis=1,
                 )
             )
