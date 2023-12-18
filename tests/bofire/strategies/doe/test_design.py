@@ -5,6 +5,7 @@ import pandas as pd
 import pytest
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -209,6 +210,30 @@ def test_find_local_max_ipopt_results():
 #     find_local_max_ipopt(problem, "linear", sampling=ProbabilitySimplexSampling)
 #     sampling = np.zeros(shape=(10, 3)).flatten()
 #     find_local_max_ipopt(problem, "linear", n_experiments=10, sampling=sampling)
+
+
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
+def test_find_local_max_ipopt_batch_constraint():
+    # define problem with batch constraints
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            ContinuousInput(key="x2", bounds=(0, 1)),
+            ContinuousInput(key="x3", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=3)],
+    )
+
+    result = find_local_max_ipopt(
+        domain, "linear", ipopt_options={"maxiter": 100}, n_experiments=30
+    )
+
+    x1 = np.round(result["x1"].values, 6)
+
+    assert 0 in x1 and 1 in x1
+    for i in range(10):
+        assert x1[3 * i] == x1[3 * i + 1] and x1[3 * i] == x1[3 * i + 2]
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
