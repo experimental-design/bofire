@@ -605,16 +605,16 @@ def partially_fix_experiment(
 
 
 def check_fixed_experiments(
-    domain: Domain, n_experiments: int, fixed_experiments: np.ndarray
+    domain: Domain, n_experiments: int, fixed_experiments: pd.DataFrame
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
         domain (Domain): domain defining the input variables used for the check.
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
-        fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
+        fixed_experiments (pd.DataFrame): fixed experiment proposals to be checked.
     """
 
-    n_fixed_experiments, _ = np.array(fixed_experiments).shape
+    n_fixed_experiments = len(fixed_experiments.index)
 
     if n_fixed_experiments >= n_experiments:
         raise ValueError(
@@ -633,10 +633,10 @@ def check_fixed_experiments(
 def check_partially_fixed_experiments(
     domain: Domain,
     n_experiments: int,
-    partially_fixed_experiments: np.ndarray,
+    partially_fixed_experiments: pd.DataFrame,
 ) -> None:
 
-    n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
+    n_partially_fixed_experiments = len(partially_fixed_experiments.index)
 
     input_set = set(domain.inputs.get_keys())
     column_set = set(partially_fixed_experiments.columns)
@@ -658,14 +658,14 @@ def check_partially_and_fully_fixed_experiments(
     domain: Domain,
     n_experiments: int,
     fixed_experiments: np.ndarray,
-    partially_fixed_experiments: np.ndarray,
+    partially_fixed_experiments: pd.DataFrame,
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
         domain (Domain): domain defining the input variables used for the check.
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
-        fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
-        partially_fixed_experiments (np.ndarray): partially fixed experiment proposals to be checked.
+        fixed_experiments (pd.DataFrame): fixed experiment proposals to be checked.
+        partially_fixed_experiments (pd.DataFrame): partially fixed experiment proposals to be checked.
     """
 
     check_fixed_experiments(domain, n_experiments, fixed_experiments)

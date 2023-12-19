@@ -626,7 +626,46 @@ def test_partially_fixed_experiments():
         doe = find_local_max_ipopt(
             domain,
             "linear",
+            n_experiments=1,
+            fixed_experiments=fixed_experiments,
+            partially_fixed_experiments=partially_fixed_experiments,
+        )
+    with pytest.raises(ValueError):
+        doe = find_local_max_ipopt(
+            domain,
+            "linear",
             n_experiments=2,
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
+
+    _fixed_experiments = fixed_experiments.drop(columns=["x1"])
+    with pytest.raises(ValueError):
+        doe = find_local_max_ipopt(
+            domain,
+            "linear",
+            n_experiments=3,
+            fixed_experiments=_fixed_experiments,
+            partially_fixed_experiments=partially_fixed_experiments,
+        )
+    _partially_fixed_experiments = partially_fixed_experiments.drop(columns=["x1"])
+    with pytest.raises(ValueError):
+        doe = find_local_max_ipopt(
+            domain,
+            "linear",
+            n_experiments=3,
+            fixed_experiments=fixed_experiments,
+            partially_fixed_experiments=_partially_fixed_experiments,
+        )
+    with pytest.raises(ValueError):
+        doe = find_local_max_ipopt(
+            domain,
+            "linear",
+            n_experiments=3,
+            fixed_experiments=_fixed_experiments,
+            partially_fixed_experiments=_partially_fixed_experiments,
+        )
+
+
+if __name__ == "__main__":
+    test_partially_fixed_experiments()
