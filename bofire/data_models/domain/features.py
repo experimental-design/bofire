@@ -232,9 +232,7 @@ class Inputs(Features):
             samples[feat.key] = feat.fixed_value()[0]  # type: ignore
         return self.validate_candidates(samples)[self.get_keys(Input)]
 
-    def validate_candidates(
-        self, candidates: pd.DataFrame, validate_is_numeric: bool = True
-    ) -> pd.DataFrame:
+    def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.
 
         Args:
@@ -250,11 +248,10 @@ class Inputs(Features):
             if feature.key not in candidates:
                 raise ValueError(f"no col for input feature `{feature.key}`")
             candidates[feature.key] = feature.validate_candidental(candidates[feature.key])  # type: ignore
-        if validate_is_numeric:
-            if candidates[self.get_keys()].isnull().to_numpy().any():
-                raise ValueError("there are null values")
-            if candidates[self.get_keys()].isna().to_numpy().any():
-                raise ValueError("there are na values")
+        if candidates[self.get_keys()].isnull().to_numpy().any():
+            raise ValueError("there are null values")
+        if candidates[self.get_keys()].isna().to_numpy().any():
+            raise ValueError("there are na values")
         return candidates
 
     def validate_experiments(

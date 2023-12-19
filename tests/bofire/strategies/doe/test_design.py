@@ -749,7 +749,9 @@ def test_partially_fixed_experiments():
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
-        assert e == get_domain_error("x1")
+        assert e == ValueError(
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+        )
 
     with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
@@ -759,7 +761,9 @@ def test_partially_fixed_experiments():
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
-        assert e == get_domain_error("x1")
+        assert e == ValueError(
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+        )
 
 
 if __name__ == "__main__":

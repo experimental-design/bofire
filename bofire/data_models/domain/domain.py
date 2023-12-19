@@ -544,8 +544,6 @@ class Domain(BaseModel):
         only_inputs: bool = False,
         tol: float = 1e-5,
         raise_validation_error: bool = True,
-        validate_is_numeric: bool = True,
-        validate_constraints: bool = True,
     ) -> pd.DataFrame:
         """Method to check the validty of porposed candidates
 
@@ -569,17 +567,14 @@ class Domain(BaseModel):
         """
         # check that each input feature has a col and is valid in itself
         assert isinstance(self.inputs, Inputs)
-        candidates = self.inputs.validate_candidates(
-            candidates, validate_is_numeric=validate_is_numeric
-        )
+        candidates = self.inputs.validate_candidates(candidates)
         # check if all constraints are fulfilled
-        if validate_constraints:
-            if not self.constraints.is_fulfilled(candidates, tol=tol).all():
-                if raise_validation_error:
-                    raise ConstraintNotFulfilledError(
-                        f"Constraints not fulfilled: {candidates}"
-                    )
-                warnings.warn("Not all constraints are fulfilled.")
+        if not self.constraints.is_fulfilled(candidates, tol=tol).all():
+            if raise_validation_error:
+                raise ConstraintNotFulfilledError(
+                    f"Constraints not fulfilled: {candidates}"
+                )
+            warnings.warn("Not all constraints are fulfilled.")
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.outputs, Outputs)

@@ -624,8 +624,6 @@ def check_fixed_experiments(
     domain.validate_candidates(
         candidates=fixed_experiments,
         only_inputs=True,
-        raise_validation_error=True,
-        validate_constraints=True,
     )
 
 
@@ -637,13 +635,13 @@ def check_partially_fixed_experiments(
 
     n_partially_fixed_experiments = len(partially_fixed_experiments.index)
 
-    domain.validate_candidates(
-        candidates=partially_fixed_experiments,
-        only_inputs=True,
-        raise_validation_error=True,
-        validate_is_numeric=False,
-        validate_constraints=False,
-    )
+    # for partially fixed experiments only check if all inputs are part of the domain
+    if not all(
+        key in partially_fixed_experiments.columns for key in domain.inputs.get_keys()
+    ):
+        raise ValueError(
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+        )
 
     if n_partially_fixed_experiments > n_experiments:
         warnings.warn(
