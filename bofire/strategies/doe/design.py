@@ -621,13 +621,12 @@ def check_fixed_experiments(
             "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
         )
 
-    input_set = set(domain.inputs.get_keys())
-    column_set = set(fixed_experiments.columns)
-
-    if not input_set.issubset(column_set):
-        raise ValueError(
-            f"Invalid fixed_experiments. Each variable in {input_set} needs to be in the columns."
-        )
+    domain.validate_candidates(
+        candidates=fixed_experiments,
+        only_inputs=True,
+        raise_validation_error=True,
+        validate_constraints=True,
+    )
 
 
 def check_partially_fixed_experiments(
@@ -638,18 +637,19 @@ def check_partially_fixed_experiments(
 
     n_partially_fixed_experiments = len(partially_fixed_experiments.index)
 
-    input_set = set(domain.inputs.get_keys())
-    column_set = set(partially_fixed_experiments.columns)
+    domain.validate_candidates(
+        candidates=partially_fixed_experiments,
+        only_inputs=True,
+        raise_validation_error=True,
+        validate_is_numeric=False,
+        validate_constraints=False,
+    )
 
-    if not input_set.issubset(column_set):
-        raise ValueError(
-            f"Invalid partially fixed experiments. Each variable in {input_set} needs to be in columns."
-        )
     if n_partially_fixed_experiments > n_experiments:
         warnings.warn(
             UserWarning(
                 "The number of partially fixed experiments exceeds the amount "
-                "of the overall count of experiments. Partially fixed experiments may be cut of"
+                "of the overall count of experiments. Partially fixed experiments may be cut off"
             )
         )
 
@@ -657,7 +657,7 @@ def check_partially_fixed_experiments(
 def check_partially_and_fully_fixed_experiments(
     domain: Domain,
     n_experiments: int,
-    fixed_experiments: np.ndarray,
+    fixed_experiments: pd.DataFrame,
     partially_fixed_experiments: pd.DataFrame,
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
@@ -672,15 +672,15 @@ def check_partially_and_fully_fixed_experiments(
     check_partially_fixed_experiments(
         domain, n_experiments, partially_fixed_experiments
     )
-    n_fixed_experiments, _ = np.array(fixed_experiments).shape
+    n_fixed_experiments = len(fixed_experiments.index)
 
-    n_partially_fixed_experiments, _ = np.array(partially_fixed_experiments).shape
+    n_partially_fixed_experiments = len(partially_fixed_experiments.index)
 
     if n_fixed_experiments + n_partially_fixed_experiments > n_experiments:
         warnings.warn(
             UserWarning(
                 "The number of fixed experiments and partially fixed experiments exceeds the amount "
-                "of the overall count of experiments. Partially fixed experiments may be cut of"
+                "of the overall count of experiments. Partially fixed experiments may be cut off"
             )
         )
 

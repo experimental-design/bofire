@@ -18,6 +18,7 @@ from bofire.data_models.features.api import (
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
+    check_partially_fixed_experiments,
     find_local_max_ipopt,
     get_n_experiments,
 )
@@ -480,7 +481,7 @@ def test_get_n_experiments():
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
-def test_partially_fixed_experiments():
+def test_fixed_experiments_checker():
     domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=(0, 5)),
@@ -540,16 +541,85 @@ def test_partially_fixed_experiments():
     )
 
     # partially fixed will be cut of
-    with pytest.warns(UserWarning):
+    with pytest.warns(UserWarning) as record:
         check_partially_and_fully_fixed_experiments(
             domain, 3, fixed_experiments, partially_fixed_experiments
         )
+        assert len(record) == 1
+        assert record[0].message.args[0] == (
+            "The number of fixed experiments and partially fixed experiments exceeds the amount "
+            "of the overall count of experiments. Partially fixed experiments may be cut off"
+        )
+
+    with pytest.warns(UserWarning) as record:
+        check_partially_fixed_experiments(domain, 1, partially_fixed_experiments)
+        assert len(record) == 1
+        assert record[0].message.args[0] == (
+            "The number of partially fixed experiments exceeds the amount "
+            "of the overall count of experiments. Partially fixed experiments may be cut off"
+        )
 
     # to few experiments
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         check_partially_and_fully_fixed_experiments(
             domain, 2, fixed_experiments, partially_fixed_experiments
         )
+        assert e == ValueError(
+            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+        )
+
+    with pytest.raises(ValueError) as e:
+        check_fixed_experiments(domain, 2, fixed_experiments)
+        assert e == ValueError(
+            "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+        )
+
+
+def test_partially_fixed_experiments():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=(0, 5)),
+            ContinuousInput(key="x2", bounds=(0, 15)),
+            ContinuousInput(key="a1", bounds=(0, 1)),
+            ContinuousInput(key="a2", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            # Case 1: a and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 10, -10], rhs=15
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, -2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, 3], rhs=5
+            ),
+            # Case 2: a and c are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, -10, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 2, 2], rhs=7
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, -3, -3], rhs=2
+            ),
+            # Case 3: c and b are active
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 1, 0, -10], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, 0.2, 0, 2], rhs=5
+            ),
+            LinearInequalityConstraint(
+                features=["x1", "x2", "a1", "a2"], coefficients=[1, -1, 0, 3], rhs=5
+            ),
+        ],
+    )
+
+    def get_domain_error(feature):
+        return ValueError(f"no col for input feature `{feature}`")
 
     fixed_experiments = pd.DataFrame(
         np.array([[1, 0, 0, 0], [0, 1, 0.7, 1]]), columns=domain.inputs.get_keys()
@@ -566,13 +636,28 @@ def test_partially_fixed_experiments():
     assert np.allclose(doe.iloc[[0, 1]]["a2"], fixed_experiments["a2"])
 
     fixed_experiments = pd.DataFrame(
-        np.array([[1, 0, 0], [0, 1, 0.7]]), columns=domain.inputs.get_keys()[:-1]
+        np.array([[1, 0, 0], [0, 1, 0.7]]), columns=["x1", "x2", "a1"]
     )
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain, "linear", n_experiments=2, fixed_experiments=fixed_experiments
         )
+        assert e == get_domain_error("a2")
+
+    partially_fixed_experiments = pd.DataFrame(
+        np.array([[1.0, None, None], [0.0, None, None]]),
+        columns=["x1", "x2", "a1"],
+    )
+
+    with pytest.raises(ValueError) as e:
+        doe = find_local_max_ipopt(
+            domain,
+            "linear",
+            n_experiments=2,
+            partially_fixed_experiments=partially_fixed_experiments,
+        )
+        assert e == get_domain_error("a2")
 
     fixed_experiments = pd.DataFrame(
         np.array([[1, 0, 0, 0, 1], [0, 1, 0.7, 1, 2]]),
@@ -622,7 +707,10 @@ def test_partially_fixed_experiments():
         doe.iloc[[2, 3]]["x1"], partially_fixed_experiments["x1"].astype(float)
     )
 
-    with pytest.raises(ValueError):
+    too_few_experiments_error = ValueError(
+        "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
+    )
+    with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
             "linear",
@@ -630,7 +718,8 @@ def test_partially_fixed_experiments():
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
-    with pytest.raises(ValueError):
+        assert e == too_few_experiments_error
+    with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
             "linear",
@@ -638,9 +727,10 @@ def test_partially_fixed_experiments():
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
+        assert e == too_few_experiments_error
 
     _fixed_experiments = fixed_experiments.drop(columns=["x1"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
             "linear",
@@ -648,8 +738,10 @@ def test_partially_fixed_experiments():
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=partially_fixed_experiments,
         )
+        assert e == get_domain_error("x1")
+
     _partially_fixed_experiments = partially_fixed_experiments.drop(columns=["x1"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
             "linear",
@@ -657,7 +749,9 @@ def test_partially_fixed_experiments():
             fixed_experiments=fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
-    with pytest.raises(ValueError):
+        assert e == get_domain_error("x1")
+
+    with pytest.raises(ValueError) as e:
         doe = find_local_max_ipopt(
             domain,
             "linear",
@@ -665,7 +759,9 @@ def test_partially_fixed_experiments():
             fixed_experiments=_fixed_experiments,
             partially_fixed_experiments=_partially_fixed_experiments,
         )
+        assert e == get_domain_error("x1")
 
 
 if __name__ == "__main__":
+    test_fixed_experiments_checker()
     test_partially_fixed_experiments()
