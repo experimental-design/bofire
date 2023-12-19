@@ -825,7 +825,6 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
         data=[[1.05, 2.5, 6], [4, 4.5, 9]],
     )
     samples = c1.from_descriptor_encoding(descriptor_values)
-    print(samples)
     assert np.all(samples == pd.Series([categories[0], categories[1]]))
 
     c2 = CategoricalDescriptorInput(
@@ -837,7 +836,6 @@ def test_categorical_descriptor_from_descriptor_encoding(key, categories, descri
     )
 
     samples = c2.from_descriptor_encoding(descriptor_values)
-    print(samples)
     assert np.all(samples == pd.Series([categories[1], categories[1]]))
 
 
@@ -1426,14 +1424,23 @@ def test_inputs_get_free(features, expected):
             inputs,
             Inputs(features=[if1, if2, if3, if4, if5, if7]),
         ]
-        for num_samples in [1, 2, 1024]
+        for num_samples in [1, 2, 64]
         for method in ["UNIFORM", "SOBOL", "LHS"]
     ],
 )
 def test_inputs_sample(features: Inputs, num_samples, method):
-    samples = features.sample(num_samples, method=method)
-    assert samples.shape == (num_samples, len(features))
-    assert list(samples.columns) == features.get_keys()
+    samples0 = features.sample(num_samples, method=method, seed=None)
+    assert samples0.shape == (num_samples, len(features))
+    assert list(samples0.columns) == features.get_keys()
+    samples1 = features.sample(num_samples, method=method, seed=42)
+    assert samples1.shape == (num_samples, len(features))
+    assert list(samples1.columns) == features.get_keys()
+    samples2 = features.sample(num_samples, method=method, seed=42)
+    assert samples2.shape == (num_samples, len(features))
+    assert list(samples2.columns) == features.get_keys()
+    assert_frame_equal(samples2, samples1)
+    with pytest.raises(AssertionError):
+        assert_frame_equal(samples2, samples0)
 
 
 @pytest.mark.parametrize(
