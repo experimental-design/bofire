@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 import pytest
-from pydantic.error_wrappers import ValidationError
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.constraints.api import (
@@ -16,58 +15,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Constraints, Inputs
 from bofire.data_models.enum import SamplingMethodEnum
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-
-
-def test_from_greater_equal():
-    spec = specs.constraints.valid(LinearInequalityConstraint).spec()
-    c = LinearInequalityConstraint.from_greater_equal(
-        features=spec["features"],
-        coefficients=spec["coefficients"],
-        rhs=spec["rhs"],
-    )
-    assert c.rhs == spec["rhs"] * -1.0
-    assert c.coefficients == [-1.0 * coef for coef in spec["coefficients"]]
-    assert c.features == spec["features"]
-
-
-def test_as_greater_equal():
-    spec = specs.constraints.valid(LinearInequalityConstraint).spec()
-    c = LinearInequalityConstraint.from_greater_equal(
-        features=spec["features"],
-        coefficients=spec["coefficients"],
-        rhs=spec["rhs"],
-    )
-    features, coefficients, rhs = c.as_greater_equal()
-    assert c.rhs == rhs * -1.0
-    assert coefficients == [-1.0 * coef for coef in c.coefficients]
-    assert c.features == features
-
-
-def test_from_smaller_equal():
-    spec = specs.constraints.valid(LinearInequalityConstraint).spec()
-    c = LinearInequalityConstraint.from_smaller_equal(
-        features=spec["features"],
-        coefficients=spec["coefficients"],
-        rhs=spec["rhs"],
-    )
-    assert c.rhs == spec["rhs"]
-    assert c.coefficients == spec["coefficients"]
-    assert c.features == spec["features"]
-
-
-def test_as_smaller_equal():
-    spec = specs.constraints.valid(LinearInequalityConstraint).spec()
-    c = LinearInequalityConstraint.from_smaller_equal(
-        features=spec["features"],
-        coefficients=spec["coefficients"],
-        rhs=spec["rhs"],
-    )
-    features, coefficients, rhs = c.as_smaller_equal()
-    assert c.rhs == rhs
-    assert coefficients == c.coefficients
-    assert c.features == features
-
+from bofire.data_models.features.api import ContinuousInput
 
 # test the Constraints Class
 c1 = specs.constraints.valid(LinearEqualityConstraint).obj()
@@ -89,22 +37,6 @@ constraints = Constraints(constraints=[c1, c2])
 constraints2 = Constraints(constraints=[c4, c5])
 constraints3 = Constraints(constraints=[c6])
 constraints4 = Constraints(constraints=[c3])
-
-
-@pytest.mark.parametrize(
-    "constraints",
-    [
-        (["s"]),
-        ([specs.constraints.valid(LinearInequalityConstraint).obj()], 5),
-        (
-            [specs.constraints.valid(LinearInequalityConstraint).obj()],
-            ContinuousOutput(key="s"),
-        ),
-    ],
-)
-def test_constraints_invalid_constraint(constraints):
-    with pytest.raises((ValueError, TypeError, KeyError, ValidationError)):
-        Constraints(constraints=constraints)
 
 
 @pytest.mark.parametrize(

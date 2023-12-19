@@ -24,3 +24,25 @@ specs.add_invalid(
     },
     error=ValueError,
 )
+
+specs.add_invalid(
+    Constraints,
+    lambda: {
+        "constraints": [
+            LinearInequalityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            CategoricalInput(key="a", categories=["1", "2"], allowed=[True, True]),
+        ],
+    },
+    error=ValueError,
+)
+
+specs.add_invalid(
+    Constraints,
+    lambda: {
+        "constraints": [
+            LinearInequalityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            "s",
+        ],
+    },
+    error=ValueError,
+)
