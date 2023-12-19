@@ -557,14 +557,13 @@ def test_partially_fixed_experiments():
 
     doe = find_local_max_ipopt(
         domain, "linear", n_experiments=3, fixed_experiments=fixed_experiments
-    )
+    ).reset_index(drop=True)
 
     assert doe.shape == (3, 4)
-    for i in range(2):
-        assert np.allclose(doe.iloc[i, "x1"], fixed_experiments.loc[i, "x1"])
-        assert np.allclose(doe.loc[i, "x2"], fixed_experiments.loc[i, "x2"])
-        assert np.allclose(doe.loc[i, "a1"], fixed_experiments.loc[i, "a1"])
-        assert np.allclose(doe.loc[i, "a2"], fixed_experiments.loc[i, "a2"])
+    assert np.allclose(doe.iloc[[0, 1]]["x1"], fixed_experiments["x1"])
+    assert np.allclose(doe.iloc[[0, 1]]["x2"], fixed_experiments["x2"])
+    assert np.allclose(doe.iloc[[0, 1]]["a1"], fixed_experiments["a1"])
+    assert np.allclose(doe.iloc[[0, 1]]["a2"], fixed_experiments["a2"])
 
     fixed_experiments = pd.DataFrame(
         np.array([[1, 0, 0], [0, 1, 0.7]]), columns=domain.inputs.get_keys()[:-1]
@@ -582,19 +581,52 @@ def test_partially_fixed_experiments():
 
     doe = find_local_max_ipopt(
         domain, "linear", n_experiments=3, fixed_experiments=fixed_experiments
-    )
+    ).reset_index(drop=True)
 
     assert doe.shape == (3, 4)
-    for i in range(2):
-        assert np.allclose(doe.iloc[i, "x1"], fixed_experiments.loc[i, "x1"])
-        assert np.allclose(doe.loc[i, "x2"], fixed_experiments.loc[i, "x2"])
-        assert np.allclose(doe.loc[i, "a1"], fixed_experiments.loc[i, "a1"])
-        assert np.allclose(doe.loc[i, "a2"], fixed_experiments.loc[i, "a2"])
+    assert np.allclose(doe.iloc[[0, 1]]["x1"], fixed_experiments["x1"])
+    assert np.allclose(doe.iloc[[0, 1]]["x2"], fixed_experiments["x2"])
+    assert np.allclose(doe.iloc[[0, 1]]["a1"], fixed_experiments["a1"])
+    assert np.allclose(doe.iloc[[0, 1]]["a2"], fixed_experiments["a2"])
 
     partially_fixed_experiments = pd.DataFrame(
-        np.array([[1, None, None, None, 1], [0, None, None, None, 2]]),
-        columns=domain.inputs.get_keys() + ["c0"],
+        np.array([[1.0, None, None, None, 1.0], [0.0, None, None, None, 2.0]]),
+        columns=["x1", "x2", "a1", "a2", "c0"],
+    )
+    doe = find_local_max_ipopt(
+        domain,
+        "linear",
+        n_experiments=3,
+        partially_fixed_experiments=partially_fixed_experiments,
+    ).reset_index(drop=True)
+
+    assert doe.shape == (3, 4)
+    assert np.allclose(
+        doe.iloc[[0, 1]]["x1"], partially_fixed_experiments["x1"].astype(float)
     )
 
-    assert doe.shape == (2, 4)
-    assert np.allclose(doe["x1"], fixed_experiments["x1"])
+    doe = find_local_max_ipopt(
+        domain,
+        "linear",
+        n_experiments=4,
+        fixed_experiments=fixed_experiments,
+        partially_fixed_experiments=partially_fixed_experiments,
+    ).reset_index(drop=True)
+
+    assert doe.shape == (4, 4)
+    assert np.allclose(doe.iloc[[0, 1]]["x1"], fixed_experiments["x1"])
+    assert np.allclose(doe.iloc[[0, 1]]["x2"], fixed_experiments["x2"])
+    assert np.allclose(doe.iloc[[0, 1]]["a1"], fixed_experiments["a1"])
+    assert np.allclose(doe.iloc[[0, 1]]["a2"], fixed_experiments["a2"])
+    assert np.allclose(
+        doe.iloc[[2, 3]]["x1"], partially_fixed_experiments["x1"].astype(float)
+    )
+
+    with pytest.raises(UserWarning):
+        doe = find_local_max_ipopt(
+            domain,
+            "linear",
+            n_experiments=2,
+            fixed_experiments=fixed_experiments,
+            partially_fixed_experiments=partially_fixed_experiments,
+        )

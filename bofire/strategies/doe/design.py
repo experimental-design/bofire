@@ -624,7 +624,7 @@ def check_fixed_experiments(
     input_set = set(domain.inputs.get_keys())
     column_set = set(fixed_experiments.columns)
 
-    if not column_set.issubset(input_set):
+    if not input_set.issubset(column_set):
         raise ValueError(
             f"Invalid fixed_experiments. Each variable in {input_set} needs to be in the columns."
         )
@@ -641,7 +641,7 @@ def check_partially_fixed_experiments(
     input_set = set(domain.inputs.get_keys())
     column_set = set(partially_fixed_experiments.columns)
 
-    if not column_set.issubset(input_set):
+    if not input_set.issubset(column_set):
         raise ValueError(
             f"Invalid partially fixed experiments. Each variable in {input_set} needs to be in columns."
         )
