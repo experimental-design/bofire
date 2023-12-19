@@ -7,7 +7,11 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    CategoricalOutput,
+)
 
 
 @pytest.mark.parametrize(
@@ -457,3 +461,13 @@ def test_categorical_input_feature_allowed_categories(input_feature, expected):
 )
 def test_categorical_input_feature_forbidden_categories(input_feature, expected):
     assert input_feature.get_forbidden_categories() == expected
+
+
+def test_categorical_output():
+    feature = CategoricalOutput(
+        key="a", categories=["alpha", "beta", "gamma"], objective=[1.0, 0.0, 0.1]
+    )
+
+    assert feature.to_dict() == {"alpha": 1.0, "beta": 0.0, "gamma": 0.1}
+    data = pd.Series(data=["alpha", "beta", "beta", "gamma"], name="a")
+    assert_series_equal(feature(data), pd.Series(data=[1.0, 0.0, 0.0, 0.1], name="a"))

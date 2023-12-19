@@ -4,8 +4,9 @@ import pytest
 from numpy import nan
 from pandas.testing import assert_frame_equal
 
+import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Outputs
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput
 from bofire.data_models.objectives.api import (
     ConstrainedObjective,
     MaximizeObjective,
@@ -30,6 +31,7 @@ obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
 
 of1 = ContinuousOutput(key="out1", objective=obj)
 of2 = ContinuousOutput(key="out2", objective=obj)
+
 of1_ = ContinuousOutput(key="out3", objective=None)
 of2_ = ContinuousOutput(key="out4", objective=None)
 
@@ -210,3 +212,65 @@ def test_get_outputs_by_objective_none():
     assert outputs.get_by_objective(excludes=Objective, includes=[]) == Outputs(
         features=[ContinuousOutput(key="a", objective=None)]
     )
+
+
+of1 = specs.features.valid(ContinuousOutput).obj(key="of1")
+of2 = specs.features.valid(ContinuousOutput).obj(key="of2")
+of3 = specs.features.valid(ContinuousOutput).obj(key="of3", objective=None)
+
+outputs = Outputs(features=[of1, of2])
+
+mixed_data = pd.DataFrame(
+    columns=["of1", "of2", "of3"],
+    index=range(5),
+    data=np.random.uniform(size=(5, 3)),
+)
+mixed_data["of4"] = ["a", "a", "b", "b", "a"]
+
+
+@pytest.mark.parametrize(
+    "features, samples",
+    [
+        (
+            outputs,
+            pd.DataFrame(
+                columns=["of1", "of2"],
+                index=range(5),
+                data=np.random.uniform(size=(5, 2)),
+            ),
+        ),
+        (
+            Outputs(features=[of1, of2, of3]),
+            pd.DataFrame(
+                columns=["of1", "of2", "of3"],
+                index=range(5),
+                data=np.random.uniform(size=(5, 3)),
+            ),
+        ),
+        (
+            Outputs(
+                features=[
+                    of1,
+                    of2,
+                    of3,
+                    CategoricalOutput(
+                        key="of4", categories=["a", "b"], objective=[1.0, 0.0]
+                    ),
+                ]
+            ),
+            mixed_data,
+        ),
+    ],
+)
+def test_outputs_call(features, samples):
+    o = features(samples)
+    assert o.shape == (
+        len(samples),
+        len(features.get_keys_by_objective(Objective))
+        + len(features.get_keys(CategoricalOutput)),
+    )
+    assert list(o.columns) == [
+        f"{key}_des"
+        for key in features.get_keys_by_objective(Objective)
+        + features.get_keys(CategoricalOutput)
+    ]
