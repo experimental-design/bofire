@@ -43,7 +43,31 @@ class InterpointEqualityConstraint(InterpointConstraint):
         return pd.Series([True])
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
-        raise NotImplementedError("Method `__call__` currently not implemented.")
+        """Numerically evaluates the constraint. Returns the distance to the constraint fulfillment
+        for each batch of size batch_size.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
+
+        Returns:
+            pd.Series: Distance to reach constraint fulfillment.
+        """
+        multiplicity = self.multiplicity or len(experiments)
+        n_batches = int(np.ceil((experiments.shape[0] / multiplicity)))
+        feature_values = np.zeros(n_batches * multiplicity)
+        feature_values[: experiments.shape[0]] = experiments[self.feature].values
+        feature_values[experiments.shape[0] :] = feature_values[-multiplicity]
+        feature_values = feature_values.reshape(n_batches, multiplicity).T
+
+        batchwise_constraint_matrix = np.zeros(shape=(multiplicity - 1, multiplicity))
+        batchwise_constraint_matrix[:, 0] = 1.0
+        batchwise_constraint_matrix[:, 1:] = -np.eye(multiplicity - 1)
+
+        return pd.Series(
+            np.linalg.norm(batchwise_constraint_matrix @ feature_values, axis=0, ord=2)
+            ** 2,
+            index=[f"batch_{i}" for i in range(n_batches)],
+        )
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError("Method `jacobian` currently not implemented.")
