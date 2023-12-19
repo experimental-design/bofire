@@ -1,5 +1,6 @@
 from math import nan
 
+import numpy as np
 import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
@@ -13,6 +14,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.domain.constraints import Constraints
+from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -409,3 +411,50 @@ def test_get_subdomain(domain, feature_keys):
 def test_get_subdomain_invalid(domain, output_feature_keys):
     with pytest.raises((AssertionError, ValueError, KeyError)):
         get_subdomain(domain, output_feature_keys)
+
+
+@pytest.mark.parametrize(
+    "df, expected",
+    [
+        (
+            pd.DataFrame(
+                {
+                    "col": [1, 2, 10, np.nan, "a"],
+                    "col2": ["a", 10, 30, 40, 50],
+                    "col3": [1, 2, 3, 4, 5.0],
+                }
+            ),
+            False,
+        ),
+        (
+            pd.DataFrame(
+                {
+                    "col": [1, 2, 10, np.nan, 6],
+                    "col2": [5, 10, 30, 40, 50],
+                    "col3": [1, 2, 3, 4, 5.0],
+                }
+            ),
+            False,
+        ),
+        (
+            pd.DataFrame(
+                {
+                    "col": [1, 2, 10, 7.0, 6],
+                    "col2": [5, 10, 30, 40, 50],
+                    "col3": [1, 2, 3, 4, 5.0],
+                }
+            ),
+            True,
+        ),
+        (
+            pd.Series([1, 2, 10, 7.0, 6]),
+            True,
+        ),
+        (
+            pd.Series([1, 2, "abc", 7.0, 6]),
+            False,
+        ),
+    ],
+)
+def test_is_numeric(df, expected):
+    assert is_numeric(df) == expected
