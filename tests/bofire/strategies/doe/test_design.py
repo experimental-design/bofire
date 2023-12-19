@@ -622,7 +622,7 @@ def test_partially_fixed_experiments():
         doe.iloc[[2, 3]]["x1"], partially_fixed_experiments["x1"].astype(float)
     )
 
-    with pytest.raises(UserWarning):
+    with pytest.raises(ValueError):
         doe = find_local_max_ipopt(
             domain,
             "linear",
