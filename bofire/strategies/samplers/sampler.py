@@ -92,7 +92,12 @@ class SamplerStrategy(Strategy):
                     raise_validation_error=raise_validation_error,
                 )
             return self.domain.validate_candidates(
-                samples.sample(n=candidate_count, replace=False, ignore_index=True),
+                samples.sample(
+                    n=candidate_count,
+                    replace=False,
+                    ignore_index=True,
+                    random_state=self._get_seed(),
+                ),
                 only_inputs=True,
                 raise_validation_error=raise_validation_error,
             )

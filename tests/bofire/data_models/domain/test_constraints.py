@@ -5,6 +5,9 @@ import pytest
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.constraints.api import (
     Constraint,
+    InterpointConstraint,
+    InterpointEqualityConstraint,
+    IntrapointConstraint,
     LinearConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -26,6 +29,7 @@ c5 = specs.constraints.valid(NonlinearInequalityConstraint).obj()
 c6 = LinearInequalityConstraint.from_smaller_equal(
     features=["f1", "f2", "f3"], coefficients=[1, 1, 1], rhs=100.0
 )
+c7 = InterpointEqualityConstraint(feature="f2", multiplicity=2)
 
 if1 = ContinuousInput(key="f1", bounds=(0, 2))
 if2 = ContinuousInput(key="f2", bounds=(0, 4))
@@ -37,6 +41,8 @@ constraints = Constraints(constraints=[c1, c2])
 constraints2 = Constraints(constraints=[c4, c5])
 constraints3 = Constraints(constraints=[c6])
 constraints4 = Constraints(constraints=[c3])
+constraints5 = Constraints(constraints=[c7])
+constraints6 = Constraints(constraints=[c1, c7])
 
 
 @pytest.mark.parametrize(
@@ -65,12 +71,27 @@ def test_constraints_plus():
     [
         (constraints2, 5),
         (constraints4, 5),
+        (constraints5, 5),
+        (constraints6, 5),
     ],
 )
 def test_constraints_call(constraints, num_candidates):
     candidates = inputs.sample(num_candidates, SamplingMethodEnum.UNIFORM)
     returned = constraints(candidates)
-    assert returned.shape == (num_candidates, len(constraints))
+
+    num_rows = 0
+    if np.any([isinstance(c, IntrapointConstraint) for c in constraints]):
+        num_rows += num_candidates
+
+    max_num_batches = 0
+    for c in constraints:
+        if isinstance(c, InterpointConstraint):
+            max_num_batches = max(
+                max_num_batches, int(np.ceil(num_candidates / c.multiplicity))
+            )
+    num_rows += max_num_batches
+
+    assert returned.shape == (num_rows, len(constraints))
 
 
 @pytest.mark.parametrize(

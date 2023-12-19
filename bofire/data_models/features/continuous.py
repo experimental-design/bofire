@@ -118,7 +118,7 @@ class ContinuousInput(NumericalInput):
             )
         return values
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -129,7 +129,9 @@ class ContinuousInput(NumericalInput):
         """
         return pd.Series(
             name=self.key,
-            data=np.random.uniform(self.lower_bound, self.upper_bound, n),
+            data=np.random.default_rng(seed=seed).uniform(
+                self.lower_bound, self.upper_bound, n
+            ),
         )
 
     def __str__(self) -> str:
