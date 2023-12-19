@@ -1,6 +1,6 @@
 import random
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Type
+from typing import Any, Callable, List, Optional, Type
 
 
 class Spec:
@@ -29,11 +29,25 @@ class Spec:
         return str(self)
 
 
+class InvalidSpec(Spec):
+    def __init__(
+        self,
+        cls: Type,
+        spec: Callable[[], dict],
+        error: Exception,
+        message: Optional[str] = None,
+    ):
+        self.cls = cls
+        self.spec = spec
+        self.error = (error,)
+        self.message = message
+
+
 class Invalidator(ABC):
     """Invalidator rule to invalidate a given spec."""
 
     @abstractmethod
-    def invalidate(self, spec: Spec) -> List[Spec]:
+    def invalidate(self, spec: Spec) -> List[InvalidSpec]:
         """Return a list of invalidated specs.
 
         If this invalidator is not applicable to the specified
@@ -49,12 +63,14 @@ class Overwrite(Invalidator):
         self.key = key
         self.overwrites = overwrites
 
-    def invalidate(self, spec: Spec) -> List[Spec]:
+    def invalidate(self, spec: Spec) -> List[InvalidSpec]:
         data: dict = spec.spec()
         if self.key not in data:
             return []
         return [
-            Spec(spec.cls, lambda data=data, overwrite=overwrite: {**data, **overwrite})
+            InvalidSpec(
+                spec.cls, lambda data=data, overwrite=overwrite: {**data, **overwrite}
+            )
             for overwrite in self.overwrites
         ]
 
@@ -69,7 +85,7 @@ class Specs:
     def __init__(self, invalidators: List[Invalidator]):
         self.invalidators = invalidators
         self.valids: List[Spec] = []
-        self.invalids: List[Spec] = []
+        self.invalids: List[InvalidSpec] = []
 
     def _get_spec(self, specs: List[Spec], cls: Type = None, exact: bool = True):
         if cls is not None:
@@ -102,7 +118,7 @@ class Specs:
         return self._get_spec(self.invalids, cls, exact)
 
     def add_valid(
-        self, cls: Type, spec: Callable[[], dict], add_invalids: bool = True
+        self, cls: Type, spec: Callable[[], dict], add_invalids: bool = False
     ) -> Spec:
         """Add a new valid spec to the list.
 
@@ -116,9 +132,15 @@ class Specs:
                 self.invalids += invalidator.invalidate(spec_)
         return spec_
 
-    def add_invalid(self, cls: Type, spec: Callable[[], dict]) -> Spec:
+    def add_invalid(
+        self,
+        cls: Type,
+        spec: Callable[[], dict],
+        error: Exception,
+        message: Optional[str] = None,
+    ) -> Spec:
         """Add a new invalid spec to the list."""
 
-        spec_ = Spec(cls, spec)
+        spec_ = InvalidSpec(cls, spec, error, message)
         self.invalids.append(spec_)
         return spec_
