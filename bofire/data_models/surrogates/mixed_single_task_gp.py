@@ -27,7 +27,6 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
 
-
     @validator("input_preprocessing_specs")
     def validate_categoricals(cls, v, values):
         """Checks that at least one one-hot encoded categorical feauture is present."""
