@@ -6,12 +6,12 @@ from pydantic import root_validator, validator
 
 from bofire.data_models.constraints.constraint import (
     Coefficients,
-    Constraint,
     FeatureKeys,
+    IntrapointConstraint,
 )
 
 
-class LinearConstraint(Constraint):
+class LinearConstraint(IntrapointConstraint):
     """Abstract base class for linear equality and inequality constraints.
 
     Attributes:
