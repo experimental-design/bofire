@@ -23,7 +23,8 @@ def get_molecular_feature_keys(
     specs: TInputTransformSpecs,
 ) -> List[str]:
     """Returns a list of molecular feature keys in the input data.
-    These features are of type Fingerprints, Fragments, or FingerprintsFragments.
+    These features are features with transform type Fingerprints, Fragments,
+    or FingerprintsFragments in `specs`.
 
     Args:
         specs (TInputTransformSpecs): Dictionary specifying which
@@ -47,7 +48,8 @@ def get_continuous_feature_keys(
     specs: TInputTransformSpecs,
 ) -> List[str]:
     """Returns a list of continuous feature keys in the input data.
-    These features include continuous inputs, categorical inputs with descriptors, and Mordred descriptors.
+    These features include continuous inputs, categorical inputs with transform
+    type CategoricalEncodingEnum.DESCRIPTOR, and Mordred descriptors.
 
     Args:
         inputs (Inputs): Input features.
