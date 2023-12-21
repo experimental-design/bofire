@@ -14,7 +14,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.surrogates.api import MLPEnsemble, ScalerEnum
-from bofire.surrogates.mlp import MLP, RegressionDataSet, _MLPEnsemble, fit_mlp
+from bofire.surrogates.mlp import MLP, MLPDataset, _MLPEnsemble, fit_mlp
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -78,10 +78,10 @@ def test_mlp_dropout():
     assert mlp.layers[9].out_features == 1
 
 
-def test_RegressionDataSet():
+def test_DataSet():
     X = torch.randn(10, 3)
     y = torch.randn(10, 1)
-    dset = RegressionDataSet(X=X, y=y)
+    dset = MLPDataset(X=X, y=y)
     assert len(dset) == 10
     xi, yi = dset[3]
     assert torch.allclose(xi, X[3].to(**tkwargs))
@@ -114,7 +114,7 @@ def test_fit_mlp(mlp, weight_decay, n_epoches, lr, shuffle):
     X, y = torch.from_numpy(experiments[["x_1", "x_2"]].values), torch.from_numpy(
         experiments[["y"]].values
     )
-    dset = RegressionDataSet(X=X, y=y)
+    dset = MLPDataset(X=X, y=y)
     fit_mlp(
         mlp=mlp,
         dataset=dset,

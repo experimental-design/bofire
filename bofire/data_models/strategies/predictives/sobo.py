@@ -6,7 +6,7 @@ from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
     qLogNEI,
 )
-from bofire.data_models.features.api import CategoricalOutput, Feature
+from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 

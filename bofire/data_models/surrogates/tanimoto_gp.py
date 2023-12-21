@@ -1,8 +1,8 @@
-from typing import Literal
+from typing import Literal, Type
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.priors.api import (
@@ -28,17 +28,15 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
-    @validator("outputs")
-    def validate_outputs(cls, outputs):
-        """validates outputs
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
 
-        Raises:
-            ValueError: if output type is not ContinuousOutput
+        Args:
+            outputs: objective functions for the surrogate
+            my_type: continuous or categorical output
 
         Returns:
-            List[ContinuousOutput]
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        for o in outputs:
-            if not isinstance(o, ContinuousOutput):
-                raise ValueError("all outputs need to be continuous")
-        return outputs
+        return True if isinstance(my_type, ContinuousOutput) else False

@@ -1,13 +1,17 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, Type
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
 
 # from bofire.data_models.strategies.api import FactorialStrategy
-from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import (
     AnyKernel,
     MaternKernel,
@@ -23,9 +27,8 @@ from bofire.data_models.priors.api import (
     MBO_OUTPUTSCALE_PRIOR,
     AnyPrior,
 )
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import Hyperconfig, TrainableSurrogate
+from bofire.data_models.surrogates.trainable import Hyperconfig
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class SingleTaskGPHyperconfig(Hyperconfig):
@@ -110,17 +113,15 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
 
-    @validator("outputs")
-    def validate_outputs(cls, outputs):
-        """validates outputs
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
 
-        Raises:
-            ValueError: if output type is not ContinuousOutput
+        Args:
+            outputs: objective functions for the surrogate
+            my_type: continuous or categorical output
 
         Returns:
-            List[ContinuousOutput]
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        for o in outputs:
-            if not isinstance(o, ContinuousOutput):
-                raise ValueError("all outputs need to be continuous")
-        return outputs
+        return True if isinstance(my_type, ContinuousOutput) else False

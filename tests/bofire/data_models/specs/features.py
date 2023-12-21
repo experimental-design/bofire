@@ -3,7 +3,10 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
-from bofire.data_models.objectives.api import CategoricalObjective, MaximizeObjective
+from bofire.data_models.objectives.api import (
+    ConstrainedCategoricalObjective,
+    MaximizeObjective,
+)
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -88,7 +91,9 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ("a", "b", "c"),
-        "objective": CategoricalObjective(desirability=(0.0, 1.0, 0.0)),
+        "objective": ConstrainedCategoricalObjective(
+            categories=("a", "b", "c"), desirability=(True, True, False)
+        ),
     },
 )
 specs.add_valid(

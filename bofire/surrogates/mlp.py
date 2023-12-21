@@ -18,7 +18,7 @@ from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.utils.torch_tools import tkwargs
 
 
-class RegressionDataSet(Dataset):
+class MLPDataset(Dataset):
     """
     Prepare the dataset for regression
     """
@@ -114,18 +114,19 @@ class _MLPEnsemble(EnsembleModel):
 
 def fit_mlp(
     mlp: MLP,
-    dataset: RegressionDataSet,
+    dataset: MLPDataset,
     batch_size: int = 10,
     n_epoches: int = 200,
     lr: float = 1e-4,
     shuffle: bool = True,
     weight_decay: float = 0.0,
+    loss_function: nn.Module = nn.L1Loss,
 ):
-    """Fit a MLP for regression to a dataset.
+    """Fit a MLP to a dataset.
 
     Args:
         mlp (MLP): The MLP that should be fitted.
-        dataset (RegressionDataSet): The data that should be fitted
+        dataset (MLPDataset): The data that should be fitted
         batch_size (int, optional): Batch size. Defaults to 10.
         n_epoches (int, optional): Number of training epoches. Defaults to 200.
         lr (float, optional): Initial learning rate. Defaults to 1e-4.
@@ -134,15 +135,21 @@ def fit_mlp(
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    loss_function = nn.L1Loss()
     optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
+    loss_function = loss_function()
     for _ in range(n_epoches):
         current_loss = 0.0
         for data in train_loader:
             # Get and prepare inputs
             inputs, targets = data
-            if len(targets.shape) == 1:
+            if isinstance(loss_function, nn.CrossEntropyLoss):
+                targets = targets.flatten().long()
+            elif len(targets.shape) == 1 and not isinstance(
+                loss_function, nn.CrossEntropyLoss
+            ):
                 targets = targets.reshape((targets.shape[0], 1))
+            else:
+                pass
 
             # Zero the gradients
             optimizer.zero_grad()
@@ -199,7 +206,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
             tX = torch.from_numpy(transformed_X.values[sample_idx]).to(**tkwargs)
             ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
 
-            dataset = RegressionDataSet(
+            dataset = MLPDataset(
                 X=scaler.transform(tX) if scaler is not None else tX,
                 y=output_scaler(ty)[0] if output_scaler is not None else ty,
             )

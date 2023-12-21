@@ -1,8 +1,8 @@
-from typing import Annotated, Literal, Sequence
+from typing import Annotated, Literal, Sequence, Type
 
-from pydantic import Field, validator
+from pydantic import Field
 
-from bofire.data_models.features.api import CategoricalOutput
+from bofire.data_models.features.api import AnyOutput, CategoricalOutput
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
@@ -22,17 +22,15 @@ class MLPClassifierEnsemble(BotorchSurrogate, TrainableSurrogate):
     shuffle: bool = True
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
-    @validator("outputs")
-    def validate_outputs(cls, outputs):
-        """validates outputs
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
 
-        Raises:
-            ValueError: if output type is not CategoricalOutput
+        Args:
+            outputs: objective functions for the surrogate
+            my_type: continuous or categorical output
 
         Returns:
-            List[CategoricalOutput]
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        for o in outputs:
-            if not isinstance(o, CategoricalOutput):
-                raise ValueError("all outputs need to be categorical")
-        return outputs
+        return True if isinstance(my_type, CategoricalOutput) else False

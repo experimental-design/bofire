@@ -655,7 +655,7 @@ class Outputs(Features):
                 and not isinstance(feat, CategoricalOutput)
             ]
             + [
-                feat.compute_objective(experiments.filter(regex=f"{feat.key}_pred_"))  # type: ignore
+                pd.Series(data=feat(experiments.filter(regex=f"{feat.key}_pred_")), name=f"{feat.key}_pred")  # type: ignore
                 if predictions
                 else experiments[feat.key]
                 for feat in self.features
@@ -715,6 +715,12 @@ class Outputs(Features):
                         includes=Objective, excludes=CategoricalObjective
                     )
                 ]
+                + [
+                    [f"{key}_pred", f"{key}_sd"]
+                    for key in self.get_keys_by_objective(
+                        excludes=Objective, includes=None  # type: ignore
+                    )
+                ]
             )
         )
         # check that pred, sd, and des cols are specified and numerical
@@ -729,18 +735,23 @@ class Outputs(Features):
                 raise ValueError(f"Not all values of column `{col}` are numerical.")
             if candidates[col].isnull().to_numpy().any():
                 raise ValueError(f"Nan values are present in {col}.")
-        # Check for categorical output
-        categorical_cols = [
-            (f"{obj.key}_pred", obj.categories)
-            for obj in self.get_by_objective(includes=CategoricalObjective)
-        ]
-        if len(categorical_cols) == 0:
-            return candidates
-        for col in categorical_cols:
-            if col[0] not in candidates:
+        # # Check for categorical output
+        # categorical_cols = [
+        #     (f"{obj.key}_pred", obj.categories)
+        #     for obj in self.get_by_objective(includes=CategoricalObjective)
+        # ]
+        # if len(categorical_cols) == 0:
+        #     return candidates
+        # for col in categorical_cols:
+        #     if col[0] not in candidates:
+        #         raise ValueError(f"missing column {col}")
+        #     if len(candidates[col[0]]) - candidates[col[0]].isin(col[1]).sum() > 0:
+        #         raise ValueError(f"values present are not in {col[1]}")
+        for feat in self.get(CategoricalOutput):
+            col = f"{feat.key}_pred"
+            if col not in candidates:
                 raise ValueError(f"missing column {col}")
-            if len(candidates[col[0]]) - candidates[col[0]].isin(col[1]).sum() > 0:
-                raise ValueError(f"values present are not in {col[1]}")
+            feat.validate_experimental(candidates[col])
         return candidates
 
     def preprocess_experiments_one_valid_output(

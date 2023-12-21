@@ -165,7 +165,7 @@ TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
 TDescriptors = Annotated[List[str], Field(min_items=1)]
 
 
-TCategoryVals = Annotated[List[str], Field(min_items=2)]
+TCategoryVals = Tuple[str, ...]
 TAllowedVals = Optional[Annotated[List[bool], Field(min_items=2)]]
 
 

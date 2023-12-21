@@ -136,7 +136,10 @@ class PredictiveStrategy(Strategy):
         categorical_preds = {
             f"{feat.key}_pred": (
                 ind,
-                feat.map_to_categories(predictions.filter(regex=f"{feat.key}_pred_")),
+                predictions.filter(regex=f"{feat.key}_pred_")
+                .idxmax(1)
+                .str.replace(f"{feat.key}_pred_", "")
+                .values,
             )
             for ind, feat in enumerate(self.domain.outputs.get())
             if isinstance(feat, CategoricalOutput)

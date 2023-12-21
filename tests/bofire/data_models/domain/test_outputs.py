@@ -8,6 +8,7 @@ import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Outputs
 from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput
 from bofire.data_models.objectives.api import (
+    ConstrainedCategoricalObjective,
     ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -254,7 +255,11 @@ mixed_data["of4"] = ["a", "a", "b", "b", "a"]
                     of2,
                     of3,
                     CategoricalOutput(
-                        key="of4", categories=["a", "b"], objective=[1.0, 0.0]
+                        key="of4",
+                        categories=["a", "b"],
+                        objective=ConstrainedCategoricalObjective(
+                            categories=("a", "b"), desirability=(True, False)
+                        ),
                     ),
                 ]
             ),
@@ -266,11 +271,17 @@ def test_outputs_call(features, samples):
     o = features(samples)
     assert o.shape == (
         len(samples),
-        len(features.get_keys_by_objective(Objective))
+        len(
+            features.get_keys_by_objective(
+                Objective, excludes=ConstrainedCategoricalObjective
+            )
+        )
         + len(features.get_keys(CategoricalOutput)),
     )
     assert list(o.columns) == [
         f"{key}_des"
-        for key in features.get_keys_by_objective(Objective)
+        for key in features.get_keys_by_objective(
+            Objective, excludes=ConstrainedCategoricalObjective
+        )
         + features.get_keys(CategoricalOutput)
     ]

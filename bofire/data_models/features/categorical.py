@@ -1,8 +1,8 @@
-from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
+from typing import ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import root_validator, validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -13,7 +13,10 @@ from bofire.data_models.features.feature import (
     TCategoryVals,
     TTransform,
 )
-from bofire.data_models.objectives.categorical import CategoricalObjective
+from bofire.data_models.objectives.categorical import (
+    CategoricalObjective,
+    ConstrainedCategoricalObjective,
+)
 
 
 class CategoricalInput(Input):
@@ -362,11 +365,11 @@ class CategoricalOutput(Output):
     order_id: ClassVar[int] = 8
 
     categories: TCategoryVals
-    objective: CategoricalObjective = Field(
-        default_factory=lambda: CategoricalObjective(w=1.0)
-    )
+    objective: Optional[
+        Union[CategoricalObjective, ConstrainedCategoricalObjective]
+    ] = None
 
-    @validator("categories")
+    @validator("categories", allow_reuse=True)
     def validate_categories_unique(cls, categories):
         """validates that categories have unique names
 
@@ -384,20 +387,29 @@ class CategoricalOutput(Output):
         return tuple(categories)
 
     @validator("objective")
-    def validate_objective(cls, objective, values):
-        """validates that objective desirabilities are the same length as categories
+    def validate_objectives_unique(cls, objective, values):
+        """validates that categories have unique names
+
+        Args:
+            categories (Union[List[str], Tuple[str]]): List or tuple of category names
 
         Raises:
-            ValueError: when len(objective.desirability) != len(categories)
+            ValueError: when categories do not match objective categories
 
         Returns:
-            CategoricalObjective
+            Tuple[str]: Tuple of the categories
         """
-        if len(objective.desirability) != len(values["categories"]):
-            raise ValueError(
-                f"{len(objective.desirability)} desirabilities and {len(values['categories'])} categories"
-            )
+        if objective.categories != tuple(values["categories"]):
+            raise ValueError("categories must match to objective categories")
         return objective
+
+    @classmethod
+    def from_objective(
+        cls,
+        key: str,
+        objective: Union[CategoricalObjective, ConstrainedCategoricalObjective],
+    ):
+        return cls(key=key, objective=objective, categories=objective.categories)
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)
@@ -407,33 +419,14 @@ class CategoricalOutput(Output):
             )
         return values
 
+    def __call__(self, values: pd.Series) -> pd.Series:
+        if self.objective is None:
+            return pd.Series(
+                data=[np.nan for _ in range(len(values))],
+                index=values.index,
+                name=values.name,
+            )
+        return self.objective(values)  # type: ignore
+
     def __str__(self) -> str:
         return "CategoricalOutputFeature"
-
-    def to_dict(self) -> Dict:
-        """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.categories, self.objective.desirability))
-
-    def to_dict_label(self) -> Dict:
-        """Returns the catergories and label location of categories"""
-        return {c: i for i, c in enumerate(self.categories)}
-
-    def from_dict_label(self) -> Dict:
-        """Returns the label location and the categories"""
-        d = self.to_dict_label()
-        return dict(zip(d.values(), d.keys()))
-
-    def map_to_categories(self, values: pd.DataFrame) -> pd.Series:
-        """Maps the input matrix of probabilities to the categories via argmax"""
-        return values.idxmax(1).str.replace(f"{self.key}_pred_", "").values
-
-    def compute_objective(self, values: pd.DataFrame) -> pd.Series:
-        """Computes the objective value as: (p.o).sum() where p is the vector of probabilities and o is the vector of objective values"""
-        values.columns = values.columns.str.replace(f"{self.key}_pred_", "")
-        scale_series = pd.Series(self.to_dict())
-        return pd.Series(
-            data=(values * scale_series).sum(1).values, name=f"{self.key}_pred"
-        )
-
-    def __call__(self, values: pd.Series) -> pd.Series:
-        return values.map(self.to_dict())
