@@ -139,6 +139,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
 def constrained_objective2botorch(
     idx: int,
     objective: ConstrainedObjective,
+    eps: float = 1e-6
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
     to setup ouput constrained optimizations.
@@ -180,13 +181,12 @@ def constrained_objective2botorch(
         )
     elif isinstance(objective, CategoricalObjective):
         # The output of a categorical objective has final dim `c` where `c` is number of classes
+        # Pass in the expected acceptance probability and perform an inverse sigmoid to atain the original probabilities
         return (
             [
-                lambda Z: -1.0
-                * (
-                    Z[..., idx : idx + len(objective.desirability)]
-                    * torch.tensor(objective.desirability).to(**tkwargs)
-                ).sum(-1)
+                lambda Z: torch.log(
+                    torch.clamp(1 / (Z[..., idx : idx + len(objective.desirability)] * torch.tensor(objective.desirability).to(**tkwargs)).sum(-1) - 1, min=eps, max=1-eps)
+                )
             ],
             [objective.eta],
             idx + len(objective.desirability),

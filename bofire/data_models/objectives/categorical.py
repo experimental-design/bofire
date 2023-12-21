@@ -19,22 +19,13 @@ class CategoricalObjective(Objective, ConstrainedObjective):
 
     Attributes:
         w (float): float between zero and one for weighting the objective.
-        desirability (tuple): tuple of values of size c (c is number of categories) such that the i-th entry is in (0, 1)
+        desirability (tuple): tuple of values of size c (c is number of categories) such that the i-th entry is in {True, False}
     """
 
     w: TWeight = 1.0
-    desirability: Tuple[float, ...]
+    desirability: Tuple[bool, ...]
     eta: float = 1.0
     type: Literal["CategoricalObjective"] = "CategoricalObjective"
-
-    @validator("desirability")
-    def validate_desirability(cls, desirability):
-        for w in desirability:
-            if w > 1:
-                raise ValueError("Objective weight has to be smaller equal than 1.")
-            if w < 0:
-                raise ValueError("Objective weight has to be larger equal than zero")
-        return desirability
 
     def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
         """The call function returning a probabilistic reward for x.

@@ -77,6 +77,7 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
                 raise ValueError("Currently no numeric transforms are supported.")
         return v
 
+    
     @validator("outputs")
     def validate_outputs(cls, outputs):
         """validates outputs
