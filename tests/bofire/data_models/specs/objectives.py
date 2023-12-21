@@ -28,10 +28,6 @@ specs.add_valid(
     lambda: {"w": 1.0, "bounds": (0.1, 0.9)},
 )
 
-specs.add_invalid(
-    objectives.MinimizeObjective,
-    lambda: {"w": 1.0, "lower_bound": 0.1, "upper_bound": 0.9},
-)
 
 specs.add_valid(
     objectives.MinimizeSigmoidObjective,

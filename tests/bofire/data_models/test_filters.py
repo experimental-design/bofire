@@ -2,7 +2,7 @@ from typing import Any
 
 import pytest
 
-from bofire.data_models.base import filter_by_attribute, filter_by_class
+from bofire.data_models.filters import filter_by_attribute, filter_by_class
 
 
 class A:

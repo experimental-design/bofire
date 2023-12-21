@@ -2,6 +2,7 @@ from typing import List
 
 import gpytorch
 import torch
+from botorch.models.kernels.categorical import CategoricalKernel
 from gpytorch.kernels import Kernel as GpytorchKernel
 
 import bofire.data_models.kernels.api as data_models
@@ -143,6 +144,19 @@ def map_TanimotoKernel(
     )
 
 
+def map_HammondDistanceKernel(
+    data_model: data_models.TanimotoKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> CategoricalKernel:
+    return CategoricalKernel(
+        batch_shape=batch_shape,
+        ard_num_dims=len(active_dims) if data_model.ard else None,
+        active_dims=active_dims,  # type: ignore
+    )
+
+
 KERNEL_MAP = {
     data_models.RBFKernel: map_RBFKernel,
     data_models.MaternKernel: map_MaternKernel,
@@ -152,6 +166,7 @@ KERNEL_MAP = {
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
+    data_models.HammondDistanceKernel: map_HammondDistanceKernel,
 }
 
 
