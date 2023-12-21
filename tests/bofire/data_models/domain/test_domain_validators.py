@@ -22,6 +22,9 @@ from bofire.data_models.features.api import (
     Output,
 )
 
+# TODO: split this into the individual methods in the `Inputs` and `Outputs` classes
+
+
 if1 = specs.features.valid(ContinuousInput).obj(key="cont")
 if2 = specs.features.valid(CategoricalInput).obj(key="cat")
 if3 = specs.features.valid(CategoricalDescriptorInput).obj(key="cat_")

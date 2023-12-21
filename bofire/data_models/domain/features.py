@@ -10,7 +10,7 @@ import pandas as pd
 from pydantic import Field, validate_arguments
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
+from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     _CAT_SEP,
@@ -29,6 +29,7 @@ from bofire.data_models.features.api import (
     Output,
     TInputTransformSpecs,
 )
+from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import (
     AbstractObjective,
@@ -108,8 +109,8 @@ class Features(BaseModel):
 
     def get(
         self,
-        includes: Union[Type, List[Type], Tuple[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type], Tuple[Type]] = None,
+        includes: Union[Type, List[Type]] = AnyFeature,
+        excludes: Union[Type, List[Type]] = None,  # type: ignore
         exact: bool = False,
     ) -> Features:
         """get features of the domain
@@ -136,8 +137,8 @@ class Features(BaseModel):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], Tuple[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type], Tuple[Type]] = None,
+        includes: Union[Type, List[Type]] = AnyFeature,
+        excludes: Union[Type, List[Type]] = None,  # type: ignore
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
@@ -191,6 +192,7 @@ class Inputs(Features):
         self,
         n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+        seed: Optional[int] = None,
     ) -> pd.DataFrame:
         """Draw sobol samples
 
@@ -203,16 +205,27 @@ class Inputs(Features):
             pd.DataFrame: Dataframe containing the samples.
         """
         if method == SamplingMethodEnum.UNIFORM:
+            # we cannot just propagate the provided seed to
+            # the sample methods as they would then sample
+            # always the same value if the bounds are the same
+            # for a feature.
+            rng = np.random.default_rng(seed=seed)
             return self.validate_candidates(
-                pd.concat([feat.sample(n) for feat in self.get(Input)], axis=1)  # type: ignore
+                pd.concat(
+                    [
+                        feat.sample(n, seed=int(rng.integers(1, 1000000)))  # type: ignore
+                        for feat in self.get(Input)
+                    ],
+                    axis=1,
+                )
             )
         free_features = self.get_free()
         if method == SamplingMethodEnum.SOBOL:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                X = Sobol(len(free_features)).random(n)
+                X = Sobol(len(free_features), seed=seed).random(n)
         else:
-            X = LatinHypercube(len(free_features)).random(n)
+            X = LatinHypercube(len(free_features), seed=seed).random(n)
         res = []
         for i, feat in enumerate(free_features):
             if isinstance(feat, ContinuousInput):
@@ -252,7 +265,9 @@ class Inputs(Features):
         for feature in self:
             if feature.key not in candidates:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            candidates[feature.key] = feature.validate_candidental(candidates[feature.key])  # type: ignore
+            candidates[feature.key] = feature.validate_candidental(  # type: ignore
+                candidates[feature.key]
+            )
         if candidates[self.get_keys()].isnull().to_numpy().any():
             raise ValueError("there are null values")
         if candidates[self.get_keys()].isna().to_numpy().any():
@@ -265,7 +280,10 @@ class Inputs(Features):
         for feature in self:
             if feature.key not in experiments:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            experiments[feature.key] = feature.validate_experimental(experiments[feature.key], strict=strict)  # type: ignore
+            experiments[feature.key] = feature.validate_experimental(
+                experiments[feature.key],
+                strict=strict,  # type: ignore
+            )
         if experiments[self.get_keys()].isnull().to_numpy().any():
             raise ValueError("there are null values")
         if experiments[self.get_keys()].isna().to_numpy().any():
@@ -274,8 +292,8 @@ class Inputs(Features):
 
     def get_categorical_combinations(
         self,
-        include: Union[Type, List[Type], Tuple[Type]] = Input,
-        exclude: Union[Type, List[Type], Tuple[Type]] = None,
+        include: Union[Type, List[Type]] = Input,
+        exclude: Union[Type, List[Type]] = None,  # type: ignore
     ):
         """get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -366,9 +384,7 @@ class Inputs(Features):
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, MolecularInput)
-                descriptor_names = specs[
-                    feat.key
-                ].get_descriptor_names()  # type: ignore
+                descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist()
                 )
@@ -455,7 +471,9 @@ class Inputs(Features):
                 transformed.append(feat.from_descriptor_encoding(experiments))
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
-                transformed.append(feat.from_descriptor_encoding(specs[feat.key], experiments))  # type: ignore
+                transformed.append(
+                    feat.from_descriptor_encoding(specs[feat.key], experiments)  # type: ignore
+                )
 
         return pd.concat(transformed, axis=1)
 
@@ -581,7 +599,7 @@ class Outputs(Features):
                         self.get([ContinuousOutput, CategoricalOutput]).features,
                         lambda of: of.objective,
                         includes,
-                        excludes,
+                        excludes,  # type: ignore
                         exact,
                     )
                 )

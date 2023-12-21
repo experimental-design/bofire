@@ -5,10 +5,10 @@ from pydantic import Field, validator
 from bofire.data_models.features.api import ContinuousOutput
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
+class MLPEnsemble(TrainableBotorchSurrogate):
     type: Literal["MLPEnsemble"] = "MLPEnsemble"
     n_estimators: Annotated[int, Field(ge=1)] = 5
     hidden_layer_sizes: Sequence = (100,)

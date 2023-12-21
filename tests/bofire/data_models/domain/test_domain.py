@@ -1,4 +1,3 @@
-import itertools
 from math import nan
 
 import numpy as np
@@ -9,16 +8,15 @@ from pydantic.error_wrappers import ValidationError
 from pytest import fixture
 
 from bofire.data_models.api import Outputs
-from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.domain.constraints import Constraints
+from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.domain.features import Inputs
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -27,13 +25,7 @@ from bofire.data_models.features.api import (
     Input,
     Output,
 )
-from bofire.data_models.objectives.api import (
-    ConstrainedObjective,
-    MaximizeObjective,
-    MaximizeSigmoidObjective,
-    Objective,
-    TargetObjective,
-)
+from bofire.data_models.objectives.api import TargetObjective
 from bofire.utils.subdomain import get_subdomain
 
 
@@ -42,12 +34,6 @@ def test_empty_domain():
         inputs=Inputs(), outputs=Outputs(), constraints=Constraints()
     )
 
-
-class Bla(BaseModel):
-    a: int
-
-
-nf = Bla(a=1)
 
 obj = TargetObjective(target_value=1, steepness=2, tolerance=3, w=0.5)
 
@@ -100,42 +86,7 @@ def test_from_lists(input_list, output_list, constraint_list):
     )
 
 
-@pytest.mark.parametrize(
-    "inputs, outputs",
-    [
-        ([if1, if1_], []),
-        ([], [of1, of1_]),
-        ([if1], [of1]),
-    ],
-)
-def test_duplicate_feature_names(inputs, outputs):
-    with pytest.raises(ValidationError):
-        Domain(
-            inputs=inputs,
-            outputs=outputs,
-        )
-
-
-@pytest.mark.parametrize(
-    "inputs, outputs, constraints",
-    [
-        # input features
-        ([nf], [], []),
-        # output features
-        ([], [nf], []),
-        # constraints
-        # ([], [], [nf]),
-    ],
-)
-def test_invalid_domain_arg_types(inputs, outputs, constraints):
-    with pytest.raises(Exception):
-        Domain(
-            inputs=inputs,
-            outputs=outputs,
-            constraints=constraints,
-        )
-
-
+# TODO: move into specs
 @pytest.mark.parametrize(
     "inputs, constraints",
     [
@@ -154,7 +105,10 @@ def test_invalid_domain_arg_types(inputs, outputs, constraints):
 )
 def test_invalid_type_in_linear_constraints(inputs, constraints):
     with pytest.raises(ValidationError):
-        Domain(inputs=inputs, constraints=constraints)
+        Domain(
+            inputs=Inputs(features=inputs),
+            constraints=Constraints(constraints=constraints),
+        )
 
 
 @pytest.mark.parametrize(
@@ -249,169 +203,11 @@ def test_valid_constraints_in_domain(outputs, inputs, constraints):
 )
 def test_unknown_features_in_domain(outputs, inputs, constraints):
     with pytest.raises(ValidationError):
-        Domain(
+        Domain.from_lists(
             inputs=inputs,
             outputs=outputs,
             constraints=constraints,
         )
-
-
-@pytest.mark.parametrize(
-    "domain, data",
-    [
-        (
-            Domain(),
-            [],
-        ),
-        (
-            Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(
-                            key="f1",
-                            categories=["c11", "c12"],
-                        ),
-                    ]
-                ),
-            ),
-            [
-                [("f1", "c11"), ("f1", "c12")],
-            ],
-        ),
-        (
-            Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(
-                            key="f1",
-                            categories=["c11", "c12"],
-                        ),
-                        CategoricalInput(
-                            key="f2",
-                            categories=["c21", "c22", "c23"],
-                        ),
-                        CategoricalInput(
-                            key="f3",
-                            categories=["c31", "c32"],
-                        ),
-                    ]
-                ),
-            ),
-            [
-                [("f1", "c11"), ("f1", "c12")],
-                [("f2", "c21"), ("f2", "c22"), ("f2", "c23")],
-                [("f3", "c31"), ("f3", "c32")],
-            ],
-        ),
-    ],
-)
-def test_categorical_combinations_of_domain_defaults(domain, data):
-    expected = list(itertools.product(*data))
-    assert domain.inputs.get_categorical_combinations() == expected
-
-
-@pytest.mark.parametrize(
-    "domain, data, include, exclude",
-    [
-        (
-            Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(
-                            key="f1",
-                            categories=["c11", "c12"],
-                        ),
-                        CategoricalDescriptorInput(
-                            key="f2",
-                            categories=["c21", "c22"],
-                            descriptors=["d21", "d22"],
-                            values=[[1, 2], [3, 4]],
-                        ),
-                    ]
-                ),
-            ),
-            [
-                [("f1", "c11"), ("f1", "c12")],
-            ],
-            CategoricalInput,
-            CategoricalDescriptorInput,
-        ),
-        (
-            Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(
-                            key="f1",
-                            categories=["c11", "c12"],
-                        ),
-                        CategoricalDescriptorInput(
-                            key="f2",
-                            categories=["c21", "c22"],
-                            descriptors=["d21", "d22"],
-                            values=[[1, 2], [3, 4]],
-                        ),
-                    ]
-                ),
-            ),
-            [
-                [("f2", "c21"), ("f2", "c22")],
-                [("f1", "c11"), ("f1", "c12")],
-            ],
-            CategoricalInput,
-            None,
-        ),
-        (
-            Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(
-                            key="f1",
-                            categories=["c11", "c12"],
-                        ),
-                        CategoricalDescriptorInput(
-                            key="f2",
-                            categories=["c21", "c22"],
-                            descriptors=["d21", "d22"],
-                            values=[[1, 2], [3, 4]],
-                        ),
-                    ]
-                ),
-            ),
-            [
-                [("f2", "c21"), ("f2", "c22")],
-            ],
-            CategoricalDescriptorInput,
-            None,
-        ),
-        (
-            Domain(
-                inputs=Inputs(
-                    features=[
-                        CategoricalInput(
-                            key="f1",
-                            categories=["c11", "c12"],
-                        ),
-                        CategoricalDescriptorInput(
-                            key="f2",
-                            categories=["c21", "c22"],
-                            descriptors=["d21", "d22"],
-                            values=[[1, 2], [3, 4]],
-                        ),
-                    ]
-                ),
-            ),
-            [],
-            CategoricalDescriptorInput,
-            CategoricalInput,
-        ),
-    ],
-)
-def test_categorical_combinations_of_domain_filtered(domain, data, include, exclude):
-    expected = list(itertools.product(*data))
-    assert (
-        domain.inputs.get_categorical_combinations(include=include, exclude=exclude)
-        == expected
-    )
 
 
 data = pd.DataFrame.from_dict(
@@ -444,141 +240,6 @@ domain2 = Domain(
     outputs=Outputs(features=[of1, of2]),
     constraints=Constraints(constraints=[c1]),
 )
-
-
-@pytest.mark.parametrize("domain", [domain, domain2])
-def test_domain_serialize(domain):
-    print("domain:", domain)
-    import json
-
-    print("dict:", json.dumps(domain.dict(), indent=4))
-    ndomain = Domain(**json.loads(domain.json()))
-    assert ndomain == domain
-
-
-@pytest.mark.parametrize(
-    "domain, data, output_feature_keys, expected",
-    [
-        (
-            domain,
-            data,
-            None,
-            pd.DataFrame.from_dict(
-                {
-                    "x1": [4.0],
-                    "x2": [4.0],
-                    "out1": [3.0],
-                    "out2": [3.0],
-                    "valid_out1": [1],
-                    "valid_out2": [1],
-                }
-            ),
-        ),
-        (
-            domain,
-            data,
-            [],
-            pd.DataFrame.from_dict(
-                {
-                    "x1": [4.0],
-                    "x2": [4.0],
-                    "out1": [3.0],
-                    "out2": [3.0],
-                    "valid_out1": [1],
-                    "valid_out2": [1],
-                }
-            ),
-        ),
-        (
-            domain,
-            data,
-            ["out1", "out2"],
-            pd.DataFrame.from_dict(
-                {
-                    "x1": [4.0],
-                    "x2": [4.0],
-                    "out1": [3.0],
-                    "out2": [3.0],
-                    "valid_out1": [1],
-                    "valid_out2": [1],
-                }
-            ),
-        ),
-        (
-            domain,
-            data,
-            ["out2"],
-            pd.DataFrame.from_dict(
-                {
-                    "x1": [2.0, 4.0, 5.0],
-                    "x2": [2.0, 4.0, 5.0],
-                    "out1": [1.0, 3.0, nan],
-                    "out2": [1.0, 3.0, 4.0],
-                    "valid_out1": [0, 1, 1],
-                    "valid_out2": [1, 1, 1],
-                }
-            ),
-        ),
-    ],
-)
-def test_preprocess_experiments_all_valid_outputs(
-    domain, data, output_feature_keys, expected
-):
-    experiments = domain.outputs.preprocess_experiments_all_valid_outputs(
-        data, output_feature_keys
-    )
-    assert_frame_equal(experiments.reset_index(drop=True), expected, check_dtype=False)
-
-
-@pytest.mark.parametrize(
-    "domain, data, expected",
-    [
-        (
-            domain,
-            data,
-            pd.DataFrame.from_dict(
-                {
-                    "x1": [2, 3, 4, 5],
-                    "x2": [2, 3, 4, 5],
-                    "out1": [1, 2, 3, nan],
-                    "out2": [1, 2, 3, 4],
-                    "valid_out1": [0, 1, 1, 1],
-                    "valid_out2": [1, 0, 1, 1],
-                }
-            ),
-        )
-    ],
-)
-def test_preprocess_experiments_any_valid_output(domain, data, expected):
-    experiments = domain.outputs.preprocess_experiments_any_valid_output(data)
-    assert experiments["x1"].tolist() == expected["x1"].tolist()
-    assert experiments["out2"].tolist() == expected["out2"].tolist()
-
-
-@pytest.mark.parametrize(
-    "domain, data, expected",
-    [
-        (
-            domain,
-            data,
-            pd.DataFrame.from_dict(
-                {
-                    "x1": [2, 4, 5],
-                    "x2": [2, 4, 5],
-                    "out1": [1, 3, nan],
-                    "out2": [1, 3, 4],
-                    "valid_out1": [0, 1, 1],
-                    "valid_out2": [1, 1, 1],
-                }
-            ),
-        )
-    ],
-)
-def test_preprocess_experiments_one_valid_output(domain, data, expected):
-    experiments = domain.outputs.preprocess_experiments_one_valid_output("out2", data)
-    assert experiments["x1"].tolist() == expected["x1"].tolist()
-    assert np.isnan(experiments["out1"].tolist()[2])
-    assert experiments["out2"].tolist() == expected["out2"].tolist()
 
 
 def test_coerce_invalids():
@@ -706,45 +367,6 @@ def test_get_features(domain, FeatureType, exact, expected):
 
 
 @pytest.mark.parametrize(
-    "domain, includes, excludes, exact, expected",
-    [
-        (domain, [Objective], [], True, []),
-        (domain, [Objective], [], False, [of1, of2]),
-        (domain, [TargetObjective], [], False, [of1, of2]),
-        (domain, [], [Objective], False, [of1_, of2_]),
-    ],
-)
-def test_get_outputs_by_objective(domain: Domain, includes, excludes, exact, expected):
-    assert (
-        domain.outputs.get_by_objective(
-            includes=includes,
-            excludes=excludes,
-            exact=exact,
-        ).features
-        == expected
-    )
-
-
-def test_get_outputs_by_objective_none():
-    outputs = Outputs(
-        features=[
-            ContinuousOutput(key="a", objective=None),
-            ContinuousOutput(
-                key="b", objective=MaximizeSigmoidObjective(w=1, steepness=1, tp=0)
-            ),
-            ContinuousOutput(key="c", objective=MaximizeObjective()),
-        ]
-    )
-    keys = outputs.get_keys_by_objective(excludes=ConstrainedObjective)
-    assert keys == ["c"]
-    assert outputs.get_keys().index("c") == 2
-    assert outputs.get_keys_by_objective(excludes=Objective, includes=[]) == ["a"]
-    assert outputs.get_by_objective(excludes=Objective, includes=[]) == Outputs(
-        features=[ContinuousOutput(key="a", objective=None)]
-    )
-
-
-@pytest.mark.parametrize(
     "domain, FeatureType, exact, expected",
     [
         (domain, Output, True, []),
@@ -759,28 +381,6 @@ def test_get_outputs_by_objective_none():
 )
 def test_get_feature_keys(domain, FeatureType, exact, expected):
     assert domain.get_feature_keys(FeatureType, exact=exact) == expected
-
-
-@pytest.mark.parametrize(
-    "domain, includes, excludes, exact, expected",
-    [
-        (domain, [Objective], [], False, ["out1", "out2"]),
-        (domain, [TargetObjective], [], False, ["out1", "out2"]),
-        (domain, [Objective], [], True, []),
-        (domain, [], [Objective], False, ["out3", "out4"]),
-    ],
-)
-def test_get_output_keys_by_objective(
-    domain: Domain, includes, excludes, exact, expected
-):
-    assert (
-        domain.outputs.get_keys_by_objective(
-            includes=includes,
-            excludes=excludes,
-            exact=exact,
-        )
-        == expected
-    )
 
 
 @pytest.mark.parametrize(
@@ -811,3 +411,50 @@ def test_get_subdomain(domain, feature_keys):
 def test_get_subdomain_invalid(domain, output_feature_keys):
     with pytest.raises((AssertionError, ValueError, KeyError)):
         get_subdomain(domain, output_feature_keys)
+
+
+@pytest.mark.parametrize(
+    "df, expected",
+    [
+        (
+            pd.DataFrame(
+                {
+                    "col": [1, 2, 10, np.nan, "a"],
+                    "col2": ["a", 10, 30, 40, 50],
+                    "col3": [1, 2, 3, 4, 5.0],
+                }
+            ),
+            False,
+        ),
+        (
+            pd.DataFrame(
+                {
+                    "col": [1, 2, 10, np.nan, 6],
+                    "col2": [5, 10, 30, 40, 50],
+                    "col3": [1, 2, 3, 4, 5.0],
+                }
+            ),
+            False,
+        ),
+        (
+            pd.DataFrame(
+                {
+                    "col": [1, 2, 10, 7.0, 6],
+                    "col2": [5, 10, 30, 40, 50],
+                    "col3": [1, 2, 3, 4, 5.0],
+                }
+            ),
+            True,
+        ),
+        (
+            pd.Series([1, 2, 10, 7.0, 6]),
+            True,
+        ),
+        (
+            pd.Series([1, 2, "abc", 7.0, 6]),
+            False,
+        ),
+    ],
+)
+def test_is_numeric(df, expected):
+    assert is_numeric(df) == expected

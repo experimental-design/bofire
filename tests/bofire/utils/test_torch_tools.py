@@ -8,6 +8,7 @@ from botorch.utils.objective import soft_eval_constraint
 
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -34,6 +35,7 @@ from bofire.utils.torch_tools import (
     get_additive_botorch_objective,
     get_custom_botorch_objective,
     get_initial_conditions_generator,
+    get_interpoint_constraints,
     get_linear_constraints,
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
@@ -283,6 +285,65 @@ def test_get_additive_botorch_objective(exclude_constraints):
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )
+
+
+def test_get_interpoint_equality_constraints():
+    domain = Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(1, 1)),
+            ]
+        ),
+        constraints=Constraints(
+            constraints=[
+                InterpointEqualityConstraint(feature="b", multiplicity=3),
+            ]
+        ),
+    )
+    assert len(get_interpoint_constraints(domain=domain, n_candidates=9)) == 0
+    domain.inputs.get_by_key("b").bounds = (0, 1)
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=6)
+    assert len(constraints) == 4
+    for c in constraints:
+        assert c[2] == 0.0
+        assert torch.allclose(c[1], torch.tensor([1.0, -1.0]).to(**tkwargs))
+    c = constraints[0]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[0, 1], [1, 1]],
+            dtype=torch.int64,
+        ),
+    )
+    c = constraints[-1]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[3, 1], [5, 1]],
+            dtype=torch.int64,
+        ),
+    )
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=8)
+    assert len(constraints) == 5
+    c = constraints[-1]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[6, 1], [7, 1]],
+            dtype=torch.int64,
+        ),
+    )
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=3)
+    assert len(constraints) == 2
+    c = constraints[-1]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[0, 1], [2, 1]],
+            dtype=torch.int64,
+        ),
+    )
 
 
 def test_get_linear_constraints():

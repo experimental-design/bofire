@@ -8,12 +8,14 @@ from formulaic import Formula
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
+    Constraint,
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
-from bofire.data_models.constraints.nonlinear import NonlinearInequalityConstraint
 from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.strategies.api import (
@@ -187,7 +189,7 @@ def constraints_as_scipy_constraints(
     n_experiments: int,
     ignore_nchoosek: bool = True,
 ) -> List:
-    """Formulates opti constraints as scipy constraints.
+    """Formulates bofire constraints as scipy constraints.
 
     Args:
         domain (Domain): Domain whose constraints should be formulated as scipy constraints.
@@ -197,80 +199,22 @@ def constraints_as_scipy_constraints(
     Returns:
         A list of scipy constraints corresponding to the constraints of the given opti problem.
     """
-    D = len(domain.inputs)
 
     # reformulate constraints
     constraints = []
     if len(domain.constraints) == 0:
         return constraints
     for c in domain.constraints:
-        if isinstance(c, LinearEqualityConstraint):
-            # write lower/upper bound as vector
-            lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients))
-            ub = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients))
-
-            # write constraint as matrix
-            lhs = {
-                c.features[i]: c.coefficients[i] / np.linalg.norm(c.coefficients)
-                for i in range(len(c.features))
-            }
-            row = np.zeros(D)
-            for i, name in enumerate(domain.inputs.get_keys()):
-                if name in lhs.keys():
-                    row[i] = lhs[name]
-
-            A = np.zeros(shape=(n_experiments, D * n_experiments))
-            for i in range(n_experiments):
-                A[i, i * D : (i + 1) * D] = row
-
+        if isinstance(c, LinearEqualityConstraint) or isinstance(
+            c, LinearInequalityConstraint
+        ):
+            A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
             constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
-        elif isinstance(c, LinearInequalityConstraint):
-            # write upper/lowe bound as vector
-            lb = -np.inf * np.ones(n_experiments)
-            ub = np.ones(n_experiments) * c.rhs / np.linalg.norm(c.coefficients)
-
-            # write constraint as matrix
-            lhs = {
-                c.features[i]: c.coefficients[i] / np.linalg.norm(c.coefficients)
-                for i in range(len(c.features))
-            }
-            row = np.zeros(D)
-            for i, name in enumerate(domain.inputs.get_keys()):
-                if name in lhs.keys():
-                    row[i] = lhs[name]
-
-            A = np.zeros(shape=(n_experiments, D * n_experiments))
-            for i in range(n_experiments):
-                A[i, i * D : (i + 1) * D] = row
-
-            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
-
-        elif isinstance(c, NonlinearEqualityConstraint):
-            # write upper/lower bound as vector
-            lb = np.zeros(n_experiments)
-            ub = np.zeros(n_experiments)
-
-            # define constraint evaluation (and gradient if provided)
-            fun = ConstraintWrapper(
-                constraint=c, domain=domain, n_experiments=n_experiments
-            )
-
-            if c.jacobian_expression is not None:
-                constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
-            else:
-                constraints.append(NonlinearConstraint(fun, lb, ub))
-
-        elif isinstance(c, NonlinearInequalityConstraint):
-            # write upper/lower bound as vector
-            lb = -np.inf * np.ones(n_experiments)
-            ub = np.zeros(n_experiments)
-
-            # define constraint evaluation (and gradient if provided)
-            fun = ConstraintWrapper(
-                constraint=c, domain=domain, n_experiments=n_experiments
-            )
-
+        elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
+            c, NonlinearInequalityConstraint
+        ):
+            fun, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
             if c.jacobian_expression is not None:
                 constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
             else:
@@ -280,21 +224,128 @@ def constraints_as_scipy_constraints(
             if ignore_nchoosek:
                 pass
             else:
-                # write upper/lower bound as vector
-                lb = -np.inf * np.ones(n_experiments)
-                ub = np.zeros(n_experiments)
-
-                # define constraint evaluation (and gradient if provided)
-                fun = ConstraintWrapper(
-                    constraint=c, domain=domain, n_experiments=n_experiments
+                fun, lb, ub = get_constraint_function_and_bounds(
+                    c, domain, n_experiments
                 )
-
                 constraints.append(NonlinearConstraint(fun, lb, ub, jac=fun.jacobian))
+
+        elif isinstance(c, InterpointEqualityConstraint):
+            A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
+            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
 
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
 
     return constraints
+
+
+def get_constraint_function_and_bounds(
+    c: Constraint, domain: Domain, n_experiments: int
+) -> List:
+    """Returns the function definition and bounds for a given constraint and domain.
+
+    Args:
+        c (Constraint): Constraint for which the constraint matrix should be determined.
+        domain (Domain): Domain for which the constraint matrix should be determined.
+        n_experiments (int): Number of experiments for which the constraint matrix should be determined.
+
+    Returns:
+        A list containing the constraint defining function and the lower and upper bounds.
+    """
+    D = len(domain.inputs)
+
+    if isinstance(c, LinearEqualityConstraint) or isinstance(
+        c, LinearInequalityConstraint
+    ):
+        # write constraint as matrix
+        lhs = {
+            c.features[i]: c.coefficients[i] / np.linalg.norm(c.coefficients)
+            for i in range(len(c.features))
+        }
+        row = np.zeros(D)
+        for i, name in enumerate(domain.inputs.get_keys()):
+            if name in lhs.keys():
+                row[i] = lhs[name]
+
+        A = np.zeros(shape=(n_experiments, D * n_experiments))
+        for i in range(n_experiments):
+            A[i, i * D : (i + 1) * D] = row
+
+        # write upper/lower bound as vector
+        lb = -np.inf * np.ones(n_experiments)
+        ub = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients))
+        if isinstance(c, LinearEqualityConstraint):
+            lb = np.ones(n_experiments) * (c.rhs / np.linalg.norm(c.coefficients))
+
+        return [A, lb, ub]
+
+    elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
+        c, NonlinearInequalityConstraint
+    ):
+        # define constraint evaluation (and gradient if provided)
+        fun = ConstraintWrapper(
+            constraint=c, domain=domain, n_experiments=n_experiments
+        )
+
+        # write upper/lower bound as vector
+        lb = -np.inf * np.ones(n_experiments)
+        ub = np.zeros(n_experiments)
+        if isinstance(c, NonlinearEqualityConstraint):
+            lb = np.zeros(n_experiments)
+
+        return [fun, lb, ub]
+
+    elif isinstance(c, NChooseKConstraint):
+        # define constraint evaluation (and gradient if provided)
+        fun = ConstraintWrapper(
+            constraint=c, domain=domain, n_experiments=n_experiments
+        )
+
+        # write upper/lower bound as vector
+        lb = -np.inf * np.ones(n_experiments)
+        ub = np.zeros(n_experiments)
+
+        return [fun, lb, ub]
+
+    elif isinstance(c, InterpointEqualityConstraint):
+        # write lower/upper bound as vector
+        multiplicity = c.multiplicity or len(domain.inputs)
+        n_batches = int(np.ceil(n_experiments / multiplicity))
+        lb = np.zeros(n_batches * (multiplicity - 1))
+        ub = np.zeros(n_batches * (multiplicity - 1))
+
+        # write constraint as matrix
+        feature_idx = 0
+        if c.feature not in domain.inputs.get_keys():
+            raise ValueError(f"Feature {c.feature} is not part of the domain {domain}.")
+        for i, name in enumerate(domain.inputs.get_keys()):
+            if name == c.feature:
+                feature_idx = i
+
+        A = np.zeros(shape=(n_batches * (multiplicity - 1), D * n_experiments))
+        for batch in range(n_batches):
+            for i in range(multiplicity - 1):
+                if batch * multiplicity + i + 2 <= n_experiments:
+                    A[
+                        batch * (multiplicity - 1) + i,
+                        batch * multiplicity * D + feature_idx,
+                    ] = 1.0
+                    A[
+                        batch * (multiplicity - 1) + i,
+                        (batch * multiplicity + i + 1) * D + feature_idx,
+                    ] = -1.0
+
+        # remove overflow in last batch
+        if (n_experiments % multiplicity) != 0:
+            n_overflow = multiplicity - (n_experiments % multiplicity)
+            A = A[:-n_overflow, :]
+            lb = lb[:-n_overflow]
+            ub = ub[:-n_overflow]
+
+        return [A, lb, ub]
+
+    else:
+        raise NotImplementedError(f"No implementation for this constraint: {c}")
 
 
 class ConstraintWrapper:
@@ -465,22 +516,22 @@ def nchoosek_constraints_as_bounds(
         for constraint in domain.constraints:
             if isinstance(constraint, NChooseKConstraint):
                 n_inactive = len(constraint.features) - constraint.max_count
+                if n_inactive > 0:
+                    # find indices of constraint.names in names
+                    ind = [
+                        i
+                        for i, p in enumerate(domain.inputs.get_keys())
+                        if p in constraint.features
+                    ]
 
-                # find indices of constraint.names in names
-                ind = [
-                    i
-                    for i, p in enumerate(domain.inputs.get_keys())
-                    if p in constraint.features
-                ]
+                    # find and shuffle all combinations of elements of ind of length max_active
+                    ind = np.array(list(combinations(ind, r=n_inactive)))
+                    np.random.shuffle(ind)
 
-                # find and shuffle all combinations of elements of ind of length max_active
-                ind = np.array(list(combinations(ind, r=n_inactive)))
-                np.random.shuffle(ind)
-
-                # set bounds to zero in each experiments for the variables that should be inactive
-                for i in range(n_experiments):
-                    ind_vanish = ind[i % len(ind)]
-                    bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
+                    # set bounds to zero in each experiments for the variables that should be inactive
+                    for i in range(n_experiments):
+                        ind_vanish = ind[i % len(ind)]
+                        bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
     else:
         pass
 

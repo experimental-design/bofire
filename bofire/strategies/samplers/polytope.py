@@ -1,9 +1,11 @@
 import warnings
+from typing import Dict
 
 import numpy as np
 import pandas as pd
 import torch
-from botorch.utils.sampling import get_polytope_samples
+from botorch.optim.initializers import sample_q_batches_from_polytope
+from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -17,7 +19,11 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.strategies.api import PolytopeSampler as DataModel
 from bofire.strategies.samplers.sampler import SamplerStrategy
-from bofire.utils.torch_tools import get_linear_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_interpoint_constraints,
+    get_linear_constraints,
+    tkwargs,
+)
 
 
 class PolytopeSampler(SamplerStrategy):
@@ -35,11 +41,15 @@ class PolytopeSampler(SamplerStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
+        self.n_burnin = data_model.n_burnin
+        self.n_thinning = data_model.n_thinning
         self.fallback_sampling_method = data_model.fallback_sampling_method
 
     def _ask(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
-            return self.domain.inputs.sample(n, self.fallback_sampling_method)
+            return self.domain.inputs.sample(
+                n, self.fallback_sampling_method, seed=self._get_seed()
+            )
 
         # check if we have pseudo fixed features in the linear equality constraints
         # a pseudo fixed is a linear euquality constraint with only one feature included
@@ -50,34 +60,47 @@ class PolytopeSampler(SamplerStrategy):
             unit_scaled=False,
         )
         cleaned_eqs = []
-        pseudo_fixed = {}
+        fixed_features: Dict[str, float] = {
+            feat.key: feat.fixed_value()[0]  # type: ignore
+            for feat in self.domain.inputs.get(ContinuousInput)
+            if feat.is_fixed()  # type: ignore
+        }
+
         for eq in eqs:
             if (
                 len(eq[0]) == 1
             ):  # only one coefficient, so this is a pseudo fixed feature
-                pseudo_fixed[
+                fixed_features[
                     self.domain.inputs.get_keys(ContinuousInput)[eq[0][0]]
                 ] = float(eq[2] / eq[1][0])
             else:
                 cleaned_eqs.append(eq)
 
-        # we have to map the indices in case of fixed features
-        # as we remove all fixed feature for the sampler, we have to adjust the
-        # indices in the constraints, here we get the mapper to map original
-        # to adjusted indices
-        feature_map = {}
-        counter = 0
-        for i, feat in enumerate(self.domain.get_features(ContinuousInput)):
-            if (not feat.is_fixed()) and (feat.key not in pseudo_fixed.keys()):  # type: ignore
-                feature_map[i] = counter
-                counter += 1
+        fixed_features_indices: Dict[int, float] = {
+            self.domain.inputs.get_keys(ContinuousInput).index(key): value
+            for key, value in fixed_features.items()
+        }
 
-        # get the bounds
+        ineqs = get_linear_constraints(
+            domain=self.domain,
+            constraint=LinearInequalityConstraint,  # type: ignore
+            unit_scaled=False,
+        )
+
+        interpoints = get_interpoint_constraints(domain=self.domain, n_candidates=n)
+
         lower = [
             feat.lower_bound  # type: ignore
             for feat in self.domain.get_features(ContinuousInput)
-            if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
+            if feat.key not in fixed_features.keys()  # type: ignore
         ]
+
+        upper = [
+            feat.upper_bound  # type: ignore
+            for feat in self.domain.get_features(ContinuousInput)
+            if feat.key not in fixed_features.keys()  # type: ignore
+        ]
+
         if len(lower) == 0:
             warnings.warn(
                 "Nothing to sample, all is fixed. Just the fixed set is returned.",
@@ -87,48 +110,42 @@ class PolytopeSampler(SamplerStrategy):
                 data=np.nan, index=range(n), columns=self.domain.inputs.get_keys()
             )
         else:
-            upper = [
-                feat.upper_bound  # type: ignore
-                for feat in self.domain.get_features(ContinuousInput)
-                if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
-            ]
             bounds = torch.tensor([lower, upper]).to(**tkwargs)
-            assert bounds.shape[-1] == len(feature_map) == counter
 
-            # get the inequality constraints and map features back
-            # we also check that only features present in the mapper
-            # are present in the constraints
-            ineqs = get_linear_constraints(
-                domain=self.domain,
-                constraint=LinearInequalityConstraint,  # type: ignore
-                unit_scaled=False,
+            unfixed_ineqs = _generate_unfixed_lin_constraints(
+                constraints=ineqs,
+                eq=False,
+                fixed_features=fixed_features_indices,
+                dimension=len(self.domain.inputs.get(ContinuousInput)),
             )
-            for ineq in ineqs:
-                for key, value in feature_map.items():
-                    if key != value:
-                        ineq[0][ineq[0] == key] = value
-                assert (
-                    ineq[0].max() <= counter
-                ), "Something went wrong when transforming the linear constraints. Revisit the problem."
+            unfixed_eqs = _generate_unfixed_lin_constraints(
+                constraints=cleaned_eqs,
+                eq=True,
+                fixed_features=fixed_features_indices,
+                dimension=len(self.domain.inputs.get(ContinuousInput)),
+            )
+            unfixed_interpoints = _generate_unfixed_lin_constraints(
+                constraints=interpoints,
+                eq=True,
+                fixed_features=fixed_features_indices,
+                dimension=len(self.domain.inputs.get(ContinuousInput)),
+            )
 
-            # map the indice of the equality constraints
-            for eq in cleaned_eqs:
-                for key, value in feature_map.items():
-                    if key != value:
-                        eq[0][eq[0] == key] = value
-                assert (
-                    eq[0].max() <= counter
-                ), "Something went wrong when transforming the linear constraints. Revisit the problem."
+            combined_eqs = unfixed_eqs + unfixed_interpoints  # type: ignore
 
             # now use the hit and run sampler
-            candidates = get_polytope_samples(
-                n=n,
+            candidates = sample_q_batches_from_polytope(
+                n=1,
+                q=n,
                 bounds=bounds.to(**tkwargs),
-                inequality_constraints=ineqs if len(ineqs) > 0 else None,
-                equality_constraints=cleaned_eqs if len(cleaned_eqs) > 0 else None,
-                n_burnin=1000,
-                # thinning=200
-            )
+                inequality_constraints=unfixed_ineqs
+                if len(unfixed_ineqs) > 0  # type: ignore
+                else None,
+                equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
+                n_burnin=self.n_burnin,
+                thinning=self.n_thinning,
+                seed=self._get_seed(),
+            ).squeeze(dim=0)
 
             # check that the random generated candidates are not always the same
             if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
@@ -137,26 +154,21 @@ class PolytopeSampler(SamplerStrategy):
             free_continuals = [
                 feat.key
                 for feat in self.domain.get_features(ContinuousInput)
-                if not feat.is_fixed() and feat.key not in pseudo_fixed.keys()  # type: ignore
+                if feat.key not in fixed_features.keys()  # type: ignore
             ]
-
             # setup the output
             samples = pd.DataFrame(
-                data=candidates.detach().numpy().reshape(n, len(free_continuals)),
+                data=candidates.detach().numpy(),
                 index=range(n),
                 columns=free_continuals,
             )
 
         # setup the categoricals and discrete ones as uniform sampled vals
         for feat in self.domain.get_features([CategoricalInput, DiscreteInput]):
-            samples[feat.key] = feat.sample(n)  # type: ignore
+            samples[feat.key] = feat.sample(n, seed=self._get_seed())  # type: ignore
 
         # setup the fixed continuous ones
-        for feat in self.domain.inputs.get_fixed():
-            samples[feat.key] = feat.fixed_value()[0]  # type: ignore
-
-        # setup the pseudo fixed ones
-        for key, value in pseudo_fixed.items():
+        for key, value in fixed_features.items():
             samples[key] = value
 
         return samples

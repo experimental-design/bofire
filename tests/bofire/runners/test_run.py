@@ -1,6 +1,7 @@
 import pandas as pd
 
 import bofire.strategies.api as strategies
+import bofire.strategies.mapper as strategy_mapper
 from bofire.benchmarks.multi import ZDT1
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import (
@@ -33,7 +34,9 @@ def test_benchmark():
 
     results = run(
         zdt1,
-        strategy_factory=qparego_factory,
+        strategy_factory=lambda domain: strategy_mapper.map(
+            qparego_factory(domain=domain)
+        ),
         n_iterations=n_iterations,
         metric=hypervolume,
         initial_sampler=sample,

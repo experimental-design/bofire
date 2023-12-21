@@ -15,12 +15,10 @@ from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class LinearSurrogate(BotorchSurrogate, TrainableSurrogate):
+class LinearSurrogate(TrainableBotorchSurrogate):
     type: Literal["LinearSurrogate"] = "LinearSurrogate"
 
-    kernel: LinearKernel = Field(
-        default_factory=lambda: LinearKernel(variance_prior=BOTORCH_SCALE_PRIOR())
-    )
+    kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 

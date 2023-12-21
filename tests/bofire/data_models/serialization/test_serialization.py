@@ -76,3 +76,21 @@ def test_molfeatures_should_be_serializable(molfeatures_spec: Spec):
     spec = molfeatures_spec.typed_spec()
     obj = molfeatures_spec.cls(**spec)
     assert obj.dict() == spec
+
+
+def test_inputs_should_be_serializable(inputs_spec: Spec):
+    spec = inputs_spec.typed_spec()
+    obj = inputs_spec.cls(**spec)
+    assert obj.dict() == spec
+
+
+def test_outputs_should_be_serializable(outputs_spec: Spec):
+    spec = outputs_spec.typed_spec()
+    obj = outputs_spec.cls(**spec)
+    assert obj.dict() == spec
+
+
+def test_constraints_should_be_serializable(constraints_spec: Spec):
+    spec = constraints_spec.typed_spec()
+    obj = constraints_spec.cls(**spec)
+    assert obj.dict() == spec

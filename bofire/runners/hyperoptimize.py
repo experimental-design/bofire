@@ -4,6 +4,7 @@ from typing import Optional, Tuple
 import pandas as pd
 
 import bofire.strategies.api as strategies
+import bofire.strategies.mapper as strategy_mapper
 from bofire.benchmarks.api import Hyperopt
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import RegressionMetricsEnum
@@ -55,11 +56,16 @@ def hyperoptimize(
             strategy.ask(candidate_count=None), return_complete=True
         )
     else:
+        strategy_data = (
+            RandomStrategy
+            if surrogate_data.hyperconfig.hyperstrategy == "RandomStrategy"
+            else SoboStrategy
+        )
         experiments = run(
             benchmark=benchmark,
-            strategy_factory=RandomStrategy
-            if surrogate_data.hyperconfig.hyperstrategy == "RandomStrategy"  # type: ignore
-            else SoboStrategy,  # type: ignore
+            strategy_factory=lambda domain: strategy_mapper.map(
+                data_model=strategy_data(domain=domain)
+            ),
             metric=best,
             n_runs=1,
             n_iterations=surrogate_data.hyperconfig.n_iterations  # type: ignore

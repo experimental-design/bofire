@@ -5,10 +5,10 @@ import numpy as np
 import pandas as pd
 from pydantic import validator
 
-from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
+from bofire.data_models.constraints.constraint import FeatureKeys, IntrapointConstraint
 
 
-class NonlinearConstraint(Constraint):
+class NonlinearConstraint(IntrapointConstraint):
     """Base class for nonlinear equality and inequality constraints.
 
     Attributes:

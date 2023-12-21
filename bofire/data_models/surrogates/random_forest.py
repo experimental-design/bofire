@@ -8,7 +8,7 @@ from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 
-class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
+class RandomForestSurrogate(TrainableBotorchSurrogate):
     type: Literal["RandomForestSurrogate"] = "RandomForestSurrogate"
 
     # hyperparams passed down to `RandomForestRegressor`

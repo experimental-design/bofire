@@ -92,7 +92,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -106,7 +106,6 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
