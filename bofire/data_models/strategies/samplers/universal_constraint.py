@@ -1,20 +1,15 @@
 from typing import Literal, Type
 
 from bofire.data_models.constraints.api import (
-    LinearInequalityConstraint,
     LinearEqualityConstraint,
+    LinearInequalityConstraint,
     NChooseKConstraint,
-    NonlinearInequalityConstraint,
     NonlinearEqualityConstraint,
-    InterpointEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.features.api import (
-    CategoricalDescriptorInput,
-    CategoricalInput,
-    CategoricalMolecularInput,
     ContinuousInput,
     ContinuousOutput,
-    DiscreteInput,
     Feature,
 )
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
@@ -25,7 +20,7 @@ class UniversalConstraintSampler(SamplerStrategy):
 
     Attributes:
         domain (Domain): Domain defining the constrained input space
-        sampling_fraction (float, optional): Fraction of sampled points to total points generated in 
+        sampling_fraction (float, optional): Fraction of sampled points to total points generated in
             the sampling process. Defaults to 0.3.
         ipopt_options (dict, optional): Dictionary containing options for the IPOPT solver. Defaults to {"maxiter":200, "disp"=0}.
     """

@@ -3,10 +3,9 @@ import pandas as pd
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import UniversalConstraintSampler as DataModel
-from bofire.strategies.samplers.sampler import SamplerStrategy
 from bofire.strategies.doe.design import find_local_max_ipopt
-
 from bofire.strategies.enum import OptimalityCriterionEnum
+from bofire.strategies.samplers.sampler import SamplerStrategy
 
 
 class UniversalConstraintSampler(SamplerStrategy):
@@ -14,7 +13,7 @@ class UniversalConstraintSampler(SamplerStrategy):
 
     Attributes:
         domain (Domain): Domain defining the constrained input space
-        sampling_fraction (float, optional): Fraction of sampled points to total points generated in 
+        sampling_fraction (float, optional): Fraction of sampled points to total points generated in
             the sampling process. Defaults to 0.3.
         ipopt_options (dict, optional): Dictionary containing options for the IPOPT solver. Defaults to {"maxiter":200, "disp"=0}.
     """
@@ -31,14 +30,14 @@ class UniversalConstraintSampler(SamplerStrategy):
 
     def _ask(self, n: int) -> pd.DataFrame:
         samples = find_local_max_ipopt(
-            domain = self.domain,
-            model_type="linear",    # dummy model
-            n_experiments=int(n/self.sampling_fraction),
+            domain=self.domain,
+            model_type="linear",  # dummy model
+            n_experiments=int(n / self.sampling_fraction),
             ipopt_options=self.ipopt_options,
             objective=OptimalityCriterionEnum.SPACE_FILLING,
         )
 
-        samples = samples.iloc[np.random.choice(len(samples), n, replace=False),:]
+        samples = samples.iloc[np.random.choice(len(samples), n, replace=False), :]
         samples.index = range(n)
 
         self.domain.validate_experiments(samples)
@@ -52,4 +51,3 @@ class UniversalConstraintSampler(SamplerStrategy):
             ipopt_options=self.ipopt_options,
         )
         return self.__class__(data_model=data_model)
-    
