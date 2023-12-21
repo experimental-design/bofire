@@ -1,5 +1,3 @@
-import random
-
 import bofire.data_models.kernels.api as kernels
 from tests.bofire.data_models.specs.priors import specs as priors
 from tests.bofire.data_models.specs.specs import Specs
@@ -9,7 +7,7 @@ specs = Specs([])
 specs.add_valid(
     kernels.HammondDistanceKernel,
     lambda: {
-        "ard": False,
+        "ard": True,
     },
 )
 specs.add_valid(
@@ -20,10 +18,21 @@ specs.add_valid(
     kernels.MaternKernel,
     lambda: {
         "ard": True,
-        "nu": random.random(),
+        "nu": 2.5,
         "lengthscale_prior": priors.valid().obj(),
     },
 )
+specs.add_invalid(
+    kernels.MaternKernel,
+    lambda: {
+        "ard": True,
+        "nu": 5,
+        "lengthscale_prior": priors.valid().obj(),
+    },
+    error=ValueError,
+    message="nu expected to be 0.5, 1.5, or 2.5",
+)
+
 specs.add_valid(
     kernels.RBFKernel,
     lambda: {

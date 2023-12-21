@@ -1,16 +1,14 @@
-from typing import List
-
 import gpytorch
 import gpytorch.kernels
 import pytest
 import torch
-from pydantic import parse_obj_as
+from botorch.models.kernels.categorical import CategoricalKernel
 
 import bofire
 import bofire.kernels.api as kernels
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
-    AnyKernel,
+    HammondDistanceKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
@@ -20,15 +18,7 @@ from bofire.data_models.kernels.api import (
     TanimotoKernel,
 )
 from bofire.data_models.priors.api import BOTORCH_SCALE_PRIOR, GammaPrior
-
-
-def get_invalids(valid: dict) -> List[dict]:
-    return [
-        {k: v for k, v in valid.items() if k != k_}
-        for k_ in valid.keys()
-        if k_ != "type"
-    ]
-
+from tests.bofire.data_models.specs.api import Spec
 
 EQUIVALENTS = {
     RBFKernel: gpytorch.kernels.RBFKernel,
@@ -38,102 +28,19 @@ EQUIVALENTS = {
     AdditiveKernel: gpytorch.kernels.AdditiveKernel,
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
-}
-
-VALID_RBF_SPEC = {
-    "type": "RBFKernel",
-    "ard": True,
-}
-VALID_MATERN_SPEC = {
-    "type": "MaternKernel",
-    "ard": True,
-    "nu": 2.5,
-}
-VALID_LINEAR_SPEC = {"type": "LinearKernel"}
-
-VALID_SCALE_SPEC = {"type": "ScaleKernel", "base_kernel": RBFKernel()}
-
-VALID_ADDITIVE_SPEC = {"type": "AdditiveKernel", "kernels": [RBFKernel(), RBFKernel()]}
-
-VALID_MULTIPLICATIVE_SPEC = {
-    "type": "MultiplicativeKernel",
-    "kernels": [RBFKernel(), RBFKernel()],
-}
-
-VALID_TANIMOTO_SPEC = {
-    "type": "TanimotoKernel",
-    "ard": True,
-}
-
-KERNEL_SPECS = {
-    RBFKernel: {
-        "valids": [
-            VALID_RBF_SPEC,
-        ],
-        "invalids": [
-            *get_invalids(VALID_RBF_SPEC),
-        ],
-    },
-    MaternKernel: {
-        "valids": [
-            VALID_MATERN_SPEC,
-        ],
-        "invalids": [
-            *get_invalids(VALID_MATERN_SPEC),
-        ],
-    },
-    LinearKernel: {
-        "valids": [
-            VALID_LINEAR_SPEC,
-        ],
-        "invalids": [
-            *get_invalids(VALID_LINEAR_SPEC),
-        ],
-    },
-    ScaleKernel: {
-        "valids": [VALID_SCALE_SPEC],
-        "invalids": [
-            *get_invalids(VALID_SCALE_SPEC),
-        ],
-    },
-    MultiplicativeKernel: {
-        "valids": [VALID_MULTIPLICATIVE_SPEC],
-        "invalids": [
-            *get_invalids(VALID_SCALE_SPEC),
-        ],
-    },
-    AdditiveKernel: {
-        "valids": [VALID_ADDITIVE_SPEC],
-        "invalids": [
-            *get_invalids(VALID_SCALE_SPEC),
-        ],
-    },
-    TanimotoKernel: {
-        "valids": [VALID_TANIMOTO_SPEC],
-        "invalids": [
-            *get_invalids(VALID_TANIMOTO_SPEC),
-        ],
-    },
+    HammondDistanceKernel: CategoricalKernel,
 }
 
 
-@pytest.mark.parametrize(
-    "cls, spec",
-    [(cls, valid) for cls, data in KERNEL_SPECS.items() for valid in data["valids"]],
-)
-def test_valid_kernel_specs(cls, spec):
-    res = cls(**spec)
-    assert isinstance(res, cls)
-    assert isinstance(res.__str__(), str)
+def test_map(kernel_spec: Spec):
+    kernel = kernel_spec.cls(**kernel_spec.typed_spec())
     gkernel = kernels.map(
-        res, batch_shape=torch.Size(), ard_num_dims=10, active_dims=list(range(5))
+        kernel, batch_shape=torch.Size(), ard_num_dims=10, active_dims=list(range(5))
     )
-    assert isinstance(gkernel, EQUIVALENTS[cls])
-    res2 = parse_obj_as(AnyKernel, res.dict())
-    assert res == res2
+    assert isinstance(gkernel, EQUIVALENTS[kernel.__class__])
 
 
-def test_scale_kernel():
+def test_map_scale_kernel():
     kernel = ScaleKernel(
         base_kernel=RBFKernel(), outputscale_prior=BOTORCH_SCALE_PRIOR()
     )
@@ -155,7 +62,7 @@ def test_scale_kernel():
     assert hasattr(k, "outputscale_prior") is False
 
 
-def test_poly_kernel():
+def test_map_polynomial_kernel():
     kernel = PolynomialKernel(power=2, offset_prior=BOTORCH_SCALE_PRIOR())
     k = kernels.map(
         kernel,
@@ -218,7 +125,7 @@ def test_poly_kernel():
         (LinearKernel(), 10, list(range(5)), gpytorch.kernels.LinearKernel),
     ],
 )
-def test_continuous_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
+def test_map_continuous_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),
@@ -261,7 +168,7 @@ def test_continuous_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
         ),
     ],
 )
-def test_molecular_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
+def test_map_molecular_kernel(kernel, ard_num_dims, active_dims, expected_kernel):
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),

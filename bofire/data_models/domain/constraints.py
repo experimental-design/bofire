@@ -1,12 +1,13 @@
 import collections.abc
 from itertools import chain
-from typing import List, Literal, Sequence, Type, Union
+from typing import List, Literal, Optional, Sequence, Type, Union
 
 import pandas as pd
 from pydantic import Field
 
-from bofire.data_models.base import BaseModel, filter_by_class
+from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
+from bofire.data_models.filters import filter_by_class
 
 
 class Constraints(BaseModel):
@@ -78,7 +79,7 @@ class Constraints(BaseModel):
     def get(
         self,
         includes: Union[Type, List[Type]] = Constraint,
-        excludes: Union[Type, List[Type]] = None,
+        excludes: Optional[Union[Type, List[Type]]] = None,
         exact: bool = False,
     ) -> "Constraints":
         """get constraints of the domain

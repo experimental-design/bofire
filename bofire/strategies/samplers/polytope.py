@@ -47,7 +47,9 @@ class PolytopeSampler(SamplerStrategy):
 
     def _ask(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
-            return self.domain.inputs.sample(n, self.fallback_sampling_method)
+            return self.domain.inputs.sample(
+                n, self.fallback_sampling_method, seed=self._get_seed()
+            )
 
         # check if we have pseudo fixed features in the linear equality constraints
         # a pseudo fixed is a linear euquality constraint with only one feature included
@@ -142,7 +144,7 @@ class PolytopeSampler(SamplerStrategy):
                 equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
                 n_burnin=self.n_burnin,
                 thinning=self.n_thinning,
-                seed=self.seed,
+                seed=self._get_seed(),
             ).squeeze(dim=0)
 
             # check that the random generated candidates are not always the same
@@ -163,7 +165,7 @@ class PolytopeSampler(SamplerStrategy):
 
         # setup the categoricals and discrete ones as uniform sampled vals
         for feat in self.domain.get_features([CategoricalInput, DiscreteInput]):
-            samples[feat.key] = feat.sample(n)  # type: ignore
+            samples[feat.key] = feat.sample(n, seed=self._get_seed())  # type: ignore
 
         # setup the fixed continuous ones
         for key, value in fixed_features.items():

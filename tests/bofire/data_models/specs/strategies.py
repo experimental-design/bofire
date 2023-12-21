@@ -1,11 +1,11 @@
 import bofire.data_models.strategies.api as strategies
-from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
-from bofire.data_models.domain.api import Domain, Inputs
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
+    ContinuousOutput,
     DiscreteInput,
 )
 from tests.bofire.data_models.specs.api import domain
@@ -65,7 +65,10 @@ specs.add_valid(
 specs.add_valid(
     strategies.SoboStrategy,
     lambda: {
-        "domain": Himmelblau().domain.dict(),
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ),
         **strategy_commons,
         "acquisition_function": qPI(tau=0.1).dict(),
     },

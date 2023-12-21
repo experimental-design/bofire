@@ -32,7 +32,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import get_nchoosek_constraints, tkwargs
-from tests.bofire.data_models.test_domain_validators import generate_experiments
+from tests.bofire.data_models.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
@@ -217,7 +217,7 @@ domains = [
         inputs=[if1, if2],  # only continuous features
         outputs=[of1, of2],
         constraints=[],
-    )
+    ),
     # Domain(
     #     inputs=[if1, if7], # unknown dummy feature
     #     outputs=[of1],
@@ -647,7 +647,9 @@ def test_base_get_categorical_combinations(
 def test_base_invalid_pair_encoding_method(domain):
     with pytest.raises(ValueError):
         DummyStrategyDataModel(
-            domain=domain, categorical_encoding="ORDINAL", categorical_method="FREE"  # type: ignore
+            domain=domain,
+            categorical_encoding="ORDINAL",
+            categorical_method="FREE",  # type: ignore
         )
 
 

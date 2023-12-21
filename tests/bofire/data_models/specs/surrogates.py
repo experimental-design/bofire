@@ -84,7 +84,7 @@ specs.add_valid(
             ]
         ),
         "aggregations": None,
-        "continuous_kernel": MaternKernel(ard=True, nu=random.choice([0.5, 1.5, 2.5])),
+        "continuous_kernel": MaternKernel(ard=True, nu=2.5),
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,

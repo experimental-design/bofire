@@ -298,7 +298,7 @@ class CategoricalInput(Input):
         enc = np.array(self.categories)
         return pd.Series(enc[values], index=values.index, name=self.key)
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -308,7 +308,10 @@ class CategoricalInput(Input):
             pd.Series: drawn samples.
         """
         return pd.Series(
-            name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
+            name=self.key,
+            data=np.random.default_rng(seed=seed).choice(
+                self.get_allowed_categories(), n
+            ),
         )
 
     def get_bounds(
