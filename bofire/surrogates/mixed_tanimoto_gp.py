@@ -25,7 +25,6 @@ from torch import Tensor
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
-from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import (
     OutputFilteringEnum,
 )
@@ -33,8 +32,13 @@ from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataMo
 
 # from bofire.data_models.kernels.categorical import HammondDistanceKernel
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.surrogates.utils import (
+    get_categorical_feature_keys,
+    get_continuous_feature_keys,
+    get_molecular_feature_keys,
+    get_scaler,
+)
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -231,30 +235,30 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     training_specs: Dict = {}
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
-        molecular_features_list = Inputs.get_molecular_features(
+        molecular_feature_keys = get_molecular_feature_keys(
             self.input_preprocessing_specs
         )
-        continuous_features_list = self.inputs.get_continuous_features(
-            self.input_preprocessing_specs
+        continuous_feature_keys = get_continuous_feature_keys(
+            self.inputs, self.input_preprocessing_specs
         )
-        categorical_features_list = Inputs.get_categorical_features(
+        categorical_feature_keys = get_categorical_feature_keys(
             self.input_preprocessing_specs
         )
 
         mol_dims = self.inputs.get_feature_indices(
-            self.input_preprocessing_specs, molecular_features_list
+            self.input_preprocessing_specs, molecular_feature_keys
         )
         ord_dims = self.inputs.get_feature_indices(
-            self.input_preprocessing_specs, continuous_features_list
+            self.input_preprocessing_specs, continuous_feature_keys
         )
         cat_dims = list(
             range(
                 len(ord_dims) + len(mol_dims),
-                len(ord_dims) + len(mol_dims) + len(categorical_features_list),
+                len(ord_dims) + len(mol_dims) + len(categorical_feature_keys),
             )
         )
 
-        if len(continuous_features_list) == 0:
+        if len(continuous_feature_keys) == 0:
             scaler = None  # skip the scaler
         else:
             scaler = get_scaler(
@@ -267,7 +271,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y.values
         ).to(**tkwargs)
 
-        if len(categorical_features_list) == 0:
+        if len(categorical_feature_keys) == 0:
             tf = scaler
             tXX = tX
         else:
@@ -277,7 +281,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             # these are the categorical features within the OneHotToNumeric transform
             categorical_features = {
                 features2idx[feat][0]: len(features2idx[feat])
-                for feat in categorical_features_list
+                for feat in categorical_feature_keys
             }
 
             o2n = OneHotToNumeric(

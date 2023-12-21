@@ -2183,7 +2183,7 @@ def test_inputs_get_bounds_fit():
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "specs, expected_molecular_features, expected_continuous_features, expected_categorical_features, expected_molecular_indices, expected_continuous_indices",
+    "specs, molecular_keys, continuous_keys, expected_molecular_indices, expected_continuous_indices",
     [
         (
             {
@@ -2193,7 +2193,6 @@ def test_inputs_get_bounds_fit():
             },
             ["x4"],
             ["x1"],
-            ["x2", "x3"],
             [0, 1],
             [2],
         ),
@@ -2205,7 +2204,6 @@ def test_inputs_get_bounds_fit():
             },
             ["x4"],
             ["x1"],
-            ["x2", "x3"],
             [0, 1],
             [2],
         ),
@@ -2217,7 +2215,6 @@ def test_inputs_get_bounds_fit():
             },
             [],
             ["x4", "x1"],
-            ["x2", "x3"],
             [],
             [0, 1, 2],
         ),
@@ -2229,7 +2226,6 @@ def test_inputs_get_bounds_fit():
             },
             ["x4"],
             ["x1", "x3"],
-            ["x2"],
             [0, 1],
             [2, 3, 4],
         ),
@@ -2241,7 +2237,6 @@ def test_inputs_get_bounds_fit():
             },
             ["x4"],
             ["x1", "x3"],
-            ["x2"],
             [0, 1],
             [2, 3, 4],
         ),
@@ -2253,17 +2248,15 @@ def test_inputs_get_bounds_fit():
             },
             [],
             ["x4", "x1", "x3"],
-            ["x2"],
             [],
             [0, 1, 2, 3, 4],
         ),
     ],
 )
-def test_inputs_get_features_and_indices(
+def test_inputs_get_feature_indices(
     specs,
-    expected_molecular_features,
-    expected_continuous_features,
-    expected_categorical_features,
+    molecular_keys,
+    continuous_keys,
     expected_molecular_indices,
     expected_continuous_indices,
 ):
@@ -2280,16 +2273,10 @@ def test_inputs_get_features_and_indices(
             MolecularInput(key="x4"),
         ]
     )
-    molecular_features_list = Inputs.get_molecular_features(specs)
-    continuous_features_list = inps.get_continuous_features(specs)
-    categorical_features_list = Inputs.get_categorical_features(specs)
 
-    mol_dims = inps.get_feature_indices(specs, molecular_features_list)
-    ord_dims = inps.get_feature_indices(specs, continuous_features_list)
+    mol_dims = inps.get_feature_indices(specs, molecular_keys)
+    ord_dims = inps.get_feature_indices(specs, continuous_keys)
 
-    assert molecular_features_list == expected_molecular_features
-    assert continuous_features_list == expected_continuous_features
-    assert categorical_features_list == expected_categorical_features
     assert mol_dims == expected_molecular_indices
     assert ord_dims == expected_continuous_indices
 

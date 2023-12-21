@@ -52,7 +52,12 @@ from bofire.data_models.surrogates.api import (
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.trainable import metrics2objectives
-from bofire.surrogates.single_task_gp import get_scaler
+from bofire.surrogates.utils import (
+    get_categorical_feature_keys,
+    get_continuous_feature_keys,
+    get_molecular_feature_keys,
+    get_scaler,
+)
 from bofire.utils.torch_tools import tkwargs
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
@@ -269,6 +274,100 @@ def test_get_scaler_molecular(
             AttributeError, match="'NoneType' object has no attribute 'indices'"
         ):
             assert scaler.indices is None
+
+
+@pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
+@pytest.mark.parametrize(
+    "specs, expected_molecular_keys, expected_continuous_keys, expected_categorical_keys",
+    [
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": Fingerprints(n_bits=2),
+            },
+            ["x4"],
+            ["x1"],
+            ["x2", "x3"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+            },
+            ["x4"],
+            ["x1"],
+            ["x2", "x3"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.ONE_HOT,
+                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            [],
+            ["x4", "x1"],
+            ["x2", "x3"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": Fingerprints(n_bits=2),
+            },
+            ["x4"],
+            ["x1", "x3"],
+            ["x2"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
+            },
+            ["x4"],
+            ["x1", "x3"],
+            ["x2"],
+        ),
+        (
+            {
+                "x2": CategoricalEncodingEnum.ONE_HOT,
+                "x3": CategoricalEncodingEnum.DESCRIPTOR,
+                "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
+            },
+            [],
+            ["x4", "x1", "x3"],
+            ["x2"],
+        ),
+    ],
+)
+def test_get_feature_keys(
+    specs,
+    expected_molecular_keys,
+    expected_continuous_keys,
+    expected_categorical_keys,
+):
+    inps = Inputs(
+        features=[
+            ContinuousInput(key="x1", bounds=(0, 1)),
+            CategoricalInput(key="x2", categories=["apple", "banana", "orange"]),
+            CategoricalDescriptorInput(
+                key="x3",
+                categories=["apple", "banana", "orange", "cherry"],
+                descriptors=["d1", "d2"],
+                values=[[1, 2], [3, 4], [5, 6], [7, 8]],
+            ),
+            MolecularInput(key="x4"),
+        ]
+    )
+    molecular_feature_keys = get_molecular_feature_keys(specs)
+    continuous_feature_keys = get_continuous_feature_keys(inps, specs)
+    categorical_feature_keys = get_categorical_feature_keys(specs)
+
+    assert molecular_feature_keys == expected_molecular_keys
+    assert continuous_feature_keys == expected_continuous_keys
+    assert categorical_feature_keys == expected_categorical_keys
 
 
 @pytest.mark.parametrize(
