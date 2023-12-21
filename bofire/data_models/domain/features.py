@@ -10,7 +10,7 @@ import pandas as pd
 from pydantic import Field, validate_arguments
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
+from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     _CAT_SEP,
@@ -28,6 +28,7 @@ from bofire.data_models.features.api import (
     Output,
     TInputTransformSpecs,
 )
+from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import AbstractObjective, Objective
 

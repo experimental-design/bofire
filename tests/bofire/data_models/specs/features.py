@@ -27,7 +27,10 @@ specs.add_invalid(
         "values": [1.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
+    error=ValueError,
+    message="Fixed discrete inputs are not supported. Please use a fixed continuous input.",
 )
+
 
 specs.add_valid(
     features.ContinuousInput,

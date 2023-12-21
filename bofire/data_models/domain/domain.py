@@ -240,12 +240,12 @@ class Domain(BaseModel):
         """
         assert isinstance(self.inputs, Inputs)
         features = self.inputs + self.outputs
-        return features.get(includes, excludes, exact)
+        return features.get(includes, excludes, exact)  # type: ignore
 
     def get_feature_keys(
         self,
         includes: Union[Type, List[Type]] = Feature,
-        excludes: Union[Type, List[Type]] = None,
+        excludes: Optional[Union[Type, List[Type]]] = None,
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
