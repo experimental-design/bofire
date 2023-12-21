@@ -21,6 +21,9 @@ from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
 from bofire.data_models.strategies.samplers.rejection import RejectionSampler
 from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.samplers.universal_constraint import (
+    UniversalConstraintSampler,
+)
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     AlwaysTrueCondition,
     CombiCondition,
@@ -50,6 +53,7 @@ AnyStrategy = Union[
     QparegoStrategy,
     PolytopeSampler,
     RejectionSampler,
+    UniversalConstraintSampler,
     RandomStrategy,
     DoEStrategy,
     StepwiseStrategy,
@@ -68,7 +72,7 @@ AnyPredictive = Union[
     MoboStrategy,
 ]
 
-AnySampler = Union[PolytopeSampler, RejectionSampler]
+AnySampler = Union[PolytopeSampler, RejectionSampler, UniversalConstraintSampler]
 
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
