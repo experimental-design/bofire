@@ -3,17 +3,14 @@ from typing import Literal
 from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SaasSingleTaskGPSurrogate"] = "SaasSingleTaskGPSurrogate"
     warmup_steps: Annotated[int, Field(ge=1)] = 256  # type: ignore
     num_samples: Annotated[int, Field(ge=1)] = 128  # type: ignore
     thinning: Annotated[int, Field(ge=1)] = 16  # type: ignore
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
     @field_validator("thinning")
     @classmethod

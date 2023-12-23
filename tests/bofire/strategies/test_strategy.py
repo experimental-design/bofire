@@ -25,7 +25,7 @@ from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.outlier_detection.outlier_detection import IterativeTrimming
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.strategies.strategy import Strategy
-from tests.bofire.data_models.test_domain_validators import (
+from tests.bofire.data_models.domain.test_domain_validators import (
     generate_candidates,
     generate_experiments,
 )

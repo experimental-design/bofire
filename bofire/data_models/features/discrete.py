@@ -1,4 +1,4 @@
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, Optional
 
 import numpy as np
 import pandas as pd
@@ -76,7 +76,7 @@ class DiscreteInput(NumericalInput):
             )
         return values
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -85,7 +85,9 @@ class DiscreteInput(NumericalInput):
         Returns:
             pd.Series: drawn samples.
         """
-        return pd.Series(name=self.key, data=np.random.choice(self.values, n))
+        return pd.Series(
+            name=self.key, data=np.random.default_rng(seed=seed).choice(self.values, n)
+        )
 
     def from_continuous(self, values: pd.DataFrame) -> pd.Series:
         """Rounds continuous values to the closest discrete ones.

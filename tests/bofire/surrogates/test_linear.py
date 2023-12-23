@@ -5,7 +5,7 @@ import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
-from bofire.data_models.surrogates.api import LinearSurrogate
+from bofire.data_models.surrogates.api import BotorchSurrogates, LinearSurrogate
 
 
 def test_LinearSurrogate():
@@ -41,3 +41,21 @@ def test_LinearSurrogate():
     surrogate.loads(dump)
     preds2 = surrogate.predict(experiments)
     assert_frame_equal(preds, preds2)
+
+
+def test_can_define_botorch_surrogate():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="a", bounds=(0, 40)),
+            ContinuousInput(key="b", bounds=(20, 80)),
+        ]
+    )
+    outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
+    (
+        BotorchSurrogates(
+            surrogates=[
+                LinearSurrogate(inputs=inputs, outputs=Outputs(features=[outputs[0]])),
+                LinearSurrogate(inputs=inputs, outputs=Outputs(features=[outputs[1]])),
+            ]
+        ),
+    )

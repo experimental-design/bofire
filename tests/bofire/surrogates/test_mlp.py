@@ -2,6 +2,7 @@ import pytest
 import torch
 import torch.nn as nn
 from botorch.models.transforms.input import InputStandardize, Normalize
+from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
@@ -163,9 +164,14 @@ def test_mlp_ensemble_forward():
 
 
 @pytest.mark.parametrize(
-    "scaler", [ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, ScalerEnum.IDENTITY]
+    "scaler, output_scaler",
+    [
+        [ScalerEnum.NORMALIZE, ScalerEnum.IDENTITY],
+        [ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE],
+        [ScalerEnum.IDENTITY, ScalerEnum.STANDARDIZE],
+    ],
 )
-def test_mlp_ensemble_fit(scaler):
+def test_mlp_ensemble_fit(scaler, output_scaler):
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
@@ -175,10 +181,12 @@ def test_mlp_ensemble_fit(scaler):
         n_estimators=2,
         n_epochs=5,
         scaler=scaler,
+        output_scaler=output_scaler,
     )
     surrogate = surrogates.map(ens)
 
     surrogate.fit(experiments=experiments)
+
     if scaler == ScalerEnum.NORMALIZE:
         assert isinstance(surrogate.model.input_transform, Normalize)
     elif scaler == ScalerEnum.STANDARDIZE:
@@ -186,6 +194,12 @@ def test_mlp_ensemble_fit(scaler):
     else:
         with pytest.raises(AttributeError):
             assert surrogate.model.input_transform is None
+
+    if output_scaler == ScalerEnum.STANDARDIZE:
+        assert isinstance(surrogate.model.outcome_transform, Standardize)
+    elif output_scaler == ScalerEnum.IDENTITY:
+        assert not hasattr(surrogate.model, "outcome_transform")
+
     preds = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(ens)

@@ -66,7 +66,9 @@ class ContinuousInput(NumericalInput):
         allowed_values = np.arange(
             self.lower_bound, self.upper_bound + self.stepsize, self.stepsize
         )
-        idx = abs(values.values.reshape([3, 1]) - allowed_values).argmin(axis=1)  # type: ignore
+        idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(
+            axis=1
+        )
         return pd.Series(
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
@@ -118,7 +120,7 @@ class ContinuousInput(NumericalInput):
             )
         return values
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -129,7 +131,9 @@ class ContinuousInput(NumericalInput):
         """
         return pd.Series(
             name=self.key,
-            data=np.random.uniform(self.lower_bound, self.upper_bound, n),
+            data=np.random.default_rng(seed=seed).uniform(
+                self.lower_bound, self.upper_bound, n
+            ),
         )
 
     def __str__(self) -> str:

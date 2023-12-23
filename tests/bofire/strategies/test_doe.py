@@ -283,12 +283,43 @@ def test_partially_fixed_experiments():
     assert test_df.sum().sum() == 0
 
 
-# if __name__ == "__main__":
-#     test_doe_strategy_ask()
-#     test_doe_strategy_ask_with_candidates()
-#     test_doe_categoricals_not_implemented()
-#     test_doe_discrete_not_implemented()
-#     test_nchoosek_implemented()
-#     test_formulas_implemented()
-#     test_doe_strategy_correctness()
-#     test_doe_strategy_amount_of_candidates()
+def test_categorical_doe_iterative():
+    quantity_a = [
+        ContinuousInput(key=f"quantity_a_{i}", bounds=(20, 100)) for i in range(2)
+    ]
+    all_inputs = [
+        ContinuousInput(key="independent", bounds=(3, 10)),
+    ]
+    all_inputs.extend(quantity_a)
+
+    all_constraints = [
+        NChooseKConstraint(
+            features=[var.key for var in quantity_a],
+            min_count=1,
+            max_count=1,
+            none_also_valid=False,
+        ),
+    ]
+
+    n_experiments = 5
+    domain = Domain(
+        inputs=all_inputs,
+        outputs=[ContinuousOutput(key="y")],
+        constraints=all_constraints,
+    )
+
+    data_model = data_models.DoEStrategy(
+        domain=domain,
+        formula="linear",
+        optimization_strategy="iterative",
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(
+        candidate_count=n_experiments, raise_validation_error=False
+    )
+
+    assert candidates.shape == (5, 3)
+
+
+if __name__ == "__main__":
+    test_categorical_doe_iterative()

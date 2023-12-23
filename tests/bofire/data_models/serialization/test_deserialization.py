@@ -12,7 +12,10 @@ from bofire.data_models.api import (
     AnyPrior,
     AnyStrategy,
     AnySurrogate,
+    Constraints,
     Domain,
+    Inputs,
+    Outputs,
 )
 from tests.bofire.data_models.specs.api import Spec
 
@@ -91,4 +94,22 @@ def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec
 def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
     obj = molfeatures_spec.obj()
     deserialized = parse_obj_as(AnyMolFeatures, obj.dict())
+    assert obj == deserialized
+
+
+def test_inputs_should_be_deserializable(inputs_spec: Spec):
+    obj = inputs_spec.obj()
+    deserialized = parse_obj_as(Inputs, obj.dict())
+    assert obj == deserialized
+
+
+def test_outputs_should_be_deserializable(outputs_spec: Spec):
+    obj = outputs_spec.obj()
+    deserialized = parse_obj_as(Outputs, obj.dict())
+    assert obj == deserialized
+
+
+def test_constraints_should_be_deserializable(constraints_spec: Spec):
+    obj = constraints_spec.obj()
+    deserialized = parse_obj_as(Constraints, obj.dict())
     assert obj == deserialized

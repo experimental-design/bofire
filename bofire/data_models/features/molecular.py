@@ -47,7 +47,7 @@ class MolecularInput(Input):
     def fixed_value(self, transform_type: Optional[AnyMolFeatures] = None) -> None:
         return None
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         raise ValueError("Sampling not supported for `MolecularInput`")
 
     def get_bounds(

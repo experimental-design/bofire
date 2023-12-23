@@ -4,7 +4,7 @@ from bofire.data_models.acquisition_functions.api import (
     AnyAcquisitionFunction,
 )
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
-from bofire.data_models.domain.api import Domain, Features, Inputs, Outputs
+from bofire.data_models.domain.api import Constraints, Domain, Features, Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyFeature,
     AnyInput,

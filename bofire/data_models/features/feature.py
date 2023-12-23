@@ -95,7 +95,7 @@ class Input(Feature):
         pass
 
     @abstractmethod
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Sample a series of allowed values.
 
         Args:

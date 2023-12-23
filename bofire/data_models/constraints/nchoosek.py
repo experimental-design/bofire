@@ -4,14 +4,14 @@ import numpy as np
 import pandas as pd
 from pydantic import field_validator, model_validator
 
-from bofire.data_models.constraints.constraint import Constraint, FeatureKeys
+from bofire.data_models.constraints.constraint import FeatureKeys, IntrapointConstraint
 
 
 def narrow_gaussian(x, ell=1e-3):
     return np.exp(-0.5 * (x / ell) ** 2)
 
 
-class NChooseKConstraint(Constraint):
+class NChooseKConstraint(IntrapointConstraint):
     """NChooseK constraint that defines how many ingredients are allowed in a formulation.
 
     Attributes:

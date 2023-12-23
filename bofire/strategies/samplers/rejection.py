@@ -28,7 +28,9 @@ class RejectionSampler(SamplerStrategy):
 
     def _ask(self, n: int) -> pd.DataFrame:
         if len(self.domain.constraints) == 0:
-            return self.domain.inputs.sample(n, self.sampling_method)
+            return self.domain.inputs.sample(
+                n, self.sampling_method, seed=self._get_seed()
+            )
         n_iters = 0
         n_found = 0
         valid_samples = []
@@ -36,7 +38,9 @@ class RejectionSampler(SamplerStrategy):
             if n_iters > self.max_iters:
                 raise ValueError("Maximum iterations exceeded in rejection sampling.")
             samples = self.domain.inputs.sample(
-                self.num_base_samples, method=self.sampling_method
+                self.num_base_samples,
+                method=self.sampling_method,
+                seed=self._get_seed(),
             )
             valid = self.domain.constraints.is_fulfilled(samples)
             n_found += np.sum(valid)

@@ -2,12 +2,11 @@ from typing import Annotated, Literal, Sequence
 
 from pydantic import Field
 
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
+class MLPEnsemble(TrainableBotorchSurrogate):
     type: Literal["MLPEnsemble"] = "MLPEnsemble"
     n_estimators: Annotated[int, Field(ge=1)] = 5
     hidden_layer_sizes: Sequence = (100,)
@@ -19,4 +18,4 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     weight_decay: Annotated[float, Field(ge=0.0)] = 0.0
     subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
     shuffle: bool = True
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
+    scaler: ScalerEnum = ScalerEnum.STANDARDIZE
