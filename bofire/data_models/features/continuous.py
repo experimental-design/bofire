@@ -2,7 +2,7 @@ from typing import ClassVar, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.features.feature import Output
 from bofire.data_models.features.numerical import NumericalInput
@@ -31,24 +31,23 @@ class ContinuousInput(NumericalInput):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
-    @field_validator("stepsize")
-    @classmethod
-    def validate_step_size(cls, v, values):
-        if v is None:
-            return v
-        lower, upper = values["bounds"]
-        if lower == upper and v is not None:
+    @model_validator(mode="after")
+    def validate_step_size(self):
+        if self.stepsize is None:
+            return self
+        lower, upper = self.bounds
+        if lower == upper and self.stepsize is not None:
             raise ValueError(
                 "Stepsize cannot be provided for a fixed continuous input."
             )
         range = upper - lower
-        if np.arange(lower, upper + v, v)[-1] != upper:
+        if np.arange(lower, upper + self.stepsize, self.stepsize)[-1] != upper:
             raise ValueError(
-                f"Stepsize of {v} does not match the provided interval [{lower},{upper}]."
+                f"Stepsize of {self.stepsize} does not match the provided interval [{lower},{upper}]."
             )
-        if range // v == 1:
+        if range // self.stepsize == 1:
             raise ValueError("Stepsize is too big, only one value allowed.")
-        return v
+        return self
 
     def round(self, values: pd.Series) -> pd.Series:
         """Round values to the stepsize of the feature. If no stepsize is provided return the
