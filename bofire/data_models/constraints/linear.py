@@ -34,15 +34,14 @@ class LinearConstraint(IntrapointConstraint):
             raise ValueError("features must be unique")
         return features
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_list_lengths(cls, values):
+    @model_validator(mode="after")
+    def validate_list_lengths(self):
         """Validate that length of the feature and coefficient lists have the same length."""
-        if len(values["features"]) != len(values["coefficients"]):
+        if len(self.features) != len(self.coefficients):
             raise ValueError(
-                f'must provide same number of features and coefficients, got {len(values["features"])} != {len(values["coefficients"])}'
+                f"must provide same number of features and coefficients, got {len(self.features)} != {len(self.coefficients)}"
             )
-        return values
+        return self
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         return (

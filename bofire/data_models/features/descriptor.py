@@ -46,9 +46,8 @@ class ContinuousDescriptorInput(ContinuousInput):
         """
         return list(descriptors)
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_list_lengths(cls, values):
+    @model_validator(mode="after")
+    def validate_list_lengths(self):
         """compares the length of the defined descriptors list with the provided values
 
         Args:
@@ -60,11 +59,11 @@ class ContinuousDescriptorInput(ContinuousInput):
         Returns:
             Dict: Dict with the attributes
         """
-        if len(values["descriptors"]) != len(values["values"]):
+        if len(self.descriptors) != len(self.values):
             raise ValueError(
                 'must provide same number of descriptors and values, got {len(values["descriptors"])} != {len(values["values"])}'
             )
-        return values
+        return self
 
     def to_df(self) -> pd.DataFrame:
         """tabular overview of the feature as DataFrame
@@ -246,9 +245,7 @@ class CategoricalDescriptorInput(CategoricalInput):
             pd.DataFrame: Descriptor encoded dataframe.
         """
         return pd.DataFrame(
-            data=values.map(
-                dict(zip(self.categories, self.values))
-            ).values.tolist(),  # type: ignore
+            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
             index=values.index,
         )

@@ -12,8 +12,10 @@ specs.add_valid(
     Inputs,
     lambda: {
         "features": [
-            CategoricalInput(key="a", categories=["1", "2"], allowed=[True, True]),
-            ContinuousInput(key="b", bounds=(0, 1)),
+            CategoricalInput(
+                key="a", categories=["1", "2"], allowed=[True, True]
+            ).model_dump(),
+            ContinuousInput(key="b", bounds=(0, 1)).model_dump(),
         ],
     },
 )

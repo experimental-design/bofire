@@ -17,7 +17,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -115,9 +115,8 @@ class Domain(BaseModel):
         else:
             return v
 
-    @field_validator("outputs")
-    @classmethod
-    def validate_unique_feature_keys(cls, v: Outputs, info) -> Outputs:
+    @model_validator(mode="after")
+    def validate_unique_feature_keys(self):
         """Validates if provided input and output feature keys are unique
 
         Args:
@@ -130,13 +129,11 @@ class Domain(BaseModel):
         Returns:
             Outputs: Keeps output features as given.
         """
-        if "inputs" not in info.data:
-            return v
-        features = v + info.data["inputs"]
-        keys = [f.key for f in features]
+
+        keys = self.outputs.get_keys() + self.inputs.get_keys()
         if len(set(keys)) != len(keys):
             raise ValueError("feature keys are not unique")
-        return v
+        return self
 
     @field_validator("constraints")
     @classmethod

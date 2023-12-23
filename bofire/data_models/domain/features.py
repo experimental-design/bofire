@@ -45,6 +45,11 @@ class Features(BaseModel):
     type: Literal["Features"] = "Features"
     features: FeatureSequence = Field(default_factory=lambda: [])
 
+    # TODO: add validator
+    # @classmethod
+    # @field_validator(features)
+    # def validate_unique_feature_keys()
+
     def __iter__(self):
         return iter(self.features)
 
