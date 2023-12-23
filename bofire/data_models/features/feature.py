@@ -170,7 +170,7 @@ TAllowedVals = Optional[Annotated[List[bool], Field(min_length=2)]]
 
 
 TCategoricalDescriptorVals = Annotated[
-    Union[List[List[float]], List[List[int]]],
+    List[List[float]],
     Field(min_length=1),
 ]
 
