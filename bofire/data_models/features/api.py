@@ -8,10 +8,11 @@ from bofire.data_models.features.descriptor import (
 )
 from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.feature import (
-    _CAT_SEP,  # noqa: F401
+    _CAT_SEP,
     Feature,
     Input,
     Output,
+    TInputTransformSpecs,
 )
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
