@@ -22,55 +22,56 @@ from tests.bofire.data_models.specs.api import Spec
 
 def test_prior_should_be_deserializable(prior_spec: Spec):
     obj = prior_spec.obj()
-    deserialized = parse_obj_as(AnyPrior, obj.dict())
+    deserialized = parse_obj_as(AnyPrior, obj.model_dump())
     assert obj == deserialized
 
 
 def test_kernel_should_be_deserializable(kernel_spec: Spec):
     obj = kernel_spec.obj()
-    deserialized = parse_obj_as(AnyKernel, obj.dict())
+    deserialized = parse_obj_as(AnyKernel, obj.model_dump())
     assert obj == deserialized
 
 
 def test_constraint_should_be_deserializable(constraint_spec: Spec):
     obj = constraint_spec.obj()
-    deserialized = parse_obj_as(AnyConstraint, obj.dict())
+    deserialized = parse_obj_as(AnyConstraint, obj.model_dump())
     assert obj == deserialized
 
 
 def test_objective_should_be_deserializable(objective_spec: Spec):
     obj = objective_spec.obj()
-    deserialized = parse_obj_as(AnyObjective, obj.dict())
+    deserialized = parse_obj_as(AnyObjective, obj.model_dump())
     assert obj == deserialized
 
 
 def test_feature_should_be_deserializable(feature_spec: Spec):
     obj = feature_spec.obj()
-    deserialized = parse_obj_as(AnyFeature, obj.dict())
+    print(obj.model_dump())
+    deserialized = parse_obj_as(AnyFeature, obj.model_dump())
     assert obj == deserialized
 
 
 def test_domain_should_be_deserializable(domain_spec: Spec):
     obj = domain_spec.obj()
-    deserialized = parse_obj_as(Domain, obj.dict())
+    deserialized = parse_obj_as(Domain, obj.model_dump())
     assert obj == deserialized
 
 
 def test_surrogate_should_be_deserializable(surrogate_spec: Spec):
     obj = surrogate_spec.obj()
-    deserialized = parse_obj_as(AnySurrogate, obj.dict())
+    deserialized = parse_obj_as(AnySurrogate, obj.model_dump())
     assert obj == deserialized
 
 
 def test_acquisition_function_should_be_deserializable(acquisition_function_spec: Spec):
     obj = acquisition_function_spec.obj()
-    deserialized = parse_obj_as(AnyAcquisitionFunction, obj.dict())
+    deserialized = parse_obj_as(AnyAcquisitionFunction, obj.model_dump())
     assert obj == deserialized
 
 
 def test_strategy_should_be_deserializable(strategy_spec: Spec):
     obj = strategy_spec.obj()
-    deserialized = parse_obj_as(AnyStrategy, obj.dict())
+    deserialized = parse_obj_as(AnyStrategy, obj.model_dump())
     # TODO: can we unhide the comparison of surrogate_specs?
     obj = {k: v for k, v in obj.dict().items() if k != "surrogate_specs"}
     deserialized = {
@@ -81,35 +82,35 @@ def test_strategy_should_be_deserializable(strategy_spec: Spec):
 
 def test_condition_should_be_deserializable(condition_spec: Spec):
     obj = condition_spec.obj()
-    deserialized = parse_obj_as(AnyCondition, obj.dict())
+    deserialized = parse_obj_as(AnyCondition, obj.model_dump())
     assert obj == deserialized
 
 
 def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec):
     obj = outlier_detection_spec.obj()
-    deserialized = parse_obj_as(AnyOutlierDetection, obj.dict())
+    deserialized = parse_obj_as(AnyOutlierDetection, obj.model_dump())
     assert obj == deserialized
 
 
 def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
     obj = molfeatures_spec.obj()
-    deserialized = parse_obj_as(AnyMolFeatures, obj.dict())
+    deserialized = parse_obj_as(AnyMolFeatures, obj.model_dump())
     assert obj == deserialized
 
 
 def test_inputs_should_be_deserializable(inputs_spec: Spec):
     obj = inputs_spec.obj()
-    deserialized = parse_obj_as(Inputs, obj.dict())
+    deserialized = parse_obj_as(Inputs, obj.model_dump())
     assert obj == deserialized
 
 
 def test_outputs_should_be_deserializable(outputs_spec: Spec):
     obj = outputs_spec.obj()
-    deserialized = parse_obj_as(Outputs, obj.dict())
+    deserialized = parse_obj_as(Outputs, obj.model_dump())
     assert obj == deserialized
 
 
 def test_constraints_should_be_deserializable(constraints_spec: Spec):
     obj = constraints_spec.obj()
-    deserialized = parse_obj_as(Constraints, obj.dict())
+    deserialized = parse_obj_as(Constraints, obj.model_dump())
     assert obj == deserialized

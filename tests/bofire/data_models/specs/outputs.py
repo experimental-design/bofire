@@ -8,8 +8,8 @@ specs.add_valid(
     Outputs,
     lambda: {
         "features": [
-            ContinuousOutput(key="a", objective=None),
-            ContinuousOutput(key="b", objective=None),
+            ContinuousOutput(key="a", objective=None).model_dump(),
+            ContinuousOutput(key="b", objective=None).model_dump(),
         ],
     },
 )

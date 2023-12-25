@@ -45,8 +45,8 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
 
     @field_validator("input_preprocessing_specs")
     @classmethod
-    def validate_input_preprocessing_specs(cls, v, values):
-        inputs = values["inputs"]
+    def validate_input_preprocessing_specs(cls, v, info):
+        inputs = info.data["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
         descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)
         for key in categorical_keys:

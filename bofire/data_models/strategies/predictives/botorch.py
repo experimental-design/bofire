@@ -30,7 +30,9 @@ class BotorchStrategy(PredictiveStrategy):
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
-    surrogate_specs: Optional[BotorchSurrogates] = None
+    surrogate_specs: BotorchSurrogates = Field(
+        default_factory=lambda: BotorchSurrogates(surrogates=[]), validate_default=True
+    )
     # outlier detection params
     outlier_detection_specs: Optional[OutlierDetections] = None
     min_experiments_before_outlier_check: PositiveInt = 1
@@ -53,7 +55,7 @@ class BotorchStrategy(PredictiveStrategy):
             return False
         return True
 
-    @field_validator("num_sobol_samples")
+    @field_validator("num_sobol_samples", "num_raw_samples")
     @classmethod
     def validate_num_sobol_samples(cls, v):
         if is_power_of_two(v) is False:
@@ -62,40 +64,38 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return v
 
-    @field_validator("num_raw_samples")
-    @classmethod
-    def validate_num_raw_samples(cls, v):
-        if is_power_of_two(v) is False:
-            raise ValueError(
-                "number raw samples have to be of the power of 2 to increase performance"
-            )
-        return v
+    # @field_validator("num_raw_samples")
+    # @classmethod
+    # def validate_num_raw_samples(cls, v):
+    #     if is_power_of_two(v) is False:
+    #         raise ValueError(
+    #             "number raw samples have to be of the power of 2 to increase performance"
+    #         )
+    #     return v
 
-    @model_validator(mode="before")
-    @classmethod
-    def update_surrogate_specs_for_domain(cls, values):
+    @model_validator(mode="after")
+    def validate_surrogate_specs(self):
         """Ensures that a prediction model is specified for each output feature"""
-
-        values["surrogate_specs"] = BotorchStrategy._generate_surrogate_specs(
-            values["domain"],
-            values["surrogate_specs"] if "surrogate_specs" in values else None,
+        BotorchStrategy._generate_surrogate_specs(
+            self.domain,
+            self.surrogate_specs,
         )
         # we also have to checke here that the categorical method is compatible with the chosen models
-        categorical_method = (
-            values["categorical_method"] if "categorical_method" in values else None
-        )
-        if categorical_method == CategoricalMethodEnum.FREE:
-            for m in values["surrogate_specs"].surrogates:
+        # categorical_method = (
+        #   values["categorical_method"] if "categorical_method" in values else None
+        # )
+        if self.categorical_method == CategoricalMethodEnum.FREE:
+            for m in self.surrogate_specs.surrogates:
                 if isinstance(m, MixedSingleTaskGPSurrogate):
                     raise ValueError(
                         "Categorical method FREE not compatible with a a MixedSingleTaskGPModel."
                     )
-        #  we also check that if a categorical with descriptor method is used as one hot encoded the same method is
+        # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
         # used for the descriptor as for the categoricals
-        descriptor_method = (
-            values["descriptor_method"] if "descriptor_method" in values else None
-        )
-        for m in values["surrogate_specs"].surrogates:
+        # descriptor_method = (
+        #   self.["descriptor_method"] if "descriptor_method" in values else None
+        # )
+        for m in self.surrogate_specs.surrogates:
             keys = m.inputs.get_keys(CategoricalDescriptorInput)
             for k in keys:
                 input_proc_specs = (
@@ -104,29 +104,25 @@ class BotorchStrategy(PredictiveStrategy):
                     else None
                 )
                 if input_proc_specs == CategoricalEncodingEnum.ONE_HOT:
-                    if categorical_method != descriptor_method:
+                    if self.categorical_method != self.descriptor_method:
                         raise ValueError(
                             "One-hot encoded CategoricalDescriptorInput features has to be treated with the same method as categoricals."
                         )
-        return values
+        return self
 
-    @model_validator(mode="before")
-    @classmethod
-    def validate_outlier_detection_specs_for_domain(cls, values):
+    @model_validator(mode="after")
+    def validate_outlier_detection_specs_for_domain(self):
         """Ensures that a outlier_detection model is specified for each output feature"""
-        if (
-            "outlier_detection_specs" in values
-            and values["outlier_detection_specs"] is not None
-        ):
-            values["outlier_detection_specs"]._check_compability(
-                inputs=values["domain"].inputs, outputs=values["domain"].outputs
+        if self.outlier_detection_specs is not None:
+            self.outlier_detection_specs._check_compability(
+                inputs=self.domain.inputs, outputs=self.domain.outputs
             )
-        return values
+        return self
 
     @staticmethod
     def _generate_surrogate_specs(
         domain: Domain,
-        surrogate_specs: Optional[BotorchSurrogates] = None,
+        surrogate_specs: BotorchSurrogates,
     ) -> BotorchSurrogates:
         """Method to generate model specifications when no model specs are passed
         As default specification, a 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
@@ -139,28 +135,28 @@ class BotorchStrategy(PredictiveStrategy):
         Returns:
             List[ModelSpec]: List of model specification classes
         """
-        existing_keys = (
-            surrogate_specs.outputs.get_keys() if surrogate_specs is not None else []
-        )
+        existing_keys = surrogate_specs.outputs.get_keys()
         non_exisiting_keys = list(set(domain.outputs.get_keys()) - set(existing_keys))
-        _surrogate_specs = (
-            surrogate_specs.surrogates if surrogate_specs is not None else []
-        )
+        _surrogate_specs = surrogate_specs.surrogates
         for output_feature in non_exisiting_keys:
             if len(domain.inputs.get(CategoricalInput, exact=True)):
                 _surrogate_specs.append(
                     MixedSingleTaskGPSurrogate(
                         inputs=domain.inputs,
-                        outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
+                        outputs=Outputs(
+                            features=[domain.outputs.get_by_key(output_feature)]
+                        ),  # type: ignore
                     )
                 )
             else:
                 _surrogate_specs.append(
                     SingleTaskGPSurrogate(
                         inputs=domain.inputs,
-                        outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
+                        outputs=Outputs(
+                            features=[domain.outputs.get_by_key(output_feature)]
+                        ),  # type: ignore
                     )
                 )
-        surrogate_specs = BotorchSurrogates(surrogates=_surrogate_specs)  # type: ignore
+        surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs

@@ -35,8 +35,8 @@ class CombiCondition(Condition):
 
     @field_validator("n_required_conditions")
     @classmethod
-    def validate_n_required_conditions(cls, v, values):
-        if v > len(values["conditions"]):
+    def validate_n_required_conditions(cls, v, info):
+        if v > len(info.data["conditions"]):
             raise ValueError(
                 "Number of required conditions larger than number of conditions."
             )

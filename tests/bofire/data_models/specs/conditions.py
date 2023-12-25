@@ -21,8 +21,8 @@ specs.add_valid(
     CombiCondition,
     lambda: {
         "conditions": [
-            NumberOfExperimentsCondition(n_experiments=5).dict(),
-            AlwaysTrueCondition().dict(),
+            NumberOfExperimentsCondition(n_experiments=5).model_dump(),
+            AlwaysTrueCondition().model_dump(),
         ],
         "n_required_conditions": 2,
     },

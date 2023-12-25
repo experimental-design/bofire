@@ -20,7 +20,7 @@ from bofire.utils.cheminformatics import smiles2mol
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
-    order: ClassVar[int] = 6
+    order_id: ClassVar[int] = 6
 
     @staticmethod
     def valid_transform_types() -> List[AnyMolFeatures]:
@@ -88,7 +88,7 @@ class MolecularInput(Input):
 
 class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
-    order: ClassVar[int] = 7
+    order_id: ClassVar[int] = 7
 
     @field_validator("categories")
     @classmethod

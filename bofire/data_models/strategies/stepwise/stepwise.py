@@ -54,9 +54,9 @@ class StepwiseStrategy(Strategy):
 
     @field_validator("steps")
     @classmethod
-    def validate_steps(cls, v: List[Step], values):
+    def validate_steps(cls, v: List[Step], info):
         for i, step in enumerate(v):
-            if step.strategy_data.domain != values["domain"]:
+            if step.strategy_data.domain != info.data["domain"]:
                 raise ValueError(
                     f"Domain of step {i} is incompatible to domain of StepwiseStrategy."
                 )

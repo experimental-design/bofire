@@ -13,14 +13,14 @@ specs.add_valid(
                 features.valid(ContinuousInput).obj(key="i2"),
                 features.valid(ContinuousInput).obj(key="i3"),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(key="o1"),
                 features.valid(ContinuousOutput).obj(key="o2"),
             ]
-        ),
-        "constraints": Constraints(),
+        ).model_dump(),
+        "constraints": Constraints().model_dump(),
     },
 )
 

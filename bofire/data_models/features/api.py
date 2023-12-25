@@ -7,12 +7,11 @@ from bofire.data_models.features.descriptor import (
     ContinuousDescriptorInput,
 )
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import (  # noqa: F401
-    _CAT_SEP,
+from bofire.data_models.features.feature import (
+    _CAT_SEP,  # noqa: F401
     Feature,
     Input,
     Output,
-    TInputTransformSpecs,
 )
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
@@ -27,7 +26,9 @@ AbstractFeature = Union[
     NumericalInput,
 ]
 
+# TODO: here is a bug, CategoricalOutput has to be the first item here, no idea why ...
 AnyFeature = Union[
+    CategoricalOutput,
     DiscreteInput,
     CategoricalInput,
     ContinuousOutput,
@@ -35,7 +36,6 @@ AnyFeature = Union[
     ContinuousDescriptorInput,
     CategoricalDescriptorInput,
     MolecularInput,
-    CategoricalOutput,
     CategoricalMolecularInput,
 ]
 
