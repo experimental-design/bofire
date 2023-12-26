@@ -26,7 +26,7 @@ class UniversalConstraintSampler(SamplerStrategy):
     """
 
     type: Literal["UniversalConstraintSampler"] = "UniversalConstraintSampler"
-    sampling_fraction: float = 0.3
+    sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
     ipopt_options: dict = {"maxiter": 200, "disp": 0}
 
     @classmethod
