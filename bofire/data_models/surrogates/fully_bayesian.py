@@ -14,7 +14,7 @@ class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
 
     @field_validator("thinning")
     @classmethod
-    def validate_thinning(cls, value, values):
-        if values["num_samples"] / value < 1:
+    def validate_thinning(cls, thinning, info):
+        if info.data["num_samples"] / thinning < 1:
             raise ValueError("`num_samples` has to be larger than `thinning`.")
-        return value
+        return thinning

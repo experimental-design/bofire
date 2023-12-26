@@ -12,16 +12,18 @@ class Surrogate(BaseModel):
 
     inputs: Inputs
     outputs: Outputs
-    input_preprocessing_specs: TInputTransformSpecs = Field(default_factory=dict)
+    input_preprocessing_specs: TInputTransformSpecs = Field(
+        default_factory=dict, validate_default=True
+    )
     dump: Optional[str] = None
 
     @field_validator("input_preprocessing_specs")
     @classmethod
-    def validate_input_preprocessing_specs(cls, v, values):
+    def validate_input_preprocessing_specs(cls, v, info):
         # we also validate the number of input features here
-        if len(values["inputs"]) == 0:
+        if len(info.data["inputs"]) == 0:
             raise ValueError("At least one input feature has to be provided.")
-        v = values["inputs"]._validate_transform_specs(v)
+        v = info.data["inputs"]._validate_transform_specs(v)
         return v
 
     @field_validator("outputs")
