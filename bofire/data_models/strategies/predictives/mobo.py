@@ -1,6 +1,6 @@
 from typing import Dict, Literal, Optional, Type
 
-from pydantic import Field, validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.acquisition_functions.api import (
     AnyMultiObjectiveAcquisitionFunction,
@@ -28,19 +28,19 @@ class MoboStrategy(MultiobjectiveStrategy):
         default_factory=lambda: qLogNEHVI()
     )
 
-    @validator("ref_point")
-    def validate_ref_point(cls, v, values):
+    @model_validator(mode="after")
+    def validate_ref_point(self):
         """Validate that the provided refpoint matches the provided domain."""
-        if v is None:
-            return v
-        keys = values["domain"].outputs.get_keys_by_objective(
-            [MaximizeObjective, MinimizeObjective]
+        if self.ref_point is None:
+            return self
+        keys = self.domain.outputs.get_keys_by_objective(
+            [MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
         )
-        if sorted(keys) != sorted(v.keys()):
+        if sorted(keys) != sorted(self.ref_point.keys()):
             raise ValueError(
                 f"Provided refpoint do not match the domain, expected keys: {keys}"
             )
-        return v
+        return self
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:

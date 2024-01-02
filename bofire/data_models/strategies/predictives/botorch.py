@@ -57,10 +57,10 @@ class BotorchStrategy(PredictiveStrategy):
 
     @field_validator("num_sobol_samples", "num_raw_samples")
     @classmethod
-    def validate_num_sobol_samples(cls, v):
+    def validate_num_sobol_samples(cls, v, info):
         if is_power_of_two(v) is False:
             raise ValueError(
-                "number sobol samples have to be of the power of 2 to increase performance"
+                f"{info.field_name} have to be of the power of 2 to increase performance"
             )
         return v
 
@@ -144,7 +144,7 @@ class BotorchStrategy(PredictiveStrategy):
                     MixedSingleTaskGPSurrogate(
                         inputs=domain.inputs,
                         outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)]
+                            features=[domain.outputs.get_by_key(output_feature)]  # type: ignore
                         ),  # type: ignore
                     )
                 )
@@ -153,7 +153,9 @@ class BotorchStrategy(PredictiveStrategy):
                     SingleTaskGPSurrogate(
                         inputs=domain.inputs,
                         outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)]
+                            features=[
+                                domain.outputs.get_by_key(output_feature)
+                            ]  # type:ignore
                         ),  # type: ignore
                     )
                 )
