@@ -37,7 +37,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="feature keys are not unique",
+    message="Feature keys are not unique",
 )
 
 specs.add_invalid(
@@ -51,7 +51,7 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="feature keys are not unique",
+    message="Feature keys are not unique",
 )
 
 specs.add_invalid(
@@ -69,5 +69,5 @@ specs.add_invalid(
         ),
     },
     error=ValueError,
-    message="feature keys are not unique",
+    message="Feature keys are not unique",
 )

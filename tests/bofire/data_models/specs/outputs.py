@@ -25,3 +25,15 @@ specs.add_invalid(
     },
     error=ValueError,
 )
+
+specs.add_invalid(
+    Outputs,
+    lambda: {
+        "features": [
+            ContinuousOutput(key="b", objective=None),
+            ContinuousOutput(key="b", objective=None),
+        ],
+    },
+    error=ValueError,
+    message="Feature keys are not unique.",
+)

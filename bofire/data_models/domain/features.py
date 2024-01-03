@@ -7,7 +7,7 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, 
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validate_call
+from pydantic import Field, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 
 from bofire.data_models.base import BaseModel
@@ -45,10 +45,15 @@ class Features(BaseModel):
     type: Literal["Features"] = "Features"
     features: FeatureSequence = Field(default_factory=lambda: [])
 
-    # TODO: add validator
-    # @classmethod
-    # @field_validator(features)
-    # def validate_unique_feature_keys()
+    @field_validator("features")
+    @classmethod
+    def validate_unique_feature_keys(
+        cls: type[Features], features: FeatureSequence
+    ) -> FeatureSequence:
+        keys = [feat.key for feat in features]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Feature keys are not unique.")
+        return features
 
     def __iter__(self):
         return iter(self.features)

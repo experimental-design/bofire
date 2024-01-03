@@ -132,7 +132,7 @@ class Domain(BaseModel):
 
         keys = self.outputs.get_keys() + self.inputs.get_keys()
         if len(set(keys)) != len(keys):
-            raise ValueError("feature keys are not unique")
+            raise ValueError("Feature keys are not unique")
         return self
 
     @field_validator("constraints")
