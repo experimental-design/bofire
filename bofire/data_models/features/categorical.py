@@ -28,7 +28,7 @@ class CategoricalInput(Input):
     order_id: ClassVar[int] = 5
 
     categories: TCategoryVals
-    allowed: TAllowedVals = None
+    allowed: TAllowedVals = Field(default=None, validate_default=True)
 
     @field_validator("categories")
     @classmethod
@@ -49,30 +49,21 @@ class CategoricalInput(Input):
             raise ValueError("categories must be unique")
         return categories
 
-    @model_validator(mode="before")
+    @field_validator("allowed")
     @classmethod
-    def init_allowed(cls, values):
-        """validates the list of allowed/not allowed categories
+    def generate_allowed(cls, allowed, info):
+        """Generates the list of allowed categories if not provided."""
+        if allowed is None and "categories" in info.data.keys():
+            return [True for _ in range(len(info.data["categories"]))]
+        return allowed
 
-        Args:
-            values (Dict): Dictionary with attributes
-
-        Raises:
-            ValueError: when the number of allowences does not fit to the number of categories
-            ValueError: when no category is allowed
-
-        Returns:
-            Dict: Dictionary with attributes
-        """
-        if "categories" not in values or values["categories"] is None:
-            return values
-        if "allowed" not in values or values["allowed"] is None:
-            values["allowed"] = [True for _ in range(len(values["categories"]))]
-        if len(values["allowed"]) != len(values["categories"]):
+    @model_validator(mode="after")
+    def validate_categories_fitting_allowed(self):
+        if len(self.allowed) != len(self.categories):  # type: ignore
             raise ValueError("allowed must have same length as categories")
-        if sum(values["allowed"]) == 0:
+        if sum(self.allowed) == 0:  # type: ignore
             raise ValueError("no category is allowed")
-        return values
+        return self
 
     @staticmethod
     def valid_transform_types() -> List[CategoricalEncodingEnum]:
