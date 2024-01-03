@@ -608,15 +608,6 @@ class Domain(BaseModel):
             ]
         )
 
-    def _set_constraints_unvalidated(
-        self, constraints: Union[Sequence[AnyConstraint], Constraints]
-    ):
-        """Hack for reduce_domain"""
-        self.constraints = Constraints(constraints=[])
-        if isinstance(constraints, Constraints):
-            constraints = constraints.constraints
-        self.constraints.constraints = constraints
-
 
 if __name__ == "__main__":
     pass
