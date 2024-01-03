@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyPrior
@@ -22,8 +22,8 @@ class MaternKernel(ContinuousKernel):
     nu: float = 2.5
     lengthscale_prior: Optional[AnyPrior] = None
 
-    @validator("nu")
-    def validate_nu(cls, v, values):
+    @field_validator("nu")
+    def validate_nu(cls, v, info):
         if v not in {0.5, 1.5, 2.5}:
             raise ValueError("nu expected to be 0.5, 1.5, or 2.5")
         return v
