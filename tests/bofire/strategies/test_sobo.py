@@ -19,6 +19,7 @@ import tests.bofire.data_models.specs.api as specs
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
+    AnySingleObjectiveAcquisitionFunction,
     SingleObjectiveAcquisitionFunction,
     qEI,
     qLogEI,
@@ -195,6 +196,7 @@ def test_SOBO_init_qUCB():
         for acqf in specs.acquisition_functions.valids
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
+        if isinstance(acqf, AnySingleObjectiveAcquisitionFunction)
     ],
 )
 @pytest.mark.slow
