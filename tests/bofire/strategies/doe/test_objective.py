@@ -68,9 +68,9 @@ def test_Objective_model_jacobian_t():
             "x1",
             "x2",
             "x3",
-            "x1**2",
-            "x2**2",
-            "x3**2",
+            "x1 ** 2",
+            "x2 ** 2",
+            "x3 ** 2",
             "x1:x2",
             "x1:x3",
             "x2:x3",
@@ -323,20 +323,20 @@ def test_Objective_model_jacobian_t():
         columns=[
             "1",
             "x1",
-            "x1**2",
-            "x1**3",
+            "x1 ** 2",
+            "x1 ** 3",
             "x2",
-            "x2**2",
-            "x2**3",
+            "x2 ** 2",
+            "x2 ** 3",
             "x3",
-            "x3**2",
-            "x3**3",
+            "x3 ** 2",
+            "x3 ** 3",
             "x4",
-            "x4**2",
-            "x4**3",
+            "x4 ** 2",
+            "x4 ** 3",
             "x5",
-            "x5**2",
-            "x5**3",
+            "x5 ** 2",
+            "x5 ** 3",
             "x2:x1",
             "x3:x1",
             "x4:x1",
@@ -419,7 +419,7 @@ def test_DOptimality_instantiation():
     assert isinstance(d_optimality.model, Formula)
     assert all(
         np.array(d_optimality.model, dtype=str)
-        == np.array(["1", "x1", "x2", "x3", "x3**2", "x1:x2"])
+        == np.array(["1", "x1", "x2", "x3", "x3 ** 2", "x1:x2"])
     )
 
     x = np.array([[1, 2, 3], [1, 2, 3]])
