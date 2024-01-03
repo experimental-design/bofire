@@ -38,6 +38,7 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
+from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, PolytopeSampler, SoboStrategy
 from tests.bofire.strategies.test_base import domains
 
@@ -196,7 +197,7 @@ def test_SOBO_init_qUCB():
         for acqf in specs.acquisition_functions.valids
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
-        if isinstance(acqf, AnySingleObjectiveAcquisitionFunction)
+        if isinstance(acqf, to_list(AnySingleObjectiveAcquisitionFunction))
     ],
 )
 @pytest.mark.slow
