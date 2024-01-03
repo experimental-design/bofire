@@ -51,7 +51,7 @@ class IterativeTrimming(OutlierDetection):
 
     @field_validator("base_gp")
     @classmethod
-    def validate_base_gp(cls, v, values):
+    def validate_base_gp(cls, v):
         # validate that all base_gps are single output surrogates
         # TODO: this restriction has to be removed at some point
 

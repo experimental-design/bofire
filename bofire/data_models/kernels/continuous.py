@@ -23,10 +23,10 @@ class MaternKernel(ContinuousKernel):
     lengthscale_prior: Optional[AnyPrior] = None
 
     @field_validator("nu")
-    def validate_nu(cls, v, info):
-        if v not in {0.5, 1.5, 2.5}:
+    def validate_nu(cls, nu):
+        if nu not in {0.5, 1.5, 2.5}:
             raise ValueError("nu expected to be 0.5, 1.5, or 2.5")
-        return v
+        return nu
 
 
 class LinearKernel(ContinuousKernel):

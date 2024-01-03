@@ -64,15 +64,6 @@ class BotorchStrategy(PredictiveStrategy):
             )
         return v
 
-    # @field_validator("num_raw_samples")
-    # @classmethod
-    # def validate_num_raw_samples(cls, v):
-    #     if is_power_of_two(v) is False:
-    #         raise ValueError(
-    #             "number raw samples have to be of the power of 2 to increase performance"
-    #         )
-    #     return v
-
     @model_validator(mode="after")
     def validate_surrogate_specs(self):
         """Ensures that a prediction model is specified for each output feature"""

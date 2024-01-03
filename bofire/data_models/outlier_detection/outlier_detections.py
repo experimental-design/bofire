@@ -29,7 +29,7 @@ class OutlierDetections(BaseModel):
 
     @field_validator("detectors")
     @classmethod
-    def validate_detectors(cls, v, values):
+    def validate_detectors(cls, v):
         used_output_feature_keys = list(
             itertools.chain.from_iterable(
                 [detector.outputs.get_keys() for detector in v]
