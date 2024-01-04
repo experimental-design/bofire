@@ -3,12 +3,12 @@ import pandas as pd
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import UniversalConstraintSampler as DataModel
+from bofire.strategies.api import Strategy
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.enum import OptimalityCriterionEnum
-from bofire.strategies.samplers.sampler import SamplerStrategy
 
 
-class UniversalConstraintSampler(SamplerStrategy):
+class UniversalConstraintSampler(Strategy):
     """Sampler that generates samples by optimization in IPOPT.
 
     Attributes:
@@ -44,7 +44,7 @@ class UniversalConstraintSampler(SamplerStrategy):
 
         return samples
 
-    def duplicate(self, domain: Domain) -> SamplerStrategy:
+    def duplicate(self, domain: Domain) -> Strategy:
         data_model = DataModel(
             domain=domain,
             sampling_fraction=self.sampling_fraction,

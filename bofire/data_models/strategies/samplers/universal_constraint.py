@@ -1,4 +1,6 @@
-from typing import Literal, Type
+from typing import Annotated, Literal, Type
+
+from pydantic import Field
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -12,10 +14,10 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     Feature,
 )
-from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.api import Strategy
 
 
-class UniversalConstraintSampler(SamplerStrategy):
+class UniversalConstraintSampler(Strategy):
     """Sampler that generates samples by optimization in IPOPT.
 
     Attributes:
