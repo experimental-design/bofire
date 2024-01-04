@@ -14,7 +14,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     Feature,
 )
-from bofire.data_models.strategies.api import Strategy
+from bofire.data_models.strategies.strategy import Strategy
 
 
 class UniversalConstraintSampler(Strategy):

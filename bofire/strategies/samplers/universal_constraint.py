@@ -3,9 +3,9 @@ import pandas as pd
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import UniversalConstraintSampler as DataModel
-from bofire.strategies.api import Strategy
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.enum import OptimalityCriterionEnum
+from bofire.strategies.strategy import Strategy
 
 
 class UniversalConstraintSampler(Strategy):
@@ -28,17 +28,19 @@ class UniversalConstraintSampler(Strategy):
         self.sampling_fraction = data_model.sampling_fraction
         self.ipopt_options = data_model.ipopt_options
 
-    def _ask(self, n: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: int) -> pd.DataFrame:
         samples = find_local_max_ipopt(
             domain=self.domain,
             model_type="linear",  # dummy model
-            n_experiments=int(n / self.sampling_fraction),
+            n_experiments=int(candidate_count / self.sampling_fraction),
             ipopt_options=self.ipopt_options,
             objective=OptimalityCriterionEnum.SPACE_FILLING,
         )
 
-        samples = samples.iloc[np.random.choice(len(samples), n, replace=False), :]
-        samples.index = range(n)
+        samples = samples.iloc[
+            np.random.choice(len(samples), candidate_count, replace=False), :
+        ]
+        samples.index = range(candidate_count)
 
         self.domain.validate_experiments(samples)
 
@@ -51,3 +53,6 @@ class UniversalConstraintSampler(Strategy):
             ipopt_options=self.ipopt_options,
         )
         return self.__class__(data_model=data_model)
+
+    def has_sufficient_experiments(self) -> bool:
+        return True
