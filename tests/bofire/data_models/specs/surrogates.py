@@ -88,6 +88,7 @@ specs.add_valid(
         "categorical_kernel": HammondDistanceKernel(ard=True),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR(),
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
         "hyperconfig": None,

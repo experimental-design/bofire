@@ -1,41 +1,37 @@
-import random
-import uuid
-
 import pytest
 from pydantic.error_wrappers import ValidationError
 
 from bofire.data_models.base import BaseModel
 
 
+class Blub(BaseModel):
+    b: str = "mama"
+
+
 class Bla(BaseModel):
-    a: int = 1
+    a: Blub
 
 
-@pytest.fixture
-def bla():
-    return Bla()
+def test_assignment_validation():
+    bla = Bla(a=Blub(b="mama"))
+    bla.a = Blub(b="papa")
+    assert bla.a == Blub(b="papa")
 
 
-@pytest.fixture
-def a():
-    return random.randint(10, 100)
-
-
-@pytest.fixture
-def b():
-    return str(uuid.uuid4())
-
-
-def test_assignment_validation(bla, a):
-    bla.a = a
-    assert bla.a == a
-
-
-def test_assignment_validation_invalid(bla, b):
+def test_assignment_validation_invalid():
+    bla = Bla(a=Blub(b="mama"))
     with pytest.raises(ValidationError):
-        bla.a = b
+        bla.a = 42.0
 
 
 def test_forbid_extra():
     with pytest.raises(ValidationError):
-        Bla(a=2, mama="papa")
+        Bla(a=Blub(b="mama"), b=5)
+
+
+def test_copy_on_validation():
+    blub = Blub(b="papa")
+    bla = Bla(a=blub)
+    assert id(blub) == id(bla.a)
+    blub.b = "lotta"
+    assert blub.b == bla.a.b == "lotta"
