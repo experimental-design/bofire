@@ -1,7 +1,5 @@
-import numpy as np
 import pandas as pd
 
-from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import UniversalConstraintSampler as DataModel
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.enum import OptimalityCriterionEnum
@@ -35,24 +33,19 @@ class UniversalConstraintSampler(Strategy):
             n_experiments=int(candidate_count / self.sampling_fraction),
             ipopt_options=self.ipopt_options,
             objective=OptimalityCriterionEnum.SPACE_FILLING,
+            fixed_experiments=self.candidates,
         )
 
-        samples = samples.iloc[
-            np.random.choice(len(samples), candidate_count, replace=False), :
-        ]
-        samples.index = range(candidate_count)
+        samples = samples.sample(
+            n=candidate_count,
+            replace=False,
+            ignore_index=True,
+            random_state=self._get_seed(),
+        )
 
         self.domain.validate_experiments(samples)
 
         return samples
-
-    def duplicate(self, domain: Domain) -> Strategy:
-        data_model = DataModel(
-            domain=domain,
-            sampling_fraction=self.sampling_fraction,
-            ipopt_options=self.ipopt_options,
-        )
-        return self.__class__(data_model=data_model)
 
     def has_sufficient_experiments(self) -> bool:
         return True
