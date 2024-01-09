@@ -1,4 +1,5 @@
 import pytest
+from pandas import concat
 
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
@@ -49,6 +50,18 @@ def test_UniversalConstraintSampler(domain, num_samples):
     sampler = strategies.UniversalConstraintSampler(data_model=data_model)
     samples = sampler.ask(num_samples)
     assert len(samples) == num_samples
+
+
+def test_UniversalConstraintSampler_pending_candidates():
+    data_model = data_models.UniversalConstraintSampler(domain=domains[0])
+    sampler = strategies.UniversalConstraintSampler(data_model=data_model)
+    pending_candidates = sampler.ask(2, add_pending=True)
+    samples = sampler.ask(1)
+    assert len(samples) == 1
+    all_samples = concat(
+        [samples, pending_candidates], axis=0, ignore_index=True
+    ).drop_duplicates()
+    assert len(all_samples) == 3
 
 
 inputs = Inputs(

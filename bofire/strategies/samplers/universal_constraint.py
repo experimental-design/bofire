@@ -30,12 +30,16 @@ class UniversalConstraintSampler(Strategy):
         samples = find_local_max_ipopt(
             domain=self.domain,
             model_type="linear",  # dummy model
-            n_experiments=int(candidate_count / self.sampling_fraction),
+            n_experiments=self.num_candidates
+            + int(candidate_count / self.sampling_fraction),
             ipopt_options=self.ipopt_options,
             objective=OptimalityCriterionEnum.SPACE_FILLING,
             fixed_experiments=self.candidates,
         )
 
+        samples = samples.iloc[
+            self.num_candidates :,
+        ]
         samples = samples.sample(
             n=candidate_count,
             replace=False,
