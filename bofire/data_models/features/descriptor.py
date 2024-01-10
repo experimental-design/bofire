@@ -169,7 +169,10 @@ class CategoricalDescriptorInput(CategoricalInput):
             return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
     def get_bounds(
-        self, transform_type: TTransform, values: Optional[pd.Series] = None
+        self,
+        transform_type: TTransform,
+        values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
@@ -242,9 +245,7 @@ class CategoricalDescriptorInput(CategoricalInput):
             pd.DataFrame: Descriptor encoded dataframe.
         """
         return pd.DataFrame(
-            data=values.map(
-                dict(zip(self.categories, self.values))
-            ).values.tolist(),  # type: ignore
+            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
             index=values.index,
         )

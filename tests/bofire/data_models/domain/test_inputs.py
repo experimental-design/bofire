@@ -942,6 +942,33 @@ def test_inputs_get_bounds(inputs, specs, expected_bounds):
     assert np.allclose(expected_bounds[1], upper)
 
 
+def test_input_get_bounds_reference_experiment():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="if1", bounds=(0, 1), local_relative_bounds=(0.2, 0.3)),
+            CategoricalInput(key="if2", categories=["a", "b"], allowed=[True, True]),
+        ]
+    )
+    specs = {
+        "if2": CategoricalEncodingEnum.ONE_HOT,
+    }
+
+    lower, upper = inputs.get_bounds(
+        specs=specs, reference_experiment=pd.Series({"if1": 0.3, "if2": "a"})
+    )
+    assert np.allclose(lower, [0.1, 0, 0])
+    assert np.allclose(upper, [0.6, 1, 1])
+    with pytest.raises(
+        ValueError,
+        match="Only one can be used, `reference_experiments` or `experiments`.",
+    ):
+        inputs.get_bounds(
+            specs=specs,
+            reference_experiment=pd.Series({"if1": 0.3, "if2": "a"}),
+            experiments=inputs.sample(3),
+        )
+
+
 def test_inputs_get_bounds_fit():
     # at first the fix on the continuous ones is tested
     inputs = Inputs(features=[if1, if2])

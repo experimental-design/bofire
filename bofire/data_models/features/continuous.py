@@ -141,16 +141,26 @@ class ContinuousInput(NumericalInput):
     def get_bounds(
         self,
         transform_type: Optional[TTransform] = None,
-        local: Optional[float] = None,
         values: Optional[pd.Series] = None,
+        reference_value: Optional[float] = None,
     ) -> Tuple[List[float], List[float]]:
         assert transform_type is None
+        if reference_value is not None and values is not None:
+            raise ValueError("Only one can be used, `local_value` or `values`.")
         if values is None:
-            if local is None:
+            if reference_value is None or self.is_fixed():
                 return [self.lower_bound], [self.upper_bound]
             else:
-                return [max(local - self.local_relative_bounds[0], self.lower_bound)], [
-                    min(local + self.local_relative_bounds[1], self.upper_bound)
+                return [
+                    max(
+                        reference_value - self.local_relative_bounds[0],
+                        self.lower_bound,
+                    )
+                ], [
+                    min(
+                        reference_value + self.local_relative_bounds[1],
+                        self.upper_bound,
+                    )
                 ]
         lower = min(self.lower_bound, values.min())  # type: ignore
         upper = max(self.upper_bound, values.max())  # type: ignore
