@@ -1,10 +1,11 @@
-from typing import ClassVar, Literal, Optional, Tuple
+import math
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, root_validator, validator
 
-from bofire.data_models.features.feature import Output
+from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
 
@@ -20,7 +21,10 @@ class ContinuousInput(NumericalInput):
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
-    bounds: Tuple[float, float]
+    bounds: Tuple[float, float] = Field(description="mama")
+    local_relative_bounds: Tuple[
+        Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]
+    ] = (math.inf, math.inf)
     stepsize: Optional[float] = None
 
     @property
@@ -65,7 +69,7 @@ class ContinuousInput(NumericalInput):
         allowed_values = np.arange(
             self.lower_bound, self.upper_bound + self.stepsize, self.stepsize
         )
-        idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(
+        idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(  # type: ignore
             axis=1
         )
         return pd.Series(
@@ -133,6 +137,24 @@ class ContinuousInput(NumericalInput):
                 self.lower_bound, self.upper_bound, n
             ),
         )
+
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        local: Optional[float] = None,
+        values: Optional[pd.Series] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert transform_type is None
+        if values is None:
+            if local is None:
+                return [self.lower_bound], [self.upper_bound]
+            else:
+                return [max(local - self.local_relative_bounds[0], self.lower_bound)], [
+                    min(local + self.local_relative_bounds[1], self.upper_bound)
+                ]
+        lower = min(self.lower_bound, values.min())  # type: ignore
+        upper = max(self.upper_bound, values.max())  # type: ignore
+        return [lower], [upper]
 
     def __str__(self) -> str:
         """Method to return a string of lower and upper bound
