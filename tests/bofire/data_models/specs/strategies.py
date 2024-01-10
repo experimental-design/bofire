@@ -150,6 +150,15 @@ specs.add_valid(
         "seed": 42,
     },
 )
+specs.add_valid(
+    strategies.UniversalConstraintSampler,
+    lambda: {
+        "domain": domain.valid().obj().dict(),
+        "sampling_fraction": 0.3,
+        "ipopt_options": {"maxiter": 200, "disp": 0},
+        "seed": 42,
+    },
+)
 
 tempdomain = domain.valid().obj()
 
