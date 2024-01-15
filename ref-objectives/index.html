@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
     
     
       
@@ -581,15 +581,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.identity.IdentityObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.objectives.identity.IdentityObjective.validate_lower_upper" class="md-nav__link">
     <span class="md-ellipsis">
       validate_lower_upper()
@@ -610,21 +601,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="MaximizeObjective">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.identity.MaximizeObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -641,15 +617,6 @@
   <a href="#bofire.data_models.objectives.identity.MinimizeObjective.__call__" class="md-nav__link">
     <span class="md-ellipsis">
       __call__()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.identity.MinimizeObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
     </span>
   </a>
   
@@ -703,15 +670,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.objective.Objective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -751,15 +709,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.sigmoid.MaximizeSigmoidObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -784,15 +733,6 @@
   
 </li>
         
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.sigmoid.MinimizeSigmoidObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
       </ul>
     </nav>
   
@@ -804,21 +744,6 @@
       SigmoidObjective
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="SigmoidObjective">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.sigmoid.SigmoidObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
         
@@ -844,21 +769,6 @@
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="CloseToTargetObjective">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.target.CloseToTargetObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
         
           <li class="md-nav__item">
@@ -875,15 +785,6 @@
   <a href="#bofire.data_models.objectives.target.TargetObjective.__call__" class="md-nav__link">
     <span class="md-ellipsis">
       __call__()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.objectives.target.TargetObjective.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
     </span>
   </a>
   
@@ -1053,9 +954,6 @@ IdentityObjective            (<a class="autorefs autorefs-internal" title="bofir
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -1109,8 +1007,9 @@ The return can be scaled, when a lower and upper bound are provided.</p>
     <span class="k">def</span> <span class="nf">upper_bound</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 
-    <span class="nd">@root_validator</span><span class="p">(</span><span class="n">pre</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_on_failure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_lower_upper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;bounds&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_lower_upper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validation function to ensure that lower bound is always greater the upper bound</span>
 
 <span class="sd">        Args:</span>
@@ -1122,11 +1021,11 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 <span class="sd">        Returns:</span>
 <span class="sd">            Dict: The attributes of the class</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s1">&#39;lower bound must be &lt;= upper bound, got </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &gt; </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+                <span class="sa">f</span><span class="s2">&quot;lower bound must be &lt;= upper bound, got </span><span class="si">{</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="p">)</span>
-        <span class="k">return</span> <span class="n">values</span>
+        <span class="k">return</span> <span class="n">bounds</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
@@ -1144,6 +1043,17 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 
 
   <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1233,33 +1143,8 @@ The return can be scaled, when a lower and upper bound are provided.</p>
 
 
 
-<h4 id="bofire.data_models.objectives.identity.IdentityObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
 <h4 id="bofire.data_models.objectives.identity.IdentityObjective.validate_lower_upper" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_lower_upper</span><span class="p">(</span><span class="n">values</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">validate_lower_upper</span><span class="p">(</span><span class="n">bounds</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
@@ -1322,8 +1207,9 @@ of the given arguments and keywords.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/identity.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@root_validator</span><span class="p">(</span><span class="n">pre</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">skip_on_failure</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_lower_upper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;bounds&quot;</span><span class="p">)</span>
+<span class="nd">@classmethod</span>
+<span class="k">def</span> <span class="nf">validate_lower_upper</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">bounds</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validation function to ensure that lower bound is always greater the upper bound</span>
 
 <span class="sd">    Args:</span>
@@ -1335,11 +1221,11 @@ of the given arguments and keywords.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Dict: The attributes of the class</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;bounds&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;lower bound must be &lt;= upper bound, got </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1"> &gt; </span><span class="si">{</span><span class="n">values</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span>
+            <span class="sa">f</span><span class="s2">&quot;lower bound must be &lt;= upper bound, got </span><span class="si">{</span><span class="n">bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> &gt; </span><span class="si">{</span><span class="n">bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
-    <span class="k">return</span> <span class="n">values</span>
+    <span class="k">return</span> <span class="n">bounds</span>
 </code></pre></div>
         </details>
     </div>
@@ -1368,9 +1254,6 @@ MaximizeObjective            (<a class="autorefs autorefs-internal" title="bofir
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -1427,28 +1310,16 @@ MaximizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 
 
 
-  <div class="doc doc-object doc-method">
 
 
 
-<h4 id="bofire.data_models.objectives.identity.MaximizeObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
 
-</h4>
 
-    <div class="doc doc-contents ">
 
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
 
-    </div>
 
-  </div>
+
 
 
 
@@ -1472,9 +1343,6 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -1532,6 +1400,19 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 
 
   <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1607,31 +1488,6 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
     <span class="k">return</span> <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>
 </code></pre></div>
         </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.identity.MinimizeObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
     </div>
 
   </div>
@@ -1727,9 +1583,6 @@ Objective            (<span title="bofire.data_models.base.BaseModel">BaseModel<
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -1761,6 +1614,18 @@ Objective            (<span title="bofire.data_models.base.BaseModel">BaseModel<
 
 
   <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1844,31 +1709,6 @@ Objective            (<span title="bofire.data_models.base.BaseModel">BaseModel<
 
 
 
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.objective.Objective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
-
-
-
 
 
   </div>
@@ -1925,9 +1765,6 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -1992,6 +1829,19 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
 
   <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2073,31 +1923,6 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
 
 
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.sigmoid.MaximizeSigmoidObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
-
-
-
 
 
   </div>
@@ -2118,9 +1943,6 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -2184,6 +2006,19 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
 
   <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -2265,31 +2100,6 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
 
 
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.sigmoid.MinimizeSigmoidObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
-
-
-
 
 
   </div>
@@ -2310,9 +2120,6 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -2380,28 +2187,13 @@ SigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire
 
 
 
-  <div class="doc doc-object doc-method">
 
 
 
-<h4 id="bofire.data_models.objectives.sigmoid.SigmoidObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
 
-</h4>
 
-    <div class="doc doc-contents ">
 
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
 
 
 
@@ -2461,9 +2253,6 @@ CloseToTargetObjective            (<a class="autorefs autorefs-internal" title="
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -2538,28 +2327,13 @@ in multiobjective scenarios.</p>
 
 
 
-  <div class="doc doc-object doc-method">
 
 
 
-<h4 id="bofire.data_models.objectives.target.CloseToTargetObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
 
-</h4>
 
-    <div class="doc doc-contents ">
 
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
 
 
 
@@ -2583,9 +2357,6 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h3>
 
@@ -2692,6 +2463,15 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 
 
 
+
+
+
+
+
+
+
+
+
   <div class="doc doc-object doc-method">
 
 
@@ -2781,31 +2561,6 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
 
 
 
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.objectives.target.TargetObjective.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
-
-
-
 
 
   </div>
@@ -2880,10 +2635,10 @@ of the given arguments and keywords.</p>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../assets/javascripts/bundle.7389ff0e.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       

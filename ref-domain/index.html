@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
     
     
       
@@ -538,15 +538,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.domain.domain.Domain.__json_encoder__" class="md-nav__link">
-    <span class="md-ellipsis">
-      __json_encoder__()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.domain.domain.Domain.aggregate_by_duplicates" class="md-nav__link">
     <span class="md-ellipsis">
       aggregate_by_duplicates()
@@ -655,9 +646,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.domain.domain.Domain.validate_linear_constraints" class="md-nav__link">
+  <a href="#bofire.data_models.domain.domain.Domain.validate_linear_constraints_and_nchoosek" class="md-nav__link">
     <span class="md-ellipsis">
-      validate_linear_constraints()
+      validate_linear_constraints_and_nchoosek()
     </span>
   </a>
   
@@ -845,9 +836,6 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         </code>
 
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-pydantic-model"><code>pydantic-model</code></small>
-  </span>
 
 </h2>
 
@@ -861,7 +849,6 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="n">inputs</span><span class="p">:</span> <span class="n">Inputs</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Inputs</span><span class="p">())</span>
     <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">())</span>
-
     <span class="n">constraints</span><span class="p">:</span> <span class="n">Constraints</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">Constraints</span><span class="p">())</span>
 
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Representation of the optimization problem/domain</span>
@@ -888,8 +875,9 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="n">constraints</span><span class="o">=</span><span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">constraints</span><span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;inputs&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_inputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;inputs&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_inputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">v</span> <span class="o">=</span> <span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">v</span>
@@ -898,8 +886,9 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_outputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_outputs_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyOutput</span><span class="p">):</span>
@@ -907,8 +896,9 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_constraints_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_constraints_list</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyConstraint</span><span class="p">):</span>
@@ -916,8 +906,8 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">else</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Outputs</span><span class="p">:</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">        Args:</span>
@@ -930,16 +920,14 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">        Returns:</span>
 <span class="sd">            Outputs: Keeps output features as given.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
-        <span class="n">features</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;feature keys are not unique&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">v</span>
 
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Feature keys are not unique&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
 
 <span class="sd">        Args:</span>
@@ -952,18 +940,17 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Constraint]: List of constraints defined for the domain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]]</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">):</span>
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
                         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> in constraint unknown (</span><span class="si">{</span><span class="n">keys</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_linear_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_linear_constraints_and_nchoosek</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
 
 <span class="sd">        Args:</span>
@@ -977,21 +964,13 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">        Returns:</span>
 <span class="sd">           List[Constraint]: List of constraints defined for the domain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
-
-        <span class="c1"># gather continuous inputs in dictionary</span>
-        <span class="n">continuous_inputs_dict</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
-                <span class="n">continuous_inputs_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
 
         <span class="c1"># check if non continuous input features appear in linear constraints</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
-                <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
-                    <span class="k">assert</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_inputs_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-        <span class="k">return</span> <span class="n">v</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">]):</span>
+            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+                <span class="k">assert</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">get_feature_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns a pandas dataframe describing the features contained in the optimization domain.&quot;&quot;&quot;</span>
@@ -1420,21 +1399,24 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                 <span class="k">for</span> <span class="n">output_feature_key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span><span class="n">Objective</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_set_constraints_unvalidated</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">constraints</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">],</span> <span class="n">Constraints</span><span class="p">]</span>
-    <span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Hack for reduce_domain&quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[])</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraints</span><span class="p">,</span> <span class="n">Constraints</span><span class="p">):</span>
-            <span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">constraints</span>
 </code></pre></div>
         </details>
 
 
 
   <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1479,7 +1461,6 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 
 
-
   <div class="doc doc-object doc-attribute">
 
 
@@ -1520,33 +1501,6 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 
 
-
-
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.data_models.domain.domain.Domain.__json_encoder__" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">__json_encoder__</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-special"><code>special</code></small>
-      <small class="doc doc-property doc-property-staticmethod"><code>staticmethod</code></small>
-  </span>
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>partial(func, <em>args, </em>*keywords) - new function with partial application
-of the given arguments and keywords.</p>
-
-    </div>
-
-  </div>
 
 
 
@@ -2514,11 +2468,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 
 <h3 id="bofire.data_models.domain.domain.Domain.validate_constraints" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_constraints</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
 
 </h3>
 
@@ -2583,8 +2534,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
 
 <span class="sd">    Args:</span>
@@ -2597,15 +2548,14 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Constraint]: List of constraints defined for the domain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">v</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]]</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
                     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> in constraint unknown (</span><span class="si">{</span><span class="n">keys</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">v</span>
+    <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div>
         </details>
     </div>
@@ -2771,12 +2721,9 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 
 
-<h3 id="bofire.data_models.domain.domain.Domain.validate_linear_constraints" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_linear_constraints</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+<h3 id="bofire.data_models.domain.domain.Domain.validate_linear_constraints_and_nchoosek" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_linear_constraints_and_nchoosek</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
 
 </h3>
 
@@ -2841,8 +2788,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_linear_constraints</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_linear_constraints_and_nchoosek</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
 
 <span class="sd">    Args:</span>
@@ -2856,21 +2803,13 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">       List[Constraint]: List of constraints defined for the domain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">v</span>
-
-    <span class="c1"># gather continuous inputs in dictionary</span>
-    <span class="n">continuous_inputs_dict</span> <span class="o">=</span> <span class="p">{}</span>
-    <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">ContinuousInput</span><span class="p">):</span>
-            <span class="n">continuous_inputs_dict</span><span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">f</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
 
     <span class="c1"># check if non continuous input features appear in linear constraints</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">v</span><span class="p">:</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
-                <span class="k">assert</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">continuous_inputs_dict</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-    <span class="k">return</span> <span class="n">v</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">]):</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+            <span class="k">assert</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
+    <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div>
         </details>
     </div>
@@ -2885,11 +2824,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 
 <h3 id="bofire.data_models.domain.domain.Domain.validate_unique_feature_keys" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_unique_feature_keys</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
 
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
 
 </h3>
 
@@ -2954,8 +2890,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@validator</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span> <span class="n">always</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">v</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Outputs</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validates if provided input and output feature keys are unique</span>
 
 <span class="sd">    Args:</span>
@@ -2968,13 +2904,11 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        Outputs: Keeps output features as given.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">v</span>
-    <span class="n">features</span> <span class="o">=</span> <span class="n">v</span> <span class="o">+</span> <span class="n">values</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">f</span><span class="o">.</span><span class="n">key</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;feature keys are not unique&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">v</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Feature keys are not unique&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div>
         </details>
     </div>
@@ -3050,10 +2984,10 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../assets/javascripts/bundle.7389ff0e.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       

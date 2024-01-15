@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.3">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.4">
     
     
       
@@ -2324,7 +2324,7 @@ are the corresponding coefficients.</p></td>
         <span class="n">B</span><span class="p">[</span><span class="n">p</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">A_aug_rref</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span>
 
     <span class="c1"># build up reduced domain</span>
-    <span class="n">_domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">construct</span><span class="p">(</span>
+    <span class="n">_domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">model_construct</span><span class="p">(</span>
         <span class="c1"># _fields_set = {&quot;inputs&quot;, &quot;outputs&quot;, &quot;constraints&quot;}</span>
         <span class="n">inputs</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">other_inputs</span><span class="p">),</span>
         <span class="n">outputs</span><span class="o">=</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="p">),</span>
@@ -2335,7 +2335,7 @@ are the corresponding coefficients.</p></td>
     <span class="p">]</span>
     <span class="n">all_inputs</span> <span class="o">=</span> <span class="n">_domain</span><span class="o">.</span><span class="n">inputs</span> <span class="o">+</span> <span class="n">new_inputs</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">all_inputs</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
-    <span class="n">_domain</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">all_inputs</span>
+    <span class="n">_domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">features</span> <span class="o">=</span> <span class="n">all_inputs</span><span class="o">.</span><span class="n">features</span>
 
     <span class="n">constraints</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">pivots</span><span class="p">:</span>
@@ -2380,7 +2380,7 @@ are the corresponding coefficients.</p></td>
                 <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">_domain</span><span class="o">.</span><span class="n">_set_constraints_unvalidated</span><span class="p">(</span><span class="n">_domain</span><span class="o">.</span><span class="n">constraints</span> <span class="o">+</span> <span class="n">constraints</span><span class="p">)</span>
+        <span class="n">_domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">_domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span> <span class="o">+</span> <span class="n">constraints</span>  <span class="c1"># type: ignore</span>
 
     <span class="c1"># assemble equalities</span>
     <span class="n">_equalities</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3718,10 +3718,10 @@ be processed.</p></td>
     </div>
     
     
-    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.f886a092.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.c011b7c0.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.d7c377c4.min.js"></script>
+      <script src="../assets/javascripts/bundle.7389ff0e.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
