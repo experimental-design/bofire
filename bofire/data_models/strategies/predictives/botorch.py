@@ -83,9 +83,6 @@ class BotorchStrategy(PredictiveStrategy):
                     )
         # we also check that if a categorical with descriptor method is used as one hot encoded the same method is
         # used for the descriptor as for the categoricals
-        # descriptor_method = (
-        #   self.["descriptor_method"] if "descriptor_method" in values else None
-        # )
         for m in self.surrogate_specs.surrogates:
             keys = m.inputs.get_keys(CategoricalDescriptorInput)
             for k in keys:
@@ -136,7 +133,7 @@ class BotorchStrategy(PredictiveStrategy):
                         inputs=domain.inputs,
                         outputs=Outputs(
                             features=[domain.outputs.get_by_key(output_feature)]  # type: ignore
-                        ),  # type: ignore
+                        ),
                     )
                 )
             else:
@@ -147,7 +144,7 @@ class BotorchStrategy(PredictiveStrategy):
                             features=[
                                 domain.outputs.get_by_key(output_feature)  # type:ignore
                             ]
-                        ),  # type: ignore
+                        ),
                     )
                 )
         surrogate_specs.surrogates = _surrogate_specs

@@ -8,9 +8,9 @@ from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurr
 
 class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SaasSingleTaskGPSurrogate"] = "SaasSingleTaskGPSurrogate"
-    warmup_steps: Annotated[int, Field(ge=1)] = 256  # type: ignore
-    num_samples: Annotated[int, Field(ge=1)] = 128  # type: ignore
-    thinning: Annotated[int, Field(ge=1)] = 16  # type: ignore
+    warmup_steps: Annotated[int, Field(ge=1)] = 256
+    num_samples: Annotated[int, Field(ge=1)] = 128
+    thinning: Annotated[int, Field(ge=1)] = 16
 
     @field_validator("thinning")
     @classmethod

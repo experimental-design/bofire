@@ -76,13 +76,13 @@ class NChooseKConstraint(IntrapointConstraint):
             max_count_violation = relu(
                 -1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
                 + (len(self.features) - self.max_count)
-            )  # type: ignore
+            )
 
         if self.min_count > 0:
             min_count_violation = relu(
                 narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
                 - (len(self.features) - self.min_count)
-            )  # type: ignore
+            )
 
         return pd.Series(max_count_violation + min_count_violation)
 
