@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Type
 
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import Output
@@ -10,7 +10,8 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 class PredictiveStrategy(Strategy):
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_objectives(cls, domain: Domain):
         """Validator to ensure that all objectives defined in the domain are valid for the chosen strategy
 
@@ -45,7 +46,8 @@ class PredictiveStrategy(Strategy):
         """
         pass
 
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_output_feature_count(cls, domain: Domain):
         """Validator to ensure that at least one output feature with attached objective is defined.
 

@@ -8,6 +8,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.surrogates.api import BotorchSurrogates
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -21,7 +22,7 @@ strategy_commons = {
     "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
     "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "surrogate_specs": None,
+    "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
     "outlier_detection_specs": None,
     "seed": 42,
     "min_experiments_before_outlier_check": 1,
@@ -34,14 +35,14 @@ strategy_commons = {
 specs.add_valid(
     strategies.QehviStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
     },
 )
 specs.add_valid(
     strategies.QnehviStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
         "alpha": 0.4,
     },
@@ -49,16 +50,16 @@ specs.add_valid(
 specs.add_valid(
     strategies.QparegoStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
-        "acquisition_function": qEI().dict(),
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qEI().model_dump(),
         **strategy_commons,
     },
 )
 specs.add_valid(
     strategies.MoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
-        "acquisition_function": qLogNEHVI().dict(),
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
         **strategy_commons,
     },
 )
@@ -68,16 +69,16 @@ specs.add_valid(
         "domain": Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
-        ),
+        ).model_dump(),
         **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
 specs.add_valid(
     strategies.AdditiveSoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
         "use_output_constraints": True,
         **strategy_commons,
     },
@@ -85,24 +86,24 @@ specs.add_valid(
 specs.add_valid(
     strategies.MultiplicativeSoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
 specs.add_valid(
     strategies.CustomSoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
         "use_output_constraints": True,
     },
 )
 specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         "seed": 42,
     },
 )
@@ -116,7 +117,7 @@ specs.add_valid(
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
                 ]
             ),
-        ),
+        ).model_dump(),
         "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
         "seed": 42,
         "n_burnin": 1000,
@@ -132,7 +133,7 @@ specs.add_valid(
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
                 ]
             )
-        ),
+        ).model_dump(),
         "max_iters": 1000,
         "num_base_samples": 1000,
         "sampling_method": SamplingMethodEnum.UNIFORM,
@@ -142,7 +143,7 @@ specs.add_valid(
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         "formula": "linear",
         "optimization_strategy": "default",
         "verbose": False,
@@ -159,25 +160,25 @@ specs.add_valid(
     },
 )
 
-tempdomain = domain.valid().obj().dict()
+tempdomain = domain.valid().obj()
 
 specs.add_valid(
     strategies.StepwiseStrategy,
     lambda: {
-        "domain": tempdomain,
+        "domain": tempdomain.model_dump(),
         "steps": [
             strategies.Step(
                 strategy_data=strategies.RandomStrategy(domain=tempdomain),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
                 max_parallelism=2,
-            ).dict(),
+            ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(
                     domain=tempdomain,
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
                 max_parallelism=2,
-            ).dict(),
+            ).model_dump(),
         ],
         "seed": 42,
     },
@@ -194,7 +195,7 @@ specs.add_valid(
                     DiscreteInput(key="beta", values=[1.0, 2, 3.0, 4.0]),
                 ]
             )
-        ),
+        ).model_dump(),
         "seed": 42,
     },
 )

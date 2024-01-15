@@ -38,7 +38,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             CategoricalInput(key="ard", categories=["True", "False"]),
         ]
     )
-    target_metric = RegressionMetricsEnum.MAE
+    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal[
         "FactorialStrategy", "SoboStrategy", "RandomStrategy"
     ] = "FactorialStrategy"

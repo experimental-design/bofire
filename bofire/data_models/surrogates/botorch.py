@@ -1,4 +1,4 @@
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
@@ -12,9 +12,10 @@ from bofire.data_models.surrogates.surrogate import Surrogate
 
 
 class BotorchSurrogate(Surrogate):
-    @validator("input_preprocessing_specs", always=True)
-    def validate_input_preprocessing_specs(cls, v, values):
-        inputs = values["inputs"]
+    @field_validator("input_preprocessing_specs")
+    @classmethod
+    def validate_input_preprocessing_specs(cls, v, info):
+        inputs = info.data["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
         descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)
         molecular_keys = inputs.get_keys(MolecularInput, exact=True)

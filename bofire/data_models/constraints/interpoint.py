@@ -28,7 +28,7 @@ class InterpointEqualityConstraint(InterpointConstraint):
 
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
     feature: str
-    multiplicity: Optional[Annotated[int, Field(ge=2)]]
+    multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
 
     def is_fulfilled(
         self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6

@@ -54,3 +54,12 @@ specs.add_valid(
         "multiplicity": 3,
     },
 )
+
+specs.add_invalid(
+    constraints.InterpointEqualityConstraint,
+    lambda: {
+        "feature": "f1",
+        "multiplicity": 1,
+    },
+    error=ValueError,
+)

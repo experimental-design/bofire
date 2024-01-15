@@ -180,7 +180,7 @@ class Strategy(ABC):
         return [
             Candidate(
                 inputValues={
-                    key: InputValue(value=row[key])
+                    key: InputValue(value=str(row[key]))
                     for key in self.domain.inputs.get_keys()
                 },
             )

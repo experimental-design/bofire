@@ -72,5 +72,5 @@ class ConstraintNotFulfilledError(ConstraintError):
     pass
 
 
-FeatureKeys = Annotated[List[str], Field(min_items=2)]
-Coefficients = Annotated[List[float], Field(min_items=2)]
+FeatureKeys = Annotated[List[str], Field(min_length=2)]
+Coefficients = Annotated[List[float], Field(min_length=2)]

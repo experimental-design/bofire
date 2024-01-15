@@ -55,5 +55,5 @@ class ScaleKernel(Kernel):
     outputscale_prior: Optional[AnyPrior] = None
 
 
-AdditiveKernel.update_forward_refs()
-MultiplicativeKernel.update_forward_refs()
+AdditiveKernel.model_rebuild()
+MultiplicativeKernel.model_rebuild()
