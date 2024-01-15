@@ -38,6 +38,10 @@ class BotorchStrategy(PredictiveStrategy):
     # hyperopt params
     frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
+    # local search region params
+    gamma: Optional[Annotated[float, Field(gt=0.0)]] = None
+
+    # TODO: add validators for gamma, should happen in pyantic2 stlye
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -132,14 +136,18 @@ class BotorchStrategy(PredictiveStrategy):
                 _surrogate_specs.append(
                     MixedSingleTaskGPSurrogate(
                         inputs=domain.inputs,
-                        outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
+                        outputs=Outputs(
+                            features=[domain.outputs.get_by_key(output_feature)]
+                        ),  # type: ignore
                     )
                 )
             else:
                 _surrogate_specs.append(
                     SingleTaskGPSurrogate(
                         inputs=domain.inputs,
-                        outputs=Outputs(features=[domain.outputs.get_by_key(output_feature)]),  # type: ignore
+                        outputs=Outputs(
+                            features=[domain.outputs.get_by_key(output_feature)]
+                        ),  # type: ignore
                     )
                 )
         surrogate_specs = BotorchSurrogates(surrogates=_surrogate_specs)  # type: ignore

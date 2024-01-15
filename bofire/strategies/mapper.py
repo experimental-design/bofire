@@ -1,29 +1,28 @@
 from typing import Dict, Type
 
 import bofire.data_models.strategies.api as data_models
-from bofire.strategies.doe_strategy import DoEStrategy  # noqa: F401
+from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.factorial import FactorialStrategy
-from bofire.strategies.predictives.botorch import BotorchStrategy  # noqa: F401
+from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.predictives.mobo import MoboStrategy
-from bofire.strategies.predictives.predictive import PredictiveStrategy  # noqa: F401
-from bofire.strategies.predictives.qehvi import QehviStrategy  # noqa: F401
-from bofire.strategies.predictives.qnehvi import QnehviStrategy  # noqa: F401
-from bofire.strategies.predictives.qparego import QparegoStrategy  # noqa: F401
-from bofire.strategies.predictives.sobo import (  # noqa: F401
+from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.strategies.predictives.qehvi import QehviStrategy
+from bofire.strategies.predictives.qnehvi import QnehviStrategy
+from bofire.strategies.predictives.qparego import QparegoStrategy
+from bofire.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
     CustomSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
-from bofire.strategies.random import RandomStrategy  # noqa: F401
-from bofire.strategies.samplers.polytope import PolytopeSampler  # noqa: F401
-from bofire.strategies.samplers.rejection import RejectionSampler  # noqa: F401
-from bofire.strategies.samplers.sampler import SamplerStrategy  # noqa: F401
-from bofire.strategies.samplers.universal_constraint import (  # noqa: F401
-    UniversalConstraintSampler,
-)
+from bofire.strategies.random import RandomStrategy
+from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.strategies.samplers.rejection import RejectionSampler
+from bofire.strategies.samplers.sampler import SamplerStrategy
+from bofire.strategies.samplers.universal_constraint import UniversalConstraintSampler
+from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.stepwise.stepwise import StepwiseStrategy
-from bofire.strategies.strategy import Strategy  # noqa: F401
+from bofire.strategies.strategy import Strategy
 
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.RandomStrategy: RandomStrategy,
@@ -41,6 +40,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.StepwiseStrategy: StepwiseStrategy,
     data_models.FactorialStrategy: FactorialStrategy,
     data_models.MoboStrategy: MoboStrategy,
+    data_models.ShortestPathStrategy: ShortestPathStrategy,
 }
 
 
