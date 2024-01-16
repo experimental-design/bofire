@@ -32,8 +32,11 @@ of2 = specs.features.valid(ContinuousOutput).obj(key="of2")
 of3 = specs.features.valid(ContinuousOutput).obj(key="of3", objective=None)
 
 inputs = Inputs(features=[if1, if2])
+inputs2 = Inputs(features=[if3, if4])
 outputs = Outputs(features=[of1, of2])
+outputs2 = Outputs(features=[of3])
 features = Features(features=[if1, if2, of1, of2])
+features2 = Features(features=[if3, if4, of3])
 
 
 @pytest.mark.parametrize(
@@ -69,14 +72,14 @@ def test_features_invalid_feature(FeatureContainer, features):
 @pytest.mark.parametrize(
     "features1, features2, expected_type",
     [
-        [inputs, inputs, Inputs],
-        [outputs, outputs, Outputs],
+        [inputs, inputs2, Inputs],
+        [outputs, outputs2, Outputs],
         [inputs, outputs, Features],
         [outputs, inputs, Features],
-        [features, outputs, Features],
-        [features, inputs, Features],
-        [outputs, features, Features],
-        [inputs, features, Features],
+        [features2, outputs, Features],
+        [features2, inputs, Features],
+        [outputs, features2, Features],
+        [inputs, features2, Features],
     ],
 )
 def test_features_plus(features1, features2, expected_type):

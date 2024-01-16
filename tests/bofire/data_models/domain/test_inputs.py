@@ -404,10 +404,10 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
         (
             {"x2": CategoricalEncodingEnum.ONE_HOT, "x4": Fingerprints(n_bits=2048)},
             {
-                "x1": (2048,),
-                "x2": (2050, 2051, 2052),
-                "x3": (2049,),
-                "x4": tuple(range(2048)),
+                "x1": (0,),
+                "x2": (2, 3, 4),
+                "x3": (1,),
+                "x4": tuple(range(5, 5 + 2048)),
             },
             {
                 "x1": ("x1",),
@@ -421,7 +421,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 "x2": CategoricalEncodingEnum.DUMMY,
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
-            {"x1": (2,), "x2": (4, 5), "x3": (3,), "x4": (0, 1)},
+            {"x1": (0,), "x2": (2, 3), "x3": (1,), "x4": (4, 5)},
             {
                 "x1": ("x1",),
                 "x2": ("x2_banana", "x2_orange"),
@@ -437,10 +437,10 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 ),
             },
             {
-                "x1": (2050,),
-                "x2": (2052,),
-                "x3": (2051,),
-                "x4": tuple(range(2048 + 2)),
+                "x1": (0,),
+                "x2": (2,),
+                "x3": (1,),
+                "x4": tuple(range(3, 2048 + 2 + 3)),
             },
             {
                 "x1": ("x1",),
@@ -457,7 +457,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 "x3": CategoricalEncodingEnum.ONE_HOT,
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
-            {"x1": (2,), "x2": (7,), "x3": (3, 4, 5, 6), "x4": (0, 1)},
+            {"x1": (0,), "x2": (5,), "x3": (1, 2, 3, 4), "x4": (6, 7)},
             {
                 "x1": ("x1",),
                 "x2": ("x2",),
@@ -471,7 +471,7 @@ def test_inputs_validate_transform_specs_molecular_input_valid(specs):
                 "x3": CategoricalEncodingEnum.DESCRIPTOR,
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
-            {"x1": (2,), "x2": (5, 6, 7), "x3": (3, 4), "x4": (0, 1)},
+            {"x1": (0,), "x2": (3, 4, 5), "x3": (1, 2), "x4": (6, 7)},
             {
                 "x1": ("x1",),
                 "x2": ("x2_apple", "x2_banana", "x2_orange"),
@@ -587,6 +587,11 @@ def test_input_reverse_transform_molecular():
         (
             {"x2": CategoricalEncodingEnum.ONE_HOT, "x4": Fingerprints(n_bits=32)},
             {
+                "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
+                "x3": {0: "banana", 1: "orange", 2: "apple", 3: "cherry"},
+                "x2_apple": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x2_banana": {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x2_orange": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
                 "x4_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
                 "x4_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
                 "x4_fingerprint_2": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
@@ -619,11 +624,6 @@ def test_input_reverse_transform_molecular():
                 "x4_fingerprint_29": {0: 1.0, 1: 0.0, 2: 0.0, 3: 1.0},
                 "x4_fingerprint_30": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
                 "x4_fingerprint_31": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
-                "x3": {0: "banana", 1: "orange", 2: "apple", 3: "cherry"},
-                "x2_apple": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
-                "x2_banana": {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0},
-                "x2_orange": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
             },
         ),
         (
@@ -632,12 +632,12 @@ def test_input_reverse_transform_molecular():
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
             {
-                "x4_fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "x4_fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
                 "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
                 "x3": {0: "banana", 1: "orange", 2: "apple", 3: "cherry"},
                 "x2_banana": {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0},
                 "x2_orange": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
+                "x4_fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
+                "x4_fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
             },
         ),
         (
@@ -648,6 +648,9 @@ def test_input_reverse_transform_molecular():
                 ),
             },
             {
+                "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
+                "x3": {0: "banana", 1: "orange", 2: "apple", 3: "cherry"},
+                "x2": {0: 0, 1: 1, 2: 0, 3: 2},
                 "x4_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
                 "x4_fingerprint_1": {0: 1.0, 1: 0.0, 2: 1.0, 3: 1.0},
                 "x4_fingerprint_2": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
@@ -682,9 +685,6 @@ def test_input_reverse_transform_molecular():
                 "x4_fingerprint_31": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
                 "x4_fr_unbrch_alkane": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
                 "x4_fr_thiocyan": {0: 0.0, 1: 0.0, 2: 0.0, 3: 0.0},
-                "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
-                "x3": {0: "banana", 1: "orange", 2: "apple", 3: "cherry"},
-                "x2": {0: 0, 1: 1, 2: 0, 3: 2},
             },
         ),
         (
@@ -694,6 +694,12 @@ def test_input_reverse_transform_molecular():
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             {
+                "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
+                "x3_d1": {0: 3.0, 1: 5.0, 2: 1.0, 3: 7.0},
+                "x3_d2": {0: 4.0, 1: 6.0, 2: 2.0, 3: 8.0},
+                "x2_apple": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
+                "x2_banana": {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0},
+                "x2_orange": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
                 "x4_NssCH2": {
                     0: 0.5963718820861676,
                     1: -1.5,
@@ -701,12 +707,6 @@ def test_input_reverse_transform_molecular():
                     3: -8.34319526627219,
                 },
                 "x4_ATSC2d": {0: 0.0, 1: 0.0, 2: 1.0, 3: 0.0},
-                "x1": {0: 0.1, 1: 0.3, 2: 0.5, 3: 1.0},
-                "x3_d1": {0: 3.0, 1: 5.0, 2: 1.0, 3: 7.0},
-                "x3_d2": {0: 4.0, 1: 6.0, 2: 2.0, 3: 8.0},
-                "x2_apple": {0: 1.0, 1: 0.0, 2: 1.0, 3: 0.0},
-                "x2_banana": {0: 0.0, 1: 1.0, 2: 0.0, 3: 0.0},
-                "x2_orange": {0: 0.0, 1: 0.0, 2: 0.0, 3: 1.0},
             },
         ),
     ],

@@ -3,7 +3,7 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
@@ -35,23 +35,23 @@ class ContinuousInput(NumericalInput):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
-    @validator("stepsize")
-    def validate_step_size(cls, v, values):
-        if v is None:
-            return v
-        lower, upper = values["bounds"]
-        if lower == upper and v is not None:
+    @model_validator(mode="after")
+    def validate_step_size(self):
+        if self.stepsize is None:
+            return self
+        lower, upper = self.bounds
+        if lower == upper and self.stepsize is not None:
             raise ValueError(
                 "Stepsize cannot be provided for a fixed continuous input."
             )
         range = upper - lower
-        if np.arange(lower, upper + v, v)[-1] != upper:
+        if np.arange(lower, upper + self.stepsize, self.stepsize)[-1] != upper:
             raise ValueError(
-                f"Stepsize of {v} does not match the provided interval [{lower},{upper}]."
+                f"Stepsize of {self.stepsize} does not match the provided interval [{lower},{upper}]."
             )
-        if range // v == 1:
+        if range // self.stepsize == 1:
             raise ValueError("Stepsize is too big, only one value allowed.")
-        return v
+        return self
 
     def round(self, values: pd.Series) -> pd.Series:
         """Round values to the stepsize of the feature. If no stepsize is provided return the
@@ -76,8 +76,9 @@ class ContinuousInput(NumericalInput):
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
 
-    @root_validator(pre=False, skip_on_failure=True)
-    def validate_lower_upper(cls, values):
+    @field_validator("bounds")
+    @classmethod
+    def validate_lower_upper(cls, bounds):
         """Validates that the lower bound is lower than the upper bound
 
         Args:
@@ -89,11 +90,11 @@ class ContinuousInput(NumericalInput):
         Returns:
             Dict: The attributes as dictionary
         """
-        if values["bounds"][0] > values["bounds"][1]:
+        if bounds[0] > bounds[1]:
             raise ValueError(
-                f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
+                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
             )
-        return values
+        return bounds
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates

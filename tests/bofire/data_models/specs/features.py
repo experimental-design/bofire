@@ -120,14 +120,7 @@ specs.add_valid(
     },
 )
 
-specs.add_valid(
-    features.CategoricalOutput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "categories": ["a", "b", "c"],
-        "objective": [0.0, 1.0, 0.0],
-    },
-)
+
 specs.add_valid(
     features.MolecularInput,
     lambda: {
@@ -146,5 +139,13 @@ specs.add_valid(
             "N[C@](C)(F)C(=O)O",
         ],
         "allowed": [True, True, True, True],
+    },
+)
+specs.add_valid(
+    features.CategoricalOutput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["a", "b", "c"],
+        "objective": [0.0, 1.0, 0.0],
     },
 )

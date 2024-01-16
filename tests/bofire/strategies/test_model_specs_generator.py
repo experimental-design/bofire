@@ -64,9 +64,8 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"}
 )
 def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
     surrogate_specs = data_models.BotorchStrategy._generate_surrogate_specs(
-        domain=strategy.domain
-    )  # , surrogate_specs=strategy.surrogate_specs
-    # )
+        domain=strategy.domain, surrogate_specs=strategy.surrogate_specs
+    )
     assert len(surrogate_specs.surrogates) == expected_count
 
 

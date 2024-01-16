@@ -1,6 +1,7 @@
 from typing import Literal, Type
 
-from pydantic import confloat
+from pydantic import Field
+from typing_extensions import Annotated
 
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -16,7 +17,7 @@ from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
 
 class QnehviStrategy(QehviStrategy):
     type: Literal["QnehviStrategy"] = "QnehviStrategy"
-    alpha: confloat(ge=0, le=0.5) = 0.0  # type: ignore
+    alpha: Annotated[float, Field(ge=0, le=0.5)] = 0.0  # type: ignore
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:

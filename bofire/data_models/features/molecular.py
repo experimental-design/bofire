@@ -3,7 +3,7 @@ from typing import ClassVar, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import _CAT_SEP, CategoricalInput
@@ -20,7 +20,7 @@ from bofire.utils.cheminformatics import smiles2mol
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
-    order: ClassVar[int] = 6
+    order_id: ClassVar[int] = 6
 
     @staticmethod
     def valid_transform_types() -> List[AnyMolFeatures]:
@@ -88,9 +88,10 @@ class MolecularInput(Input):
 
 class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
-    order: ClassVar[int] = 7
+    order_id: ClassVar[int] = 7
 
-    @validator("categories")
+    @field_validator("categories")
+    @classmethod
     def validate_smiles(cls, categories: Sequence[str]):
         """validates that categories are valid smiles. Note that this check can only
         be executed when rdkit is available.

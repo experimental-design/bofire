@@ -1,4 +1,4 @@
-from pydantic import parse_obj_as
+from pydantic import TypeAdapter
 
 from bofire.data_models.api import (
     AnyAcquisitionFunction,
@@ -22,94 +22,94 @@ from tests.bofire.data_models.specs.api import Spec
 
 def test_prior_should_be_deserializable(prior_spec: Spec):
     obj = prior_spec.obj()
-    deserialized = parse_obj_as(AnyPrior, obj.dict())
+    deserialized = TypeAdapter(AnyPrior).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_kernel_should_be_deserializable(kernel_spec: Spec):
     obj = kernel_spec.obj()
-    deserialized = parse_obj_as(AnyKernel, obj.dict())
+    deserialized = TypeAdapter(AnyKernel).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_constraint_should_be_deserializable(constraint_spec: Spec):
     obj = constraint_spec.obj()
-    deserialized = parse_obj_as(AnyConstraint, obj.dict())
+    deserialized = TypeAdapter(AnyConstraint).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_objective_should_be_deserializable(objective_spec: Spec):
     obj = objective_spec.obj()
-    deserialized = parse_obj_as(AnyObjective, obj.dict())
+    deserialized = TypeAdapter(AnyObjective).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_feature_should_be_deserializable(feature_spec: Spec):
     obj = feature_spec.obj()
-    deserialized = parse_obj_as(AnyFeature, obj.dict())
+    deserialized = TypeAdapter(AnyFeature).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_domain_should_be_deserializable(domain_spec: Spec):
     obj = domain_spec.obj()
-    deserialized = parse_obj_as(Domain, obj.dict())
+    deserialized = TypeAdapter(Domain).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_surrogate_should_be_deserializable(surrogate_spec: Spec):
     obj = surrogate_spec.obj()
-    deserialized = parse_obj_as(AnySurrogate, obj.dict())
+    deserialized = TypeAdapter(AnySurrogate).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_acquisition_function_should_be_deserializable(acquisition_function_spec: Spec):
     obj = acquisition_function_spec.obj()
-    deserialized = parse_obj_as(AnyAcquisitionFunction, obj.dict())
+    deserialized = TypeAdapter(AnyAcquisitionFunction).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_strategy_should_be_deserializable(strategy_spec: Spec):
     obj = strategy_spec.obj()
-    deserialized = parse_obj_as(AnyStrategy, obj.dict())
+    deserialized = TypeAdapter(AnyStrategy).validate_python(obj.model_dump())
     # TODO: can we unhide the comparison of surrogate_specs?
-    obj = {k: v for k, v in obj.dict().items() if k != "surrogate_specs"}
+    obj = {k: v for k, v in obj.model_dump().items() if k != "surrogate_specs"}
     deserialized = {
-        k: v for k, v in deserialized.dict().items() if k != "surrogate_specs"
+        k: v for k, v in deserialized.model_dump().items() if k != "surrogate_specs"
     }
     assert obj == deserialized
 
 
 def test_condition_should_be_deserializable(condition_spec: Spec):
     obj = condition_spec.obj()
-    deserialized = parse_obj_as(AnyCondition, obj.dict())
+    deserialized = TypeAdapter(AnyCondition).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_outlier_detection_should_be_deserializable(outlier_detection_spec: Spec):
     obj = outlier_detection_spec.obj()
-    deserialized = parse_obj_as(AnyOutlierDetection, obj.dict())
+    deserialized = TypeAdapter(AnyOutlierDetection).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_molfeatures_should_be_deserializable(molfeatures_spec: Spec):
     obj = molfeatures_spec.obj()
-    deserialized = parse_obj_as(AnyMolFeatures, obj.dict())
+    deserialized = TypeAdapter(AnyMolFeatures).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_inputs_should_be_deserializable(inputs_spec: Spec):
     obj = inputs_spec.obj()
-    deserialized = parse_obj_as(Inputs, obj.dict())
+    deserialized = TypeAdapter(Inputs).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_outputs_should_be_deserializable(outputs_spec: Spec):
     obj = outputs_spec.obj()
-    deserialized = parse_obj_as(Outputs, obj.dict())
+    deserialized = TypeAdapter(Outputs).validate_python(obj.model_dump())
     assert obj == deserialized
 
 
 def test_constraints_should_be_deserializable(constraints_spec: Spec):
     obj = constraints_spec.obj()
-    deserialized = parse_obj_as(Constraints, obj.dict())
+    deserialized = TypeAdapter(Constraints).validate_python(obj.model_dump())
     assert obj == deserialized

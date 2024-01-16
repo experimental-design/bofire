@@ -1,4 +1,4 @@
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -9,7 +9,8 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     output_scaler: ScalerEnum = ScalerEnum.STANDARDIZE
 
-    @validator("output_scaler")
+    @field_validator("output_scaler")
+    @classmethod
     def validate_output_scaler(cls, output_scaler):
         """validates that output_scaler is a valid type
 
