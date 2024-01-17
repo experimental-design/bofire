@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -32,7 +32,7 @@ tkwargs = {
 
 def get_linear_constraints(
     domain: Domain,
-    constraint: Union[LinearEqualityConstraint, LinearInequalityConstraint],
+    constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Converts linear constraints to the form required by BoTorch.
@@ -46,7 +46,7 @@ def get_linear_constraints(
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
-    for c in domain.constraints.get(constraint):
+    for c in domain.constraints.get(type(constraint)):
         indices = []
         coefficients = []
         lower = []

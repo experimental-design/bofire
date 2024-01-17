@@ -340,10 +340,10 @@ class BotorchStrategy(PredictiveStrategy):
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
                 equality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
+                    domain=self.domain, constraint=LinearEqualityConstraint
                 ),
                 inequality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
+                    domain=self.domain, constraint=LinearInequalityConstraint
                 ),
                 nonlinear_inequality_constraints=nchooseks,
                 fixed_features=fixed_features,
