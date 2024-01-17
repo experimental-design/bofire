@@ -55,7 +55,7 @@ setup(
         "tests": [
             "mock",
             "mopti",
-            "pyright==1.1.305",
+            "pyright==1.1.347",
             "pytest",
             "pytest-cov",
             "papermill",
