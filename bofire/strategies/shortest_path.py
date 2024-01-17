@@ -23,11 +23,12 @@ class ShortestPathStrategy(Strategy):
     ):
         self.start = pd.Series(data_model.start)
         self.end = pd.Series(data_model.end)
+        self.atol = data_model.atol
         super().__init__(data_model=data_model, **kwargs)
 
     @property
     def continuous_inputs(self) -> Inputs:
-        return self.domain.inputs.get(ContinuousInput)
+        return self.domain.inputs.get(ContinuousInput)  # type: ignore
 
     def get_linear_constraints(
         self, constraints: Constraints
@@ -42,7 +43,7 @@ class ShortestPathStrategy(Strategy):
                 feat = inputs.get_by_key(key)
                 assert isinstance(feat, ContinuousInput)
                 if feat.is_fixed():
-                    b[i] -= feat.fixed_value()[0] * coef
+                    b[i] -= feat.fixed_value()[0] * coef  # type: ignore
                 else:
                     A[i, keys.index(key)] = coef
         return A, b
@@ -68,9 +69,12 @@ class ShortestPathStrategy(Strategy):
                 self.domain.constraints.get(LinearInequalityConstraint)
             )
             constraints.append(A @ x <= b)
-        prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)
+        prob = cp.Problem(objective=cp.Minimize(cost), constraints=constraints)  # type: ignore
         prob.solve(solver=cp.CLARABEL)
         step = pd.Series(index=inputs.get_keys(), data=x.value)
+        # add other features based on start
+        for key in self.domain.inputs.get_keys(excludes=[ContinuousInput], includes=[]):
+            step[key] = self.end[key]
         return step
 
     def _ask(self, candidate_count: Optional[int] = None) -> pd.DataFrame:
@@ -82,8 +86,15 @@ class ShortestPathStrategy(Strategy):
             )
         start = self.start
         steps = []
-        while not np.allclose(start.values, self.end.values, atol=1e-5):  #
+        while not np.allclose(
+            start[self.continuous_inputs.get_keys()].tolist(),
+            self.end[self.continuous_inputs.get_keys()].tolist(),
+            atol=self.atol,
+        ):
             step = self.step(start=start)
             steps.append(step)
             start = step
         return pd.concat(steps, axis=1).T
+
+    def has_sufficient_experiments(self) -> bool:
+        return True

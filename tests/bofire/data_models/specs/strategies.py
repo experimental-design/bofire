@@ -1,6 +1,10 @@
 import bofire.data_models.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -198,4 +202,188 @@ specs.add_valid(
         ).model_dump(),
         "seed": 42,
     },
+)
+
+specs.add_valid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    ),
+                    LinearInequalityConstraint(
+                        features=["a", "b"], coefficients=[1.0, 1.0], rhs=0.95
+                    ),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.2, "b": 0.7, "c": 0.1, "d": "b"},
+        "atol": 1e-6,
+    },
+)
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.5, "d": "a"},
+        "end": {"a": 0.2, "b": 0.7, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="`start` is not a valid candidate.",
+)
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.2, "b": 0.9, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="`end` is not a valid candidate.",
+)
+
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="`start` is equal to `end`.",
+)
+
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="Domain has no local search region.",
+)
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"d": "a"},
+        "end": {"d": "b"},
+    },
+    error=ValueError,
+    message="No `ContinuousInput` features defined. Domain has no local search region.",
 )
