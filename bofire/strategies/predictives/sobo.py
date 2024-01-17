@@ -2,9 +2,12 @@ import base64
 import warnings
 from typing import Callable, List, Tuple, Union
 
+from bofire.data_models.types import NonExistingImportWrapper
+
 try:
     import cloudpickle
 except ModuleNotFoundError:
+    cloudpickle = NonExistingImportWrapper("cloudpickle")
     warnings.warn(
         "Cloudpickle is not available. CustomSoboStrategy's `f` cannot be dumped or loaded."
     )

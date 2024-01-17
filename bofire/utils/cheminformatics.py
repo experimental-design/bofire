@@ -4,11 +4,16 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
+from bofire.data_models.types import NonExistingImportWrapper
+
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
 
     # from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
+    AllChem = NonExistingImportWrapper("rdkit")
+    Descriptors = NonExistingImportWrapper("rdkit")
+    MolFromSmiles = NonExistingImportWrapper("rdkit")
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
     )
@@ -16,6 +21,8 @@ except ImportError:
 try:
     from mordred import Calculator, descriptors
 except ImportError:
+    Calculator = NonExistingImportWrapper("mordred")
+    descriptors = NonExistingImportWrapper("mordred")
     warnings.warn(
         "mordred not installed. Mordred molecular descriptors cannot be used."
     )
