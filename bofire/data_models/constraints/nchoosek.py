@@ -2,7 +2,7 @@ from typing import List, Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import field_validator, model_validator
 
 from bofire.data_models.constraints.constraint import FeatureKeys, IntrapointConstraint
 
@@ -28,28 +28,26 @@ class NChooseKConstraint(IntrapointConstraint):
     max_count: int
     none_also_valid: bool
 
-    @validator("features")
+    @field_validator("features")
+    @classmethod
     def validate_features_unique(cls, features: List[str]):
         """Validates that provided feature keys are unique."""
         if len(features) != len(set(features)):
             raise ValueError("features must be unique")
         return features
 
-    @root_validator(pre=False, skip_on_failure=True)
-    def validate_counts(cls, values):
+    @model_validator(mode="after")
+    def validate_counts(self):
         """Validates if the minimum and maximum of allowed features are smaller than the overall number of features."""
-        features = values["features"]
-        min_count = values["min_count"]
-        max_count = values["max_count"]
 
-        if min_count > len(features):
+        if self.min_count > len(self.features):
             raise ValueError("min_count must be <= # of features")
-        if max_count > len(features):
+        if self.max_count > len(self.features):
             raise ValueError("max_count must be <= # of features")
-        if min_count > max_count:
+        if self.min_count > self.max_count:
             raise ValueError("min_values must be <= max_values")
 
-        return values
+        return self
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         """Smooth relaxation of NChooseK constraint by countig the number of zeros in a candidate by a sum of
@@ -75,10 +73,16 @@ class NChooseKConstraint(IntrapointConstraint):
         min_count_violation = np.zeros(experiments_tensor.shape[0])
 
         if self.max_count != len(self.features):
-            max_count_violation = relu(-1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1) + (len(self.features) - self.max_count))  # type: ignore
+            max_count_violation = relu(
+                -1 * narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
+                + (len(self.features) - self.max_count)
+            )
 
         if self.min_count > 0:
-            min_count_violation = relu(narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1) - (len(self.features) - self.min_count))  # type: ignore
+            min_count_violation = relu(
+                narrow_gaussian(x=experiments_tensor[..., indices]).sum(axis=-1)
+                - (len(self.features) - self.min_count)
+            )
 
         return pd.Series(max_count_violation + min_count_violation)
 

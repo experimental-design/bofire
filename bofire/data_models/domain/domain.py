@@ -17,7 +17,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -57,7 +57,6 @@ class Domain(BaseModel):
 
     inputs: Inputs = Field(default_factory=lambda: Inputs())
     outputs: Outputs = Field(default_factory=lambda: Outputs())
-
     constraints: Constraints = Field(default_factory=lambda: Constraints())
 
     """Representation of the optimization problem/domain
@@ -84,8 +83,9 @@ class Domain(BaseModel):
             constraints=Constraints(constraints=constraints),
         )
 
-    @validator("inputs", always=True, pre=True)
-    def validate_inputs_list(cls, v, values):
+    @field_validator("inputs", mode="before")
+    @classmethod
+    def validate_inputs_list(cls, v):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
             return v
@@ -94,8 +94,9 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("outputs", always=True, pre=True)
-    def validate_outputs_list(cls, v, values):
+    @field_validator("outputs", mode="before")
+    @classmethod
+    def validate_outputs_list(cls, v):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
         if isinstance_or_union(v, AnyOutput):
@@ -103,8 +104,9 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("constraints", always=True, pre=True)
-    def validate_constraints_list(cls, v, values):
+    @field_validator("constraints", mode="before")
+    @classmethod
+    def validate_constraints_list(cls, v):
         if isinstance(v, list):
             return Constraints(constraints=v)
         if isinstance_or_union(v, AnyConstraint):
@@ -112,8 +114,8 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("outputs", always=True)
-    def validate_unique_feature_keys(cls, v: Outputs, values) -> Outputs:
+    @model_validator(mode="after")
+    def validate_unique_feature_keys(self):
         """Validates if provided input and output feature keys are unique
 
         Args:
@@ -126,16 +128,14 @@ class Domain(BaseModel):
         Returns:
             Outputs: Keeps output features as given.
         """
-        if "inputs" not in values:
-            return v
-        features = v + values["inputs"]
-        keys = [f.key for f in features]
-        if len(set(keys)) != len(keys):
-            raise ValueError("feature keys are not unique")
-        return v
 
-    @validator("constraints", always=True)
-    def validate_constraints(cls, v, values):
+        keys = self.outputs.get_keys() + self.inputs.get_keys()
+        if len(set(keys)) != len(keys):
+            raise ValueError("Feature keys are not unique")
+        return self
+
+    @model_validator(mode="after")
+    def validate_constraints(self):
         """Validate if all features included in the constraints are also defined as features for the domain.
 
         Args:
@@ -148,18 +148,17 @@ class Domain(BaseModel):
         Returns:
             List[Constraint]: List of constraints defined for the domain
         """
-        if "inputs" not in values:
-            return v
-        keys = [f.key for f in values["inputs"]]
-        for c in v:
+
+        keys = self.inputs.get_keys()
+        for c in self.constraints:
             if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
                 for f in c.features:
                     if f not in keys:
                         raise ValueError(f"feature {f} in constraint unknown ({keys})")
-        return v
+        return self
 
-    @validator("constraints", always=True)
-    def validate_linear_constraints(cls, v, values):
+    @model_validator(mode="after")
+    def validate_linear_constraints_and_nchoosek(self):
         """Validate if all features included in linear constraints are continuous ones.
 
         Args:
@@ -173,21 +172,13 @@ class Domain(BaseModel):
         Returns:
            List[Constraint]: List of constraints defined for the domain
         """
-        if "inputs" not in values:
-            return v
-
-        # gather continuous inputs in dictionary
-        continuous_inputs_dict = {}
-        for f in values["inputs"]:
-            if isinstance(f, ContinuousInput):
-                continuous_inputs_dict[f.key] = f
+        keys = self.inputs.get_keys(ContinuousInput)
 
         # check if non continuous input features appear in linear constraints
-        for c in v:
-            if isinstance(c, LinearConstraint):
-                for f in c.features:
-                    assert f in continuous_inputs_dict, f"{f} must be continuous."
-        return v
+        for c in self.constraints.get(includes=[LinearConstraint, NChooseKConstraint]):
+            for f in c.features:  # type: ignore
+                assert f in keys, f"{f} must be continuous."
+        return self
 
     def get_feature_reps_df(self) -> pd.DataFrame:
         """Returns a pandas dataframe describing the features contained in the optimization domain."""
@@ -617,11 +608,6 @@ class Domain(BaseModel):
             ]
         )
 
-    def _set_constraints_unvalidated(
-        self, constraints: Union[Sequence[AnyConstraint], Constraints]
-    ):
-        """Hack for reduce_domain"""
-        self.constraints = Constraints(constraints=[])
-        if isinstance(constraints, Constraints):
-            constraints = constraints.constraints
-        self.constraints.constraints = constraints
+
+if __name__ == "__main__":
+    pass

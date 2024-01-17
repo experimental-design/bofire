@@ -162,18 +162,18 @@ def is_categorical(s: pd.Series, categories: List[str]):
 TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
 
 
-TDescriptors = Annotated[List[str], Field(min_items=1)]
+TDescriptors = Annotated[List[str], Field(min_length=1)]
 
 
-TCategoryVals = Tuple[str, ...]
-TAllowedVals = Optional[Annotated[List[bool], Field(min_items=2)]]
+TCategoryVals = Annotated[List[str], Field(min_length=2)]
+TAllowedVals = Optional[Annotated[List[bool], Field(min_length=2)]]
 
 
 TCategoricalDescriptorVals = Annotated[
-    Union[List[List[float]], List[List[int]]],
-    Field(min_items=1),
+    List[List[float]],
+    Field(min_length=1),
 ]
 
-TDiscreteVals = Annotated[List[float], Field(min_items=1)]
+TDiscreteVals = Annotated[List[float], Field(min_length=1)]
 
 _CAT_SEP = "_"

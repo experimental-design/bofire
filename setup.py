@@ -36,7 +36,7 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
-        "pydantic>=1.10.0,<2.0",
+        "pydantic>=2.5",
         "scipy>=1.7",
         "typing-extensions",
     ],
@@ -45,7 +45,7 @@ setup(
             "botorch>=0.9.5",
             "multiprocess",
             "plotly",
-            "formulaic>=0.6.0",
+            "formulaic>=1.0.1",
             "cloudpickle>=2.0.0",
             "sympy>=1.12",
             sklearn_dependency,

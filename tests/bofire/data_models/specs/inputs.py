@@ -12,8 +12,10 @@ specs.add_valid(
     Inputs,
     lambda: {
         "features": [
-            CategoricalInput(key="a", categories=["1", "2"], allowed=[True, True]),
-            ContinuousInput(key="b", bounds=(0, 1)),
+            CategoricalInput(
+                key="a", categories=["1", "2"], allowed=[True, True]
+            ).model_dump(),
+            ContinuousInput(key="b", bounds=(0, 1)).model_dump(),
         ],
     },
 )
@@ -28,4 +30,16 @@ specs.add_invalid(
         ],
     },
     error=ValueError,
+)
+
+specs.add_invalid(
+    Inputs,
+    lambda: {
+        "features": [
+            CategoricalInput(key="a", categories=["1", "2"]),
+            ContinuousInput(key="a", bounds=(0, 1)),
+        ],
+    },
+    error=ValueError,
+    message="Feature keys are not unique.",
 )

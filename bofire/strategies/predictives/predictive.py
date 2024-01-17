@@ -185,12 +185,12 @@ class PredictiveStrategy(Strategy):
         return [
             Candidate(
                 inputValues={
-                    key: InputValue(value=row[key])
+                    key: InputValue(value=str(row[key]))
                     for key in self.domain.inputs.get_keys()
                 },
                 outputValues={
                     feat.key: OutputValue(
-                        predictedValue=row[f"{feat.key}_pred"],
+                        predictedValue=str(row[f"{feat.key}_pred"]),
                         standardDeviation=row[f"{feat.key}_sd"],
                         objective=row[f"{feat.key}_des"]
                         if feat.objective is not None  # type: ignore

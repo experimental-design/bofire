@@ -1,5 +1,3 @@
-from pydantic.error_wrappers import ValidationError
-
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from tests.bofire.data_models.specs.features import specs as features
@@ -15,14 +13,14 @@ specs.add_valid(
                 features.valid(ContinuousInput).obj(key="i2"),
                 features.valid(ContinuousInput).obj(key="i3"),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(key="o1"),
                 features.valid(ContinuousOutput).obj(key="o2"),
             ]
-        ),
-        "constraints": Constraints(),
+        ).model_dump(),
+        "constraints": Constraints().model_dump(),
     },
 )
 
@@ -38,7 +36,8 @@ specs.add_invalid(
             ]
         ),
     },
-    error=ValidationError,
+    error=ValueError,
+    message="Feature keys are not unique",
 )
 
 specs.add_invalid(
@@ -51,7 +50,8 @@ specs.add_invalid(
             ]
         ),
     },
-    error=ValidationError,
+    error=ValueError,
+    message="Feature keys are not unique",
 )
 
 specs.add_invalid(
@@ -68,5 +68,6 @@ specs.add_invalid(
             ]
         ),
     },
-    error=ValidationError,
+    error=ValueError,
+    message="Feature keys are not unique",
 )

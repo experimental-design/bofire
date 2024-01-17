@@ -114,19 +114,21 @@ def test_cvresult_not_numeric():
         bounds=(10, 20),
     )
     feature2 = CategoricalInput(key="a", categories=["a", "b"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Not all values of observed are numerical"):
         CvResult(
             key=feature.key,
             observed=feature2.sample(n_samples),
             predicted=feature.sample(n_samples),
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Not all values of predicted are numerical"):
         CvResult(
             key=feature.key,
             observed=feature.sample(n_samples),
             predicted=feature2.sample(n_samples),
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Not all values of standard_deviation are numerical"
+    ):
         CvResult(
             key=feature.key,
             observed=feature.sample(n_samples),

@@ -1,9 +1,8 @@
 import warnings
-from abc import abstractmethod
 from typing import List, Literal, Optional, Union
 
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import Field, field_validator, model_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -31,7 +30,7 @@ metrics2objectives = {
 
 class Aggregation(BaseModel):
     type: str
-    features: Annotated[List[str], Field(min_items=2)]
+    features: Annotated[List[str], Field(min_length=2)]
     keep_features: bool = False
 
 
@@ -53,18 +52,19 @@ class Hyperconfig(BaseModel):
     n_iterations: Optional[Annotated[int, Field(ge=1)]] = None
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
 
-    @validator("n_iterations", always=True)
+    @field_validator("n_iterations")
+    @classmethod
     def validate_n_iterations(cls, v, values):
         if v is None:
-            if values["hyperstrategy"] == "FactorialStrategy":
+            if values.data["hyperstrategy"] == "FactorialStrategy":
                 return v
-            return len(values["inputs"]) + 10
+            return len(values.data["inputs"]) + 10
         else:
-            if values["hyperstrategy"] == "FactorialStrategy":
+            if values.data["hyperstrategy"] == "FactorialStrategy":
                 raise ValueError(
                     "It is not allowed to scpecify the number of its for FactorialStrategy"
                 )
-            if v < len(values["inputs"]) + 2:
+            if v < len(values.data["inputs"]) + 2:
                 raise ValueError(
                     "At least number of hyperparams plus 2 iterations has to be specified"
                 )
@@ -85,32 +85,34 @@ class Hyperconfig(BaseModel):
         )
 
     @staticmethod
-    @abstractmethod
     def _update_hyperparameters(surrogate_data, hyperparameters: pd.Series):
-        pass
+        raise NotImplementedError(
+            "Ideally this would be an abstract method, but this causes problems in pydantic."
+        )
 
 
 class TrainableSurrogate(BaseModel):
     hyperconfig: Optional[Hyperconfig] = None
-    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_items=1)]] = None
+    aggregations: Optional[Annotated[List[AnyAggregation], Field(min_length=1)]] = None
 
-    @root_validator
-    def validate_aggregations(cls, values):
-        if values["aggregations"] is None:
-            return values
-        for agg in values["aggregations"]:
+    @model_validator(mode="after")
+    def validate_aggregations(self):
+        if self.aggregations is None:
+            return self
+
+        for agg in self.aggregations:
             for key in agg.features:
-                if key not in values["inputs"].get_keys():
+                if key not in self.inputs.get_keys():  # type: ignore
                     raise ValueError(
                         f"Unkown feature key {key} provided in aggregations."
                     )
-                feat = values["inputs"].get_by_key(key)
+                feat = self.inputs.get_by_key(key)  # type: ignore
                 if not isinstance(feat, ContinuousInput):
                     raise ValueError(
                         f"Feature with key {key} is not of type ContinuousInput"
                     )
         warnings.warn("Aggregations currently only implemented in the data models.")
-        return values
+        return self
 
     def update_hyperparameters(self, hyperparameters: pd.Series):
         if self.hyperconfig is not None:

@@ -1,6 +1,6 @@
 from typing import List, Literal, Type, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
@@ -50,12 +50,13 @@ class Step(BaseModel):
 
 class StepwiseStrategy(Strategy):
     type: Literal["StepwiseStrategy"] = "StepwiseStrategy"
-    steps: Annotated[List[Step], Field(min_items=2)]
+    steps: Annotated[List[Step], Field(min_length=2)]
 
-    @validator("steps")
-    def validate_steps(cls, v: List[Step], values):
+    @field_validator("steps")
+    @classmethod
+    def validate_steps(cls, v: List[Step], info):
         for i, step in enumerate(v):
-            if step.strategy_data.domain != values["domain"]:
+            if step.strategy_data.domain != info.data["domain"]:
                 raise ValueError(
                     f"Domain of step {i} is incompatible to domain of StepwiseStrategy."
                 )

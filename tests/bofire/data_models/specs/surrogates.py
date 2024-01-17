@@ -40,32 +40,32 @@ specs.add_valid(
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(0, 1)),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
                 ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        ),
+        ).model_dump(),
         "aggregations": [
             random.choice(
                 [
-                    SumAggregation(features=["a", "b"]),
-                    MeanAggregation(features=["a", "b"]),
+                    SumAggregation(features=["a", "b"]).model_dump(),
+                    MeanAggregation(features=["a", "b"]).model_dump(),
                 ]
             )
         ],
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {},
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig(),
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 
@@ -77,17 +77,18 @@ specs.add_valid(
                 features.valid(ContinuousInput).obj(),
             ]
             + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "aggregations": None,
-        "continuous_kernel": MaternKernel(ard=True, nu=2.5),
-        "categorical_kernel": HammondDistanceKernel(ard=True),
+        "continuous_kernel": MaternKernel(ard=True, nu=2.5).model_dump(),
+        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
         "hyperconfig": None,
@@ -100,25 +101,25 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
                 ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        ),
+        ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {},
         "dump": None,
-        "hyperconfig": SingleTaskGPHyperconfig(),
+        "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
     },
 )
 specs.add_valid(
@@ -128,12 +129,12 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "aggregations": None,
         "input_preprocessing_specs": {},
         "n_estimators": 100,
@@ -163,12 +164,12 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "aggregations": None,
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
@@ -195,12 +196,12 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "aggregations": None,
         "n_estimators": 10,
         "max_depth": 6,
@@ -236,23 +237,25 @@ specs.add_valid(
             features=[
                 MolecularInput(key="mol1"),
             ]
-        ),
+        ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
             ]
-        ),
+        ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=TanimotoKernel(
                 ard=True,
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        ),
+        ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
-        "noise_prior": BOTORCH_NOISE_PRIOR(),
-        "input_preprocessing_specs": {"mol1": Fingerprints(n_bits=32, bond_radius=3)},
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "input_preprocessing_specs": {
+            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump()
+        },
         "dump": None,
         "hyperconfig": None,
     },

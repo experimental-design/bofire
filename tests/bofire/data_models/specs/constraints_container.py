@@ -9,7 +9,9 @@ specs.add_valid(
     Constraints,
     lambda: {
         "constraints": [
-            LinearInequalityConstraint(features=["a", "b"], coefficients=[1, 1], rhs=1),
+            LinearInequalityConstraint(
+                features=["a", "b"], coefficients=[1, 1], rhs=1
+            ).model_dump(),
         ],
     },
 )

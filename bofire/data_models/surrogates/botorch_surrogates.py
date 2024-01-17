@@ -1,7 +1,7 @@
 import itertools
 from typing import List, Union
 
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -85,7 +85,8 @@ class BotorchSurrogates(BaseModel):
         if len(used_feature_keys) != len(inputs):
             raise ValueError("Unused features are present.")
 
-    @validator("surrogates")
+    @field_validator("surrogates")
+    @classmethod
     def validate_surrogates(cls, v, values):
         # validate that all surrogates are single output surrogates
         # TODO: this restriction has to be removed at some point
