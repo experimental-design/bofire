@@ -1,5 +1,8 @@
+from typing import Optional
+
 import numpy as np
 import pandas as pd
+from pydantic import PositiveInt
 
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import RejectionSampler as DataModel
@@ -26,15 +29,16 @@ class RejectionSampler(SamplerStrategy):
         self.num_base_samples = data_model.num_base_samples
         self.max_iters = data_model.max_iters
 
-    def _ask(self, n: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+        candidate_count = candidate_count or 1
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(
-                n, self.sampling_method, seed=self._get_seed()
+                candidate_count, self.sampling_method, seed=self._get_seed()
             )
         n_iters = 0
         n_found = 0
         valid_samples = []
-        while n_found < n:
+        while n_found < candidate_count:
             if n_iters > self.max_iters:
                 raise ValueError("Maximum iterations exceeded in rejection sampling.")
             samples = self.domain.inputs.sample(
@@ -46,7 +50,7 @@ class RejectionSampler(SamplerStrategy):
             n_found += np.sum(valid)
             valid_samples.append(samples[valid])
             n_iters += 1
-        return pd.concat(valid_samples, ignore_index=True).iloc[:n]
+        return pd.concat(valid_samples, ignore_index=True).iloc[:candidate_count]
 
     def duplicate(self, domain: Domain) -> SamplerStrategy:
         data_model = DataModel(

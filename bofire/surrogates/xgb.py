@@ -4,11 +4,13 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
+from bofire.data_models.types import NonExistingImportWrapper
 from bofire.utils.tmpfile import make_tmpfile
 
 try:
     from xgboost import XGBRegressor  # type: ignore
 except ImportError:
+    XGBRegressor = NonExistingImportWrapper("xgboost")
     warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
 
 import uuid

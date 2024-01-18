@@ -18,7 +18,7 @@ jobs:
           python-version: 3.9
       - name: style
         run: |
-          pip3 install ruff==0.0.265 black==22.10.0
+          pip3 install ruff==0.1.13 black==22.10.0
           black --check bofire tests
           ruff check .
 

@@ -1,9 +1,10 @@
 import math
 from abc import abstractmethod
 from copy import deepcopy
+from typing import Optional
 
 import pandas as pd
-from pydantic import validate_call
+from pydantic import PositiveInt, validate_call
 
 from bofire.data_models.constraints.api import NChooseKConstraint
 from bofire.data_models.domain.api import Domain
@@ -33,7 +34,7 @@ class SamplerStrategy(Strategy):
     @validate_call
     def ask(
         self,
-        candidate_count: int,
+        candidate_count: Optional[PositiveInt] = None,
         return_all: bool = False,
         raise_validation_error: bool = True,
     ) -> pd.DataFrame:
@@ -50,6 +51,7 @@ class SamplerStrategy(Strategy):
         Returns:
             Dataframe with samples.
         """
+        candidate_count = candidate_count or 1
         # n = candidate_count
         # handle here NChooseK
         if len(self.domain.constraints.get(NChooseKConstraint)) > 0:

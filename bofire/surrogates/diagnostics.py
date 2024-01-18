@@ -569,7 +569,7 @@ class CvResults(BaseModel):
     def __len__(self) -> int:
         return len(self.results)
 
-    def __iter__(self):
+    def __iter__(self):  # type: ignore
         return iter(self.results)
 
     def __getitem__(self, i) -> CvResult:

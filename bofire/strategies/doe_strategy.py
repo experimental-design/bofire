@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pandas as pd
 from pydantic.types import PositiveInt
 
@@ -56,7 +58,8 @@ class DoEStrategy(Strategy):
 
         self._candidates = candidates
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
+        candidate_count = candidate_count or 1
         all_new_categories = []
 
         # map categorical/ discrete Domain to a relaxable Domain

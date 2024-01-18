@@ -51,7 +51,7 @@ class TrainableSurrogate(ABC):
             raise ValueError("Unknown output filtering option requested.")
 
     @abstractmethod
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         pass
 
     def cross_validate(

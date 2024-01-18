@@ -1,14 +1,19 @@
 import warnings
-from typing import List, Optional
+from typing import List, Optional, cast
 
 import numpy as np
 import pandas as pd
+
+from bofire.data_models.types import NonExistingImportWrapper
 
 try:
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
 
     # from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
+    AllChem = NonExistingImportWrapper("rdkit")
+    Descriptors = NonExistingImportWrapper("rdkit")
+    MolFromSmiles = NonExistingImportWrapper("rdkit")
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used."
     )
@@ -16,6 +21,8 @@ except ImportError:
 try:
     from mordred import Calculator, descriptors
 except ImportError:
+    Calculator = NonExistingImportWrapper("mordred")
+    descriptors = NonExistingImportWrapper("mordred")
     warnings.warn(
         "mordred not installed. Mordred molecular descriptors cannot be used."
     )
@@ -125,10 +132,12 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
     descriptors_df = calc.pandas(mols)
-    nan_list = [
-        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()
+    nan_list = np.array(
+        cast(pd.Series, pd.to_numeric(descriptors_df[col], errors="coerce"))
+        .isna()
+        .any()
         for col in descriptors_df.columns
-    ]
+    )
     if any(nan_list):
         raise ValueError(
             f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"

@@ -2,9 +2,12 @@ import base64
 import warnings
 from typing import Callable, List, Tuple, Union
 
+from bofire.data_models.types import NonExistingImportWrapper
+
 try:
     import cloudpickle
 except ModuleNotFoundError:
+    cloudpickle = NonExistingImportWrapper("cloudpickle")
     warnings.warn(
         "Cloudpickle is not available. CustomSoboStrategy's `f` cannot be dumped or loaded."
     )
@@ -157,7 +160,7 @@ class AdditiveSoboStrategy(SoboStrategy):
                 outputs=self.domain.outputs
             )
         else:
-            constraint_callables, etas = None, 1e-3
+            constraint_callables, etas = [], 1e-3
         # TODO: test this
         if self.use_output_constraints:
             objective_callable = get_additive_botorch_objective(
@@ -168,7 +171,7 @@ class AdditiveSoboStrategy(SoboStrategy):
             if isinstance(self.acquisition_function, (qSR, qUCB)):
                 return (
                     ConstrainedMCObjective(
-                        objective=objective_callable,  # type: ignore
+                        objective=objective_callable,
                         constraints=constraint_callables,
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
@@ -256,7 +259,7 @@ class CustomSoboStrategy(SoboStrategy):
                 outputs=self.domain.outputs
             )
         else:
-            constraint_callables, etas = None, 1e-3
+            constraint_callables, etas = [], 1e-3
 
         if self.use_output_constraints:
             objective_callable = get_custom_botorch_objective(
