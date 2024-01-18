@@ -1,4 +1,7 @@
+from typing import Optional
+
 import pandas as pd
+from pydantic import PositiveInt
 
 from bofire.data_models.strategies.api import UniversalConstraintSampler as DataModel
 from bofire.strategies.doe.design import find_local_max_ipopt
@@ -26,7 +29,8 @@ class UniversalConstraintSampler(Strategy):
         self.sampling_fraction = data_model.sampling_fraction
         self.ipopt_options = data_model.ipopt_options
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+        candidate_count = candidate_count or 1
         samples = find_local_max_ipopt(
             domain=self.domain,
             model_type="linear",  # dummy model

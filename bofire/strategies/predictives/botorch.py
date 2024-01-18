@@ -1,6 +1,6 @@
 import copy
 from abc import abstractmethod
-from typing import Callable, Dict, List, Optional, Tuple, get_args
+from typing import Callable, Dict, Optional, Sequence, Tuple, cast, get_args
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ from botorch.optim.optimize import (
     optimize_acqf_list,
     optimize_acqf_mixed,
 )
+from pydantic import PositiveInt
 from torch import Tensor
 
 from bofire.data_models.constraints.api import (
@@ -267,7 +268,7 @@ class BotorchStrategy(PredictiveStrategy):
         preds = self.predict(df_candidates)
         return pd.concat((df_candidates, preds), axis=1)
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
         """[summary]
 
         Args:
@@ -276,7 +277,7 @@ class BotorchStrategy(PredictiveStrategy):
         Returns:
             pd.DataFrame: [description]
         """
-
+        candidate_count = candidate_count or 1
         assert candidate_count > 0, "candidate_count has to be larger than zero."
         if self.experiments is None:
             raise ValueError("No experiments have been provided yet.")
@@ -335,7 +336,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         if len(acqfs) > 1:
             candidates, _ = optimize_acqf_list(
-                acq_function_list=acqfs,
+                acq_function_list=cast(list, acqfs),
                 bounds=bounds,
                 num_restarts=self.num_restarts,
                 raw_samples=self.num_raw_samples,
@@ -396,7 +397,7 @@ class BotorchStrategy(PredictiveStrategy):
         pass
 
     @abstractmethod
-    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
+    def _get_acqfs(self, n: int) -> Sequence[AcquisitionFunction]:
         pass
 
     def get_fixed_features(self):
@@ -551,6 +552,7 @@ class BotorchStrategy(PredictiveStrategy):
         return False
 
     def get_acqf_input_tensors(self):
+        assert self.experiments is not None
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )

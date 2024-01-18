@@ -51,6 +51,7 @@ class QparegoStrategy(BotorchStrategy):
             Union[ConstrainedObjective, None]: the botorch constraints.
             Union[List, float]: etas used in the botorch constraints.
         """
+        assert self.experiments is not None
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs
         )

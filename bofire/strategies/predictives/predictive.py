@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -156,7 +156,7 @@ class PredictiveStrategy(Strategy):
                 outputValues={
                     feat.key: OutputValue(
                         predictedValue=str(row[f"{feat.key}_pred"]),
-                        standardDeviation=row[f"{feat.key}_sd"],
+                        standardDeviation=cast(float, row[f"{feat.key}_sd"]),
                         objective=row[f"{feat.key}_des"]
                         if feat.objective is not None  # type: ignore
                         else 1.0,

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 
 import numpy as np
 import pandas as pd
@@ -74,10 +74,12 @@ class Surrogate(ABC):
         outputs = {key: [] for key in self.outputs.get_keys()}
         for _, row in predictions.iterrows():
             for key in self.outputs.get_keys():
+                predicted_val = cast(float, row[f"{key}_pred"])
+                sd = cast(float, row[f"{key}_sd"])
                 outputs[key].append(
                     PredictedValue(
-                        predictedValue=row[f"{key}_pred"],
-                        standardDeviation=row[f"{key}_sd"],
+                        predictedValue=predicted_val,
+                        standardDeviation=sd,
                     )
                 )
         return outputs

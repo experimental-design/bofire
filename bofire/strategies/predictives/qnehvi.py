@@ -1,4 +1,4 @@
-from typing import List
+from typing import Sequence
 
 import torch
 from botorch.acquisition.multi_objective.monte_carlo import (
@@ -20,7 +20,7 @@ class QnehviStrategy(QehviStrategy):
         super().__init__(data_model=data_model, **kwargs)
         self.alpha = data_model.alpha
 
-    def _get_acqfs(self, n) -> List[qNoisyExpectedHypervolumeImprovement]:
+    def _get_acqfs(self, n) -> Sequence[qNoisyExpectedHypervolumeImprovement]:
         X_train, X_pending = self.get_acqf_input_tensors()
 
         # get etas and constraints
@@ -34,7 +34,7 @@ class QnehviStrategy(QehviStrategy):
         # if the reference point is not defined it has to be calculated from data
         acqf = qNoisyExpectedHypervolumeImprovement(
             model=self.model,
-            ref_point=self.get_adjusted_refpoint(),
+            ref_point=self.get_adjusted_refpoint().tolist(),
             X_baseline=X_train,
             # sampler=self.sampler,
             prune_baseline=True,

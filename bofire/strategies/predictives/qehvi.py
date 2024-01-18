@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Optional, Sequence
 
 import numpy as np
 import torch
@@ -33,7 +33,8 @@ class QehviStrategy(BotorchStrategy):
     ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
-    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:
+    def _get_acqfs(self, n) -> Sequence[qExpectedHypervolumeImprovement]:
+        assert self.experiments is not None
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
@@ -64,7 +65,7 @@ class QehviStrategy(BotorchStrategy):
         # setup the acqf
         acqf = qExpectedHypervolumeImprovement(
             model=self.model,
-            ref_point=ref_point,  # use known reference point
+            ref_point=ref_point.tolist(),  # use known reference point
             partitioning=partitioning,
             # sampler=self.sampler,
             # define an objective that specifies which outcomes are the objectives
@@ -78,7 +79,8 @@ class QehviStrategy(BotorchStrategy):
         objective = get_multiobjective_objective(outputs=self.domain.outputs)
         return GenericMCMultiOutputObjective(objective=objective)
 
-    def get_adjusted_refpoint(self) -> List[float]:
+    def get_adjusted_refpoint(self) -> np.ndarray:
+        assert self.experiments is not None
         if self.ref_point is None:
             df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
                 self.experiments
@@ -88,14 +90,11 @@ class QehviStrategy(BotorchStrategy):
             )
         else:
             ref_point = self.ref_point
-        return (
-            self.ref_point_mask
-            * np.array(
-                [
-                    ref_point[feat]
-                    for feat in self.domain.outputs.get_keys_by_objective(
-                        excludes=ConstrainedObjective
-                    )
-                ]
-            )
-        ).tolist()
+        return self.ref_point_mask * np.array(
+            [
+                ref_point[feat]
+                for feat in self.domain.outputs.get_keys_by_objective(
+                    excludes=ConstrainedObjective
+                )
+            ]
+        )

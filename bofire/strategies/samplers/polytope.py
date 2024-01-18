@@ -1,11 +1,12 @@
 import warnings
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
 import torch
 from botorch.optim.initializers import sample_q_batches_from_polytope
 from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraints
+from pydantic import PositiveInt
 
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
@@ -45,10 +46,11 @@ class PolytopeSampler(SamplerStrategy):
         self.n_thinning = data_model.n_thinning
         self.fallback_sampling_method = data_model.fallback_sampling_method
 
-    def _ask(self, n: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+        candidate_count = candidate_count or 1
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(
-                n, self.fallback_sampling_method, seed=self._get_seed()
+                candidate_count, self.fallback_sampling_method, seed=self._get_seed()
             )
 
         # check if we have pseudo fixed features in the linear equality constraints
@@ -87,7 +89,9 @@ class PolytopeSampler(SamplerStrategy):
             unit_scaled=False,
         )
 
-        interpoints = get_interpoint_constraints(domain=self.domain, n_candidates=n)
+        interpoints = get_interpoint_constraints(
+            domain=self.domain, n_candidates=candidate_count
+        )
 
         lower = [
             feat.lower_bound  # type: ignore
@@ -107,7 +111,9 @@ class PolytopeSampler(SamplerStrategy):
                 UserWarning,
             )
             samples = pd.DataFrame(
-                data=np.nan, index=range(n), columns=self.domain.inputs.get_keys()
+                data=np.nan,
+                index=range(candidate_count),
+                columns=self.domain.inputs.get_keys(),
             )
         else:
             bounds = torch.tensor([lower, upper]).to(**tkwargs)
@@ -136,7 +142,7 @@ class PolytopeSampler(SamplerStrategy):
             # now use the hit and run sampler
             candidates = sample_q_batches_from_polytope(
                 n=1,
-                q=n,
+                q=candidate_count,
                 bounds=bounds.to(**tkwargs),
                 inequality_constraints=unfixed_ineqs
                 if len(unfixed_ineqs) > 0  # type: ignore
@@ -148,7 +154,9 @@ class PolytopeSampler(SamplerStrategy):
             ).squeeze(dim=0)
 
             # check that the random generated candidates are not always the same
-            if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
+            if (candidates.unique(dim=0).shape[0] != candidate_count) and (
+                candidate_count > 1
+            ):
                 warnings.warn("Generated candidates are not unique!")
 
             free_continuals = [
@@ -159,13 +167,13 @@ class PolytopeSampler(SamplerStrategy):
             # setup the output
             samples = pd.DataFrame(
                 data=candidates.detach().numpy(),
-                index=range(n),
+                index=range(candidate_count),
                 columns=free_continuals,
             )
 
         # setup the categoricals and discrete ones as uniform sampled vals
         for feat in self.domain.get_features([CategoricalInput, DiscreteInput]):
-            samples[feat.key] = feat.sample(n, seed=self._get_seed())  # type: ignore
+            samples[feat.key] = feat.sample(candidate_count, seed=self._get_seed())  # type: ignore
 
         # setup the fixed continuous ones
         for key, value in fixed_features.items():

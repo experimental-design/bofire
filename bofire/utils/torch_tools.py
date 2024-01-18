@@ -308,12 +308,12 @@ def get_custom_botorch_objective(
             Tensor,
             List[Callable[[Tensor, Optional[Tensor]], Tensor]],
             List[float],
-            Tensor,
+            Optional[Tensor],
         ],
         Tensor,
     ],
     exclude_constraints: bool = True,
-) -> Callable[[Tensor, Tensor], Tensor]:
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(outputs.get())
@@ -335,7 +335,7 @@ def get_custom_botorch_objective(
         )
     ]
 
-    def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
+    def objective(samples: torch.Tensor, X: Optional[torch.Tensor]) -> torch.Tensor:
         return f(samples, callables, weights, X)
 
     return objective
@@ -356,17 +356,17 @@ def get_multiplicative_botorch_objective(
     ]
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
-        val = 1.0
+        val = torch.tensor(1.0)
         for c, w in zip(callables, weights):
             val *= c(samples, None) ** w
-        return val  # type: ignore
+        return val
 
     return objective
 
 
 def get_additive_botorch_objective(
     outputs: Outputs, exclude_constraints: bool = True
-) -> Callable[[Tensor, Tensor], Tensor]:
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     callables = [
         get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
         for i, feat in enumerate(outputs.get())
@@ -388,7 +388,7 @@ def get_additive_botorch_objective(
         )
     ]
 
-    def objective(samples: Tensor, X: Tensor) -> Tensor:
+    def objective(samples: Tensor, X: Optional[Tensor]) -> Tensor:
         val = 0.0
         for c, w in zip(callables, weights):
             val += c(samples, None) * w

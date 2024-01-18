@@ -1,6 +1,7 @@
-from typing import Dict, Tuple, Type
+from typing import Dict, Optional, Tuple, Type
 
 import pandas as pd
+from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.stepwise.conditions as conditions
@@ -49,13 +50,17 @@ class StepwiseStrategy(Strategy):
         return True
 
     def _get_step(self) -> Tuple[int, Step]:  # type: ignore
+        assert self.experiments is not None
         for i, step in enumerate(self.steps):
             condition = conditions.map(step.condition)
             if condition.evaluate(self.domain, experiments=self.experiments):
                 return i, step
         raise ValueError("No condition could be satisfied.")
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt] = None) -> pd.DataFrame:
+        assert self.experiments is not None
+        assert self.candidates is not None
+        candidate_count = candidate_count or 1
         # we have to decide here w
         istep, step = self._get_step()
         if (step.max_parallelism > 0) and (candidate_count > step.max_parallelism):
