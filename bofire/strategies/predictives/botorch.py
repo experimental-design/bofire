@@ -34,10 +34,15 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
+from bofire.data_models.strategies.api import (
+    ShortestPathStrategy as ShortestPathStrategyDataModel,
+)
+from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
@@ -78,7 +83,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
         self.surrogates = None
-        self.gamma = data_model.gamma
+        self.local_search_config = data_model.local_search_config
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -308,7 +313,10 @@ class BotorchStrategy(PredictiveStrategy):
                 fixed_features_list=fixed_features_list,
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
-                options={"batch_limit": 5, "maxiter": 200},
+                options={
+                    "batch_limit": 5 if len(nchooseks) == 0 else 1,
+                    "maxiter": 200,
+                },
             )
         else:
             if fixed_features_list:
@@ -421,72 +429,90 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features_list,
         ) = self._setup_ask()
 
-        # candidates, acqf_vals = self.__ask()
+        # do the global opt
+        candidates, global_acqf_val = self.__ask(
+            candidate_count=candidate_count,
+            acqfs=acqfs,
+            bounds=bounds,
+            ic_generator=ic_generator,
+            ic_gen_kwargs=ic_gen_kwargs,
+            nchooseks=nchooseks,
+            fixed_features=fixed_features,
+            fixed_features_list=fixed_features_list,
+        )
 
-        if len(acqfs) > 1:
-            candidates, acqf_vals = optimize_acqf_list(
-                acq_function_list=acqfs,
-                bounds=bounds,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearEqualityConstraint,  # type: ignore
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain,
-                    constraint=LinearInequalityConstraint,  # type: ignore
-                ),
-                nonlinear_inequality_constraints=nchooseks,
+        if (
+            self.local_search_config is not None
+            and has_local_search_region(self.domain)
+            and candidate_count == 1
+        ):
+            local_candidates, local_acqf_val = self.__ask(
+                candidate_count=candidate_count,
+                acqfs=acqfs,
+                bounds=local_bounds,
+                ic_generator=ic_generator,
+                ic_gen_kwargs=ic_gen_kwargs,
+                nchooseks=nchooseks,
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
-                ic_gen_kwargs=ic_gen_kwargs,
-                ic_generator=ic_generator,
-                options={"batch_limit": 5, "maxiter": 200},
             )
-        else:
-            if fixed_features_list:
-                candidates, acqf_vals = optimize_acqf_mixed(
-                    acq_function=acqfs[0],
-                    bounds=bounds,
-                    q=candidate_count,
-                    num_restarts=self.num_restarts,
-                    raw_samples=self.num_raw_samples,
-                    equality_constraints=get_linear_constraints(
-                        domain=self.domain,
-                        constraint=LinearEqualityConstraint,  # type: ignore
-                    ),
-                    inequality_constraints=get_linear_constraints(
-                        domain=self.domain,
-                        constraint=LinearInequalityConstraint,  # type: ignore
-                    ),
-                    nonlinear_inequality_constraints=nchooseks,
-                    fixed_features_list=fixed_features_list,
-                    ic_generator=ic_generator,
-                    ic_gen_kwargs=ic_gen_kwargs,
-                )
+
+            if self.local_search_config.is_local_step(
+                local_acqf_val.item(), global_acqf_val.item()
+            ):
+                return self._postprocess_candidates(candidates=local_candidates)
             else:
-                candidates, acqf_vals = optimize_acqf(
-                    acq_function=acqfs[0],
-                    bounds=bounds,
-                    q=candidate_count,
-                    num_restarts=self.num_restarts,
-                    raw_samples=self.num_raw_samples,
-                    equality_constraints=get_linear_constraints(
+                sp = ShortestPathStrategy(
+                    data_model=ShortestPathStrategyDataModel(
                         domain=self.domain,
-                        constraint=LinearEqualityConstraint,  # type: ignore
-                    ),
-                    inequality_constraints=get_linear_constraints(
-                        domain=self.domain,
-                        constraint=LinearInequalityConstraint,  # type: ignore
-                    ),
-                    fixed_features=fixed_features,
-                    nonlinear_inequality_constraints=nchooseks,
-                    return_best_only=True,
-                    ic_generator=ic_generator,  # type: ignore
-                    **ic_gen_kwargs,  # type: ignore
+                        start=self.experiments.iloc[-1].to_dict(),
+                        end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+                    )
                 )
-        return self._postprocess_candidates(candidates=candidates)
+                step = pd.DataFrame(sp.step(sp.start)).T
+                return pd.concat((step, self.predict(step)), axis=1)
+
+            # if isinstance(self.local_search_config, ShortestPath):
+            #     sp = ShortestPathStrategy(
+            #         data_model=ShortestPathStrategyDataModel(
+            #             domain=self.domain,
+            #             start=self.experiments.iloc[-1][
+            #                 self.domain.inputs.get_keys()
+            #             ].to_dict(),
+            #             end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+            #         )
+            #     )
+            #     path = sp.ask()
+            #     return pd.concat((path, self.predict(path)), axis=1)
+            # else:
+            #     assert isinstance(self.local_search_config, AcqfDependentStep)
+            #     local_candidates, local_acqf_vals = self.__ask(
+            #         candidate_count=candidate_count,
+            #         acqfs=acqfs,
+            #         bounds=local_bounds,
+            #         ic_generator=ic_generator,
+            #         ic_gen_kwargs=ic_gen_kwargs,
+            #         nchooseks=nchooseks,
+            #         fixed_features=fixed_features,
+            #         fixed_features_list=fixed_features_list,
+            #     )
+            #     if local_acqf_vals.item() >= self.local_search_config.threshold:
+            #         return self._postprocess_candidates(candidates=local_candidates)
+            #     else:
+            #         sp = ShortestPathStrategy(
+            #             data_model=ShortestPathStrategyDataModel(
+            #                 domain=self.domain,
+            #                 start=self.experiments.iloc[-1].to_dict(),
+            #                 end=self._postprocess_candidates(candidates)
+            #                 .iloc[-1]
+            #                 .to_dict(),
+            #             )
+            #         )
+            #         step = pd.DataFrame(sp.step(sp.start)).T
+            #         return pd.concat((step, self.predict(step)), axis=1)
+
+        else:
+            return self._postprocess_candidates(candidates=candidates)
 
     def _tell(self) -> None:
         pass
@@ -495,7 +521,7 @@ class BotorchStrategy(PredictiveStrategy):
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         pass
 
-    def get_fixed_features(self):
+    def get_fixed_features(self) -> Dict[int, float]:
         """provides the values of all fixed features
 
         Raises:
@@ -560,7 +586,7 @@ class BotorchStrategy(PredictiveStrategy):
                             fixed_features[idx] = lower[j]
         return fixed_features
 
-    def get_categorical_combinations(self):
+    def get_categorical_combinations(self) -> List[Dict[int, float]]:
         """provides all possible combinations of fixed values
 
         Returns:

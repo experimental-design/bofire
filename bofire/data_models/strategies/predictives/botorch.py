@@ -1,9 +1,13 @@
-from typing import Annotated, Optional, Type
+import warnings
+from abc import abstractmethod
+from typing import Annotated, Literal, Optional, Type
 
 from pydantic import Field, PositiveInt, field_validator, model_validator
 
+from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     Constraint,
+    LinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
@@ -12,6 +16,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEn
 from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
+from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
@@ -21,6 +26,25 @@ from bofire.data_models.surrogates.api import (
 
 def is_power_of_two(n):
     return (n != 0) and (n & (n - 1) == 0)
+
+
+class LocalSearchConfig(BaseModel):
+    type: str
+
+    @abstractmethod
+    def is_local_step(self, acqf_local, acqf_global) -> bool:
+        pass
+
+
+class LSRBO(LocalSearchConfig):
+    type: Literal["LSR"] = "LSR"
+    gamma: Annotated[float, Field(ge=0)] = 0.1
+
+    def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
+        return acqf_local >= self.gamma
+
+
+AnyLocalSearchConfig = LSRBO
 
 
 class BotorchStrategy(PredictiveStrategy):
@@ -41,9 +65,22 @@ class BotorchStrategy(PredictiveStrategy):
     frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
     # local search region params
-    gamma: Optional[Annotated[float, Field(gt=0.0)]] = None
+    local_search_config: Optional[AnyLocalSearchConfig] = None
 
-    # TODO: add validators for gamma, should happen in pyantic2 stlye
+    @model_validator(mode="after")
+    def validate_local_search_config(self):
+        if self.local_search_config is not None:
+            if has_local_search_region(self.domain) is False:
+                warnings.warn(
+                    "`local_search_region` config is specified, but no local search region is defined in `domain`"
+                )
+            if (
+                len(self.domain.constraints)
+                - len(self.domain.constraints.get(LinearConstraint))
+                > 0
+            ):
+                raise ValueError("LSR-BO only supported for linear constraints.")
+        return self
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

@@ -385,5 +385,5 @@ specs.add_invalid(
         "end": {"d": "b"},
     },
     error=ValueError,
-    message="No `ContinuousInput` features defined. Domain has no local search region.",
+    message="Domain has no local search region.",
 )

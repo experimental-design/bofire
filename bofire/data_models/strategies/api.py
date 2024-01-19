@@ -2,7 +2,7 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
-from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -78,3 +78,6 @@ AnySampler = Union[PolytopeSampler, RejectionSampler, UniversalConstraintSampler
 
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
+
+
+AnyLocalSearchConfig = LSRBO
