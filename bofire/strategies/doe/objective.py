@@ -183,6 +183,117 @@ class DOptimality(Objective):
 
         return J.flatten()
 
+class IOptimality(Objective):
+    """Modified from DOptimality to evaluate the (estimated) I criterion. The I criterion can be evaluated as
+       I = tr((Y'Y @ (X'X/Nx)^-1) / Ny) ; Ny, Nx = number of rows in Y and X.
+       Y is the space (expanded to the model frame), the I criterion is evaluated over, X is the model matrix of the problem.
+    """
+
+    def __init__(
+        self,
+        domain: Domain,
+        model: Formula,
+        n_experiments: int,
+        delta: float = 1e-7,
+    ) -> None:
+        super().__init__(
+            domain=domain, model=model, n_experiments=n_experiments, delta=delta
+        )
+
+    def evaluate(self, x: np.ndarray) -> float:
+        """Computes tr((Y'Y @ (X'X/Nx)^-1) / Ny).
+        Where X is the model matrix corresponding to x, Y is the space over which the prediction variance is averaged (I criterion), expanded
+        to the model frame.
+
+        Args:
+            x (np.ndarray): values of design variables a 1d array.
+
+        Returns:
+            ...
+
+        """
+        X = self._convert_input_to_model_tensor(x, requires_grad=False)
+
+        #### define evaluation space
+        factors = self.domain.inputs.get_keys()
+
+        mins = []
+        maxs = []
+        for k in factors:
+            mins.append(self.domain.inputs.get_by_key(k).bounds[0])
+            maxs.append(self.domain.inputs.get_by_key(k).bounds[1])
+
+        resolution = 11
+
+        Y_meshgrid = np.meshgrid(*[np.linspace(i, j, resolution) for i,j in zip(mins,maxs)], indexing='ij')
+        Y = np.hstack([c.reshape(-1, 1) for c in Y_meshgrid])
+
+        rowsY = Y.shape[0]
+
+        Y = Y.flatten()
+
+        Y = self._convert_input_to_model_tensor(Y, requires_grad=False)
+
+        ####
+
+        return float(
+            torch.trace(
+               ((Y.T @ Y) @ torch.linalg.inv(X.detach().T @ X.detach() / self.n_experiments + self.delta * torch.eye(self.n_model_terms)) / rowsY)
+            )
+        )
+
+    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+        """Computes the jacobian of minus one times the log of the determinant of X.T @ X + delta.
+        Where X is the model matrix corresponding to x.
+
+        Args:
+            x (np.ndarray): values of design variables a 1d array.
+
+        Returns:
+            The jacobian of tr((Y'Y @ (X'X/Nx)^-1) / Ny) as numpy array
+        """
+        # get model matrix X
+        X = self._convert_input_to_model_tensor(x, requires_grad=True)
+
+        #### define evaluation space
+        factors = self.domain.inputs.get_keys()
+
+        mins = []
+        maxs = []
+        for k in factors:
+            mins.append(self.domain.inputs.get_by_key(k).bounds[0])
+            maxs.append(self.domain.inputs.get_by_key(k).bounds[1])
+
+        resolution = 11
+
+        Y_meshgrid = np.meshgrid(*[np.linspace(i, j, resolution) for i,j in zip(mins,maxs)], indexing='ij')
+        Y = np.hstack([c.reshape(-1, 1) for c in Y_meshgrid])
+
+        rowsY = Y.shape[0]
+
+        Y = Y.flatten()
+
+        Y = self._convert_input_to_model_tensor(Y, requires_grad=False)
+
+        ####
+
+        # first part of jacobian
+        
+        torch.trace(((Y.T @ Y) @ torch.linalg.inv(X.T @ X / self.n_experiments + self.delta * torch.eye(self.n_model_terms))) / rowsY).backward()
+        J1 = X.grad.detach().numpy()  # type: ignore
+        J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
+            self.n_experiments, self.n_vars, self.n_model_terms
+        )
+
+        # second part of jacobian
+        J2 = self._model_jacobian_t(x)
+
+        # combine both parts
+        J = J1 * J2
+        J = np.sum(J, axis=-1)
+
+        return J.flatten()
+
 
 class AOptimality(Objective):
     """A class implementing the evaluation of tr((X.T@X + delta)^-1) and its jacobian w.r.t. the inputs.

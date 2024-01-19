@@ -3,6 +3,7 @@ from enum import Enum
 
 class OptimalityCriterionEnum(Enum):
     D_OPTIMALITY = "D_OPTIMALITY"
+    I_OPTIMALITY = "I_OPTIMALITY"
     E_OPTIMALITY = "E_OPTIMALITY"
     A_OPTIMALITY = "A_OPTIMALITY"
     G_OPTIMALITY = "G_OPTIMALITY"
