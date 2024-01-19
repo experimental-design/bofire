@@ -33,6 +33,7 @@ max-complexity = 18
 "bofire/strategies/mapper.py" = ["F401"]
 "bofire/strategies/api.py" = ["F401"]
 "bofire/data_models/features/api.py" = ["F401"]
+"bofire/data_models/strategies/api.py" = ["F401"]
 
 [tool.pyright]
 include = ["bofire"]
