@@ -37,7 +37,7 @@ class LocalSearchConfig(BaseModel):
 
 
 class LSRBO(LocalSearchConfig):
-    type: Literal["LSR"] = "LSR"
+    type: Literal["LSRBO"] = "LSRBO"
     gamma: Annotated[float, Field(ge=0)] = 0.1
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
