@@ -40,7 +40,7 @@ def get_molecular_feature_keys(
         or isinstance(value, Fragments)
         or isinstance(value, FingerprintsFragments)
     ]
-    return molecular_feature_key_list
+    return sorted(molecular_feature_key_list)
 
 
 def get_continuous_feature_keys(
@@ -70,7 +70,7 @@ def get_continuous_feature_keys(
         for feat in inputs.get()
         if feat.key not in non_continuous_feature_key_list
     ]
-    return continuous_feature_key_list
+    return sorted(continuous_feature_key_list)
 
 
 def get_categorical_feature_keys(
@@ -96,7 +96,7 @@ def get_categorical_feature_keys(
         and not isinstance(value, FingerprintsFragments)
         and not isinstance(value, MordredDescriptors)
     ]
-    return categorical_feature_key_list
+    return sorted(categorical_feature_key_list)
 
 
 def get_scaler(

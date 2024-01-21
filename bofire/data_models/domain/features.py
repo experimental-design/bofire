@@ -575,7 +575,7 @@ class Inputs(Features):
             List[int]: The list of indices.
         """
         features2idx, _ = self._get_transform_info(specs)
-        return list(
+        return sorted(
             itertools.chain.from_iterable([features2idx[feat] for feat in feature_keys])
         )
 

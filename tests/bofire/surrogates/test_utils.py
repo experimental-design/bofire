@@ -158,7 +158,7 @@ def test_get_scaler(
 
 
 @pytest.mark.parametrize(
-    "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices_length",
+    "scaler_enum, input_preprocessing_specs, expected_scaler, expected_indices",
     [
         (
             ScalerEnum.NORMALIZE,
@@ -166,15 +166,15 @@ def test_get_scaler(
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             Normalize,
-            4,
+            torch.tensor([0, 1, 2, 3], dtype=torch.int64),
         ),
         (
             ScalerEnum.NORMALIZE,
             {
-                "x_mol": Fingerprints(n_bits=32),
+                "x_mol": Fingerprints(n_bits=2),
             },
             Normalize,
-            2,
+            torch.tensor([0, 1], dtype=torch.int64),
         ),
         (
             ScalerEnum.STANDARDIZE,
@@ -182,15 +182,15 @@ def test_get_scaler(
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             InputStandardize,
-            4,
+            torch.tensor([0, 1, 2, 3], dtype=torch.int64),
         ),
         (
             ScalerEnum.STANDARDIZE,
             {
-                "x_mol": Fragments(),
+                "x_mol": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
             InputStandardize,
-            2,
+            torch.tensor([0, 1], dtype=torch.int64),
         ),
         (
             ScalerEnum.IDENTITY,
@@ -198,7 +198,7 @@ def test_get_scaler(
                 "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
             type(None),
-            0,
+            None,
         ),
         (
             ScalerEnum.IDENTITY,
@@ -206,7 +206,7 @@ def test_get_scaler(
                 "x_mol": FingerprintsFragments(n_bits=32),
             },
             type(None),
-            0,
+            None,
         ),
     ],
 )
@@ -214,7 +214,7 @@ def test_get_scaler_molecular(
     scaler_enum,
     input_preprocessing_specs,
     expected_scaler,
-    expected_indices_length,
+    expected_indices,
 ):
     inputs = Inputs(
         features=[
@@ -240,18 +240,18 @@ def test_get_scaler_molecular(
         X=experiments[inputs.get_keys()],
     )
     assert isinstance(scaler, expected_scaler)
-    if expected_indices_length != 0:
-        assert len(scaler.indices) == expected_indices_length
+    if expected_indices is not None:
+        assert (scaler.indices == expected_indices).all()
     else:
         with pytest.raises(
             AttributeError, match="'NoneType' object has no attribute 'indices'"
         ):
-            assert scaler.indices is None
+            assert (scaler.indices == expected_indices).all()
 
 
 @pytest.mark.skipif(not RDKIT_AVAILABLE, reason="requires rdkit")
 @pytest.mark.parametrize(
-    "specs, expected_molecular_keys, expected_continuous_keys, expected_categorical_keys",
+    "specs, expected_continuous_keys, expected_categorical_keys, expected_molecular_keys",
     [
         (
             {
@@ -259,9 +259,9 @@ def test_get_scaler_molecular(
                 "x3": CategoricalEncodingEnum.ONE_HOT,
                 "x4": Fingerprints(n_bits=2),
             },
-            ["x4"],
             ["x1"],
             ["x2", "x3"],
+            ["x4"],
         ),
         (
             {
@@ -269,9 +269,9 @@ def test_get_scaler_molecular(
                 "x3": CategoricalEncodingEnum.ONE_HOT,
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
-            ["x4"],
             ["x1"],
             ["x2", "x3"],
+            ["x4"],
         ),
         (
             {
@@ -279,9 +279,9 @@ def test_get_scaler_molecular(
                 "x3": CategoricalEncodingEnum.ONE_HOT,
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
-            [],
-            ["x4", "x1"],
+            ["x1", "x4"],
             ["x2", "x3"],
+            [],
         ),
         (
             {
@@ -289,9 +289,9 @@ def test_get_scaler_molecular(
                 "x3": CategoricalEncodingEnum.DESCRIPTOR,
                 "x4": Fingerprints(n_bits=2),
             },
-            ["x4"],
             ["x1", "x3"],
             ["x2"],
+            ["x4"],
         ),
         (
             {
@@ -299,9 +299,9 @@ def test_get_scaler_molecular(
                 "x3": CategoricalEncodingEnum.DESCRIPTOR,
                 "x4": Fragments(fragments=["fr_unbrch_alkane", "fr_thiocyan"]),
             },
-            ["x4"],
             ["x1", "x3"],
             ["x2"],
+            ["x4"],
         ),
         (
             {
@@ -309,17 +309,17 @@ def test_get_scaler_molecular(
                 "x3": CategoricalEncodingEnum.DESCRIPTOR,
                 "x4": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             },
-            [],
-            ["x4", "x1", "x3"],
+            ["x1", "x3", "x4"],
             ["x2"],
+            [],
         ),
     ],
 )
 def test_get_feature_keys(
     specs,
-    expected_molecular_keys,
     expected_continuous_keys,
     expected_categorical_keys,
+    expected_molecular_keys,
 ):
     inps = Inputs(
         features=[

@@ -74,12 +74,19 @@ class MixedTanimotoGP(SingleTaskGP):
         ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims))  # type: ignore
 
         if cont_kernel_factory is None:
-            cont_kernel_factory = kernels.map_MaternKernel(  # type: ignore
-                data_model=MaternKernel(ard=True, nu=2.5),
-                batch_shape=aug_batch_shape,
-                ard_num_dims=len(ord_dims),
-                active_dims=ord_dims,
-            )
+
+            def cont_kernel_factory(
+                batch_shape: torch.Size,
+                ard_num_dims: int,
+                active_dims: List[int],
+            ) -> MaternKernel:
+                return MaternKernel(
+                    nu=2.5,
+                    batch_shape=batch_shape,
+                    ard_num_dims=ard_num_dims,
+                    active_dims=active_dims,
+                    lengthscale_constraint=GreaterThan(1e-04),
+                )
 
         if likelihood is None:
             min_noise = 1e-5 if train_X.dtype == torch.float else 1e-6
@@ -251,6 +258,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         ord_dims = self.inputs.get_feature_indices(
             self.input_preprocessing_specs, continuous_feature_keys
         )
+        # these are the categorical dimesions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(
                 len(ord_dims) + len(mol_dims),
