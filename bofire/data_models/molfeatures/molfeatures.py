@@ -2,7 +2,7 @@ from abc import abstractmethod
 from typing import List, Literal, Optional
 
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 import bofire.data_models.molfeatures.names as names
@@ -51,9 +51,8 @@ class Fragments(MolFeatures):
     type: Literal["Fragments"] = "Fragments"
     fragments: Optional[List[str]] = None
 
-    @validator(
-        "fragments",
-    )
+    @field_validator("fragments")
+    @classmethod
     def validate_fragments(cls, fragments):
         """validates that fragments have unique names
 
@@ -120,11 +119,10 @@ class FingerprintsFragments(Fingerprints, Fragments):
 
 class MordredDescriptors(MolFeatures):
     type: Literal["MordredDescriptors"] = "MordredDescriptors"
-    descriptors: Annotated[List[str], Field(min_items=1)]
+    descriptors: Annotated[List[str], Field(min_length=1)]
 
-    @validator(
-        "descriptors",
-    )
+    @field_validator("descriptors")
+    @classmethod
     def validate_descriptors(cls, descriptors):
         """validates that descriptors have unique names
 

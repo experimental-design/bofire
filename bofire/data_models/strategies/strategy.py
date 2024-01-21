@@ -1,7 +1,7 @@
 from abc import abstractmethod
 from typing import Annotated, Optional, Type
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -14,7 +14,8 @@ class Strategy(BaseModel):
     domain: Domain
     seed: Optional[Annotated[int, Field(ge=0)]] = None
 
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_constraints(cls, domain: Domain):
         """Validator to ensure that all constraints defined in the domain are valid for the chosen strategy
 
@@ -34,7 +35,8 @@ class Strategy(BaseModel):
                 )
         return domain
 
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_features(cls, domain: Domain):
         """Validator to ensure that all features defined in the domain are valid for the chosen strategy
 
@@ -54,7 +56,8 @@ class Strategy(BaseModel):
                 )
         return domain
 
-    @validator("domain")
+    @field_validator("domain")
+    @classmethod
     def validate_input_feature_count(cls, domain: Domain):
         """Validator to ensure that at least one input is defined.
 

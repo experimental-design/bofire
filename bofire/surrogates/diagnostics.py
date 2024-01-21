@@ -3,7 +3,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import Field, field_validator, model_validator, validator
 from scipy.integrate import simps
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
@@ -16,7 +16,6 @@ from sklearn.metrics import (
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
-from bofire.data_models.validated import ValidatedDataFrame, ValidatedSeries
 
 
 def _mean_absolute_error(
@@ -456,52 +455,50 @@ class CvResult(BaseModel):
     """
 
     key: str
-    observed: ValidatedSeries
-    predicted: ValidatedSeries
-    standard_deviation: Optional[ValidatedSeries] = None
-    labcodes: Optional[ValidatedSeries] = None
-    X: Optional[ValidatedDataFrame] = None
+    observed: pd.Series
+    predicted: pd.Series
+    standard_deviation: Optional[pd.Series] = None
+    labcodes: Optional[pd.Series] = None
+    X: Optional[pd.DataFrame] = None
+    model_config: Optional[Dict] = {"arbitrary_types_allowed": True}
 
-    @root_validator(pre=True)
-    def validate_shapes(cls, values):
-        if not len(values["predicted"]) == len(values["observed"]):
+    @model_validator(mode="after")
+    def validate_shapes(self):
+        if not len(self.predicted) == len(self.observed):
             raise ValueError(
-                f"Predicted values has length {len(values['predicted'])} whereas observed has length {len(values['observed'])}"
+                f"Predicted values has length {len(self.predicted)} whereas observed has length {len(self.observed)}"
             )
-        if "standard_deviation" in values and values["standard_deviation"] is not None:
-            if not len(values["predicted"]) == len(values["standard_deviation"]):
+        if self.standard_deviation is not None:
+            if not len(self.predicted) == len(self.standard_deviation):
                 raise ValueError(
-                    f"Predicted values has length {len(values['predicted'])} whereas standard_deviation has length {len(values['standard_deviation'])}"
+                    f"Predicted values has length {len(self.predicted)} whereas standard_deviation has length {len(self.standard_deviation)}"
                 )
-        if "labcodes" in values and values["labcodes"] is not None:
-            if not len(values["predicted"]) == len(values["labcodes"]):
+        if self.labcodes is not None:
+            if not len(self.predicted) == len(self.labcodes):
                 raise ValueError(
-                    f"Predicted values has length {len(values['predicted'])} whereas labcodes has length {len(values['labcodes'])}"
+                    f"Predicted values has length {len(self.predicted)} whereas labcodes has length {len(self.labcodes)}"
                 )
-        if "X" in values and values["X"] is not None:
-            if not len(values["predicted"]) == len(values["X"]):
+        if self.X is not None:
+            if not len(self.predicted) == len(self.X):
                 raise ValueError(
-                    f"Predicted values has length {len(values['predicted'])} whereas X has length {len(values['X'])}"
+                    f"Predicted values has length {len(self.predicted)} whereas X has length {len(self.X)}"
                 )
-        return values
+        return self
 
-    @validator("observed")
-    def validate_observed(cls, v, values):
+    @field_validator("observed", "predicted")
+    @classmethod
+    def validate_series(cls, v, info):
         if not is_numeric(v):
-            raise ValueError("Not all values of observed are numerical")
+            raise ValueError(f"Not all values of {info.field_name} are numerical")
         return v
 
-    @validator("predicted")
-    def validate_predicted(cls, v, values):
+    @field_validator("standard_deviation")
+    @classmethod
+    def validate_standard_deviation(cls, v, info):
+        if v is None:
+            return v
         if not is_numeric(v):
-            raise ValueError("Not all values of predicted are numerical")
-        return v
-
-    @validator("standard_deviation")
-    def validate_standard_deviation(cls, v, values):
-        if v is not None:
-            if not is_numeric(v):
-                raise ValueError("Not all values of standard_deviation are numerical")
+            raise ValueError(f"Not all values of {info.field_name} are numerical")
         return v
 
     @property
@@ -529,7 +526,9 @@ class CvResult(BaseModel):
                 "Metric cannot be calculated for only one sample. Null value will be returned"
             )
             return np.nan
-        return all_metrics[metric](self.observed.values, self.predicted.values, self.standard_deviation)  # type: ignore
+        return all_metrics[metric](
+            self.observed.values, self.predicted.values, self.standard_deviation
+        )  # type: ignore
 
 
 class CvResults(BaseModel):
@@ -541,6 +540,8 @@ class CvResults(BaseModel):
 
     results: Sequence[CvResult]
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("results")
     def validate_results(cls, v, values):
         if len(v) <= 1:
@@ -601,11 +602,17 @@ class CvResults(BaseModel):
         observed = pd.concat([cv.observed for cv in self.results], ignore_index=True)
         predicted = pd.concat([cv.predicted for cv in self.results], ignore_index=True)
         if self.results[0].standard_deviation is not None:
-            sd = pd.concat([cv.standard_deviation for cv in self.results], ignore_index=True)  # type: ignore
+            sd = pd.concat(
+                [cv.standard_deviation for cv in self.results],  # type: ignore
+                ignore_index=True,
+            )
         else:
             sd = None
         if self.results[0].labcodes is not None:
-            labcodes = pd.concat([cv.labcodes for cv in self.results], ignore_index=True)  # type: ignore
+            labcodes = pd.concat(
+                [cv.labcodes for cv in self.results],  # type: ignore
+                ignore_index=True,
+            )
         else:
             labcodes = None
         if self.results[0].X is not None:

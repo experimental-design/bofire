@@ -289,10 +289,16 @@ data = [
 
 @pytest.mark.parametrize("domain", list(domains))
 def test_base_create(domain: Domain):
-    with pytest.raises(ValueError, match="number sobol samples"):
+    with pytest.raises(
+        ValueError,
+        match="num_sobol_samples have to be of the power of 2 to increase performance",
+    ):
         DummyStrategyDataModel(domain=domain, num_sobol_samples=5)
 
-    with pytest.raises(ValueError, match="number raw samples"):
+    with pytest.raises(
+        ValueError,
+        match="num_raw_samples have to be of the power of 2 to increase performance",
+    ):
         DummyStrategyDataModel(domain=domain, num_raw_samples=5)
 
 
@@ -316,10 +322,16 @@ def test_base_invalid_descriptor_method():
     # "domain, descriptor_encoding, categorical_encoding, categorical_method, expected",
     "domain, surrogate_specs, categorical_method, descriptor_method, expected",
     [
-        (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
+        (
+            domains[0],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "EXHAUSTIVE",
+            "EXHAUSTIVE",
+            {},
+        ),
         (
             domains[1],
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
@@ -374,7 +386,13 @@ def test_base_invalid_descriptor_method():
             "FREE",
             {1: 3, 6: 1, 7: 0, 8: 0, 12: 1, 13: 0, 14: 0},
         ),
-        (domains[5], None, "EXHAUSTIVE", "EXHAUSTIVE", {1: 3.0}),
+        (
+            domains[5],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "EXHAUSTIVE",
+            "EXHAUSTIVE",
+            {1: 3.0},
+        ),
         (
             domains[5],
             surrogate_data_models.BotorchSurrogates(
@@ -392,8 +410,20 @@ def test_base_invalid_descriptor_method():
             "FREE",
             {1: 3.0, 2: 0},
         ),
-        (domains[5], None, "FREE", "EXHAUSTIVE", {1: 3.0}),
-        (domains[5], None, "FREE", "FREE", {1: 3.0, 2: 3.0}),
+        (
+            domains[5],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "FREE",
+            "EXHAUSTIVE",
+            {1: 3.0},
+        ),
+        (
+            domains[5],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "FREE",
+            "FREE",
+            {1: 3.0, 2: 3.0},
+        ),
     ],
 )
 def test_base_get_fixed_features(
@@ -423,7 +453,7 @@ def test_base_get_fixed_features(
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0, 1: 1},
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0, 1: 1},
@@ -450,7 +480,7 @@ def test_base_get_fixed_features(
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             "FREE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0},
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0},
@@ -603,7 +633,7 @@ def test_base_get_fixed_features(
             "FREE",
             "EXHAUSTIVE",
             "FREE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {4: 1.0, 5: 0.0, 6: 0.0},
                 {4: 0.0, 5: 1.0, 6: 0.0},
@@ -615,7 +645,7 @@ def test_base_get_fixed_features(
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {1: 3.0},
             ],

@@ -2,7 +2,7 @@ from typing import ClassVar, Literal, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.features.feature import TDiscreteVals
 from bofire.data_models.features.numerical import NumericalInput
@@ -21,7 +21,8 @@ class DiscreteInput(NumericalInput):
 
     values: TDiscreteVals
 
-    @validator("values")
+    @field_validator("values")
+    @classmethod
     def validate_values_unique(cls, values):
         """Validates that provided values are unique.
 

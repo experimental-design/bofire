@@ -2,7 +2,7 @@ from typing import ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
@@ -33,7 +33,8 @@ class ContinuousDescriptorInput(ContinuousInput):
     descriptors: TDescriptors
     values: TDiscreteVals
 
-    @validator("descriptors")
+    @field_validator("descriptors")
+    @classmethod
     def descriptors_to_keys(cls, descriptors):
         """validates the descriptor names and transforms it to valid keys
 
@@ -45,8 +46,8 @@ class ContinuousDescriptorInput(ContinuousInput):
         """
         return list(descriptors)
 
-    @root_validator(pre=False, skip_on_failure=True)
-    def validate_list_lengths(cls, values):
+    @model_validator(mode="after")
+    def validate_list_lengths(self):
         """compares the length of the defined descriptors list with the provided values
 
         Args:
@@ -58,11 +59,11 @@ class ContinuousDescriptorInput(ContinuousInput):
         Returns:
             Dict: Dict with the attributes
         """
-        if len(values["descriptors"]) != len(values["values"]):
+        if len(self.descriptors) != len(self.values):
             raise ValueError(
                 'must provide same number of descriptors and values, got {len(values["descriptors"])} != {len(values["values"])}'
             )
-        return values
+        return self
 
     def to_df(self) -> pd.DataFrame:
         """tabular overview of the feature as DataFrame
@@ -91,7 +92,8 @@ class CategoricalDescriptorInput(CategoricalInput):
     descriptors: TDescriptors
     values: TCategoricalDescriptorVals
 
-    @validator("descriptors")
+    @field_validator("descriptors")
+    @classmethod
     def validate_descriptors(cls, descriptors):
         """validates that descriptors have unique names
 
@@ -109,8 +111,9 @@ class CategoricalDescriptorInput(CategoricalInput):
             raise ValueError("descriptors must be unique")
         return descriptors
 
-    @validator("values")
-    def validate_values(cls, v, values):
+    @field_validator("values")
+    @classmethod
+    def validate_values(cls, v, info):
         """validates the compatability of passed values for the descriptors and the defined categories
 
         Args:
@@ -125,13 +128,13 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             List[List[float]]: Nested list with descriptor values
         """
-        if len(v) != len(values["categories"]):
+        if len(v) != len(info.data["categories"]):
             raise ValueError("values must have same length as categories")
         for row in v:
-            if len(row) != len(values["descriptors"]):
+            if len(row) != len(info.data["descriptors"]):
                 raise ValueError("rows in values must have same length as descriptors")
         a = np.array(v)
-        for i, d in enumerate(values["descriptors"]):
+        for i, d in enumerate(info.data["descriptors"]):
             if len(set(a[:, i])) == 1:
                 raise ValueError(f"No variation for descriptor {d}.")
         return v
@@ -242,9 +245,7 @@ class CategoricalDescriptorInput(CategoricalInput):
             pd.DataFrame: Descriptor encoded dataframe.
         """
         return pd.DataFrame(
-            data=values.map(
-                dict(zip(self.categories, self.values))
-            ).values.tolist(),  # type: ignore
+            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
             index=values.index,
         )

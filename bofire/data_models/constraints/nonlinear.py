@@ -3,7 +3,7 @@ from typing import Literal, Optional
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import Field, field_validator
 
 from bofire.data_models.constraints.constraint import FeatureKeys, IntrapointConstraint
 
@@ -19,10 +19,11 @@ class NonlinearConstraint(IntrapointConstraint):
 
     expression: str
     features: Optional[FeatureKeys] = None
-    jacobian_expression: Optional[str] = None
+    jacobian_expression: Optional[str] = Field(default=None, validate_default=True)
 
-    @validator("jacobian_expression", always=True)
-    def set_jacobian_expression(cls, jacobian_expression, values):
+    @field_validator("jacobian_expression")
+    @classmethod
+    def set_jacobian_expression(cls, jacobian_expression, info):
         try:
             import sympy  # type: ignore
         except ImportError as e:
@@ -32,16 +33,16 @@ class NonlinearConstraint(IntrapointConstraint):
 
         if (
             jacobian_expression is None
-            and "features" in values
-            and "expression" in values
+            and "features" in info.data.keys()
+            and "expression" in info.data.keys()
         ):
-            if values["features"] is not None:
+            if info.data["features"] is not None:
                 return (
                     "["
                     + ", ".join(
                         [
-                            str(sympy.S(values["expression"]).diff(key))
-                            for key in values["features"]
+                            str(sympy.S(info.data["expression"]).diff(key))
+                            for key in info.data["features"]
                         ]
                     )
                     + "]"
