@@ -3,6 +3,7 @@ from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
@@ -386,4 +387,34 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Domain has no local search region.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=k, bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    )
+                    for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+            constraints=Constraints(
+                constraints=[
+                    NChooseKConstraint(
+                        features=["a", "b", "c"],
+                        min_count=1,
+                        max_count=2,
+                        none_also_valid=False,
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "local_search_config": strategies.LSRBO(),
+    },
+    error=ValueError,
+    message="LSR-BO only supported for linear constraints.",
 )

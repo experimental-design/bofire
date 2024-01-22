@@ -53,6 +53,15 @@ from bofire.utils.torch_tools import (
 
 
 def is_power_of_two(n):
+    """
+    Check if a number is a power of two.
+
+    Args:
+        n (int): The number to be checked.
+
+    Returns:
+        bool: True if the number is a power of two, False otherwise.
+    """
     return (n != 0) and (n & (n - 1) == 0)
 
 
