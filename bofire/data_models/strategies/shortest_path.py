@@ -15,6 +15,7 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 def has_local_search_region(domain: Domain) -> bool:
+    """Returns True of a local search region is defined in the domain, else False."""
     if len(domain.inputs.get(ContinuousInput)) == 0:
         return False
     is_lsr = False
