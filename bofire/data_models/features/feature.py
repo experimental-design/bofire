@@ -10,7 +10,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
-TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
+TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
 
 
 class Feature(BaseModel):

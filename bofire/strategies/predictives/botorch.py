@@ -203,9 +203,10 @@ class BotorchStrategy(PredictiveStrategy):
         )
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
         # setup local bounds
+        assert self.experiments is not None
         local_lower, local_upper = self.domain.inputs.get_bounds(
             specs=self.input_preprocessing_specs,
-            reference_experiment=self.experiments.iloc[-1],  # type: ignore
+            reference_experiment=self.experiments.iloc[-1],
         )
         local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
@@ -291,8 +292,8 @@ class BotorchStrategy(PredictiveStrategy):
         ic_generator: Callable,
         ic_gen_kwargs: Dict,
         nchooseks: List[Callable[[Tensor], float]],
-        fixed_features: Dict[int, float],
-        fixed_features_list: List[Dict[int, float]],
+        fixed_features: Optional[Dict[int, float]],
+        fixed_features_list: Optional[List[Dict[int, float]]],
     ) -> Tuple[Tensor, Tensor]:
         if len(acqfs) > 1:
             candidates, acqf_vals = optimize_acqf_list(
@@ -308,7 +309,7 @@ class BotorchStrategy(PredictiveStrategy):
                     domain=self.domain,
                     constraint=LinearInequalityConstraint,  # type: ignore
                 ),
-                nonlinear_inequality_constraints=nchooseks,
+                nonlinear_inequality_constraints=nchooseks,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
                 ic_gen_kwargs=ic_gen_kwargs,
@@ -334,7 +335,7 @@ class BotorchStrategy(PredictiveStrategy):
                         domain=self.domain,
                         constraint=LinearInequalityConstraint,  # type: ignore
                     ),
-                    nonlinear_inequality_constraints=nchooseks,
+                    nonlinear_inequality_constraints=nchooseks,  # type: ignore
                     fixed_features_list=fixed_features_list,
                     ic_generator=ic_generator,
                     ic_gen_kwargs=ic_gen_kwargs,
@@ -355,7 +356,7 @@ class BotorchStrategy(PredictiveStrategy):
                         constraint=LinearInequalityConstraint,  # type: ignore
                     ),
                     fixed_features=fixed_features,
-                    nonlinear_inequality_constraints=nchooseks,
+                    nonlinear_inequality_constraints=nchooseks,  # type: ignore
                     return_best_only=True,
                     ic_generator=ic_generator,  # type: ignore
                     **ic_gen_kwargs,  # type: ignore
@@ -434,9 +435,9 @@ class BotorchStrategy(PredictiveStrategy):
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
-            ic_generator=ic_generator,
+            ic_generator=ic_generator,  # type: ignore
             ic_gen_kwargs=ic_gen_kwargs,
-            nchooseks=nchooseks,
+            nchooseks=nchooseks,  # type: ignore
             fixed_features=fixed_features,
             fixed_features_list=fixed_features_list,
         )
@@ -450,13 +451,12 @@ class BotorchStrategy(PredictiveStrategy):
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
-                ic_generator=ic_generator,
+                ic_generator=ic_generator,  # type: ignore
                 ic_gen_kwargs=ic_gen_kwargs,
-                nchooseks=nchooseks,
+                nchooseks=nchooseks,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
             )
-
             if self.local_search_config.is_local_step(
                 local_acqf_val.item(), global_acqf_val.item()
             ):
@@ -471,45 +471,6 @@ class BotorchStrategy(PredictiveStrategy):
                 )
                 step = pd.DataFrame(sp.step(sp.start)).T
                 return pd.concat((step, self.predict(step)), axis=1)
-
-            # if isinstance(self.local_search_config, ShortestPath):
-            #     sp = ShortestPathStrategy(
-            #         data_model=ShortestPathStrategyDataModel(
-            #             domain=self.domain,
-            #             start=self.experiments.iloc[-1][
-            #                 self.domain.inputs.get_keys()
-            #             ].to_dict(),
-            #             end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
-            #         )
-            #     )
-            #     path = sp.ask()
-            #     return pd.concat((path, self.predict(path)), axis=1)
-            # else:
-            #     assert isinstance(self.local_search_config, AcqfDependentStep)
-            #     local_candidates, local_acqf_vals = self.__ask(
-            #         candidate_count=candidate_count,
-            #         acqfs=acqfs,
-            #         bounds=local_bounds,
-            #         ic_generator=ic_generator,
-            #         ic_gen_kwargs=ic_gen_kwargs,
-            #         nchooseks=nchooseks,
-            #         fixed_features=fixed_features,
-            #         fixed_features_list=fixed_features_list,
-            #     )
-            #     if local_acqf_vals.item() >= self.local_search_config.threshold:
-            #         return self._postprocess_candidates(candidates=local_candidates)
-            #     else:
-            #         sp = ShortestPathStrategy(
-            #             data_model=ShortestPathStrategyDataModel(
-            #                 domain=self.domain,
-            #                 start=self.experiments.iloc[-1].to_dict(),
-            #                 end=self._postprocess_candidates(candidates)
-            #                 .iloc[-1]
-            #                 .to_dict(),
-            #             )
-            #         )
-            #         step = pd.DataFrame(sp.step(sp.start)).T
-            #         return pd.concat((step, self.predict(step)), axis=1)
 
         else:
             return self._postprocess_candidates(candidates=candidates)
@@ -534,10 +495,13 @@ class BotorchStrategy(PredictiveStrategy):
         features2idx = self._features2idx
 
         for _, feat in enumerate(self.domain.get_features(Input)):
-            if feat.fixed_value() is not None:  # type: ignore
+            assert isinstance(feat, Input)
+            if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
-                    transform_type=self.input_preprocessing_specs.get(feat.key)
-                )  # type: ignore
+                    transform_type=self.input_preprocessing_specs.get(
+                        feat.key
+                    )  # type:ignore
+                )
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
 
@@ -621,7 +585,8 @@ class BotorchStrategy(PredictiveStrategy):
             include = None
 
         combos = self.domain.inputs.get_categorical_combinations(
-            include=(include if include else Input), exclude=exclude
+            include=(include if include else Input),
+            exclude=exclude,  # type: ignore
         )
         # now build up the fixed feature list
         if len(combos) == 1:
@@ -675,6 +640,7 @@ class BotorchStrategy(PredictiveStrategy):
         return False
 
     def get_acqf_input_tensors(self):
+        assert self.experiments is not None
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
@@ -718,6 +684,7 @@ class BotorchStrategy(PredictiveStrategy):
             if X_pending is not None
             else torch.cat((X_train, transformed_samples))
         )
+        assert self.model is not None
         return get_infeasible_cost(
             X=X,
             model=self.model,
