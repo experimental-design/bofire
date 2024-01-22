@@ -29,14 +29,36 @@ def is_power_of_two(n):
 
 
 class LocalSearchConfig(BaseModel):
+    """LocalSearchConfigs provide a way to define how to switch between global
+    acqf optimization in the global bounds and local acqf optimization in the local
+    reference bounds.
+    """
+
     type: str
 
     @abstractmethod
-    def is_local_step(self, acqf_local, acqf_global) -> bool:
+    def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
+        """Abstract switching function between local and global acqf optimum.
+
+        Args:
+            acqf_local (float): Local acqf value.
+            acqf_global (float): Global acqf value.
+
+        Returns:
+            bool: If true, do local step, else a step towards the global acqf maximum.
+        """
         pass
 
 
 class LSRBO(LocalSearchConfig):
+    """LSRBO implements the local search region method published in.
+    https://www.merl.com/publications/docs/TR2023-057.pdf
+
+    Attributes:
+        gamma (float): The switsching parameter between local and global optimization.
+            Defaults to 0.1.
+    """
+
     type: Literal["LSRBO"] = "LSRBO"
     gamma: Annotated[float, Field(ge=0)] = 0.1
 
