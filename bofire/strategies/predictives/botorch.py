@@ -284,7 +284,7 @@ class BotorchStrategy(PredictiveStrategy):
         preds = self.predict(df_candidates)
         return pd.concat((df_candidates, preds), axis=1)
 
-    def __ask(
+    def _optimize_acqf_continuous(
         self,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
@@ -431,7 +431,7 @@ class BotorchStrategy(PredictiveStrategy):
         ) = self._setup_ask()
 
         # do the global opt
-        candidates, global_acqf_val = self.__ask(
+        candidates, global_acqf_val = self._optimize_acqf_continuous(
             candidate_count=candidate_count,
             acqfs=acqfs,
             bounds=bounds,
@@ -447,7 +447,7 @@ class BotorchStrategy(PredictiveStrategy):
             and has_local_search_region(self.domain)
             and candidate_count == 1
         ):
-            local_candidates, local_acqf_val = self.__ask(
+            local_candidates, local_acqf_val = self._optimize_acqf_continuous(
                 candidate_count=candidate_count,
                 acqfs=acqfs,
                 bounds=local_bounds,
