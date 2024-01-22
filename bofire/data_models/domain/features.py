@@ -565,7 +565,7 @@ class Inputs(Features):
             lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),  # type: ignore
                 values=experiments[feat.key] if experiments is not None else None,
-                reference_value=reference_experiment[feat.key]
+                reference_value=reference_experiment[feat.key]  # type: ignore
                 if reference_experiment is not None
                 else None,
             )
