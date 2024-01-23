@@ -89,7 +89,8 @@ class MolecularInput(Input):
 
 class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
-    order_id: ClassVar[int] = 7
+    # order_id: ClassVar[int] = 7
+    order_id: ClassVar[int] = 5
 
     @field_validator("categories")
     @classmethod

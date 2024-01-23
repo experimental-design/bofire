@@ -26,7 +26,7 @@ class CategoricalInput(Input):
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
     # order_id: ClassVar[int] = 5
-    order_id: ClassVar[int] = 6
+    order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
     allowed: TAllowedVals = Field(default=None, validate_default=True)

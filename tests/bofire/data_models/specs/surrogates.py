@@ -278,7 +278,9 @@ specs.add_valid(
         ).model_dump(),
         "aggregations": None,
         "molecular_kernel": TanimotoKernel(ard=True).model_dump(),
-        "continuous_kernel": MaternKernel(ard=True, nu=random.choice([0.5, 1.5, 2.5])).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, nu=random.choice([0.5, 1.5, 2.5])
+        ).model_dump(),
         "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,

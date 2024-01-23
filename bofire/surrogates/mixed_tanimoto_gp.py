@@ -75,7 +75,7 @@ class MixedTanimotoGP(SingleTaskGP):
 
         if cont_kernel_factory is None:
 
-            def cont_kernel_factory(
+            def cont_kernel_factory(  # type: ignore
                 batch_shape: torch.Size,
                 ard_num_dims: int,
                 active_dims: List[int],
