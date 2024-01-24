@@ -125,9 +125,9 @@ specs.add_valid(
     features.CategoricalOutput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "categories": ("a", "b", "c"),
+        "categories": ["a", "b", "c"],
         "objective": ConstrainedCategoricalObjective(
-            categories=("a", "b", "c"), desirability=(True, True, False)
+            categories=["a", "b", "c"], desirability=[True, True, False]
         ),
     },
 )
@@ -149,13 +149,5 @@ specs.add_valid(
             "N[C@](C)(F)C(=O)O",
         ),
         "allowed": [True, True, True, True],
-    },
-)
-specs.add_valid(
-    features.CategoricalOutput,
-    lambda: {
-        "key": str(uuid.uuid4()),
-        "categories": ["a", "b", "c"],
-        "objective": [0.0, 1.0, 0.0],
     },
 )

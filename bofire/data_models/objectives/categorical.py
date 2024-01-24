@@ -1,9 +1,8 @@
-from typing import Dict, Literal, Tuple, Union
-from warnings import warn
+from typing import Dict, List, Literal, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.features.feature import TCategoryVals
 from bofire.data_models.objectives.objective import (
@@ -13,37 +12,13 @@ from bofire.data_models.objectives.objective import (
 )
 
 
-class CategoricalObjective(Objective):
-    """Categorical objective class; stores categories"""
-
-    type: Literal["CategoricalObjective"] = "CategoricalObjective"
-    categories: TCategoryVals
-
-    @validator("categories")
-    def validate_categories_unique(cls, categories):
-        """validates that categories have unique names
-
-        Args:
-            categories (Union[List[str], Tuple[str]]): List or tuple of category names
-
-        Raises:
-            ValueError: when categories have non-unique names
-
-        Returns:
-            Tuple[str]: Tuple of the categories
-        """
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return tuple(categories)
-
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
-        warn(
-            "Categorical objective currently does not have a function. Returning the original input."
-        )
-        return x
+class CategoricalObjective:
+    """Abstract categorical objective class"""
 
 
-class ConstrainedCategoricalObjective(ConstrainedObjective, CategoricalObjective):
+class ConstrainedCategoricalObjective(
+    ConstrainedObjective, CategoricalObjective, Objective
+):
     """Compute the categorical objective value as:
 
         Po where P is an [n, c] matrix where each row is a probability vector
@@ -51,21 +26,23 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, CategoricalObjective
 
     Attributes:
         w (float): float between zero and one for weighting the objective.
-        desirability (tuple): tuple of values of size c (c is number of categories) such that the i-th entry is in {True, False}
+        desirability (list): list of values of size c (c is number of categories) such that the i-th entry is in {True, False}
     """
 
     w: TWeight = 1.0
     categories: TCategoryVals
-    desirability: Tuple[bool, ...]
+    desirability: List[bool]
     eta: float = 1.0
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
-    @validator("desirability")
-    def validate_categories_unique(cls, desirability, values):
+    @field_validator(
+        "desirability",
+    )
+    def validate_categories_unique(cls, desirability: List[bool], info) -> List[bool]:
         """validates that desirabilities match the categories
 
         Args:
-            categories (Union[List[str], Tuple[str]]): List or tuple of category names
+            categories (List[str]): List or tuple of category names
 
         Raises:
             ValueError: when desirability count is not equal to category count
@@ -73,11 +50,11 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, CategoricalObjective
         Returns:
             Tuple[bool]: Tuple of the desirability
         """
-        if len(desirability) != len(values["categories"]):
+        if len(desirability) != len(info.data["categories"]):
             raise ValueError(
                 "number of categories differs from number of desirabilities"
             )
-        return tuple(desirability)
+        return desirability
 
     def to_dict(self) -> Dict:
         """Returns the categories and corresponding objective values as dictionary"""

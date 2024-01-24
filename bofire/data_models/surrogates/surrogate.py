@@ -10,7 +10,6 @@ from bofire.data_models.features.api import AnyOutput, TInputTransformSpecs
 
 class Surrogate(BaseModel):
     type: str
-
     inputs: Inputs
     outputs: Outputs
     input_preprocessing_specs: TInputTransformSpecs = Field(
@@ -29,20 +28,21 @@ class Surrogate(BaseModel):
 
     @field_validator("outputs")
     @classmethod
-    def validate_outputs(cls, v, values):
-        if len(v) == 0:
+    def validate_outputs(cls, outputs, info):
+        if len(outputs) == 0:
             raise ValueError("At least one output feature has to be provided.")
-        return v
+        for o in outputs:
+            if not cls.is_output_implemented(o):
+                raise ValueError("Invalid output type passed.")
+        return outputs
 
     @classmethod
     @abstractmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
         """Abstract method to check output type for surrogate models
-
         Args:
             outputs: objective functions for the surrogate
             my_type: continuous or categorical output
-
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """

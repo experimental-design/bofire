@@ -46,3 +46,24 @@ specs.add_valid(
         "steepness": 0.3,
     },
 )
+
+specs.add_valid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue"],
+        "desirability": [True, False, True],
+        "eta": 1.0,
+    },
+)
+specs.add_invalid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue"],
+        "desirability": [True, False, True, False],
+        "eta": 1.0,
+    },
+    error=ValueError,
+    message="number of categories differs from number of desirabilities",
+)

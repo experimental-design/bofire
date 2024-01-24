@@ -2,7 +2,7 @@ from typing import ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import (
@@ -13,8 +13,8 @@ from bofire.data_models.features.feature import (
     TCategoryVals,
     TTransform,
 )
+from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.objectives.categorical import (
-    CategoricalObjective,
     ConstrainedCategoricalObjective,
 )
 
@@ -23,8 +23,8 @@ class CategoricalInput(Input):
     """Base class for all categorical input features.
 
     Attributes:
-        categories (Tuple[str]): Names of the categories.
-        allowed (Tuple[bool]): List of bools indicating if a category is allowed within the optimization.
+        categories (List[str]): Names of the categories.
+        allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
@@ -39,7 +39,7 @@ class CategoricalInput(Input):
         """validates that categories have unique names
 
         Args:
-            categories (Union[List[str], Tuple[str]]): List or tuple of category names
+            categories (List[str]): List of category names
 
         Raises:
             ValueError: when categories have non-unique names
@@ -49,7 +49,7 @@ class CategoricalInput(Input):
         """
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
-        return tuple(categories)
+        return categories
 
     @field_validator("allowed")
     @classmethod
@@ -358,16 +358,19 @@ class CategoricalOutput(Output):
     order_id: ClassVar[int] = 8
 
     categories: TCategoryVals
-    objective: Optional[
-        Union[CategoricalObjective, ConstrainedCategoricalObjective]
-    ] = None
+    objective: Optional[AnyCategoricalObjective] = Field(
+        default_factory=lambda: ConstrainedCategoricalObjective(
+            w=1.0, categories=["a", "b"], desirability=[True, False]
+        )
+    )
 
-    @validator("categories", allow_reuse=True)
-    def validate_categories_unique(cls, categories):
+    @field_validator("categories")
+    @classmethod
+    def validate_categories_unique(cls, categories: List[str]) -> List["str"]:
         """validates that categories have unique names
 
         Args:
-            categories (Union[List[str], Tuple[str]]): List or tuple of category names
+            categories (List[str]): List or tuple of category names
 
         Raises:
             ValueError: when categories have non-unique names
@@ -377,14 +380,17 @@ class CategoricalOutput(Output):
         """
         if len(categories) != len(set(categories)):
             raise ValueError("categories must be unique")
-        return tuple(categories)
+        return categories
 
-    @validator("objective")
-    def validate_objectives_unique(cls, objective, values):
+    @field_validator("objective")
+    @classmethod
+    def validate_objectives_unique(
+        cls, objective: AnyCategoricalObjective, info
+    ) -> AnyCategoricalObjective:
         """validates that categories have unique names
 
         Args:
-            categories (Union[List[str], Tuple[str]]): List or tuple of category names
+            categories (List[str]): List or tuple of category names
 
         Raises:
             ValueError: when categories do not match objective categories
@@ -392,7 +398,7 @@ class CategoricalOutput(Output):
         Returns:
             Tuple[str]: Tuple of the categories
         """
-        if objective.categories != tuple(values["categories"]):
+        if objective.categories != info.data["categories"]:
             raise ValueError("categories must match to objective categories")
         return objective
 
@@ -400,17 +406,9 @@ class CategoricalOutput(Output):
     def from_objective(
         cls,
         key: str,
-        objective: Union[CategoricalObjective, ConstrainedCategoricalObjective],
+        objective: ConstrainedCategoricalObjective,
     ):
         return cls(key=key, objective=objective, categories=objective.categories)
-
-    def validate_experimental(self, values: pd.Series) -> pd.Series:
-        values = values.map(str)
-        if sum(values.isin(self.categories)) != len(values):
-            raise ValueError(
-                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
-            )
-        return values
 
     def __call__(self, values: pd.Series) -> pd.Series:
         if self.objective is None:
@@ -420,6 +418,14 @@ class CategoricalOutput(Output):
                 name=values.name,
             )
         return self.objective(values)  # type: ignore
+
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
+        if sum(values.isin(self.categories)) != len(values):
+            raise ValueError(
+                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
+            )
+        return values
 
     def __str__(self) -> str:
         return "CategoricalOutputFeature"

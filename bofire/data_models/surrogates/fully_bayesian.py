@@ -18,17 +18,14 @@ class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     def validate_thinning(cls, thinning, info):
         if info.data["num_samples"] / thinning < 1:
             raise ValueError("`num_samples` has to be larger than `thinning`.")
-        return value
+        return thinning
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
         """Abstract method to check output type for surrogate models
-
         Args:
-            outputs: objective functions for the surrogate
             my_type: continuous or categorical output
-
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return True if isinstance(my_type, ContinuousOutput) else False
+        return isinstance(my_type, ContinuousOutput)

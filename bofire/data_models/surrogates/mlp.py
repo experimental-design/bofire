@@ -2,7 +2,11 @@ from typing import Annotated, Literal, Sequence, Type
 
 from pydantic import Field
 
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalOutput,
+    ContinuousOutput,
+)
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
@@ -21,15 +25,32 @@ class MLPEnsemble(TrainableBotorchSurrogate):
     shuffle: bool = True
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
+
+class RegressionMLPEnsemble(MLPEnsemble):
+    type: Literal["RegressionMLPEnsemble"] = "RegressionMLPEnsemble"
+    final_activation: Literal["identity"] = "identity"
+
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
         """Abstract method to check output type for surrogate models
-
         Args:
-            outputs: objective functions for the surrogate
             my_type: continuous or categorical output
-
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return True if isinstance(my_type, ContinuousOutput) else False
+        return isinstance(my_type, ContinuousOutput)
+
+
+class ClassificationMLPEnsemble(MLPEnsemble):
+    type: Literal["ClassificationMLPEnsemble"] = "ClassificationMLPEnsemble"
+    final_activation: Literal["softmax"] = "softmax"
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, CategoricalOutput)

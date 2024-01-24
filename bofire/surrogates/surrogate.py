@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.domain.domain import is_numeric
+from bofire.data_models.features.api import CategoricalOutput
 from bofire.data_models.surrogates.api import Surrogate as DataModel
 from bofire.surrogates.values import PredictedValue
 
@@ -44,27 +45,88 @@ class Surrogate(ABC):
             Xt[c] = pd.to_numeric(Xt[c], errors="raise")
         # predict
         preds, stds = self._predict(Xt)
+        # set up column names
+        columns = []
+        for featkey in self.outputs.get_keys():
+            if isinstance(self.outputs.get_by_key(featkey), CategoricalOutput):
+                columns = (
+                    columns
+                    + [
+                        f"{featkey}_{cat}_prob"
+                        for cat in self.outputs.get_by_key(featkey).categories
+                    ]
+                    + [
+                        f"{featkey}_{cat}_sd"
+                        for cat in self.outputs.get_by_key(featkey).categories
+                    ]
+                )
+            else:
+                columns = (
+                    columns
+                    + [f"{featkey}_pred" for featkey in self.outputs.get_keys()]
+                    + [f"{featkey}_sd" for featkey in self.outputs.get_keys()]
+                )
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
-            columns=["%s_pred" % featkey for featkey in self.outputs.get_keys()]
-            + ["%s_sd" % featkey for featkey in self.outputs.get_keys()],
+            columns=columns,
         )
+        # append predictions for categorical cases
+        for feat in self.outputs.get():
+            if isinstance(feat, CategoricalOutput):
+                predictions.insert(
+                    loc=0,
+                    column=f"{feat.key}_pred",
+                    value=predictions.filter(regex=f"{feat.key}(.*)_prob")
+                    .idxmax(1)
+                    .str.replace(f"{feat.key}_", "")
+                    .str.replace("_prob", "")
+                    .values,
+                )
+                predictions.insert(
+                    loc=1,
+                    column=f"{feat.key}_sd",
+                    value=predictions.filter(regex=f"{feat.key}(.*)_sd")
+                    .pow(2.0)
+                    .sum(1)
+                    .pow(0.5)
+                    .values,
+                )
         # validate
         self.validate_predictions(predictions=predictions)
         # return
         return predictions
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
-        expected_cols = [
-            f"{key}_{t}" for key in self.outputs.get_keys() for t in ["pred", "sd"]
-        ]
+        expected_cols = []
+        for featkey in self.outputs.get_keys():
+            if isinstance(self.outputs.get_by_key(featkey), CategoricalOutput):
+                expected_cols = (
+                    expected_cols
+                    + [f"{featkey}_{t}" for t in ["pred", "sd"]]
+                    + [
+                        f"{featkey}_{cat}_prob"
+                        for cat in self.outputs.get_by_key(featkey).categories
+                    ]
+                    + [
+                        f"{featkey}_{cat}_sd"
+                        for cat in self.outputs.get_by_key(featkey).categories
+                    ]
+                )
+                check_columns = [
+                    col for col in expected_cols if col != f"{featkey}_pred"
+                ]
+            else:
+                expected_cols = expected_cols + [
+                    f"{featkey}_{t}" for t in ["pred", "sd"]
+                ]
+                check_columns = expected_cols
         if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
                 f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
             )
         # check that values are numeric
-        if not is_numeric(predictions):
+        if not is_numeric(predictions[check_columns]):
             raise ValueError("Not all values in predictions are numeric.")
         return predictions
 

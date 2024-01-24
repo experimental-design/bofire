@@ -12,6 +12,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.objectives.api import CategoricalObjective
 from bofire.surrogates.diagnostics import CvResult, CvResults
 from bofire.surrogates.surrogate import Surrogate
 
@@ -181,6 +182,20 @@ class TrainableSurrogate(ABC):
             # now do the scoring
             y_test_pred = self.predict(X_test)  # type: ignore
             y_train_pred = self.predict(X_train)  # type: ignore
+
+            # Convert to categorical if applicable
+            if isinstance(self.outputs[0].objective, CategoricalObjective):
+                y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
+                    self.outputs[0].objective.to_dict_label()
+                )
+                y_train_pred[f"{key}_pred"] = y_train_pred[f"{key}_pred"].map(
+                    self.outputs[0].objective.to_dict_label()
+                )
+                y_test[key] = y_test[key].map(self.outputs[0].objective.to_dict_label())
+                y_train[key] = y_train[key].map(
+                    self.outputs[0].objective.to_dict_label()
+                )
+
             # now store the results
             train_results.append(
                 CvResult(  # type: ignore

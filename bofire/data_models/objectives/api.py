@@ -26,11 +26,12 @@ AbstractObjective = Union[
     IdentityObjective,
     SigmoidObjective,
     ConstrainedObjective,
+    CategoricalObjective,
 ]
 
+AnyCategoricalObjective = ConstrainedCategoricalObjective
+
 AnyConstraintObjective = Union[
-    CategoricalObjective,
-    ConstrainedCategoricalObjective,
     MaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
     TargetObjective,

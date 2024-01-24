@@ -108,7 +108,7 @@ class PredictiveStrategy(Strategy):
                 *[
                     [f"{feat.key}_pred"]
                     if not isinstance(feat, CategoricalOutput)
-                    else [f"{feat.key}_pred_{cat}" for cat in feat.categories]
+                    else [f"{feat.key}_{cat}_prob" for cat in feat.categories]
                     for feat in self.domain.outputs.get()
                 ]
             )
@@ -122,7 +122,7 @@ class PredictiveStrategy(Strategy):
                         *[
                             [f"{feat.key}_sd"]
                             if not isinstance(feat, CategoricalOutput)
-                            else [f"{feat.key}_sd_{cat}" for cat in feat.categories]
+                            else [f"{feat.key}_{cat}_sd" for cat in feat.categories]
                             for feat in self.domain.outputs.get()
                         ]
                     )
@@ -133,21 +133,26 @@ class PredictiveStrategy(Strategy):
                 data=preds,
                 columns=column_names,
             )
-        categorical_preds = {
-            f"{feat.key}_pred": (
-                ind,
-                predictions.filter(regex=f"{feat.key}_pred_")
-                .idxmax(1)
-                .str.replace(f"{feat.key}_pred_", "")
-                .values,
-            )
-            for ind, feat in enumerate(self.domain.outputs.get())
-            if isinstance(feat, CategoricalOutput)
-        }
-        for key in categorical_preds.keys():
-            predictions.insert(
-                categorical_preds[key][0], key, categorical_preds[key][1]
-            )
+        for feat in self.domain.outputs.get():
+            if isinstance(feat, CategoricalOutput):
+                predictions.insert(
+                    loc=0,
+                    column=f"{feat.key}_pred",
+                    value=predictions.filter(regex=f"{feat.key}(.*)_prob")
+                    .idxmax(1)
+                    .str.replace(f"{feat.key}_", "")
+                    .str.replace("_prob", "")
+                    .values,
+                )
+                predictions.insert(
+                    loc=1,
+                    column=f"{feat.key}_sd",
+                    value=predictions.filter(regex=f"{feat.key}(.*)_sd")
+                    .pow(2.0)
+                    .sum(1)
+                    .pow(0.5)
+                    .values,
+                )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index

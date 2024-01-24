@@ -14,8 +14,11 @@ try:
     from bofire.data_models.surrogates.mixed_single_task_gp import (
         MixedSingleTaskGPSurrogate,
     )
-    from bofire.data_models.surrogates.mlp import MLPEnsemble
-    from bofire.data_models.surrogates.mlp_classifier import MLPClassifierEnsemble
+    from bofire.data_models.surrogates.mlp import (
+        ClassificationMLPEnsemble,
+        MLPEnsemble,
+        RegressionMLPEnsemble,
+    )
     from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
@@ -34,8 +37,8 @@ try:
         RandomForestSurrogate,
         SingleTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
-        MLPClassifierEnsemble,
-        MLPEnsemble,
+        ClassificationMLPEnsemble,
+        RegressionMLPEnsemble,
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
@@ -47,8 +50,8 @@ try:
         RandomForestSurrogate,
         SingleTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
-        MLPClassifierEnsemble,
-        MLPEnsemble,
+        ClassificationMLPEnsemble,
+        RegressionMLPEnsemble,
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,

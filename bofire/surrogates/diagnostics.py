@@ -7,6 +7,8 @@ from pydantic import Field, field_validator, model_validator, validator
 from scipy.integrate import simps
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,
@@ -15,7 +17,49 @@ from sklearn.metrics import (
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.domain import is_numeric
-from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
+from bofire.data_models.enum import (
+    ClassificationMetricsEnum,
+    RegressionMetricsEnum,
+    UQRegressionMetricsEnum,
+)
+
+
+def _accuracy_score(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the standard accuracy score.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: Accuracy score.
+    """
+    return float(accuracy_score(observed, predicted))
+
+
+def _f1_score(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the f1 accuracy score.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: Accuracy score.
+    """
+    return float(f1_score(observed, predicted, average="micro"))
 
 
 def _mean_absolute_error(
@@ -429,6 +473,8 @@ metrics = {
     RegressionMetricsEnum.PEARSON: _pearson,
     RegressionMetricsEnum.SPEARMAN: _spearman,
     RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
+    ClassificationMetricsEnum.ACCURACY: _accuracy_score,
+    ClassificationMetricsEnum.F1: _f1_score,
 }
 
 UQ_metrics = {
@@ -511,7 +557,10 @@ class CvResult(BaseModel):
         return len(self.observed)
 
     def get_metric(
-        self, metric: Union[RegressionMetricsEnum, UQRegressionMetricsEnum]
+        self,
+        metric: Union[
+            ClassificationMetricsEnum, RegressionMetricsEnum, UQRegressionMetricsEnum
+        ],
     ) -> float:
         """Calculates a metric for the fold.
 
@@ -630,7 +679,9 @@ class CvResults(BaseModel):
 
     def get_metric(
         self,
-        metric: Union[RegressionMetricsEnum, UQRegressionMetricsEnum],
+        metric: Union[
+            ClassificationMetricsEnum, RegressionMetricsEnum, UQRegressionMetricsEnum
+        ],
         combine_folds: bool = True,
     ) -> pd.Series:
         """Calculates a metric for every fold and returns them as pd.Series.
@@ -654,7 +705,13 @@ class CvResults(BaseModel):
 
     def get_metrics(
         self,
-        metrics: Sequence[Union[RegressionMetricsEnum, UQRegressionMetricsEnum]] = [
+        metrics: Sequence[
+            Union[
+                ClassificationMetricsEnum,
+                RegressionMetricsEnum,
+                UQRegressionMetricsEnum,
+            ]
+        ] = [
             RegressionMetricsEnum.MAE,
             RegressionMetricsEnum.MSD,
             RegressionMetricsEnum.R2,

@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from typing import Literal, Optional, Sequence
 
 import numpy as np
@@ -10,7 +11,13 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Dataset
 
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.surrogates.api import (
+    ClassificationMLPEnsemble as DataModelClassification,
+)
 from bofire.data_models.surrogates.api import MLPEnsemble as DataModel
+from bofire.data_models.surrogates.api import (
+    RegressionMLPEnsemble as DataModelRegression,
+)
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.single_task_gp import get_scaler
@@ -20,7 +27,7 @@ from bofire.utils.torch_tools import tkwargs
 
 class MLPDataset(Dataset):
     """
-    Prepare the dataset for regression
+    Prepare the dataset for MLP training
     """
 
     def __init__(self, X: Tensor, y: Tensor):
@@ -42,6 +49,7 @@ class MLP(nn.Module):
         hidden_layer_sizes: Sequence = (100,),
         dropout: float = 0.0,
         activation: Literal["relu", "logistic", "tanh"] = "relu",
+        final_activation: Literal["softmax", "identity"] = "identity",
     ):
         super().__init__()
         if activation == "relu":
@@ -69,6 +77,14 @@ class MLP(nn.Module):
                 if dropout > 0.0:
                     layers.append(nn.Dropout(dropout))
         layers.append(nn.Linear(hidden_layer_sizes[-1], output_size).to(**tkwargs))
+        if final_activation == "softmax":
+            layers.append(nn.Softmax(dim=-1))
+        elif final_activation == "identity":
+            layers.append(nn.Identity())
+        else:
+            raise ValueError(
+                f"Currently only serving classification and regression problems; {final_activation} is not known."
+            )
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):
@@ -83,10 +99,10 @@ class _MLPEnsemble(EnsembleModel):
         if len(mlps) == 0:
             raise ValueError("List of mlps is empty.")
         num_in_features = mlps[0].layers[0].in_features
-        num_out_features = mlps[0].layers[-1].out_features
+        num_out_features = mlps[0].layers[-2].out_features
         for mlp in mlps:
             assert mlp.layers[0].in_features == num_in_features
-            assert mlp.layers[-1].out_features == num_out_features
+            assert mlp.layers[-2].out_features == num_out_features
         self.mlps = mlps
         if output_scaler is not None:
             self.outcome_transform = output_scaler
@@ -109,7 +125,7 @@ class _MLPEnsemble(EnsembleModel):
     @property
     def num_outputs(self) -> int:
         r"""The number of outputs of the model."""
-        return self.mlps[0].layers[-1].out_features  # type: ignore
+        return self.mlps[0].layers[-2].out_features  # type: ignore
 
 
 def fit_mlp(
@@ -132,6 +148,7 @@ def fit_mlp(
         lr (float, optional): Initial learning rate. Defaults to 1e-4.
         shuffle (bool, optional): Whereas the batches should be shuffled. Defaults to True.
         weight_decay (float, optional): Weight decay (L2 regularization). Defaults to 0.0 (no regularization).
+        loss_function (Module, optional): Loss function specified by the problem type. Defaults to L1 loss for regression problems.
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
@@ -189,6 +206,16 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     model: Optional[_MLPEnsemble] = None
 
+    @abstractmethod
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+        pass
+
+
+class RegressionMLPEnsemble(MLPEnsemble):
+    def __init__(self, data_model: DataModelRegression, **kwargs):
+        self.final_activation = "identity"
+        super().__init__(data_model, **kwargs)
+
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
@@ -216,6 +243,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
                 hidden_layer_sizes=self.hidden_layer_sizes,
                 activation=self.activation,  # type: ignore
                 dropout=self.dropout,
+                final_activation="identity",
             )
             fit_mlp(
                 mlp=mlp,
@@ -225,8 +253,63 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
                 lr=self.lr,
                 shuffle=self.shuffle,
                 weight_decay=self.weight_decay,
+                loss_function=nn.L1Loss,
             )
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps, output_scaler=output_scaler)
+        if scaler is not None:
+            self.model.input_transform = scaler
+
+
+class ClassificationMLPEnsemble(MLPEnsemble):
+    def __init__(self, data_model: DataModelClassification, **kwargs):
+        self.final_activation = "softmax"
+        super().__init__(data_model, **kwargs)
+
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+        # Map dictionary of objective values to labels
+        label_mapping = self.outputs[0].objective.to_dict_label()
+
+        # Convert Y to classification tensor
+        Y = pd.DataFrame.from_dict(
+            {col: Y[col].map(label_mapping) for col in Y.columns}
+        )
+
+        mlps = []
+        subsample_size = round(self.subsample_fraction * X.shape[0])
+        for _ in range(self.n_estimators):
+            # resample X and Y
+            sample_idx = np.random.choice(X.shape[0], replace=True, size=subsample_size)
+            tX = torch.from_numpy(transformed_X.values[sample_idx]).to(**tkwargs)
+            ty = torch.from_numpy(Y.values[sample_idx]).to(**tkwargs)
+
+            dataset = MLPDataset(
+                X=scaler.transform(tX) if scaler is not None else tX,
+                y=ty,
+            )
+            mlp = MLP(
+                input_size=transformed_X.shape[1],
+                output_size=len(
+                    label_mapping
+                ),  # Set outputs based on number of categories
+                hidden_layer_sizes=self.hidden_layer_sizes,
+                activation=self.activation,  # type: ignore
+                dropout=self.dropout,
+                final_activation="softmax",
+            )
+            fit_mlp(
+                mlp=mlp,
+                dataset=dataset,
+                batch_size=self.batch_size,
+                n_epoches=self.n_epochs,
+                lr=self.lr,
+                shuffle=self.shuffle,
+                weight_decay=self.weight_decay,
+                loss_function=nn.CrossEntropyLoss,  # utilizes logits as input
+            )
+            mlps.append(mlp)
+        self.model = _MLPEnsemble(mlps=mlps)
         if scaler is not None:
             self.model.input_transform = scaler
