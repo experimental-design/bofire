@@ -152,7 +152,8 @@ class ContinuousOutput(Output):
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
-    order_id: ClassVar[int] = 7
+    # order_id: ClassVar[int] = 7
+    order_id: ClassVar[int] = 8
     unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(

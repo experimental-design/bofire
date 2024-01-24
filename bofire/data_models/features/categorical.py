@@ -354,7 +354,8 @@ class CategoricalInput(Input):
 
 class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
-    order_id: ClassVar[int] = 8
+    # order_id: ClassVar[int] = 8
+    order_id: ClassVar[int] = 9
 
     categories: TCategoryVals
     objective: Annotated[List[Annotated[float, Field(ge=0, le=1)]], Field(min_length=2)]

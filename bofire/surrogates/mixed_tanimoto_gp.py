@@ -53,7 +53,7 @@ class MixedTanimotoGP(SingleTaskGP):
         # cat_kernel_factory: Optional[
         #    Callable[[torch.Size, int, List[int]], Kernel]
         # ] = None, --> BoTorch forced to use CategoricalKernel
-        cont_kernel_factory: Optional[
+        cont_kernel_factory: Optional[  # type: ignore
             Callable[[torch.Size, int, List[int]], Kernel]
         ] = None,
         likelihood: Optional[Likelihood] = None,
@@ -75,7 +75,7 @@ class MixedTanimotoGP(SingleTaskGP):
 
         if cont_kernel_factory is None:
 
-            def cont_kernel_factory(  # type: ignore
+            def cont_kernel_factory(
                 batch_shape: torch.Size,
                 ard_num_dims: int,
                 active_dims: List[int],
