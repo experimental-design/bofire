@@ -532,7 +532,7 @@ def nchoosek_constraints_as_bounds(
                     for i in range(n_experiments):
                         ind_vanish = ind[i % len(ind)]
                         bounds[ind_vanish + i * len(domain.inputs), :] = [0, 0]
-                        if (i % len(ind) == len(ind) - 1):
+                        if i % len(ind) == len(ind) - 1:
                             np.random.shuffle(ind)
     else:
         pass
