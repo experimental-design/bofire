@@ -34,10 +34,15 @@ from bofire.data_models.strategies.api import BotorchStrategy as DataModel
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
+from bofire.data_models.strategies.api import (
+    ShortestPathStrategy as ShortestPathStrategyDataModel,
+)
+from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
@@ -48,6 +53,15 @@ from bofire.utils.torch_tools import (
 
 
 def is_power_of_two(n):
+    """
+    Check if a number is a power of two.
+
+    Args:
+        n (int): The number to be checked.
+
+    Returns:
+        bool: True if the number is a power of two, False otherwise.
+    """
     return (n != 0) and (n & (n - 1) == 0)
 
 
@@ -78,6 +92,7 @@ class BotorchStrategy(PredictiveStrategy):
         self.frequency_hyperopt = data_model.frequency_hyperopt
         self.folds = data_model.folds
         self.surrogates = None
+        self.local_search_config = data_model.local_search_config
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
@@ -196,12 +211,22 @@ class BotorchStrategy(PredictiveStrategy):
             specs=self.input_preprocessing_specs
         )
         bounds = torch.tensor([lower, upper]).to(**tkwargs)
+        # setup local bounds
+        assert self.experiments is not None
+        local_lower, local_upper = self.domain.inputs.get_bounds(
+            specs=self.input_preprocessing_specs,
+            reference_experiment=self.experiments.iloc[-1],
+        )
+        local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
+
         # setup nchooseks
         if len(self.domain.constraints.get(NChooseKConstraint)) == 0:
             ic_generator = None
             ic_gen_kwargs = {}
             nchooseks = None
         else:
+            # TODO: implement LSR-BO also for constraints --> use local bounds
+            # for polytope sampler
             ic_generator = gen_batch_initial_conditions
             ic_gen_kwargs = {
                 "generator": get_initial_conditions_generator(
@@ -234,6 +259,7 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features_list = self.get_categorical_combinations()
         return (
             bounds,
+            local_bounds,
             ic_generator,
             ic_gen_kwargs,
             nchooseks,
@@ -266,6 +292,85 @@ class BotorchStrategy(PredictiveStrategy):
 
         preds = self.predict(df_candidates)
         return pd.concat((df_candidates, preds), axis=1)
+
+    def _optimize_acqf_continuous(
+        self,
+        candidate_count: int,
+        acqfs: List[AcquisitionFunction],
+        bounds: Tensor,
+        ic_generator: Callable,
+        ic_gen_kwargs: Dict,
+        nchooseks: List[Callable[[Tensor], float]],
+        fixed_features: Optional[Dict[int, float]],
+        fixed_features_list: Optional[List[Dict[int, float]]],
+    ) -> Tuple[Tensor, Tensor]:
+        if len(acqfs) > 1:
+            candidates, acqf_vals = optimize_acqf_list(
+                acq_function_list=acqfs,
+                bounds=bounds,
+                num_restarts=self.num_restarts,
+                raw_samples=self.num_raw_samples,
+                equality_constraints=get_linear_constraints(
+                    domain=self.domain,
+                    constraint=LinearEqualityConstraint,  # type: ignore
+                ),
+                inequality_constraints=get_linear_constraints(
+                    domain=self.domain,
+                    constraint=LinearInequalityConstraint,  # type: ignore
+                ),
+                nonlinear_inequality_constraints=nchooseks,  # type: ignore
+                fixed_features=fixed_features,
+                fixed_features_list=fixed_features_list,
+                ic_gen_kwargs=ic_gen_kwargs,
+                ic_generator=ic_generator,
+                options={
+                    "batch_limit": 5 if len(nchooseks) == 0 else 1,
+                    "maxiter": 200,
+                },
+            )
+        else:
+            if fixed_features_list:
+                candidates, acqf_vals = optimize_acqf_mixed(
+                    acq_function=acqfs[0],
+                    bounds=bounds,
+                    q=candidate_count,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.num_raw_samples,
+                    equality_constraints=get_linear_constraints(
+                        domain=self.domain,
+                        constraint=LinearEqualityConstraint,  # type: ignore
+                    ),
+                    inequality_constraints=get_linear_constraints(
+                        domain=self.domain,
+                        constraint=LinearInequalityConstraint,  # type: ignore
+                    ),
+                    nonlinear_inequality_constraints=nchooseks,  # type: ignore
+                    fixed_features_list=fixed_features_list,
+                    ic_generator=ic_generator,
+                    ic_gen_kwargs=ic_gen_kwargs,
+                )
+            else:
+                candidates, acqf_vals = optimize_acqf(
+                    acq_function=acqfs[0],
+                    bounds=bounds,
+                    q=candidate_count,
+                    num_restarts=self.num_restarts,
+                    raw_samples=self.num_raw_samples,
+                    equality_constraints=get_linear_constraints(
+                        domain=self.domain,
+                        constraint=LinearEqualityConstraint,  # type: ignore
+                    ),
+                    inequality_constraints=get_linear_constraints(
+                        domain=self.domain,
+                        constraint=LinearInequalityConstraint,  # type: ignore
+                    ),
+                    fixed_features=fixed_features,
+                    nonlinear_inequality_constraints=nchooseks,  # type: ignore
+                    return_best_only=True,
+                    ic_generator=ic_generator,  # type: ignore
+                    **ic_gen_kwargs,  # type: ignore
+                )
+        return candidates, acqf_vals
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         """[summary]
@@ -326,6 +431,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         (
             bounds,
+            local_bounds,
             ic_generator,
             ic_gen_kwargs,
             nchooseks,
@@ -333,64 +439,50 @@ class BotorchStrategy(PredictiveStrategy):
             fixed_features_list,
         ) = self._setup_ask()
 
-        if len(acqfs) > 1:
-            candidates, _ = optimize_acqf_list(
-                acq_function_list=acqfs,
-                bounds=bounds,
-                num_restarts=self.num_restarts,
-                raw_samples=self.num_raw_samples,
-                equality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                ),
-                inequality_constraints=get_linear_constraints(
-                    domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                ),
-                nonlinear_inequality_constraints=nchooseks,
+        # do the global opt
+        candidates, global_acqf_val = self._optimize_acqf_continuous(
+            candidate_count=candidate_count,
+            acqfs=acqfs,
+            bounds=bounds,
+            ic_generator=ic_generator,  # type: ignore
+            ic_gen_kwargs=ic_gen_kwargs,
+            nchooseks=nchooseks,  # type: ignore
+            fixed_features=fixed_features,
+            fixed_features_list=fixed_features_list,
+        )
+
+        if (
+            self.local_search_config is not None
+            and has_local_search_region(self.domain)
+            and candidate_count == 1
+        ):
+            local_candidates, local_acqf_val = self._optimize_acqf_continuous(
+                candidate_count=candidate_count,
+                acqfs=acqfs,
+                bounds=local_bounds,
+                ic_generator=ic_generator,  # type: ignore
+                ic_gen_kwargs=ic_gen_kwargs,
+                nchooseks=nchooseks,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
-                ic_gen_kwargs=ic_gen_kwargs,
-                ic_generator=ic_generator,
-                options={"batch_limit": 5, "maxiter": 200},
             )
-        else:
-            if fixed_features_list:
-                candidates, _ = optimize_acqf_mixed(
-                    acq_function=acqfs[0],
-                    bounds=bounds,
-                    q=candidate_count,
-                    num_restarts=self.num_restarts,
-                    raw_samples=self.num_raw_samples,
-                    equality_constraints=get_linear_constraints(
-                        domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                    ),
-                    inequality_constraints=get_linear_constraints(
-                        domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                    ),
-                    nonlinear_inequality_constraints=nchooseks,
-                    fixed_features_list=fixed_features_list,
-                    ic_generator=ic_generator,
-                    ic_gen_kwargs=ic_gen_kwargs,
-                )
+            if self.local_search_config.is_local_step(
+                local_acqf_val.item(), global_acqf_val.item()
+            ):
+                return self._postprocess_candidates(candidates=local_candidates)
             else:
-                candidates, _ = optimize_acqf(
-                    acq_function=acqfs[0],
-                    bounds=bounds,
-                    q=candidate_count,
-                    num_restarts=self.num_restarts,
-                    raw_samples=self.num_raw_samples,
-                    equality_constraints=get_linear_constraints(
-                        domain=self.domain, constraint=LinearEqualityConstraint  # type: ignore
-                    ),
-                    inequality_constraints=get_linear_constraints(
-                        domain=self.domain, constraint=LinearInequalityConstraint  # type: ignore
-                    ),
-                    fixed_features=fixed_features,
-                    nonlinear_inequality_constraints=nchooseks,
-                    return_best_only=True,
-                    ic_generator=ic_generator,  # type: ignore
-                    **ic_gen_kwargs,  # type: ignore
+                sp = ShortestPathStrategy(
+                    data_model=ShortestPathStrategyDataModel(
+                        domain=self.domain,
+                        start=self.experiments.iloc[-1].to_dict(),
+                        end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+                    )
                 )
-        return self._postprocess_candidates(candidates=candidates)
+                step = pd.DataFrame(sp.step(sp.start)).T
+                return pd.concat((step, self.predict(step)), axis=1)
+
+        else:
+            return self._postprocess_candidates(candidates=candidates)
 
     def _tell(self) -> None:
         pass
@@ -399,7 +491,7 @@ class BotorchStrategy(PredictiveStrategy):
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         pass
 
-    def get_fixed_features(self):
+    def get_fixed_features(self) -> Dict[int, float]:
         """provides the values of all fixed features
 
         Raises:
@@ -412,8 +504,13 @@ class BotorchStrategy(PredictiveStrategy):
         features2idx = self._features2idx
 
         for _, feat in enumerate(self.domain.get_features(Input)):
-            if feat.fixed_value() is not None:  # type: ignore
-                fixed_values = feat.fixed_value(transform_type=self.input_preprocessing_specs.get(feat.key))  # type: ignore
+            assert isinstance(feat, Input)
+            if feat.fixed_value() is not None:
+                fixed_values = feat.fixed_value(
+                    transform_type=self.input_preprocessing_specs.get(
+                        feat.key
+                    )  # type:ignore
+                )
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
 
@@ -462,7 +559,7 @@ class BotorchStrategy(PredictiveStrategy):
                             fixed_features[idx] = lower[j]
         return fixed_features
 
-    def get_categorical_combinations(self):
+    def get_categorical_combinations(self) -> List[Dict[int, float]]:
         """provides all possible combinations of fixed values
 
         Returns:
@@ -497,7 +594,8 @@ class BotorchStrategy(PredictiveStrategy):
             include = None
 
         combos = self.domain.inputs.get_categorical_combinations(
-            include=(include if include else Input), exclude=exclude
+            include=(include if include else Input),
+            exclude=exclude,  # type: ignore
         )
         # now build up the fixed feature list
         if len(combos) == 1:
@@ -551,6 +649,7 @@ class BotorchStrategy(PredictiveStrategy):
         return False
 
     def get_acqf_input_tensors(self):
+        assert self.experiments is not None
         experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
@@ -594,6 +693,9 @@ class BotorchStrategy(PredictiveStrategy):
             if X_pending is not None
             else torch.cat((X_train, transformed_samples))
         )
+        assert self.model is not None
         return get_infeasible_cost(
-            X=X, model=self.model, objective=objective  # type: ignore
+            X=X,
+            model=self.model,
+            objective=objective,  # type: ignore
         )

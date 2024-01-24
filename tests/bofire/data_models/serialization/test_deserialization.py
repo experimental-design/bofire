@@ -6,6 +6,7 @@ from bofire.data_models.api import (
     AnyConstraint,
     AnyFeature,
     AnyKernel,
+    AnyLocalSearchConfig,
     AnyMolFeatures,
     AnyObjective,
     AnyOutlierDetection,
@@ -112,4 +113,10 @@ def test_outputs_should_be_deserializable(outputs_spec: Spec):
 def test_constraints_should_be_deserializable(constraints_spec: Spec):
     obj = constraints_spec.obj()
     deserialized = TypeAdapter(Constraints).validate_python(obj.model_dump())
+    assert obj == deserialized
+
+
+def test_local_search_config_should_be_deserializable(local_search_config_spec: Spec):
+    obj = local_search_config_spec.obj()
+    deserialized = TypeAdapter(AnyLocalSearchConfig).validate_python(obj.model_dump())
     assert obj == deserialized
