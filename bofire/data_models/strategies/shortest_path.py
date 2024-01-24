@@ -15,7 +15,15 @@ from bofire.data_models.strategies.strategy import Strategy
 
 
 def has_local_search_region(domain: Domain) -> bool:
-    """Returns True of a local search region is defined in the domain, else False."""
+    """
+    Checks if the given domain has a local search region.
+
+    Args:
+        domain (Domain): The domain to check.
+
+    Returns:
+        bool: True if the domain has a local search region, False otherwise.
+    """
     if len(domain.inputs.get(ContinuousInput)) == 0:
         return False
     is_lsr = False
@@ -27,6 +35,16 @@ def has_local_search_region(domain: Domain) -> bool:
 
 
 class ShortestPathStrategy(Strategy):
+    """
+    Represents a strategy for finding the shortest path between two points.
+
+    Attributes:
+        type (Literal["ShortestPathStrategy"]): The type of the strategy.
+        start (Annotated[Dict[str, Union[float, str]], Field(min_length=1)]): The starting point of the path.
+        end (Annotated[Dict[str, Union[float, str]], Field(min_length=1)]): The ending point of the path.
+        atol (Annotated[float, Field(gt=0)]): The absolute tolerance used for numerical comparisons.
+    """
+
     type: Literal["ShortestPathStrategy"] = "ShortestPathStrategy"
     start: Annotated[Dict[str, Union[float, str]], Field(min_length=1)]
     end: Annotated[Dict[str, Union[float, str]], Field(min_length=1)]
@@ -34,6 +52,12 @@ class ShortestPathStrategy(Strategy):
 
     @model_validator(mode="after")
     def validate_start_end(self):
+        """
+        Validates the start and end points of the path.
+
+        Raises:
+            ValueError: If the start or end point is not a valid candidate or if they are the same.
+        """
         df_start = pd.DataFrame(pd.Series(self.start)).T
         df_end = pd.DataFrame(pd.Series(self.end)).T
         try:
@@ -56,14 +80,41 @@ class ShortestPathStrategy(Strategy):
     @field_validator("domain")
     @classmethod
     def validate_lsr(cls, domain):
+        """
+        Validates the local search region of the domain.
+
+        Args:
+            domain: The domain to validate.
+
+        Raises:
+            ValueError: If the domain has no local search region.
+        """
         if has_local_search_region(domain=domain) is False:
             raise ValueError("Domain has no local search region.")
         return domain
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
+        """
+        Checks if a constraint is implemented. Currently only linear constraints are supported.
+
+        Args:
+            my_type (Type[Feature]): The type of the constraint.
+
+        Returns:
+            bool: True if the constraint is implemented, False otherwise.
+        """
         return my_type in [LinearInequalityConstraint, LinearEqualityConstraint]
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
+        """
+        Checks if a feature is implemented. Currently all features are supported.
+
+        Args:
+            my_type (Type[Feature]): The type of the feature.
+
+        Returns:
+            bool: True if the feature is implemented, False otherwise.
+        """
         return True
