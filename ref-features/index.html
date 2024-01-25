@@ -7852,7 +7852,11 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">):</span>
             <span class="c1"># we are just using the standard categorical transformations</span>
-            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span>
+                <span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span>
+                <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
+                <span class="n">reference_value</span><span class="o">=</span><span class="n">reference_value</span><span class="p">,</span>
+            <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># in case that values is None, we return the optimization bounds</span>
             <span class="c1"># else we return the complete bounds</span>
@@ -8071,7 +8075,7 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
 
     <div class="doc doc-contents ">
 
-      <p>Returns the bounds of an input feature depending on the requested transform type.</p>
+      <p>Calculates the lower and upper bounds for the feature based on the given transform type and values.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -8086,23 +8090,21 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
   <tbody>
       <tr>
         <td><code>transform_type</code></td>
-        <td><code>Optional[TTransform]</code></td>
-        <td><p>The requested transform type. Defaults to None.</p></td>
+        <td><code>AnyMolFeatures</code></td>
+        <td><p>The type of transformation to apply to the data.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
         <td><code>values</code></td>
-        <td><code>Optional[pd.Series]</code></td>
-        <td><p>If values are provided the bounds are returned taking
-the most extreme values for the feature into account. Defaults to None.</p></td>
+        <td><code>pd.Series</code></td>
+        <td><p>The actual data over which the lower and upper bounds are calculated.</p></td>
         <td><code>None</code></td>
       </tr>
       <tr>
         <td><code>reference_value</code></td>
-        <td><code>Optional[float]</code></td>
-        <td><p>If a reference value is provided, then the local bounds based
-on a local search region are provided. Currently only supported for continuous inputs. For more
-details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.</p></td>
+        <td><code>Optional[str]</code></td>
+        <td><p>The reference value for the transformation. Not used here.
+Defaults to None.</p></td>
         <td><code>None</code></td>
       </tr>
   </tbody>
@@ -8118,8 +8120,23 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
   <tbody>
     <tr>
       <td><code>Tuple[List[float], List[float]]</code></td>
-      <td><p>List of lower bound values, list of upper bound values.</p></td>
+      <td><p>A tuple containing the lower and upper bounds of the transformed data.</p></td>
     </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>NotImplementedError</code></td>
+        <td><p>Raised when <code>values</code> is None, as it is currently required for <code>MolecularInput</code>.</p></td>
+      </tr>
   </tbody>
 </table>
         <details class="quote">
@@ -8132,7 +8149,11 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">):</span>
         <span class="c1"># we are just using the standard categorical transformations</span>
-        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span>
+            <span class="n">transform_type</span><span class="o">=</span><span class="n">transform_type</span><span class="p">,</span>
+            <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">,</span>
+            <span class="n">reference_value</span><span class="o">=</span><span class="n">reference_value</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="c1"># in case that values is None, we return the optimization bounds</span>
         <span class="c1"># else we return the complete bounds</span>
@@ -8317,8 +8338,26 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`&quot;</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span>
+        <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+        <span class="n">reference_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Calculates the lower and upper bounds for the feature based on the given transform type and values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            transform_type (AnyMolFeatures): The type of transformation to apply to the data.</span>
+<span class="sd">            values (pd.Series): The actual data over which the lower and upper bounds are calculated.</span>
+<span class="sd">            reference_value (Optional[str], optional): The reference value for the transformation. Not used here.</span>
+<span class="sd">                Defaults to None.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
                 <span class="s2">&quot;`values` is currently required for `MolecularInput`&quot;</span>
@@ -8426,14 +8465,14 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
 
 
 <h4 id="bofire.data_models.features.molecular.MolecularInput.get_bounds" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_bounds</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">reference_value</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
 
 </h4>
 
     <div class="doc doc-contents ">
 
-      <p>Returns the bounds of an input feature depending on the requested transform type.</p>
+      <p>Calculates the lower and upper bounds for the feature based on the given transform type and values.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -8448,24 +8487,22 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
   <tbody>
       <tr>
         <td><code>transform_type</code></td>
-        <td><code>Optional[TTransform]</code></td>
-        <td><p>The requested transform type. Defaults to None.</p></td>
+        <td><code>AnyMolFeatures</code></td>
+        <td><p>The type of transformation to apply to the data.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
         <td><code>values</code></td>
-        <td><code>Optional[pd.Series]</code></td>
-        <td><p>If values are provided the bounds are returned taking
-the most extreme values for the feature into account. Defaults to None.</p></td>
+        <td><code>pd.Series</code></td>
+        <td><p>The actual data over which the lower and upper bounds are calculated.</p></td>
         <td><em>required</em></td>
       </tr>
       <tr>
         <td><code>reference_value</code></td>
-        <td><code>Optional[float]</code></td>
-        <td><p>If a reference value is provided, then the local bounds based
-on a local search region are provided. Currently only supported for continuous inputs. For more
-details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.</p></td>
-        <td><em>required</em></td>
+        <td><code>Optional[str]</code></td>
+        <td><p>The reference value for the transformation. Not used here.
+Defaults to None.</p></td>
+        <td><code>None</code></td>
       </tr>
   </tbody>
 </table>
@@ -8480,15 +8517,48 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
   <tbody>
     <tr>
       <td><code>Tuple[List[float], List[float]]</code></td>
-      <td><p>List of lower bound values, list of upper bound values.</p></td>
+      <td><p>A tuple containing the lower and upper bounds of the transformed data.</p></td>
     </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>NotImplementedError</code></td>
+        <td><p>Raised when <code>values</code> is None, as it is currently required for <code>MolecularInput</code>.</p></td>
+      </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
+    <span class="n">reference_value</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates the lower and upper bounds for the feature based on the given transform type and values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transform_type (AnyMolFeatures): The type of transformation to apply to the data.</span>
+<span class="sd">        values (pd.Series): The actual data over which the lower and upper bounds are calculated.</span>
+<span class="sd">        reference_value (Optional[str], optional): The reference value for the transformation. Not used here.</span>
+<span class="sd">            Defaults to None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
             <span class="s2">&quot;`values` is currently required for `MolecularInput`&quot;</span>
