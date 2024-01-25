@@ -91,7 +91,7 @@ supported_domains = [
         constraints=[c2],
     ),
     Domain.from_lists(
-        # all feature types, non-linear inequality
+        # all ordered feature types, non-linear inequality
         inputs=[if0, if1, if2, if7],
         outputs=[of1],
         constraints=[c4],
