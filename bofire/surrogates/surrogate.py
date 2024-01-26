@@ -49,7 +49,7 @@ class Surrogate(ABC):
         pred_cols = []
         sd_cols = []
         for featkey in self.outputs.get_keys():
-            if isinstance(self.outputs.get_by_key(featkey), CategoricalOutput):
+            if hasattr(self.outputs.get_by_key(featkey), "categories"):
                 pred_cols = pred_cols + [
                     f"{featkey}_{cat}_prob"
                     for cat in self.outputs.get_by_key(featkey).categories
@@ -90,8 +90,9 @@ class Surrogate(ABC):
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
         expected_cols = []
+        check_columns = []
         for featkey in self.outputs.get_keys():
-            if isinstance(self.outputs.get_by_key(featkey), CategoricalOutput):
+            if hasattr(self.outputs.get_by_key(featkey), "categories"):
                 expected_cols = (
                     expected_cols
                     + [f"{featkey}_{t}" for t in ["pred", "sd"]]
@@ -104,14 +105,14 @@ class Surrogate(ABC):
                         for cat in self.outputs.get_by_key(featkey).categories
                     ]
                 )
-                check_columns = [
+                check_columns = check_columns + [
                     col for col in expected_cols if col != f"{featkey}_pred"
                 ]
             else:
                 expected_cols = expected_cols + [
                     f"{featkey}_{t}" for t in ["pred", "sd"]
                 ]
-                check_columns = expected_cols
+                check_columns = check_columns + expected_cols
         if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
                 f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
