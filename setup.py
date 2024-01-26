@@ -48,6 +48,7 @@ setup(
             "formulaic>=1.0.1",
             "cloudpickle>=2.0.0",
             "sympy>=1.12",
+            "cvxpy[CLARABEL]",
             sklearn_dependency,
         ],
         "xgb": ["xgboost>=1.7.5"],

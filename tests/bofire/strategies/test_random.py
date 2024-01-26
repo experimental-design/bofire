@@ -90,6 +90,12 @@ supported_domains = [
         outputs=[of1],
         constraints=[c2],
     ),
+    Domain.from_lists(
+        # all ordered feature types, non-linear inequality
+        inputs=[if0, if1, if2, if7],
+        outputs=[of1],
+        constraints=[c4],
+    ),
 ]
 
 unsupported_domains = [
@@ -120,6 +126,7 @@ def test_ask(domain):
     strategy = strategies.map(data_model=data_model)
     candidates = strategy.ask(3)
     assert len(candidates) == 3
+    assert domain.constraints.is_fulfilled(candidates).all()
 
 
 @pytest.mark.parametrize("domain", unsupported_domains)

@@ -70,3 +70,9 @@ def test_outlier_detection_should_be_invalid(
 
 def test_molfeatures_should_be_invalid(invalid_molfeatures_spec: InvalidSpec):
     _invalidate(invalid_molfeatures_spec)
+
+
+def test_local_search_config_should_be_invalid(
+    invalid_local_search_config_spec: InvalidSpec,
+):
+    _invalidate(invalid_local_search_config_spec)

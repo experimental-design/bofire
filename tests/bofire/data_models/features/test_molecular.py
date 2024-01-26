@@ -233,6 +233,7 @@ def test_molecular_feature_get_bounds(expected, transform_type):
     lower, upper = input_feature.get_bounds(
         transform_type=transform_type,
         values=VALID_SMILES,
+        reference_value=None,
     )
     assert np.allclose(lower, expected[0])
     assert np.allclose(upper, expected[1])
@@ -398,7 +399,9 @@ def test_categorical_molecular_input_get_bounds():
     feat = CategoricalMolecularInput(
         key="a", categories=VALID_SMILES.to_list(), allowed=[True, True, True, True]
     )
-    lower, upper = feat.get_bounds(transform_type=CategoricalEncodingEnum.ONE_HOT)
+    lower, upper = feat.get_bounds(
+        transform_type=CategoricalEncodingEnum.ONE_HOT, reference_value=None
+    )
     assert lower == [0 for _ in range(len(feat.categories))]
     assert upper == [1 for _ in range(len(feat.categories))]
     # now test it with descriptors,
@@ -411,7 +414,8 @@ def test_categorical_molecular_input_get_bounds():
                 "nAromAtom",
                 "nAromBond",
             ]
-        )
+        ),
+        reference_value=None,
     )
     assert lower == [6.0, 6.0]
     assert upper == [6.0, 6.0]
@@ -424,6 +428,7 @@ def test_categorical_molecular_input_get_bounds():
             ]
         ),
         values=VALID_SMILES,
+        reference_value=None,
     )
     assert lower == [0.0, 0.0]
     assert upper == [6.0, 6.0]

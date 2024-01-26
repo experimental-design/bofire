@@ -10,7 +10,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
-TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
+TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
 
 
 class Feature(BaseModel):
@@ -111,6 +111,7 @@ class Input(Feature):
         self,
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
+        reference_value: Optional[Union[float, str]] = None,
     ) -> Tuple[List[float], List[float]]:
         """Returns the bounds of an input feature depending on the requested transform type.
 
@@ -118,7 +119,9 @@ class Input(Feature):
             transform_type (Optional[TTransform], optional): The requested transform type. Defaults to None.
             values (Optional[pd.Series], optional): If values are provided the bounds are returned taking
                 the most extreme values for the feature into account. Defaults to None.
-
+            reference_value (Optional[float], optional): If a reference value is provided, then the local bounds based
+                on a local search region are provided. Currently only supported for continuous inputs. For more
+                details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.
         Returns:
             Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
         """

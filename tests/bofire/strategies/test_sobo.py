@@ -1,6 +1,7 @@
 import math
 from itertools import chain
 
+import numpy as np
 import pytest
 import torch
 from botorch.acquisition import (
@@ -16,6 +17,7 @@ from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjec
 
 import bofire.data_models.strategies.api as data_models
 import tests.bofire.data_models.specs.api as specs
+from bofire.benchmarks.api import Branin
 from bofire.benchmarks.multi import DTLZ2
 from bofire.benchmarks.single import Himmelblau, _CategoricalDiscreteHimmelblau
 from bofire.data_models.acquisition_functions.api import (
@@ -35,6 +37,7 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
 )
+from bofire.data_models.strategies.api import LSRBO
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
 )
@@ -412,3 +415,39 @@ def test_sobo_hyperoptimize():
         match="No hyperopt is possible as no hyperopt config is available. Returning initial config."
     ):
         strategy.tell(experiments=experiments)
+
+
+def test_sobo_lsrbo():
+    bench = Branin(locality_factor=0.5)
+    experiments = bench.f(bench.domain.inputs.sample(3, seed=42), return_complete=True)
+    # without lsr
+    strategy_data = data_models.SoboStrategy(domain=bench.domain, seed=42)
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments)
+    candidates = strategy.ask(1)
+    candidates.loc[
+        (
+            (candidates.x_1 > experiments.loc[2, "x_1"] + 0.25)
+            | (candidates.x_1 < experiments.loc[2, "x_1"] - 0.25)
+        )
+        & (
+            (candidates.x_1 > experiments.loc[2, "x_2"] + 0.75)
+            | (candidates.x_1 < experiments.loc[2, "x_2"] - 0.75)
+        )
+    ]
+    # local search
+    strategy_data = data_models.SoboStrategy(
+        domain=bench.domain, seed=42, local_search_config=LSRBO(gamma=0)
+    )
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments)
+    strategy.ask(1)
+    np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.55276, 11.192913])
+    # global search
+    strategy_data = data_models.SoboStrategy(
+        domain=bench.domain, seed=42, local_search_config=LSRBO(gamma=500000)
+    )
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments)
+    strategy.ask(1)
+    np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.05276, 11.192913])

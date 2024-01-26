@@ -1,4 +1,4 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -132,15 +132,3 @@ class NumericalInput(Input):
                 f"not all values of input feature `{self.key}` are numerical"
             )
         return values
-
-    def get_bounds(
-        self,
-        transform_type: Optional[TTransform] = None,
-        values: Optional[pd.Series] = None,
-    ) -> Tuple[List[float], List[float]]:
-        assert transform_type is None
-        if values is None:
-            return [self.lower_bound], [self.upper_bound]  # type: ignore
-        lower = min(self.lower_bound, values.min())  # type: ignore
-        upper = max(self.upper_bound, values.max())  # type: ignore
-        return [lower], [upper]  # type: ignore

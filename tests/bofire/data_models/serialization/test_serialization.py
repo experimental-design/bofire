@@ -94,3 +94,9 @@ def test_constraints_should_be_serializable(constraints_spec: Spec):
     spec = constraints_spec.typed_spec()
     obj = constraints_spec.cls(**spec)
     assert obj.model_dump() == spec
+
+
+def test_local_search_config_should_be_serializable(local_search_config_spec: Spec):
+    spec = local_search_config_spec.typed_spec()
+    obj = local_search_config_spec.cls(**spec)
+    assert obj.model_dump() == spec
