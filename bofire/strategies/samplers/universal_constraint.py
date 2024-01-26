@@ -37,7 +37,9 @@ class UniversalConstraintSampler(Strategy):
             fixed_experiments=self.candidates,
         )
 
-        samples = samples.iloc[self.num_candidates :,]
+        samples = samples.iloc[
+            self.num_candidates :,
+        ]
         samples = samples.sample(
             n=candidate_count,
             replace=False,

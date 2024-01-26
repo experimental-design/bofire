@@ -46,4 +46,5 @@ AnyObjective = Union[
     MinimizeSigmoidObjective,
     TargetObjective,
     CloseToTargetObjective,
+    ConstrainedCategoricalObjective,
 ]

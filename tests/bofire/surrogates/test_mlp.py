@@ -13,7 +13,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.surrogates.api import MLPEnsemble, ScalerEnum
+from bofire.data_models.surrogates.api import RegressionMLPEnsemble, ScalerEnum
 from bofire.surrogates.mlp import MLP, MLPDataset, _MLPEnsemble, fit_mlp
 from bofire.utils.torch_tools import tkwargs
 
@@ -39,12 +39,12 @@ def test_mlp_activation_invalid():
 @pytest.mark.parametrize("output_size", [1, 2])
 def test_mlp_input_size(output_size):
     mlp = MLP(input_size=2, output_size=output_size)
-    assert mlp.layers[-1].out_features == output_size
+    assert mlp.layers[-2].out_features == output_size
 
 
 def test_mlp_hidden_layer_sizes():
     mlp = MLP(input_size=2, output_size=1, hidden_layer_sizes=(8, 4, 2))
-    assert len(mlp.layers) == 7
+    assert len(mlp.layers) == 8  # added final acitvation function as a layer
     assert mlp.layers[0].in_features == 2
     assert mlp.layers[0].out_features == 8
     assert mlp.layers[2].in_features == 8
@@ -60,7 +60,7 @@ def test_mlp_hidden_layer_sizes():
 
 def test_mlp_dropout():
     mlp = MLP(input_size=2, output_size=1, hidden_layer_sizes=(8, 4, 2), dropout=0.2)
-    assert len(mlp.layers) == 10
+    assert len(mlp.layers) == 11
     assert mlp.layers[0].in_features == 2
     assert mlp.layers[0].out_features == 8
     assert isinstance(mlp.layers[1], nn.modules.activation.ReLU)
@@ -175,7 +175,7 @@ def test_mlp_ensemble_fit(scaler, output_scaler):
     bench = Himmelblau()
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
-    ens = MLPEnsemble(
+    ens = RegressionMLPEnsemble(
         inputs=bench.domain.inputs,
         outputs=bench.domain.outputs,
         n_estimators=2,
@@ -229,7 +229,7 @@ def test_mlp_ensemble_fit_categorical(scaler):
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
 
-    ens = MLPEnsemble(
+    ens = RegressionMLPEnsemble(
         inputs=inputs,
         outputs=outputs,
         n_estimators=2,

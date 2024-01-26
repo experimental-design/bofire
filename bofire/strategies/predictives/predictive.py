@@ -147,11 +147,7 @@ class PredictiveStrategy(Strategy):
                 predictions.insert(
                     loc=1,
                     column=f"{feat.key}_sd",
-                    value=predictions.filter(regex=f"{feat.key}(.*)_sd")
-                    .pow(2.0)
-                    .sum(1)
-                    .pow(0.5)
-                    .values,
+                    value=0.0,
                 )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)

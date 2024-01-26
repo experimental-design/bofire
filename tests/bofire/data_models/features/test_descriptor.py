@@ -378,6 +378,6 @@ def test_categorical_descriptor_input_feature_from_dataframe(
         columns=descriptors,
     )
     f = CategoricalDescriptorInput.from_df("k", df)
-    assert f.categories == tuple(categories)
+    assert f.categories == categories
     assert f.descriptors == descriptors
     assert f.values == values

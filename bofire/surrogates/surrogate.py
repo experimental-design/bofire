@@ -46,30 +46,25 @@ class Surrogate(ABC):
         # predict
         preds, stds = self._predict(Xt)
         # set up column names
-        columns = []
+        pred_cols = []
+        sd_cols = []
         for featkey in self.outputs.get_keys():
             if isinstance(self.outputs.get_by_key(featkey), CategoricalOutput):
-                columns = (
-                    columns
-                    + [
-                        f"{featkey}_{cat}_prob"
-                        for cat in self.outputs.get_by_key(featkey).categories
-                    ]
-                    + [
-                        f"{featkey}_{cat}_sd"
-                        for cat in self.outputs.get_by_key(featkey).categories
-                    ]
-                )
+                pred_cols = pred_cols + [
+                    f"{featkey}_{cat}_prob"
+                    for cat in self.outputs.get_by_key(featkey).categories
+                ]
+                sd_cols = sd_cols + [
+                    f"{featkey}_{cat}_sd"
+                    for cat in self.outputs.get_by_key(featkey).categories
+                ]
             else:
-                columns = (
-                    columns
-                    + [f"{featkey}_pred" for featkey in self.outputs.get_keys()]
-                    + [f"{featkey}_sd" for featkey in self.outputs.get_keys()]
-                )
+                pred_cols = pred_cols + [f"{featkey}_pred"]
+                sd_cols = sd_cols + [f"{featkey}_sd"]
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
-            columns=columns,
+            columns=pred_cols + sd_cols,
         )
         # append predictions for categorical cases
         for feat in self.outputs.get():
@@ -86,11 +81,7 @@ class Surrogate(ABC):
                 predictions.insert(
                     loc=1,
                     column=f"{feat.key}_sd",
-                    value=predictions.filter(regex=f"{feat.key}(.*)_sd")
-                    .pow(2.0)
-                    .sum(1)
-                    .pow(0.5)
-                    .values,
+                    value=0.0,
                 )
         # validate
         self.validate_predictions(predictions=predictions)

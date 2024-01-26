@@ -12,7 +12,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.data_models.objectives.api import CategoricalObjective
+from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 from bofire.surrogates.diagnostics import CvResult, CvResults
 from bofire.surrogates.surrogate import Surrogate
 
@@ -184,7 +184,7 @@ class TrainableSurrogate(ABC):
             y_train_pred = self.predict(X_train)  # type: ignore
 
             # Convert to categorical if applicable
-            if isinstance(self.outputs[0].objective, CategoricalObjective):
+            if isinstance(self.outputs[0].objective, ConstrainedCategoricalObjective):
                 y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
                     self.outputs[0].objective.to_dict_label()
                 )

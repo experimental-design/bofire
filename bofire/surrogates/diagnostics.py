@@ -473,6 +473,9 @@ metrics = {
     RegressionMetricsEnum.PEARSON: _pearson,
     RegressionMetricsEnum.SPEARMAN: _spearman,
     RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
+}
+
+classification_metrics = {
     ClassificationMetricsEnum.ACCURACY: _accuracy_score,
     ClassificationMetricsEnum.F1: _f1_score,
 }
@@ -486,7 +489,7 @@ UQ_metrics = {
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
 }
 
-all_metrics = {**metrics, **UQ_metrics}
+all_metrics = {**metrics, **UQ_metrics, **classification_metrics}
 
 
 class CvResult(BaseModel):

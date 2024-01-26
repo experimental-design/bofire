@@ -59,7 +59,7 @@ specs.add_valid(
     features.CategoricalInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "categories": ("c1", "c2", "c3"),
+        "categories": ["c1", "c2", "c3"],
         "allowed": [True, True, False],
     },
 )
@@ -102,7 +102,7 @@ specs.add_valid(
     features.CategoricalDescriptorInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "categories": ("c1", "c2", "c3"),
+        "categories": ["c1", "c2", "c3"],
         "allowed": [True, True, False],
         "descriptors": ["d1", "d2"],
         "values": [
@@ -142,12 +142,12 @@ specs.add_valid(
     features.CategoricalMolecularInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "categories": (
+        "categories": [
             "CC(=O)Oc1ccccc1C(=O)O",
             "c1ccccc1",
             "[CH3][CH2][OH]",
             "N[C@](C)(F)C(=O)O",
-        ),
+        ],
         "allowed": [True, True, True, True],
     },
 )

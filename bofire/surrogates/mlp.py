@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Literal, Optional, Sequence
+from typing import Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -136,7 +136,7 @@ def fit_mlp(
     lr: float = 1e-4,
     shuffle: bool = True,
     weight_decay: float = 0.0,
-    loss_function: nn.Module = nn.L1Loss,
+    loss_function: Union[nn.L1Loss, nn.CrossEntropyLoss] = nn.L1Loss,
 ):
     """Fit a MLP to a dataset.
 
@@ -148,7 +148,7 @@ def fit_mlp(
         lr (float, optional): Initial learning rate. Defaults to 1e-4.
         shuffle (bool, optional): Whereas the batches should be shuffled. Defaults to True.
         weight_decay (float, optional): Weight decay (L2 regularization). Defaults to 0.0 (no regularization).
-        loss_function (Module, optional): Loss function specified by the problem type. Defaults to L1 loss for regression problems.
+        loss_function (Loss function, NOT Optional): Loss function specified by the problem type. Defaults to L1 loss for regression problems.
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
