@@ -573,6 +573,26 @@ class Inputs(Features):
             upper += up
         return lower, upper
 
+    def get_feature_indices(
+        self,
+        specs: TInputTransformSpecs,
+        feature_keys: List[str],
+    ) -> List[int]:
+        """Returns a list of indices of the given feature key list.
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+            feature_keys (List[str]): List of feature keys.
+
+        Returns:
+            List[int]: The list of indices.
+        """
+        features2idx, _ = self._get_transform_info(specs)
+        return sorted(
+            itertools.chain.from_iterable([features2idx[feat] for feat in feature_keys])
+        )
+
 
 class Outputs(Features):
     """Container of output features, only output features are allowed.

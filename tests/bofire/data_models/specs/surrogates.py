@@ -260,3 +260,36 @@ specs.add_valid(
         "hyperconfig": None,
     },
 )
+
+specs.add_valid(
+    models.MixedTanimotoGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [MolecularInput(key="mol1")]
+            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "molecular_kernel": TanimotoKernel(ard=True).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, nu=random.choice([0.5, 1.5, 2.5])
+        ).model_dump(),
+        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "input_preprocessing_specs": {
+            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
+            "cat1": CategoricalEncodingEnum.ONE_HOT,
+        },
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "dump": None,
+        "hyperconfig": None,
+    },
+)

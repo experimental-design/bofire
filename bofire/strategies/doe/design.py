@@ -632,7 +632,6 @@ def check_partially_fixed_experiments(
     n_experiments: int,
     partially_fixed_experiments: pd.DataFrame,
 ) -> None:
-
     n_partially_fixed_experiments = len(partially_fixed_experiments.index)
 
     # for partially fixed experiments only check if all inputs are part of the domain

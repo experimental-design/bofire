@@ -25,7 +25,8 @@ class CategoricalInput(Input):
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
-    order_id: ClassVar[int] = 5
+    # order_id: ClassVar[int] = 5
+    order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
     allowed: TAllowedVals = Field(default=None, validate_default=True)
@@ -354,7 +355,8 @@ class CategoricalInput(Input):
 
 class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
-    order_id: ClassVar[int] = 8
+    # order_id: ClassVar[int] = 8
+    order_id: ClassVar[int] = 9
 
     categories: TCategoryVals
     objective: Annotated[List[Annotated[float, Field(ge=0, le=1)]], Field(min_length=2)]

@@ -11,8 +11,8 @@ from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import SaasSingleTaskGPSurrogate as DataModel
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
-from bofire.surrogates.single_task_gp import get_scaler
 from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.surrogates.utils import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 

@@ -87,7 +87,8 @@ class CategoricalDescriptorInput(CategoricalInput):
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
-    order_id: ClassVar[int] = 4
+    # order_id: ClassVar[int] = 4
+    order_id: ClassVar[int] = 6
 
     descriptors: TDescriptors
     values: TCategoricalDescriptorVals
