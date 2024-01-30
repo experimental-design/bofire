@@ -106,9 +106,11 @@ class PredictiveStrategy(Strategy):
         column_names = list(
             itertools.chain(
                 *[
-                    [f"{feat.key}_pred"]
-                    if not isinstance(feat, CategoricalOutput)
-                    else [f"{feat.key}_{cat}_prob" for cat in feat.categories]
+                    (
+                        [f"{feat.key}_pred"]
+                        if not isinstance(feat, CategoricalOutput)
+                        else [f"{feat.key}_{cat}_prob" for cat in feat.categories]
+                    )
                     for feat in self.domain.outputs.get()
                 ]
             )
@@ -120,9 +122,11 @@ class PredictiveStrategy(Strategy):
                 + list(
                     itertools.chain(
                         *[
-                            [f"{feat.key}_sd"]
-                            if not isinstance(feat, CategoricalOutput)
-                            else [f"{feat.key}_{cat}_sd" for cat in feat.categories]
+                            (
+                                [f"{feat.key}_sd"]
+                                if not isinstance(feat, CategoricalOutput)
+                                else [f"{feat.key}_{cat}_sd" for cat in feat.categories]
+                            )
                             for feat in self.domain.outputs.get()
                         ]
                     )
@@ -193,9 +197,11 @@ class PredictiveStrategy(Strategy):
                     feat.key: OutputValue(
                         predictedValue=str(row[f"{feat.key}_pred"]),
                         standardDeviation=row[f"{feat.key}_sd"],
-                        objective=row[f"{feat.key}_des"]
-                        if feat.objective is not None  # type: ignore
-                        else 1.0,
+                        objective=(
+                            row[f"{feat.key}_des"]
+                            if feat.objective is not None  # type: ignore
+                            else 1.0
+                        ),
                     )
                     for feat in self.domain.outputs.get()
                 },

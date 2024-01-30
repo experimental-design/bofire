@@ -763,9 +763,11 @@ def CvResults2CrossValidationValues(
             CrossValidationValues(
                 observed=fold.observed.tolist(),
                 predicted=fold.predicted.tolist(),
-                standardDeviation=fold.standard_deviation.tolist()
-                if fold.standard_deviation is not None
-                else None,
+                standardDeviation=(
+                    fold.standard_deviation.tolist()
+                    if fold.standard_deviation is not None
+                    else None
+                ),
                 metrics=metrics.loc[i].to_dict() if fold.n_samples > 1 else None,
             )
         )

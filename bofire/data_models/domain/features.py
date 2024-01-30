@@ -570,9 +570,11 @@ class Inputs(Features):
             lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),  # type: ignore
                 values=experiments[feat.key] if experiments is not None else None,
-                reference_value=reference_experiment[feat.key]  # type: ignore
-                if reference_experiment is not None
-                else None,
+                reference_value=(
+                    reference_experiment[feat.key]  # type: ignore
+                    if reference_experiment is not None
+                    else None
+                ),
             )
             lower += lo
             upper += up
@@ -697,9 +699,11 @@ class Outputs(Features):
                 and not isinstance(feat, CategoricalOutput)
             ]
             + [
-                pd.Series(data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")), name=f"{feat.key}_pred")  # type: ignore
-                if predictions
-                else experiments[feat.key]
+                (
+                    pd.Series(data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")), name=f"{feat.key}_pred")  # type: ignore
+                    if predictions
+                    else experiments[feat.key]
+                )
                 for feat in self.features
                 if feat.objective is not None and isinstance(feat, CategoricalOutput)
             ],

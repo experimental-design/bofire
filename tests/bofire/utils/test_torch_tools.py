@@ -162,12 +162,14 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
     reward3 = obj3(a_samples[:, 2])
     # do the comparison
     assert np.allclose(
-        (reward1**obj1.w + reward3**obj3.w)
-        * (reward1**obj1.w * reward3**obj3.w)
-        if exclude_constraints
-        else (reward1**obj1.w + reward2**obj2.w)
-        * (reward1**obj1.w * reward2**obj2.w)
-        * (reward1**obj1.w * reward3**obj3.w),
+        (
+            (reward1**obj1.w + reward3**obj3.w)
+            * (reward1**obj1.w * reward3**obj3.w)
+            if exclude_constraints
+            else (reward1**obj1.w + reward2**obj2.w)
+            * (reward1**obj1.w * reward2**obj2.w)
+            * (reward1**obj1.w * reward3**obj3.w)
+        ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
@@ -266,9 +268,11 @@ def test_get_additive_botorch_objective(exclude_constraints):
     # do the comparison
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
-        reward1 * obj1.w + reward3 * obj3.w
-        if exclude_constraints
-        else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w,
+        (
+            reward1 * obj1.w + reward3 * obj3.w
+            if exclude_constraints
+            else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w
+        ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )

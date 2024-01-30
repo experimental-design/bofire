@@ -72,9 +72,11 @@ def generate_experiments(
                     ]
                 },
                 **{
-                    f.key: random.choice(f.categories)  # type: ignore
-                    if not only_allowed_categories
-                    else random.choice(f.get_allowed_categories())  # type: ignore
+                    f.key: (
+                        random.choice(f.categories)  # type: ignore
+                        if not only_allowed_categories
+                        else random.choice(f.get_allowed_categories())
+                    )  # type: ignore
                     for f in domain.get_features(CategoricalInput)
                 },
             }
