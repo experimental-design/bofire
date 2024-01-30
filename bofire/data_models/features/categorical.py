@@ -382,11 +382,8 @@ class CategoricalOutput(Output):
             raise ValueError("categories must be unique")
         return categories
 
-    @field_validator("objective")
-    @classmethod
-    def validate_objectives_unique(
-        cls, objective: AnyCategoricalObjective, info
-    ) -> AnyCategoricalObjective:
+    @model_validator(mode="after")
+    def validate_objectives_unique(self):
         """validates that categories have unique names
 
         Args:
@@ -398,9 +395,9 @@ class CategoricalOutput(Output):
         Returns:
             Tuple[str]: Tuple of the categories
         """
-        if objective.categories != info.data["categories"]:
+        if self.objective.categories != self.categories:
             raise ValueError("categories must match to objective categories")
-        return objective
+        return self
 
     @classmethod
     def from_objective(

@@ -128,7 +128,7 @@ specs.add_valid(
         "categories": ["a", "b", "c"],
         "objective": ConstrainedCategoricalObjective(
             categories=["a", "b", "c"], desirability=[True, True, False]
-        ),
+        ).model_dump(),
     },
 )
 specs.add_valid(
