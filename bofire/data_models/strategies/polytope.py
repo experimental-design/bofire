@@ -3,6 +3,7 @@ from typing import Annotated, Literal, Type
 from pydantic import Field
 
 from bofire.data_models.constraints.api import (
+    Constraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -36,7 +37,7 @@ class PolytopeSampler(Strategy):
     n_thinning: Annotated[int, Field(ge=1)] = 32
 
     @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearInequalityConstraint,
             LinearEqualityConstraint,

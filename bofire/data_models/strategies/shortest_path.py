@@ -5,6 +5,7 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.constraints.api import (
+    Constraint,
     ConstraintNotFulfilledError,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -94,7 +95,7 @@ class ShortestPathStrategy(Strategy):
         return domain
 
     @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         """
         Checks if a constraint is implemented. Currently only linear constraints are supported.
 
