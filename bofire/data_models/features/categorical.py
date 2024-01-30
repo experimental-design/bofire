@@ -28,7 +28,8 @@ class CategoricalInput(Input):
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
-    order_id: ClassVar[int] = 5
+    # order_id: ClassVar[int] = 5
+    order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
     allowed: TAllowedVals = Field(default=None, validate_default=True)
@@ -313,6 +314,7 @@ class CategoricalInput(Input):
         self,
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         assert isinstance(transform_type, CategoricalEncodingEnum)
         if transform_type == CategoricalEncodingEnum.ORDINAL:
@@ -355,7 +357,8 @@ class CategoricalInput(Input):
 
 class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
-    order_id: ClassVar[int] = 8
+    # order_id: ClassVar[int] = 8
+    order_id: ClassVar[int] = 9
 
     categories: TCategoryVals
     objective: Optional[AnyCategoricalObjective] = Field(

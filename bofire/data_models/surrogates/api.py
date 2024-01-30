@@ -14,6 +14,9 @@ try:
     from bofire.data_models.surrogates.mixed_single_task_gp import (
         MixedSingleTaskGPSurrogate,
     )
+    from bofire.data_models.surrogates.mixed_tanimoto_gp import (
+        MixedTanimotoGPSurrogate,
+    )
     from bofire.data_models.surrogates.mlp import (
         ClassificationMLPEnsemble,
         MLPEnsemble,
@@ -37,6 +40,7 @@ try:
         RandomForestSurrogate,
         SingleTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
+        MixedTanimotoGPSurrogate,
         ClassificationMLPEnsemble,
         RegressionMLPEnsemble,
         SaasSingleTaskGPSurrogate,
@@ -50,6 +54,7 @@ try:
         RandomForestSurrogate,
         SingleTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
+        MixedTanimotoGPSurrogate,
         ClassificationMLPEnsemble,
         RegressionMLPEnsemble,
         SaasSingleTaskGPSurrogate,

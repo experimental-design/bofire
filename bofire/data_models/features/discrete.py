@@ -1,10 +1,10 @@
-from typing import ClassVar, Literal, Optional
+from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 from pydantic import field_validator
 
-from bofire.data_models.features.feature import TDiscreteVals
+from bofire.data_models.features.feature import TDiscreteVals, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 
 
@@ -108,3 +108,16 @@ class DiscreteInput(NumericalInput):
         ).idxmin(1)
         s.name = self.key
         return s
+
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+        reference_value: Optional[float] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert transform_type is None
+        if values is None:
+            return [self.lower_bound], [self.upper_bound]  # type: ignore
+        lower = min(self.lower_bound, values.min())  # type: ignore
+        upper = max(self.upper_bound, values.max())  # type: ignore
+        return [lower], [upper]  # type: ignore

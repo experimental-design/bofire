@@ -10,6 +10,9 @@ from tests.bofire.data_models.specs.domain import specs as domain
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.inputs import specs as inputs
 from tests.bofire.data_models.specs.kernels import specs as kernels
+from tests.bofire.data_models.specs.local_search_config import (
+    specs as local_search_configs,
+)
 from tests.bofire.data_models.specs.molfeatures import specs as molfeatures
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.outlier_detection import specs as outlier_detection

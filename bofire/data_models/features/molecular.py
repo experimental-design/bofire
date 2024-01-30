@@ -20,7 +20,8 @@ from bofire.utils.cheminformatics import smiles2mol
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
-    order_id: ClassVar[int] = 6
+    # order_id: ClassVar[int] = 6
+    order_id: ClassVar[int] = 4
 
     @staticmethod
     def valid_transform_types() -> List[AnyMolFeatures]:
@@ -51,8 +52,26 @@ class MolecularInput(Input):
         raise ValueError("Sampling not supported for `MolecularInput`")
 
     def get_bounds(
-        self, transform_type: AnyMolFeatures, values: pd.Series
+        self,
+        transform_type: AnyMolFeatures,
+        values: pd.Series,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
+        """
+        Calculates the lower and upper bounds for the feature based on the given transform type and values.
+
+        Args:
+            transform_type (AnyMolFeatures): The type of transformation to apply to the data.
+            values (pd.Series): The actual data over which the lower and upper bounds are calculated.
+            reference_value (Optional[str], optional): The reference value for the transformation. Not used here.
+                Defaults to None.
+
+        Returns:
+            Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.
+
+        Raises:
+            NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.
+        """
         if values is None:
             raise NotImplementedError(
                 "`values` is currently required for `MolecularInput`"
@@ -88,7 +107,8 @@ class MolecularInput(Input):
 
 class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
-    order_id: ClassVar[int] = 7
+    # order_id: ClassVar[int] = 7
+    order_id: ClassVar[int] = 5
 
     @field_validator("categories")
     @classmethod
@@ -129,10 +149,15 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
         self,
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         if isinstance(transform_type, CategoricalEncodingEnum):
             # we are just using the standard categorical transformations
-            return super().get_bounds(transform_type=transform_type, values=values)
+            return super().get_bounds(
+                transform_type=transform_type,
+                values=values,
+                reference_value=reference_value,
+            )
         else:
             # in case that values is None, we return the optimization bounds
             # else we return the complete bounds

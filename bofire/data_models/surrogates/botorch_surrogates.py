@@ -12,6 +12,9 @@ from bofire.data_models.surrogates.linear import LinearSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
+from bofire.data_models.surrogates.mixed_tanimoto_gp import (
+    MixedTanimotoGPSurrogate,
+)
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     RegressionMLPEnsemble,
@@ -26,6 +29,7 @@ AnyBotorchSurrogate = Union[
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
+    MixedTanimotoGPSurrogate,
     RegressionMLPEnsemble,
     ClassificationMLPEnsemble,
     SaasSingleTaskGPSurrogate,

@@ -4,6 +4,11 @@ import tests.bofire.data_models.specs.api as specs
 
 
 # invalid fixtures
+@fixture(params=specs.local_search_configs.invalids)
+def invalid_local_search_config_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.features.invalids)
 def invalid_feature_spec(request) -> specs.InvalidSpec:
     return request.param
@@ -152,4 +157,9 @@ def outlier_detection_spec(request) -> specs.Spec:
 
 @fixture(params=specs.molfeatures.valids)
 def molfeatures_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.local_search_configs.valids)
+def local_search_config_spec(request) -> specs.Spec:
     return request.param

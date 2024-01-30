@@ -87,7 +87,8 @@ class CategoricalDescriptorInput(CategoricalInput):
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
-    order_id: ClassVar[int] = 4
+    # order_id: ClassVar[int] = 4
+    order_id: ClassVar[int] = 6
 
     descriptors: TDescriptors
     values: TCategoricalDescriptorVals
@@ -172,7 +173,10 @@ class CategoricalDescriptorInput(CategoricalInput):
             return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
     def get_bounds(
-        self, transform_type: TTransform, values: Optional[pd.Series] = None
+        self,
+        transform_type: TTransform,
+        values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)

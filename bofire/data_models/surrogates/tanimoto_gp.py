@@ -1,10 +1,15 @@
 from typing import Literal, Type
 
-from pydantic import Field
+from pydantic import Field, validator
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
+from bofire.data_models.molfeatures.api import (
+    Fingerprints,
+    FingerprintsFragments,
+    Fragments,
+)
 from bofire.data_models.priors.api import (
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
@@ -37,3 +42,18 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
         return isinstance(my_type, ContinuousOutput)
+
+    # TanimotoGP will be used when at least one of fingerprints, fragments, or fingerprintsfragments are present
+    @validator("input_preprocessing_specs")
+    def validate_moleculars(cls, v, values):
+        """Checks that at least one of fingerprints, fragments, or fingerprintsfragments features are present."""
+        if not any(
+            isinstance(value, Fingerprints)
+            or isinstance(value, Fragments)
+            or isinstance(value, FingerprintsFragments)
+            for value in v.values()
+        ):
+            raise ValueError(
+                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
+            )
+        return v

@@ -798,8 +798,10 @@ def test_base_setup_ask_fixed_features(
         ),
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = domains[0].inputs.sample(3)
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -828,8 +830,10 @@ def test_base_setup_ask_fixed_features(
         discrete_method=discrete_method,
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = domains[3].inputs.sample(3)
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -848,8 +852,12 @@ def test_base_setup_ask():
         # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = benchmark.f(
+        benchmark.domain.inputs.sample(3), return_complete=True
+    )
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -858,6 +866,10 @@ def test_base_setup_ask():
     ) = myStrategy._setup_ask()
     assert torch.allclose(
         bounds,
+        torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
+    )
+    assert torch.allclose(
+        local_bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
     )
     assert ic_generator is None
@@ -872,8 +884,12 @@ def test_base_setup_ask():
         # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = benchmark.f(
+        benchmark.domain.inputs.sample(3), return_complete=True
+    )
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,

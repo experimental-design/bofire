@@ -532,6 +532,7 @@ class Inputs(Features):
         self,
         specs: TInputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
+        reference_experiment: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
@@ -542,6 +543,10 @@ class Inputs(Features):
             experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
                 If provided the real feature bounds are returned based on both the opt.
                 feature bounds and the extreme points in the dataframe. Defaults to None,
+            reference_experiment (Optional[pd.Serues], optional): If a reference experiment provided,
+            then the local bounds based on a local search region are provided as reference to the
+                reference experiment. Currently only supported for continuous inputs.
+                For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
 
         Raises:
             ValueError: If a feature type is not known.
@@ -550,19 +555,48 @@ class Inputs(Features):
         Returns:
             Tuple[List[float], List[float]]: list with lower bounds, list with upper bounds.
         """
+        if reference_experiment is not None and experiments is not None:
+            raise ValueError(
+                "Only one can be used, `reference_experiments` or `experiments`."
+            )
+
         self._validate_transform_specs(specs=specs)
 
         lower = []
         upper = []
 
         for feat in self.get():
-            lo, up = feat.get_bounds(  # type: ignore
+            assert isinstance(feat, Input)
+            lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
+                values=experiments[feat.key] if experiments is not None else None,
+                reference_value=reference_experiment[feat.key]  # type: ignore
+                if reference_experiment is not None
+                else None,
             )
             lower += lo
             upper += up
         return lower, upper
+
+    def get_feature_indices(
+        self,
+        specs: TInputTransformSpecs,
+        feature_keys: List[str],
+    ) -> List[int]:
+        """Returns a list of indices of the given feature key list.
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+            feature_keys (List[str]): List of feature keys.
+
+        Returns:
+            List[int]: The list of indices.
+        """
+        features2idx, _ = self._get_transform_info(specs)
+        return sorted(
+            itertools.chain.from_iterable([features2idx[feat] for feat in feature_keys])
+        )
 
 
 class Outputs(Features):

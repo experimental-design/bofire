@@ -1,3 +1,4 @@
+import math
 import random
 
 import numpy as np
@@ -49,6 +50,36 @@ def test_continuous_input_feature_get_bounds(input_feature, expected):
         input_feature.lower_bound,
         input_feature.upper_bound,
     )
+
+
+def test_continuous_input_feature_get_bounds_local():
+    feat = ContinuousInput(key="if2", bounds=(0, 1), local_relative_bounds=(0.2, 0.3))
+    lower, upper = feat.get_bounds(reference_value=0.3)
+    assert np.isclose(lower[0], 0.1)
+    assert np.isclose(upper[0], 0.6)
+    # half left
+    feat = ContinuousInput(
+        key="if2", bounds=(0, 1), local_relative_bounds=(math.inf, 0.3)
+    )
+    lower, upper = feat.get_bounds(reference_value=0.3)
+    assert np.isclose(lower[0], 0.0)
+    assert np.isclose(upper[0], 0.6)
+    # half right
+    feat = ContinuousInput(
+        key="if2", bounds=(0, 1), local_relative_bounds=(0.2, math.inf)
+    )
+    lower, upper = feat.get_bounds(reference_value=0.3)
+    assert np.isclose(lower[0], 0.1)
+    assert np.isclose(upper[0], 1.0)
+    # fixed feature
+    feat = ContinuousInput(key="if2", bounds=(1, 1), local_relative_bounds=(0.2, 0.3))
+    lower, upper = feat.get_bounds(reference_value=0.3)
+    assert np.isclose(lower[0], 1)
+    assert np.isclose(upper[0], 1)
+    with pytest.raises(
+        ValueError, match="Only one can be used, `local_value` or `values`."
+    ):
+        feat.get_bounds(reference_value=0.3, values=pd.Series([0.1, 0.2], name="if2"))
 
 
 @pytest.mark.parametrize(
