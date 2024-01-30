@@ -15,12 +15,7 @@ from pydantic import ValidationError
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
-from bofire.data_models.acquisition_functions.api import (
-    qEI,
-    qLogEI,
-    qLogNEI,
-    qNEI,
-)
+from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.domain.api import Outputs
 from bofire.data_models.strategies.api import (
     PolytopeSampler as PolytopeSamplerDataModel,
@@ -119,7 +114,7 @@ def test_qparego(num_test_candidates):
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
     acqfs = [qEI(), qLogEI(), qLogNEI(), qNEI()]
     b_acqfs = [
@@ -157,7 +152,7 @@ def test_qparego_constraints(num_test_candidates):
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
     data_model = data_models.QparegoStrategy(domain=benchmark.domain)
     my_strategy = QparegoStrategy(data_model=data_model)
@@ -194,16 +189,15 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
-        random_strategy._ask(n=num_experiments), return_complete=True
+        random_strategy.ask(num_experiments), return_complete=True
     )
-    print(specs.items())
     data_model = data_models.QparegoStrategy(
         domain=benchmark.domain,
         **{
             key: value
             for key, value in specs.items()
             if key not in ["domain", "surrogate_specs"]
-        }
+        },
     )
     strategy = QparegoStrategy(data_model=data_model)
     # just to ensure there are no former experiments/ candidates already stored in the domain

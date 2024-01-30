@@ -28,7 +28,7 @@ from bofire.strategies.doe.utils import (
     nchoosek_constraints_as_bounds,
 )
 from bofire.strategies.enum import OptimalityCriterionEnum
-from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.strategies.polytope import PolytopeSampler
 
 
 def find_local_max_ipopt_BaB(
@@ -457,7 +457,7 @@ def find_local_max_ipopt(
             sampler = PolytopeSampler(
                 data_model=PolytopeSamplerDataModel(domain=domain)
             )
-            x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
+            x0 = sampler.ask(n_experiments).to_numpy().flatten()
         else:
             warnings.warn(
                 "Sampling failed. Falling back to uniform sampling on input domain.\

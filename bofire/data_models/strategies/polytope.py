@@ -1,9 +1,12 @@
-from typing import Literal, Type
+from typing import Annotated, Literal, Type
+
+from pydantic import Field
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
+    LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
-    NonlinearInequalityConstraint,
 )
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
@@ -15,30 +18,30 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Feature,
 )
-from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.strategy import Strategy
 
 
-class RejectionSampler(SamplerStrategy):
-    """Sampler that generates samples via rejection sampling.
+class PolytopeSampler(Strategy):
+    """Sampler that generates samples from a Polytope defined by linear equality and ineqality constraints.
 
     Attributes:
         domain (Domain): Domain defining the constrained input space
-        sampling_method (SamplingMethodEnum, optional): Method to generate the base samples. Defaults to UNIFORM.
-        num_base_samples (int, optional): Number of base samples to sample in each iteration. Defaults to 1000.
-        max_iters (int, optinal): Number of iterations. Defaults to 1000.
+        fallback_sampling_method: SamplingMethodEnum, optional): Method to use for sampling when no
+            constraints are present. Defaults to UNIFORM.
     """
 
-    type: Literal["RejectionSampler"] = "RejectionSampler"
-    sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
-    num_base_samples: int = 1000
-    max_iters: int = 1000
+    type: Literal["PolytopeSampler"] = "PolytopeSampler"
+    fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM
+    n_burnin: Annotated[int, Field(ge=1)] = 1000
+    n_thinning: Annotated[int, Field(ge=1)] = 32
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
         return my_type in [
             LinearInequalityConstraint,
-            NonlinearInequalityConstraint,
+            LinearEqualityConstraint,
             NChooseKConstraint,
+            InterpointEqualityConstraint,
         ]
 
     @classmethod
@@ -46,8 +49,8 @@ class RejectionSampler(SamplerStrategy):
         return my_type in [
             ContinuousInput,
             ContinuousOutput,
-            DiscreteInput,
             CategoricalInput,
+            DiscreteInput,
             CategoricalDescriptorInput,
             CategoricalMolecularInput,
         ]

@@ -181,7 +181,7 @@ def test_SOBO_init_qUCB():
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=20), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
 
     data_model = data_models.SoboStrategy(
         domain=benchmark.domain, acquisition_function=acqf
