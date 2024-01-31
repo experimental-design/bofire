@@ -40,8 +40,8 @@ from bofire.data_models.strategies.api import (
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
 from bofire.outlier_detection.outlier_detections import OutlierDetections
+from bofire.strategies.polytope import PolytopeSampler
 from bofire.strategies.predictives.predictive import PredictiveStrategy
-from bofire.strategies.samplers.polytope import PolytopeSampler
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
@@ -683,7 +683,7 @@ class BotorchStrategy(PredictiveStrategy):
         sampler = PolytopeSampler(
             data_model=PolytopeSamplerDataModel(domain=self.domain)
         )
-        samples = sampler.ask(candidate_count=n_samples, return_all=False)
+        samples = sampler.ask(candidate_count=n_samples)
         # we need to transform the samples
         transformed_samples = torch.from_numpy(
             self.domain.inputs.transform(samples, self.input_preprocessing_specs).values

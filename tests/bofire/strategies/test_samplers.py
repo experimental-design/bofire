@@ -76,39 +76,6 @@ constraints = Constraints(
 )
 
 
-@pytest.mark.parametrize(
-    "features, constraints, sampling_method, num_samples",
-    [
-        (inputs, constraints, sampling_method, num_samples)
-        for sampling_method in ["SOBOL", "UNIFORM", "LHS"]
-        for num_samples in [1, 2, 64, 128]
-    ],
-)
-def test_rejection_sampler(features, constraints, sampling_method, num_samples):
-    domain = Domain(
-        inputs=features,
-        constraints=constraints,
-    )
-    data_model = data_models.RejectionSampler(
-        domain=domain, sampling_method=sampling_method
-    )
-    sampler = strategies.RejectionSampler(data_model=data_model)
-    sampler.ask(num_samples)
-
-
-def test_rejection_sampler_not_converged():
-    domain = Domain(
-        inputs=inputs,
-        constraints=constraints,
-    )
-    data_model = data_models.RejectionSampler(
-        domain=domain, num_base_samples=16, max_iters=2
-    )
-    sampler = strategies.RejectionSampler(data_model=data_model)
-    with pytest.raises(ValueError):
-        sampler.ask(128)
-
-
 if1 = ContinuousInput(
     bounds=(0, 1),
     key="if1",
@@ -225,7 +192,5 @@ def test_PolytopeSampler_nchoosek():
     )
     data_model = data_models.PolytopeSampler(domain=domain)
     sampler = strategies.PolytopeSampler(data_model=data_model)
-    samples = sampler.ask(5, return_all=True)
-    assert len(samples) == 15
-    samples = sampler.ask(50, return_all=False)
+    samples = sampler.ask(50)
     assert len(samples) == 50

@@ -2,6 +2,7 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.polytope import PolytopeSampler
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -18,12 +19,6 @@ from bofire.data_models.strategies.predictives.sobo import (
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
-from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
-from bofire.data_models.strategies.samplers.rejection import RejectionSampler
-from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
-from bofire.data_models.strategies.samplers.universal_constraint import (
-    UniversalConstraintSampler,
-)
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     AlwaysTrueCondition,
@@ -35,11 +30,13 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.strategies.universal_constraint import (
+    UniversalConstraintSampler,
+)
 
 AbstractStrategy = Union[
     Strategy,
     BotorchStrategy,
-    SamplerStrategy,
     PredictiveStrategy,
     MultiobjectiveStrategy,
 ]
@@ -53,7 +50,6 @@ AnyStrategy = Union[
     QnehviStrategy,
     QparegoStrategy,
     PolytopeSampler,
-    RejectionSampler,
     UniversalConstraintSampler,
     RandomStrategy,
     DoEStrategy,
@@ -74,7 +70,7 @@ AnyPredictive = Union[
     MoboStrategy,
 ]
 
-AnySampler = Union[PolytopeSampler, RejectionSampler, UniversalConstraintSampler]
+AnySampler = Union[PolytopeSampler, UniversalConstraintSampler]
 
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]

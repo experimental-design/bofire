@@ -1,4 +1,6 @@
+import math
 import warnings
+from copy import deepcopy
 from typing import Dict
 
 import numpy as np
@@ -10,6 +12,7 @@ from botorch.optim.parameter_constraints import _generate_unfixed_lin_constraint
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
@@ -18,7 +21,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.strategies.api import PolytopeSampler as DataModel
-from bofire.strategies.samplers.sampler import SamplerStrategy
+from bofire.strategies.strategy import Strategy
 from bofire.utils.torch_tools import (
     get_interpoint_constraints,
     get_linear_constraints,
@@ -26,13 +29,11 @@ from bofire.utils.torch_tools import (
 )
 
 
-class PolytopeSampler(SamplerStrategy):
-    """Sampler that generates samples from a Polytope defined by linear equality and ineqality constraints.
+class PolytopeSampler(Strategy):
+    """Base class for sampling methods in BoFire for sampling from constrained input spaces.
 
-    Attributes:
+    Attributes
         domain (Domain): Domain defining the constrained input space
-        fallback_sampling_method: SamplingMethodEnum, optional): Method to use for sampling when no
-            constraints are present. Defaults to UNIFORM.
     """
 
     def __init__(
@@ -45,7 +46,66 @@ class PolytopeSampler(SamplerStrategy):
         self.n_thinning = data_model.n_thinning
         self.fallback_sampling_method = data_model.fallback_sampling_method
 
-    def _ask(self, n: int) -> pd.DataFrame:
+    def _ask(
+        self,
+        candidate_count: int,
+    ) -> pd.DataFrame:
+        """Generates the samples. In the case that `NChooseK` constraints are
+        present, per combination `n` samples are generated.
+
+        Args:
+            candidate_count (int): number of samples to generate.
+        Returns:
+            Dataframe with samples.
+        """
+        if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
+            _, unused = self.domain.get_nchoosek_combinations()
+
+            if candidate_count <= len(unused):
+                sampled_combinations = [
+                    unused[i]
+                    for i in self.rng.choice(
+                        len(unused), size=candidate_count, replace=False
+                    )
+                ]
+                num_samples_per_it = 1
+            else:
+                sampled_combinations = unused
+                num_samples_per_it = math.ceil(candidate_count / len(unused))
+
+            samples = []
+            for u in sampled_combinations:
+                # create new domain without the nchoosekconstraints
+                domain = deepcopy(self.domain)
+                domain.constraints = domain.constraints.get(excludes=NChooseKConstraint)
+                # fix the unused features
+                for key in u:
+                    feat = domain.inputs.get_by_key(key=key)
+                    assert isinstance(feat, ContinuousInput)
+                    feat.bounds = (0, 0)
+                # setup then sampler for this situation
+                sampler: PolytopeSampler = self.duplicate(domain=domain)
+                samples.append(sampler.ask(num_samples_per_it))
+            samples = pd.concat(samples, axis=0, ignore_index=True)
+            return samples.sample(
+                n=candidate_count,
+                replace=False,
+                ignore_index=True,
+                random_state=self._get_seed(),
+            )
+
+        return self._sample_from_polytope(candidate_count)
+
+    def _sample_from_polytope(self, n: int) -> pd.DataFrame:
+        """
+        Sample points from the polytope defined by the domain constraints.
+
+        Args:
+            n (int): The number of points to sample.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the sampled points.
+        """
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(
                 n, self.fallback_sampling_method, seed=self._get_seed()
@@ -173,9 +233,14 @@ class PolytopeSampler(SamplerStrategy):
 
         return samples
 
-    def duplicate(self, domain: Domain) -> SamplerStrategy:
+    def has_sufficient_experiments(self) -> bool:
+        return True
+
+    def duplicate(self, domain: Domain) -> "PolytopeSampler":
         data_model = DataModel(
             domain=domain,
             fallback_sampling_method=self.fallback_sampling_method,
+            n_burnin=self.n_burnin,
+            n_thinning=self.n_thinning,
         )
         return self.__class__(data_model=data_model)

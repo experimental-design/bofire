@@ -5,10 +5,10 @@ import bofire.strategies.mapper as strategy_mapper
 from bofire.benchmarks.multi import ZDT1
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import (
-    QparegoStrategy as QparegoStrategyDataModel,
+    PolytopeSampler as PolytopeSamplerDataModel,
 )
 from bofire.data_models.strategies.api import (
-    RejectionSampler as RejectionSamplerDataModel,
+    QparegoStrategy as QparegoStrategyDataModel,
 )
 from bofire.runners.api import run
 from bofire.utils.multiobjective import compute_hypervolume
@@ -24,7 +24,7 @@ def test_benchmark():
 
     def sample(domain):
         nonlocal n_initial_samples
-        sampler = strategies.map(RejectionSamplerDataModel(domain=domain))
+        sampler = strategies.map(PolytopeSamplerDataModel(domain=domain))
         sampled = sampler.ask(n_initial_samples)
 
         return sampled
