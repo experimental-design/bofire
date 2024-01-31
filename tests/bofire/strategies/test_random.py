@@ -126,7 +126,7 @@ def test_ask(domain):
 def test_get_feasible_domain_for_polytope_sampler():
     data_model = data_models.RandomStrategy(domain=supported_domains[-1])
     strategy = strategies.map(data_model=data_model)
-    domain = strategy._get_feasible_domain_for_polytope_sampler()
+    domain = strategy._get_feasible_domain_for_polytope_sampler(strategy.domain)
     assert domain.inputs == supported_domains[-1].inputs
     assert domain.outputs == supported_domains[-1].outputs
     assert len(domain.constraints) == 0
