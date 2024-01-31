@@ -13,8 +13,14 @@ from bofire.strategies.strategy import Strategy
 class RandomStrategy(Strategy):
     """Strategy for randomly selecting new candidates.
 
-    Provides a baseline strategy for benchmarks or for generating initial candidates.
-    Uses PolytopeSampler or RejectionSampler, depending on the constraints.
+    This strategy generates candidate samples using the random strategy. It first checks if the domain
+    is compatible with the PolytopeSampler. If so, it uses the PolytopeSampler to generate candidate
+    samples. If not, it performs rejection sampling by repeatedly generating candidates with the PolytopeSampler
+    until the desired number of valid samples is obtained.
+
+    Args:
+        data_model (data_models.RandomStrategy): The data model for the random strategy.
+        **kwargs: Additional keyword arguments.
     """
 
     def __init__(
@@ -29,8 +35,19 @@ class RandomStrategy(Strategy):
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
 
-    def _get_feasible_domain_for_polytope_sampler(self) -> Domain:
-        domain = deepcopy(self.domain)
+    @staticmethod
+    def _get_feasible_domain_for_polytope_sampler(domain: Domain) -> Domain:
+        """
+        Returns a modified domain object with only the constraints that are implemented
+        for the PolytopeSampler.
+
+        Args:
+            domain (Domain): The original domain object.
+
+        Returns:
+            Domain: A modified domain object with only the feasible constraints.
+        """
+        domain = deepcopy(domain)
         domain.constraints = Constraints(
             constraints=[
                 c
@@ -41,10 +58,29 @@ class RandomStrategy(Strategy):
         return domain
 
     def has_sufficient_experiments(self) -> bool:
+        """
+        Check if there are sufficient experiments for the strategy.
+
+        Returns:
+            bool: True if there are sufficient experiments, False otherwise.
+        """
         return True
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
-        domain = self._get_feasible_domain_for_polytope_sampler()
+        """
+        Generate candidate samples using the random strategy.
+
+        If the domain is compatible with the PolytopeSampler, it uses the PolytopeSampler to generate
+        candidate samples. Otherwise, it performs rejection sampling by repeatedly generating candidate
+        samples until the desired number of valid samples is obtained.
+
+        Args:
+            candidate_count (PositiveInt): The number of candidate samples to generate.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the generated candidate samples.
+        """
+        domain = self._get_feasible_domain_for_polytope_sampler(domain=self.domain)
         sampler = PolytopeSampler(
             data_model=data_models.PolytopeSampler(
                 domain=domain,

@@ -97,6 +97,15 @@ class PolytopeSampler(Strategy):
         return self._sample_from_polytope(candidate_count)
 
     def _sample_from_polytope(self, n: int) -> pd.DataFrame:
+        """
+        Sample points from the polytope defined by the domain constraints.
+
+        Args:
+            n (int): The number of points to sample.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the sampled points.
+        """
         if len(self.domain.constraints) == 0:
             return self.domain.inputs.sample(
                 n, self.fallback_sampling_method, seed=self._get_seed()
