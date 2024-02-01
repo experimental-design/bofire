@@ -92,7 +92,9 @@ def test_mobo(strategy, use_ref_point, acqf):
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(
+        random_strategy.ask(candidate_count=10), return_complete=True
+    )
     # init strategy
     data_model = strategy(
         domain=benchmark.domain,
@@ -129,7 +131,7 @@ def test_mobo_constraints(acqf):
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     data_model = data_models.MoboStrategy(
         domain=benchmark.domain,
         ref_point={"f_0": 1.1, "f_1": 1.1},
@@ -171,7 +173,7 @@ def test_get_acqf_input(num_experiments, num_candidates):
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
-        random_strategy._ask(n=num_experiments), return_complete=True
+        random_strategy.ask(num_experiments), return_complete=True
     )
     data_model = data_models.MoboStrategy(domain=benchmark.domain)
     strategy = strategies.map(data_model)

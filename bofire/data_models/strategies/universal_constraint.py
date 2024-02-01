@@ -3,17 +3,14 @@ from typing import Annotated, Literal, Type
 from pydantic import Field
 
 from bofire.data_models.constraints.api import (
+    Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
-from bofire.data_models.features.api import (
-    ContinuousInput,
-    ContinuousOutput,
-    Feature,
-)
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, Feature
 from bofire.data_models.strategies.strategy import Strategy
 
 
@@ -32,7 +29,7 @@ class UniversalConstraintSampler(Strategy):
     ipopt_options: dict = {"maxiter": 200, "disp": 0}
 
     @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearEqualityConstraint,
             LinearInequalityConstraint,

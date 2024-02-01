@@ -3,6 +3,7 @@ from typing import Annotated, Literal, Type
 from pydantic import Field
 
 from bofire.data_models.constraints.api import (
+    Constraint,
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -18,10 +19,10 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     Feature,
 )
-from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.strategy import Strategy
 
 
-class PolytopeSampler(SamplerStrategy):
+class PolytopeSampler(Strategy):
     """Sampler that generates samples from a Polytope defined by linear equality and ineqality constraints.
 
     Attributes:
@@ -36,7 +37,7 @@ class PolytopeSampler(SamplerStrategy):
     n_thinning: Annotated[int, Field(ge=1)] = 32
 
     @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return my_type in [
             LinearInequalityConstraint,
             LinearEqualityConstraint,

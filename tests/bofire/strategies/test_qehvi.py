@@ -146,7 +146,7 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
     data_model = strategy(
         domain=benchmark.domain,
@@ -176,7 +176,7 @@ def test_qnehvi_constraints():
     random_strategy = PolytopeSampler(
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     data_model = data_models.QnehviStrategy(
         domain=benchmark.domain, ref_point={"f_0": 1.1, "f_1": 1.1}
     )
@@ -211,7 +211,7 @@ def test_get_acqf_input(strategy, ref_point, num_experiments, num_candidates):
         data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
-        random_strategy._ask(n=num_experiments), return_complete=True
+        random_strategy.ask(num_experiments), return_complete=True
     )
     data_model = strategy(domain=benchmark.domain)
     strategy = strategies.map(data_model)

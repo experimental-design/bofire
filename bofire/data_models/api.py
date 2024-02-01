@@ -28,7 +28,6 @@ from bofire.data_models.strategies.api import (
     AnySampler,
     AnyStrategy,
     PredictiveStrategy,
-    SamplerStrategy,
     Strategy,
 )
 from bofire.data_models.surrogates.api import (

@@ -78,6 +78,13 @@ class Objective:
         X = pd.DataFrame(
             x.reshape(len(x.flatten()) // self.n_vars, self.n_vars), columns=self.vars
         )
+        # scale to [0, 1]
+        # lower, upper = self.domain.inputs.get_bounds(specs={}, experiments=X)
+        # lower = np.array(lower)
+        # upper = np.array(upper)
+        # X = (X - lower) / (upper - lower)
+        # X = X * 2 - 1
+        # get model matrix
         X = self.model.get_model_matrix(X)
         return torch.tensor(X.values, requires_grad=requires_grad, **tkwargs)
 

@@ -91,6 +91,12 @@ supported_domains = [
         constraints=[c2],
     ),
     Domain.from_lists(
+        # combination of linear equality and nonlinear inequality
+        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
+        outputs=[of1],
+        constraints=[c1, c4],
+    ),
+    Domain.from_lists(
         # all ordered feature types, non-linear inequality
         inputs=[if0, if1, if2, if7],
         outputs=[of1],
@@ -105,18 +111,6 @@ unsupported_domains = [
         outputs=[of1],
         constraints=[c3],
     ),
-    Domain.from_lists(
-        # combination of linear equality and nonlinear inequality
-        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
-        outputs=[of1],
-        constraints=[c1, c4],
-    ),
-    # Domain(
-    #     # n-choose-k
-    #     inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
-    #     outputs=[of1],
-    #     constraints=[c5],
-    # ),
 ]
 
 
@@ -127,6 +121,26 @@ def test_ask(domain):
     candidates = strategy.ask(3)
     assert len(candidates) == 3
     assert domain.constraints.is_fulfilled(candidates).all()
+
+
+def test_get_feasible_domain_for_polytope_sampler():
+    data_model = data_models.RandomStrategy(domain=supported_domains[-1])
+    strategy = strategies.map(data_model=data_model)
+    domain = strategy._get_feasible_domain_for_polytope_sampler(strategy.domain)
+    assert domain.inputs == supported_domains[-1].inputs
+    assert domain.outputs == supported_domains[-1].outputs
+    assert len(domain.constraints) == 0
+
+
+def test_rejection_sampler_not_converged():
+    data_model = data_models.RandomStrategy(
+        domain=supported_domains[-2], num_base_samples=4, max_iters=2
+    )
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    with pytest.raises(
+        ValueError, match="Maximum iterations exceeded in rejection sampling."
+    ):
+        sampler.ask(128)
 
 
 @pytest.mark.parametrize("domain", unsupported_domains)

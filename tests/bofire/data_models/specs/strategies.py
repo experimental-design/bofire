@@ -110,8 +110,14 @@ specs.add_valid(
     lambda: {
         "domain": domain.valid().obj().model_dump(),
         "seed": 42,
+        "max_iters": 1000,
+        "num_base_samples": 1000,
+        "n_burnin": 1000,
+        "n_thinning": 32,
+        "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
     },
 )
+
 
 specs.add_valid(
     strategies.PolytopeSampler,
@@ -129,22 +135,7 @@ specs.add_valid(
         "n_thinning": 32,
     },
 )
-specs.add_valid(
-    strategies.RejectionSampler,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
-                ]
-            )
-        ).model_dump(),
-        "max_iters": 1000,
-        "num_base_samples": 1000,
-        "sampling_method": SamplingMethodEnum.UNIFORM,
-        "seed": 42,
-    },
-)
+
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {

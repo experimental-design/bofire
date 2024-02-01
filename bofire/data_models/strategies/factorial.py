@@ -1,5 +1,6 @@
 from typing import Literal, Type
 
+from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
@@ -14,7 +15,7 @@ class FactorialStrategy(Strategy):
     type: Literal["FactorialStrategy"] = "FactorialStrategy"
 
     @classmethod
-    def is_constraint_implemented(cls, my_type: Type[Feature]) -> bool:
+    def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
         return False
 
     @classmethod
