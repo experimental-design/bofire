@@ -138,7 +138,7 @@ def fit_mlp(
     weight_decay: float = 0.0,
     loss_function: Union[
         nn.modules.loss.L1Loss, nn.modules.loss.CrossEntropyLoss
-    ] = nn.L1Loss,
+    ] = nn.L1Loss, # type: ignore
 ):
     """Fit a MLP to a dataset.
 
