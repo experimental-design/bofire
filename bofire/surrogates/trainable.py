@@ -186,16 +186,16 @@ class TrainableSurrogate(ABC):
             # Convert to categorical if applicable
             if isinstance(self.outputs.get_by_key(key).objective, ConstrainedCategoricalObjective):  # type: ignore
                 y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
                 )
                 y_train_pred[f"{key}_pred"] = y_train_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
                 )
                 y_test[key] = y_test[key].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
                 )
                 y_train[key] = y_train[key].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
                 )
 
             # now store the results

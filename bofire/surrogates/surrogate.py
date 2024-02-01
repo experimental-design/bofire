@@ -51,11 +51,11 @@ class Surrogate(ABC):
         for featkey in self.outputs.get_keys(CategoricalOutput):
             pred_cols = pred_cols + [
                 f"{featkey}_{cat}_prob"
-                for cat in self.outputs.get_by_key(featkey).categories
+                for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
             ]
             sd_cols = sd_cols + [
                 f"{featkey}_{cat}_sd"
-                for cat in self.outputs.get_by_key(featkey).categories
+                for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
             ]
         for featkey in self.outputs.get_keys(ContinuousOutput):
             pred_cols = pred_cols + [f"{featkey}_pred"]
@@ -95,11 +95,11 @@ class Surrogate(ABC):
                 + [f"{featkey}_{t}" for t in ["pred", "sd"]]
                 + [
                     f"{featkey}_{cat}_prob"
-                    for cat in self.outputs.get_by_key(featkey).categories
+                    for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
                 ]
                 + [
                     f"{featkey}_{cat}_sd"
-                    for cat in self.outputs.get_by_key(featkey).categories
+                    for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
                 ]
             )
             check_columns = check_columns + [
