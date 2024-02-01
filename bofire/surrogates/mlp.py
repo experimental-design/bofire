@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Literal, Optional, Sequence
+from typing import Literal, Optional, Sequence, Union
 
 import numpy as np
 import pandas as pd
@@ -136,7 +136,7 @@ def fit_mlp(
     lr: float = 1e-4,
     shuffle: bool = True,
     weight_decay: float = 0.0,
-    loss_function=nn.L1Loss,  # type: ignore
+    loss_function: nn.modules.loss = nn.L1Loss,  # type: ignore
 ):
     """Fit a MLP to a dataset.
 
@@ -307,7 +307,7 @@ class ClassificationMLPEnsemble(MLPEnsemble):
                 lr=self.lr,
                 shuffle=self.shuffle,
                 weight_decay=self.weight_decay,
-                loss_function=nn.CrossEntropyLoss,  # utilizes logits as input
+                loss_function=nn.CrossEntropyLoss,  # type: ignore
             )
             mlps.append(mlp)
         self.model = _MLPEnsemble(mlps=mlps)
