@@ -136,7 +136,7 @@ def fit_mlp(
     lr: float = 1e-4,
     shuffle: bool = True,
     weight_decay: float = 0.0,
-    loss_function: nn.modules.loss = nn.L1Loss,  # type: ignore
+    loss_function=nn.L1Loss,  # type: ignore
 ):
     """Fit a MLP to a dataset.
 
