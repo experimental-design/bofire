@@ -398,7 +398,7 @@ class CategoricalOutput(Output):
         Returns:
             Tuple[str]: Tuple of the categories
         """
-        if self.objective.categories != self.categories:
+        if self.objective.categories != self.categories:  # type: ignore
             raise ValueError("categories must match to objective categories")
         return self
 
