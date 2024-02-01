@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Literal, Optional, Sequence, Union
+from typing import Literal, Optional, Sequence
 
 import numpy as np
 import pandas as pd
