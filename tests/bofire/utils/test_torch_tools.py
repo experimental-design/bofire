@@ -11,6 +11,7 @@ from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    MultiLinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
@@ -37,6 +38,7 @@ from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
     get_interpoint_constraints,
     get_linear_constraints,
+    get_multilinear_constraints,
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
@@ -648,6 +650,56 @@ def test_get_nchoosek_constraints():
     assert torch.allclose(
         constraints[2](samples), torch.tensor([1.0, 0.0, -1.0]).to(**tkwargs)
     )
+
+
+def test_get_multilinear_constraints():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[5, 100]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            MultiLinearInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=80,
+            ),
+            MultiLinearInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=-20,
+                sign=-1,
+            ),
+            MultiLinearInequalityConstraint(
+                features=["x1", "x2", "x3"],
+                exponents=[2, -1, 0.5],
+                rhs=0,
+                sign=-1,
+            ),
+        ],
+    )
+    constraints = get_multilinear_constraints(domain=domain)
+    assert len(constraints) == 3
+
+    samples = torch.tensor([[0.1, 0.5, 90], [0.2, 0.9, 100], [0.3, 0.1, 100]]).to(
+        **tkwargs
+    )
+    results = torch.tensor([35.0, -10.0, 70.0]).to(**tkwargs)
+    assert torch.allclose(constraints[0](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[0](samples[i]), results[i])
+
+    results = torch.tensor([25.0, 70, -10]).to(**tkwargs)
+    assert torch.allclose(constraints[1](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[1](samples[i]), results[i])
+
+    results = torch.tensor([0.18973666, 0.44444444444, 9.0]).to(**tkwargs)
+    assert torch.allclose(constraints[2](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[2](samples[i]), results[i])
 
 
 def test_get_multiobjective_objective():

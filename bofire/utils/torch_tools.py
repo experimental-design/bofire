@@ -10,6 +10,7 @@ from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
+    MultiLinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.features.api import ContinuousInput, Input
@@ -174,6 +175,52 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
                 )
             )
     return constraints
+
+
+def get_multilinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+    """
+    Returns a list of nonlinear constraint functions that can be processed by botorch
+    based on the given domain.
+
+    Args:
+        domain (Domain): The domain object containing the constraints.
+
+    Returns:
+        List[Callable[[Tensor], float]]: A list of multilinear constraint functions.
+
+    """
+
+    def multilinear_constraint(
+        indices: Tensor, exponents: Tensor, rhs: float, sign: int
+    ):
+        return lambda x: -1.0 * sign * (x[..., indices] ** exponents).prod(dim=-1) + rhs
+
+    constraints = []
+    for c in domain.constraints.get(MultiLinearInequalityConstraint):
+        assert isinstance(c, MultiLinearInequalityConstraint)
+        indices = torch.tensor(
+            [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
+            dtype=torch.int64,
+        )
+        constraints.append(
+            multilinear_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign)
+        )
+    return constraints
+
+
+def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+    """
+    Returns a list of callable functions that represent the nonlinear constraints
+    for the given domain that can be processed by botorch.
+
+    Parameters:
+        domain (Domain): The domain for which to generate the nonlinear constraints.
+
+    Returns:
+        List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
+        as input and return a float value representing the constraint evaluation.
+    """
+    return get_nchoosek_constraints(domain) + get_multilinear_constraints(domain)
 
 
 def constrained_objective2botorch(
