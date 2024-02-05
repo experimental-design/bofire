@@ -1,7 +1,7 @@
 import pytest
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.types import FeatureKeys, TCategories, make_unique_validator
+from bofire.data_models.types import FeatureKeys, TCategoryVals, make_unique_validator
 
 
 def test_make_unique_validator():
@@ -16,7 +16,7 @@ def test_make_unique_validator():
 def test_FeatureKeys():
     class Bla(BaseModel):
         features: FeatureKeys
-        categories: TCategories
+        categories: TCategoryVals
 
     with pytest.raises(ValueError, match="Features must be unique"):
         Bla(features=["a", "a"])

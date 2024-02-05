@@ -30,7 +30,7 @@ from bofire.data_models.objectives.api import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
-from bofire.data_models.strategies.api import PolytopeSampler
+from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
     constrained_objective2botorch,
     get_additive_botorch_objective,
@@ -42,6 +42,7 @@ from bofire.utils.torch_tools import (
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
+    get_nonlinear_constraints,
     get_objective_callable,
     get_output_constraints,
     tkwargs,
@@ -702,6 +703,31 @@ def test_get_multilinear_constraints():
         assert torch.allclose(constraints[2](samples[i]), results[i])
 
 
+def test_get_nonlinear_constraints():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[5, 100]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            MultiLinearInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=80,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                min_count=0,
+                max_count=1,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    assert len(get_nonlinear_constraints(domain=domain)) == 2
+
+
 def test_get_multiobjective_objective():
     samples = (torch.rand(30, 4, requires_grad=True) * 5).to(**tkwargs)
     samples2 = (torch.rand(30, 512, 4, requires_grad=True) * 5).to(**tkwargs)
@@ -761,7 +787,7 @@ def test_get_initial_conditions_generator(sequential: bool):
         ]
     )
     domain = Domain(inputs=inputs)
-    strategy = strategies.map(PolytopeSampler(domain=domain))
+    strategy = strategies.map(RandomStrategy(domain=domain))
     # test with one hot encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,

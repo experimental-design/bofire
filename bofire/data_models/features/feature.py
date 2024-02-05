@@ -165,10 +165,6 @@ def is_categorical(s: pd.Series, categories: List[str]):
 TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
 
 
-TDescriptors = Annotated[List[str], Field(min_length=1)]
-
-
-TCategoryVals = Annotated[List[str], Field(min_length=2)]
 TAllowedVals = Optional[Annotated[List[bool], Field(min_length=2)]]
 
 

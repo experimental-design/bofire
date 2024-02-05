@@ -45,6 +45,10 @@ FeatureKeys = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Features"))
 ]
 
-TCategories = Annotated[
+TCategoryVals = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Categories"))
+]
+
+TDescriptors = Annotated[
+    List[str], Field(min_length=1), AfterValidator(make_unique_validator("Descriptors"))
 ]
