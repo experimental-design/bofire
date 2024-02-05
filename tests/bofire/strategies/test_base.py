@@ -76,6 +76,7 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
             LinearEqualityConstraint,
             LinearInequalityConstraint,
             NChooseKConstraint,
+            MultiLinearInequalityConstraint,
         ]
 
     @classmethod
