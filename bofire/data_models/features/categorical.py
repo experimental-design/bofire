@@ -6,13 +6,7 @@ from pydantic import Field, field_validator, model_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    Input,
-    Output,
-    TAllowedVals,
-    TTransform,
-)
+from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
 from bofire.data_models.types import TCategoryVals
 
 
@@ -29,7 +23,9 @@ class CategoricalInput(Input):
     order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
-    allowed: TAllowedVals = Field(default=None, validate_default=True)
+    allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
+        default=None, validate_default=True
+    )
 
     @field_validator("allowed")
     @classmethod

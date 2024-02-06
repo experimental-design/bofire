@@ -1,6 +1,9 @@
-from typing import Annotated, List
+from typing import Annotated, Dict, List, Union
 
 from pydantic import AfterValidator, Field
+
+from bofire.data_models.enum import CategoricalEncodingEnum
+from bofire.data_models.molfeatures.api import AnyMolFeatures
 
 
 def make_unique_validator(name: str):
@@ -41,7 +44,7 @@ def make_unique_validator(name: str):
     return validate_unique
 
 
-FeatureKeys = Annotated[
+TFeatureKeys = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Features"))
 ]
 
@@ -52,3 +55,7 @@ TCategoryVals = Annotated[
 TDescriptors = Annotated[
     List[str], Field(min_length=1), AfterValidator(make_unique_validator("Descriptors"))
 ]
+
+TDiscreteVals = Annotated[List[float], Field(min_length=1)]
+
+TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]

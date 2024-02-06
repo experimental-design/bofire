@@ -1,19 +1,14 @@
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    TCategoricalDescriptorVals,
-    TDiscreteVals,
-    TTransform,
-)
-from bofire.data_models.types import TDescriptors
+from bofire.data_models.features.feature import _CAT_SEP, TTransform
+from bofire.data_models.types import TDescriptors, TDiscreteVals
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -74,11 +69,13 @@ class CategoricalDescriptorInput(CategoricalInput):
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
-    # order_id: ClassVar[int] = 4
     order_id: ClassVar[int] = 6
 
     descriptors: TDescriptors
-    values: TCategoricalDescriptorVals
+    values: Annotated[
+        List[List[float]],
+        Field(min_length=1),
+    ]
 
     @field_validator("values")
     @classmethod

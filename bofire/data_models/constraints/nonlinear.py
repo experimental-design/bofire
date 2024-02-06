@@ -10,7 +10,7 @@ from bofire.data_models.constraints.constraint import (
     InequalityConstraint,
     IntrapointConstraint,
 )
-from bofire.data_models.types import FeatureKeys
+from bofire.data_models.types import TFeatureKeys
 
 
 class NonlinearConstraint(IntrapointConstraint):
@@ -23,7 +23,7 @@ class NonlinearConstraint(IntrapointConstraint):
     """
 
     expression: str
-    features: Optional[FeatureKeys] = None
+    features: Optional[TFeatureKeys] = None
     jacobian_expression: Optional[str] = Field(default=None, validate_default=True)
 
     @field_validator("jacobian_expression")

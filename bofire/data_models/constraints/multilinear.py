@@ -9,7 +9,7 @@ from bofire.data_models.constraints.constraint import (
     InequalityConstraint,
     IntrapointConstraint,
 )
-from bofire.data_models.types import FeatureKeys
+from bofire.data_models.types import TFeatureKeys
 
 
 class MultiLinearConstraint(IntrapointConstraint):
@@ -26,7 +26,7 @@ class MultiLinearConstraint(IntrapointConstraint):
     """
 
     type: str
-    features: FeatureKeys
+    features: TFeatureKeys
     exponents: Annotated[List[float], Field(min_length=2)]
     rhs: float
     sign: Literal[1, -1] = 1
