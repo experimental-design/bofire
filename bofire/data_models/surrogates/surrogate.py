@@ -4,7 +4,7 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import TInputTransformSpecs
+from bofire.data_models.types import TInputTransformSpecs
 
 
 class Surrogate(BaseModel):

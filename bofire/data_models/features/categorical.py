@@ -6,14 +6,8 @@ from pydantic import Field, field_validator, model_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    Input,
-    Output,
-    TAllowedVals,
-    TCategoryVals,
-    TTransform,
-)
+from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
+from bofire.data_models.types import TCategoryVals
 
 
 class CategoricalInput(Input):
@@ -29,26 +23,9 @@ class CategoricalInput(Input):
     order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
-    allowed: TAllowedVals = Field(default=None, validate_default=True)
-
-    @field_validator("categories")
-    @classmethod
-    def validate_categories_unique(cls, categories):
-        """validates that categories have unique names
-
-        Args:
-            categories (List[str]): List of category names
-
-        Raises:
-            ValueError: when categories have non-unique names
-
-        Returns:
-            List[str]: List of the categories
-        """
-        categories = list(categories)
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return categories
+    allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
+        default=None, validate_default=True
+    )
 
     @field_validator("allowed")
     @classmethod
@@ -360,25 +337,6 @@ class CategoricalOutput(Output):
 
     categories: TCategoryVals
     objective: Annotated[List[Annotated[float, Field(ge=0, le=1)]], Field(min_length=2)]
-
-    @field_validator("categories")
-    @classmethod
-    def validate_categories_unique(cls, categories):
-        """validates that categories have unique names
-
-        Args:
-            categories (List[str]): List of category names
-
-        Raises:
-            ValueError: when categories have non-unique names
-
-        Returns:
-            List[str]: List of the categories
-        """
-        categories = list(categories)
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return categories
 
     @field_validator("objective")
     @classmethod

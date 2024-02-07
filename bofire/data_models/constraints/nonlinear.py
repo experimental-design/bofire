@@ -5,7 +5,12 @@ import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator
 
-from bofire.data_models.constraints.constraint import FeatureKeys, IntrapointConstraint
+from bofire.data_models.constraints.constraint import (
+    EqalityConstraint,
+    InequalityConstraint,
+    IntrapointConstraint,
+)
+from bofire.data_models.types import TFeatureKeys
 
 
 class NonlinearConstraint(IntrapointConstraint):
@@ -18,7 +23,7 @@ class NonlinearConstraint(IntrapointConstraint):
     """
 
     expression: str
-    features: Optional[FeatureKeys] = None
+    features: Optional[TFeatureKeys] = None
     jacobian_expression: Optional[str] = Field(default=None, validate_default=True)
 
     @field_validator("jacobian_expression")
@@ -73,7 +78,7 @@ class NonlinearConstraint(IntrapointConstraint):
         )
 
 
-class NonlinearEqualityConstraint(NonlinearConstraint):
+class NonlinearEqualityConstraint(NonlinearConstraint, EqalityConstraint):
     """Nonlinear equality constraint of the form 'expression == 0'.
 
     Attributes:
@@ -82,16 +87,8 @@ class NonlinearEqualityConstraint(NonlinearConstraint):
 
     type: Literal["NonlinearEqualityConstraint"] = "NonlinearEqualityConstraint"
 
-    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
-        return pd.Series(
-            np.isclose(self(experiments), 0, atol=tol), index=experiments.index
-        )
 
-    def __str__(self):
-        return f"{self.expression}==0"
-
-
-class NonlinearInequalityConstraint(NonlinearConstraint):
+class NonlinearInequalityConstraint(NonlinearConstraint, InequalityConstraint):
     """Nonlinear inequality constraint of the form 'expression <= 0'.
 
     Attributes:
@@ -99,9 +96,3 @@ class NonlinearInequalityConstraint(NonlinearConstraint):
     """
 
     type: Literal["NonlinearInequalityConstraint"] = "NonlinearInequalityConstraint"
-
-    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
-        return self(experiments) <= 0 + tol
-
-    def __str__(self):
-        return f"{self.expression}<=0"

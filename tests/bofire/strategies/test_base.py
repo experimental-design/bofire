@@ -18,6 +18,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -31,7 +32,11 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
-from bofire.utils.torch_tools import get_nchoosek_constraints, tkwargs
+from bofire.utils.torch_tools import (
+    get_nchoosek_constraints,
+    get_nonlinear_constraints,
+    tkwargs,
+)
 from tests.bofire.data_models.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
@@ -71,6 +76,7 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
             LinearEqualityConstraint,
             LinearInequalityConstraint,
             NChooseKConstraint,
+            ProductInequalityConstraint,
         ]
 
     @classmethod
@@ -903,5 +909,39 @@ def test_base_setup_ask():
     assert ic_generator == gen_batch_initial_conditions
     assert list(ic_gen_kwargs.keys()) == ["generator"]
     assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))  # type: ignore
+    assert fixed_features == {}
+    assert fixed_features_list is None
+    # test for nchooseks with product constraints
+    benchmark = Hartmann(dim=6, allowed_k=3)
+    benchmark.domain.constraints.constraints.append(
+        ProductInequalityConstraint(
+            features=["x_1", "x_2", "x_3"], exponents=[1, 1, 1], rhs=50
+        )
+    )
+    data_model = DummyStrategyDataModel(
+        domain=benchmark.domain,
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
+    )
+    myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = benchmark.f(
+        benchmark.domain.inputs.sample(3), return_complete=True
+    )
+    (
+        bounds,
+        local_bounds,
+        ic_generator,
+        ic_gen_kwargs,
+        nonlinears,
+        fixed_features,
+        fixed_features_list,
+    ) = myStrategy._setup_ask()
+    assert torch.allclose(
+        bounds,
+        torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
+    )
+    assert ic_generator == gen_batch_initial_conditions
+    assert list(ic_gen_kwargs.keys()) == ["generator"]
+    assert len(nonlinears) != len(get_nchoosek_constraints(domain=benchmark.domain))
+    assert len(nonlinears) == len(get_nonlinear_constraints(domain=benchmark.domain))
     assert fixed_features == {}
     assert fixed_features_list is None

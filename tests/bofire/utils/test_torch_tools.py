@@ -12,6 +12,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -29,7 +30,7 @@ from bofire.data_models.objectives.api import (
     MinimizeSigmoidObjective,
     TargetObjective,
 )
-from bofire.data_models.strategies.api import PolytopeSampler
+from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
     constrained_objective2botorch,
     get_additive_botorch_objective,
@@ -40,8 +41,10 @@ from bofire.utils.torch_tools import (
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
+    get_nonlinear_constraints,
     get_objective_callable,
     get_output_constraints,
+    get_product_constraints,
     tkwargs,
 )
 
@@ -650,6 +653,81 @@ def test_get_nchoosek_constraints():
     )
 
 
+def test_get_product_constraints():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[5, 100]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            ProductInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=80,
+            ),
+            ProductInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=-20,
+                sign=-1,
+            ),
+            ProductInequalityConstraint(
+                features=["x1", "x2", "x3"],
+                exponents=[2, -1, 0.5],
+                rhs=0,
+                sign=-1,
+            ),
+        ],
+    )
+    constraints = get_product_constraints(domain=domain)
+    assert len(constraints) == 3
+
+    samples = torch.tensor([[0.1, 0.5, 90], [0.2, 0.9, 100], [0.3, 0.1, 100]]).to(
+        **tkwargs
+    )
+    results = torch.tensor([35.0, -10.0, 70.0]).to(**tkwargs)
+    assert torch.allclose(constraints[0](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[0](samples[i]), results[i])
+
+    results = torch.tensor([25.0, 70, -10]).to(**tkwargs)
+    assert torch.allclose(constraints[1](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[1](samples[i]), results[i])
+
+    results = torch.tensor([0.18973666, 0.44444444444, 9.0]).to(**tkwargs)
+    assert torch.allclose(constraints[2](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[2](samples[i]), results[i])
+
+
+def test_get_nonlinear_constraints():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[5, 100]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            ProductInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=80,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                min_count=0,
+                max_count=1,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    assert len(get_nonlinear_constraints(domain=domain)) == 2
+
+
 def test_get_multiobjective_objective():
     samples = (torch.rand(30, 4, requires_grad=True) * 5).to(**tkwargs)
     samples2 = (torch.rand(30, 512, 4, requires_grad=True) * 5).to(**tkwargs)
@@ -709,7 +787,7 @@ def test_get_initial_conditions_generator(sequential: bool):
         ]
     )
     domain = Domain(inputs=inputs)
-    strategy = strategies.map(PolytopeSampler(domain=domain))
+    strategy = strategies.map(RandomStrategy(domain=domain))
     # test with one hot encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,

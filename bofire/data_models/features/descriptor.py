@@ -1,19 +1,14 @@
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator, model_validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    TCategoricalDescriptorVals,
-    TDescriptors,
-    TDiscreteVals,
-    TTransform,
-)
+from bofire.data_models.features.feature import _CAT_SEP, TTransform
+from bofire.data_models.types import TDescriptors, TDiscreteVals
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -32,19 +27,6 @@ class ContinuousDescriptorInput(ContinuousInput):
 
     descriptors: TDescriptors
     values: TDiscreteVals
-
-    @field_validator("descriptors")
-    @classmethod
-    def descriptors_to_keys(cls, descriptors):
-        """validates the descriptor names and transforms it to valid keys
-
-        Args:
-            descriptors (List[str]): List of descriptor names
-
-        Returns:
-            List[str]: List of valid keys
-        """
-        return list(descriptors)
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
@@ -87,30 +69,13 @@ class CategoricalDescriptorInput(CategoricalInput):
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
-    # order_id: ClassVar[int] = 4
     order_id: ClassVar[int] = 6
 
     descriptors: TDescriptors
-    values: TCategoricalDescriptorVals
-
-    @field_validator("descriptors")
-    @classmethod
-    def validate_descriptors(cls, descriptors):
-        """validates that descriptors have unique names
-
-        Args:
-            categories (List[str]): List of descriptor names
-
-        Raises:
-            ValueError: when descriptors have non-unique names
-
-        Returns:
-            List[str]: List of the descriptors
-        """
-        descriptors = list(descriptors)
-        if len(descriptors) != len(set(descriptors)):
-            raise ValueError("descriptors must be unique")
-        return descriptors
+    values: Annotated[
+        List[List[float]],
+        Field(min_length=1),
+    ]
 
     @field_validator("values")
     @classmethod

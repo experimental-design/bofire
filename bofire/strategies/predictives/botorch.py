@@ -21,6 +21,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
@@ -28,26 +29,24 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     DiscreteInput,
     Input,
-    TInputTransformSpecs,
 )
 from bofire.data_models.strategies.api import BotorchStrategy as DataModel
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.strategies.api import (
     ShortestPathStrategy as ShortestPathStrategyDataModel,
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
+from bofire.data_models.types import TInputTransformSpecs
 from bofire.outlier_detection.outlier_detections import OutlierDetections
-from bofire.strategies.polytope import PolytopeSampler
 from bofire.strategies.predictives.predictive import PredictiveStrategy
+from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
     get_linear_constraints,
-    get_nchoosek_constraints,
+    get_nonlinear_constraints,
     tkwargs,
 )
 
@@ -219,24 +218,27 @@ class BotorchStrategy(PredictiveStrategy):
         )
         local_bounds = torch.tensor([local_lower, local_upper]).to(**tkwargs)
 
-        # setup nchooseks
-        if len(self.domain.constraints.get(NChooseKConstraint)) == 0:
+        # setup nonlinears
+        if (
+            len(self.domain.constraints.get([NChooseKConstraint, ProductConstraint]))
+            == 0
+        ):
             ic_generator = None
             ic_gen_kwargs = {}
-            nchooseks = None
+            nonlinear_constraints = None
         else:
             # TODO: implement LSR-BO also for constraints --> use local bounds
             # for polytope sampler
             ic_generator = gen_batch_initial_conditions
             ic_gen_kwargs = {
                 "generator": get_initial_conditions_generator(
-                    strategy=PolytopeSampler(
-                        data_model=PolytopeSamplerDataModel(domain=self.domain),
+                    strategy=RandomStrategy(
+                        data_model=RandomStrategyDataModel(domain=self.domain),
                     ),
                     transform_specs=self.input_preprocessing_specs,
                 )
             }
-            nchooseks = get_nchoosek_constraints(self.domain)
+            nonlinear_constraints = get_nonlinear_constraints(self.domain)
         # setup fixed features
         if (
             (num_categorical_features == 0)
@@ -262,7 +264,7 @@ class BotorchStrategy(PredictiveStrategy):
             local_bounds,
             ic_generator,
             ic_gen_kwargs,
-            nchooseks,
+            nonlinear_constraints,
             fixed_features,
             fixed_features_list,
         )
@@ -300,7 +302,7 @@ class BotorchStrategy(PredictiveStrategy):
         bounds: Tensor,
         ic_generator: Callable,
         ic_gen_kwargs: Dict,
-        nchooseks: List[Callable[[Tensor], float]],
+        nonlinear_constraints: List[Callable[[Tensor], float]],
         fixed_features: Optional[Dict[int, float]],
         fixed_features_list: Optional[List[Dict[int, float]]],
     ) -> Tuple[Tensor, Tensor]:
@@ -318,13 +320,13 @@ class BotorchStrategy(PredictiveStrategy):
                     domain=self.domain,
                     constraint=LinearInequalityConstraint,  # type: ignore
                 ),
-                nonlinear_inequality_constraints=nchooseks,  # type: ignore
+                nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
                 options={
-                    "batch_limit": 5 if len(nchooseks) == 0 else 1,
+                    "batch_limit": 5 if len(nonlinear_constraints) == 0 else 1,
                     "maxiter": 200,
                 },
             )
@@ -344,7 +346,7 @@ class BotorchStrategy(PredictiveStrategy):
                         domain=self.domain,
                         constraint=LinearInequalityConstraint,  # type: ignore
                     ),
-                    nonlinear_inequality_constraints=nchooseks,  # type: ignore
+                    nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                     fixed_features_list=fixed_features_list,
                     ic_generator=ic_generator,
                     ic_gen_kwargs=ic_gen_kwargs,
@@ -365,7 +367,7 @@ class BotorchStrategy(PredictiveStrategy):
                         constraint=LinearInequalityConstraint,  # type: ignore
                     ),
                     fixed_features=fixed_features,
-                    nonlinear_inequality_constraints=nchooseks,  # type: ignore
+                    nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                     return_best_only=True,
                     ic_generator=ic_generator,  # type: ignore
                     **ic_gen_kwargs,  # type: ignore
@@ -434,7 +436,7 @@ class BotorchStrategy(PredictiveStrategy):
             local_bounds,
             ic_generator,
             ic_gen_kwargs,
-            nchooseks,
+            nonlinears,
             fixed_features,
             fixed_features_list,
         ) = self._setup_ask()
@@ -446,7 +448,7 @@ class BotorchStrategy(PredictiveStrategy):
             bounds=bounds,
             ic_generator=ic_generator,  # type: ignore
             ic_gen_kwargs=ic_gen_kwargs,
-            nchooseks=nchooseks,  # type: ignore
+            nonlinear_constraints=nonlinears,  # type: ignore
             fixed_features=fixed_features,
             fixed_features_list=fixed_features_list,
         )
@@ -462,7 +464,7 @@ class BotorchStrategy(PredictiveStrategy):
                 bounds=local_bounds,
                 ic_generator=ic_generator,  # type: ignore
                 ic_gen_kwargs=ic_gen_kwargs,
-                nchooseks=nchooseks,  # type: ignore
+                nonlinear_constraints=nonlinears,  # type: ignore
                 fixed_features=fixed_features,
                 fixed_features_list=fixed_features_list,
             )
@@ -680,9 +682,7 @@ class BotorchStrategy(PredictiveStrategy):
         self, objective: Callable[[Tensor, Tensor], Tensor], n_samples=128
     ) -> Tensor:
         X_train, X_pending = self.get_acqf_input_tensors()
-        sampler = PolytopeSampler(
-            data_model=PolytopeSamplerDataModel(domain=self.domain)
-        )
+        sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=self.domain))
         samples = sampler.ask(candidate_count=n_samples)
         # we need to transform the samples
         transformed_samples = torch.from_numpy(

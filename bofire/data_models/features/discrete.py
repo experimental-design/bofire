@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 from pydantic import field_validator
 
-from bofire.data_models.features.feature import TDiscreteVals, TTransform
+from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
+from bofire.data_models.types import TDiscreteVals
 
 
 class DiscreteInput(NumericalInput):

@@ -26,11 +26,11 @@ from bofire.data_models.features.api import (
     Input,
     MolecularInput,
     Output,
-    TInputTransformSpecs,
 )
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import AbstractObjective, Objective
+from bofire.data_models.types import TInputTransformSpecs
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
 

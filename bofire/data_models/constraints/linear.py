@@ -1,14 +1,15 @@
-from typing import List, Literal, Tuple
+from typing import Annotated, List, Literal, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.constraint import (
-    Coefficients,
-    FeatureKeys,
+    EqalityConstraint,
+    InequalityConstraint,
     IntrapointConstraint,
 )
+from bofire.data_models.types import TFeatureKeys
 
 
 class LinearConstraint(IntrapointConstraint):
@@ -22,17 +23,9 @@ class LinearConstraint(IntrapointConstraint):
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    features: FeatureKeys
-    coefficients: Coefficients
+    features: TFeatureKeys
+    coefficients: Annotated[List[float], Field(min_length=2)]
     rhs: float
-
-    @field_validator("features")
-    @classmethod
-    def validate_features_unique(cls, features):
-        """Validate that feature keys are unique."""
-        if len(features) != len(set(features)):
-            raise ValueError("features must be unique")
-        return features
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
@@ -46,29 +39,22 @@ class LinearConstraint(IntrapointConstraint):
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         return (
             experiments[self.features] @ self.coefficients - self.rhs
-        ) / np.linalg.norm(self.coefficients)
-
-    def __str__(self) -> str:
-        """Generate string representation of the constraint.
-
-        Returns:
-            str: string representation of the constraint.
-        """
-        return " + ".join(
-            [f"{self.coefficients[i]} * {feat}" for i, feat in enumerate(self.features)]
-        )
+        ) / np.linalg.norm(np.array(self.coefficients))
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             np.tile(
-                [np.array(self.coefficients) / np.linalg.norm(self.coefficients)],
+                [
+                    np.array(self.coefficients)
+                    / np.linalg.norm(np.array(self.coefficients))
+                ],
                 [experiments.shape[0], 1],
             ),
             columns=[f"dg/d{name}" for name in self.features],
         )
 
 
-class LinearEqualityConstraint(LinearConstraint):
+class LinearEqualityConstraint(LinearConstraint, EqalityConstraint):
     """Linear equality constraint of the form `coefficients * x = rhs`.
 
     Attributes:
@@ -79,36 +65,8 @@ class LinearEqualityConstraint(LinearConstraint):
 
     type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
 
-    # def is_fulfilled(self, experiments: pd.DataFrame, complete: bool) -> bool:
-    #     """Check if the linear equality constraint is fulfilled for all the rows of the provided dataframe.
 
-    #     Args:
-    #         df_data (pd.DataFrame): Dataframe to evaluate constraint on.
-
-    #     Returns:
-    #         bool: True if fulfilled else False.
-    #     """
-    #     fulfilled = np.isclose(self(experiments), 0)
-    #     if complete:
-    #         return fulfilled.all()
-    #     else:
-    #         pd.Series(fulfilled, index=experiments.index)
-
-    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
-        return pd.Series(
-            np.isclose(self(experiments), 0, atol=tol), index=experiments.index
-        )
-
-    def __str__(self) -> str:
-        """Generate string representation of the constraint.
-
-        Returns:
-            str: string representation of the constraint.
-        """
-        return super().__str__() + f" = {self.rhs}"
-
-
-class LinearInequalityConstraint(LinearConstraint):
+class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     """Linear inequality constraint of the form `coefficients * x <= rhs`.
 
     To instantiate a constraint of the form `coefficients * x >= rhs` multiply coefficients and rhs by -1, or
@@ -121,9 +79,6 @@ class LinearInequalityConstraint(LinearConstraint):
     """
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
-
-    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
-        return self(experiments) <= 0 + tol
 
     def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
         """Return attributes in the smaller equal convention
@@ -180,11 +135,3 @@ class LinearInequalityConstraint(LinearConstraint):
             coefficients=coefficients,
             rhs=rhs,
         )
-
-    def __str__(self):
-        """Generate string representation of the constraint.
-
-        Returns:
-            str: string representation of the constraint.
-        """
-        return super().__str__() + f" <= {self.rhs}"

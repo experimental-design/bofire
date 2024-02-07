@@ -5,21 +5,19 @@ from pydantic import field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.linear import LinearSurrogate
 from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
-from bofire.data_models.surrogates.mixed_tanimoto_gp import (
-    MixedTanimotoGPSurrogate,
-)
+from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.mlp import MLPEnsemble
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
+from bofire.data_models.types import TInputTransformSpecs
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,

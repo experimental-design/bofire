@@ -1,9 +1,7 @@
 from abc import abstractmethod
-from typing import ClassVar, Dict, List, Optional, Tuple, Union
+from typing import ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
-from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -161,22 +159,5 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
-
-TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
-
-
-TDescriptors = Annotated[List[str], Field(min_length=1)]
-
-
-TCategoryVals = Annotated[List[str], Field(min_length=2)]
-TAllowedVals = Optional[Annotated[List[bool], Field(min_length=2)]]
-
-
-TCategoricalDescriptorVals = Annotated[
-    List[List[float]],
-    Field(min_length=1),
-]
-
-TDiscreteVals = Annotated[List[float], Field(min_length=1)]
 
 _CAT_SEP = "_"
