@@ -43,7 +43,8 @@ def discrete_to_relaxable_domain_mapper(
     relaxable_discrete_inputs = {
         d_input.key: (  # type: ignore
             ContinuousInput(
-                key=d_input.key, bounds=(min(d_input.values), max(d_input.values))
+                key=d_input.key,
+                bounds=(min(d_input.values), max(d_input.values)),  # type: ignore
             ),  # type: ignore
             d_input.values,  # type: ignore
         )  # type: ignore
@@ -64,7 +65,7 @@ def discrete_to_relaxable_domain_mapper(
     # create new domain with continuous inputs
     new_domain = Domain(
         inputs=kept_inputs
-        + [var for key, (var, values) in relaxable_discrete_inputs.items()]
+        + [var for key, (var, values) in relaxable_discrete_inputs.items()]  # type: ignore
         + relaxable_categorical_inputs,  # type: ignore
         outputs=domain.outputs.features,  # type: ignore
         constraints=domain.constraints + new_constraints,
@@ -89,8 +90,8 @@ def nchoosek_to_relaxable_domain_mapper(
         ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
             current_features,
-            constr.min_count,
-            constr.max_count,
+            constr.min_count,  # type: ignore
+            constr.max_count,  # type: ignore
             constr.none_also_valid,  # type: ignore
         )
         new_categories.append(new_relaxable_categorical_vars)
@@ -265,7 +266,7 @@ def NChooseKGroup_with_quantity(
     )
     if max_quantity_constraint is not None:
         all_new_constraints.append(max_quantity_constraint)  # type: ignore
-    return category, quantity_var, all_new_constraints
+    return category, quantity_var, all_new_constraints  # type: ignore
 
 
 def _generate_quantity_var_constr(
