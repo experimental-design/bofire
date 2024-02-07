@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.6">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.8">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.50c56a3b.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.f2e4d321.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -737,15 +737,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.features.categorical.CategoricalInput.validate_categories_unique" class="md-nav__link">
-    <span class="md-ellipsis">
-      validate_categories_unique()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.features.categorical.CategoricalInput.validate_experimental" class="md-nav__link">
     <span class="md-ellipsis">
       validate_experimental()
@@ -773,15 +764,6 @@
   <a href="#bofire.data_models.features.categorical.CategoricalOutput.to_dict" class="md-nav__link">
     <span class="md-ellipsis">
       to_dict()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.features.categorical.CategoricalOutput.validate_categories_unique" class="md-nav__link">
-    <span class="md-ellipsis">
-      validate_categories_unique()
     </span>
   </a>
   
@@ -989,15 +971,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.features.descriptor.CategoricalDescriptorInput.validate_descriptors" class="md-nav__link">
-    <span class="md-ellipsis">
-      validate_descriptors()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.features.descriptor.CategoricalDescriptorInput.validate_experimental" class="md-nav__link">
     <span class="md-ellipsis">
       validate_experimental()
@@ -1029,15 +1002,6 @@
   
     <nav class="md-nav" aria-label="ContinuousDescriptorInput">
       <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.features.descriptor.ContinuousDescriptorInput.descriptors_to_keys" class="md-nav__link">
-    <span class="md-ellipsis">
-      descriptors_to_keys()
-    </span>
-  </a>
-  
-</li>
         
           <li class="md-nav__item">
   <a href="#bofire.data_models.features.descriptor.ContinuousDescriptorInput.to_df" class="md-nav__link">
@@ -1688,26 +1652,9 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span>
 
     <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
-    <span class="n">allowed</span><span class="p">:</span> <span class="n">TAllowedVals</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validate_default</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_categories_unique</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            categories (List[str]): List of category names</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: when categories have non-unique names</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: List of the categories</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">categories</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must be unique&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">categories</span>
+    <span class="n">allowed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validate_default</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;allowed&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -3154,100 +3101,6 @@ that can be used in the optimization</p>
 
 
 
-<h4 id="bofire.data_models.features.categorical.CategoricalInput.validate_categories_unique" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_categories_unique</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>validates that categories have unique names</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>categories</code></td>
-        <td><code>List[str]</code></td>
-        <td><p>List of category names</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Exceptions:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ValueError</code></td>
-        <td><p>when categories have non-unique names</p></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[str]</code></td>
-      <td><p>List of the categories</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
-<span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">validate_categories_unique</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        categories (List[str]): List of category names</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: when categories have non-unique names</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[str]: List of the categories</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">categories</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must be unique&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">categories</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
 <h4 id="bofire.data_models.features.categorical.CategoricalInput.validate_experimental" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">validate_experimental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
@@ -3391,25 +3244,6 @@ CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofir
     <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">ge</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">le</span><span class="o">=</span><span class="mi">1</span><span class="p">)]],</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)]</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_categories_unique</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            categories (List[str]): List of category names</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: when categories have non-unique names</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: List of the categories</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">categories</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must be unique&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">categories</span>
-
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;objective&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">validate_objective</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">info</span><span class="p">):</span>
@@ -3487,100 +3321,6 @@ CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofir
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the catergories and corresponding objective values as dictionary&quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="p">))</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.features.categorical.CategoricalOutput.validate_categories_unique" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_categories_unique</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>validates that categories have unique names</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>categories</code></td>
-        <td><code>List[str]</code></td>
-        <td><p>List of category names</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Exceptions:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ValueError</code></td>
-        <td><p>when categories have non-unique names</p></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[str]</code></td>
-      <td><p>List of the categories</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;categories&quot;</span><span class="p">)</span>
-<span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">validate_categories_unique</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">categories</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        categories (List[str]): List of category names</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: when categories have non-unique names</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[str]: List of the categories</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">categories</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">categories</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must be unique&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">categories</span>
 </code></pre></div>
         </details>
     </div>
@@ -4742,30 +4482,13 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalDescriptorInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalDescriptorInput&quot;</span>
-    <span class="c1"># order_id: ClassVar[int] = 4</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
 
     <span class="n">descriptors</span><span class="p">:</span> <span class="n">TDescriptors</span>
-    <span class="n">values</span><span class="p">:</span> <span class="n">TCategoricalDescriptorVals</span>
-
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;descriptors&quot;</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">validate_descriptors</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates that descriptors have unique names</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            categories (List[str]): List of descriptor names</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: when descriptors have non-unique names</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: List of the descriptors</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">descriptors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;descriptors must be unique&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">descriptors</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+        <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
+    <span class="p">]</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;values&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -5435,100 +5158,6 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 
 
 
-<h4 id="bofire.data_models.features.descriptor.CategoricalDescriptorInput.validate_descriptors" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_descriptors</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>validates that descriptors have unique names</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>categories</code></td>
-        <td><code>List[str]</code></td>
-        <td><p>List of descriptor names</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Exceptions:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ValueError</code></td>
-        <td><p>when descriptors have non-unique names</p></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[str]</code></td>
-      <td><p>List of the descriptors</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/features/descriptor.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;descriptors&quot;</span><span class="p">)</span>
-<span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">validate_descriptors</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates that descriptors have unique names</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        categories (List[str]): List of descriptor names</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: when descriptors have non-unique names</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[str]: List of the descriptors</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">descriptors</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;descriptors must be unique&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">descriptors</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
 <h4 id="bofire.data_models.features.descriptor.CategoricalDescriptorInput.validate_experimental" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">validate_experimental</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></code>
 
@@ -5834,19 +5463,6 @@ ContinuousDescriptorInput            (<a class="autorefs autorefs-internal" titl
     <span class="n">descriptors</span><span class="p">:</span> <span class="n">TDescriptors</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">TDiscreteVals</span>
 
-    <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;descriptors&quot;</span><span class="p">)</span>
-    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">descriptors_to_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates the descriptor names and transforms it to valid keys</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            descriptors (List[str]): List of descriptor names</span>
-
-<span class="sd">        Returns:</span>
-<span class="sd">            List[str]: List of valid keys</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
-
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_list_lengths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;compares the length of the defined descriptors list with the provided values</span>
@@ -5903,79 +5519,6 @@ ContinuousDescriptorInput            (<a class="autorefs autorefs-internal" titl
 
 
 
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h4 id="bofire.data_models.features.descriptor.ContinuousDescriptorInput.descriptors_to_keys" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">descriptors_to_keys</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span></code>
-
-  <span class="doc doc-properties">
-      <small class="doc doc-property doc-property-classmethod"><code>classmethod</code></small>
-  </span>
-
-</h4>
-
-    <div class="doc doc-contents ">
-
-      <p>validates the descriptor names and transforms it to valid keys</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>descriptors</code></td>
-        <td><code>List[str]</code></td>
-        <td><p>List of descriptor names</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[str]</code></td>
-      <td><p>List of valid keys</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/features/descriptor.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;descriptors&quot;</span><span class="p">)</span>
-<span class="nd">@classmethod</span>
-<span class="k">def</span> <span class="nf">descriptors_to_keys</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">descriptors</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates the descriptor names and transforms it to valid keys</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        descriptors (List[str]): List of descriptor names</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        List[str]: List of valid keys</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">descriptors</span><span class="p">)</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
@@ -6866,12 +6409,6 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 
 
   <div class="doc doc-children">
-
-
-
-
-
-
 
 
 
@@ -9709,7 +9246,7 @@ Defaults to False.</p></td>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.e1c3ead8.min.js"></script>
+      <script src="../assets/javascripts/bundle.8fd75fb4.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
