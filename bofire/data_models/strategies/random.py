@@ -7,9 +7,9 @@ from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    MultiLinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearInequalityConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import Feature
@@ -33,7 +33,7 @@ class RandomStrategy(Strategy):
             NChooseKConstraint,
             InterpointEqualityConstraint,
             NonlinearInequalityConstraint,
-            MultiLinearInequalityConstraint,
+            ProductInequalityConstraint,
         ]
 
     @classmethod

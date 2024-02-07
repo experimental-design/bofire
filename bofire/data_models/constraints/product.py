@@ -12,9 +12,9 @@ from bofire.data_models.constraints.constraint import (
 from bofire.data_models.types import TFeatureKeys
 
 
-class MultiLinearConstraint(IntrapointConstraint):
+class ProductConstraint(IntrapointConstraint):
     """
-    Represents a multi-linear constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en`.
+    Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en`.
 
     Attributes:
         type (str): The type of the constraint.
@@ -32,7 +32,7 @@ class MultiLinearConstraint(IntrapointConstraint):
     sign: Literal[1, -1] = 1
 
     @model_validator(mode="after")
-    def validate_list_lengths(self) -> "MultiLinearConstraint":
+    def validate_list_lengths(self) -> "ProductConstraint":
         """
         Validates that the number of features and exponents provided are the same.
 
@@ -40,7 +40,7 @@ class MultiLinearConstraint(IntrapointConstraint):
             ValueError: If the number of features and exponents are not equal.
 
         Returns:
-            MultiLinearConstraint: The current instance of the class.
+            ProductConstraint: The current instance of the class.
         """
         if len(self.features) != len(self.exponents):
             raise ValueError(
@@ -70,13 +70,13 @@ class MultiLinearConstraint(IntrapointConstraint):
 
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         raise NotImplementedError(
-            "Jacobian for multilinear constraints is not yet implemented."
+            "Jacobian for product constraints is not yet implemented."
         )
 
 
-class MultiLinearEqualityConstraint(MultiLinearConstraint, EqalityConstraint):
+class ProductEqualityConstraint(ProductConstraint, EqalityConstraint):
     """
-    Represents a multi-linear constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
+    Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
 
     Attributes:
         type (str): The type of the constraint.
@@ -87,12 +87,12 @@ class MultiLinearEqualityConstraint(MultiLinearConstraint, EqalityConstraint):
             Defaults to 1.
     """
 
-    type: Literal["MultiLinearEqualityConstraint"] = "MultiLinearEqualityConstraint"
+    type: Literal["ProductEqualityConstraint"] = "ProductEqualityConstraint"
 
 
-class MultiLinearInequalityConstraint(MultiLinearConstraint, InequalityConstraint):
+class ProductInequalityConstraint(ProductConstraint, InequalityConstraint):
     """
-    Represents a multi-linear constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
+    Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en <= rhs`.
 
     Attributes:
         type (str): The type of the constraint.
@@ -103,4 +103,4 @@ class MultiLinearInequalityConstraint(MultiLinearConstraint, InequalityConstrain
             Defaults to 1.
     """
 
-    type: Literal["MultiLinearInequalityConstraint"] = "MultiLinearInequalityConstraint"
+    type: Literal["ProductInequalityConstraint"] = "ProductInequalityConstraint"

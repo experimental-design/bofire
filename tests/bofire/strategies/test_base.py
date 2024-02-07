@@ -17,8 +17,8 @@ from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    MultiLinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -76,7 +76,7 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
             LinearEqualityConstraint,
             LinearInequalityConstraint,
             NChooseKConstraint,
-            MultiLinearInequalityConstraint,
+            ProductInequalityConstraint,
         ]
 
     @classmethod
@@ -911,10 +911,10 @@ def test_base_setup_ask():
     assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))  # type: ignore
     assert fixed_features == {}
     assert fixed_features_list is None
-    # test for nchooseks with multilinear constraints
+    # test for nchooseks with product constraints
     benchmark = Hartmann(dim=6, allowed_k=3)
     benchmark.domain.constraints.constraints.append(
-        MultiLinearInequalityConstraint(
+        ProductInequalityConstraint(
             features=["x_1", "x_2", "x_3"], exponents=[1, 1, 1], rhs=50
         )
     )

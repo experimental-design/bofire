@@ -65,11 +65,6 @@ class LinearEqualityConstraint(LinearConstraint, EqalityConstraint):
 
     type: Literal["LinearEqualityConstraint"] = "LinearEqualityConstraint"
 
-    # def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
-    #     return pd.Series(
-    #         np.isclose(self(experiments), 0, atol=tol), index=experiments.index
-    #     )
-
 
 class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     """Linear inequality constraint of the form `coefficients * x <= rhs`.
@@ -84,9 +79,6 @@ class LinearInequalityConstraint(LinearConstraint, InequalityConstraint):
     """
 
     type: Literal["LinearInequalityConstraint"] = "LinearInequalityConstraint"
-
-    # def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
-    #     return self(experiments) <= 0 + tol
 
     def as_smaller_equal(self) -> Tuple[List[str], List[float], float]:
         """Return attributes in the smaller equal convention

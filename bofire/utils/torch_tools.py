@@ -10,8 +10,8 @@ from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    MultiLinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
@@ -177,7 +177,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     return constraints
 
 
-def get_multilinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
+def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     """
     Returns a list of nonlinear constraint functions that can be processed by botorch
     based on the given domain.
@@ -186,24 +186,22 @@ def get_multilinear_constraints(domain: Domain) -> List[Callable[[Tensor], float
         domain (Domain): The domain object containing the constraints.
 
     Returns:
-        List[Callable[[Tensor], float]]: A list of multilinear constraint functions.
+        List[Callable[[Tensor], float]]: A list of product constraint functions.
 
     """
 
-    def multilinear_constraint(
-        indices: Tensor, exponents: Tensor, rhs: float, sign: int
-    ):
+    def product_constraint(indices: Tensor, exponents: Tensor, rhs: float, sign: int):
         return lambda x: -1.0 * sign * (x[..., indices] ** exponents).prod(dim=-1) + rhs
 
     constraints = []
-    for c in domain.constraints.get(MultiLinearInequalityConstraint):
-        assert isinstance(c, MultiLinearInequalityConstraint)
+    for c in domain.constraints.get(ProductInequalityConstraint):
+        assert isinstance(c, ProductInequalityConstraint)
         indices = torch.tensor(
             [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
             dtype=torch.int64,
         )
         constraints.append(
-            multilinear_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign)
+            product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign)
         )
     return constraints
 
@@ -220,7 +218,7 @@ def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]
         List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
         as input and return a float value representing the constraint evaluation.
     """
-    return get_nchoosek_constraints(domain) + get_multilinear_constraints(domain)
+    return get_nchoosek_constraints(domain) + get_product_constraints(domain)
 
 
 def constrained_objective2botorch(

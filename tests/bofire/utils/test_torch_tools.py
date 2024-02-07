@@ -11,8 +11,8 @@ from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    MultiLinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -38,13 +38,13 @@ from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
     get_interpoint_constraints,
     get_linear_constraints,
-    get_multilinear_constraints,
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
     get_nonlinear_constraints,
     get_objective_callable,
     get_output_constraints,
+    get_product_constraints,
     tkwargs,
 )
 
@@ -653,7 +653,7 @@ def test_get_nchoosek_constraints():
     )
 
 
-def test_get_multilinear_constraints():
+def test_get_product_constraints():
     domain = Domain(
         inputs=[
             ContinuousInput(key="x1", bounds=[0, 1]),
@@ -662,18 +662,18 @@ def test_get_multilinear_constraints():
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
-            MultiLinearInequalityConstraint(
+            ProductInequalityConstraint(
                 features=["x2", "x3"],
                 exponents=[1, 1],
                 rhs=80,
             ),
-            MultiLinearInequalityConstraint(
+            ProductInequalityConstraint(
                 features=["x2", "x3"],
                 exponents=[1, 1],
                 rhs=-20,
                 sign=-1,
             ),
-            MultiLinearInequalityConstraint(
+            ProductInequalityConstraint(
                 features=["x1", "x2", "x3"],
                 exponents=[2, -1, 0.5],
                 rhs=0,
@@ -681,7 +681,7 @@ def test_get_multilinear_constraints():
             ),
         ],
     )
-    constraints = get_multilinear_constraints(domain=domain)
+    constraints = get_product_constraints(domain=domain)
     assert len(constraints) == 3
 
     samples = torch.tensor([[0.1, 0.5, 90], [0.2, 0.9, 100], [0.3, 0.1, 100]]).to(
@@ -712,7 +712,7 @@ def test_get_nonlinear_constraints():
         ],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
-            MultiLinearInequalityConstraint(
+            ProductInequalityConstraint(
                 features=["x2", "x3"],
                 exponents=[1, 1],
                 rhs=80,

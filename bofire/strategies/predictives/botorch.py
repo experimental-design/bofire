@@ -20,8 +20,8 @@ from torch import Tensor
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    MultiLinearConstraint,
     NChooseKConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
 from bofire.data_models.features.api import (
@@ -220,9 +220,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         # setup nonlinears
         if (
-            len(
-                self.domain.constraints.get([NChooseKConstraint, MultiLinearConstraint])
-            )
+            len(self.domain.constraints.get([NChooseKConstraint, ProductConstraint]))
             == 0
         ):
             ic_generator = None

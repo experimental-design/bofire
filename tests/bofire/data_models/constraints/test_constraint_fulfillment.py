@@ -7,11 +7,11 @@ from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    MultiLinearEqualityConstraint,
-    MultiLinearInequalityConstraint,
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
 )
 
 F = FEATURES = ["f" + str(i) for i in range(1, 11)]
@@ -248,24 +248,22 @@ def get_row(features, value: float = None, values: List[float] = None):
         ),
         (
             pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
-            MultiLinearEqualityConstraint(features=["a", "b"], exponents=[1, 1], rhs=6),
+            ProductEqualityConstraint(features=["a", "b"], exponents=[1, 1], rhs=6),
             True,
         ),
         (
             pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 3.0]}),
-            MultiLinearEqualityConstraint(features=["a", "b"], exponents=[1, 1], rhs=6),
+            ProductEqualityConstraint(features=["a", "b"], exponents=[1, 1], rhs=6),
             False,
         ),
         (
             pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
-            MultiLinearInequalityConstraint(
-                features=["a", "b"], exponents=[2, 1], rhs=18
-            ),
+            ProductInequalityConstraint(features=["a", "b"], exponents=[2, 1], rhs=18),
             True,
         ),
         (
             pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
-            MultiLinearInequalityConstraint(
+            ProductInequalityConstraint(
                 features=["a", "b"], exponents=[2, 1], rhs=-18, sign=-1
             ),
             False,
