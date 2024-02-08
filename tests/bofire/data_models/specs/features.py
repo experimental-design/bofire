@@ -74,7 +74,7 @@ specs.add_invalid(
         "allowed": [True, True, False],
     },
     error=ValueError,
-    message="categories must be unique",
+    message="Categories must be unique",
 )
 
 specs.add_invalid(

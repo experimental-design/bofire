@@ -8,6 +8,7 @@ from pydantic import PositiveInt
 
 from bofire.data_models.features.api import CategoricalOutput, TInputTransformSpecs
 from bofire.data_models.strategies.api import Strategy as DataModel
+from bofire.data_models.types import TInputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy

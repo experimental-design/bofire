@@ -15,7 +15,8 @@ from bofire.data_models.domain.domain import Domain
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import Feature, Output, TDiscreteVals
+from bofire.data_models.features.feature import Feature, Output
+from bofire.data_models.types import TDiscreteVals
 
 
 def discrete_to_relaxable_domain_mapper(
@@ -41,7 +42,10 @@ def discrete_to_relaxable_domain_mapper(
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = {
         d_input.key: (  # type: ignore
-            ContinuousInput(key=d_input.key, bounds=(min(d_input.values), max(d_input.values))),  # type: ignore
+            ContinuousInput(
+                key=d_input.key,
+                bounds=(min(d_input.values), max(d_input.values)),  # type: ignore
+            ),  # type: ignore
             d_input.values,  # type: ignore
         )  # type: ignore
         for d_input in discrete_inputs
@@ -60,7 +64,9 @@ def discrete_to_relaxable_domain_mapper(
 
     # create new domain with continuous inputs
     new_domain = Domain(
-        inputs=kept_inputs + [var for key, (var, values) in relaxable_discrete_inputs.items()] + relaxable_categorical_inputs,  # type: ignore
+        inputs=kept_inputs
+        + [var for key, (var, values) in relaxable_discrete_inputs.items()]  # type: ignore
+        + relaxable_categorical_inputs,  # type: ignore
         outputs=domain.outputs.features,  # type: ignore
         constraints=domain.constraints + new_constraints,
     )
@@ -83,7 +89,10 @@ def nchoosek_to_relaxable_domain_mapper(
             domain.get_feature(k) for k in constr.features  # type: ignore
         ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
-            current_features, constr.min_count, constr.max_count, constr.none_also_valid  # type: ignore
+            current_features,
+            constr.min_count,  # type: ignore
+            constr.max_count,  # type: ignore
+            constr.none_also_valid,  # type: ignore
         )
         new_categories.append(new_relaxable_categorical_vars)
         new_constraints.extend(new_nchoosek_constraints)
@@ -97,7 +106,8 @@ def nchoosek_to_relaxable_domain_mapper(
                 current_var.bounds = (current_var.lower_bound, 0)  # type: ignore
 
     new_domain = Domain(
-        inputs=domain.inputs.features + [var for group in new_categories for var in group],  # type: ignore
+        inputs=domain.inputs.features
+        + [var for group in new_categories for var in group],  # type: ignore
         outputs=domain.outputs,
         constraints=domain.constraints.get(excludes=NChooseKConstraint)
         + new_constraints,
@@ -258,7 +268,7 @@ def NChooseKGroup_with_quantity(
     )
     if max_quantity_constraint is not None:
         all_new_constraints.append(max_quantity_constraint)  # type: ignore
-    return category, quantity_var, all_new_constraints
+    return category, quantity_var, all_new_constraints  # type: ignore
 
 
 def _generate_quantity_var_constr(

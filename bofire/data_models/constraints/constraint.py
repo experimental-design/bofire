@@ -1,9 +1,8 @@
 from abc import abstractmethod
-from typing import List, Optional
+from typing import Optional
 
+import numpy as np
 import pandas as pd
-from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
@@ -60,6 +59,22 @@ class IntrapointConstraint(Constraint):
     type: str
 
 
+class EqalityConstraint(IntrapointConstraint):
+    type: str
+
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+        return pd.Series(
+            np.isclose(self(experiments), 0, atol=tol), index=experiments.index
+        )
+
+
+class InequalityConstraint(IntrapointConstraint):
+    type: str
+
+    def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
+        return self(experiments) <= 0 + tol
+
+
 class ConstraintError(Exception):
     """Base Error for Constraints"""
 
@@ -70,7 +85,3 @@ class ConstraintNotFulfilledError(ConstraintError):
     """Raised when an constraint is not fulfilled."""
 
     pass
-
-
-FeatureKeys = Annotated[List[str], Field(min_length=2)]
-Coefficients = Annotated[List[float], Field(min_length=2)]

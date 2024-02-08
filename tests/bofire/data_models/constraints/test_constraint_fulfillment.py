@@ -10,6 +10,8 @@ from bofire.data_models.constraints.api import (
     NChooseKConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
 )
 
 F = FEATURES = ["f" + str(i) for i in range(1, 11)]
@@ -242,6 +244,28 @@ def get_row(features, value: float = None, values: List[float] = None):
                 {"a": [1.0, 1.0, 2.0, 3.0, 3.0], "b": [1.0, 2.0, 3.0, 4.0, 5.0]}
             ),
             InterpointEqualityConstraint(feature="a", multiplicity=2),
+            False,
+        ),
+        (
+            pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
+            ProductEqualityConstraint(features=["a", "b"], exponents=[1, 1], rhs=6),
+            True,
+        ),
+        (
+            pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 3.0]}),
+            ProductEqualityConstraint(features=["a", "b"], exponents=[1, 1], rhs=6),
+            False,
+        ),
+        (
+            pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
+            ProductInequalityConstraint(features=["a", "b"], exponents=[2, 1], rhs=18),
+            True,
+        ),
+        (
+            pd.DataFrame({"a": [2.0, 3.0], "b": [3.0, 2.0]}),
+            ProductInequalityConstraint(
+                features=["a", "b"], exponents=[2, 1], rhs=-18, sign=-1
+            ),
             False,
         ),
     ],

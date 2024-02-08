@@ -6,9 +6,6 @@ from botorch.models.transforms.input import InputStandardize, Normalize
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import (
-    TInputTransformSpecs,
-)
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
     FingerprintsFragments,
@@ -16,6 +13,7 @@ from bofire.data_models.molfeatures.api import (
     MordredDescriptors,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.types import TInputTransformSpecs
 from bofire.utils.torch_tools import tkwargs
 
 

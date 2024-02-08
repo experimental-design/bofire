@@ -5,14 +5,8 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    Input,
-    Output,
-    TAllowedVals,
-    TCategoryVals,
-    TTransform,
-)
+from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
+from bofire.data_models.types import TCategoryVals
 from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.objectives.categorical import (
     ConstrainedCategoricalObjective,
@@ -32,25 +26,9 @@ class CategoricalInput(Input):
     order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
-    allowed: TAllowedVals = Field(default=None, validate_default=True)
-
-    @field_validator("categories")
-    @classmethod
-    def validate_categories_unique(cls, categories):
-        """validates that categories have unique names
-
-        Args:
-            categories (List[str]): List of category names
-
-        Raises:
-            ValueError: when categories have non-unique names
-
-        Returns:
-            Tuple[str]: Tuple of the categories
-        """
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return categories
+    allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
+        default=None, validate_default=True
+    )
 
     @field_validator("allowed")
     @classmethod

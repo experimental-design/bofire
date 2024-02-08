@@ -25,6 +25,7 @@ from bofire.data_models.constraints.api import (
     ConstraintNotFulfilledError,
     LinearConstraint,
     NChooseKConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
 from bofire.data_models.domain.features import Features, Inputs, Outputs
@@ -150,11 +151,12 @@ class Domain(BaseModel):
         """
 
         keys = self.inputs.get_keys()
-        for c in self.constraints:
-            if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
-                for f in c.features:
-                    if f not in keys:
-                        raise ValueError(f"feature {f} in constraint unknown ({keys})")
+        for c in self.constraints.get(
+            [LinearConstraint, NChooseKConstraint, ProductConstraint]
+        ):
+            for f in c.features:  # type: ignore
+                if f not in keys:
+                    raise ValueError(f"feature {f} in constraint unknown ({keys})")
         return self
 
     @model_validator(mode="after")

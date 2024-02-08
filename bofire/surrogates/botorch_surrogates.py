@@ -9,8 +9,8 @@ from botorch.models import ModelList
 from botorch.models.transforms.input import ChainedInputTransform, FilterFeatures
 
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import TInputTransformSpecs
 from bofire.data_models.surrogates.api import BotorchSurrogates as DataModel
+from bofire.data_models.types import TInputTransformSpecs
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.mapper import map as map_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
@@ -112,7 +112,8 @@ class BotorchSurrogates(ABC):
                     and model.model.input_transform is not None  # type: ignore
                 ):
                     model.model.input_transform = ChainedInputTransform(  # type: ignore
-                        tcompatibilize=features_filter, tf2=model.model.input_transform  # type: ignore
+                        tcompatibilize=features_filter,
+                        tf2=model.model.input_transform,  # type: ignore
                     )
                 else:
                     model.model.input_transform = features_filter  # type: ignore
