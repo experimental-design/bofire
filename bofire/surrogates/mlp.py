@@ -165,8 +165,6 @@ def fit_mlp(
                 loss_function, nn.CrossEntropyLoss
             ):
                 targets = targets.reshape((targets.shape[0], 1))
-            else:
-                pass
 
             # Zero the gradients
             optimizer.zero_grad()

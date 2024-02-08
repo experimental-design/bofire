@@ -369,7 +369,7 @@ class CategoricalOutput(Output):
 
     @field_validator("categories")
     @classmethod
-    def validate_categories_unique(cls, categories: List[str]) -> List["str"]:
+    def validate_categories_unique(cls, categories: List[str]) -> List[str]:
         """validates that categories have unique names
 
         Args:

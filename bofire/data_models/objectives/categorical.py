@@ -36,19 +36,40 @@ class ConstrainedCategoricalObjective(
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
     @field_validator(
-        "desirability",
+        "categories",
     )
-    def validate_categories_unique(cls, desirability: List[bool], info) -> List[bool]:
+    def validate_categories_unique(cls, categories: List[str]) -> List[bool]:
         """validates that desirabilities match the categories
 
         Args:
             categories (List[str]): List or tuple of category names
 
         Raises:
+            ValueError: when categories are not unique
+
+        Returns:
+            List[str]: List of categories
+        """
+        if len(categories) != len(set(categories)):
+            raise ValueError(
+                "Categories are not unique"
+            )
+        return categories
+
+    @field_validator(
+        "desirability",
+    )
+    def validate_desirability(cls, desirability: List[bool], info) -> List[bool]:
+        """validates that desirabilities match the categories
+
+        Args:
+            desireability (List[str]): List or tuple of desirabilities
+
+        Raises:
             ValueError: when desirability count is not equal to category count
 
         Returns:
-            Tuple[bool]: Tuple of the desirability
+            List[bool]: List of the desirability
         """
         if len(desirability) != len(info.data["categories"]):
             raise ValueError(

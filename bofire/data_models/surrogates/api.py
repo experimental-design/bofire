@@ -63,6 +63,22 @@ try:
         PolynomialSurrogate,
         TanimotoGPSurrogate,
     ]
+
+    AnyRegressionSurrogate = Union[
+        EmpiricalSurrogate,
+        RandomForestSurrogate,
+        SingleTaskGPSurrogate,
+        MixedSingleTaskGPSurrogate,
+        MixedTanimotoGPSurrogate,
+        RegressionMLPEnsemble,
+        SaasSingleTaskGPSurrogate,
+        XGBoostSurrogate,
+        LinearSurrogate,
+        PolynomialSurrogate,
+        TanimotoGPSurrogate,
+    ]
+
+    AnyClassificationSurrogate = ClassificationMLPEnsemble
 except ImportError:
     # with the minimal installationwe don't have botorch
     pass
