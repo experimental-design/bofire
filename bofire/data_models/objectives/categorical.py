@@ -2,14 +2,14 @@ from typing import Dict, List, Literal, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator
+from pydantic import model_validator
 
-from bofire.data_models.features.feature import TCategoryVals
 from bofire.data_models.objectives.objective import (
     ConstrainedObjective,
     Objective,
     TWeight,
 )
+from bofire.data_models.types import TCategoryVals
 
 
 class CategoricalObjective:
@@ -32,50 +32,26 @@ class ConstrainedCategoricalObjective(
     w: TWeight = 1.0
     categories: TCategoryVals
     desirability: List[bool]
-    eta: float = 1.0
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
-    @field_validator(
-        "categories",
-    )
-    def validate_categories_unique(cls, categories: List[str]) -> List[bool]:
-        """validates that desirabilities match the categories
+    @model_validator(mode="after")
+    def validate_desireability(self):
+        """validates that categories have unique names
 
         Args:
             categories (List[str]): List or tuple of category names
 
         Raises:
-            ValueError: when categories are not unique
+            ValueError: when categories do not match objective categories
 
         Returns:
-            List[str]: List of categories
+            Tuple[str]: Tuple of the categories
         """
-        if len(categories) != len(set(categories)):
-            raise ValueError(
-                "Categories are not unique"
-            )
-        return categories
-
-    @field_validator(
-        "desirability",
-    )
-    def validate_desirability(cls, desirability: List[bool], info) -> List[bool]:
-        """validates that desirabilities match the categories
-
-        Args:
-            desireability (List[str]): List or tuple of desirabilities
-
-        Raises:
-            ValueError: when desirability count is not equal to category count
-
-        Returns:
-            List[bool]: List of the desirability
-        """
-        if len(desirability) != len(info.data["categories"]):
+        if len(self.desirability) != len(self.categories):
             raise ValueError(
                 "number of categories differs from number of desirabilities"
             )
-        return desirability
+        return self
 
     def to_dict(self) -> Dict:
         """Returns the categories and corresponding objective values as dictionary"""

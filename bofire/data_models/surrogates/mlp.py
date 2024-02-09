@@ -25,15 +25,15 @@ class MLPEnsemble(TrainableBotorchSurrogate):
     shuffle: bool = True
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
-    @classmethod
-    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
-        """Abstract method to check output type for surrogate models
-        Args:
-            my_type: continuous or categorical output
-        Returns:
-            bool: True if the output type is valid for the surrogate chosen, False otherwise
-        """
-        return isinstance(my_type, (CategoricalOutput, ContinuousOutput))
+    # @classmethod
+    # def is_output_implemented(cls, my_type: str) -> bool:
+    #     """Abstract method to check output type for surrogate models
+    #     Args:
+    #         my_type: continuous or categorical output
+    #     Returns:
+    #         bool: True if the output type is valid for the surrogate chosen, False otherwise
+    #     """
+    #     return isinstance(my_type, (CategoricalOutput, ContinuousOutput))
 
 
 class RegressionMLPEnsemble(MLPEnsemble):
@@ -48,7 +48,7 @@ class RegressionMLPEnsemble(MLPEnsemble):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, ContinuousOutput)
+        return isinstance(my_type, type(ContinuousOutput))
 
 
 class ClassificationMLPEnsemble(MLPEnsemble):
@@ -63,4 +63,4 @@ class ClassificationMLPEnsemble(MLPEnsemble):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, CategoricalOutput)
+        return isinstance(my_type, type(CategoricalOutput))

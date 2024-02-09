@@ -3,6 +3,8 @@ import pandas as pd
 import pytest
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,
@@ -16,7 +18,9 @@ from bofire.surrogates.diagnostics import (
     CvResults,
     CvResults2CrossValidationValues,
     UQ_metrics,
+    _accuracy_score,
     _CVPPDiagram,
+    _f1_score,
     _mean_absolute_error,
     _mean_absolute_percentage_error,
     _mean_squared_error,
@@ -84,6 +88,38 @@ def test_sklearn_metrics(bofire, sklearn):
     sd = np.random.normal(0, 1, size=n_samples)
     assert bofire(observed, predicted, sd) == sklearn(observed, predicted)
     assert bofire(observed, predicted) == sklearn(observed, predicted)
+
+
+@pytest.mark.parametrize(
+    "bofire, sklearn",
+    [
+        (_accuracy_score, accuracy_score),
+    ],
+)
+def test_sklearn_metrics_accuracy(bofire, sklearn):
+    n_samples = 20
+    observed = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    predicted = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    sd = None
+    assert bofire(observed, predicted, sd) == sklearn(observed, predicted)
+    assert bofire(observed, predicted) == sklearn(observed, predicted)
+
+
+@pytest.mark.parametrize(
+    "bofire, sklearn",
+    [
+        (_f1_score, f1_score),
+    ],
+)
+def test_sklearn_metrics_f1(bofire, sklearn):
+    n_samples = 20
+    observed = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    predicted = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    sd = None
+    assert bofire(observed, predicted, sd) == sklearn(
+        observed, predicted, average="micro"
+    )
+    assert bofire(observed, predicted) == sklearn(observed, predicted, average="micro")
 
 
 @pytest.mark.parametrize(

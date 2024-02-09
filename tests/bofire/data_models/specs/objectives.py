@@ -53,7 +53,6 @@ specs.add_valid(
         "w": 1.0,
         "categories": ["green", "red", "blue"],
         "desirability": [True, False, True],
-        "eta": 1.0,
     },
 )
 
@@ -63,7 +62,6 @@ specs.add_invalid(
         "w": 1.0,
         "categories": ["green", "red", "blue"],
         "desirability": [True, False, True, False],
-        "eta": 1.0,
     },
     error=ValueError,
     message="number of categories differs from number of desirabilities",
@@ -75,8 +73,7 @@ specs.add_invalid(
         "w": 1.0,
         "categories": ["green", "red", "blue", "blue"],
         "desirability": [True, False, True, False],
-        "eta": 1.0,
     },
     error=ValueError,
-    message="categories must be unique",
+    message="Categories must be unique",
 )

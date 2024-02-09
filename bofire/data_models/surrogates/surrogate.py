@@ -5,7 +5,8 @@ from pydantic import Field, field_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import AnyOutput, TInputTransformSpecs
+from bofire.data_models.features.api import AnyOutput
+from bofire.data_models.types import TInputTransformSpecs
 
 
 class Surrogate(BaseModel):
@@ -32,7 +33,7 @@ class Surrogate(BaseModel):
         if len(outputs) == 0:
             raise ValueError("At least one output feature has to be provided.")
         for o in outputs:
-            if not cls.is_output_implemented(o):
+            if not cls.is_output_implemented(type(o)):
                 raise ValueError("Invalid output type passed.")
         return outputs
 

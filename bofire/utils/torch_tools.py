@@ -269,19 +269,19 @@ def constrained_objective2botorch(
         return (
             [
                 lambda Z: torch.log(
-                    torch.clamp(
-                        1
-                        / (
+                    1
+                    / torch.clamp(
+                        (
                             Z[..., idx : idx + len(objective.desirability)]
                             * torch.tensor(objective.desirability).to(**tkwargs)
-                        ).sum(-1)
-                        - 1,
+                        ).sum(-1),
                         min=eps,
                         max=1 - eps,
                     )
+                    - 1,
                 )
             ],
-            [objective.eta],
+            [1.0],
             idx + len(objective.desirability),
         )
     else:

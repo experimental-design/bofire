@@ -1,4 +1,3 @@
-import itertools
 from abc import abstractmethod
 from typing import List, Optional, Tuple
 
@@ -6,12 +5,13 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
-from bofire.data_models.features.api import CategoricalOutput, TInputTransformSpecs
+from bofire.data_models.features.api import CategoricalOutput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.data_models.types import TInputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy
+from bofire.utils.naming_conventions import get_column_names
 
 
 class PredictiveStrategy(Strategy):
@@ -104,39 +104,15 @@ class PredictiveStrategy(Strategy):
             experiments=experiments, specs=self.input_preprocessing_specs
         )
         preds, stds = self._predict(transformed)
-        column_names = list(
-            itertools.chain(
-                *[
-                    (
-                        [f"{feat.key}_pred"]
-                        if not isinstance(feat, CategoricalOutput)
-                        else [f"{feat.key}_{cat}_prob" for cat in feat.categories]
-                    )
-                    for feat in self.domain.outputs.get()
-                ]
-            )
-        )
+        pred_cols, sd_cols = get_column_names(self.domain.outputs)
         if stds is not None:
             predictions = pd.DataFrame(
-                data=np.hstack((preds, stds)),
-                columns=column_names
-                + list(
-                    itertools.chain(
-                        *[
-                            (
-                                [f"{feat.key}_sd"]
-                                if not isinstance(feat, CategoricalOutput)
-                                else [f"{feat.key}_{cat}_sd" for cat in feat.categories]
-                            )
-                            for feat in self.domain.outputs.get()
-                        ]
-                    )
-                ),
+                data=np.hstack((preds, stds)), columns=pred_cols + sd_cols
             )
         else:
             predictions = pd.DataFrame(
                 data=preds,
-                columns=column_names,
+                columns=pred_cols,
             )
         for feat in self.domain.outputs.get():
             if isinstance(feat, CategoricalOutput):

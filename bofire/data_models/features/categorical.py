@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -6,11 +6,8 @@ from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
-from bofire.data_models.types import TCategoryVals
 from bofire.data_models.objectives.api import AnyCategoricalObjective
-from bofire.data_models.objectives.categorical import (
-    ConstrainedCategoricalObjective,
-)
+from bofire.data_models.types import TCategoryVals
 
 
 class CategoricalInput(Input):
@@ -339,54 +336,21 @@ class CategoricalOutput(Output):
     order_id: ClassVar[int] = 9
 
     categories: TCategoryVals
-    objective: Optional[AnyCategoricalObjective] = Field(
-        default_factory=lambda: ConstrainedCategoricalObjective(
-            w=1.0, categories=["a", "b"], desirability=[True, False]
-        )
-    )
-
-    @field_validator("categories")
-    @classmethod
-    def validate_categories_unique(cls, categories: List[str]) -> List[str]:
-        """validates that categories have unique names
-
-        Args:
-            categories (List[str]): List or tuple of category names
-
-        Raises:
-            ValueError: when categories have non-unique names
-
-        Returns:
-            Tuple[str]: Tuple of the categories
-        """
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return categories
+    objective: AnyCategoricalObjective
 
     @model_validator(mode="after")
-    def validate_objectives_unique(self):
-        """validates that categories have unique names
-
-        Args:
-            categories (List[str]): List or tuple of category names
+    def validate_objective_categories(self):
+        """validates that objective categories match the output categories
 
         Raises:
             ValueError: when categories do not match objective categories
 
         Returns:
-            Tuple[str]: Tuple of the categories
+            self
         """
         if self.objective.categories != self.categories:  # type: ignore
             raise ValueError("categories must match to objective categories")
         return self
-
-    @classmethod
-    def from_objective(
-        cls,
-        key: str,
-        objective: ConstrainedCategoricalObjective,
-    ):
-        return cls(key=key, objective=objective, categories=objective.categories)
 
     def __call__(self, values: pd.Series) -> pd.Series:
         if self.objective is None:

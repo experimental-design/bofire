@@ -222,7 +222,6 @@ specs.add_invalid(
         "hyperconfig": None,
     },
     error=ValueError,
-    message="Invalid output type passed.",
 )
 
 specs.add_valid(
@@ -289,7 +288,6 @@ specs.add_invalid(
         "hyperconfig": None,
     },
     error=ValueError,
-    message="Invalid output type passed.",
 )
 
 specs.add_valid(

@@ -1,5 +1,9 @@
 from bofire.data_models.domain.api import Outputs
-from bofire.data_models.features.api import CategoricalInput, ContinuousOutput, CategoricalOutput
+from bofire.data_models.features.api import (
+    CategoricalInput,
+    CategoricalOutput,
+    ContinuousOutput,
+)
 from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -42,7 +46,13 @@ specs.add_invalid(
     Outputs,
     lambda: {
         "features": [
-            CategoricalOutput(key="b", categories=["a", "b"], objective=ConstrainedCategoricalObjective(categories=["c", "d"], desirability=[True, True])),
+            CategoricalOutput(
+                key="b",
+                categories=["a", "b"],
+                objective=ConstrainedCategoricalObjective(
+                    categories=["c", "d"], desirability=[True, True]
+                ),
+            ),
         ],
     },
     error=ValueError,

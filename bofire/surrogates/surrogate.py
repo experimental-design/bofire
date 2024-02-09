@@ -5,9 +5,10 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.domain.domain import is_numeric
-from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput
+from bofire.data_models.features.api import CategoricalOutput
 from bofire.data_models.surrogates.api import Surrogate as DataModel
 from bofire.surrogates.values import PredictedValue
+from bofire.utils.naming_conventions import get_column_names
 
 
 class Surrogate(ABC):
@@ -46,20 +47,7 @@ class Surrogate(ABC):
         # predict
         preds, stds = self._predict(Xt)
         # set up column names
-        pred_cols = []
-        sd_cols = []
-        for featkey in self.outputs.get_keys(CategoricalOutput):
-            pred_cols = pred_cols + [
-                f"{featkey}_{cat}_prob"
-                for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
-            ]
-            sd_cols = sd_cols + [
-                f"{featkey}_{cat}_sd"
-                for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
-            ]
-        for featkey in self.outputs.get_keys(ContinuousOutput):
-            pred_cols = pred_cols + [f"{featkey}_pred"]
-            sd_cols = sd_cols + [f"{featkey}_sd"]
+        pred_cols, sd_cols = get_column_names(self.outputs)
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
@@ -87,27 +75,12 @@ class Surrogate(ABC):
         return predictions
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
-        expected_cols = []
-        check_columns = []
+        # Get the column names
+        pred_cols, sd_cols = get_column_names(self.outputs)
+        expected_cols = pred_cols + sd_cols
+        check_columns = list(expected_cols)
         for featkey in self.outputs.get_keys(CategoricalOutput):
-            expected_cols = (
-                expected_cols
-                + [f"{featkey}_{t}" for t in ["pred", "sd"]]
-                + [
-                    f"{featkey}_{cat}_prob"
-                    for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
-                ]
-                + [
-                    f"{featkey}_{cat}_sd"
-                    for cat in self.outputs.get_by_key(featkey).categories  # type: ignore
-                ]
-            )
-            check_columns = check_columns + [
-                col for col in expected_cols if col != f"{featkey}_pred"
-            ]
-        for featkey in self.outputs.get_keys(ContinuousOutput):
             expected_cols = expected_cols + [f"{featkey}_{t}" for t in ["pred", "sd"]]
-            check_columns = check_columns + expected_cols
         if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
                 f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."

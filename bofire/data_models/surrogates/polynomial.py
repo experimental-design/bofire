@@ -33,4 +33,4 @@ class PolynomialSurrogate(TrainableBotorchSurrogate):
         Returns:
             bool: True if the output type is valid for the surrogate chosen, False otherwise
         """
-        return isinstance(my_type, ContinuousOutput)
+        return isinstance(my_type, type(ContinuousOutput))

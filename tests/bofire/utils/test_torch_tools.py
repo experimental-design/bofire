@@ -24,6 +24,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
+    ConstrainedCategoricalObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -831,3 +832,23 @@ def test_constrained_objective2botorch(objective):
         y *= soft_eval_constraint(xtt, eta)
 
     assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), y.numpy().ravel())
+
+
+def test_constrained_objective():
+    desirability = [True, False, False]
+    obj1 = ConstrainedCategoricalObjective(
+        categories=["c1", "c2", "c3"], desirability=desirability
+    )
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1)
+
+    x = torch.rand((50, 3))
+    x /= x.sum(1).unsqueeze(1)  # Convert to probabilities
+    true_y = (x * torch.tensor(desirability)).sum(-1)
+    transformed_y = torch.log(1 / torch.clamp(true_y, 1e-6, 1 - 1e-6) - 1)
+
+    assert len(cs) == 1
+    assert etas[0] == 1.0
+
+    y_hat = cs[0](x)
+    assert np.allclose(y_hat.numpy(), transformed_y.numpy())
+    assert np.allclose(np.exp(-np.log(np.exp(y_hat.numpy()) + 1)), true_y)
