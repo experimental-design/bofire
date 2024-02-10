@@ -17,9 +17,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput, Input
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -28,7 +26,7 @@ from bofire.strategies.doe.utils import (
     nchoosek_constraints_as_bounds,
 )
 from bofire.strategies.enum import OptimalityCriterionEnum
-from bofire.strategies.polytope import PolytopeSampler
+from bofire.strategies.random import RandomStrategy
 
 
 def find_local_max_ipopt_BaB(
@@ -454,9 +452,7 @@ def find_local_max_ipopt(
         x0 = sampling.values.flatten()
     else:
         if len(domain.constraints.get(NonlinearConstraint)) == 0:
-            sampler = PolytopeSampler(
-                data_model=PolytopeSamplerDataModel(domain=domain)
-            )
+            sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
             x0 = sampler.ask(n_experiments).to_numpy().flatten()
         else:
             warnings.warn(

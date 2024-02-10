@@ -38,11 +38,9 @@ from bofire.data_models.objectives.api import (
     MaximizeSigmoidObjective,
 )
 from bofire.data_models.strategies.api import LSRBO
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.unions import to_list
-from bofire.strategies.api import CustomSoboStrategy, PolytopeSampler, SoboStrategy
+from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
 from tests.bofire.strategies.test_base import domains
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
@@ -138,8 +136,8 @@ def test_SOBO_get_acqf(acqf, expected, num_test_candidates):
     # generate data
     benchmark = Himmelblau()
 
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
 
     experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
@@ -178,8 +176,8 @@ def test_SOBO_init_qUCB():
 
     # generate data
     benchmark = Himmelblau()
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(random_strategy.ask(20), return_complete=True)
 
@@ -207,8 +205,8 @@ def test_SOBO_init_qUCB():
 def test_get_acqf_input(acqf, num_experiments, num_candidates):
     # generate data
     benchmark = Himmelblau()
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
         random_strategy._ask(n=num_experiments), return_complete=True

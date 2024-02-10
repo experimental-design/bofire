@@ -2,7 +2,6 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
-from bofire.data_models.strategies.polytope import PolytopeSampler
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -49,7 +48,6 @@ AnyStrategy = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
-    PolytopeSampler,
     UniversalConstraintSampler,
     RandomStrategy,
     DoEStrategy,
@@ -69,8 +67,6 @@ AnyPredictive = Union[
     QparegoStrategy,
     MoboStrategy,
 ]
-
-AnySampler = Union[PolytopeSampler, UniversalConstraintSampler]
 
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]

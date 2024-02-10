@@ -5,6 +5,7 @@ import pytest
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -19,7 +20,6 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
-from bofire.strategies.api import RandomStrategy
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
@@ -104,15 +104,6 @@ supported_domains = [
     ),
 ]
 
-unsupported_domains = [
-    Domain.from_lists(
-        # nonlinear equality
-        inputs=[if0, if1, if2, if3, if4, if5, if6, if7],
-        outputs=[of1],
-        constraints=[c3],
-    ),
-]
-
 
 @pytest.mark.parametrize("domain", supported_domains)
 def test_ask(domain):
@@ -123,10 +114,10 @@ def test_ask(domain):
     assert domain.constraints.is_fulfilled(candidates).all()
 
 
-def test_get_feasible_domain_for_polytope_sampler():
+def test_get_feasible_domain_for_polytope_sampling():
     data_model = data_models.RandomStrategy(domain=supported_domains[-1])
     strategy = strategies.map(data_model=data_model)
-    domain = strategy._get_feasible_domain_for_polytope_sampler(strategy.domain)
+    domain = strategy._get_feasible_domain_for_polytope_sampling(strategy.domain)
     assert domain.inputs == supported_domains[-1].inputs
     assert domain.outputs == supported_domains[-1].outputs
     assert len(domain.constraints) == 0
@@ -143,8 +134,82 @@ def test_rejection_sampler_not_converged():
         sampler.ask(128)
 
 
-@pytest.mark.parametrize("domain", unsupported_domains)
-def test_unsupported(domain):
-    with pytest.raises(Exception):
-        data_model = data_models.RandomStrategy(domain=domain)
-        RandomStrategy(data_model=data_model)
+def test_interpoint():
+    domain = Domain.from_lists(
+        inputs=[if1, if2, if3],
+        constraints=[InterpointEqualityConstraint(feature="if1", multiplicity=3)],
+    )
+    data_model = data_models.RandomStrategy(domain=domain)
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    sampler.ask(9)
+
+
+def test_all_fixed():
+    if1 = ContinuousInput(
+        bounds=(0, 1),
+        key="if1",
+    )
+    if4 = ContinuousInput(
+        bounds=(0.1, 0.1),
+        key="if4",
+    )
+    domain = Domain.from_lists(
+        inputs=[if1, if4],
+        constraints=[
+            LinearEqualityConstraint(
+                features=["if1", "if4"], coefficients=[1.0, 1.0], rhs=1.0
+            )
+        ],
+    )
+    data_model = data_models.RandomStrategy(domain=domain)
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    with pytest.warns(UserWarning):
+        sampler.ask(2)
+
+
+def test_nchoosek():
+    if1 = ContinuousInput(
+        bounds=(0, 1),
+        key="if1",
+    )
+    if2 = ContinuousInput(
+        bounds=(0, 1),
+        key="if2",
+    )
+    if3 = ContinuousInput(
+        bounds=(0, 1),
+        key="if3",
+    )
+    if4 = ContinuousInput(
+        bounds=(0.1, 0.1),
+        key="if4",
+    )
+
+    if6 = CategoricalInput(
+        categories=["a", "b", "c"],
+        allowed=[False, True, False],
+        key="if6",
+    )
+    If7 = ContinuousInput(bounds=(1, 1), key="If7")
+
+    c2 = LinearInequalityConstraint.from_greater_equal(
+        features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.2
+    )
+
+    c6 = NChooseKConstraint(
+        features=["if1", "if2", "if3"],
+        min_count=1,
+        max_count=2,
+        none_also_valid=False,
+    )
+    c7 = LinearEqualityConstraint(
+        features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=1.0
+    )
+    domain = Domain.from_lists(
+        inputs=[if1, if2, if3, if4, if6, If7],
+        constraints=[c6, c2, c7],
+    )
+    data_model = data_models.RandomStrategy(domain=domain)
+    sampler = strategies.RandomStrategy(data_model=data_model)
+    samples = sampler.ask(50)
+    assert len(samples) == 50

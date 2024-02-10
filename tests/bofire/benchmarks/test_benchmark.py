@@ -6,7 +6,7 @@ import bofire.strategies.api as strategies
 from bofire.benchmarks.api import GenericBenchmark
 from bofire.benchmarks.multi import ZDT1
 from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.strategies.api import PolytopeSampler
+from bofire.data_models.strategies.api import RandomStrategy
 
 
 def test_generic_benchmark():
@@ -20,7 +20,7 @@ def test_generic_benchmark():
 
 def test_benchmark_generate_outliers():
     def sample(domain):
-        datamodel = PolytopeSampler(domain=domain)
+        datamodel = RandomStrategy(domain=domain)
         sampler = strategies.map(data_model=datamodel)
         sampled = sampler.ask(10)
         return sampled

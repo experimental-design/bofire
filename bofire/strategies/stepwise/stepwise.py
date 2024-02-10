@@ -8,7 +8,6 @@ from bofire.data_models.strategies.api import Step
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.factorial import FactorialStrategy
-from bofire.strategies.polytope import PolytopeSampler
 from bofire.strategies.predictives.mobo import MoboStrategy
 from bofire.strategies.predictives.qehvi import QehviStrategy
 from bofire.strategies.predictives.qnehvi import QnehviStrategy
@@ -34,7 +33,6 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.QehviStrategy: QehviStrategy,
     data_models.QnehviStrategy: QnehviStrategy,
     data_models.QparegoStrategy: QparegoStrategy,
-    data_models.PolytopeSampler: PolytopeSampler,
     data_models.UniversalConstraintSampler: UniversalConstraintSampler,
     data_models.DoEStrategy: DoEStrategy,
     data_models.FactorialStrategy: FactorialStrategy,
