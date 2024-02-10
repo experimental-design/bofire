@@ -44,16 +44,16 @@ domains = [
     "domain, num_samples",
     [(domain, candidate_count) for domain in domains for candidate_count in [1, 16]],
 )
-def test_UniversalConstraintSampler(domain, num_samples):
-    data_model = data_models.UniversalConstraintSampler(domain=domain)
-    sampler = strategies.UniversalConstraintSampler(data_model=data_model)
+def test_ask(domain, num_samples):
+    data_model = data_models.SpaceFillingStrategy(domain=domain)
+    sampler = strategies.SpaceFillingStrategy(data_model=data_model)
     samples = sampler.ask(num_samples)
     assert len(samples) == num_samples
 
 
-def test_UniversalConstraintSampler_pending_candidates():
-    data_model = data_models.UniversalConstraintSampler(domain=domains[0])
-    sampler = strategies.UniversalConstraintSampler(data_model=data_model)
+def test_ask_pending_candidates():
+    data_model = data_models.SpaceFillingStrategy(domain=domains[0])
+    sampler = strategies.SpaceFillingStrategy(data_model=data_model)
     pending_candidates = sampler.ask(2, add_pending=True)
     samples = sampler.ask(1)
     assert len(samples) == 1

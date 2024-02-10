@@ -130,7 +130,7 @@ specs.add_valid(
     },
 )
 specs.add_valid(
-    strategies.UniversalConstraintSampler,
+    strategies.SpaceFillingStrategy,
     lambda: {
         "domain": domain.valid().obj().dict(),
         "sampling_fraction": 0.3,

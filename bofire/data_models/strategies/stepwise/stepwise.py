@@ -20,15 +20,13 @@ from bofire.data_models.strategies.predictives.sobo import (
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     CombiCondition,
     NumberOfExperimentsCondition,
 )
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.strategies.universal_constraint import (
-    UniversalConstraintSampler,
-)
 
 AnyStrategy = Union[
     SoboStrategy,
@@ -38,7 +36,7 @@ AnyStrategy = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
-    UniversalConstraintSampler,
+    SpaceFillingStrategy,
     RandomStrategy,
     DoEStrategy,
     FactorialStrategy,
