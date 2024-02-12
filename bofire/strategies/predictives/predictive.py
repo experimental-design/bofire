@@ -104,7 +104,7 @@ class PredictiveStrategy(Strategy):
             experiments=experiments, specs=self.input_preprocessing_specs
         )
         preds, stds = self._predict(transformed)
-        pred_cols, sd_cols = get_column_names(self.domain.outputs)
+        pred_cols, sd_cols = get_column_names(self.domain.outputs)  # type: ignore
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)), columns=pred_cols + sd_cols

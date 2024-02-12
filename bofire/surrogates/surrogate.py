@@ -47,7 +47,7 @@ class Surrogate(ABC):
         # predict
         preds, stds = self._predict(Xt)
         # set up column names
-        pred_cols, sd_cols = get_column_names(self.outputs)
+        pred_cols, sd_cols = get_column_names(self.outputs)  # type: ignore
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
@@ -76,7 +76,7 @@ class Surrogate(ABC):
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
         # Get the column names
-        pred_cols, sd_cols = get_column_names(self.outputs)
+        pred_cols, sd_cols = get_column_names(self.outputs)  # type: ignore
         expected_cols = pred_cols + sd_cols
         check_columns = list(expected_cols)
         for featkey in self.outputs.get_keys(CategoricalOutput):
