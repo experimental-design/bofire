@@ -223,7 +223,7 @@ def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]
 
 
 def constrained_objective2botorch(
-    idx: int, objective: ConstrainedObjective, eps: float = 1e-6
+    idx: int, objective: ConstrainedObjective, eps: float = 1e-8
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
     to setup ouput constrained optimizations.

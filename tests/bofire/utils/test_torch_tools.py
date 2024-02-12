@@ -841,14 +841,19 @@ def test_constrained_objective():
     )
     cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1)
 
-    x = torch.rand((50, 3))
-    x /= x.sum(1).unsqueeze(1)  # Convert to probabilities
+    x = torch.zeros((50, 3))
+    x[:, 0] = torch.arange(50) / 50
     true_y = (x * torch.tensor(desirability)).sum(-1)
-    transformed_y = torch.log(1 / torch.clamp(true_y, 1e-6, 1 - 1e-6) - 1)
+    transformed_y = torch.log(1 / torch.clamp(true_y, 1e-8, 1 - 1e-8) - 1)
 
     assert len(cs) == 1
     assert etas[0] == 1.0
 
     y_hat = cs[0](x)
     assert np.allclose(y_hat.numpy(), transformed_y.numpy())
-    assert np.allclose(np.exp(-np.log(np.exp(y_hat.numpy()) + 1)), true_y)
+    assert (
+        np.linalg.norm(
+            np.exp(-np.log(np.exp(y_hat.numpy()) + 1)) - true_y.numpy(), ord=np.inf
+        )
+        <= 1e-8
+    )
