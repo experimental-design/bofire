@@ -120,23 +120,6 @@ specs.add_valid(
 
 
 specs.add_valid(
-    strategies.PolytopeSampler,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
-                ]
-            ),
-        ).model_dump(),
-        "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
-        "seed": 42,
-        "n_burnin": 1000,
-        "n_thinning": 32,
-    },
-)
-
-specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -147,7 +130,7 @@ specs.add_valid(
     },
 )
 specs.add_valid(
-    strategies.UniversalConstraintSampler,
+    strategies.SpaceFillingStrategy,
     lambda: {
         "domain": domain.valid().obj().dict(),
         "sampling_fraction": 0.3,

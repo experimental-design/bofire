@@ -7,16 +7,20 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.strategies.doe import DoEStrategy
-from bofire.data_models.strategies.polytope import PolytopeSampler
+from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
 from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
+    CustomSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
+from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     CombiCondition,
@@ -28,12 +32,16 @@ AnyStrategy = Union[
     SoboStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
-    PolytopeSampler,
+    SpaceFillingStrategy,
     RandomStrategy,
     DoEStrategy,
+    FactorialStrategy,
+    MoboStrategy,
+    ShortestPathStrategy,
 ]
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]

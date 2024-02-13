@@ -25,7 +25,6 @@ from bofire.data_models.strategies.api import (
     AnyCondition,
     AnyLocalSearchConfig,
     AnyPredictive,
-    AnySampler,
     AnyStrategy,
     PredictiveStrategy,
     Strategy,
@@ -39,6 +38,7 @@ from bofire.data_models.surrogates.api import (
 
 data_model_list = [
     AnyAcquisitionFunction,
+    AnyCondition,
     AnyConstraint,
     AnyFeature,
     AnyKernel,

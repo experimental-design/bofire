@@ -228,7 +228,6 @@ class BotorchStrategy(PredictiveStrategy):
             nonlinear_constraints = None
         else:
             # TODO: implement LSR-BO also for constraints --> use local bounds
-            # for polytope sampler
             ic_generator = gen_batch_initial_conditions
             ic_gen_kwargs = {
                 "generator": get_initial_conditions_generator(

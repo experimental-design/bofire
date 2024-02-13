@@ -20,10 +20,8 @@ import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2
 from bofire.data_models.features.api import ContinuousOutput
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
-from bofire.strategies.api import PolytopeSampler
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.strategies.api import RandomStrategy
 from tests.bofire.utils.test_multiobjective import (
     dfs,
     invalid_domains,
@@ -89,8 +87,8 @@ def test_mobo_get_adjusted_refpoint(domain, ref_point, experiments, expected):
 def test_mobo(strategy, use_ref_point, acqf):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
         random_strategy.ask(candidate_count=10), return_complete=True
@@ -128,8 +126,8 @@ def test_mobo(strategy, use_ref_point, acqf):
 )
 def test_mobo_constraints(acqf):
     benchmark = C2DTLZ2(dim=4)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     data_model = data_models.MoboStrategy(
@@ -169,8 +167,8 @@ def test_mobo_constraints(acqf):
 def test_get_acqf_input(num_experiments, num_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
         random_strategy.ask(num_experiments), return_complete=True
