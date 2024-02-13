@@ -1,7 +1,7 @@
 import math
 import warnings
 from copy import deepcopy
-from typing import Dict
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -17,7 +17,7 @@ from bofire.data_models.constraints.api import (
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
-from bofire.data_models.domain.api import Constraints, Domain
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
@@ -57,34 +57,6 @@ class RandomStrategy(Strategy):
         self.n_burnin = data_model.n_burnin
         self.n_thinning = data_model.n_thinning
 
-    @staticmethod
-    def _get_feasible_domain_for_polytope_sampling(domain: Domain) -> Domain:
-        """
-        Returns a modified domain object with only the constraints that are implemented
-        in polytope sampling.
-
-        Args:
-            domain (Domain): The original domain object.
-
-        Returns:
-            Domain: A modified domain object with only the feasible constraints.
-        """
-        domain = deepcopy(domain)
-        domain.constraints = Constraints(
-            constraints=[
-                c
-                for c in domain.constraints
-                if type(c)
-                in [
-                    LinearInequalityConstraint,
-                    LinearEqualityConstraint,
-                    NChooseKConstraint,
-                    InterpointEqualityConstraint,
-                ]
-            ]
-        )
-        return domain
-
     def has_sufficient_experiments(self) -> bool:
         """
         Check if there are sufficient experiments for the strategy.
@@ -108,8 +80,17 @@ class RandomStrategy(Strategy):
         Returns:
             pd.DataFrame: A DataFrame containing the generated candidate samples.
         """
-        domain = self._get_feasible_domain_for_polytope_sampling(domain=self.domain)
-        if domain == self.domain:
+        # no nonlinear constraints present --> no rejection sampling needed
+        if len(self.domain.constraints) == len(
+            self.domain.constraints.get(
+                [
+                    LinearInequalityConstraint,
+                    LinearEqualityConstraint,
+                    NChooseKConstraint,
+                    InterpointEqualityConstraint,
+                ]
+            )
+        ):
             return self._sample_with_nchooseks(candidate_count)
         # perform the rejection sampling
         num_base_samples = self.num_base_samples or candidate_count
@@ -195,21 +176,30 @@ class RandomStrategy(Strategy):
     @staticmethod
     def _sample_from_polytope(
         domain: Domain,
-        fallback_sampling_method: SamplingMethodEnum,
-        n_burnin: int,
-        n_thinning: int,
-        seed: int,
         n: int,
+        fallback_sampling_method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+        n_burnin: int = 1000,
+        n_thinning: int = 32,
+        seed: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Sample points from the polytope defined by the domain constraints.
+        Sample points from a polytope defined by the given domain.
 
         Args:
             n (int): The number of points to sample.
+            domain (Domain): The domain defining the polytope.
+            fallback_sampling_method (SamplingMethodEnum, optional): The fallback sampling method to use when the domain has no constraints.
+                Defaults to SamplingMethodEnum.UNIFORM.
+            n_burnin (int, optional): The number of burn-in samples for the polytope sampler. Defaults to 1000.
+            n_thinning (int, optional): The thinning factor for the polytope sampler. Defaults to 32.
+            seed (Optional[int], optional): The seed value for random number generation. Defaults to None.
 
         Returns:
             pd.DataFrame: A DataFrame containing the sampled points.
         """
+        if seed is None:
+            seed = np.random.default_rng().integers(1, 1000000)
+
         if len(domain.constraints) == 0:
             return domain.inputs.sample(n, fallback_sampling_method, seed=seed)
 
@@ -326,8 +316,16 @@ class RandomStrategy(Strategy):
             )
 
         # setup the categoricals and discrete ones as uniform sampled vals
-        for feat in domain.get_features([CategoricalInput, DiscreteInput]):
-            samples[feat.key] = feat.sample(n, seed=seed)  # type: ignore
+        samples = pd.concat(
+            [
+                samples,
+                domain.inputs.get([CategoricalInput, DiscreteInput]).sample(  # type: ignore
+                    n, method=SamplingMethodEnum.UNIFORM, seed=seed
+                ),
+            ],
+            axis=1,
+            ignore_index=False,
+        )
 
         # setup the fixed continuous ones
         for key, value in fixed_features.items():

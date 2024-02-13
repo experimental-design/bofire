@@ -1,6 +1,7 @@
 import warnings
 
 import pytest
+from pandas.testing import assert_frame_equal
 
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
@@ -114,15 +115,6 @@ def test_ask(domain):
     assert domain.constraints.is_fulfilled(candidates).all()
 
 
-def test_get_feasible_domain_for_polytope_sampling():
-    data_model = data_models.RandomStrategy(domain=supported_domains[-1])
-    strategy = strategies.map(data_model=data_model)
-    domain = strategy._get_feasible_domain_for_polytope_sampling(strategy.domain)
-    assert domain.inputs == supported_domains[-1].inputs
-    assert domain.outputs == supported_domains[-1].outputs
-    assert len(domain.constraints) == 0
-
-
 def test_rejection_sampler_not_converged():
     data_model = data_models.RandomStrategy(
         domain=supported_domains[-2], num_base_samples=4, max_iters=2
@@ -213,3 +205,27 @@ def test_nchoosek():
     sampler = strategies.RandomStrategy(data_model=data_model)
     samples = sampler.ask(50)
     assert len(samples) == 50
+
+
+def test_sample_from_polytope():
+    if1 = ContinuousInput(
+        bounds=(0, 1),
+        key="if1",
+    )
+    if2 = ContinuousInput(
+        bounds=(0, 1),
+        key="if2",
+    )
+    c2 = LinearInequalityConstraint.from_greater_equal(
+        features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=0.8
+    )
+    domain = Domain.from_lists(
+        inputs=[if1, if2],
+        constraints=[c2],
+    )
+    samples = strategies.RandomStrategy._sample_from_polytope(domain, 5)
+    samples2 = strategies.RandomStrategy._sample_from_polytope(domain, 5, seed=42)
+    samples3 = strategies.RandomStrategy._sample_from_polytope(domain, 5, seed=42)
+    assert_frame_equal(samples2, samples3)
+    with pytest.raises(AssertionError):
+        assert_frame_equal(samples2, samples)
