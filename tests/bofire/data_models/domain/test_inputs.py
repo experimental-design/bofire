@@ -257,6 +257,11 @@ def test_inputs_sample(features: Inputs, num_samples, method):
         assert_frame_equal(samples2, samples0)
 
 
+def test_inputs_sample_empty():
+    samples = Inputs().sample(5)
+    assert_frame_equal(samples, pd.DataFrame())
+
+
 @pytest.mark.parametrize(
     "specs",
     [

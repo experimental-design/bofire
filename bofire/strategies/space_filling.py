@@ -1,13 +1,13 @@
 import pandas as pd
 
-from bofire.data_models.strategies.api import UniversalConstraintSampler as DataModel
+from bofire.data_models.strategies.api import SpaceFillingStrategy as DataModel
 from bofire.strategies.doe.design import find_local_max_ipopt
 from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.strategy import Strategy
 
 
-class UniversalConstraintSampler(Strategy):
-    """Sampler that generates samples by optimization in IPOPT.
+class SpaceFillingStrategy(Strategy):
+    """Sampler that generates space filling samples by optimization in IPOPT.
 
     Attributes:
         domain (Domain): Domain defining the constrained input space

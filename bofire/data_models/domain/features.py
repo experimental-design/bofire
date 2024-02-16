@@ -214,6 +214,8 @@ class Inputs(Features):
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
+        if len(self) == 0:
+            return pd.DataFrame()
         if method == SamplingMethodEnum.UNIFORM:
             # we cannot just propagate the provided seed to
             # the sample methods as they would then sample

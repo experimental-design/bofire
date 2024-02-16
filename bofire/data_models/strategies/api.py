@@ -2,7 +2,6 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
-from bofire.data_models.strategies.polytope import PolytopeSampler
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -20,6 +19,7 @@ from bofire.data_models.strategies.predictives.sobo import (
 )
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     AlwaysTrueCondition,
     CombiCondition,
@@ -30,9 +30,6 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.strategies.universal_constraint import (
-    UniversalConstraintSampler,
-)
 
 AbstractStrategy = Union[
     Strategy,
@@ -49,8 +46,7 @@ AnyStrategy = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
-    PolytopeSampler,
-    UniversalConstraintSampler,
+    SpaceFillingStrategy,
     RandomStrategy,
     DoEStrategy,
     StepwiseStrategy,
@@ -69,8 +65,6 @@ AnyPredictive = Union[
     QparegoStrategy,
     MoboStrategy,
 ]
-
-AnySampler = Union[PolytopeSampler, UniversalConstraintSampler]
 
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]

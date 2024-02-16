@@ -17,10 +17,8 @@ import bofire.data_models.surrogates.api as surrogate_data_models
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
 from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.domain.api import Outputs
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
-from bofire.strategies.api import PolytopeSampler, QparegoStrategy
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.strategies.api import QparegoStrategy, RandomStrategy
 from tests.bofire.strategies.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
@@ -111,8 +109,8 @@ def test_invalid_qparego_init_domain(domain):
 def test_qparego(num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
@@ -149,8 +147,8 @@ def test_qparego(num_test_candidates):
 def test_qparego_constraints(num_test_candidates):
     # generate data
     benchmark = C2DTLZ2(dim=4)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
@@ -185,8 +183,8 @@ def test_qparego_constraints(num_test_candidates):
 @pytest.mark.slow
 def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
     # generate data
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
         random_strategy.ask(num_experiments), return_complete=True
