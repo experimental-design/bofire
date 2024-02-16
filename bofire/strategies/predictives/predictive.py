@@ -5,13 +5,15 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
-from bofire.data_models.features.api import CategoricalOutput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.data_models.types import TInputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy
-from bofire.utils.naming_conventions import get_column_names
+from bofire.utils.naming_conventions import (
+    get_column_names,
+    postprocess_categorical_predictions,
+)
 
 
 class PredictiveStrategy(Strategy):
@@ -114,22 +116,7 @@ class PredictiveStrategy(Strategy):
                 data=preds,
                 columns=pred_cols,
             )
-        for feat in self.domain.outputs.get():
-            if isinstance(feat, CategoricalOutput):
-                predictions.insert(
-                    loc=0,
-                    column=f"{feat.key}_pred",
-                    value=predictions.filter(regex=f"{feat.key}(.*)_prob")
-                    .idxmax(1)
-                    .str.replace(f"{feat.key}_", "")
-                    .str.replace("_prob", "")
-                    .values,
-                )
-                predictions.insert(
-                    loc=1,
-                    column=f"{feat.key}_sd",
-                    value=0.0,
-                )
+        predictions = postprocess_categorical_predictions(predictions=predictions, outputs=self.domain.outputs)  # type: ignore
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index

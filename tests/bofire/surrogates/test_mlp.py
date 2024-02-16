@@ -7,13 +7,19 @@ from pandas.testing import assert_frame_equal
 
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.domain.api import Inputs, Outputs
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
 )
-from bofire.data_models.surrogates.api import RegressionMLPEnsemble, ScalerEnum
+from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
+from bofire.data_models.surrogates.api import (
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
+    ScalerEnum,
+)
 from bofire.surrogates.mlp import MLP, MLPDataset, _MLPEnsemble, fit_mlp
 from bofire.utils.torch_tools import tkwargs
 
@@ -258,4 +264,46 @@ def test_mlp_ensemble_fit_categorical(scaler):
     surrogate2 = surrogates.map(ens)
     surrogate2.loads(dump)
     preds2 = surrogate2.predict(experiments)
+    assert_frame_equal(preds, preds2)
+
+
+def test_mlp_classification_ensemble_fit():
+    # Define toy problem
+    inputs = Inputs(
+        features=[
+            ContinuousInput(key="x_1", bounds=(-1, 1)),
+            ContinuousInput(key="x_2", bounds=(-1, 1)),
+        ]
+    )
+    outputs = Outputs(
+        features=[
+            CategoricalOutput(
+                key="f_1",
+                categories=["unacceptable", "acceptable"],
+                objective=ConstrainedCategoricalObjective(
+                    categories=["unacceptable", "acceptable"],
+                    desirability=[False, True],
+                ),
+            )
+        ]
+    )
+    domain = Domain(inputs=inputs, outputs=outputs)
+    samples = domain.inputs.sample(10)
+    samples["f_1"] = "unacceptable"
+    samples.loc[samples["x_1"] < 0.0, "f_1"] = "acceptable"
+    samples["valid_f_1"] = 1
+    ens = ClassificationMLPEnsemble(
+        inputs=domain.inputs,
+        outputs=domain.outputs,
+        n_estimators=2,
+        n_epochs=5,
+    )
+    surrogate = surrogates.map(ens)
+    surrogate.fit(experiments=samples)
+
+    preds = surrogate.predict(samples)
+    dump = surrogate.dumps()
+    surrogate2 = surrogates.map(ens)
+    surrogate2.loads(dump)
+    preds2 = surrogate2.predict(samples)
     assert_frame_equal(preds, preds2)

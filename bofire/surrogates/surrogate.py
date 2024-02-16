@@ -8,7 +8,10 @@ from bofire.data_models.domain.domain import is_numeric
 from bofire.data_models.features.api import CategoricalOutput
 from bofire.data_models.surrogates.api import Surrogate as DataModel
 from bofire.surrogates.values import PredictedValue
-from bofire.utils.naming_conventions import get_column_names
+from bofire.utils.naming_conventions import (
+    get_column_names,
+    postprocess_categorical_predictions,
+)
 
 
 class Surrogate(ABC):
@@ -54,21 +57,7 @@ class Surrogate(ABC):
             columns=pred_cols + sd_cols,
         )
         # append predictions for categorical cases
-        for feat in self.outputs.get(CategoricalOutput):
-            predictions.insert(
-                loc=0,
-                column=f"{feat.key}_pred",
-                value=predictions.filter(regex=f"{feat.key}(.*)_prob")
-                .idxmax(1)
-                .str.replace(f"{feat.key}_", "")
-                .str.replace("_prob", "")
-                .values,
-            )
-            predictions.insert(
-                loc=1,
-                column=f"{feat.key}_sd",
-                value=0.0,
-            )
+        predictions = postprocess_categorical_predictions(predictions=predictions, outputs=self.outputs)  # type: ignore
         # validate
         self.validate_predictions(predictions=predictions)
         # return
