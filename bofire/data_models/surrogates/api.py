@@ -18,6 +18,10 @@ try:
         MixedTanimotoGPSurrogate,
     )
     from bofire.data_models.surrogates.mlp import MLPEnsemble
+    from bofire.data_models.surrogates.multi_task_gp import (
+        MultiTaskGPHyperconfig,
+        MultiTaskGPSurrogate,
+    )
     from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
@@ -43,6 +47,7 @@ try:
         LinearSurrogate,
         PolynomialSurrogate,
         TanimotoGPSurrogate,
+        MultiTaskGPSurrogate,
     ]
 
     AnyTrainableSurrogate = Union[
@@ -56,6 +61,7 @@ try:
         LinearSurrogate,
         PolynomialSurrogate,
         TanimotoGPSurrogate,
+        MultiTaskGPSurrogate,
     ]
 except ImportError:
     # with the minimal installationwe don't have botorch

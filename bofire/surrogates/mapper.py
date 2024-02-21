@@ -6,6 +6,7 @@ from bofire.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate
 from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.surrogates.mlp import MLPEnsemble
+from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
@@ -23,6 +24,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.LinearSurrogate: SingleTaskGPSurrogate,
     data_models.PolynomialSurrogate: SingleTaskGPSurrogate,
     data_models.TanimotoGPSurrogate: SingleTaskGPSurrogate,
+    data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
 }
 
 
