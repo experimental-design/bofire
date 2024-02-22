@@ -47,8 +47,6 @@ class Step(BaseModel):
     type: Literal["Step"] = "Step"
     strategy_data: AnyStrategy
     condition: AnyCondition
-
-    # something that happens when entering the step for the first time
     transform: Optional[AnyTransform] = None
 
 
