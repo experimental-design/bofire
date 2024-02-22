@@ -1,5 +1,7 @@
 from copy import deepcopy
+from typing import cast
 
+import pandas as pd
 import pytest
 
 import bofire.strategies.api as strategies
@@ -9,6 +11,7 @@ from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     NumberOfExperimentsCondition,
     RandomStrategy,
+    RemoveTransform,
     SoboStrategy,
     Step,
     StepwiseStrategy,
@@ -30,14 +33,12 @@ def test_StepwiseStrategy_invalid_domains():
                 Step(
                     strategy_data=RandomStrategy(domain=domain2),
                     condition=NumberOfExperimentsCondition(n_experiments=5),
-                    max_parallelism=-1,
                 ),
                 Step(
                     strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
                     condition=NumberOfExperimentsCondition(n_experiments=15),
-                    max_parallelism=2,
                 ),
             ],
         )
@@ -54,14 +55,12 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
                 Step(
                     strategy_data=RandomStrategy(domain=benchmark.domain),
                     condition=AlwaysTrueCondition(),
-                    max_parallelism=-1,
                 ),
                 Step(
                     strategy_data=SoboStrategy(
                         domain=benchmark.domain, acquisition_function=qNEI()
                     ),
                     condition=NumberOfExperimentsCondition(n_experiments=10),
-                    max_parallelism=2,
                 ),
             ],
         )
@@ -69,7 +68,7 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
 
 @pytest.mark.parametrize(
     "n_experiments, expected_strategy, expected_index",
-    [(5, RandomStrategy, 0), (10, SoboStrategy, 1)],
+    [(5, strategies.RandomStrategy), (10, strategies.SoboStrategy)],
 )
 def test_StepWiseStrategy_get_step(n_experiments, expected_strategy, expected_index):
     benchmark = Himmelblau()
@@ -82,22 +81,20 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy, expected_in
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
                 condition=NumberOfExperimentsCondition(n_experiments=6),
-                max_parallelism=-1,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
-                max_parallelism=2,
             ),
         ],
     )
-    strategy = strategies.map(data_model)
+    strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
-    i, step = strategy._get_step()
-    assert isinstance(step.strategy_data, expected_strategy)
-    assert i == expected_index
+    strategy, transform = strategy._get_step()
+    assert transform is None
+    assert isinstance(strategy, expected_strategy)
 
 
 def test_StepWiseStrategy_get_step_invalid():
@@ -109,18 +106,16 @@ def test_StepWiseStrategy_get_step_invalid():
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
                 condition=NumberOfExperimentsCondition(n_experiments=6),
-                max_parallelism=-1,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
-                max_parallelism=2,
             ),
         ],
     )
-    strategy = strategies.map(data_model)
+    strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
     with pytest.raises(ValueError, match="No condition could be satisfied."):
         strategy._get_step()
@@ -134,14 +129,12 @@ def test_StepWiseStrategy_invalid_ask():
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
                 condition=NumberOfExperimentsCondition(n_experiments=8),
-                max_parallelism=2,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
-                max_parallelism=2,
             ),
         ],
     )
@@ -163,14 +156,12 @@ def test_StepWiseStrategy_ask():
             Step(
                 strategy_data=RandomStrategy(domain=benchmark.domain),
                 condition=NumberOfExperimentsCondition(n_experiments=5),
-                max_parallelism=2,
             ),
             Step(
                 strategy_data=SoboStrategy(
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
-                max_parallelism=2,
             ),
         ],
     )
@@ -178,3 +169,43 @@ def test_StepWiseStrategy_ask():
     strategy.tell(experiments=experiments)
     candidates = strategy.ask(2)
     assert len(candidates) == 2
+
+
+def test_remove_transition():
+    benchmark = Himmelblau()
+    data_model = StepwiseStrategy(
+        domain=benchmark.domain,
+        steps=[
+            Step(
+                strategy_data=RandomStrategy(domain=benchmark.domain),
+                condition=NumberOfExperimentsCondition(n_experiments=2),
+            ),
+            Step(
+                strategy_data=SoboStrategy(
+                    domain=benchmark.domain, acquisition_function=qNEI()
+                ),
+                condition=AlwaysTrueCondition(),
+                transform=RemoveTransform(to_be_removed_experiments=[0, 1]),
+            ),
+        ],
+    )
+    strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
+    n_samples = 4
+    experiments = pd.concat(
+        [
+            benchmark.domain.inputs.sample(n_samples),
+            pd.DataFrame({"y": [1] * n_samples}),
+        ],
+        axis=1,
+    )
+    strategy.tell(experiments=experiments)
+    for _ in range(2):
+        x = strategy.ask()
+        xy = pd.concat([x, pd.DataFrame({"y": [2]})], axis=1)
+        strategy.tell(experiments=xy)
+    last_strategy, _ = strategy._get_step()
+    assert last_strategy.experiments is not None and len(last_strategy.experiments) == 3
+
+
+if __name__ == "__main__":
+    test_remove_transition()

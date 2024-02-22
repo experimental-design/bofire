@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Union
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -9,7 +9,7 @@ from bofire.data_models.domain.api import Domain
 
 class Condition(object):
     @abstractmethod
-    def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
+    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
         pass
 
 
@@ -17,7 +17,7 @@ class NumberOfExperimentsCondition(Condition):
     def __init__(self, data_model: data_models.NumberOfExperimentsCondition):
         self.n_experiments = data_model.n_experiments
 
-    def evaluate(self, domain: Domain, experiments: Union[pd.DataFrame, None]) -> bool:
+    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
         if experiments is None:
             n_experiments = 0
         else:
@@ -31,7 +31,7 @@ class AlwaysTrueCondition(Condition):
     def __init__(self, data_model: data_models.AlwaysTrueCondition):
         pass
 
-    def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
+    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
         return True
 
 
@@ -40,7 +40,7 @@ class CombiCondition(Condition):
         self.conditions = [map(c) for c in data_model.conditions]  # type: ignore
         self.n_required_conditions = data_model.n_required_conditions
 
-    def evaluate(self, domain: Domain, experiments: pd.DataFrame) -> bool:
+    def evaluate(self, domain: Domain, experiments: Optional[pd.DataFrame]) -> bool:
         n_matched_conditions = 0
         for c in self.conditions:
             if c.evaluate(domain, experiments):

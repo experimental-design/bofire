@@ -41,3 +41,6 @@ class CombiCondition(Condition):
                 "Number of required conditions larger than number of conditions."
             )
         return v
+
+
+AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
