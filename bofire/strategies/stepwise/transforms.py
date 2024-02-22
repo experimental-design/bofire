@@ -25,12 +25,10 @@ class RemoveTransform(Transform):
         self.to_be_removed_experiments = data_model.to_be_removed_experiments
 
     def transform_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        experiments = experiments.drop(self.to_be_removed_experiments)
-        return experiments
+        return experiments.drop(self.to_be_removed_experiments)
 
     def transform_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        candidates = candidates.drop(self.to_be_removed_candidates)
-        return candidates
+        return candidates.drop(self.to_be_removed_candidates)
 
 
 TRANSFORM_MAP = {
