@@ -30,7 +30,7 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     Step,
     StepwiseStrategy,
 )
-from bofire.data_models.strategies.stepwise.transitions import (  # noqa: F401
+from bofire.data_models.strategies.stepwise.transforms import (  # noqa: F401
     AnyTransform,
     RemoveTransform,
 )
