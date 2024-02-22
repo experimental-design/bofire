@@ -4,7 +4,7 @@ import pandas as pd
 from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
-import bofire.strategies.stepwise.conditions as conditions
+import bofire.data_models.transforms as transforms
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
 from bofire.strategies.doe_strategy import DoEStrategy
@@ -22,7 +22,6 @@ from bofire.strategies.predictives.sobo import (
 from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.space_filling import SpaceFillingStrategy
-from bofire.strategies.stepwise import transforms
 from bofire.strategies.strategy import Strategy
 
 # we have to duplicate the map functionality due to prevent circular imports
@@ -64,10 +63,8 @@ class StepwiseStrategy(Strategy):
     def __init__(self, data_model: data_model, **kwargs):
         super().__init__(data_model, **kwargs)
         self.stratgies = [_map(s.strategy_data) for s in data_model.steps]
-        self.conditions = [conditions.map(s.condition) for s in data_model.steps]
-        self.transforms = [
-            s.transform and transforms.map(s.transform) for s in data_model.steps
-        ]
+        self.conditions = [s.condition for s in data_model.steps]
+        self.transforms = [s.transform for s in data_model.steps]
 
     def has_sufficient_experiments(self) -> bool:
         return True

@@ -23,8 +23,8 @@ from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import AlwaysTrueCondition
-from bofire.data_models.strategies.stepwise.transforms import AnyTransform
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.transforms import AnyTransform
 
 AnyStrategy = Union[
     SoboStrategy,
