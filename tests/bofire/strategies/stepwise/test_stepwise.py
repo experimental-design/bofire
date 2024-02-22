@@ -67,7 +67,7 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
 
 
 @pytest.mark.parametrize(
-    "n_experiments, expected_strategy, expected_index",
+    "n_experiments, expected_strategy",
     [(5, strategies.RandomStrategy), (10, strategies.SoboStrategy)],
 )
 def test_StepWiseStrategy_get_step(n_experiments, expected_strategy, expected_index):
@@ -205,7 +205,3 @@ def test_remove_transition():
         strategy.tell(experiments=xy)
     last_strategy, _ = strategy._get_step()
     assert last_strategy.experiments is not None and len(last_strategy.experiments) == 3
-
-
-if __name__ == "__main__":
-    test_remove_transition()
