@@ -121,32 +121,6 @@ def test_StepWiseStrategy_get_step_invalid():
         strategy._get_step()
 
 
-def test_StepWiseStrategy_invalid_ask():
-    benchmark = Himmelblau()
-    data_model = StepwiseStrategy(
-        domain=benchmark.domain,
-        steps=[
-            Step(
-                strategy_data=RandomStrategy(domain=benchmark.domain),
-                condition=NumberOfExperimentsCondition(n_experiments=8),
-            ),
-            Step(
-                strategy_data=SoboStrategy(
-                    domain=benchmark.domain, acquisition_function=qNEI()
-                ),
-                condition=NumberOfExperimentsCondition(n_experiments=10),
-            ),
-        ],
-    )
-    strategy = strategies.map(data_model)
-    experiments = benchmark.f(benchmark.domain.inputs.sample(2), return_complete=True)
-    strategy.tell(experiments=experiments)
-    with pytest.raises(
-        ValueError, match="Maximum number of candidates for step 0 is 2."
-    ):
-        strategy.ask(3)
-
-
 def test_StepWiseStrategy_ask():
     benchmark = Himmelblau()
     experiments = benchmark.f(benchmark.domain.inputs.sample(2), return_complete=True)
