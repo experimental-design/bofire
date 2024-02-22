@@ -2,6 +2,7 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.predictives.active_learning import ActiveLearningStrategy
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -40,6 +41,7 @@ AbstractStrategy = Union[
 
 AnyStrategy = Union[
     SoboStrategy,
+    ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     CustomSoboStrategy,
@@ -57,6 +59,7 @@ AnyStrategy = Union[
 
 AnyPredictive = Union[
     SoboStrategy,
+    ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     CustomSoboStrategy,
