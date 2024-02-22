@@ -68,3 +68,8 @@ specs.add_valid(
     acquisition_functions.qLogNEHVI,
     lambda: {"alpha": random.random(), "prune_baseline": random.choice([True, False])},
 )
+
+specs.add_valid(
+    acquisition_functions.qNegIntPosVar,
+    lambda: {"n_points": random.randint(1, 1024)},
+)

@@ -69,3 +69,8 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     type: Literal["qLogNEHVI"] = "qLogNEHVI"
     alpha: Annotated[float, Field(ge=0)] = 0.0
     prune_baseline: bool = True
+
+
+class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
+    type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
+    n_points: Annotated[int, Field(ge=1)] = 1024

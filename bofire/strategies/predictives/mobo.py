@@ -84,56 +84,6 @@ class MoboStrategy(BotorchStrategy):
         )
         return [acqf]
 
-    # def _get_acqfs(
-    #     self, n
-    # ) -> List[
-    #     Union[
-    #         qExpectedHypervolumeImprovement,
-    #         qNoisyExpectedHypervolumeImprovement,
-    #         qLogNoisyExpectedHypervolumeImprovement,
-    #         qLogExpectedHypervolumeImprovement,
-    #     ]
-    # ]:
-    #     df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-    #         self.experiments
-    #     )
-
-    #     train_obj = (
-    #         df[self.domain.outputs.get_keys_by_objective(excludes=None)].values
-    #         * self.ref_point_mask
-    #     )
-    #     ref_point = self.get_adjusted_refpoint()
-    #     weights = np.array(
-    #         [
-    #             feat.objective.w  # type: ignore
-    #             for feat in self.domain.outputs.get_by_objective(excludes=None)
-    #         ]
-    #     )
-    #     # compute points that are better than the known reference point
-    #     better_than_ref = (train_obj > ref_point).all(axis=-1)
-    #     # partition non-dominated space into disjoint rectangles
-    #     partitioning = NondominatedPartitioning(
-    #         ref_point=torch.from_numpy(ref_point * weights),
-    #         # use observations that are better than the specified reference point and feasible
-    #         Y=torch.from_numpy(train_obj[better_than_ref]),
-    #     )
-
-    #     _, X_pending = self.get_acqf_input_tensors()
-
-    #     assert self.model is not None
-    #     # setup the acqf
-    #     acqf = qExpectedHypervolumeImprovement(
-    #         model=self.model,
-    #         ref_point=ref_point,  # use known reference point
-    #         partitioning=partitioning,
-    #         # sampler=self.sampler,
-    #         # define an objective that specifies which outcomes are the objectives
-    #         objective=self._get_objective(),
-    #         X_pending=X_pending,
-    #     )
-    #     acqf._default_sample_shape = torch.Size([self.num_sobol_samples])
-    #     return [acqf]
-
     def _get_objective(self) -> GenericMCMultiOutputObjective:
         objective = get_multiobjective_objective(outputs=self.domain.outputs)
         return GenericMCMultiOutputObjective(objective=objective)
