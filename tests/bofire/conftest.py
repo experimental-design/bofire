@@ -74,6 +74,11 @@ def invalid_condition_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
+@fixture(params=specs.transforms.invalids)
+def invalid_transfomrs_spec(request) -> specs.InvalidSpec:
+    return request.param
+
+
 @fixture(params=specs.outlier_detection.invalids)
 def invalid_outlier_detection_spec(request) -> specs.InvalidSpec:
     return request.param
