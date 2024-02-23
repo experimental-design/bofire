@@ -66,12 +66,12 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
                 ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
             )
 
-        elif hyperparameters.kernel == "matern_2.5":
+        elif hyperparameters.continuous_kernel == "matern_2.5":
             surrogate_data.continuous_kernel = MaternKernel(
                 ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=2.5
             )
 
-        elif hyperparameters.kernel == "matern_1.5":
+        elif hyperparameters.continuous_kernel == "matern_1.5":
             surrogate_data.continuous_kernel = MaternKernel(
                 ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=1.5
             )
