@@ -30,9 +30,7 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
 )
-from bofire.data_models.molfeatures.api import (
-    MordredDescriptors,
-)
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
@@ -281,6 +279,49 @@ def test_SingleTaskGPHyperconfig():
             surrogate_data.kernel.base_kernel.lengthscale_prior
             == BOTORCH_LENGTHCALE_PRIOR()
         )
+
+
+def test_MixedSingleTaskGPHyperconfig():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    MixedSingleTaskGP(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    # candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
+    # surrogate_data.update_hyperparameters(candidate)
+    # assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
+    # if candidate.kernel == "matern_1.5":
+    #     assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+    #     assert surrogate_data.kernel.base_kernel.nu == 1.5
+    # elif candidate.kernel == "matern_2.5":
+    #     assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+    #     assert surrogate_data.kernel.base_kernel.nu == 2.5
+    # else:
+    #     assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
+    # if candidate.prior == "mbo":
+    #     assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+    #     assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
+    #     assert (
+    #         surrogate_data.kernel.base_kernel.lengthscale_prior
+    #         == MBO_LENGTHCALE_PRIOR()
+    #     )
+    # else:
+    #     assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+    #     assert surrogate_data.kernel.outputscale_prior == BOTORCH_SCALE_PRIOR()
+    #     assert (
+    #         surrogate_data.kernel.base_kernel.lengthscale_prior
+    #         == BOTORCH_LENGTHCALE_PRIOR()
+    #     )
 
 
 def test_MixedSingleTaskGPModel_invalid_preprocessing():

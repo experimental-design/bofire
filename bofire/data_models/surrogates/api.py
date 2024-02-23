@@ -15,6 +15,7 @@ try:
         MixedSingleTaskGPSurrogate,
     )
     from bofire.data_models.surrogates.mixed_tanimoto_gp import (
+        MixedSingleTaskGPHyperconfig,
         MixedTanimotoGPSurrogate,
     )
     from bofire.data_models.surrogates.mlp import MLPEnsemble
