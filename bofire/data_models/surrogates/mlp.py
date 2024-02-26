@@ -23,17 +23,7 @@ class MLPEnsemble(TrainableBotorchSurrogate):
     weight_decay: Annotated[float, Field(ge=0.0)] = 0.0
     subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
     shuffle: bool = True
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
-
-    # @classmethod
-    # def is_output_implemented(cls, my_type: str) -> bool:
-    #     """Abstract method to check output type for surrogate models
-    #     Args:
-    #         my_type: continuous or categorical output
-    #     Returns:
-    #         bool: True if the output type is valid for the surrogate chosen, False otherwise
-    #     """
-    #     return isinstance(my_type, (CategoricalOutput, ContinuousOutput))
+    scalar: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
 
 
 class RegressionMLPEnsemble(MLPEnsemble):
