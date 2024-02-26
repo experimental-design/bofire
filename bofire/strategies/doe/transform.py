@@ -3,7 +3,7 @@ from typing import Tuple, Union
 
 import numpy as np
 
-from bofire.data_models.domain.api import Domain
+from bofire.data_models.domain.api import Inputs
 
 
 class Transform(ABC):
@@ -29,11 +29,11 @@ class MinMaxTransform(Transform):
 
     def __init__(
         self,
-        domain: Domain,
+        inputs: Inputs,
         n_experiments: int,
         feature_range: Tuple[int, int] = (-1, 1),
     ):
-        lower, upper = domain.inputs.get_bounds(specs={})
+        lower, upper = inputs.get_bounds(specs={})
         self._range = np.tile(np.array(upper) - np.array(lower), n_experiments)
         self._lower = np.array(lower * n_experiments)
         self._transformed_range = feature_range[1] - feature_range[0]
