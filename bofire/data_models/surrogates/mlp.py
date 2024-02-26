@@ -23,13 +23,13 @@ class MLPEnsemble(TrainableBotorchSurrogate):
     weight_decay: Annotated[float, Field(ge=0.0)] = 0.0
     subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
     shuffle: bool = True
-    scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
-    output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
 
 
 class RegressionMLPEnsemble(MLPEnsemble):
     type: Literal["RegressionMLPEnsemble"] = "RegressionMLPEnsemble"
     final_activation: Literal["identity"] = "identity"
+    scaler: ScalerEnum = ScalerEnum.IDENTITY
+    output_scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
@@ -45,6 +45,8 @@ class RegressionMLPEnsemble(MLPEnsemble):
 class ClassificationMLPEnsemble(MLPEnsemble):
     type: Literal["ClassificationMLPEnsemble"] = "ClassificationMLPEnsemble"
     final_activation: Literal["softmax"] = "softmax"
+    scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
+    output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
