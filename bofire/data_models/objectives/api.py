@@ -1,7 +1,6 @@
 from typing import Union
 
 from bofire.data_models.objectives.categorical import (
-    CategoricalObjective,
     ConstrainedCategoricalObjective,
 )
 from bofire.data_models.objectives.identity import (
@@ -26,7 +25,6 @@ AbstractObjective = Union[
     IdentityObjective,
     SigmoidObjective,
     ConstrainedObjective,
-    CategoricalObjective,
 ]
 
 AnyCategoricalObjective = ConstrainedCategoricalObjective

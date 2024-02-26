@@ -12,13 +12,7 @@ from bofire.data_models.objectives.objective import (
 from bofire.data_models.types import TCategoryVals
 
 
-class CategoricalObjective:
-    """Abstract categorical objective class"""
-
-
-class ConstrainedCategoricalObjective(
-    ConstrainedObjective, CategoricalObjective, Objective
-):
+class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
     """Compute the categorical objective value as:
 
         Po where P is an [n, c] matrix where each row is a probability vector

@@ -32,7 +32,7 @@ from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import (
     AbstractObjective,
-    CategoricalObjective,
+    ConstrainedCategoricalObjective,
     Objective,
 )
 from bofire.data_models.types import TInputTransformSpecs
@@ -760,7 +760,7 @@ class Outputs(Features):
                 [
                     [f"{feat.key}_pred", f"{feat.key}_sd", f"{feat.key}_des"]
                     for feat in self.get_by_objective(
-                        includes=Objective, excludes=CategoricalObjective
+                        includes=Objective, excludes=ConstrainedCategoricalObjective
                     )
                 ]
                 + [
