@@ -23,7 +23,8 @@ class MLPEnsemble(TrainableBotorchSurrogate):
     weight_decay: Annotated[float, Field(ge=0.0)] = 0.0
     subsample_fraction: Annotated[float, Field(gt=0.0)] = 1.0
     shuffle: bool = True
-    scalar: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
+    scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
+    output_scaler: Literal[ScalerEnum.IDENTITY] = ScalerEnum.IDENTITY
 
 
 class RegressionMLPEnsemble(MLPEnsemble):
