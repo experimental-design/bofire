@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Type
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,7 @@ from formulaic import Formula
 from torch import Tensor
 
 from bofire.data_models.domain.api import Domain
+from bofire.strategies.doe.transform import AnyTransform, IndentityTransform
 from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.utils.torch_tools import tkwargs
 
@@ -20,6 +21,7 @@ class Objective:
         model: Formula,
         n_experiments: int,
         delta: float = 1e-6,
+        transform: Optional[AnyTransform] = None,
     ) -> None:
         """
         Args:
@@ -32,6 +34,10 @@ class Objective:
 
         self.model = deepcopy(model)
         self.domain = deepcopy(domain)
+        self.transform = transform or IndentityTransform()
+        # self.transform = transform or MinMaxTransform(
+        #     domain=domain, n_experiments=n_experiments
+        # )
         self.n_experiments = n_experiments
         self.delta = delta
 
@@ -58,12 +64,18 @@ class Objective:
     def __call__(self, x: np.ndarray) -> float:
         return self.evaluate(x)
 
-    @abstractmethod
     def evaluate(self, x: np.ndarray) -> float:
-        pass
+        return self._evaluate(self.transform(x=x))
 
     @abstractmethod
+    def _evaluate(self, x: np.ndarray) -> float:
+        pass
+
     def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+        return self._evaluate_jacobian(x) * self.transform.jacobian(x=x)
+
+    @abstractmethod
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         pass
 
     def _convert_input_to_model_tensor(
@@ -142,7 +154,7 @@ class DOptimality(Objective):
             domain=domain, model=model, n_experiments=n_experiments, delta=delta
         )
 
-    def evaluate(self, x: np.ndarray) -> float:
+    def _evaluate(self, x: np.ndarray) -> float:
         """Computes the minus one times the sum of the log of the eigenvalues of X.T @ X + delta.
         Where X is the model matrix corresponding to x.
 
@@ -161,7 +173,7 @@ class DOptimality(Objective):
             )
         )
 
-    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the jacobian of minus one times the log of the determinant of X.T @ X + delta.
         Where X is the model matrix corresponding to x.
 
@@ -197,7 +209,7 @@ class AOptimality(Objective):
     the jacobian of tr((X.T@X + delta)^-1) instead of logdet(X.T@X + delta).
     """
 
-    def evaluate(self, x: np.ndarray) -> float:
+    def _evaluate(self, x: np.ndarray) -> float:
         """Computes the trace of the inverse of X.T @ X + delta.
         Where X is the model matrix corresponding to x.
 
@@ -218,7 +230,7 @@ class AOptimality(Objective):
             )
         )
 
-    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the jacobian of the trace of the inverse of X.T @ X + delta.
         Where X is the model matrix corresponding to x.
 
@@ -257,7 +269,7 @@ class GOptimality(Objective):
     logdet(X.T@X + delta).
     """
 
-    def evaluate(self, x: np.ndarray) -> float:
+    def _evaluate(self, x: np.ndarray) -> float:
         """Computes the maximum diagonal entry of H = X @ (X.T@X + delta)^-1 @ X.T .
         Where X is the model matrix corresponding to x.
 
@@ -278,7 +290,7 @@ class GOptimality(Objective):
         )
         return float(torch.max(torch.diag(H)))
 
-    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the jacobian of the maximum diagonal element of H = X @ (X.T @ X + delta)^-1 @ X.T.
         Where X is the model matrix corresponding to x.
 
@@ -321,7 +333,7 @@ class EOptimality(Objective):
     logdet(X.T@X + delta).
     """
 
-    def evaluate(self, x: np.ndarray) -> float:
+    def _evaluate(self, x: np.ndarray) -> float:
         """Computes minus one times the minimum eigenvalue of (X.T@X + delta).
         Where X is the model matrix corresponding to x.
 
@@ -341,7 +353,7 @@ class EOptimality(Objective):
             )
         )
 
-    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the jacobian of minus one times the minimum eigenvalue of (X.T @ X + delta).
         Where X is the model matrix corresponding to x.
 
@@ -380,7 +392,7 @@ class KOptimality(Objective):
     of (X.T @ X + delta) instead of logdet(X.T@X + delta).
     """
 
-    def evaluate(self, x: np.ndarray) -> float:
+    def _evaluate(self, x: np.ndarray) -> float:
         """Computes condition number of (X.T@X + delta).
         Where X is the model matrix corresponding to x.
 
@@ -397,7 +409,7 @@ class KOptimality(Objective):
             )
         )
 
-    def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
+    def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
         """Computes the jacobian of the condition number of (X.T @ X + delta).
         Where X is the model matrix corresponding to x.
 
@@ -430,13 +442,13 @@ class KOptimality(Objective):
 
 
 class SpaceFilling(Objective):
-    def evaluate(self, x: np.ndarray) -> float:
+    def _evaluate(self, x: np.ndarray) -> float:
         X = self._convert_input_to_tensor(x, requires_grad=False)
         return float(
             -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments])
         )
 
-    def evaluate_jacobian(self, x: np.ndarray) -> float:
+    def _evaluate_jacobian(self, x: np.ndarray) -> float:
         X = self._convert_input_to_tensor(x, requires_grad=True)
         torch.sum(torch.sort(torch.pdist(X))[0][: self.n_experiments]).backward()
 
