@@ -15,6 +15,7 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
 from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
+    MLPEnsemble,
     RegressionMLPEnsemble,
 )
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
@@ -29,7 +30,7 @@ from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.surrogates.trainable import MeanAggregation, SumAggregation
 from bofire.data_models.surrogates.xgb import XGBoostSurrogate
 
-AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
+AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate, MLPEnsemble]
 
 
 AnySurrogate = Union[
