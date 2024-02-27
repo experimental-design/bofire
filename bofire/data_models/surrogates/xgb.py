@@ -1,12 +1,14 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, Type
 
 from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
+    AnyOutput,
     CategoricalDescriptorInput,
     CategoricalInput,
+    ContinuousOutput,
     NumericalInput,
 )
 from bofire.data_models.surrogates.surrogate import Surrogate
@@ -76,3 +78,13 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
             if v.get(key) is not None:
                 raise ValueError("Currently no numeric transforms are supported.")
         return v
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))

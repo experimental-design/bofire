@@ -158,9 +158,11 @@ def test_qehvi(strategy, use_ref_point, num_test_candidates):
     assert isinstance(acqf.objective, GenericMCMultiOutputObjective)
     assert isinstance(
         acqf,
-        qExpectedHypervolumeImprovement
-        if strategy == data_models.QehviStrategy
-        else qNoisyExpectedHypervolumeImprovement,
+        (
+            qExpectedHypervolumeImprovement
+            if strategy == data_models.QehviStrategy
+            else qNoisyExpectedHypervolumeImprovement
+        ),
     )
     # test acqf calc
     # acqf_vals = my_strategy._choose_from_pool(experiments_test, num_test_candidates)

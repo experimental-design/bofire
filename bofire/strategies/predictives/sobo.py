@@ -64,17 +64,23 @@ class SoboStrategy(BotorchStrategy):
             X_pending=X_pending,
             constraints=constraint_callables,
             mc_samples=self.num_sobol_samples,
-            beta=self.acquisition_function.beta
-            if isinstance(self.acquisition_function, qUCB)
-            else 0.2,
-            tau=self.acquisition_function.tau
-            if isinstance(self.acquisition_function, qPI)
-            else 1e-3,
+            beta=(
+                self.acquisition_function.beta
+                if isinstance(self.acquisition_function, qUCB)
+                else 0.2
+            ),
+            tau=(
+                self.acquisition_function.tau
+                if isinstance(self.acquisition_function, qPI)
+                else 1e-3
+            ),
             eta=torch.tensor(etas).to(**tkwargs),
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
-            prune_baseline=self.acquisition_function.prune_baseline
-            if isinstance(self.acquisition_function, (qNEI, qLogNEI))
-            else True,
+            prune_baseline=(
+                self.acquisition_function.prune_baseline
+                if isinstance(self.acquisition_function, (qNEI, qLogNEI))
+                else True
+            ),
         )
         return [acqf]
 

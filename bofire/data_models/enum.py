@@ -28,6 +28,13 @@ class CategoricalEncodingEnum(Enum):
     DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
+class ClassificationMetricsEnum(Enum):
+    """Enumeration class for classification metrics."""
+
+    ACCURACY = "ACCURACY"
+    F1 = "F1"
+
+
 class OutputFilteringEnum(Enum):
     ALL = "ALL"
     ANY = "ANY"

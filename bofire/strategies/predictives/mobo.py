@@ -77,9 +77,11 @@ class MoboStrategy(BotorchStrategy):
             mc_samples=self.num_sobol_samples,
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             alpha=self.acquisition_function.alpha,
-            prune_baseline=self.acquisition_function.prune_baseline
-            if isinstance(self.acquisition_function, (qLogNEHVI, qNEHVI))
-            else True,
+            prune_baseline=(
+                self.acquisition_function.prune_baseline
+                if isinstance(self.acquisition_function, (qLogNEHVI, qNEHVI))
+                else True
+            ),
             Y=Y,
         )
         return [acqf]

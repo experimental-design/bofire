@@ -5,8 +5,13 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.domain.domain import is_numeric
+from bofire.data_models.features.api import CategoricalOutput
 from bofire.data_models.surrogates.api import Surrogate as DataModel
 from bofire.surrogates.values import PredictedValue
+from bofire.utils.naming_conventions import (
+    get_column_names,
+    postprocess_categorical_predictions,
+)
 
 
 class Surrogate(ABC):
@@ -44,27 +49,33 @@ class Surrogate(ABC):
             Xt[c] = pd.to_numeric(Xt[c], errors="raise")
         # predict
         preds, stds = self._predict(Xt)
+        # set up column names
+        pred_cols, sd_cols = get_column_names(self.outputs)  # type: ignore
         # postprocess
         predictions = pd.DataFrame(
             data=np.hstack((preds, stds)),
-            columns=["%s_pred" % featkey for featkey in self.outputs.get_keys()]
-            + ["%s_sd" % featkey for featkey in self.outputs.get_keys()],
+            columns=pred_cols + sd_cols,
         )
+        # append predictions for categorical cases
+        predictions = postprocess_categorical_predictions(predictions=predictions, outputs=self.outputs)  # type: ignore
         # validate
         self.validate_predictions(predictions=predictions)
         # return
         return predictions
 
     def validate_predictions(self, predictions: pd.DataFrame) -> pd.DataFrame:
-        expected_cols = [
-            f"{key}_{t}" for key in self.outputs.get_keys() for t in ["pred", "sd"]
-        ]
+        # Get the column names
+        pred_cols, sd_cols = get_column_names(self.outputs)  # type: ignore
+        expected_cols = pred_cols + sd_cols
+        check_columns = list(expected_cols)
+        for featkey in self.outputs.get_keys(CategoricalOutput):
+            expected_cols = expected_cols + [f"{featkey}_{t}" for t in ["pred", "sd"]]
         if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
                 f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
             )
         # check that values are numeric
-        if not is_numeric(predictions):
+        if not is_numeric(predictions[check_columns]):
             raise ValueError("Not all values in predictions are numeric.")
         return predictions
 

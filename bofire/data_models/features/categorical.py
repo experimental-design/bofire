@@ -1,12 +1,12 @@
-from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
+from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import TCategoryVals
 
 
@@ -336,19 +336,30 @@ class CategoricalOutput(Output):
     order_id: ClassVar[int] = 9
 
     categories: TCategoryVals
-    objective: Annotated[List[Annotated[float, Field(ge=0, le=1)]], Field(min_length=2)]
+    objective: AnyCategoricalObjective
 
-    @field_validator("objective")
-    @classmethod
-    def validate_objective(cls, objective, info):
-        if len(objective) != len(info.data["categories"]):
-            raise ValueError("Length of objectives and categories do not match.")
-        for o in objective:
-            if o > 1:
-                raise ValueError("Objective values has to be smaller equal than 1.")
-            if o < 0:
-                raise ValueError("Objective values has to be larger equal than zero")
-        return objective
+    @model_validator(mode="after")
+    def validate_objective_categories(self):
+        """validates that objective categories match the output categories
+
+        Raises:
+            ValueError: when categories do not match objective categories
+
+        Returns:
+            self
+        """
+        if self.objective.categories != self.categories:  # type: ignore
+            raise ValueError("categories must match to objective categories")
+        return self
+
+    def __call__(self, values: pd.Series) -> pd.Series:
+        if self.objective is None:
+            return pd.Series(
+                data=[np.nan for _ in range(len(values))],
+                index=values.index,
+                name=values.name,
+            )
+        return self.objective(values)  # type: ignore
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)
@@ -358,9 +369,5 @@ class CategoricalOutput(Output):
             )
         return values
 
-    def to_dict(self) -> Dict:
-        """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.categories, self.objective))
-
-    def __call__(self, values: pd.Series) -> pd.Series:
-        return values.map(self.to_dict()).astype(float)
+    def __str__(self) -> str:
+        return "CategoricalOutputFeature"

@@ -40,7 +40,7 @@ def test_hartmann():
         (Branin, True, {}),
         (Branin, False, {}),
         (Branin30, True, {}),
-        (Branin30, False, {})
+        (Branin30, False, {}),
         # TO DO: Implement feature that tests Ackley for categorical and descriptive inputs.
         # (Ackley, {"categorical": True}),
         # (Ackley, {"descriptor": True}),
