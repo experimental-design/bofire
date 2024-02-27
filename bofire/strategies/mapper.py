@@ -3,6 +3,7 @@ from typing import Dict, Type
 import bofire.data_models.strategies.api as data_models
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.factorial import FactorialStrategy
+from bofire.strategies.predictives.active_learning import ActiveLearningStrategy
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.predictives.mobo import MoboStrategy
 from bofire.strategies.predictives.predictive import PredictiveStrategy
@@ -25,6 +26,7 @@ STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.RandomStrategy: RandomStrategy,
     data_models.SoboStrategy: SoboStrategy,
     data_models.AdditiveSoboStrategy: AdditiveSoboStrategy,
+    data_models.ActiveLearningStrategy: ActiveLearningStrategy,
     data_models.MultiplicativeSoboStrategy: MultiplicativeSoboStrategy,
     data_models.CustomSoboStrategy: CustomSoboStrategy,
     data_models.QehviStrategy: QehviStrategy,
