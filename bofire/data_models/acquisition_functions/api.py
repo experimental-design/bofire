@@ -25,7 +25,18 @@ AbstractAcquisitionFunction = [
 ]
 
 AnyAcquisitionFunction = Union[
-    qNEI, qEI, qSR, qUCB, qPI, qLogEI, qLogNEI, qEHVI, qLogEHVI, qNEHVI, qLogNEHVI
+    qNEI,
+    qEI,
+    qSR,
+    qUCB,
+    qPI,
+    qLogEI,
+    qLogNEI,
+    qEHVI,
+    qLogEHVI,
+    qNEHVI,
+    qLogNEHVI,
+    qNegIntPosVar,
 ]
 
 AnySingleObjectiveAcquisitionFunction = Union[

@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Type
+from typing import Literal, Type
 
 from pydantic import Field, field_validator
 
@@ -6,8 +6,9 @@ from bofire.data_models.acquisition_functions.api import (
     AnyActiveLearningAcquisitionFunction,
     qNegIntPosVar,
 )
+from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import CategoricalOutput, Feature
-from bofire.data_models.objectives.api import ConstrainedObjective, Objective
+from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
@@ -16,6 +17,16 @@ class ActiveLearningStrategy(BotorchStrategy):
     acquisition_function: AnyActiveLearningAcquisitionFunction = Field(
         default_factory=lambda: qNegIntPosVar()
     )
+
+    @field_validator("domain")
+    @classmethod
+    def validate_domain_is_multiobjective(cls, domain: Domain):
+        """Validate that the domain contains only one output feature."""
+        if len(domain.outputs) != 1:
+            raise ValueError(
+                f"Only one output feature allowed for `ActiveLearningStrategy`, got {len(domain.outputs)}."
+            )
+        return domain
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
@@ -42,17 +53,3 @@ class ActiveLearningStrategy(BotorchStrategy):
             bool: True if the objective type is valid for the strategy chosen, False otherwise
         """
         return True
-    
-    @field_validator("domain")
-    @classmethod
-    def validate_is_singleobjective(cls, v, values):
-        if len(v.outputs) == 1:
-            return v
-        if (
-            len(v.outputs.get_by_objective(excludes=ConstrainedObjective))
-            - len(v.outputs.get_by_objective(includes=None, excludes=Objective))
-        ) > 1:
-            raise ValueError(
-                "Active learning strategy can only deal with one objective."
-            )
-        return v
