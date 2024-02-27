@@ -13,6 +13,10 @@ from bofire.strategies.predictives.botorch import BotorchStrategy
 
 
 class ActiveLearningStrategy(BotorchStrategy):
+    """ActiveLearningStrategy that uses an acquisition function which focuses on
+    pure exploration of the objective function only.
+    """
+
     def __init__(
         self,
         data_model: DataModel,
@@ -20,7 +24,7 @@ class ActiveLearningStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
-        
+
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
         assert self.model is not None
 
@@ -34,8 +38,6 @@ class ActiveLearningStrategy(BotorchStrategy):
 
         # Instantiate active_learning acquisition function
         acqf = qNegIntegratedPosteriorVariance(
-            model=self.model,
-            mc_points=mc_points,
-            X_pending=X_pending
+            model=self.model, mc_points=mc_points, X_pending=X_pending
         )
         return [acqf]
