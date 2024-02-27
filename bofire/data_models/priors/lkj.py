@@ -16,6 +16,6 @@ class LKJPrior(Prior):
     """
 
     type: Literal["LKJPrior"] = "LKJPrior"
-    n_tasks: int
     eta: PositiveFloat
     sd_prior: GammaPrior
+    n_tasks: int = 1

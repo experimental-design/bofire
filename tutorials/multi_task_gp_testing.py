@@ -14,7 +14,7 @@ samples = benchmark.domain.inputs.sample(n=50)
 experiments = benchmark.f(samples, return_complete=True)
 
 # make fid the columns in order [fid, x_1, x_2, y, valid_y]
-experiments = experiments[["fid", "x_1", "x_2", "y", "valid_y"]]
+experiments = experiments[["task_id", "x_1", "x_2", "y", "valid_y"]]
 
 input_features = benchmark.domain.inputs
 output_features = benchmark.domain.outputs
@@ -43,9 +43,11 @@ predictions = surrogate.to_predictions(predictions=df_predictions)
 
 surrogate_data = parse_obj_as(AnySurrogate, json.loads(jspec))
 surrogate = surrogates.map(surrogate_data)
-# surrogate.loads(dump)
+surrogate.loads(dump)
 
 # predict with it
 df_predictions2 = surrogate.predict(experiments)
 # transform to spec
 predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+
+assert predictions.equals(predictions2)

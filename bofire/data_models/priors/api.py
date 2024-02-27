@@ -18,9 +18,6 @@ AnyPrior = Union[
 BOTORCH_LENGTHCALE_PRIOR = partial(GammaPrior, concentration=3.0, rate=6.0)
 BOTORCH_NOISE_PRIOR = partial(GammaPrior, concentration=1.1, rate=0.05)
 BOTORCH_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
-BOTORCH_LKJ_PRIOR = partial(
-    LKJPrior, n_tasks=1, eta=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
-)
 
 # mbo priors
 # By default BoTorch places a highly informative prior on the kernel lengthscales,
@@ -29,6 +26,8 @@ BOTORCH_LKJ_PRIOR = partial(
 MBO_LENGTHCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.2)
 MBO_NOISE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 MBO_OUTPUTSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
-MBO_LKJ_PRIOR = partial(
-    LKJPrior, n_tasks=1, eta=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
+
+# prior for multitask kernel
+LKJ_PRIOR = partial(
+    LKJPrior, eta=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
 )
