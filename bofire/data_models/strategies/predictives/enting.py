@@ -1,8 +1,8 @@
 from typing import Any, Dict, Literal, Type
 
-from entmoot.models.model_params import EntingParams
 from pydantic import Field, PositiveFloat, PositiveInt
 
+from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     Constraint,
     LinearEqualityConstraint,
@@ -22,8 +22,8 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
     Objective,
 )
-from bofire.data_models.base import BaseModel
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
+
 
 class UncParams(BaseModel):
     beta: PositiveFloat = 1.96
@@ -32,7 +32,7 @@ class UncParams(BaseModel):
     dist_trafo: Literal["normal", "standard"] = "normal"
     dist_metric: Literal["euclidean_squared", "l1", "l2"] = "euclidean_squared"
     cat_metric: Literal["overlap", "of", "goodall4"] = "overlap"
-        
+
 
 class TrainParams(BaseModel):
     # lightgbm training hyperparameters
@@ -53,8 +53,11 @@ class TreeTrainParams(BaseModel):
 
 class EntingParams(BaseModel):
     """Contains parameters for a mean and uncertainty model."""
+
     unc_params: "UncParams" = Field(default_factory=lambda: UncParams())
-    tree_train_params: "TreeTrainParams" = Field(default_factory=lambda: TreeTrainParams())
+    tree_train_params: "TreeTrainParams" = Field(
+        default_factory=lambda: TreeTrainParams()
+    )
 
 
 class EntingStrategy(PredictiveStrategy):
