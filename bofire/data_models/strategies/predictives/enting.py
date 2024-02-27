@@ -27,7 +27,7 @@ from bofire.data_models.strategies.predictives.predictive import PredictiveStrat
 
 class EntingStrategy(PredictiveStrategy):
     type: Literal["EntingStrategy"] = "EntingStrategy"
-    enting_params: EntingParams = Field(default_factory=EntingParams)
+    enting_params: EntingParams = Field(default_factory=lambda: EntingParams())
     solver_params: Dict[str, Any] = {}
     learn_from_candidates_coeff: float = 10.0
 
