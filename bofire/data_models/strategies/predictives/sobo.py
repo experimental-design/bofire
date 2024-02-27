@@ -6,7 +6,7 @@ from bofire.data_models.acquisition_functions.api import (
     AnySingleObjectiveAcquisitionFunction,
     qLogNEI,
 )
-from bofire.data_models.features.api import CategoricalOutput, Feature
+from bofire.data_models.features.api import Feature
 from bofire.data_models.objectives.api import ConstrainedObjective, Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
@@ -26,9 +26,7 @@ class SoboBaseStrategy(BotorchStrategy):
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
         """
-        if my_type not in [CategoricalOutput]:
-            return True
-        return False
+        return True
 
     @classmethod
     def is_objective_implemented(cls, my_type: Type[Objective]) -> bool:

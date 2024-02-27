@@ -46,3 +46,34 @@ specs.add_valid(
         "steepness": 0.3,
     },
 )
+
+specs.add_valid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue"],
+        "desirability": [True, False, True],
+    },
+)
+
+specs.add_invalid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue"],
+        "desirability": [True, False, True, False],
+    },
+    error=ValueError,
+    message="number of categories differs from number of desirabilities",
+)
+
+specs.add_invalid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue", "blue"],
+        "desirability": [True, False, True, False],
+    },
+    error=ValueError,
+    message="Categories must be unique",
+)

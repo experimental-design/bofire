@@ -2,6 +2,7 @@
 Module for test_kernels that operate on fingerprint representations (bit vectors or count vectors).
 Author: Ryan-Rhys Griffiths and Austin Tripp 2022
 """
+
 # This code was copied from GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/base_fingerprint_kernel.py
 
 import torch

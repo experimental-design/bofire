@@ -13,7 +13,10 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
-from bofire.data_models.surrogates.mlp import MLPEnsemble
+from bofire.data_models.surrogates.mlp import (
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
+)
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -28,13 +31,15 @@ from bofire.data_models.surrogates.xgb import XGBoostSurrogate
 
 AbstractSurrogate = Union[Surrogate, BotorchSurrogate, EmpiricalSurrogate]
 
+
 AnySurrogate = Union[
     EmpiricalSurrogate,
     RandomForestSurrogate,
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
     MixedTanimotoGPSurrogate,
-    MLPEnsemble,
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
     SaasSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
@@ -47,10 +52,27 @@ AnyTrainableSurrogate = Union[
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
     MixedTanimotoGPSurrogate,
-    MLPEnsemble,
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
     SaasSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
 ]
+
+AnyRegressionSurrogate = Union[
+    EmpiricalSurrogate,
+    RandomForestSurrogate,
+    SingleTaskGPSurrogate,
+    MixedSingleTaskGPSurrogate,
+    MixedTanimotoGPSurrogate,
+    RegressionMLPEnsemble,
+    SaasSingleTaskGPSurrogate,
+    XGBoostSurrogate,
+    LinearSurrogate,
+    PolynomialSurrogate,
+    TanimotoGPSurrogate,
+]
+
+AnyClassificationSurrogate = ClassificationMLPEnsemble
