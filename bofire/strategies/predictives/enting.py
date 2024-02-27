@@ -25,7 +25,7 @@ class EntingStrategy(PredictiveStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self._init_problem_config()
-        self._enting = Enting(self._problem_config, data_model.enting_params)
+        self._enting = Enting(self._problem_config, data_model.enting_params.dict())
         self._solver_params = data_model.solver_params
         self._learn_from_candidates_coeff = data_model.learn_from_candidates_coeff
 
@@ -35,10 +35,8 @@ class EntingStrategy(PredictiveStrategy):
         self._model_pyo: pyo.ConcreteModel = cfg[1]
 
     @property
-    def input_preprocessing_specs(self) -> TInputTransformSpecs:
-        # TODO: implement this properly
-        # return self.surrogate_specs.input_preprocessing_specs  # type: ignore
-        return {}  # type: ignore
+    def input_preprocessing_specs(self):
+        return
 
     def _postprocess_candidate(self, candidate: List) -> pd.DataFrame:
         """Converts a single candidate to a pandas Dataframe with prediction.
