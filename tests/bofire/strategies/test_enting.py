@@ -1,5 +1,8 @@
+import pytest
 from pydantic.utils import deep_update
 
+import bofire.data_models.strategies.api as data_models
+from bofire.strategies.api import EntingStrategy
 from tests.bofire.strategies.test_base import domains
 
 VALID_ENTING_STRATEGY_SPEC = {
@@ -38,3 +41,24 @@ ENTING_STRATEGY_SPECS = {
         ),
     ],
 }
+
+
+@pytest.mark.parametrize(
+    "domain, enting_params, solver_params",
+    [
+        (
+            domains[0],
+            VALID_ENTING_STRATEGY_SPEC["enting_params"],
+            {"solver_name": "gurobi"},
+        )
+    ],
+)
+def test_enting_not_fitted(domain, enting_params, solver_params):
+    data_model = data_models.EntingStrategy(
+        domain=domain, enting_params=enting_params, solver_params=solver_params
+    )
+    strategy = EntingStrategy(data_model=data_model)
+
+    msg = "Uncertainty model needs fit function call before it can predict."
+    with pytest.raises(AssertionError, match=msg):
+        strategy._ask(1)
