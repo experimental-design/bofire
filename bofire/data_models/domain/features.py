@@ -20,6 +20,7 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalMolecularInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
@@ -29,7 +30,11 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
-from bofire.data_models.objectives.api import AbstractObjective, Objective
+from bofire.data_models.objectives.api import (
+    AbstractObjective,
+    ConstrainedCategoricalObjective,
+    Objective,
+)
 from bofire.data_models.types import TInputTransformSpecs
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
@@ -567,9 +572,11 @@ class Inputs(Features):
             lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),  # type: ignore
                 values=experiments[feat.key] if experiments is not None else None,
-                reference_value=reference_experiment[feat.key]  # type: ignore
-                if reference_experiment is not None
-                else None,
+                reference_value=(
+                    reference_experiment[feat.key]  # type: ignore
+                    if reference_experiment is not None
+                    else None
+                ),
             )
             lower += lo
             upper += up
@@ -637,8 +644,8 @@ class Outputs(Features):
             return Outputs(
                 features=sorted(
                     filter_by_attribute(
-                        self.get(ContinuousOutput).features,
-                        lambda of: of.objective,  # type: ignore
+                        self.get([ContinuousOutput, CategoricalOutput]).features,
+                        lambda of: of.objective,
                         includes,
                         excludes,  # type: ignore
                         exact,
@@ -654,7 +661,9 @@ class Outputs(Features):
             Type[Objective],
         ] = Objective,
         excludes: Union[
-            List[Type[AbstractObjective]], Type[AbstractObjective], None
+            List[Type[AbstractObjective]],
+            Type[AbstractObjective],
+            None,
         ] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -689,6 +698,16 @@ class Outputs(Features):
                 feat(experiments[f"{feat.key}_pred" if predictions else feat.key])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
+                and not isinstance(feat, CategoricalOutput)
+            ]
+            + [
+                (
+                    pd.Series(data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")), name=f"{feat.key}_pred")  # type: ignore
+                    if predictions
+                    else experiments[feat.key]
+                )
+                for feat in self.features
+                if feat.objective is not None and isinstance(feat, CategoricalOutput)
             ],
             axis=1,
         )
@@ -736,24 +755,24 @@ class Outputs(Features):
 
     def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         # for each continuous output feature with an attached objective object
-        # ToDo: adjust it for the CategoricalOutput
-        cols = list(
+        continuous_cols = list(
             itertools.chain.from_iterable(
                 [
-                    [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                    for key in self.get_keys_by_objective(Objective)
+                    [f"{feat.key}_pred", f"{feat.key}_sd", f"{feat.key}_des"]
+                    for feat in self.get_by_objective(
+                        includes=Objective, excludes=ConstrainedCategoricalObjective
+                    )
                 ]
                 + [
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
-                        excludes=Objective,
-                        includes=None,  # type: ignore
+                        excludes=Objective, includes=None  # type: ignore
                     )
                 ]
             )
         )
         # check that pred, sd, and des cols are specified and numerical
-        for col in cols:
+        for col in continuous_cols:
             if col not in candidates:
                 raise ValueError(f"missing column {col}")
             try:
@@ -764,6 +783,18 @@ class Outputs(Features):
                 raise ValueError(f"Not all values of column `{col}` are numerical.")
             if candidates[col].isnull().to_numpy().any():
                 raise ValueError(f"Nan values are present in {col}.")
+        # Looping over features allows to check categories objective wise
+        for feat in self.get(CategoricalOutput):
+            cols = [f"{feat.key}_pred", f"{feat.key}_des"]
+            for col in cols:
+                if col not in candidates:
+                    raise ValueError(f"missing column {col}")
+                if col == f"{feat.key}_pred":
+                    feat.validate_experimental(candidates[col])
+                else:
+                    # Check sd and desirability
+                    if candidates[col].isnull().to_numpy().any():
+                        raise ValueError(f"Nan values are present in {col}.")
         return candidates
 
     def preprocess_experiments_one_valid_output(

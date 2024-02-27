@@ -24,6 +24,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
+    ConstrainedCategoricalObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
@@ -165,12 +166,14 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
     reward3 = obj3(a_samples[:, 2])
     # do the comparison
     assert np.allclose(
-        (reward1**obj1.w + reward3**obj3.w)
-        * (reward1**obj1.w * reward3**obj3.w)
-        if exclude_constraints
-        else (reward1**obj1.w + reward2**obj2.w)
-        * (reward1**obj1.w * reward2**obj2.w)
-        * (reward1**obj1.w * reward3**obj3.w),
+        (
+            (reward1**obj1.w + reward3**obj3.w)
+            * (reward1**obj1.w * reward3**obj3.w)
+            if exclude_constraints
+            else (reward1**obj1.w + reward2**obj2.w)
+            * (reward1**obj1.w * reward2**obj2.w)
+            * (reward1**obj1.w * reward3**obj3.w)
+        ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
@@ -269,9 +272,11 @@ def test_get_additive_botorch_objective(exclude_constraints):
     # do the comparison
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
-        reward1 * obj1.w + reward3 * obj3.w
-        if exclude_constraints
-        else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w,
+        (
+            reward1 * obj1.w + reward3 * obj3.w
+            if exclude_constraints
+            else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w
+        ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
@@ -817,7 +822,7 @@ def test_get_initial_conditions_generator(sequential: bool):
     ],
 )
 def test_constrained_objective2botorch(objective):
-    cs, etas = constrained_objective2botorch(idx=0, objective=objective)
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=objective)
 
     x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
     y = torch.ones([500])
@@ -827,3 +832,28 @@ def test_constrained_objective2botorch(objective):
         y *= soft_eval_constraint(xtt, eta)
 
     assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), y.numpy().ravel())
+
+
+def test_constrained_objective():
+    desirability = [True, False, False]
+    obj1 = ConstrainedCategoricalObjective(
+        categories=["c1", "c2", "c3"], desirability=desirability
+    )
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1)
+
+    x = torch.zeros((50, 3))
+    x[:, 0] = torch.arange(50) / 50
+    true_y = (x * torch.tensor(desirability)).sum(-1)
+    transformed_y = torch.log(1 / torch.clamp(true_y, 1e-8, 1 - 1e-8) - 1)
+
+    assert len(cs) == 1
+    assert etas[0] == 1.0
+
+    y_hat = cs[0](x)
+    assert np.allclose(y_hat.numpy(), transformed_y.numpy())
+    assert (
+        np.linalg.norm(
+            np.exp(-np.log(np.exp(y_hat.numpy()) + 1)) - true_y.numpy(), ord=np.inf
+        )
+        <= 1e-8
+    )

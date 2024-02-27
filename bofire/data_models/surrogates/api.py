@@ -17,7 +17,11 @@ try:
     from bofire.data_models.surrogates.mixed_tanimoto_gp import (
         MixedTanimotoGPSurrogate,
     )
-    from bofire.data_models.surrogates.mlp import MLPEnsemble
+    from bofire.data_models.surrogates.mlp import (
+        ClassificationMLPEnsemble,
+        MLPEnsemble,
+        RegressionMLPEnsemble,
+    )
     from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
     from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
     from bofire.data_models.surrogates.single_task_gp import (
@@ -37,7 +41,8 @@ try:
         SingleTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
         MixedTanimotoGPSurrogate,
-        MLPEnsemble,
+        ClassificationMLPEnsemble,
+        RegressionMLPEnsemble,
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
@@ -50,13 +55,30 @@ try:
         SingleTaskGPSurrogate,
         MixedSingleTaskGPSurrogate,
         MixedTanimotoGPSurrogate,
-        MLPEnsemble,
+        ClassificationMLPEnsemble,
+        RegressionMLPEnsemble,
         SaasSingleTaskGPSurrogate,
         XGBoostSurrogate,
         LinearSurrogate,
         PolynomialSurrogate,
         TanimotoGPSurrogate,
     ]
+
+    AnyRegressionSurrogate = Union[
+        EmpiricalSurrogate,
+        RandomForestSurrogate,
+        SingleTaskGPSurrogate,
+        MixedSingleTaskGPSurrogate,
+        MixedTanimotoGPSurrogate,
+        RegressionMLPEnsemble,
+        SaasSingleTaskGPSurrogate,
+        XGBoostSurrogate,
+        LinearSurrogate,
+        PolynomialSurrogate,
+        TanimotoGPSurrogate,
+    ]
+
+    AnyClassificationSurrogate = ClassificationMLPEnsemble
 except ImportError:
     # with the minimal installationwe don't have botorch
     pass

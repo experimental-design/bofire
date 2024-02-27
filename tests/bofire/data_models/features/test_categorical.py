@@ -12,6 +12,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     CategoricalOutput,
 )
+from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 
 
 @pytest.mark.parametrize(
@@ -463,11 +464,14 @@ def test_categorical_input_feature_forbidden_categories(input_feature, expected)
     assert input_feature.get_forbidden_categories() == expected
 
 
-def test_categorical_output():
-    feature = CategoricalOutput(
-        key="a", categories=["alpha", "beta", "gamma"], objective=[1.0, 0.0, 0.1]
+def test_categorical_output_call():
+    test_df = pd.DataFrame(data=[[0.7, 0.3], [0.2, 0.8]], columns=["c1", "c2"])
+    categorical_output = CategoricalOutput(
+        key="a",
+        categories=["c1", "c2"],
+        objective=ConstrainedCategoricalObjective(
+            categories=["c1", "c2"], desirability=[True, False]
+        ),
     )
-
-    assert feature.to_dict() == {"alpha": 1.0, "beta": 0.0, "gamma": 0.1}
-    data = pd.Series(data=["alpha", "beta", "beta", "gamma"], name="a")
-    assert_series_equal(feature(data), pd.Series(data=[1.0, 0.0, 0.0, 0.1], name="a"))
+    output = categorical_output(test_df)
+    assert output.tolist() == test_df["c1"].tolist()

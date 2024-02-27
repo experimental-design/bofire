@@ -135,13 +135,15 @@ class BotorchStrategy(PredictiveStrategy):
             from bofire.runners.hyperoptimize import hyperoptimize
 
             self.surrogate_specs.surrogates = [  # type: ignore
-                hyperoptimize(
-                    surrogate_data=surrogate_data,  # type: ignore
-                    training_data=experiments,
-                    folds=self.folds,
-                )[0]
-                if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
-                else surrogate_data
+                (
+                    hyperoptimize(
+                        surrogate_data=surrogate_data,  # type: ignore
+                        training_data=experiments,
+                        folds=self.folds,
+                    )[0]
+                    if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
+                    else surrogate_data
+                )
                 for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
             ]
 

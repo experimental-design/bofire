@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Type
 
 import numpy as np
 import pandas as pd
@@ -6,13 +6,26 @@ import pytest
 from pydantic.error_wrappers import ValidationError
 
 from bofire.data_models.domain.api import Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.features.api import AnyOutput, ContinuousInput, ContinuousOutput
 from bofire.data_models.surrogates.api import Surrogate as SurrogateDataModel
 from bofire.surrogates.api import PredictedValue, Surrogate
 
 
 class DummyDataModel(SurrogateDataModel):
     type: Literal["Dummy"] = "Dummy"
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+
+        Args:
+            outputs: objective functions for the surrogate
+            my_type: continuous or categorical output
+
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return True
 
 
 class Dummy(Surrogate):
