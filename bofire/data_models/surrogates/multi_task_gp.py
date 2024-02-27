@@ -13,8 +13,8 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_LKJ_PRIOR,
     BOTORCH_NOISE_PRIOR,
+    LKJ_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     AnyPrior,
@@ -88,7 +88,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
-    lkj_prior: LKJPrior = Field(default_factory=lambda: BOTORCH_LKJ_PRIOR())
+    lkj_prior: LKJPrior = Field(default_factory=lambda: LKJ_PRIOR())
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig()
     )

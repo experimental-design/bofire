@@ -17,6 +17,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    TaskInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -394,7 +395,7 @@ class MultiFidelityHimmelblau(Benchmark):
         self.use_constraints = use_constraints
         inputs = []
 
-        inputs.append(DiscreteInput(key="fid", values=[0, 1]))
+        inputs.append(TaskInput(key="task_id", n_tasks=2, fidelities=[0, 1]))
         inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
         inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
@@ -417,7 +418,7 @@ class MultiFidelityHimmelblau(Benchmark):
             pd.DataFrame: y values of the function. Columns are y and valid_y.
         """
         X_temp = X.eval(
-            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + fid * x_1 * x_2",
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + (1 - task_id) * x_1 * x_2",
             inplace=False,
         )
         Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})

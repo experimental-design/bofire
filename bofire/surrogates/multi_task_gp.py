@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
 import botorch
+import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -34,6 +35,12 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.lkj_prior = data_model.lkj_prior
         # set the number of tasks in the prior
         self.lkj_prior.n_tasks = self.n_tasks
+        # obtain the name of the task feature
+        for feature in data_model.inputs.features:
+            if feature.type == "TaskInput":
+                self.task_feature_key = feature.key
+                break
+
         super().__init__(data_model=data_model, **kwargs)
 
     model: Optional[botorch.models.MultiTaskGP] = None
@@ -51,7 +58,9 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.model = botorch.models.MultiTaskGP(  # type: ignore
             train_X=tX,
             train_Y=tY,
-            task_feature=X.columns.get_loc("fid"),  # obtain the fidelity index
+            task_feature=X.columns.get_loc(
+                self.task_feature_key
+            ),  # obtain the fidelity index
             covar_module=kernels.map(
                 self.kernel,
                 batch_shape=torch.Size(),
@@ -71,3 +80,13 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
+
+    def _predict(self, transformed_X: pd.DataFrame):
+        # transform to tensor
+        X = torch.from_numpy(transformed_X.values).to(**tkwargs)
+        with torch.no_grad():
+            preds = self.model.posterior(X=X, observation_noise=False).mean.cpu().detach().numpy()  # type: ignore
+            vars = self.model.posterior(X=X, observation_noise=False).variance.cpu().detach().numpy()  # type: ignore
+            # add the observation noise to the stds
+            stds = np.sqrt(vars + self.model.likelihood.noise.cpu().detach().numpy())
+        return preds, stds
