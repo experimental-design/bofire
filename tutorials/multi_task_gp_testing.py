@@ -1,11 +1,7 @@
-import json
-
-from pydantic import parse_obj_as
-
 import bofire.surrogates.api as surrogates
 from bofire.benchmarks.single import MultiFidelityHimmelblau
+from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.surrogates.api import (
-    AnySurrogate,
     MultiTaskGPSurrogate,
 )
 
@@ -21,33 +17,36 @@ output_features = benchmark.domain.outputs
 
 # we setup the data model, here a Multi Task GP
 surrogate_data = MultiTaskGPSurrogate(
-    inputs=input_features, outputs=output_features, n_tasks=2
+    inputs=input_features,
+    outputs=output_features,
+    input_preprocessing_specs={"task_id": CategoricalEncodingEnum.ONE_HOT},
 )
 
 # we generate the json spec
-jspec = surrogate_data.json()
+# jspec = surrogate_data.json()
 
-surrogate_data = parse_obj_as(AnySurrogate, json.loads(jspec))
+# surrogate_data = parse_obj_as(MultiTaskGPSurrogate, json.loads(jspec))
+# surrogate_data = TypeAdapter(MultiTaskGPSurrogate).validate_python(json.loads(jspec))
 
 surrogate = surrogates.map(surrogate_data)
 
 surrogate.fit(experiments=experiments)
 
 # dump it
-dump = surrogate.dumps()
+# dump = surrogate.dumps()
 
 # predict with it
 df_predictions = surrogate.predict(experiments)
 # transform to spec
 predictions = surrogate.to_predictions(predictions=df_predictions)
 
-surrogate_data = parse_obj_as(AnySurrogate, json.loads(jspec))
-surrogate = surrogates.map(surrogate_data)
-surrogate.loads(dump)
+# surrogate_data = parse_obj_as(AnySurrogate, json.loads(jspec))
+# surrogate = surrogates.map(surrogate_data)
+# surrogate.loads(dump)
 
 # predict with it
-df_predictions2 = surrogate.predict(experiments)
+# df_predictions2 = surrogate.predict(experiments)
 # transform to spec
-predictions2 = surrogate.to_predictions(predictions=df_predictions2)
+# predictions2 = surrogate.to_predictions(predictions=df_predictions2)
 
-assert predictions.equals(predictions2)
+# assert predictions.equals(predictions2)

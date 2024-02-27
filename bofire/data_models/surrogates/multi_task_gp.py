@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Optional
+from typing import Literal, Optional
 
 import pandas as pd
 from pydantic import Field
@@ -79,7 +79,6 @@ class MultiTaskGPHyperconfig(Hyperconfig):
 
 class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MultiTaskGPSurrogate"] = "MultiTaskGPSurrogate"
-    n_tasks: Annotated[int, Field(ge=1)] = 1
     kernel: AnyKernel = Field(
         default_factory=lambda: MaternKernel(
             ard=True,

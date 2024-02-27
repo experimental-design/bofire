@@ -395,7 +395,7 @@ class MultiFidelityHimmelblau(Benchmark):
         self.use_constraints = use_constraints
         inputs = []
 
-        inputs.append(TaskInput(key="task_id", n_tasks=2, fidelities=[0, 1]))
+        inputs.append(TaskInput(key="task_id", categories=["task_1", "task_2"]))
         inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
         inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
 
@@ -417,11 +417,20 @@ class MultiFidelityHimmelblau(Benchmark):
         Returns:
             pd.DataFrame: y values of the function. Columns are y and valid_y.
         """
-        X_temp = X.eval(
-            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + (1 - task_id) * x_1 * x_2",
-            inplace=False,
+        # initialize y outputs
+        Y = pd.DataFrame({"y": np.zeros(len(X)), "valid_y": 0})
+        # evaluate task 1
+        X_temp = X.query("task_id == 'task_1'").eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=False
         )
-        Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
+        Y.loc[X_temp.index, "y"] = X_temp["y"]
+        Y.loc[X_temp.index, "valid_y"] = 1
+        # evaluate task 2
+        X_temp = X.query("task_id == 'task_2'").eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2", inplace=False
+        )
+        Y.loc[X_temp.index, "y"] = X_temp["y"]
+        Y.loc[X_temp.index, "valid_y"] = 1
         return Y
 
     def get_optima(self) -> pd.DataFrame:

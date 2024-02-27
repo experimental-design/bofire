@@ -5,12 +5,14 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
+from botorch.models.transforms.input import OneHotToNumeric
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
+from bofire.data_models.features.api import TaskInput
 
 # from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
@@ -27,7 +29,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         data_model: DataModel,
         **kwargs,
     ):
-        self.n_tasks = data_model.n_tasks
+        self.n_tasks = len(data_model.inputs.get(TaskInput).features[0].categories)
         self.kernel = data_model.kernel
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
@@ -36,10 +38,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         # set the number of tasks in the prior
         self.lkj_prior.n_tasks = self.n_tasks
         # obtain the name of the task feature
-        for feature in data_model.inputs.features:
-            if feature.type == "TaskInput":
-                self.task_feature_key = feature.key
-                break
+        self.task_feature_key = data_model.inputs.get_keys(TaskInput)[0]
 
         super().__init__(data_model=data_model, **kwargs)
 
@@ -55,8 +54,24 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y.values
         ).to(**tkwargs)
 
+        features2idx, _ = self.inputs._get_transform_info(
+            self.input_preprocessing_specs
+        )
+
+        task_features = {
+            features2idx[self.task_feature_key][0]: len(
+                features2idx[self.task_feature_key]
+            )
+        }
+
+        self.o2n = OneHotToNumeric(
+            dim=tX.shape[1],
+            categorical_features=task_features,
+            transform_on_train=False,
+        )
+
         self.model = botorch.models.MultiTaskGP(  # type: ignore
-            train_X=tX,
+            train_X=self.o2n.transform(tX),
             train_Y=tY,
             task_feature=X.columns.get_loc(
                 self.task_feature_key
@@ -65,7 +80,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(
-                    range(tX.shape[1] - 1)
+                    range(self.o2n.transform(tX).shape[1] - 1)
                 ),  # kernel is for input space so we subtract one for the fidelity index
                 ard_num_dims=1,  # this keyword is ingored
             ),
@@ -84,6 +99,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
+        X = self.o2n.transform(X)
         with torch.no_grad():
             preds = self.model.posterior(X=X, observation_noise=False).mean.cpu().detach().numpy()  # type: ignore
             vars = self.model.posterior(X=X, observation_noise=False).variance.cpu().detach().numpy()  # type: ignore
