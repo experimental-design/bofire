@@ -1,31 +1,103 @@
-from typing import Literal, Type
+from typing import Literal, Optional, Type
 
+import pandas as pd
 from pydantic import Field, field_validator
 
-from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.enum import CategoricalEncodingEnum, RegressionMetricsEnum
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernal,
     AnyContinuousKernel,
     HammondDistanceKernel,
     MaternKernel,
+    RBFKernel,
 )
 from bofire.data_models.priors.api import (
+    BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
+    BOTORCH_SCALE_PRIOR,
+    MBO_LENGTHCALE_PRIOR,
+    MBO_NOISE_PRIOR,
+    MBO_OUTPUTSCALE_PRIOR,
     AnyPrior,
 )
+
+# from bofire.data_models.strategies.api import FactorialStrategy
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
+
+
+class MixedSingleTaskGPHyperconfig(Hyperconfig):
+    type: Literal["MixedSingleTaskGPHyperconfig"] = "MixedSingleTaskGPHyperconfig"
+    inputs: Inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="continuous_kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+            ),
+            CategoricalInput(key="prior", categories=["mbo", "botorch"]),
+            CategoricalInput(key="ard", categories=["True", "False"]),
+        ]
+    )
+    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
+    hyperstrategy: Literal[
+        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
+    ] = "FactorialStrategy"
+
+    @staticmethod
+    def _update_hyperparameters(
+        surrogate_data: "MixedSingleTaskGPSurrogate", hyperparameters: pd.Series
+    ):
+        if hyperparameters.prior == "mbo":
+            noise_prior, lengthscale_prior, _ = (
+                MBO_NOISE_PRIOR(),
+                MBO_LENGTHCALE_PRIOR(),
+                MBO_OUTPUTSCALE_PRIOR(),
+            )
+        else:
+            noise_prior, lengthscale_prior, _ = (
+                BOTORCH_NOISE_PRIOR(),
+                BOTORCH_LENGTHCALE_PRIOR(),
+                BOTORCH_SCALE_PRIOR(),
+            )
+        surrogate_data.noise_prior = noise_prior
+        if hyperparameters.continuous_kernel == "rbf":
+            surrogate_data.continuous_kernel = RBFKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_2.5":
+            surrogate_data.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=2.5
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_1.5":
+            surrogate_data.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=1.5
+            )
+
+        else:
+            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
 class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
-        default_factory=lambda: MaternKernel(ard=True, nu=2.5)
+        default_factory=lambda: MaternKernel(
+            ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+        )
     )
     categorical_kernel: AnyCategoricalKernal = Field(
         default_factory=lambda: HammondDistanceKernel(ard=True)
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
+        default_factory=lambda: MixedSingleTaskGPHyperconfig()
+    )
 
     @field_validator("input_preprocessing_specs")
     @classmethod

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
-from botorch.utils.objective import soft_eval_constraint
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
@@ -824,14 +824,21 @@ def test_get_initial_conditions_generator(sequential: bool):
 def test_constrained_objective2botorch(objective):
     cs, etas, _ = constrained_objective2botorch(idx=0, objective=objective)
 
-    x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
-    y = torch.ones([500])
+    x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1).to(**tkwargs)
 
-    for c, eta in zip(cs, etas):
-        xtt = c(x)
-        y *= soft_eval_constraint(xtt, eta)
+    result = (
+        compute_smoothed_feasibility_indicator(
+            constraints=cs,
+            samples=x,
+            eta=torch.tensor(etas).to(**tkwargs),
+            log=False,
+            fat=False,
+        )
+        .numpy()
+        .ravel()
+    )
 
-    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), y.numpy().ravel())
+    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), result)
 
 
 def test_constrained_objective():
@@ -857,3 +864,15 @@ def test_constrained_objective():
         )
         <= 1e-8
     )
+    result = (
+        compute_smoothed_feasibility_indicator(
+            constraints=cs,
+            samples=x,
+            eta=torch.tensor(etas).to(**tkwargs),
+            log=False,
+            fat=False,
+        )
+        .numpy()
+        .ravel()
+    )
+    assert np.allclose(true_y.numpy(), result)
