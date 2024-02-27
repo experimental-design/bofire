@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.9">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.11">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.f2e4d321.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -548,6 +548,81 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical" class="md-nav__link">
+    <span class="md-ellipsis">
+      categorical
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="categorical">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective" class="md-nav__link">
+    <span class="md-ellipsis">
+      ConstrainedCategoricalObjective
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="ConstrainedCategoricalObjective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __call__()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.from_dict_label" class="md-nav__link">
+    <span class="md-ellipsis">
+      from_dict_label()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.to_dict" class="md-nav__link">
+    <span class="md-ellipsis">
+      to_dict()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.to_dict_label" class="md-nav__link">
+    <span class="md-ellipsis">
+      to_dict_label()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.validate_desireability" class="md-nav__link">
+    <span class="md-ellipsis">
+      validate_desireability()
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#bofire.data_models.objectives.identity" class="md-nav__link">
     <span class="md-ellipsis">
       identity
@@ -913,6 +988,432 @@
 
 
 
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.data_models.objectives.categorical" class="doc doc-heading">
+        <code>categorical</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h3 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective" class="doc doc-heading">
+        <code>
+ConstrainedCategoricalObjective            (<a class="autorefs autorefs-internal" title="bofire.data_models.objectives.objective.ConstrainedObjective" href="#bofire.data_models.objectives.objective.ConstrainedObjective">ConstrainedObjective</a>, <a class="autorefs autorefs-internal" title="bofire.data_models.objectives.objective.Objective" href="#bofire.data_models.objectives.objective.Objective">Objective</a>)
+        </code>
+
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Compute the categorical objective value as:</p>
+<div class="highlight"><pre><span></span><code>Po where P is an [n, c] matrix where each row is a probability vector
+(P[i, :].sum()=1 for all i) and o is a vector of size [c] of objective values
+</code></pre></div>
+
+<p><strong>Attributes:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>w</code></td>
+        <td><code>float</code></td>
+        <td><p>float between zero and one for weighting the objective.</p></td>
+      </tr>
+      <tr>
+        <td><code>desirability</code></td>
+        <td><code>list</code></td>
+        <td><p>list of values of size c (c is number of categories) such that the i-th entry is in {True, False}</p></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">ConstrainedCategoricalObjective</span><span class="p">(</span><span class="n">ConstrainedObjective</span><span class="p">,</span> <span class="n">Objective</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the categorical objective value as:</span>
+
+<span class="sd">        Po where P is an [n, c] matrix where each row is a probability vector</span>
+<span class="sd">        (P[i, :].sum()=1 for all i) and o is a vector of size [c] of objective values</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        w (float): float between zero and one for weighting the objective.</span>
+<span class="sd">        desirability (list): list of values of size c (c is number of categories) such that the i-th entry is in {True, False}</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">w</span><span class="p">:</span> <span class="n">TWeight</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
+    <span class="n">desirability</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">]</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ConstrainedCategoricalObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ConstrainedCategoricalObjective&quot;</span>
+
+    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">validate_desireability</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            categories (List[str]): List or tuple of category names</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: when categories do not match objective categories</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[str]: Tuple of the categories</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">desirability</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;number of categories differs from number of desirabilities&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the categories and corresponding objective values as dictionary&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desirability</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">to_dict_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the catergories and label location of categories&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">)}</span>
+
+    <span class="k">def</span> <span class="nf">from_dict_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Returns the label location and the categories&quot;&quot;&quot;</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict_label</span><span class="p">()</span>
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a probabilistic reward for x.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (np.ndarray): A matrix of x values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: A reward calculated as inner product of probabilities and feasible objectives.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">desirability</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.__call__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The call function returning a probabilistic reward for x.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>x</code></td>
+        <td><code>np.ndarray</code></td>
+        <td><p>A matrix of x values</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>A reward calculated as inner product of probabilities and feasible objectives.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a probabilistic reward for x.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (np.ndarray): A matrix of x values</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: A reward calculated as inner product of probabilities and feasible objectives.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">desirability</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.from_dict_label" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">from_dict_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns the label location and the categories</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">from_dict_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the label location and the categories&quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_dict_label</span><span class="p">()</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.to_dict" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns the categories and corresponding objective values as dictionary</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the categories and corresponding objective values as dictionary&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">desirability</span><span class="p">))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.to_dict_label" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">to_dict_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Returns the catergories and label location of categories</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">to_dict_label</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns the catergories and label location of categories&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">{</span><span class="n">c</span><span class="p">:</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">)}</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.validate_desireability" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_desireability</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>validates that categories have unique names</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>categories</code></td>
+        <td><code>List[str]</code></td>
+        <td><p>List or tuple of category names</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Exceptions:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>ValueError</code></td>
+        <td><p>when categories do not match objective categories</p></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[str]</code></td>
+      <td><p>Tuple of the categories</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">validate_desireability</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;validates that categories have unique names</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        categories (List[str]): List or tuple of category names</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: when categories do not match objective categories</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[str]: Tuple of the categories</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">desirability</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;number of categories differs from number of desirabilities&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="bp">self</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
 
 
 

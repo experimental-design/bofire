@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.9">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.11">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.f2e4d321.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -678,6 +678,39 @@
   <a href="#bofire.utils.multiobjective.get_ref_point_mask" class="md-nav__link">
     <span class="md-ellipsis">
       get_ref_point_mask()
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#bofire.utils.naming_conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      naming_conventions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="naming_conventions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.naming_conventions.get_column_names" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_column_names()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.naming_conventions.postprocess_categorical_predictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      postprocess_categorical_predictions()
     </span>
   </a>
   
@@ -1679,6 +1712,217 @@ that should be considered in the mask. Defaults to None.</p></td>
 
   </div>
 
+
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-module">
+
+
+
+<h2 id="bofire.utils.naming_conventions" class="doc doc-heading">
+        <code>naming_conventions</code>
+
+
+
+</h2>
+
+    <div class="doc doc-contents ">
+
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.naming_conventions.get_column_names" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_column_names</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Specifies column names for given Outputs type.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>outputs</code></td>
+        <td><code>Outputs</code></td>
+        <td><p>The Outputs object containing the individual outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>Tuple[List[str], List[str]]</code></td>
+      <td><p>A tuple containing the prediction column names and the standard deviation column names</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_column_names</span><span class="p">(</span><span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Specifies column names for given Outputs type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        outputs (Outputs): The Outputs object containing the individual outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[List[str], List[str]]: A tuple containing the prediction column names and the standard deviation column names</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">pred_cols</span><span class="p">,</span> <span class="n">sd_cols</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">CategoricalOutput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="n">pred_cols</span> <span class="o">=</span> <span class="n">pred_cols</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2">_prob&quot;</span>
+            <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span><span class="o">.</span><span class="n">categories</span>  <span class="c1"># type: ignore</span>
+        <span class="p">]</span>
+        <span class="n">sd_cols</span> <span class="o">=</span> <span class="n">sd_cols</span> <span class="o">+</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2">_sd&quot;</span>
+            <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span><span class="o">.</span><span class="n">categories</span>  <span class="c1"># type: ignore</span>
+        <span class="p">]</span>
+    <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="n">pred_cols</span> <span class="o">=</span> <span class="n">pred_cols</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span>
+        <span class="n">sd_cols</span> <span class="o">=</span> <span class="n">sd_cols</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">pred_cols</span><span class="p">,</span> <span class="n">sd_cols</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.naming_conventions.postprocess_categorical_predictions" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">postprocess_categorical_predictions</span><span class="p">(</span><span class="n">predictions</span><span class="p">,</span> <span class="n">outputs</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Postprocess categorical predictions by finding the maximum probability location</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>predictions</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>The dataframe containing the predictions.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>outputs</code></td>
+        <td><code>Outputs</code></td>
+        <td><p>The Outputs object containing the individual outputs.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>predictions (pd.DataFrame)</code></td>
+      <td><p>The (potentially modified) original dataframe with categorical predictions added</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">postprocess_categorical_predictions</span><span class="p">(</span><span class="n">predictions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Postprocess categorical predictions by finding the maximum probability location</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        predictions (pd.DataFrame): The dataframe containing the predictions.</span>
+<span class="sd">        outputs (Outputs): The Outputs object containing the individual outputs.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        predictions (pd.DataFrame): The (potentially modified) original dataframe with categorical predictions added</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">CategoricalOutput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+                <span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                <span class="n">column</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">predictions</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">regex</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">(.*)_prob&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">idxmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_prob&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">values</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">predictions</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
+                <span class="n">loc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">column</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="p">)</span>
+    <span class="k">return</span> <span class="n">predictions</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
 
 
 
@@ -2927,7 +3171,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
 
 <h3 id="bofire.utils.torch_tools.constrained_objective2botorch" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">constrained_objective2botorch</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">constrained_objective2botorch</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-08</span><span class="p">)</span></code>
 
 
 </h3>
@@ -2972,18 +3216,17 @@ to setup ouput constrained optimizations.</p>
   </thead>
   <tbody>
     <tr>
-      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float]]</code></td>
-      <td><p>List of callables that can be used by botorch for setting up the constrained objective, and
-    list of the corresponding botorch eta values.</p></td>
+      <td><code>Tuple[List[Callable[[Tensor], Tensor]], List[float], int]</code></td>
+      <td><p>List of callables that can be used by botorch for setting up the constrained objective,
+    list of the corresponding botorch eta values, final index used by the method (to track for categorical variables)</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">constrained_objective2botorch</span><span class="p">(</span>
-    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">objective</span><span class="p">:</span> <span class="n">ConstrainedObjective</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">ConstrainedObjective</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints`</span>
 <span class="sd">    to setup ouput constrained optimizations.</span>
 
@@ -2992,24 +3235,57 @@ to setup ouput constrained optimizations.</p>
 <span class="sd">        objective (BotorchConstrainedObjective): The objective that should be transformed.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and</span>
-<span class="sd">            list of the corresponding botorch eta values.</span>
+<span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,</span>
+<span class="sd">            list of the corresponding botorch eta values, final index used by the method (to track for categorical variables)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
         <span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span>
     <span class="p">),</span> <span class="s2">&quot;Objective is not a `ConstrainedObjective`.&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeSigmoidObjective</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span> <span class="p">[</span>
-            <span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span>
-        <span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
+            <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeSigmoidObjective</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)],</span>
+            <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
+            <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">TargetObjective</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">[</span>
-            <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span>
-            <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)),</span>
-        <span class="p">],</span> <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">[</span>
+                <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span>
+                <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+                <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">+</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">],</span>
+            <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
+            <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedCategoricalObjective</span><span class="p">):</span>
+        <span class="c1"># The output of a categorical objective has final dim `c` where `c` is number of classes</span>
+        <span class="c1"># Pass in the expected acceptance probability and perform an inverse sigmoid to atain the original probabilities</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">[</span>
+                <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="mi">1</span>
+                    <span class="o">/</span> <span class="n">torch</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
+                        <span class="p">(</span>
+                            <span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span> <span class="p">:</span> <span class="n">idx</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">desirability</span><span class="p">)]</span>
+                            <span class="o">*</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">desirability</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+                        <span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                        <span class="nb">min</span><span class="o">=</span><span class="n">eps</span><span class="p">,</span>
+                        <span class="nb">max</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">],</span>
+            <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span>
+            <span class="n">idx</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">desirability</span><span class="p">),</span>
+        <span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective </span><span class="si">{</span><span class="n">objective</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not known.&quot;</span><span class="p">)</span>
 </code></pre></div>
@@ -3725,14 +4001,16 @@ be processed.</p></td>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">etas</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">()):</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
-            <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
-                <span class="n">idx</span><span class="p">,</span>
-                <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+            <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
+                <span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span>  <span class="c1"># type: ignore</span>
             <span class="p">)</span>
             <span class="n">constraints</span> <span class="o">+=</span> <span class="n">iconstraints</span>
             <span class="n">etas</span> <span class="o">+=</span> <span class="n">ietas</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">idx</span> <span class="o">+=</span> <span class="mi">1</span>
     <span class="k">return</span> <span class="n">constraints</span><span class="p">,</span> <span class="n">etas</span>
 </code></pre></div>
         </details>
