@@ -4,7 +4,6 @@ import pandas as pd
 from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
-import bofire.data_models.transforms.transform as transform
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
 from bofire.strategies.doe_strategy import DoEStrategy
@@ -23,6 +22,7 @@ from bofire.strategies.random import RandomStrategy
 from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.space_filling import SpaceFillingStrategy
 from bofire.strategies.strategy import Strategy
+from bofire.transforms.transform import Transform
 
 # we have to duplicate the map functionality due to prevent circular imports
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
@@ -52,7 +52,7 @@ _T = TypeVar("_T", pd.DataFrame, Domain)
 
 def _apply_tf(
     data: Optional[_T],
-    transform: Optional[transform.Transform],
+    transform: Optional[Transform],
     tf: Union[Literal["experiments"], Literal["candidates"], Literal["domain"]],
 ) -> Optional[_T]:
     if data is not None and transform is not None:
@@ -69,7 +69,7 @@ class StepwiseStrategy(Strategy):
     def has_sufficient_experiments(self) -> bool:
         return True
 
-    def _get_step(self) -> Tuple[Strategy, Optional[transform.Transform]]:
+    def _get_step(self) -> Tuple[Strategy, Optional[Transform]]:
         """Returns index of the current step, the step itself"""
         for i, condition in enumerate(self.conditions):
             if condition.evaluate(self.domain, experiments=self.experiments):
