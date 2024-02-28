@@ -153,3 +153,50 @@ specs.add_valid(
         "allowed": [True, True, True, True],
     },
 )
+
+
+specs.add_valid(
+    features.TaskInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": [
+            "process_1",
+            "process_2",
+            "process_3",
+        ],
+        "allowed": [True, True, True],
+        "fidelities": [0, 1, 2],
+    },
+)
+
+specs.add_invalid(
+    features.TaskInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": [
+            "process_1",
+            "process_2",
+            "process_3",
+        ],
+        "allowed": [True, True, True],
+        "fidelities": [0, 1],
+    },
+    error=ValueError,
+    message="Length of fidelity lists must be equal to the number of tasks",
+)
+
+specs.add_invalid(
+    features.TaskInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": [
+            "process_1",
+            "process_2",
+            "process_3",
+        ],
+        "allowed": [True, True, True],
+        "fidelities": [0, 1, 3],
+    },
+    error=ValueError,
+    message="Fidelities must be a list containing integers, starting from 0 and increasing by 1",
+)
