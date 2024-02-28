@@ -17,7 +17,7 @@ from typing import (
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -25,6 +25,7 @@ from bofire.data_models.constraints.api import (
     ConstraintNotFulfilledError,
     LinearConstraint,
     NChooseKConstraint,
+    ProductConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
 from bofire.data_models.domain.features import Features, Inputs, Outputs
@@ -57,7 +58,6 @@ class Domain(BaseModel):
 
     inputs: Inputs = Field(default_factory=lambda: Inputs())
     outputs: Outputs = Field(default_factory=lambda: Outputs())
-
     constraints: Constraints = Field(default_factory=lambda: Constraints())
 
     """Representation of the optimization problem/domain
@@ -84,8 +84,9 @@ class Domain(BaseModel):
             constraints=Constraints(constraints=constraints),
         )
 
-    @validator("inputs", always=True, pre=True)
-    def validate_inputs_list(cls, v, values):
+    @field_validator("inputs", mode="before")
+    @classmethod
+    def validate_inputs_list(cls, v):
         if isinstance(v, collections.abc.Sequence):
             v = Inputs(features=v)
             return v
@@ -94,8 +95,9 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("outputs", always=True, pre=True)
-    def validate_outputs_list(cls, v, values):
+    @field_validator("outputs", mode="before")
+    @classmethod
+    def validate_outputs_list(cls, v):
         if isinstance(v, collections.abc.Sequence):
             return Outputs(features=v)
         if isinstance_or_union(v, AnyOutput):
@@ -103,8 +105,9 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("constraints", always=True, pre=True)
-    def validate_constraints_list(cls, v, values):
+    @field_validator("constraints", mode="before")
+    @classmethod
+    def validate_constraints_list(cls, v):
         if isinstance(v, list):
             return Constraints(constraints=v)
         if isinstance_or_union(v, AnyConstraint):
@@ -112,8 +115,8 @@ class Domain(BaseModel):
         else:
             return v
 
-    @validator("outputs", always=True)
-    def validate_unique_feature_keys(cls, v: Outputs, values) -> Outputs:
+    @model_validator(mode="after")
+    def validate_unique_feature_keys(self):
         """Validates if provided input and output feature keys are unique
 
         Args:
@@ -126,16 +129,14 @@ class Domain(BaseModel):
         Returns:
             Outputs: Keeps output features as given.
         """
-        if "inputs" not in values:
-            return v
-        features = v + values["inputs"]
-        keys = [f.key for f in features]
-        if len(set(keys)) != len(keys):
-            raise ValueError("feature keys are not unique")
-        return v
 
-    @validator("constraints", always=True)
-    def validate_constraints(cls, v, values):
+        keys = self.outputs.get_keys() + self.inputs.get_keys()
+        if len(set(keys)) != len(keys):
+            raise ValueError("Feature keys are not unique")
+        return self
+
+    @model_validator(mode="after")
+    def validate_constraints(self):
         """Validate if all features included in the constraints are also defined as features for the domain.
 
         Args:
@@ -148,18 +149,18 @@ class Domain(BaseModel):
         Returns:
             List[Constraint]: List of constraints defined for the domain
         """
-        if "inputs" not in values:
-            return v
-        keys = [f.key for f in values["inputs"]]
-        for c in v:
-            if isinstance(c, LinearConstraint) or isinstance(c, NChooseKConstraint):
-                for f in c.features:
-                    if f not in keys:
-                        raise ValueError(f"feature {f} in constraint unknown ({keys})")
-        return v
 
-    @validator("constraints", always=True)
-    def validate_linear_constraints(cls, v, values):
+        keys = self.inputs.get_keys()
+        for c in self.constraints.get(
+            [LinearConstraint, NChooseKConstraint, ProductConstraint]
+        ):
+            for f in c.features:  # type: ignore
+                if f not in keys:
+                    raise ValueError(f"feature {f} in constraint unknown ({keys})")
+        return self
+
+    @model_validator(mode="after")
+    def validate_linear_constraints_and_nchoosek(self):
         """Validate if all features included in linear constraints are continuous ones.
 
         Args:
@@ -173,21 +174,13 @@ class Domain(BaseModel):
         Returns:
            List[Constraint]: List of constraints defined for the domain
         """
-        if "inputs" not in values:
-            return v
-
-        # gather continuous inputs in dictionary
-        continuous_inputs_dict = {}
-        for f in values["inputs"]:
-            if isinstance(f, ContinuousInput):
-                continuous_inputs_dict[f.key] = f
+        keys = self.inputs.get_keys(ContinuousInput)
 
         # check if non continuous input features appear in linear constraints
-        for c in v:
-            if isinstance(c, LinearConstraint):
-                for f in c.features:
-                    assert f in continuous_inputs_dict, f"{f} must be continuous."
-        return v
+        for c in self.constraints.get(includes=[LinearConstraint, NChooseKConstraint]):
+            for f in c.features:  # type: ignore
+                assert f in keys, f"{f} must be continuous."
+        return self
 
     def get_feature_reps_df(self) -> pd.DataFrame:
         """Returns a pandas dataframe describing the features contained in the optimization domain."""
@@ -240,12 +233,12 @@ class Domain(BaseModel):
         """
         assert isinstance(self.inputs, Inputs)
         features = self.inputs + self.outputs
-        return features.get(includes, excludes, exact)
+        return features.get(includes, excludes, exact)  # type: ignore
 
     def get_feature_keys(
         self,
         includes: Union[Type, List[Type]] = Feature,
-        excludes: Union[Type, List[Type]] = None,
+        excludes: Optional[Union[Type, List[Type]]] = None,
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
@@ -491,23 +484,8 @@ class Domain(BaseModel):
 
         if len(experiments) == 0:
             raise ValueError("no experiments provided (empty dataframe)")
-        # check that each feature is a col
-        feature_keys = self.get_feature_keys()
-        for feature_key in feature_keys:
-            if feature_key not in experiments:
-                raise ValueError(f"no col in experiments for feature {feature_key}")
-        # add valid_{key} cols if missing
-        valid_keys = [
-            f"valid_{output_feature_key}"
-            for output_feature_key in self.get_feature_keys(Output)
-        ]
-        for valid_key in valid_keys:
-            if valid_key not in experiments:
-                experiments[valid_key] = True
-        # check all cols
-        cols = list(experiments.columns)
         # we allow here for a column named labcode used to identify experiments
-        if "labcode" in cols:
+        if "labcode" in experiments.columns:
             # test that labcodes are not na
             if experiments.labcode.isnull().to_numpy().any():
                 raise ValueError("there are labcodes with null value")
@@ -519,17 +497,11 @@ class Domain(BaseModel):
                 != experiments.shape[0]
             ):
                 raise ValueError("labcodes are not unique")
-            # we remove the labcode from the cols list to proceed as before
-            cols.remove("labcode")
-        # check values of continuous input features
-        if experiments[self.get_feature_keys(Input)].isnull().to_numpy().any():
-            raise ValueError("there are null values")
-        if experiments[self.get_feature_keys(Input)].isna().to_numpy().any():
-            raise ValueError("there are na values")
         # run the individual validators
-        for feat in self.get_features(Input):
-            assert isinstance(feat, Input)
-            feat.validate_experimental(experiments[feat.key], strict=strict)
+        experiments = self.inputs.validate_experiments(
+            experiments=experiments, strict=strict
+        )
+        experiments = self.outputs.validate_experiments(experiments=experiments)
         return experiments
 
     def describe_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
@@ -588,7 +560,7 @@ class Domain(BaseModel):
         """
         # check that each input feature has a col and is valid in itself
         assert isinstance(self.inputs, Inputs)
-        self.inputs.validate_inputs(candidates)
+        candidates = self.inputs.validate_candidates(candidates)
         # check if all constraints are fulfilled
         if not self.constraints.is_fulfilled(candidates, tol=tol).all():
             if raise_validation_error:
@@ -599,38 +571,7 @@ class Domain(BaseModel):
         # for each continuous output feature with an attached objective object
         if not only_inputs:
             assert isinstance(self.outputs, Outputs)
-
-            cols = list(
-                itertools.chain.from_iterable(
-                    [
-                        [f"{key}_pred", f"{key}_sd", f"{key}_des"]
-                        for key in self.outputs.get_keys_by_objective(Objective)
-                    ]
-                    + [
-                        [f"{key}_pred", f"{key}_sd"]
-                        for key in self.outputs.get_keys_by_objective(
-                            excludes=Objective, includes=None  # type: ignore
-                        )
-                    ]
-                )
-            )
-
-            # check that pred, sd, and des cols are specified and numerical
-            for col in cols:
-                if col not in candidates:
-                    raise ValueError(f"missing column {col}")
-                if (not is_numeric(candidates[col])) and (
-                    not candidates[col].isnull().to_numpy().all()
-                ):
-                    raise ValueError(f"not all values of column `{col}` are numerical")
-
-            # validate no additional cols exist
-            if_count = len(self.get_features(Input))
-            of_count = len(self.outputs.get_by_objective(includes=Objective))
-            of_count_w = len(self.outputs.get_by_objective(excludes=Objective, includes=None))  # type: ignore
-            # input features, prediction, standard deviation and reward for each output feature, 3 additional usefull infos: reward, aquisition function, strategy
-            if len(candidates.columns) != if_count + 3 * of_count + 2 * of_count_w:
-                raise ValueError("additional columns found")
+            candidates = self.outputs.validate_candidates(candidates=candidates)
         return candidates
 
     @property
@@ -669,11 +610,6 @@ class Domain(BaseModel):
             ]
         )
 
-    def _set_constraints_unvalidated(
-        self, constraints: Union[Sequence[AnyConstraint], Constraints]
-    ):
-        """Hack for reduce_domain"""
-        self.constraints = Constraints(constraints=[])
-        if isinstance(constraints, Constraints):
-            constraints = constraints.constraints
-        self.constraints.constraints = constraints
+
+if __name__ == "__main__":
+    pass

@@ -1,9 +1,9 @@
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
 
-from bofire.data_models.features.feature import Input, TTransform, is_numeric
+from bofire.data_models.features.feature import Input, TTransform
 
 
 class NumericalInput(Input):
@@ -98,10 +98,13 @@ class NumericalInput(Input):
         Returns:
             pd.Series: A dataFrame with experiments
         """
-        if not is_numeric(values):
+        try:
+            values = pd.to_numeric(values, errors="raise").astype("float64")
+        except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
             )
+        values = values.astype("float64")
         if strict:
             lower, upper = self.get_bounds(transform_type=None, values=values)
             if lower == upper:
@@ -122,20 +125,10 @@ class NumericalInput(Input):
         Returns:
             pd.Series: the original provided candidates
         """
-        if not is_numeric(values):
+        try:
+            values = pd.to_numeric(values, errors="raise").astype("float64")
+        except ValueError:
             raise ValueError(
                 f"not all values of input feature `{self.key}` are numerical"
             )
         return values
-
-    def get_bounds(
-        self,
-        transform_type: Optional[TTransform] = None,
-        values: Optional[pd.Series] = None,
-    ) -> Tuple[List[float], List[float]]:
-        assert transform_type is None
-        if values is None:
-            return [self.lower_bound], [self.upper_bound]  # type: ignore
-        lower = min(self.lower_bound, values.min())  # type: ignore
-        upper = max(self.upper_bound, values.max())  # type: ignore
-        return [lower], [upper]  # type: ignore

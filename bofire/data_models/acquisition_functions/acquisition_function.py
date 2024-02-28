@@ -1,6 +1,6 @@
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import PositiveFloat
+from pydantic import Field, PositiveFloat
 
 from bofire.data_models.base import BaseModel
 
@@ -9,31 +9,63 @@ class AcquisitionFunction(BaseModel):
     type: str
 
 
-class qNEI(AcquisitionFunction):
+class SingleObjectiveAcquisitionFunction(AcquisitionFunction):
+    type: str
+
+
+class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
+    type: str
+
+
+class qNEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qNEI"] = "qNEI"
+    prune_baseline: bool = True
 
 
-class qLogNEI(AcquisitionFunction):
+class qLogNEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qLogNEI"] = "qLogNEI"
+    prune_baseline: bool = True
 
 
-class qEI(AcquisitionFunction):
+class qEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qEI"] = "qEI"
 
 
-class qLogEI(AcquisitionFunction):
+class qLogEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qLogEI"] = "qLogEI"
 
 
-class qSR(AcquisitionFunction):
+class qSR(SingleObjectiveAcquisitionFunction):
     type: Literal["qSR"] = "qSR"
 
 
-class qUCB(AcquisitionFunction):
+class qUCB(SingleObjectiveAcquisitionFunction):
     type: Literal["qUCB"] = "qUCB"
-    beta: PositiveFloat = 0.2
+    beta: Annotated[float, Field(ge=0)] = 0.2
 
 
-class qPI(AcquisitionFunction):
+class qPI(SingleObjectiveAcquisitionFunction):
     type: Literal["qPI"] = "qPI"
     tau: PositiveFloat = 1e-3
+
+
+class qEHVI(MultiObjectiveAcquisitionFunction):
+    type: Literal["qEHVI"] = "qEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+
+
+class qLogEHVI(MultiObjectiveAcquisitionFunction):
+    type: Literal["qLogEHVI"] = "qLogEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+
+
+class qNEHVI(MultiObjectiveAcquisitionFunction):
+    type: Literal["qNEHVI"] = "qNEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    prune_baseline: bool = True
+
+
+class qLogNEHVI(MultiObjectiveAcquisitionFunction):
+    type: Literal["qLogNEHVI"] = "qLogNEHVI"
+    alpha: Annotated[float, Field(ge=0)] = 0.0
+    prune_baseline: bool = True

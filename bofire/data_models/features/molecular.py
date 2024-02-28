@@ -3,7 +3,7 @@ from typing import ClassVar, List, Literal, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import field_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import _CAT_SEP, CategoricalInput
@@ -20,7 +20,8 @@ from bofire.utils.cheminformatics import smiles2mol
 
 class MolecularInput(Input):
     type: Literal["MolecularInput"] = "MolecularInput"
-    order: ClassVar[int] = 6
+    # order_id: ClassVar[int] = 6
+    order_id: ClassVar[int] = 4
 
     @staticmethod
     def valid_transform_types() -> List[AnyMolFeatures]:
@@ -29,12 +30,14 @@ class MolecularInput(Input):
     def validate_experimental(
         self, values: pd.Series, strict: bool = False
     ) -> pd.Series:
+        values = values.map(str)
         for smi in values:
             smiles2mol(smi)
 
         return values
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
         for smi in values:
             smiles2mol(smi)
         return values
@@ -45,12 +48,30 @@ class MolecularInput(Input):
     def fixed_value(self, transform_type: Optional[AnyMolFeatures] = None) -> None:
         return None
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         raise ValueError("Sampling not supported for `MolecularInput`")
 
     def get_bounds(
-        self, transform_type: AnyMolFeatures, values: pd.Series
+        self,
+        transform_type: AnyMolFeatures,
+        values: pd.Series,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
+        """
+        Calculates the lower and upper bounds for the feature based on the given transform type and values.
+
+        Args:
+            transform_type (AnyMolFeatures): The type of transformation to apply to the data.
+            values (pd.Series): The actual data over which the lower and upper bounds are calculated.
+            reference_value (Optional[str], optional): The reference value for the transformation. Not used here.
+                Defaults to None.
+
+        Returns:
+            Tuple[List[float], List[float]]: A tuple containing the lower and upper bounds of the transformed data.
+
+        Raises:
+            NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.
+        """
         if values is None:
             raise NotImplementedError(
                 "`values` is currently required for `MolecularInput`"
@@ -86,9 +107,11 @@ class MolecularInput(Input):
 
 class CategoricalMolecularInput(CategoricalInput, MolecularInput):
     type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
-    order: ClassVar[int] = 7
+    # order_id: ClassVar[int] = 7
+    order_id: ClassVar[int] = 5
 
-    @validator("categories")
+    @field_validator("categories")
+    @classmethod
     def validate_smiles(cls, categories: Sequence[str]):
         """validates that categories are valid smiles. Note that this check can only
         be executed when rdkit is available.
@@ -126,18 +149,25 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
         self,
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         if isinstance(transform_type, CategoricalEncodingEnum):
             # we are just using the standard categorical transformations
-            return super().get_bounds(transform_type=transform_type, values=values)
+            return super().get_bounds(
+                transform_type=transform_type,
+                values=values,
+                reference_value=reference_value,
+            )
         else:
             # in case that values is None, we return the optimization bounds
             # else we return the complete bounds
             data = self.to_descriptor_encoding(
                 transform_type=transform_type,
-                values=pd.Series(self.get_allowed_categories())
-                if values is None
-                else pd.Series(self.categories),
+                values=(
+                    pd.Series(self.get_allowed_categories())
+                    if values is None
+                    else pd.Series(self.categories)
+                ),
             )
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()

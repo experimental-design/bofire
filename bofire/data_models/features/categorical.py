@@ -1,19 +1,13 @@
-from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
-from typing_extensions import Annotated
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    Input,
-    Output,
-    TAllowedVals,
-    TCategoryVals,
-    TTransform,
-)
+from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
+from bofire.data_models.objectives.api import AnyCategoricalObjective
+from bofire.data_models.types import TCategoryVals
 
 
 class CategoricalInput(Input):
@@ -25,52 +19,29 @@ class CategoricalInput(Input):
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"
-    order_id: ClassVar[int] = 5
+    # order_id: ClassVar[int] = 5
+    order_id: ClassVar[int] = 7
 
     categories: TCategoryVals
-    allowed: TAllowedVals = None
+    allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
+        default=None, validate_default=True
+    )
 
-    @validator("categories")
-    def validate_categories_unique(cls, categories):
-        """validates that categories have unique names
+    @field_validator("allowed")
+    @classmethod
+    def generate_allowed(cls, allowed, info):
+        """Generates the list of allowed categories if not provided."""
+        if allowed is None and "categories" in info.data.keys():
+            return [True for _ in range(len(info.data["categories"]))]
+        return allowed
 
-        Args:
-            categories (List[str]): List of category names
-
-        Raises:
-            ValueError: when categories have non-unique names
-
-        Returns:
-            List[str]: List of the categories
-        """
-        categories = list(categories)
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return categories
-
-    @root_validator(pre=False, skip_on_failure=True)
-    def init_allowed(cls, values):
-        """validates the list of allowed/not allowed categories
-
-        Args:
-            values (Dict): Dictionary with attributes
-
-        Raises:
-            ValueError: when the number of allowences does not fit to the number of categories
-            ValueError: when no category is allowed
-
-        Returns:
-            Dict: Dictionary with attributes
-        """
-        if "categories" not in values or values["categories"] is None:
-            return values
-        if "allowed" not in values or values["allowed"] is None:
-            values["allowed"] = [True for _ in range(len(values["categories"]))]
-        if len(values["allowed"]) != len(values["categories"]):
+    @model_validator(mode="after")
+    def validate_categories_fitting_allowed(self):
+        if len(self.allowed) != len(self.categories):  # type: ignore
             raise ValueError("allowed must have same length as categories")
-        if sum(values["allowed"]) == 0:
+        if sum(self.allowed) == 0:  # type: ignore
             raise ValueError("no category is allowed")
-        return values
+        return self
 
     @staticmethod
     def valid_transform_types() -> List[CategoricalEncodingEnum]:
@@ -166,6 +137,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: The passed dataFrame with candidates
         """
+        values = values.map(str)
         if sum(values.isin(self.get_allowed_categories())) != len(values):
             raise ValueError(
                 f"not all values of input feature `{self.key}` are a valid allowed category from {self.get_allowed_categories()}"
@@ -297,7 +269,7 @@ class CategoricalInput(Input):
         enc = np.array(self.categories)
         return pd.Series(enc[values], index=values.index, name=self.key)
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -307,13 +279,17 @@ class CategoricalInput(Input):
             pd.Series: drawn samples.
         """
         return pd.Series(
-            name=self.key, data=np.random.choice(self.get_allowed_categories(), n)
+            name=self.key,
+            data=np.random.default_rng(seed=seed).choice(
+                self.get_allowed_categories(), n
+            ),
         )
 
     def get_bounds(
         self,
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         assert isinstance(transform_type, CategoricalEncodingEnum)
         if transform_type == CategoricalEncodingEnum.ORDINAL:
@@ -356,45 +332,42 @@ class CategoricalInput(Input):
 
 class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
-    order_id: ClassVar[int] = 8
+    # order_id: ClassVar[int] = 8
+    order_id: ClassVar[int] = 9
 
     categories: TCategoryVals
-    objective: Annotated[
-        List[Annotated[float, Field(type=float, ge=0, le=1)]], Field(min_items=2)
-    ]
+    objective: AnyCategoricalObjective
 
-    @validator("categories")
-    def validate_categories_unique(cls, categories):
-        """validates that categories have unique names
-
-        Args:
-            categories (List[str]): List of category names
+    @model_validator(mode="after")
+    def validate_objective_categories(self):
+        """validates that objective categories match the output categories
 
         Raises:
-            ValueError: when categories have non-unique names
+            ValueError: when categories do not match objective categories
 
         Returns:
-            List[str]: List of the categories
+            self
         """
-        categories = list(categories)
-        if len(categories) != len(set(categories)):
-            raise ValueError("categories must be unique")
-        return categories
-
-    @validator("objective")
-    def validate_objective(cls, objective, values):
-        if len(objective) != len(values["categories"]):
-            raise ValueError("Length of objectives and categories do not match.")
-        for o in objective:
-            if o > 1:
-                raise ValueError("Objective values has to be smaller equal than 1.")
-            if o < 0:
-                raise ValueError("Objective values has to be larger equal than zero")
-        return objective
-
-    def to_dict(self) -> Dict:
-        """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.categories, self.objective))
+        if self.objective.categories != self.categories:  # type: ignore
+            raise ValueError("categories must match to objective categories")
+        return self
 
     def __call__(self, values: pd.Series) -> pd.Series:
-        return values.map(self.to_dict()).astype(float)
+        if self.objective is None:
+            return pd.Series(
+                data=[np.nan for _ in range(len(values))],
+                index=values.index,
+                name=values.name,
+            )
+        return self.objective(values)  # type: ignore
+
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        values = values.map(str)
+        if sum(values.isin(self.categories)) != len(values):
+            raise ValueError(
+                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
+            )
+        return values
+
+    def __str__(self) -> str:
+        return "CategoricalOutputFeature"

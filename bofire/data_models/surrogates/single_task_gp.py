@@ -1,11 +1,17 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, Type
 
 import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import RegressionMetricsEnum
-from bofire.data_models.features.api import CategoricalInput
+
+# from bofire.data_models.strategies.api import FactorialStrategy
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import (
     AnyKernel,
     MaternKernel,
@@ -21,11 +27,8 @@ from bofire.data_models.priors.api import (
     MBO_OUTPUTSCALE_PRIOR,
     AnyPrior,
 )
-
-# from bofire.data_models.strategies.api import FactorialStrategy
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import Hyperconfig, TrainableSurrogate
+from bofire.data_models.surrogates.trainable import Hyperconfig
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
 class SingleTaskGPHyperconfig(Hyperconfig):
@@ -39,7 +42,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             CategoricalInput(key="ard", categories=["True", "False"]),
         ]
     )
-    target_metric = RegressionMetricsEnum.MAE
+    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal[
         "FactorialStrategy", "SoboStrategy", "RandomStrategy"
     ] = "FactorialStrategy"
@@ -92,7 +95,7 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
-class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
@@ -106,7 +109,16 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))

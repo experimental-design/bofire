@@ -32,6 +32,6 @@ class ConstrainedObjective:
     """This abstract class offers a convenience routine for transforming sigmoid based objectives to botorch output constraints."""
 
 
-TGt0 = Annotated[float, Field(type=float, gt=0)]
-TGe0 = Annotated[float, Field(type=float, ge=0)]
-TWeight = Annotated[float, Field(type=float, gt=0, le=1)]
+TGt0 = Annotated[float, Field(gt=0)]
+TGe0 = Annotated[float, Field(ge=0)]
+TWeight = Annotated[float, Field(gt=0, le=1)]

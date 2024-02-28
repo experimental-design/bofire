@@ -1,23 +1,26 @@
 from typing import List, Literal, Type, Union
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.strategies.doe import DoEStrategy
+from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
 from bofire.data_models.strategies.predictives.qnehvi import QnehviStrategy
 from bofire.data_models.strategies.predictives.qparego import QparegoStrategy
 from bofire.data_models.strategies.predictives.sobo import (
     AdditiveSoboStrategy,
+    CustomSoboStrategy,
     MultiplicativeSoboStrategy,
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
-from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
-from bofire.data_models.strategies.samplers.rejection import RejectionSampler
+from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (
     AlwaysTrueCondition,
     CombiCondition,
@@ -29,13 +32,16 @@ AnyStrategy = Union[
     SoboStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
+    CustomSoboStrategy,
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
-    PolytopeSampler,
-    RejectionSampler,
+    SpaceFillingStrategy,
     RandomStrategy,
     DoEStrategy,
+    FactorialStrategy,
+    MoboStrategy,
+    ShortestPathStrategy,
 ]
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
@@ -50,12 +56,13 @@ class Step(BaseModel):
 
 class StepwiseStrategy(Strategy):
     type: Literal["StepwiseStrategy"] = "StepwiseStrategy"
-    steps: Annotated[List[Step], Field(min_items=2)]
+    steps: Annotated[List[Step], Field(min_length=2)]
 
-    @validator("steps")
-    def validate_steps(cls, v: List[Step], values):
+    @field_validator("steps")
+    @classmethod
+    def validate_steps(cls, v: List[Step], info):
         for i, step in enumerate(v):
-            if step.strategy_data.domain != values["domain"]:
+            if step.strategy_data.domain != info.data["domain"]:
                 raise ValueError(
                     f"Domain of step {i} is incompatible to domain of StepwiseStrategy."
                 )

@@ -1,19 +1,14 @@
-from typing import ClassVar, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
-from pydantic import root_validator, validator
+from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.feature import (
-    _CAT_SEP,
-    TCategoricalDescriptorVals,
-    TDescriptors,
-    TDiscreteVals,
-    TTransform,
-)
+from bofire.data_models.features.feature import _CAT_SEP, TTransform
+from bofire.data_models.types import TDescriptors, TDiscreteVals
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -33,20 +28,8 @@ class ContinuousDescriptorInput(ContinuousInput):
     descriptors: TDescriptors
     values: TDiscreteVals
 
-    @validator("descriptors")
-    def descriptors_to_keys(cls, descriptors):
-        """validates the descriptor names and transforms it to valid keys
-
-        Args:
-            descriptors (List[str]): List of descriptor names
-
-        Returns:
-            List[str]: List of valid keys
-        """
-        return list(descriptors)
-
-    @root_validator(pre=False, skip_on_failure=True)
-    def validate_list_lengths(cls, values):
+    @model_validator(mode="after")
+    def validate_list_lengths(self):
         """compares the length of the defined descriptors list with the provided values
 
         Args:
@@ -58,11 +41,11 @@ class ContinuousDescriptorInput(ContinuousInput):
         Returns:
             Dict: Dict with the attributes
         """
-        if len(values["descriptors"]) != len(values["values"]):
+        if len(self.descriptors) != len(self.values):
             raise ValueError(
                 'must provide same number of descriptors and values, got {len(values["descriptors"])} != {len(values["values"])}'
             )
-        return values
+        return self
 
     def to_df(self) -> pd.DataFrame:
         """tabular overview of the feature as DataFrame
@@ -86,31 +69,17 @@ class CategoricalDescriptorInput(CategoricalInput):
     """
 
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
-    order_id: ClassVar[int] = 4
+    order_id: ClassVar[int] = 6
 
     descriptors: TDescriptors
-    values: TCategoricalDescriptorVals
+    values: Annotated[
+        List[List[float]],
+        Field(min_length=1),
+    ]
 
-    @validator("descriptors")
-    def validate_descriptors(cls, descriptors):
-        """validates that descriptors have unique names
-
-        Args:
-            categories (List[str]): List of descriptor names
-
-        Raises:
-            ValueError: when descriptors have non-unique names
-
-        Returns:
-            List[str]: List of the descriptors
-        """
-        descriptors = list(descriptors)
-        if len(descriptors) != len(set(descriptors)):
-            raise ValueError("descriptors must be unique")
-        return descriptors
-
-    @validator("values")
-    def validate_values(cls, v, values):
+    @field_validator("values")
+    @classmethod
+    def validate_values(cls, v, info):
         """validates the compatability of passed values for the descriptors and the defined categories
 
         Args:
@@ -125,13 +94,13 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             List[List[float]]: Nested list with descriptor values
         """
-        if len(v) != len(values["categories"]):
+        if len(v) != len(info.data["categories"]):
             raise ValueError("values must have same length as categories")
         for row in v:
-            if len(row) != len(values["descriptors"]):
+            if len(row) != len(info.data["descriptors"]):
                 raise ValueError("rows in values must have same length as descriptors")
         a = np.array(v)
-        for i, d in enumerate(values["descriptors"]):
+        for i, d in enumerate(info.data["descriptors"]):
             if len(set(a[:, i])) == 1:
                 raise ValueError(f"No variation for descriptor {d}.")
         return v
@@ -169,7 +138,10 @@ class CategoricalDescriptorInput(CategoricalInput):
             return self.to_descriptor_encoding(pd.Series([val])).values[0].tolist()
 
     def get_bounds(
-        self, transform_type: TTransform, values: Optional[pd.Series] = None
+        self,
+        transform_type: TTransform,
+        values: Optional[pd.Series] = None,
+        reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
         if transform_type != CategoricalEncodingEnum.DESCRIPTOR:
             return super().get_bounds(transform_type, values)
@@ -242,9 +214,7 @@ class CategoricalDescriptorInput(CategoricalInput):
             pd.DataFrame: Descriptor encoded dataframe.
         """
         return pd.DataFrame(
-            data=values.map(
-                dict(zip(self.categories, self.values))
-            ).values.tolist(),  # type: ignore
+            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
             columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
             index=values.index,
         )

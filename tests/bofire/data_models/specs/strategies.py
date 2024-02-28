@@ -1,13 +1,19 @@
 import bofire.data_models.strategies.api as strategies
-from bofire.benchmarks.single import Himmelblau
-from bofire.data_models.acquisition_functions.api import qEI, qPI
-from bofire.data_models.domain.api import Domain, Inputs
+from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+)
+from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalMethodEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
+    ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.surrogates.api import BotorchSurrogates
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -21,25 +27,27 @@ strategy_commons = {
     "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
     "discrete_method": CategoricalMethodEnum.EXHAUSTIVE,
-    "surrogate_specs": None,
+    "surrogate_specs": BotorchSurrogates(surrogates=[]).model_dump(),
     "outlier_detection_specs": None,
     "seed": 42,
     "min_experiments_before_outlier_check": 1,
     "frequency_check": 1,
+    "frequency_hyperopt": 0,
+    "folds": 5,
 }
 
 
 specs.add_valid(
     strategies.QehviStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
     },
 )
 specs.add_valid(
     strategies.QnehviStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
         "alpha": 0.4,
     },
@@ -47,24 +55,35 @@ specs.add_valid(
 specs.add_valid(
     strategies.QparegoStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
-        "acquisition_function": qEI().dict(),
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qEI().model_dump(),
+        **strategy_commons,
+    },
+)
+specs.add_valid(
+    strategies.MoboStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qLogNEHVI().model_dump(),
         **strategy_commons,
     },
 )
 specs.add_valid(
     strategies.SoboStrategy,
     lambda: {
-        "domain": Himmelblau().domain.dict(),
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
         **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
 specs.add_valid(
     strategies.AdditiveSoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "domain": domain.valid().obj().model_dump(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
         "use_output_constraints": True,
         **strategy_commons,
     },
@@ -72,88 +91,73 @@ specs.add_valid(
 specs.add_valid(
     strategies.MultiplicativeSoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
     },
 )
 specs.add_valid(
     strategies.CustomSoboStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         **strategy_commons,
-        "acquisition_function": qPI(tau=0.1).dict(),
+        "acquisition_function": qPI(tau=0.1).model_dump(),
         "use_output_constraints": True,
     },
 )
 specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         "seed": 42,
+        "max_iters": 1000,
+        "num_base_samples": 1000,
+        "n_burnin": 1000,
+        "n_thinning": 32,
+        "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
     },
 )
 
-specs.add_valid(
-    strategies.PolytopeSampler,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
-                ]
-            ),
-        ),
-        "fallback_sampling_method": SamplingMethodEnum.UNIFORM,
-        "seed": 42,
-    },
-)
-specs.add_valid(
-    strategies.RejectionSampler,
-    lambda: {
-        "domain": Domain(
-            inputs=Inputs(
-                features=[
-                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(2)
-                ]
-            )
-        ),
-        "max_iters": 1000,
-        "num_base_samples": 1000,
-        "sampling_method": SamplingMethodEnum.UNIFORM,
-        "seed": 42,
-    },
-)
+
 specs.add_valid(
     strategies.DoEStrategy,
     lambda: {
-        "domain": domain.valid().obj().dict(),
+        "domain": domain.valid().obj().model_dump(),
         "formula": "linear",
         "optimization_strategy": "default",
         "verbose": False,
         "seed": 42,
     },
 )
+specs.add_valid(
+    strategies.SpaceFillingStrategy,
+    lambda: {
+        "domain": domain.valid().obj().dict(),
+        "sampling_fraction": 0.3,
+        "ipopt_options": {"maxiter": 200, "disp": 0},
+        "seed": 42,
+    },
+)
 
-tempdomain = domain.valid().obj().dict()
+tempdomain = domain.valid().obj()
 
 specs.add_valid(
     strategies.StepwiseStrategy,
     lambda: {
-        "domain": tempdomain,
+        "domain": tempdomain.model_dump(),
         "steps": [
             strategies.Step(
                 strategy_data=strategies.RandomStrategy(domain=tempdomain),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
                 max_parallelism=2,
-            ).dict(),
+            ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(
                     domain=tempdomain,
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
                 max_parallelism=2,
-            ).dict(),
+            ).model_dump(),
         ],
         "seed": 42,
     },
@@ -170,7 +174,221 @@ specs.add_valid(
                     DiscreteInput(key="beta", values=[1.0, 2, 3.0, 4.0]),
                 ]
             )
-        ),
+        ).model_dump(),
         "seed": 42,
     },
+)
+
+specs.add_valid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    ),
+                    LinearInequalityConstraint(
+                        features=["a", "b"], coefficients=[1.0, 1.0], rhs=0.95
+                    ),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.2, "b": 0.7, "c": 0.1, "d": "b"},
+        "atol": 1e-6,
+    },
+)
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.5, "d": "a"},
+        "end": {"a": 0.2, "b": 0.7, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="`start` is not a valid candidate.",
+)
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.2, "b": 0.9, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="`end` is not a valid candidate.",
+)
+
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a", bounds=(0, 1), local_relative_bounds=(0.2, 0.2)
+                    ),
+                    ContinuousInput(
+                        key="b", bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="`start` is equal to `end`.",
+)
+
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(key="c", bounds=(0.1, 0.1)),
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+            constraints=Constraints(
+                constraints=[
+                    LinearEqualityConstraint(
+                        features=["a", "b", "c"], coefficients=[1.0, 1.0, 1.0], rhs=1.0
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+        "end": {"a": 0.8, "b": 0.1, "c": 0.1, "d": "a"},
+    },
+    error=ValueError,
+    message="Domain has no local search region.",
+)
+
+specs.add_invalid(
+    strategies.ShortestPathStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    CategoricalInput(key="d", categories=["a", "b", "c"]),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "start": {"d": "a"},
+        "end": {"d": "b"},
+    },
+    error=ValueError,
+    message="Domain has no local search region.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=k, bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    )
+                    for k in ["a", "b", "c"]
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+            constraints=Constraints(
+                constraints=[
+                    NChooseKConstraint(
+                        features=["a", "b", "c"],
+                        min_count=1,
+                        max_count=2,
+                        none_also_valid=False,
+                    )
+                ]
+            ),
+        ).model_dump(),
+        "local_search_config": strategies.LSRBO(),
+    },
+    error=ValueError,
+    message="LSR-BO only supported for linear constraints.",
 )

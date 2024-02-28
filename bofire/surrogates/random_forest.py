@@ -1,19 +1,22 @@
-import codecs
-import pickle
+import base64
+import io
 from typing import Optional
 
 import numpy as np
 import pandas as pd
 import torch
 from botorch.models.ensemble import EnsembleModel
+from botorch.models.transforms.outcome import OutcomeTransform, Standardize
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.utils.validation import check_is_fitted
 from torch import Tensor
 
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import RandomForestSurrogate as DataModel
+from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
+from bofire.surrogates.utils import get_scaler
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -22,7 +25,11 @@ class _RandomForest(EnsembleModel):
     Predictions of the individual trees are interpreted as uncertainty.
     """
 
-    def __init__(self, rf: RandomForestRegressor):
+    def __init__(
+        self,
+        rf: RandomForestRegressor,
+        output_scaler: Optional[OutcomeTransform] = None,
+    ):
         """Constructs the model.
 
         Args:
@@ -33,6 +40,8 @@ class _RandomForest(EnsembleModel):
             raise ValueError("`rf` is not a sklearn RandomForestRegressor.")
         check_is_fitted(rf)
         self._rf = rf
+        if output_scaler is not None:
+            self.outcome_transform = output_scaler
 
     def forward(self, X: Tensor):
         r"""Compute the model output at X.
@@ -97,6 +106,8 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.random_state = data_model.random_state
         self.ccp_alpha = data_model.ccp_alpha
         self.max_samples = data_model.max_samples
+        self.scaler = data_model.scaler
+        self.output_scaler = data_model.output_scaler
         super().__init__(data_model=data_model, **kwargs)
 
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
@@ -110,6 +121,22 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y (pd.DataFrame): Dataframe with Y values.
         """
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+
+        scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
+        tX = (
+            scaler.transform(torch.from_numpy(transformed_X.values)).numpy()
+            if scaler is not None
+            else transformed_X.values
+        )
+
+        if self.output_scaler == ScalerEnum.STANDARDIZE:
+            output_scaler = Standardize(m=Y.shape[-1])
+            ty = torch.from_numpy(Y.values).to(**tkwargs)
+            ty = output_scaler(ty)[0].numpy()
+        else:
+            output_scaler = None
+            ty = Y.values
+
         rf = RandomForestRegressor(
             n_estimators=self.n_estimators,
             criterion=self.criterion,
@@ -126,15 +153,19 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
             ccp_alpha=self.ccp_alpha,
             max_samples=self.max_samples,
         )
-        rf.fit(X=transformed_X.values, y=Y.values.ravel())
-        self.model = _RandomForest(rf=rf)
+        rf.fit(X=tX, y=ty.ravel())
+
+        self.model = _RandomForest(rf=rf, output_scaler=output_scaler)
+        if scaler is not None:
+            self.model.input_transform = scaler
 
     def _dumps(self) -> str:
         """Dumps the random forest to a string via pickle as this is not directly json serializable."""
-        return codecs.encode(pickle.dumps(self.model._rf), "base64").decode()  # type: ignore
+        buffer = io.BytesIO()
+        torch.save(self.model, buffer)
+        return base64.b64encode(buffer.getvalue()).decode()
 
     def loads(self, data: str):
         """Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
-        self.model = _RandomForest(
-            rf=pickle.loads(codecs.decode(data.encode(), "base64"))
-        )
+        buffer = io.BytesIO(base64.b64decode(data.encode()))
+        self.model = torch.load(buffer)

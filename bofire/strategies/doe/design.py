@@ -17,9 +17,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput, Input
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -28,7 +26,7 @@ from bofire.strategies.doe.utils import (
     nchoosek_constraints_as_bounds,
 )
 from bofire.strategies.enum import OptimalityCriterionEnum
-from bofire.strategies.samplers.polytope import PolytopeSampler
+from bofire.strategies.random import RandomStrategy
 
 
 def find_local_max_ipopt_BaB(
@@ -402,6 +400,33 @@ def find_local_max_ipopt(
         )
         raise e
 
+    # determine number of experiments (only relevant if n_experiments is not provided by the user)
+    n_experiments = get_n_experiments(
+        domain=domain, model_type=model_type, n_experiments=n_experiments
+    )
+
+    if partially_fixed_experiments is not None:
+        # check if partially fixed experiments are valid
+        check_partially_fixed_experiments(
+            domain, n_experiments, partially_fixed_experiments
+        )
+        # no columns from partially fixed experiments which are not in the domain
+        partially_fixed_experiments = partially_fixed_experiments[
+            domain.inputs.get_keys()
+        ]
+
+    if fixed_experiments is not None:
+        # check if  fixed experiments are valid
+        check_fixed_experiments(domain, n_experiments, fixed_experiments)
+        # no columns from fixed experiments which are not in the domain
+        fixed_experiments = fixed_experiments[domain.inputs.get_keys()]
+
+    if (partially_fixed_experiments is not None) and (fixed_experiments is not None):
+        # check if partially fixed experiments and fixed experiments are valid
+        check_partially_and_fully_fixed_experiments(
+            domain, n_experiments, fixed_experiments, partially_fixed_experiments
+        )
+
     # warn user about usage of nonlinear constraints
     if domain.constraints:
         if np.any([isinstance(c, NonlinearConstraint) for c in domain.constraints]):
@@ -418,11 +443,6 @@ def find_local_max_ipopt(
         if isinstance(c, NChooseKConstraint)
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
-    # determine number of experiments (only relevant if n_experiments is not provided by the user)
-    n_experiments = get_n_experiments(
-        domain=domain, model_type=model_type, n_experiments=n_experiments
-    )
-
     #
     # Sampling initital values
     #
@@ -432,10 +452,8 @@ def find_local_max_ipopt(
         x0 = sampling.values.flatten()
     else:
         if len(domain.constraints.get(NonlinearConstraint)) == 0:
-            sampler = PolytopeSampler(
-                data_model=PolytopeSamplerDataModel(domain=domain)
-            )
-            x0 = sampler.ask(n_experiments, return_all=False).to_numpy().flatten()
+            sampler = RandomStrategy(data_model=RandomStrategyDataModel(domain=domain))
+            x0 = sampler.ask(n_experiments).to_numpy().flatten()
         else:
             warnings.warn(
                 "Sampling failed. Falling back to uniform sampling on input domain.\
@@ -583,59 +601,79 @@ def partially_fix_experiment(
 
 
 def check_fixed_experiments(
-    domain: Domain, n_experiments: int, fixed_experiments: np.ndarray
+    domain: Domain, n_experiments: int, fixed_experiments: pd.DataFrame
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
         domain (Domain): domain defining the input variables used for the check.
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
-        fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
+        fixed_experiments (pd.DataFrame): fixed experiment proposals to be checked.
     """
 
-    n_fixed_experiments, D = np.array(fixed_experiments).shape
+    n_fixed_experiments = len(fixed_experiments.index)
 
     if n_fixed_experiments >= n_experiments:
         raise ValueError(
             "For starting the optimization the total number of experiments must be larger that the number of fixed experiments."
         )
 
-    if D != len(domain.inputs):
+    domain.validate_candidates(
+        candidates=fixed_experiments,
+        only_inputs=True,
+    )
+
+
+def check_partially_fixed_experiments(
+    domain: Domain,
+    n_experiments: int,
+    partially_fixed_experiments: pd.DataFrame,
+) -> None:
+    n_partially_fixed_experiments = len(partially_fixed_experiments.index)
+
+    # for partially fixed experiments only check if all inputs are part of the domain
+    if not all(
+        key in partially_fixed_experiments.columns for key in domain.inputs.get_keys()
+    ):
         raise ValueError(
-            f"Invalid shape of fixed_experiments. Length along axis 1 is {D}, but must be {len(domain.inputs)}"
+            "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
+        )
+
+    if n_partially_fixed_experiments > n_experiments:
+        warnings.warn(
+            UserWarning(
+                "The number of partially fixed experiments exceeds the amount "
+                "of the overall count of experiments. Partially fixed experiments may be cut off"
+            )
         )
 
 
 def check_partially_and_fully_fixed_experiments(
     domain: Domain,
     n_experiments: int,
-    fixed_experiments: np.ndarray,
-    paritally_fixed_experiments: np.ndarray,
+    fixed_experiments: pd.DataFrame,
+    partially_fixed_experiments: pd.DataFrame,
 ) -> None:
     """Checks if the shape of the fixed experiments is correct and if the number of fixed experiments is valid
     Args:
         domain (Domain): domain defining the input variables used for the check.
         n_experiments (int): total number of experiments in the design that fixed_experiments are part of.
-        fixed_experiments (np.ndarray): fixed experiment proposals to be checked.
-        paritally_fixed_experiments (np.ndarray): partially fixed experiment proposals to be checked.
+        fixed_experiments (pd.DataFrame): fixed experiment proposals to be checked.
+        partially_fixed_experiments (pd.DataFrame): partially fixed experiment proposals to be checked.
     """
 
     check_fixed_experiments(domain, n_experiments, fixed_experiments)
-    n_fixed_experiments, dim = np.array(fixed_experiments).shape
+    check_partially_fixed_experiments(
+        domain, n_experiments, partially_fixed_experiments
+    )
+    n_fixed_experiments = len(fixed_experiments.index)
 
-    n_partially_fixed_experiments, partially_dim = np.array(
-        paritally_fixed_experiments
-    ).shape
-
-    if partially_dim != len(domain.inputs):
-        raise ValueError(
-            f"Invalid shape of partially_fixed_experiments. Length along axis 1 is {partially_dim}, but must be {len(domain.inputs)}"
-        )
+    n_partially_fixed_experiments = len(partially_fixed_experiments.index)
 
     if n_fixed_experiments + n_partially_fixed_experiments > n_experiments:
         warnings.warn(
             UserWarning(
                 "The number of fixed experiments and partially fixed experiments exceeds the amount "
-                "of the overall count of experiments. Partially fixed experiments may be cut of"
+                "of the overall count of experiments. Partially fixed experiments may be cut off"
             )
         )
 

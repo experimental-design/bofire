@@ -26,28 +26,37 @@ class Strategy(ABC):
         self._experiments = None
         self._candidates = None
 
+    def _get_seed(self) -> int:
+        """Returns an integer sampled from the strategies random number generator,
+        that can be used to seed dependent generators.
+
+        Returns:
+            int: random seed.
+        """
+        return int(self.rng.integers(1, 100000))
+
     @classmethod
     def from_spec(cls, data_model: DataModel) -> "Strategy":
         """Used by the mapper to map from data model to functional strategy."""
         return cls(data_model=data_model)
 
     @property
-    def experiments(self) -> pd.DataFrame:
+    def experiments(self) -> Optional[pd.DataFrame]:
         """Returns the experiments of the strategy.
 
         Returns:
             pd.DataFrame: Current experiments.
         """
-        return self._experiments  # type: ignore
+        return self._experiments
 
     @property
-    def candidates(self) -> pd.DataFrame:
+    def candidates(self) -> Optional[pd.DataFrame]:
         """Returns the (pending) candidates of the strategy.
 
         Returns:
             pd.DataFrame: Pending experiments.
         """
-        return self._candidates  # type: ignore
+        return self._candidates
 
     def tell(
         self,
@@ -171,7 +180,7 @@ class Strategy(ABC):
         return [
             Candidate(
                 inputValues={
-                    key: InputValue(value=row[key])
+                    key: InputValue(value=str(row[key]))
                     for key in self.domain.inputs.get_keys()
                 },
             )
@@ -179,21 +188,25 @@ class Strategy(ABC):
         ]
 
     def set_candidates(self, candidates: pd.DataFrame):
-        """Set candidates of the strategy. Overwrites existing ones.
+        """Set pending candidates of the strategy. Overwrites existing ones.
 
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
+        candidates = self.domain.inputs.validate_experiments(
+            candidates[self.domain.inputs.get_keys()], strict=False
+        )
         self._candidates = candidates[self.domain.inputs.get_keys()]
 
     def add_candidates(self, candidates: pd.DataFrame):
-        """Add candidates to the strategy. Appends to existing ones.
+        """Add pending candidates to the strategy. Appends to existing ones.
 
         Args:
             experiments (pd.DataFrame): Dataframe with candidates.
         """
-        candidates = self.domain.validate_candidates(candidates, only_inputs=True)
+        candidates = self.domain.inputs.validate_experiments(
+            candidates[self.domain.inputs.get_keys()], strict=False
+        )
         if self.candidates is None:
             self._candidates = candidates[self.domain.inputs.get_keys()]
         else:

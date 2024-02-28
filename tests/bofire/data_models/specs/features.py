@@ -1,9 +1,12 @@
-# import importlib
+import math
 import random
 import uuid
 
 import bofire.data_models.features.api as features
-from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.objectives.api import (
+    ConstrainedCategoricalObjective,
+    MaximizeObjective,
+)
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -27,7 +30,10 @@ specs.add_invalid(
         "values": [1.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
     },
+    error=ValueError,
+    message="Fixed discrete inputs are not supported. Please use a fixed continuous input.",
 )
+
 
 specs.add_valid(
     features.ContinuousInput,
@@ -35,6 +41,7 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "bounds": (3, 5.3),
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "local_relative_bounds": (math.inf, math.inf),
         "stepsize": None,
     },
 )
@@ -46,6 +53,7 @@ specs.add_valid(
         "descriptors": ["d1", "d2"],
         "values": [1.0, 2.0],
         "unit": random.choice(["°C", "mg", "mmol/l", None]),
+        "local_relative_bounds": (math.inf, math.inf),
         "stepsize": None,
     },
 )
@@ -57,6 +65,41 @@ specs.add_valid(
         "allowed": [True, True, False],
     },
 )
+
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c2"],
+        "allowed": [True, True, False],
+    },
+    error=ValueError,
+    message="Categories must be unique",
+)
+
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "allowed": [True, True],
+    },
+    error=ValueError,
+    message="allowed must have same length as categories",
+)
+
+specs.add_invalid(
+    features.CategoricalInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["c1", "c2", "c3"],
+        "allowed": [False, False, False],
+    },
+    error=ValueError,
+    message="no category is allowed",
+)
+
+
 specs.add_valid(
     features.CategoricalDescriptorInput,
     lambda: {
@@ -85,7 +128,9 @@ specs.add_valid(
     lambda: {
         "key": str(uuid.uuid4()),
         "categories": ["a", "b", "c"],
-        "objective": [0.0, 1.0, 0.0],
+        "objective": ConstrainedCategoricalObjective(
+            categories=["a", "b", "c"], desirability=[True, True, False]
+        ).model_dump(),
     },
 )
 specs.add_valid(

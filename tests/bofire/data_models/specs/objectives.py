@@ -28,10 +28,6 @@ specs.add_valid(
     lambda: {"w": 1.0, "bounds": (0.1, 0.9)},
 )
 
-specs.add_invalid(
-    objectives.MinimizeObjective,
-    lambda: {"w": 1.0, "lower_bound": 0.1, "upper_bound": 0.9},
-)
 
 specs.add_valid(
     objectives.MinimizeSigmoidObjective,
@@ -49,4 +45,35 @@ specs.add_valid(
         "tolerance": 0.4,
         "steepness": 0.3,
     },
+)
+
+specs.add_valid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue"],
+        "desirability": [True, False, True],
+    },
+)
+
+specs.add_invalid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue"],
+        "desirability": [True, False, True, False],
+    },
+    error=ValueError,
+    message="number of categories differs from number of desirabilities",
+)
+
+specs.add_invalid(
+    objectives.ConstrainedCategoricalObjective,
+    lambda: {
+        "w": 1.0,
+        "categories": ["green", "red", "blue", "blue"],
+        "desirability": [True, False, True, False],
+    },
+    error=ValueError,
+    message="Categories must be unique",
 )

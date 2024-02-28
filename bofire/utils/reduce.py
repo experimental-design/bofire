@@ -131,7 +131,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
         B[p + M - 1, :] += A_aug_rref[i, :]
 
     # build up reduced domain
-    _domain = Domain.construct(
+    _domain = Domain.model_construct(
         # _fields_set = {"inputs", "outputs", "constraints"}
         inputs=deepcopy(other_inputs),
         outputs=deepcopy(domain.outputs),
@@ -142,7 +142,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     ]
     all_inputs = _domain.inputs + new_inputs
     assert isinstance(all_inputs, Inputs)
-    _domain.inputs = all_inputs
+    _domain.inputs.features = all_inputs.features
 
     constraints: List[AnyConstraint] = []
     for i in pivots:
@@ -187,7 +187,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 raise Exception("There is no solution that fulfills the constraints.")
 
     if len(constraints) > 0:
-        _domain._set_constraints_unvalidated(_domain.constraints + constraints)
+        _domain.constraints.constraints = _domain.constraints.constraints + constraints  # type: ignore
 
     # assemble equalities
     _equalities = []

@@ -4,13 +4,15 @@ import numpy as np
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
-from botorch.utils.objective import soft_eval_constraint
+from botorch.utils.objective import compute_smoothed_feasibility_indicator
 
 import bofire.strategies.api as strategies
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -22,24 +24,28 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
+    ConstrainedCategoricalObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
     TargetObjective,
 )
-from bofire.data_models.strategies.api import PolytopeSampler
+from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
     constrained_objective2botorch,
     get_additive_botorch_objective,
     get_custom_botorch_objective,
     get_initial_conditions_generator,
+    get_interpoint_constraints,
     get_linear_constraints,
     get_multiobjective_objective,
     get_multiplicative_botorch_objective,
     get_nchoosek_constraints,
+    get_nonlinear_constraints,
     get_objective_callable,
     get_output_constraints,
+    get_product_constraints,
     tkwargs,
 )
 
@@ -160,12 +166,14 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
     reward3 = obj3(a_samples[:, 2])
     # do the comparison
     assert np.allclose(
-        (reward1**obj1.w + reward3**obj3.w)
-        * (reward1**obj1.w * reward3**obj3.w)
-        if exclude_constraints
-        else (reward1**obj1.w + reward2**obj2.w)
-        * (reward1**obj1.w * reward2**obj2.w)
-        * (reward1**obj1.w * reward3**obj3.w),
+        (
+            (reward1**obj1.w + reward3**obj3.w)
+            * (reward1**obj1.w * reward3**obj3.w)
+            if exclude_constraints
+            else (reward1**obj1.w + reward2**obj2.w)
+            * (reward1**obj1.w * reward2**obj2.w)
+            * (reward1**obj1.w * reward3**obj3.w)
+        ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
@@ -264,9 +272,11 @@ def test_get_additive_botorch_objective(exclude_constraints):
     # do the comparison
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
-        reward1 * obj1.w + reward3 * obj3.w
-        if exclude_constraints
-        else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w,
+        (
+            reward1 * obj1.w + reward3 * obj3.w
+            if exclude_constraints
+            else reward1 * obj1.w + reward3 * obj3.w + reward2 * obj2.w
+        ),
         objective_forward.detach().numpy(),
         rtol=1e-06,
     )
@@ -283,6 +293,65 @@ def test_get_additive_botorch_objective(exclude_constraints):
             objective_forward.detach().numpy(),
             rtol=1e-06,
         )
+
+
+def test_get_interpoint_equality_constraints():
+    domain = Domain(
+        inputs=Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(1, 1)),
+            ]
+        ),
+        constraints=Constraints(
+            constraints=[
+                InterpointEqualityConstraint(feature="b", multiplicity=3),
+            ]
+        ),
+    )
+    assert len(get_interpoint_constraints(domain=domain, n_candidates=9)) == 0
+    domain.inputs.get_by_key("b").bounds = (0, 1)
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=6)
+    assert len(constraints) == 4
+    for c in constraints:
+        assert c[2] == 0.0
+        assert torch.allclose(c[1], torch.tensor([1.0, -1.0]).to(**tkwargs))
+    c = constraints[0]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[0, 1], [1, 1]],
+            dtype=torch.int64,
+        ),
+    )
+    c = constraints[-1]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[3, 1], [5, 1]],
+            dtype=torch.int64,
+        ),
+    )
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=8)
+    assert len(constraints) == 5
+    c = constraints[-1]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[6, 1], [7, 1]],
+            dtype=torch.int64,
+        ),
+    )
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=3)
+    assert len(constraints) == 2
+    c = constraints[-1]
+    assert torch.allclose(
+        c[0],
+        torch.tensor(
+            [[0, 1], [2, 1]],
+            dtype=torch.int64,
+        ),
+    )
 
 
 def test_get_linear_constraints():
@@ -589,6 +658,81 @@ def test_get_nchoosek_constraints():
     )
 
 
+def test_get_product_constraints():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[5, 100]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            ProductInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=80,
+            ),
+            ProductInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=-20,
+                sign=-1,
+            ),
+            ProductInequalityConstraint(
+                features=["x1", "x2", "x3"],
+                exponents=[2, -1, 0.5],
+                rhs=0,
+                sign=-1,
+            ),
+        ],
+    )
+    constraints = get_product_constraints(domain=domain)
+    assert len(constraints) == 3
+
+    samples = torch.tensor([[0.1, 0.5, 90], [0.2, 0.9, 100], [0.3, 0.1, 100]]).to(
+        **tkwargs
+    )
+    results = torch.tensor([35.0, -10.0, 70.0]).to(**tkwargs)
+    assert torch.allclose(constraints[0](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[0](samples[i]), results[i])
+
+    results = torch.tensor([25.0, 70, -10]).to(**tkwargs)
+    assert torch.allclose(constraints[1](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[1](samples[i]), results[i])
+
+    results = torch.tensor([0.18973666, 0.44444444444, 9.0]).to(**tkwargs)
+    assert torch.allclose(constraints[2](samples), results)
+    for i in range(3):
+        assert torch.allclose(constraints[2](samples[i]), results[i])
+
+
+def test_get_nonlinear_constraints():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="x1", bounds=[0, 1]),
+            ContinuousInput(key="x2", bounds=[0, 1]),
+            ContinuousInput(key="x3", bounds=[5, 100]),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            ProductInequalityConstraint(
+                features=["x2", "x3"],
+                exponents=[1, 1],
+                rhs=80,
+            ),
+            NChooseKConstraint(
+                features=["x1", "x2"],
+                min_count=0,
+                max_count=1,
+                none_also_valid=False,
+            ),
+        ],
+    )
+    assert len(get_nonlinear_constraints(domain=domain)) == 2
+
+
 def test_get_multiobjective_objective():
     samples = (torch.rand(30, 4, requires_grad=True) * 5).to(**tkwargs)
     samples2 = (torch.rand(30, 512, 4, requires_grad=True) * 5).to(**tkwargs)
@@ -648,7 +792,7 @@ def test_get_initial_conditions_generator(sequential: bool):
         ]
     )
     domain = Domain(inputs=inputs)
-    strategy = strategies.map(PolytopeSampler(domain=domain))
+    strategy = strategies.map(RandomStrategy(domain=domain))
     # test with one hot encoding
     generator = get_initial_conditions_generator(
         strategy=strategy,
@@ -678,13 +822,57 @@ def test_get_initial_conditions_generator(sequential: bool):
     ],
 )
 def test_constrained_objective2botorch(objective):
-    cs, etas = constrained_objective2botorch(idx=0, objective=objective)
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=objective)
 
-    x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1)
-    y = torch.ones([500])
+    x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1).to(**tkwargs)
 
-    for c, eta in zip(cs, etas):
-        xtt = c(x)
-        y *= soft_eval_constraint(xtt, eta)
+    result = (
+        compute_smoothed_feasibility_indicator(
+            constraints=cs,
+            samples=x,
+            eta=torch.tensor(etas).to(**tkwargs),
+            log=False,
+            fat=False,
+        )
+        .numpy()
+        .ravel()
+    )
 
-    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), y.numpy().ravel())
+    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), result)
+
+
+def test_constrained_objective():
+    desirability = [True, False, False]
+    obj1 = ConstrainedCategoricalObjective(
+        categories=["c1", "c2", "c3"], desirability=desirability
+    )
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1)
+
+    x = torch.zeros((50, 3))
+    x[:, 0] = torch.arange(50) / 50
+    true_y = (x * torch.tensor(desirability)).sum(-1)
+    transformed_y = torch.log(1 / torch.clamp(true_y, 1e-8, 1 - 1e-8) - 1)
+
+    assert len(cs) == 1
+    assert etas[0] == 1.0
+
+    y_hat = cs[0](x)
+    assert np.allclose(y_hat.numpy(), transformed_y.numpy())
+    assert (
+        np.linalg.norm(
+            np.exp(-np.log(np.exp(y_hat.numpy()) + 1)) - true_y.numpy(), ord=np.inf
+        )
+        <= 1e-8
+    )
+    result = (
+        compute_smoothed_feasibility_indicator(
+            constraints=cs,
+            samples=x,
+            eta=torch.tensor(etas).to(**tkwargs),
+            log=False,
+            fat=False,
+        )
+        .numpy()
+        .ravel()
+    )
+    assert np.allclose(true_y.numpy(), result)

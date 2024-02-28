@@ -3,6 +3,8 @@ import pandas as pd
 import pytest
 from scipy.stats import pearsonr, spearmanr
 from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,
@@ -16,7 +18,9 @@ from bofire.surrogates.diagnostics import (
     CvResults,
     CvResults2CrossValidationValues,
     UQ_metrics,
+    _accuracy_score,
     _CVPPDiagram,
+    _f1_score,
     _mean_absolute_error,
     _mean_absolute_percentage_error,
     _mean_squared_error,
@@ -87,6 +91,38 @@ def test_sklearn_metrics(bofire, sklearn):
 
 
 @pytest.mark.parametrize(
+    "bofire, sklearn",
+    [
+        (_accuracy_score, accuracy_score),
+    ],
+)
+def test_sklearn_metrics_accuracy(bofire, sklearn):
+    n_samples = 20
+    observed = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    predicted = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    sd = None
+    assert bofire(observed, predicted, sd) == sklearn(observed, predicted)
+    assert bofire(observed, predicted) == sklearn(observed, predicted)
+
+
+@pytest.mark.parametrize(
+    "bofire, sklearn",
+    [
+        (_f1_score, f1_score),
+    ],
+)
+def test_sklearn_metrics_f1(bofire, sklearn):
+    n_samples = 20
+    observed = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    predicted = np.random.choice([0, 1, 2, 3], size=(n_samples,))
+    sd = None
+    assert bofire(observed, predicted, sd) == sklearn(
+        observed, predicted, average="micro"
+    )
+    assert bofire(observed, predicted) == sklearn(observed, predicted, average="micro")
+
+
+@pytest.mark.parametrize(
     "bofire, scipy",
     [
         (_pearson, pearsonr),
@@ -114,19 +150,21 @@ def test_cvresult_not_numeric():
         bounds=(10, 20),
     )
     feature2 = CategoricalInput(key="a", categories=["a", "b"])
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Not all values of observed are numerical"):
         CvResult(
             key=feature.key,
             observed=feature2.sample(n_samples),
             predicted=feature.sample(n_samples),
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Not all values of predicted are numerical"):
         CvResult(
             key=feature.key,
             observed=feature.sample(n_samples),
             predicted=feature2.sample(n_samples),
         )
-    with pytest.raises(ValueError):
+    with pytest.raises(
+        ValueError, match="Not all values of standard_deviation are numerical"
+    ):
         CvResult(
             key=feature.key,
             observed=feature.sample(n_samples),
@@ -212,7 +250,7 @@ def test_cvresult_get_UQ_metric_valid():
     assert cv.n_samples == 10
     for metric in UQ_metrics.keys():
         m = cv.get_metric(metric=metric)
-        assert type(m) == float
+        assert isinstance(m, float)
 
 
 def test_cvresult_get_UQ_metric_invalid():

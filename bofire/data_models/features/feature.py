@@ -1,16 +1,14 @@
 from abc import abstractmethod
-from typing import ClassVar, Dict, List, Optional, Tuple, Union
+from typing import ClassVar, List, Optional, Tuple, Union
 
 import pandas as pd
-from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import AnyMolFeatures
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
-TTransform = Union[CategoricalEncodingEnum, ScalerEnum]
+TTransform = Union[CategoricalEncodingEnum, ScalerEnum, AnyMolFeatures]
 
 
 class Feature(BaseModel):
@@ -95,7 +93,7 @@ class Input(Feature):
         pass
 
     @abstractmethod
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Sample a series of allowed values.
 
         Args:
@@ -111,6 +109,7 @@ class Input(Feature):
         self,
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
+        reference_value: Optional[Union[float, str]] = None,
     ) -> Tuple[List[float], List[float]]:
         """Returns the bounds of an input feature depending on the requested transform type.
 
@@ -118,7 +117,9 @@ class Input(Feature):
             transform_type (Optional[TTransform], optional): The requested transform type. Defaults to None.
             values (Optional[pd.Series], optional): If values are provided the bounds are returned taking
                 the most extreme values for the feature into account. Defaults to None.
-
+            reference_value (Optional[float], optional): If a reference value is provided, then the local bounds based
+                on a local search region are provided. Currently only supported for continuous inputs. For more
+                details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf.
         Returns:
             Tuple[List[float], List[float]]: List of lower bound values, list of upper bound values.
         """
@@ -136,6 +137,18 @@ class Output(Feature):
     def __call__(self, values: pd.Series) -> pd.Series:
         pass
 
+    @abstractmethod
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        """Abstract method to validate the experimental Series
+
+        Args:
+            values (pd.Series): A dataFrame with values for the outcome
+
+        Returns:
+            pd.Series: The passed dataFrame with experiments
+        """
+        pass
+
 
 def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
     if isinstance(s, pd.Series):
@@ -146,22 +159,5 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
-
-TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
-
-
-TDescriptors = Annotated[List[str], Field(min_items=1)]
-
-
-TCategoryVals = Annotated[List[str], Field(min_items=2)]
-TAllowedVals = Optional[Annotated[List[bool], Field(min_items=2)]]
-
-
-TCategoricalDescriptorVals = Annotated[
-    Union[List[List[float]], List[List[int]]],
-    Field(min_items=1),
-]
-
-TDiscreteVals = Annotated[List[float], Field(min_items=1)]
 
 _CAT_SEP = "_"

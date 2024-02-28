@@ -12,6 +12,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
 )
+from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 from bofire.surrogates.diagnostics import CvResult, CvResults
 from bofire.surrogates.surrogate import Surrogate
 
@@ -20,12 +21,13 @@ class TrainableSurrogate(ABC):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
 
     def fit(self, experiments: pd.DataFrame, options: Optional[Dict] = None):
-        # preprocess
-        experiments = self._preprocess_experiments(experiments)
         # validate
         experiments = self.inputs.validate_experiments(  # type: ignore
             experiments, strict=False
         )
+        experiments = self.outputs.validate_experiments(experiments)  # type: ignore
+        # preprocess
+        experiments = self._preprocess_experiments(experiments)
         X = experiments[self.inputs.get_keys()]  # type: ignore
         # TODO: output feature validation
         Y = experiments[self.outputs.get_keys()]  # type: ignore
@@ -180,6 +182,22 @@ class TrainableSurrogate(ABC):
             # now do the scoring
             y_test_pred = self.predict(X_test)  # type: ignore
             y_train_pred = self.predict(X_train)  # type: ignore
+
+            # Convert to categorical if applicable
+            if isinstance(self.outputs.get_by_key(key).objective, ConstrainedCategoricalObjective):  # type: ignore
+                y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                )
+                y_train_pred[f"{key}_pred"] = y_train_pred[f"{key}_pred"].map(
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                )
+                y_test[key] = y_test[key].map(
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                )
+                y_train[key] = y_train[key].map(
+                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                )
+
             # now store the results
             train_results.append(
                 CvResult(  # type: ignore
@@ -205,7 +223,7 @@ class TrainableSurrogate(ABC):
             for hookname, hook in hooks.items():
                 hook_results[hookname].append(
                     hook(
-                        model=self,  # type: ignore
+                        surrogate=self,  # type: ignore
                         X_train=X_train,
                         y_train=y_train,
                         X_test=X_test,

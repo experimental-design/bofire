@@ -1,10 +1,11 @@
-from typing import ClassVar, Literal, Optional, Tuple
+import math
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, root_validator, validator
+from pydantic import Field, field_validator, model_validator
 
-from bofire.data_models.features.feature import Output
+from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
 
@@ -15,12 +16,17 @@ class ContinuousInput(NumericalInput):
     Attributes:
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
         stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
+        local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
+            Defaults to (math.inf, math.inf).
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
     bounds: Tuple[float, float]
+    local_relative_bounds: Tuple[
+        Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]
+    ] = (math.inf, math.inf)
     stepsize: Optional[float] = None
 
     @property
@@ -31,23 +37,23 @@ class ContinuousInput(NumericalInput):
     def upper_bound(self) -> float:
         return self.bounds[1]
 
-    @validator("stepsize")
-    def validate_step_size(cls, v, values):
-        if v is None:
-            return v
-        lower, upper = values["bounds"]
-        if lower == upper and v is not None:
+    @model_validator(mode="after")
+    def validate_step_size(self):
+        if self.stepsize is None:
+            return self
+        lower, upper = self.bounds
+        if lower == upper and self.stepsize is not None:
             raise ValueError(
                 "Stepsize cannot be provided for a fixed continuous input."
             )
         range = upper - lower
-        if np.arange(lower, upper + v, v)[-1] != upper:
+        if np.arange(lower, upper + self.stepsize, self.stepsize)[-1] != upper:
             raise ValueError(
-                f"Stepsize of {v} does not match the provided interval [{lower},{upper}]."
+                f"Stepsize of {self.stepsize} does not match the provided interval [{lower},{upper}]."
             )
-        if range // v == 1:
+        if range // self.stepsize == 1:
             raise ValueError("Stepsize is too big, only one value allowed.")
-        return v
+        return self
 
     def round(self, values: pd.Series) -> pd.Series:
         """Round values to the stepsize of the feature. If no stepsize is provided return the
@@ -65,13 +71,16 @@ class ContinuousInput(NumericalInput):
         allowed_values = np.arange(
             self.lower_bound, self.upper_bound + self.stepsize, self.stepsize
         )
-        idx = abs(values.values.reshape([3, 1]) - allowed_values).argmin(axis=1)  # type: ignore
+        idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(  # type: ignore
+            axis=1
+        )
         return pd.Series(
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
 
-    @root_validator(pre=False, skip_on_failure=True)
-    def validate_lower_upper(cls, values):
+    @field_validator("bounds")
+    @classmethod
+    def validate_lower_upper(cls, bounds):
         """Validates that the lower bound is lower than the upper bound
 
         Args:
@@ -83,11 +92,11 @@ class ContinuousInput(NumericalInput):
         Returns:
             Dict: The attributes as dictionary
         """
-        if values["bounds"][0] > values["bounds"][1]:
+        if bounds[0] > bounds[1]:
             raise ValueError(
-                f'lower bound must be <= upper bound, got {values["lower_bound"]} > {values["upper_bound"]}'
+                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
             )
-        return values
+        return bounds
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
@@ -105,7 +114,7 @@ class ContinuousInput(NumericalInput):
         """
 
         noise = 10e-6
-        super().validate_candidental(values)
+        values = super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
                 f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` "
@@ -116,7 +125,7 @@ class ContinuousInput(NumericalInput):
             )
         return values
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -127,8 +136,38 @@ class ContinuousInput(NumericalInput):
         """
         return pd.Series(
             name=self.key,
-            data=np.random.uniform(self.lower_bound, self.upper_bound, n),
+            data=np.random.default_rng(seed=seed).uniform(
+                self.lower_bound, self.upper_bound, n
+            ),
         )
+
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+        reference_value: Optional[float] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert transform_type is None
+        if reference_value is not None and values is not None:
+            raise ValueError("Only one can be used, `local_value` or `values`.")
+        if values is None:
+            if reference_value is None or self.is_fixed():
+                return [self.lower_bound], [self.upper_bound]
+            else:
+                return [
+                    max(
+                        reference_value - self.local_relative_bounds[0],
+                        self.lower_bound,
+                    )
+                ], [
+                    min(
+                        reference_value + self.local_relative_bounds[1],
+                        self.upper_bound,
+                    )
+                ]
+        lower = min(self.lower_bound, values.min())  # type: ignore
+        upper = max(self.upper_bound, values.max())  # type: ignore
+        return [lower], [upper]
 
     def __str__(self) -> str:
         """Method to return a string of lower and upper bound
@@ -147,7 +186,8 @@ class ContinuousOutput(Output):
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"
-    order_id: ClassVar[int] = 7
+    # order_id: ClassVar[int] = 7
+    order_id: ClassVar[int] = 8
     unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(
@@ -162,6 +202,15 @@ class ContinuousOutput(Output):
                 name=values.name,
             )
         return self.objective(values)  # type: ignore
+
+    def validate_experimental(self, values: pd.Series) -> pd.Series:
+        try:
+            values = pd.to_numeric(values, errors="raise").astype("float64")
+        except ValueError:
+            raise ValueError(
+                f"not all values of input feature `{self.key}` are numerical"
+            )
+        return values
 
     def __str__(self) -> str:
         return "ContinuousOutputFeature"

@@ -9,23 +9,16 @@ from botorch.acquisition import (
     qLogNoisyExpectedImprovement,
     qNoisyExpectedImprovement,
 )
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.objective import GenericMCObjective
 from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
-from bofire.data_models.acquisition_functions.api import (
-    qEI,
-    qLogEI,
-    qLogNEI,
-    qNEI,
-)
+from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.domain.api import Outputs
-from bofire.data_models.strategies.api import (
-    PolytopeSampler as PolytopeSamplerDataModel,
-)
-from bofire.strategies.api import PolytopeSampler, QparegoStrategy
+from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.strategies.api import QparegoStrategy, RandomStrategy
 from tests.bofire.strategies.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
@@ -116,10 +109,10 @@ def test_invalid_qparego_init_domain(domain):
 def test_qparego(num_test_candidates):
     # generate data
     benchmark = DTLZ2(dim=6)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
     acqfs = [qEI(), qLogEI(), qLogNEI(), qNEI()]
     b_acqfs = [
@@ -136,7 +129,7 @@ def test_qparego(num_test_candidates):
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
     # test get objective
-    objective = my_strategy._get_objective()
+    objective, _, _ = my_strategy._get_objective_and_constraints()
     assert isinstance(objective, GenericMCObjective)
     acqfs = my_strategy._get_acqfs(2)
     assert len(acqfs) == 2
@@ -154,17 +147,17 @@ def test_qparego(num_test_candidates):
 def test_qparego_constraints(num_test_candidates):
     # generate data
     benchmark = C2DTLZ2(dim=4)
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
-    experiments = benchmark.f(random_strategy._ask(n=10), return_complete=True)
+    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
     data_model = data_models.QparegoStrategy(domain=benchmark.domain)
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
     # test get objective
-    objective = my_strategy._get_objective()
-    assert isinstance(objective, ConstrainedMCObjective)
+    objective, _, _ = my_strategy._get_objective_and_constraints()
+    assert isinstance(objective, GenericMCObjective)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
     assert len(candidates) == num_test_candidates
@@ -190,20 +183,19 @@ def test_qparego_constraints(num_test_candidates):
 @pytest.mark.slow
 def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
     # generate data
-    random_strategy = PolytopeSampler(
-        data_model=PolytopeSamplerDataModel(domain=benchmark.domain)
+    random_strategy = RandomStrategy(
+        data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
-        random_strategy._ask(n=num_experiments), return_complete=True
+        random_strategy.ask(num_experiments), return_complete=True
     )
-    print(specs.items())
     data_model = data_models.QparegoStrategy(
         domain=benchmark.domain,
         **{
             key: value
             for key, value in specs.items()
             if key not in ["domain", "surrogate_specs"]
-        }
+        },
     )
     strategy = QparegoStrategy(data_model=data_model)
     # just to ensure there are no former experiments/ candidates already stored in the domain

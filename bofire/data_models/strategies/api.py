@@ -2,8 +2,9 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
-from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
+from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
@@ -18,9 +19,8 @@ from bofire.data_models.strategies.predictives.sobo import (
     SoboStrategy,
 )
 from bofire.data_models.strategies.random import RandomStrategy
-from bofire.data_models.strategies.samplers.polytope import PolytopeSampler
-from bofire.data_models.strategies.samplers.rejection import RejectionSampler
-from bofire.data_models.strategies.samplers.sampler import SamplerStrategy
+from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
+from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     AlwaysTrueCondition,
     CombiCondition,
@@ -35,7 +35,6 @@ from bofire.data_models.strategies.strategy import Strategy
 AbstractStrategy = Union[
     Strategy,
     BotorchStrategy,
-    SamplerStrategy,
     PredictiveStrategy,
     MultiobjectiveStrategy,
 ]
@@ -48,13 +47,14 @@ AnyStrategy = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
+    SpaceFillingStrategy,
     EntingStrategy,
-    PolytopeSampler,
-    RejectionSampler,
     RandomStrategy,
     DoEStrategy,
     StepwiseStrategy,
     FactorialStrategy,
+    MoboStrategy,
+    ShortestPathStrategy,
 ]
 
 AnyPredictive = Union[
@@ -66,9 +66,11 @@ AnyPredictive = Union[
     QnehviStrategy,
     QparegoStrategy,
     EntingStrategy,
+    MoboStrategy,
 ]
-
-AnySampler = Union[PolytopeSampler, RejectionSampler]
 
 
 AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
+
+
+AnyLocalSearchConfig = LSRBO

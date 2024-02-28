@@ -1,6 +1,6 @@
 from typing import Union
 
-from bofire.data_models.molfeatures.molfeatures import (  # BagOfCharacters
+from bofire.data_models.molfeatures.molfeatures import (
     Fingerprints,
     FingerprintsFragments,
     Fragments,
@@ -14,6 +14,5 @@ AnyMolFeatures = Union[
     Fingerprints,
     Fragments,
     FingerprintsFragments,
-    # BagOfCharacters,
     MordredDescriptors,
 ]

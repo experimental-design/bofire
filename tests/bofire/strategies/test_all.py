@@ -6,12 +6,15 @@ import bofire.strategies.api as strategies
 from tests.bofire.strategies.test_enting import ENTING_STRATEGY_SPECS
 from tests.bofire.strategies.test_qehvi import BOTORCH_QEHVI_STRATEGY_SPECS
 from tests.bofire.strategies.test_qparego import BOTORCH_QPAREGO_STRATEGY_SPECS
-from tests.bofire.strategies.test_sobo import BOTORCH_SOBO_STRATEGY_SPECS
+from tests.bofire.strategies.test_sobo import (
+    BOTORCH_ADDITIVE_AND_MULTIPLICATIVE_SOBO_STRATEGY_SPECS,
+    BOTORCH_SOBO_STRATEGY_SPECS,
+)
 
 STRATEGY_SPECS = {
     data_models.SoboStrategy: BOTORCH_SOBO_STRATEGY_SPECS,
-    data_models.AdditiveSoboStrategy: BOTORCH_SOBO_STRATEGY_SPECS,
-    data_models.MultiplicativeSoboStrategy: BOTORCH_SOBO_STRATEGY_SPECS,
+    data_models.AdditiveSoboStrategy: BOTORCH_ADDITIVE_AND_MULTIPLICATIVE_SOBO_STRATEGY_SPECS,
+    data_models.MultiplicativeSoboStrategy: BOTORCH_ADDITIVE_AND_MULTIPLICATIVE_SOBO_STRATEGY_SPECS,
     data_models.QehviStrategy: BOTORCH_QEHVI_STRATEGY_SPECS,
     data_models.QnehviStrategy: BOTORCH_QEHVI_STRATEGY_SPECS,
     data_models.QparegoStrategy: BOTORCH_QPAREGO_STRATEGY_SPECS,

@@ -1,12 +1,14 @@
-from typing import Literal, Optional
+from typing import Literal, Optional, Type
 
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
+    AnyOutput,
     CategoricalDescriptorInput,
     CategoricalInput,
+    ContinuousOutput,
     NumericalInput,
 )
 from bofire.data_models.surrogates.surrogate import Surrogate
@@ -15,7 +17,7 @@ from bofire.data_models.surrogates.trainable import TrainableSurrogate
 
 class XGBoostSurrogate(Surrogate, TrainableSurrogate):
     type: Literal["XGBoostSurrogate"] = "XGBoostSurrogate"
-    n_estimators: int
+    n_estimators: Annotated[int, Field(ge=1)] = 100
     max_depth: Annotated[int, Field(ge=0)] = 6
     max_leaves: Annotated[int, Field(ge=0)] = 0
     max_bin: Annotated[int, Field(ge=0)] = 256
@@ -43,9 +45,10 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
     random_state: Optional[Annotated[int, Field(ge=0)]] = None
     num_parallel_tree: Annotated[int, Field(gt=0)] = 1
 
-    @validator("input_preprocessing_specs", always=True)
-    def validate_input_preprocessing_specs(cls, v, values):
-        inputs = values["inputs"]
+    @field_validator("input_preprocessing_specs")
+    @classmethod
+    def validate_input_preprocessing_specs(cls, v, info):
+        inputs = info.data["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
         descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)
         for key in categorical_keys:
@@ -75,3 +78,13 @@ class XGBoostSurrogate(Surrogate, TrainableSurrogate):
             if v.get(key) is not None:
                 raise ValueError("Currently no numeric transforms are supported.")
         return v
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))

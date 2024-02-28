@@ -6,6 +6,26 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
+    constraints.ProductEqualityConstraint,
+    lambda: {
+        "features": ["f1", "f2", "f3"],
+        "exponents": [random.randint(1, 10) for _ in range(3)],
+        "rhs": random.random(),
+        "sign": 1,
+    },
+)
+
+specs.add_valid(
+    constraints.ProductInequalityConstraint,
+    lambda: {
+        "features": ["f1", "f2", "f3"],
+        "exponents": [random.randint(1, 10) for _ in range(3)],
+        "rhs": random.random(),
+        "sign": 1,
+    },
+)
+
+specs.add_valid(
     constraints.LinearEqualityConstraint,
     lambda: {
         "features": ["f1", "f2", "f3"],
@@ -45,4 +65,21 @@ specs.add_valid(
         "max_count": 1,
         "none_also_valid": False,
     },
+)
+
+specs.add_valid(
+    constraints.InterpointEqualityConstraint,
+    lambda: {
+        "feature": "f1",
+        "multiplicity": 3,
+    },
+)
+
+specs.add_invalid(
+    constraints.InterpointEqualityConstraint,
+    lambda: {
+        "feature": "f1",
+        "multiplicity": 1,
+    },
+    error=ValueError,
 )

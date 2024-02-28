@@ -1,4 +1,7 @@
-from pydantic import confloat
+from typing import Union
+
+from pydantic import Field
+from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 
@@ -14,5 +17,5 @@ class PredictedValue(BaseModel):
             Has to be greater/equal than zero.
     """
 
-    predictedValue: float
-    standardDeviation: confloat(ge=0)  # type: ignore
+    predictedValue: Union[float, str]
+    standardDeviation: Annotated[float, Field(ge=0)]

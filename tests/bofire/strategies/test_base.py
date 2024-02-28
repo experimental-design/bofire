@@ -18,6 +18,7 @@ from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
+    ProductInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
@@ -31,8 +32,12 @@ from bofire.data_models.features.api import (
     Output,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
-from bofire.utils.torch_tools import get_nchoosek_constraints, tkwargs
-from tests.bofire.data_models.test_domain_validators import generate_experiments
+from bofire.utils.torch_tools import (
+    get_nchoosek_constraints,
+    get_nonlinear_constraints,
+    tkwargs,
+)
+from tests.bofire.data_models.domain.test_domain_validators import generate_experiments
 from tests.bofire.strategies.specs import (
     VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
     VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
@@ -71,6 +76,7 @@ class DummyStrategyDataModel(data_models.BotorchStrategy):
             LinearEqualityConstraint,
             LinearInequalityConstraint,
             NChooseKConstraint,
+            ProductInequalityConstraint,
         ]
 
     @classmethod
@@ -217,7 +223,7 @@ domains = [
         inputs=[if1, if2],  # only continuous features
         outputs=[of1, of2],
         constraints=[],
-    )
+    ),
     # Domain(
     #     inputs=[if1, if7], # unknown dummy feature
     #     outputs=[of1],
@@ -289,10 +295,16 @@ data = [
 
 @pytest.mark.parametrize("domain", list(domains))
 def test_base_create(domain: Domain):
-    with pytest.raises(ValueError, match="number sobol samples"):
+    with pytest.raises(
+        ValueError,
+        match="num_sobol_samples have to be of the power of 2 to increase performance",
+    ):
         DummyStrategyDataModel(domain=domain, num_sobol_samples=5)
 
-    with pytest.raises(ValueError, match="number raw samples"):
+    with pytest.raises(
+        ValueError,
+        match="num_raw_samples have to be of the power of 2 to increase performance",
+    ):
         DummyStrategyDataModel(domain=domain, num_raw_samples=5)
 
 
@@ -316,10 +328,16 @@ def test_base_invalid_descriptor_method():
     # "domain, descriptor_encoding, categorical_encoding, categorical_method, expected",
     "domain, surrogate_specs, categorical_method, descriptor_method, expected",
     [
-        (domains[0], None, "EXHAUSTIVE", "EXHAUSTIVE", {}),
+        (
+            domains[0],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "EXHAUSTIVE",
+            "EXHAUSTIVE",
+            {},
+        ),
         (
             domains[1],
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
@@ -374,7 +392,13 @@ def test_base_invalid_descriptor_method():
             "FREE",
             {1: 3, 6: 1, 7: 0, 8: 0, 12: 1, 13: 0, 14: 0},
         ),
-        (domains[5], None, "EXHAUSTIVE", "EXHAUSTIVE", {1: 3.0}),
+        (
+            domains[5],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "EXHAUSTIVE",
+            "EXHAUSTIVE",
+            {1: 3.0},
+        ),
         (
             domains[5],
             surrogate_data_models.BotorchSurrogates(
@@ -392,8 +416,20 @@ def test_base_invalid_descriptor_method():
             "FREE",
             {1: 3.0, 2: 0},
         ),
-        (domains[5], None, "FREE", "EXHAUSTIVE", {1: 3.0}),
-        (domains[5], None, "FREE", "FREE", {1: 3.0, 2: 3.0}),
+        (
+            domains[5],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "FREE",
+            "EXHAUSTIVE",
+            {1: 3.0},
+        ),
+        (
+            domains[5],
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
+            "FREE",
+            "FREE",
+            {1: 3.0, 2: 3.0},
+        ),
     ],
 )
 def test_base_get_fixed_features(
@@ -423,7 +459,7 @@ def test_base_get_fixed_features(
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0, 1: 1},
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0, 1: 1},
@@ -450,7 +486,7 @@ def test_base_get_fixed_features(
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             "FREE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 1.0, 3: 2.0},
                 {4: 1.0, 5: 0.0, 6: 0.0, 2: 3.0, 3: 7.0},
@@ -603,7 +639,7 @@ def test_base_get_fixed_features(
             "FREE",
             "EXHAUSTIVE",
             "FREE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {4: 1.0, 5: 0.0, 6: 0.0},
                 {4: 0.0, 5: 1.0, 6: 0.0},
@@ -615,7 +651,7 @@ def test_base_get_fixed_features(
             "EXHAUSTIVE",
             "EXHAUSTIVE",
             "EXHAUSTIVE",
-            None,
+            surrogate_data_models.BotorchSurrogates(surrogates=[]),
             [
                 {1: 3.0},
             ],
@@ -647,7 +683,9 @@ def test_base_get_categorical_combinations(
 def test_base_invalid_pair_encoding_method(domain):
     with pytest.raises(ValueError):
         DummyStrategyDataModel(
-            domain=domain, categorical_encoding="ORDINAL", categorical_method="FREE"  # type: ignore
+            domain=domain,
+            categorical_encoding="ORDINAL",
+            categorical_method="FREE",  # type: ignore
         )
 
 
@@ -766,8 +804,10 @@ def test_base_setup_ask_fixed_features(
         ),
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = domains[0].inputs.sample(3)
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -796,8 +836,10 @@ def test_base_setup_ask_fixed_features(
         discrete_method=discrete_method,
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = domains[3].inputs.sample(3)
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -816,8 +858,12 @@ def test_base_setup_ask():
         # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = benchmark.f(
+        benchmark.domain.inputs.sample(3), return_complete=True
+    )
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -826,6 +872,10 @@ def test_base_setup_ask():
     ) = myStrategy._setup_ask()
     assert torch.allclose(
         bounds,
+        torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
+    )
+    assert torch.allclose(
+        local_bounds,
         torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
     )
     assert ic_generator is None
@@ -840,8 +890,12 @@ def test_base_setup_ask():
         # acquisition_function=specs.acquisition_functions.valid().obj(),
     )
     myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = benchmark.f(
+        benchmark.domain.inputs.sample(3), return_complete=True
+    )
     (
         bounds,
+        local_bounds,
         ic_generator,
         ic_gen_kwargs,
         nchooseks,
@@ -855,5 +909,39 @@ def test_base_setup_ask():
     assert ic_generator == gen_batch_initial_conditions
     assert list(ic_gen_kwargs.keys()) == ["generator"]
     assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))  # type: ignore
+    assert fixed_features == {}
+    assert fixed_features_list is None
+    # test for nchooseks with product constraints
+    benchmark = Hartmann(dim=6, allowed_k=3)
+    benchmark.domain.constraints.constraints.append(
+        ProductInequalityConstraint(
+            features=["x_1", "x_2", "x_3"], exponents=[1, 1, 1], rhs=50
+        )
+    )
+    data_model = DummyStrategyDataModel(
+        domain=benchmark.domain,
+        # acquisition_function=specs.acquisition_functions.valid().obj(),
+    )
+    myStrategy = DummyStrategy(data_model=data_model)
+    myStrategy._experiments = benchmark.f(
+        benchmark.domain.inputs.sample(3), return_complete=True
+    )
+    (
+        bounds,
+        local_bounds,
+        ic_generator,
+        ic_gen_kwargs,
+        nonlinears,
+        fixed_features,
+        fixed_features_list,
+    ) = myStrategy._setup_ask()
+    assert torch.allclose(
+        bounds,
+        torch.tensor([[0 for _ in range(6)], [1 for _ in range(6)]]).to(**tkwargs),
+    )
+    assert ic_generator == gen_batch_initial_conditions
+    assert list(ic_gen_kwargs.keys()) == ["generator"]
+    assert len(nonlinears) != len(get_nchoosek_constraints(domain=benchmark.domain))
+    assert len(nonlinears) == len(get_nonlinear_constraints(domain=benchmark.domain))
     assert fixed_features == {}
     assert fixed_features_list is None

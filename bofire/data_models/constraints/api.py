@@ -4,6 +4,13 @@ from bofire.data_models.constraints.constraint import (
     Constraint,
     ConstraintError,
     ConstraintNotFulfilledError,
+    EqalityConstraint,
+    InequalityConstraint,
+    IntrapointConstraint,
+)
+from bofire.data_models.constraints.interpoint import (
+    InterpointConstraint,
+    InterpointEqualityConstraint,
 )
 from bofire.data_models.constraints.linear import (
     LinearConstraint,
@@ -16,11 +23,21 @@ from bofire.data_models.constraints.nonlinear import (
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
+from bofire.data_models.constraints.product import (
+    ProductConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
+)
 
 AbstractConstraint = Union[
     Constraint,
     LinearConstraint,
     NonlinearConstraint,
+    IntrapointConstraint,
+    InterpointConstraint,
+    ProductConstraint,
+    InequalityConstraint,
+    EqalityConstraint,
 ]
 
 AnyConstraint = Union[
@@ -29,8 +46,9 @@ AnyConstraint = Union[
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
     NChooseKConstraint,
+    InterpointEqualityConstraint,
+    ProductEqualityConstraint,
+    ProductInequalityConstraint,
 ]
 
 AnyConstraintError = Union[ConstraintError, ConstraintNotFulfilledError]
-
-# %%

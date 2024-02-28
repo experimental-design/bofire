@@ -1,9 +1,9 @@
-from typing import List, Union
+from typing import Callable, List, Tuple, Union
 
 import torch
 from botorch.acquisition import get_acquisition_function
 from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
+from botorch.acquisition.objective import GenericMCObjective
 from botorch.models.gpytorch import GPyTorchModel
 from botorch.utils.multi_objective.scalarization import get_chebyshev_scalarization
 from botorch.utils.sampling import sample_simplex
@@ -12,6 +12,7 @@ from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
     MaximizeObjective,
     MinimizeObjective,
+    Objective,
 )
 from bofire.data_models.strategies.api import QparegoStrategy as DataModel
 from bofire.strategies.predictives.botorch import BotorchStrategy
@@ -34,14 +35,21 @@ class QparegoStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
+        self.constraint_callables, self.etas = None, 1e-3
 
-    def _get_objective(
+    def _get_objective_and_constraints(
         self,
-    ) -> Union[GenericMCObjective, ConstrainedMCObjective]:
+    ) -> Tuple[
+        GenericMCObjective,
+        Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
+        Union[List, float],
+    ]:
         """Returns the scalarized objective.
 
         Returns:
-            Union[GenericMCObjective, ConstrainedMCObjective]: the botorch objective.
+            GenericMCObjective: the botorch objective.
+            Union[ConstrainedObjective, None]: the botorch constraints.
+            Union[List, float]: etas used in the botorch constraints.
         """
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs
@@ -78,18 +86,19 @@ class QparegoStrategy(BotorchStrategy):
             weights=weights, Y=obj_callable(preds, None) * ref_point_mask
         )
 
-        def objective(Z, X=None):
+        def objective_callable(Z, X=None):
             return scalarization(obj_callable(Z, None) * ref_point_mask, X)
 
-        if len(weights) != len(self.domain.outputs):
-            constraints, etas = get_output_constraints(self.domain.outputs)
-            return ConstrainedMCObjective(
-                objective=objective,
-                constraints=constraints,
-                eta=torch.tensor(etas).to(**tkwargs),
-                infeasible_cost=self.get_infeasible_cost(objective=objective),
-            )
-        return GenericMCObjective(scalarization)
+        if len(weights) != len(self.domain.outputs.get_by_objective(Objective)):
+            constraint_callables, etas = get_output_constraints(self.domain.outputs)
+        else:
+            constraint_callables, etas = None, 1e-3
+
+        return (
+            GenericMCObjective(objective=objective_callable),
+            constraint_callables,
+            etas,
+        )
 
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
@@ -98,16 +107,22 @@ class QparegoStrategy(BotorchStrategy):
 
         X_train, X_pending = self.get_acqf_input_tensors()
 
+        (
+            objective_callable,
+            constraint_callables,
+            etas,
+        ) = self._get_objective_and_constraints()
+
         assert self.model is not None
         for i in range(n):
             acqf = get_acquisition_function(
                 acquisition_function_name=self.acquisition_function.__class__.__name__,
                 model=self.model,
-                objective=self._get_objective(),
+                objective=objective_callable,
                 X_observed=X_train,
                 X_pending=X_pending if i == 0 else None,
-                constraints=None,
-                eta=None,
+                constraints=constraint_callables,
+                eta=torch.tensor(etas).to(**tkwargs),
                 mc_samples=self.num_sobol_samples,
                 prune_baseline=True,
                 cache_root=True if isinstance(self.model, GPyTorchModel) else False,

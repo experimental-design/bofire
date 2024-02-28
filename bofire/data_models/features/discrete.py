@@ -1,11 +1,12 @@
-from typing import ClassVar, Literal
+from typing import ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import validator
+from pydantic import field_validator
 
-from bofire.data_models.features.feature import TDiscreteVals
+from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
+from bofire.data_models.types import TDiscreteVals
 
 
 class DiscreteInput(NumericalInput):
@@ -21,7 +22,8 @@ class DiscreteInput(NumericalInput):
 
     values: TDiscreteVals
 
-    @validator("values")
+    @field_validator("values")
+    @classmethod
     def validate_values_unique(cls, values):
         """Validates that provided values are unique.
 
@@ -68,14 +70,14 @@ class DiscreteInput(NumericalInput):
         Returns:
             pd.Series: _uggested candidates for the feature
         """
-        super().validate_candidental(values)
+        values = super().validate_candidental(values)
         if not np.isin(values.to_numpy(), np.array(self.values)).all():
             raise ValueError(
                 f"Not allowed values in candidates for feature {self.key}."
             )
         return values
 
-    def sample(self, n: int) -> pd.Series:
+    def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         """Draw random samples from the feature.
 
         Args:
@@ -84,7 +86,9 @@ class DiscreteInput(NumericalInput):
         Returns:
             pd.Series: drawn samples.
         """
-        return pd.Series(name=self.key, data=np.random.choice(self.values, n))
+        return pd.Series(
+            name=self.key, data=np.random.default_rng(seed=seed).choice(self.values, n)
+        )
 
     def from_continuous(self, values: pd.DataFrame) -> pd.Series:
         """Rounds continuous values to the closest discrete ones.
@@ -105,3 +109,16 @@ class DiscreteInput(NumericalInput):
         ).idxmin(1)
         s.name = self.key
         return s
+
+    def get_bounds(
+        self,
+        transform_type: Optional[TTransform] = None,
+        values: Optional[pd.Series] = None,
+        reference_value: Optional[float] = None,
+    ) -> Tuple[List[float], List[float]]:
+        assert transform_type is None
+        if values is None:
+            return [self.lower_bound], [self.upper_bound]  # type: ignore
+        lower = min(self.lower_bound, values.min())  # type: ignore
+        upper = max(self.upper_bound, values.max())  # type: ignore
+        return [lower], [upper]  # type: ignore

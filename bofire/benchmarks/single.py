@@ -175,18 +175,20 @@ class Hartmann(Benchmark):
             outputs=Outputs(
                 features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
             ),
-            constraints=Constraints(
-                constraints=[
-                    NChooseKConstraint(
-                        features=[f"x_{i}" for i in range(dim)],
-                        min_count=0,
-                        max_count=allowed_k,
-                        none_also_valid=True,
-                    )
-                ]
-            )
-            if allowed_k
-            else Constraints(),
+            constraints=(
+                Constraints(
+                    constraints=[
+                        NChooseKConstraint(
+                            features=[f"x_{i}" for i in range(dim)],
+                            min_count=0,
+                            max_count=allowed_k,
+                            none_also_valid=True,
+                        )
+                    ]
+                )
+                if allowed_k
+                else Constraints()
+            ),
         )
         self._hartmann = botorch_hartmann(dim=dim)
 
@@ -218,13 +220,35 @@ class Hartmann(Benchmark):
 
 
 class Branin(Benchmark):
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, locality_factor: Optional[float] = None, **kwargs) -> None:
         super().__init__(**kwargs)
         self._domain = Domain(
             inputs=Inputs(
                 features=[
-                    ContinuousInput(key="x_1", bounds=(-5.0, 10)),
-                    ContinuousInput(key="x_2", bounds=(0.0, 15.0)),
+                    ContinuousInput(
+                        key="x_1",
+                        bounds=(-5.0, 10),
+                        local_relative_bounds=(
+                            (
+                                0.5 * locality_factor,
+                                0.5 * locality_factor,
+                            )
+                            if locality_factor is not None
+                            else (math.inf, math.inf)
+                        ),
+                    ),
+                    ContinuousInput(
+                        key="x_2",
+                        bounds=(0.0, 15.0),
+                        local_relative_bounds=(
+                            (
+                                1.5 * locality_factor,
+                                1.5 * locality_factor,
+                            )
+                            if locality_factor is not None
+                            else (math.inf, math.inf)
+                        ),
+                    ),
                 ]
             ),
             outputs=Outputs(

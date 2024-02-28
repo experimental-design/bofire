@@ -7,10 +7,10 @@ from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, 
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, validate_arguments
+from pydantic import Field, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
 
-from bofire.data_models.base import BaseModel, filter_by_attribute, filter_by_class
+from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
     _CAT_SEP,
@@ -20,16 +20,22 @@ from bofire.data_models.features.api import (
     CategoricalDescriptorInput,
     CategoricalInput,
     CategoricalMolecularInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
     Input,
     MolecularInput,
     Output,
-    TInputTransformSpecs,
 )
+from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
-from bofire.data_models.objectives.api import AbstractObjective, Objective
+from bofire.data_models.objectives.api import (
+    AbstractObjective,
+    ConstrainedCategoricalObjective,
+    Objective,
+)
+from bofire.data_models.types import TInputTransformSpecs
 
 FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
 
@@ -43,6 +49,16 @@ class Features(BaseModel):
 
     type: Literal["Features"] = "Features"
     features: FeatureSequence = Field(default_factory=lambda: [])
+
+    @field_validator("features")
+    @classmethod
+    def validate_unique_feature_keys(
+        cls: type[Features], features: FeatureSequence
+    ) -> FeatureSequence:
+        keys = [feat.key for feat in features]
+        if len(keys) != len(set(keys)):
+            raise ValueError("Feature keys are not unique.")
+        return features
 
     def __iter__(self):
         return iter(self.features)
@@ -104,7 +120,7 @@ class Features(BaseModel):
     def get(
         self,
         includes: Union[Type, List[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type]] = None,
+        excludes: Union[Type, List[Type]] = None,  # type: ignore
         exact: bool = False,
     ) -> Features:
         """get features of the domain
@@ -132,7 +148,7 @@ class Features(BaseModel):
     def get_keys(
         self,
         includes: Union[Type, List[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type]] = None,
+        excludes: Union[Type, List[Type]] = None,  # type: ignore
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
@@ -181,11 +197,12 @@ class Inputs(Features):
         """
         return Inputs(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
 
-    @validate_arguments
+    @validate_call
     def sample(
         self,
         n: int = 1,
         method: SamplingMethodEnum = SamplingMethodEnum.UNIFORM,
+        seed: Optional[int] = None,
     ) -> pd.DataFrame:
         """Draw sobol samples
 
@@ -197,17 +214,30 @@ class Inputs(Features):
         Returns:
             pd.DataFrame: Dataframe containing the samples.
         """
+        if len(self) == 0:
+            return pd.DataFrame()
         if method == SamplingMethodEnum.UNIFORM:
-            return self.validate_inputs(
-                pd.concat([feat.sample(n) for feat in self.get(Input)], axis=1)  # type: ignore
+            # we cannot just propagate the provided seed to
+            # the sample methods as they would then sample
+            # always the same value if the bounds are the same
+            # for a feature.
+            rng = np.random.default_rng(seed=seed)
+            return self.validate_candidates(
+                pd.concat(
+                    [
+                        feat.sample(n, seed=int(rng.integers(1, 1000000)))  # type: ignore
+                        for feat in self.get(Input)
+                    ],
+                    axis=1,
+                )
             )
         free_features = self.get_free()
         if method == SamplingMethodEnum.SOBOL:
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
-                X = Sobol(len(free_features)).random(n)
+                X = Sobol(len(free_features), seed=seed).random(n)
         else:
-            X = LatinHypercube(len(free_features)).random(n)
+            X = LatinHypercube(len(free_features), seed=seed).random(n)
         res = []
         for i, feat in enumerate(free_features):
             if isinstance(feat, ContinuousInput):
@@ -230,14 +260,13 @@ class Inputs(Features):
         samples = pd.concat(res, axis=1)
         for feat in self.get_fixed():
             samples[feat.key] = feat.fixed_value()[0]  # type: ignore
-        return self.validate_inputs(samples)[self.get_keys(Input)]
+        return self.validate_candidates(samples)[self.get_keys(Input)]
 
-    # validate candidates, TODO rename and tidy up
-    def validate_inputs(self, inputs: pd.DataFrame) -> pd.DataFrame:
+    def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
         """Validate a pandas dataframe with input feature values.
 
         Args:
-            inputs (pd.Dataframe): Inputs to validate.
+            candidates (pd.Dataframe): Inputs to validate.
 
         Raises:
             ValueError: Raises a Valueerror if a feature based validation raises an exception.
@@ -246,10 +275,16 @@ class Inputs(Features):
             pd.Dataframe: Validated dataframe
         """
         for feature in self:
-            if feature.key not in inputs:
+            if feature.key not in candidates:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            feature.validate_candidental(inputs[feature.key])  # type: ignore
-        return inputs
+            candidates[feature.key] = feature.validate_candidental(  # type: ignore
+                candidates[feature.key]
+            )
+        if candidates[self.get_keys()].isnull().to_numpy().any():
+            raise ValueError("there are null values")
+        if candidates[self.get_keys()].isna().to_numpy().any():
+            raise ValueError("there are na values")
+        return candidates
 
     def validate_experiments(
         self, experiments: pd.DataFrame, strict=False
@@ -257,13 +292,20 @@ class Inputs(Features):
         for feature in self:
             if feature.key not in experiments:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            experiments[feature.key] = feature.validate_experimental(experiments[feature.key], strict=strict)  # type: ignore
+            experiments[feature.key] = feature.validate_experimental(
+                experiments[feature.key],
+                strict=strict,  # type: ignore
+            )
+        if experiments[self.get_keys()].isnull().to_numpy().any():
+            raise ValueError("there are null values")
+        if experiments[self.get_keys()].isna().to_numpy().any():
+            raise ValueError("there are na values")
         return experiments
 
     def get_categorical_combinations(
         self,
         include: Union[Type, List[Type]] = Input,
-        exclude: Union[Type, List[Type]] = None,
+        exclude: Union[Type, List[Type]] = None,  # type: ignore
     ):
         """get a list of tuples pairing the feature keys with a list of valid categories
 
@@ -354,9 +396,7 @@ class Inputs(Features):
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, MolecularInput)
-                descriptor_names = specs[
-                    feat.key
-                ].get_descriptor_names()  # type: ignore
+                descriptor_names = specs[feat.key].get_descriptor_names()  # type: ignore
                 features2idx[feat.key] = tuple(
                     (np.array(range(len(descriptor_names))) + counter).tolist()
                 )
@@ -443,7 +483,9 @@ class Inputs(Features):
                 transformed.append(feat.from_descriptor_encoding(experiments))
             elif isinstance(specs[feat.key], MolFeatures):
                 assert isinstance(feat, CategoricalMolecularInput)
-                transformed.append(feat.from_descriptor_encoding(specs[feat.key], experiments))  # type: ignore
+                transformed.append(
+                    feat.from_descriptor_encoding(specs[feat.key], experiments)  # type: ignore
+                )
 
         return pd.concat(transformed, axis=1)
 
@@ -492,6 +534,7 @@ class Inputs(Features):
         self,
         specs: TInputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
+        reference_experiment: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
         """Returns the boundaries of the optimization problem based on the transformations
         defined in the  `specs` dictionary.
@@ -502,6 +545,10 @@ class Inputs(Features):
             experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
                 If provided the real feature bounds are returned based on both the opt.
                 feature bounds and the extreme points in the dataframe. Defaults to None,
+            reference_experiment (Optional[pd.Serues], optional): If a reference experiment provided,
+            then the local bounds based on a local search region are provided as reference to the
+                reference experiment. Currently only supported for continuous inputs.
+                For more details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf. Defaults to None.
 
         Raises:
             ValueError: If a feature type is not known.
@@ -510,19 +557,50 @@ class Inputs(Features):
         Returns:
             Tuple[List[float], List[float]]: list with lower bounds, list with upper bounds.
         """
+        if reference_experiment is not None and experiments is not None:
+            raise ValueError(
+                "Only one can be used, `reference_experiments` or `experiments`."
+            )
+
         self._validate_transform_specs(specs=specs)
 
         lower = []
         upper = []
 
         for feat in self.get():
-            lo, up = feat.get_bounds(  # type: ignore
+            assert isinstance(feat, Input)
+            lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
+                values=experiments[feat.key] if experiments is not None else None,
+                reference_value=(
+                    reference_experiment[feat.key]  # type: ignore
+                    if reference_experiment is not None
+                    else None
+                ),
             )
             lower += lo
             upper += up
         return lower, upper
+
+    def get_feature_indices(
+        self,
+        specs: TInputTransformSpecs,
+        feature_keys: List[str],
+    ) -> List[int]:
+        """Returns a list of indices of the given feature key list.
+
+        Args:
+            specs (TInputTransformSpecs): Dictionary specifying which
+                input feature is transformed by which encoder.
+            feature_keys (List[str]): List of feature keys.
+
+        Returns:
+            List[int]: The list of indices.
+        """
+        features2idx, _ = self._get_transform_info(specs)
+        return sorted(
+            itertools.chain.from_iterable([features2idx[feat] for feat in feature_keys])
+        )
 
 
 class Outputs(Features):
@@ -566,10 +644,10 @@ class Outputs(Features):
             return Outputs(
                 features=sorted(
                     filter_by_attribute(
-                        self.get(ContinuousOutput).features,
+                        self.get([ContinuousOutput, CategoricalOutput]).features,
                         lambda of: of.objective,
                         includes,
-                        excludes,
+                        excludes,  # type: ignore
                         exact,
                     )
                 )
@@ -583,7 +661,9 @@ class Outputs(Features):
             Type[Objective],
         ] = Objective,
         excludes: Union[
-            List[Type[AbstractObjective]], Type[AbstractObjective], None
+            List[Type[AbstractObjective]],
+            Type[AbstractObjective],
+            None,
         ] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -618,6 +698,16 @@ class Outputs(Features):
                 feat(experiments[f"{feat.key}_pred" if predictions else feat.key])  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
+                and not isinstance(feat, CategoricalOutput)
+            ]
+            + [
+                (
+                    pd.Series(data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")), name=f"{feat.key}_pred")  # type: ignore
+                    if predictions
+                    else experiments[feat.key]
+                )
+                for feat in self.features
+                if feat.objective is not None and isinstance(feat, CategoricalOutput)
             ],
             axis=1,
         )
@@ -629,6 +719,83 @@ class Outputs(Features):
             },
             axis=1,
         )
+
+    def add_valid_columns(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        """Add the `valid_{feature.key}` columns to the experiments dataframe,
+        in case that they are not present.
+
+        Args:
+            experiments (pd.DataFrame): Dataframe holding the experiments.
+
+        Returns:
+            pd.DataFrame: Dataframe holding the experiments.
+        """
+        valid_keys = [
+            f"valid_{output_feature_key}" for output_feature_key in self.get_keys()
+        ]
+        for valid_key in valid_keys:
+            if valid_key not in experiments:
+                experiments[valid_key] = True
+            else:
+                try:
+                    experiments[valid_key] = (
+                        experiments[valid_key].astype(int).astype(bool)
+                    )
+                except ValueError:
+                    raise ValueError(f"Column {valid_key} cannot casted to dtype bool.")
+        return experiments
+
+    def validate_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
+        for feat in self.get():
+            if feat.key not in experiments:
+                raise ValueError(f"no col for input feature `{feat.key}`")
+            experiments[feat.key] = feat.validate_experimental(experiments[feat.key])
+        experiments = self.add_valid_columns(experiments=experiments)
+        return experiments
+
+    def validate_candidates(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        # for each continuous output feature with an attached objective object
+        continuous_cols = list(
+            itertools.chain.from_iterable(
+                [
+                    [f"{feat.key}_pred", f"{feat.key}_sd", f"{feat.key}_des"]
+                    for feat in self.get_by_objective(
+                        includes=Objective, excludes=ConstrainedCategoricalObjective
+                    )
+                ]
+                + [
+                    [f"{key}_pred", f"{key}_sd"]
+                    for key in self.get_keys_by_objective(
+                        excludes=Objective, includes=None  # type: ignore
+                    )
+                ]
+            )
+        )
+        # check that pred, sd, and des cols are specified and numerical
+        for col in continuous_cols:
+            if col not in candidates:
+                raise ValueError(f"missing column {col}")
+            try:
+                candidates[col] = pd.to_numeric(candidates[col], errors="raise").astype(
+                    "float64"
+                )
+            except ValueError:
+                raise ValueError(f"Not all values of column `{col}` are numerical.")
+            if candidates[col].isnull().to_numpy().any():
+                raise ValueError(f"Nan values are present in {col}.")
+        # Looping over features allows to check categories objective wise
+        for feat in self.get(CategoricalOutput):
+            cols = [f"{feat.key}_pred", f"{feat.key}_des"]
+            for col in cols:
+                if col not in candidates:
+                    raise ValueError(f"missing column {col}")
+                if col == f"{feat.key}_pred":
+                    feat.validate_experimental(candidates[col])
+                else:
+                    # Check sd and desirability
+                    if candidates[col].isnull().to_numpy().any():
+                        raise ValueError(f"Nan values are present in {col}.")
+        return candidates
 
     def preprocess_experiments_one_valid_output(
         self,
@@ -701,5 +868,4 @@ class Outputs(Features):
                 ]
             )
         )
-
         return clean_exp

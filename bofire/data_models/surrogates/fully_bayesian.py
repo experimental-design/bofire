@@ -1,21 +1,31 @@
-from typing import Literal
+from typing import Literal, Type
 
-from pydantic import conint, validator
+from pydantic import Field, field_validator
+from typing_extensions import Annotated
 
-from bofire.data_models.surrogates.botorch import BotorchSurrogate
-from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.surrogates.trainable import TrainableSurrogate
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
-class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
+class SaasSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SaasSingleTaskGPSurrogate"] = "SaasSingleTaskGPSurrogate"
-    warmup_steps: conint(ge=1) = 256  # type: ignore
-    num_samples: conint(ge=1) = 128  # type: ignore
-    thinning: conint(ge=1) = 16  # type: ignore
-    scaler: ScalerEnum = ScalerEnum.NORMALIZE
+    warmup_steps: Annotated[int, Field(ge=1)] = 256
+    num_samples: Annotated[int, Field(ge=1)] = 128
+    thinning: Annotated[int, Field(ge=1)] = 16
 
-    @validator("thinning")
-    def validate_thinning(cls, value, values):
-        if values["num_samples"] / value < 1:
+    @field_validator("thinning")
+    @classmethod
+    def validate_thinning(cls, thinning, info):
+        if info.data["num_samples"] / thinning < 1:
             raise ValueError("`num_samples` has to be larger than `thinning`.")
-        return value
+        return thinning
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))

@@ -5,6 +5,7 @@ import pytest
 from scipy.optimize import LinearConstraint, NonlinearConstraint
 
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -73,7 +74,7 @@ def test_get_formula_from_string():
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
 
     # linear and quadratic
-    terms = ["1", "x0", "x1", "x2", "x0**2", "x1**2", "x2**2"]
+    terms = ["1", "x0", "x1", "x2", "x0 ** 2", "x1 ** 2", "x2 ** 2"]
     model_formula = get_formula_from_string(
         domain=domain, model_type="linear-and-quadratic"
     )
@@ -89,9 +90,9 @@ def test_get_formula_from_string():
         "x0:x1",
         "x0:x2",
         "x1:x2",
-        "x0**2",
-        "x1**2",
-        "x2**2",
+        "x0 ** 2",
+        "x1 ** 2",
+        "x2 ** 2",
     ]
     model_formula = get_formula_from_string(domain=domain, model_type="fully-quadratic")
     assert all(term in terms for term in model_formula)
@@ -99,7 +100,7 @@ def test_get_formula_from_string():
 
     # custom model
     terms_lhs = ["y"]
-    terms_rhs = ["1", "x0", "x0**2", "x0:x1"]
+    terms_rhs = ["1", "x0", "x0 ** 2", "x0:x1"]
     model_formula = get_formula_from_string(
         domain=domain,
         model_type="y ~ 1 + x0 + x0:x1 + {x0**2}",
@@ -325,6 +326,31 @@ def test_constraints_as_scipy_constraints():
     assert np.allclose(
         constraints[0].fun(np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])), [2, 0, 0]
     )
+
+    # domain with batch constraint
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(3)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            InterpointEqualityConstraint(feature="x0", multiplicity=3),
+        ],
+    )
+    n_experiments = 5
+
+    constraints = constraints_as_scipy_constraints(domain, n_experiments)
+    assert len(constraints) == 1
+    assert isinstance(constraints[0], LinearConstraint)
+    A = np.array(
+        [
+            [1, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 0, 0, 0, 0, 0, -1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, -1, 0, 0],
+        ],
+        dtype=float,
+    )
+    assert np.allclose(constraints[0].A, A)
+    assert np.allclose(constraints[0].lb, np.zeros(3))
+    assert np.allclose(constraints[0].ub, np.zeros(3))
 
 
 def test_ConstraintWrapper():

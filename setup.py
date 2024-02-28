@@ -36,19 +36,20 @@ setup(
     install_requires=[
         "numpy",
         "pandas",
-        "pydantic>=1.10.0,<2.0",
+        "pydantic>=2.5",
         "scipy>=1.7",
         "typing-extensions",
     ],
     extras_require={
         "optimization": [
-            "botorch>=0.9.2",
+            "botorch>=0.10.0",
             "entmoot>=2.0",
             "multiprocess",
             "plotly",
-            "formulaic>=0.6.0",
+            "formulaic>=1.0.1",
             "cloudpickle>=2.0.0",
             "sympy>=1.12",
+            "cvxpy[CLARABEL]",
             sklearn_dependency,
         ],
         "xgb": ["xgboost>=1.7.5"],
