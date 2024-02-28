@@ -1,7 +1,8 @@
-from typing import Literal
+from typing import Literal, Type
 
 from pydantic import Field, validator
 
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import AnyKernel, ScaleKernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
 from bofire.data_models.molfeatures.api import (
@@ -31,6 +32,16 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))
 
     # TanimotoGP will be used when at least one of fingerprints, fragments, or fingerprintsfragments are present
     @validator("input_preprocessing_specs")

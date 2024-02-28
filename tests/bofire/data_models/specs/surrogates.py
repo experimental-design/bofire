@@ -5,6 +5,7 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     MolecularInput,
@@ -158,7 +159,7 @@ specs.add_valid(
     },
 )
 specs.add_valid(
-    models.MLPEnsemble,
+    models.RegressionMLPEnsemble,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -174,6 +175,7 @@ specs.add_valid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
+        "final_activation": "identity",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -181,12 +183,111 @@ specs.add_valid(
         "weight_decay": 0.0,
         "subsample_fraction": 1.0,
         "shuffle": True,
-        "scaler": ScalerEnum.NORMALIZE,
-        "output_scaler": ScalerEnum.STANDARDIZE,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": None,
     },
+)
+specs.add_invalid(
+    models.RegressionMLPEnsemble,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(CategoricalOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "final_activation": "softmax",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
+)
+
+specs.add_valid(
+    models.ClassificationMLPEnsemble,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(CategoricalOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "final_activation": "softmax",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+)
+specs.add_invalid(
+    models.ClassificationMLPEnsemble,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "final_activation": "identity",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
 )
 
 specs.add_valid(

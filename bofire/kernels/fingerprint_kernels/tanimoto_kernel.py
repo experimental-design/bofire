@@ -2,6 +2,7 @@
 Tanimoto Kernel. Operates on representations including bit vectors e.g. Morgan/ECFP6 fingerprints count vectors e.g.
 RDKit fragment features.
 """
+
 # This code was copied from GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/tanimoto_kernel.py
 
 import torch
@@ -36,6 +37,7 @@ class TanimotoKernel(BitKernel):
         >>> covar_module = gpytorch.kernels.ScaleKernel(TanimotoKernel())
         >>> covar = covar_module(batch_x)  # Output: LazyTensor of size (2 x 10 x 10)
     """
+
     is_stationary = False
     has_lengthscale = False
 

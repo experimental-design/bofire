@@ -1,8 +1,9 @@
-from typing import Literal
+from typing import Literal, Type
 
 from pydantic import Field, validator
 
 # from bofire.data_models.enum import MolecularEncodingEnum
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import (
     AnyCategoricalKernal,
     AnyContinuousKernel,
@@ -44,6 +45,16 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))
 
     @validator("input_preprocessing_specs")
     def validate_moleculars(cls, v, values):
