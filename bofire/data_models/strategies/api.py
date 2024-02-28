@@ -31,7 +31,7 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.transforms import (  # noqa: F401
+from bofire.data_models.transforms.transform import (  # noqa: F401
     AnyTransform,
     RemoveTransform,
 )

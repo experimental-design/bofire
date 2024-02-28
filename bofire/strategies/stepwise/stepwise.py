@@ -4,7 +4,7 @@ import pandas as pd
 from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
-import bofire.data_models.transforms as transforms
+import bofire.data_models.transforms.transform as transform
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
 from bofire.strategies.doe_strategy import DoEStrategy
@@ -52,7 +52,7 @@ _T = TypeVar("_T", pd.DataFrame, Domain)
 
 def _apply_tf(
     data: Optional[_T],
-    transform: Optional[transforms.Transform],
+    transform: Optional[transform.Transform],
     tf: Union[Literal["experiments"], Literal["candidates"], Literal["domain"]],
 ) -> Optional[_T]:
     if data is not None and transform is not None:
@@ -69,7 +69,7 @@ class StepwiseStrategy(Strategy):
     def has_sufficient_experiments(self) -> bool:
         return True
 
-    def _get_step(self) -> Tuple[Strategy, Optional[transforms.Transform]]:
+    def _get_step(self) -> Tuple[Strategy, Optional[transform.Transform]]:
         """Returns index of the current step, the step itself"""
         for i, condition in enumerate(self.conditions):
             if condition.evaluate(self.domain, experiments=self.experiments):
