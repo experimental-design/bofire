@@ -41,7 +41,7 @@ class EntingStrategy(PredictiveStrategy):
 
     @property
     def input_preprocessing_specs(self):
-        return
+        return {}
 
     def _postprocess_candidate(self, candidate: List) -> pd.DataFrame:
         """Converts a single candidate to a pandas Dataframe with prediction.

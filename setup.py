@@ -43,6 +43,7 @@ setup(
     extras_require={
         "optimization": [
             "botorch>=0.9.2",
+            "entmoot>=2.0",
             "multiprocess",
             "plotly",
             "formulaic>=0.6.0",
