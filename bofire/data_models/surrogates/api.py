@@ -39,13 +39,13 @@ AnySurrogate = Union[
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
     MixedTanimotoGPSurrogate,
-    ClassificationMLPEnsemble,
-    RegressionMLPEnsemble,
+    MLPEnsemble,
     SaasSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
+    MultiTaskGPSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -53,27 +53,13 @@ AnyTrainableSurrogate = Union[
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
     MixedTanimotoGPSurrogate,
-    ClassificationMLPEnsemble,
-    RegressionMLPEnsemble,
+    MLPEnsemble,
     SaasSingleTaskGPSurrogate,
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
+    MultiTaskGPSurrogate,
 ]
-
-AnyRegressionSurrogate = Union[
-    EmpiricalSurrogate,
-    RandomForestSurrogate,
-    SingleTaskGPSurrogate,
-    MixedSingleTaskGPSurrogate,
-    MixedTanimotoGPSurrogate,
-    RegressionMLPEnsemble,
-    SaasSingleTaskGPSurrogate,
-    XGBoostSurrogate,
-    LinearSurrogate,
-    PolynomialSurrogate,
-    TanimotoGPSurrogate,
-]
-
+ 
 AnyClassificationSurrogate = ClassificationMLPEnsemble
