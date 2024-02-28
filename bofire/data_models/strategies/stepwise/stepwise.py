@@ -24,7 +24,7 @@ from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import AlwaysTrueCondition
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.transforms.transform import AnyTransform
+from bofire.data_models.transforms.api import AnyTransform
 
 AnyStrategy = Union[
     SoboStrategy,
