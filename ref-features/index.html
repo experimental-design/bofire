@@ -3234,8 +3234,7 @@ CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofir
           <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalOutput</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalOutput&quot;</span>
-    <span class="c1"># order_id: ClassVar[int] = 8</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 
     <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">AnyCategoricalObjective</span>
@@ -4290,8 +4289,7 @@ ContinuousOutput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousOutput&quot;</span>
-    <span class="c1"># order_id: ClassVar[int] = 7</span>
-    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">9</span>
     <span class="n">unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">objective</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyObjective</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
@@ -9235,6 +9233,7 @@ Defaults to False.</p></td>
     </div>
 
   </div>
+
 
 
 
