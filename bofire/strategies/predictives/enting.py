@@ -67,7 +67,7 @@ class EntingStrategy(PredictiveStrategy):
         # overestimate for minimisation, underestimate for maximisation
         signs = {
             output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1
-            for output in self.domain.outputs
+            for output in self.domain.outputs.get()
         }
         as_experiment = candidate.assign(
             **{

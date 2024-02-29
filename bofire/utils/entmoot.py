@@ -1,4 +1,4 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import entmoot.constraints as entconstr
 import numpy as np
@@ -6,14 +6,12 @@ import pyomo.environ as pyo
 from entmoot import ProblemConfig
 
 from bofire.data_models.constraints.api import (
-    AnyConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
-    AnyInput,
     AnyOutput,
     CategoricalInput,
     ContinuousInput,
@@ -37,14 +35,14 @@ def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.Concret
     """
     problem_config = ProblemConfig()
 
-    for input_feature in domain.inputs:
+    for input_feature in domain.inputs.get():
         _bofire_feat_to_entmoot(problem_config, input_feature)
 
-    for output_feature in domain.outputs:
+    for output_feature in domain.outputs.get():
         _bofire_output_to_entmoot(problem_config, output_feature)
 
     constraints = []
-    for constraint in domain.constraints:
+    for constraint in domain.constraints.get():
         constraints.append(_bofire_constraint_to_entmoot(problem_config, constraint))
 
     # apply constraints to model
@@ -57,7 +55,10 @@ def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.Concret
     return problem_config, model_pyo
 
 
-def _bofire_feat_to_entmoot(problem_config: ProblemConfig, feature: AnyInput) -> None:
+def _bofire_feat_to_entmoot(
+    problem_config: ProblemConfig,
+    feature: Union[ContinuousInput, CategoricalInput, DiscreteInput],
+) -> None:
     """Given a Bofire `Input`, create an ENTMOOT `FeatureType`.
 
     Args:
@@ -114,13 +115,15 @@ def _bofire_output_to_entmoot(
 
 def _bofire_constraint_to_entmoot(
     problem_config: ProblemConfig,
-    constraint: AnyConstraint,
+    constraint: Union[
+        LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint
+    ],
 ) -> None:
     """Convert a Bofire `Constraint` to an ENTMOOT `Constraint`.
 
     Args:
         problem_config (ProblemConfig): An ENTMOOT problem definition.
-        constraint (AnyConstraint): A constraint to be applied to the Pyomo model.
+        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint]): A constraint to be applied to the Pyomo model.
     """
 
     if isinstance(constraint, LinearEqualityConstraint):
@@ -131,7 +134,7 @@ def _bofire_constraint_to_entmoot(
         )
 
     elif isinstance(constraint, LinearInequalityConstraint):
-        ent_constraint = entconstr.LinearEqualityConstraint(
+        ent_constraint = entconstr.LinearInequalityConstraint(
             feature_keys=constraint.features,
             coefficients=constraint.coefficients,
             rhs=constraint.rhs,

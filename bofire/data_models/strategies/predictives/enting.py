@@ -27,7 +27,7 @@ from bofire.data_models.strategies.predictives.predictive import PredictiveStrat
 
 class UncParams(BaseModel):
     beta: PositiveFloat = 1.96
-    bound_coeff: float = 0.5
+    bound_coeff: PositiveFloat = 0.5
     acq_sense: Literal["exploration", "penalty"] = "exploration"
     dist_trafo: Literal["normal", "standard"] = "normal"
     dist_metric: Literal["euclidean_squared", "l1", "l2"] = "euclidean_squared"
@@ -36,26 +36,27 @@ class UncParams(BaseModel):
 
 class TrainParams(BaseModel):
     # lightgbm training hyperparameters
+    # see https://lightgbm.readthedocs.io/en/latest/Parameters.html
     objective: Literal["regression"] = "regression"
-    metric: str = "rmse"
-    boosting: str = "gbdt"
+    metric: Literal["rmse"] = "rmse"
+    boosting: Literal["gbdt", "rf", "dart"] = "gbdt"
     num_boost_round: PositiveInt = 100
     max_depth: PositiveInt = 3
     min_data_in_leaf: PositiveInt = 1
     min_data_per_group: PositiveInt = 1
-    verbose: int = -1
+    verbose: Literal[-1, 0, 1, 2] = -1
 
 
 class TreeTrainParams(BaseModel):
-    train_params: "TrainParams" = Field(default_factory=lambda: TrainParams())
+    train_params: TrainParams = Field(default_factory=lambda: TrainParams())
     train_lib: Literal["lgbm"] = "lgbm"
 
 
 class EntingParams(BaseModel):
     """Contains parameters for a mean and uncertainty model."""
 
-    unc_params: "UncParams" = Field(default_factory=lambda: UncParams())
-    tree_train_params: "TreeTrainParams" = Field(
+    unc_params: UncParams = Field(default_factory=lambda: UncParams())
+    tree_train_params: TreeTrainParams = Field(
         default_factory=lambda: TreeTrainParams()
     )
 
