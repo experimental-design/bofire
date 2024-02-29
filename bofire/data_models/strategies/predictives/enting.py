@@ -36,7 +36,7 @@ class UncParams(BaseModel):
 
 class TrainParams(BaseModel):
     # lightgbm training hyperparameters
-    objective: str = "regression"
+    objective: Literal["regression"] = "regression"
     metric: str = "rmse"
     boosting: str = "gbdt"
     num_boost_round: PositiveInt = 100
