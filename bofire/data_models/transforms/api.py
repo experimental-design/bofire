@@ -1,3 +1,3 @@
-from bofire.data_models.transforms.remove import RemoveTransform
+from bofire.data_models.transforms.drop_data import DropDataTransform
 
-AnyTransform = RemoveTransform
+AnyTransform = DropDataTransform

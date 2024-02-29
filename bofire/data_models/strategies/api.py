@@ -33,7 +33,7 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.transforms.api import (  # noqa: F401
     AnyTransform,
-    RemoveTransform,
+    DropDataTransform,
 )
 
 AbstractStrategy = Union[

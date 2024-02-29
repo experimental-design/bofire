@@ -9,9 +9,9 @@ from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qNEI
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
+    DropDataTransform,
     NumberOfExperimentsCondition,
     RandomStrategy,
-    RemoveTransform,
     SoboStrategy,
     Step,
     StepwiseStrategy,
@@ -159,7 +159,7 @@ def test_remove_transform():
                     domain=benchmark.domain, acquisition_function=qNEI()
                 ),
                 condition=AlwaysTrueCondition(),
-                transform=RemoveTransform(to_be_removed_experiments=[0, 1]),
+                transform=DropDataTransform(to_be_removed_experiments=[0, 1]),
             ),
         ],
     )

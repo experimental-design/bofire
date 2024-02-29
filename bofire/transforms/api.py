@@ -1,11 +1,11 @@
 from typing import Dict, Type
 
 import bofire.data_models.transforms.api as data_models
-from bofire.transforms.remove import RemoveTransform
+from bofire.transforms.drop_data import DropDataTransform
 from bofire.transforms.transform import Transform
 
 TRANSFORM_MAP: Dict[Type[data_models.AnyTransform], Type[Transform]] = {
-    data_models.RemoveTransform: RemoveTransform
+    data_models.DropDataTransform: DropDataTransform
 }
 
 
