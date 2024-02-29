@@ -145,7 +145,7 @@ def test_StepWiseStrategy_ask():
     assert len(candidates) == 2
 
 
-def test_remove_transition():
+def test_remove_transform():
     benchmark = Himmelblau()
     data_model = StepwiseStrategy(
         domain=benchmark.domain,

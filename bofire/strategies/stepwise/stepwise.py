@@ -4,6 +4,7 @@ import pandas as pd
 from pydantic import PositiveInt
 
 import bofire.data_models.strategies.api as data_models
+import bofire.transforms.api as transforms
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
 from bofire.strategies.doe_strategy import DoEStrategy
@@ -47,14 +48,17 @@ def _map(data_model: data_models.Strategy) -> Strategy:
     return cls.from_spec(data_model=data_model)
 
 
-_T = TypeVar("_T", pd.DataFrame, Domain)
+T = TypeVar("T", pd.DataFrame, Domain)
+
+
+TfData = Union[Literal["experiments"], Literal["candidates"], Literal["domain"]]
 
 
 def _apply_tf(
-    data: Optional[_T],
+    data: Optional[T],
     transform: Optional[Transform],
-    tf: Union[Literal["experiments"], Literal["candidates"], Literal["domain"]],
-) -> Optional[_T]:
+    tf: TfData,
+) -> Optional[T]:
     if data is not None and transform is not None:
         return getattr(transform, f"transform_{tf}")(data)
 
@@ -64,7 +68,9 @@ class StepwiseStrategy(Strategy):
         super().__init__(data_model, **kwargs)
         self.stratgies = [_map(s.strategy_data) for s in data_model.steps]
         self.conditions = [s.condition for s in data_model.steps]
-        self.transforms = [s.transform for s in data_model.steps]
+        self.transforms = [
+            s.transform and transforms.map(s.transform) for s in data_model.steps
+        ]
 
     def has_sufficient_experiments(self) -> bool:
         return True
@@ -96,4 +102,8 @@ class StepwiseStrategy(Strategy):
         if transformed_candidates is not None and len(transformed_candidates) > 0:
             strategy.set_candidates(transformed_candidates)
         # ask and return
-        return strategy.ask(candidate_count=candidate_count)
+        data_asked_for = strategy.ask(candidate_count=candidate_count)
+        if transform is not None:
+            return transform.untransform_experiments(data_asked_for)
+        else:
+            return data_asked_for
