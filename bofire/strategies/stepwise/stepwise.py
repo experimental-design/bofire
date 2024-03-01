@@ -76,7 +76,7 @@ class StepwiseStrategy(Strategy):
         return True
 
     def _get_step(self) -> Tuple[Strategy, Optional[Transform]]:
-        """Returns index of the current step, the step itself"""
+        """Returns the strategy at the current step and the corresponding transform if given."""
         for i, condition in enumerate(self.conditions):
             if condition.evaluate(self.domain, experiments=self.experiments):
                 return self.strategies[i], self.transforms[i]
@@ -102,8 +102,8 @@ class StepwiseStrategy(Strategy):
         if transformed_candidates is not None and len(transformed_candidates) > 0:
             strategy.set_candidates(transformed_candidates)
         # ask and return
-        data_asked_for = strategy.ask(candidate_count=candidate_count)
+        candidates = strategy.ask(candidate_count=candidate_count)
         if transform is not None:
-            return transform.untransform_candidates(data_asked_for)
+            return transform.untransform_candidates(candidates)
         else:
             return candidates

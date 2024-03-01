@@ -16,5 +16,5 @@ class Transform:
     def transform_domain(self, domain: Domain) -> Domain:
         return domain
 
-    def untransform_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
+    def untransform_candidates(self, experiments: pd.DataFrame) -> pd.DataFrame:
         return experiments

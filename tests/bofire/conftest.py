@@ -75,7 +75,7 @@ def invalid_condition_spec(request) -> specs.InvalidSpec:
 
 
 @fixture(params=specs.transforms.invalids)
-def invalid_transfomrs_spec(request) -> specs.InvalidSpec:
+def invalid_transforms_spec(request) -> specs.InvalidSpec:
     return request.param
 
 
@@ -152,6 +152,11 @@ def kernel_spec(request) -> specs.Spec:
 
 @fixture(params=specs.conditions.valids)
 def condition_spec(request) -> specs.Spec:
+    return request.param
+
+
+@fixture(params=specs.transforms.valids)
+def transforms_detection_spec(request) -> specs.Spec:
     return request.param
 
 
