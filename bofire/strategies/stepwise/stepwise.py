@@ -66,7 +66,7 @@ def _apply_tf(
 class StepwiseStrategy(Strategy):
     def __init__(self, data_model: data_model, **kwargs):
         super().__init__(data_model, **kwargs)
-        self.stratgies = [_map(s.strategy_data) for s in data_model.steps]
+        self.strategies = [_map(s.strategy_data) for s in data_model.steps]
         self.conditions = [s.condition for s in data_model.steps]
         self.transforms = [
             s.transform and transforms.map(s.transform) for s in data_model.steps
@@ -79,7 +79,7 @@ class StepwiseStrategy(Strategy):
         """Returns index of the current step, the step itself"""
         for i, condition in enumerate(self.conditions):
             if condition.evaluate(self.domain, experiments=self.experiments):
-                return self.stratgies[i], self.transforms[i]
+                return self.strategies[i], self.transforms[i]
         raise ValueError("No condition could be satisfied.")
 
     def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
