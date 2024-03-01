@@ -176,19 +176,7 @@ def feat_equal(a: FeatureType, b: FeatureType) -> bool:
         b: Second feature.
     """
     # no __eq__ method is implemented for FeatureType, hence the need for this function
-    print(
-        (
-            a.name,
-            b.name,
-            a.get_enc_bnds(),
-            b.get_enc_bnds(),
-            a.is_real(),
-            b.is_real(),
-            a.is_cat() == b.is_cat(),
-            a.is_int() == b.is_int(),
-            a.is_bin() == b.is_bin(),
-        )
-    )
+    assert a is not None and b is not None
     return all(
         (
             a.name == b.name,
@@ -248,10 +236,12 @@ def test_domain_to_problem_config():
         inputs=[if1_ent, if2_ent, if3_ent, if4_ent], outputs=[of1_ent, of2_ent]
     )
     bof_problem_config, _ = domain_to_problem_config(domain)
-    for feat_a, feat_b in zip(
-        ent_problem_config.feat_list, bof_problem_config.feat_list
-    ):
-        assert feat_equal(feat_a, feat_b)
+    for feat_ent in ent_problem_config.feat_list:
+        # get bofire feature with same name
+        feat_bof = next(
+            (f for f in bof_problem_config.feat_list if f.name == feat_ent.name), None
+        )
+        assert feat_equal(feat_ent, feat_bof)
 
     assert len(ent_problem_config.obj_list) == len(bof_problem_config.obj_list)
 
