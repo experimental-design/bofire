@@ -96,7 +96,7 @@ class StepwiseStrategy(Strategy):
         tf_cand = _apply_tf(self.candidates, transform, "candidates")
         transformed_candidates = self.candidates if tf_cand is None else tf_cand
         # tell the experiments
-        if transformed_experiments is not None and self.num_experiments > 0:
+        if transformed_experiments is not None and len(transformed_experiments) > 0:
             strategy.tell(experiments=transformed_experiments, replace=True)
         # tell pending
         if transformed_candidates is not None and len(transformed_candidates) > 0:
@@ -104,6 +104,6 @@ class StepwiseStrategy(Strategy):
         # ask and return
         data_asked_for = strategy.ask(candidate_count=candidate_count)
         if transform is not None:
-            return transform.untransform_experiments(data_asked_for)
+            return transform.untransform_candidates(data_asked_for)
         else:
-            return data_asked_for
+            return candidates
