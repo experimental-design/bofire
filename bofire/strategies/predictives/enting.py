@@ -178,10 +178,8 @@ class EntingStrategy(PredictiveStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self._init_problem_config()
-        self._enting = Enting(
-            self._problem_config, data_model.enting_params.model_dump()
-        )
-        self._solver_params = data_model.solver_params
+        self._enting = Enting(self._problem_config, data_model.dump_enting_params())
+        self._solver_params = data_model.dump_solver_params()
         self._learn_from_candidates_coeff = data_model.learn_from_candidates_coeff
 
     def _init_problem_config(self) -> None:
