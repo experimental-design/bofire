@@ -43,7 +43,6 @@ setup(
     extras_require={
         "optimization": [
             "botorch>=0.10.0",
-            "entmoot>=2.0",
             "multiprocess",
             "plotly",
             "formulaic>=1.0.1",
@@ -52,6 +51,7 @@ setup(
             "cvxpy[CLARABEL]",
             sklearn_dependency,
         ],
+        "entmoot": ["entmoot>=2.0"],
         "xgb": ["xgboost>=1.7.5"],
         "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
         "tests": [
