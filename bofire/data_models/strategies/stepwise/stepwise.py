@@ -1,4 +1,4 @@
-from typing import List, Literal, Type, Union
+from typing import List, Literal, Optional, Type, Union
 
 from pydantic import Field, field_validator
 from typing_extensions import Annotated
@@ -6,6 +6,7 @@ from typing_extensions import Annotated
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import Feature
+from bofire.data_models.strategies.api import AnyCondition
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
@@ -21,12 +22,9 @@ from bofire.data_models.strategies.predictives.sobo import (
 from bofire.data_models.strategies.random import RandomStrategy
 from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
-from bofire.data_models.strategies.stepwise.conditions import (
-    AlwaysTrueCondition,
-    CombiCondition,
-    NumberOfExperimentsCondition,
-)
+from bofire.data_models.strategies.stepwise.conditions import AlwaysTrueCondition
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.transforms.api import AnyTransform
 
 AnyStrategy = Union[
     SoboStrategy,
@@ -44,14 +42,12 @@ AnyStrategy = Union[
     ShortestPathStrategy,
 ]
 
-AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
-
 
 class Step(BaseModel):
     type: Literal["Step"] = "Step"
     strategy_data: AnyStrategy
     condition: AnyCondition
-    max_parallelism: Annotated[int, Field(ge=-1)]  # -1 means no restriction at all
+    transform: Optional[AnyTransform] = None
 
 
 class StepwiseStrategy(Strategy):

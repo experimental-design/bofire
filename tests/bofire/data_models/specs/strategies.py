@@ -149,14 +149,12 @@ specs.add_valid(
             strategies.Step(
                 strategy_data=strategies.RandomStrategy(domain=tempdomain),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
-                max_parallelism=2,
             ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(
                     domain=tempdomain,
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
-                max_parallelism=2,
             ).model_dump(),
         ],
         "seed": 42,

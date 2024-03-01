@@ -22,6 +22,7 @@ from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     AlwaysTrueCondition,
+    AnyCondition,
     CombiCondition,
     NumberOfExperimentsCondition,
 )
@@ -30,6 +31,10 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.transforms.api import (  # noqa: F401
+    AnyTransform,
+    DropDataTransform,
+)
 
 AbstractStrategy = Union[
     Strategy,
@@ -65,9 +70,6 @@ AnyPredictive = Union[
     QparegoStrategy,
     MoboStrategy,
 ]
-
-
-AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
 
 
 AnyLocalSearchConfig = LSRBO
