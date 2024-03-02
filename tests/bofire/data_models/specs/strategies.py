@@ -14,6 +14,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates
+from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -127,6 +128,9 @@ specs.add_valid(
         "optimization_strategy": "default",
         "verbose": False,
         "seed": 42,
+        "objective": OptimalityCriterionEnum.D_OPTIMALITY,
+        "transform": TransformEnum.IDENTITY,
+        "transform_range": None,
     },
 )
 specs.add_valid(
@@ -136,6 +140,8 @@ specs.add_valid(
         "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
         "seed": 42,
+        "transform": TransformEnum.MIN_MAX_TRANSFORM,
+        "transform_range": (-1, 1),
     },
 )
 

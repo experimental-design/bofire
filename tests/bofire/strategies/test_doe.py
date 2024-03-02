@@ -17,6 +17,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
+from bofire.strategies.enum import TransformEnum
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
@@ -281,6 +282,31 @@ def test_partially_fixed_experiments():
     test_df = pd.DataFrame(np.ones((4, 6)))
     test_df = test_df.where(candidates[:4] == only_partially_fixed, 0)
     assert test_df.sum().sum() == 0
+
+
+def test_scaled_doe():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(
+                key=f"x{1}",
+                bounds=(0.0, 1.0),
+            ),
+            ContinuousInput(
+                key=f"x{2}",
+                bounds=(0.0, 1.0),
+            ),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[],
+    )
+    data_model = data_models.DoEStrategy(
+        domain=domain, formula="linear", transform=TransformEnum.MIN_MAX_TRANSFORM
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=4).to_numpy()
+    expected_candidates = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])
+    for c in candidates:
+        assert np.any([np.allclose(c, e) for e in expected_candidates])
 
 
 def test_categorical_doe_iterative():

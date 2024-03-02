@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Optional, Type
+from typing import Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -9,8 +9,8 @@ from formulaic import Formula
 from torch import Tensor
 
 from bofire.data_models.domain.api import Domain
-from bofire.strategies.doe.transform import AnyTransform, IndentityTransform
-from bofire.strategies.enum import OptimalityCriterionEnum
+from bofire.strategies.doe.transform import get_transform_class
+from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -21,7 +21,8 @@ class Objective:
         model: Formula,
         n_experiments: int,
         delta: float = 1e-6,
-        transform: Optional[AnyTransform] = None,
+        transform: TransformEnum = TransformEnum.IDENTITY,
+        transform_range: Tuple[float, float] = (-1, 1),
     ) -> None:
         """
         Args:
@@ -34,10 +35,9 @@ class Objective:
 
         self.model = deepcopy(model)
         self.domain = deepcopy(domain)
-        self.transform = transform or IndentityTransform()
-        # self.transform = transform or MinMaxTransform(
-        #     domain=domain, n_experiments=n_experiments
-        # )
+        self.transform = get_transform_class(transform)(
+            inputs=self.domain.inputs, feature_range=transform_range
+        )
         self.n_experiments = n_experiments
         self.delta = delta
 
@@ -72,7 +72,7 @@ class Objective:
         pass
 
     def evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
-        return self._evaluate_jacobian(x) * self.transform.jacobian(x=x)
+        return self._evaluate_jacobian(self.transform(x)) * self.transform.jacobian(x=x)
 
     @abstractmethod
     def _evaluate_jacobian(self, x: np.ndarray) -> np.ndarray:
@@ -149,9 +149,16 @@ class DOptimality(Objective):
         model: Formula,
         n_experiments: int,
         delta: float = 1e-7,
+        transform: TransformEnum = TransformEnum.IDENTITY,
+        transform_range: Tuple[float, float] = (-1, 1),
     ) -> None:
         super().__init__(
-            domain=domain, model=model, n_experiments=n_experiments, delta=delta
+            domain=domain,
+            model=model,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform=transform,
+            transform_range=transform_range,
         )
 
     def _evaluate(self, x: np.ndarray) -> float:

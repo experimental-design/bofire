@@ -1,4 +1,4 @@
-from typing import Literal, Type, Union
+from typing import Literal, Tuple, Type, Union
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
@@ -7,6 +7,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
 
 
 class DoEStrategy(Strategy):
@@ -30,6 +31,11 @@ class DoEStrategy(Strategy):
     ] = "default"
 
     verbose: bool = False
+
+    objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY
+
+    transform: TransformEnum = TransformEnum.IDENTITY
+    transform_range: Union[None, Tuple[float, float]] = (-1, 1)
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

@@ -21,7 +21,7 @@ def test_MinMaxTransform():
             ContinuousInput(key="b", bounds=(4, 8)),
         ]
     )
-    t = MinMaxTransform(inputs=inputs, feature_range=(-1, 1), n_experiments=2)
+    t = MinMaxTransform(inputs=inputs, feature_range=(-1, 1))
     samples = pd.DataFrame.from_dict({"a": [1, 2], "b": [4, 6]})
     transformed_samples = t(samples.values.flatten())
     assert_allclose(transformed_samples, np.array([0, -1, 1, 0]))

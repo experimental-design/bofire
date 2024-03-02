@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Union
+from typing import Tuple, Type, Union
 
 import numpy as np
 
 from bofire.data_models.domain.api import Inputs
+from bofire.strategies.enum import TransformEnum
 
 
 class Transform(ABC):
+    def __init__(*args, **kwargs):
+        pass
+
     @abstractmethod
     def __call__(self, x: np.ndarray) -> np.ndarray:
         pass
@@ -30,23 +34,32 @@ class MinMaxTransform(Transform):
     def __init__(
         self,
         inputs: Inputs,
-        n_experiments: int,
-        feature_range: Tuple[int, int] = (-1, 1),
+        feature_range: Tuple[float, float] = (-1, 1),
     ):
         lower, upper = inputs.get_bounds(specs={})
-        self._range = np.tile(np.array(upper) - np.array(lower), n_experiments)
-        self._lower = np.array(lower * n_experiments)
+        self._range = np.array(upper) - np.array(lower)
+        self._lower = lower
         self._transformed_range = feature_range[1] - feature_range[0]
         self._transformed_lower = feature_range[0]
-        self._jacobian = self._transformed_range / self._range
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        return (
-            x - self._lower
-        ) / self._range * self._transformed_range + self._transformed_lower
+        return (x - np.array(self._lower * (len(x) // len(self._lower)))) / np.tile(
+            self._range, len(x) // len(self._range)
+        ) * self._transformed_range + self._transformed_lower
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
-        return self._jacobian
+        return self._transformed_range / np.tile(
+            self._range, len(x) // len(self._range)
+        )
 
 
 AnyTransform = Union[IndentityTransform, MinMaxTransform]
+
+
+def get_transform_class(transform: TransformEnum) -> Type:
+    if transform == TransformEnum.IDENTITY:
+        return IndentityTransform
+    elif transform == TransformEnum.MIN_MAX_TRANSFORM:
+        return MinMaxTransform
+    else:
+        raise ValueError(f"Transform {transform} not implemented")
