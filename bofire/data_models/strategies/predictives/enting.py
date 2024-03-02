@@ -26,7 +26,6 @@ from bofire.data_models.strategies.predictives.predictive import PredictiveStrat
 
 class EntingStrategy(PredictiveStrategy):
     type: Literal["EntingStrategy"] = "EntingStrategy"
-    learn_from_candidates_coeff: float = 10.0
 
     # uncertainty model parameters
     beta: PositiveFloat = 1.96
@@ -48,6 +47,13 @@ class EntingStrategy(PredictiveStrategy):
     solver_name: str = "gurobi"
     solver_verbose: bool = False
     solver_params: Dict[str, Any] = {}
+
+    # kappa_fantasy determines a bound on the predicted value of an unseen point
+    # used for making batch predictions, y* = mean + kappa_fantasy * std
+    # for a both min and max problems, a positive value is 'pesimistic'
+    # and a negative value is 'optimistic'
+    # a value of zero implies future observations will be exactly the mean
+    kappa_fantasy: float = 1.96
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

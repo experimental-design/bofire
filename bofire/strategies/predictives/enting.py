@@ -180,7 +180,7 @@ class EntingStrategy(PredictiveStrategy):
         self._init_problem_config()
         self._enting = Enting(self._problem_config, data_model.dump_enting_params())
         self._solver_params = data_model.dump_solver_params()
-        self._learn_from_candidates_coeff = data_model.learn_from_candidates_coeff
+        self._kappa_fantasy = data_model.kappa_fantasy
 
     def _init_problem_config(self) -> None:
         cfg = domain_to_problem_config(self.domain)
@@ -211,7 +211,17 @@ class EntingStrategy(PredictiveStrategy):
         return pd.concat((df_candidate, preds), axis=1)
 
     def _add_candidate_as_experiment(self, candidate: pd.DataFrame):
-        gamma = self._learn_from_candidates_coeff
+        """Generate a fantasy observation.
+
+        The Enting strategy generates a globally optimal candidate. Therefore,
+        to generate batch proposals, we sequentially generate 'fantasy' observations
+        of the candidate, by adding a multiple of the standard deviation to the
+        mean prediction. This behaviour is defined by the `kappa_fantasy` parameter.
+
+        Args:
+            candidate (pd.DataFrame): The candidate to make a fantasy observation for.
+        """
+        kappa = self._kappa_fantasy
         # overestimate for minimisation, underestimate for maximisation
         signs = {
             output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1
@@ -220,7 +230,7 @@ class EntingStrategy(PredictiveStrategy):
         as_experiment = candidate.assign(
             **{
                 key: candidate[f"{key}_pred"]
-                + gamma * signs[key] * candidate[f"{key}_sd"]
+                + kappa * signs[key] * candidate[f"{key}_sd"]
                 for key in self.domain.outputs.get_keys()
             }
         )
@@ -250,6 +260,10 @@ class EntingStrategy(PredictiveStrategy):
     def _fit(self, experiments: pd.DataFrame):
         input_keys = self.domain.inputs.get_keys()
         output_keys = self.domain.outputs.get_keys()
+
+        experiments = self.domain.outputs.preprocess_experiments_all_valid_outputs(
+            experiments
+        )
 
         X = experiments[input_keys].to_numpy()
         y = experiments[output_keys].to_numpy()

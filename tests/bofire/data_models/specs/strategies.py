@@ -123,7 +123,7 @@ specs.add_valid(
         "solver_name": "gurobi",
         "solver_verbose": False,
         "solver_params": {},
-        "learn_from_candidates_coeff": 10.0,
+        "kappa_fantasy": 10.0,
     },
 )
 specs.add_valid(
