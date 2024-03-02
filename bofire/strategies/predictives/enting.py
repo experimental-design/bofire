@@ -210,8 +210,8 @@ class EntingStrategy(PredictiveStrategy):
 
         return pd.concat((df_candidate, preds), axis=1)
 
-    def _add_candidate_as_experiment(self, candidate: pd.DataFrame):
-        """Generate a fantasy observation.
+    def _fantasy_as_experiment(self, candidates: pd.DataFrame):
+        """Fit the model with fantasy candidates.
 
         The Enting strategy generates a globally optimal candidate. Therefore,
         to generate batch proposals, we sequentially generate 'fantasy' observations
@@ -219,7 +219,7 @@ class EntingStrategy(PredictiveStrategy):
         mean prediction. This behaviour is defined by the `kappa_fantasy` parameter.
 
         Args:
-            candidate (pd.DataFrame): The candidate to make a fantasy observation for.
+            candidates (pd.DataFrame): The candidate(s) to make a fantasy observation for.
         """
         kappa = self._kappa_fantasy
         # overestimate for minimisation, underestimate for maximisation
@@ -227,35 +227,59 @@ class EntingStrategy(PredictiveStrategy):
             output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1
             for output in self.domain.outputs.get()
         }
-        as_experiment = candidate.assign(
+        as_experiment = candidates.assign(
             **{
-                key: candidate[f"{key}_pred"]
-                + kappa * signs[key] * candidate[f"{key}_sd"]
+                key: candidates[f"{key}_pred"]
+                + kappa * signs[key] * candidates[f"{key}_sd"]
                 for key in self.domain.outputs.get_keys()
-            }
+            },
+            valid_y=True,
         )
-        self.tell(as_experiment)
+
+        return as_experiment
 
     def _ask(self, candidate_count: PositiveInt = 1) -> pd.DataFrame:
-        """Generate a single optimal candidate.
+        """Generates candidates.
+
+        If `candidate_count == 1`, then the globally optimal solution is returned.
+        If `candidate_count > 1`, then we use fantasy observations to make sequential
+        proposals. Note that since this sequentially generates candidates, it is
+        much faster to generate a batch in a single function call, such that each candidate
+        is only predicted once.
 
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to 1.
 
         Returns:
-            pd.DataFrame: DataFrame with a single candidate (proposed experiment).
+            pd.DataFrame: DataFrame with a candidates.
         """
-        candidate_lst = []
-        for _ in range(candidate_count):
+        # First, fit the model on fantasies generated for any pending candidates
+        # This ensures that new points are far from pending candidates
+        real_experiments = self.experiments
+        if self.candidates is not None:
+            for i in range(len(self.candidates)):
+                # iterate using indices so that each `candidate` is a DataFrame
+                candidate = self.candidates[i : i + 1]
+                # add prediction from model
+                preds = self.predict(candidate)
+                candidate = pd.concat((candidate, preds), axis=1)
+                as_experiment = self._fantasy_as_experiment(candidate)
+                self.tell(as_experiment)
+
+        new_candidates = []
+        # Subsequently generate candidates, using fantasies if appropriate
+        for i in range(candidate_count):
             opt_pyo = PyomoOptimizer(self._problem_config, params=self._solver_params)
             res = opt_pyo.solve(tree_model=self._enting, model_core=self._model_pyo)
             candidate = self._postprocess_candidate(res.opt_point)
-            candidate_lst.append(candidate)
-            # only refit if generating multiple
-            if candidate_count > 1:
-                self._add_candidate_as_experiment(candidate)
+            new_candidates.append(candidate)
+            # only retrain with fantasy if not last candidate in batch
+            if i < candidate_count - 1:
+                as_experiment = self._fantasy_as_experiment(candidate)
+                self.tell(as_experiment)
 
-        return pd.concat(candidate_lst)
+        self.tell(real_experiments, replace=True, retrain=True)
+        return pd.concat(new_candidates)
 
     def _fit(self, experiments: pd.DataFrame):
         input_keys = self.domain.inputs.get_keys()

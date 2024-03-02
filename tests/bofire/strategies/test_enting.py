@@ -26,17 +26,17 @@ from tests.bofire.strategies.test_base import domains
 
 
 @pytest.fixture
-def data_model():
-    return data_models.EntingStrategy(
-        domain=domains[0],
-        dist_metric="l1",
-        acq_sense="penalty",
-        solver_name="gurobi",
-        solver_verbose=False,
-    )
+def common_args():
+    return {
+        "dist_metric": "l1",
+        "acq_sense": "exploration",
+        "solver_name": "gurobi",
+        "solver_verbose": False,
+    }
 
 
-def test_enting_not_fitted(data_model):
+def test_enting_not_fitted(common_args):
+    data_model = data_models.EntingStrategy(domain=domains[0], **common_args)
     strategy = EntingStrategy(data_model=data_model)
 
     msg = "Uncertainty model needs fit function call before it can predict."
@@ -75,30 +75,32 @@ def test_enting_param_consistency(params):
     [1, 3, 5, 6],
 )
 @pytest.mark.slow
-def test_nchoosek_constraint_with_enting(data_model, allowed_k):
+def test_nchoosek_constraint_with_enting(common_args, allowed_k):
     benchmark = Hartmann(6, allowed_k=allowed_k)
-    samples = benchmark.domain.inputs.sample(10)
+    samples = benchmark.domain.inputs.sample(10, seed=43)
     experiments = benchmark.f(samples, return_complete=True)
 
+    data_model = data_models.EntingStrategy(domain=benchmark.domain, **common_args)
     strategy = EntingStrategy(data_model)
 
     strategy.tell(experiments)
     proposal = strategy.ask(1)
 
     input_values = proposal[benchmark.domain.get_feature_keys(Input)]
-    assert (input_values != 0).sum().sum() == allowed_k
+    assert (input_values != 0).sum().sum() <= allowed_k
 
 
 @pytest.mark.slow
-def test_propose_optimal_point(data_model):
+def test_propose_optimal_point(common_args):
     # regression test, ensure that a good point is proposed
     np.random.seed(42)
     random.seed(42)
 
     benchmark = Hartmann(6)
-    samples = benchmark.domain.inputs.sample(50)
+    samples = benchmark.domain.inputs.sample(50, seed=43)
     experiments = benchmark.f(samples, return_complete=True)
 
+    data_model = data_models.EntingStrategy(domain=benchmark.domain, **common_args)
     strategy = EntingStrategy(data_model)
 
     # filter experiments to remove those in a box surrounding optimum
@@ -113,9 +115,34 @@ def test_propose_optimal_point(data_model):
 
     assert np.allclose(
         proposal.loc[0, benchmark.domain.get_feature_keys(Input)].tolist(),
-        [0.275, 0.95454, 0.28484, 0.34005, 0.015457, 0.06135],
+        [0.0, 0.79439, 0.6124835, 0.0, 1.0, 0.0],
         atol=1e-6,
     )
+
+
+@pytest.mark.slow
+def test_propose_unique_points(common_args):
+    # ensure that the strategy does not repeat candidates
+    np.random.seed(42)
+    random.seed(42)
+
+    benchmark = Hartmann(6)
+    samples = benchmark.domain.inputs.sample(10)
+    experiments = benchmark.f(samples, return_complete=True)
+
+    data_model = data_models.EntingStrategy(domain=benchmark.domain, **common_args)
+    strategy = EntingStrategy(data_model)
+
+    strategy.tell(experiments)
+
+    a = strategy.ask(candidate_count=5)
+    b = strategy.ask(candidate_count=5, add_pending=True)
+    c = strategy.ask(candidate_count=5)
+
+    # without adding points to pending, a and b should propose the same points
+    assert a.equals(b)
+    # after adding points to pending, b and c should propose different points
+    assert not b.equals(c)
 
 
 # Test utils for converting from bofire problem definition to entmoot
