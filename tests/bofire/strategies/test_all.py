@@ -3,7 +3,6 @@ from pydantic.error_wrappers import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
-from tests.bofire.strategies.test_enting import ENTING_STRATEGY_SPECS
 from tests.bofire.strategies.test_qehvi import BOTORCH_QEHVI_STRATEGY_SPECS
 from tests.bofire.strategies.test_qparego import BOTORCH_QPAREGO_STRATEGY_SPECS
 from tests.bofire.strategies.test_sobo import (
@@ -18,7 +17,6 @@ STRATEGY_SPECS = {
     data_models.QehviStrategy: BOTORCH_QEHVI_STRATEGY_SPECS,
     data_models.QnehviStrategy: BOTORCH_QEHVI_STRATEGY_SPECS,
     data_models.QparegoStrategy: BOTORCH_QPAREGO_STRATEGY_SPECS,
-    data_models.EntingStrategy: ENTING_STRATEGY_SPECS,
 }
 
 

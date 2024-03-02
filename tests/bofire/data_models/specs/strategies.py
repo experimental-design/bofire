@@ -106,6 +106,27 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.EntingStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "beta": 1.0,
+        "bound_coeff": 0.5,
+        "acq_sense": "exploration",
+        "dist_trafo": "normal",
+        "dist_metric": "euclidean_squared",
+        "cat_metric": "overlap",
+        "num_boost_round": 100,
+        "max_depth": 3,
+        "min_data_in_leaf": 1,
+        "min_data_per_group": 1,
+        "verbose": -1,
+        "solver_name": "gurobi",
+        "solver_verbose": False,
+        "solver_params": {},
+        "learn_from_candidates_coeff": 10.0,
+    },
+)
+specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
