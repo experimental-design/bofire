@@ -1,5 +1,10 @@
 import bofire.data_models.strategies.api as strategies
-from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
+from bofire.data_models.acquisition_functions.api import (
+    qEI,
+    qLogNEHVI,
+    qNegIntPosVar,
+    qPI,
+)
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -106,6 +111,57 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.ActiveLearningStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_function": qNegIntPosVar(n_points=2048).model_dump(),
+        **strategy_commons,
+    },
+)
+
+specs.add_invalid(
+    strategies.ActiveLearningStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        "acquisition_function": qNegIntPosVar(n_points=2048).model_dump(),
+        **strategy_commons,
+    },
+    error=ValueError,
+    message="Only one output feature allowed for `ActiveLearningStrategy`, got 2.",
+)
+
+
+specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -138,6 +194,7 @@ specs.add_valid(
         "seed": 42,
     },
 )
+
 
 tempdomain = domain.valid().obj()
 

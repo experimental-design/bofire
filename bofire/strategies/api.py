@@ -1,5 +1,6 @@
 from bofire.strategies.doe_strategy import DoEStrategy
 from bofire.strategies.mapper import map
+from bofire.strategies.predictives.active_learning import ActiveLearningStrategy
 from bofire.strategies.predictives.botorch import BotorchStrategy
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.predictives.qehvi import QehviStrategy
