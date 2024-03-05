@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import List, Literal, Optional, Type
 
 from pydantic import Field, field_validator
 
@@ -17,16 +17,17 @@ class ActiveLearningStrategy(BotorchStrategy):
     acquisition_function: AnyActiveLearningAcquisitionFunction = Field(
         default_factory=lambda: qNegIntPosVar()
     )
+    weights: List = Field(default_factory=lambda: None)
 
-    @field_validator("domain")
-    @classmethod
-    def validate_domain_is_multiobjective(cls, domain: Domain):
-        """Validate that the domain contains only one output feature."""
-        if len(domain.outputs) != 1:
-            raise ValueError(
-                f"Only one output feature allowed for `ActiveLearningStrategy`, got {len(domain.outputs)}."
-            )
-        return domain
+    # @field_validator("domain")
+    # @classmethod
+    # def validate_weights(cls, domain: Domain):
+    #     """Validate that the domain contains only one output feature."""
+    #     if len(domain.outputs) != 1:
+    #         raise ValueError(
+    #             f"Only one output feature allowed for `ActiveLearningStrategy`, got {len(domain.outputs)}."
+    #         )
+    #     return domain
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:
