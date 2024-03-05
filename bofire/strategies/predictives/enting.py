@@ -1,5 +1,5 @@
 import warnings
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -34,7 +34,9 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
-def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.ConcreteModel]:
+def domain_to_problem_config(
+    domain: Domain, seed: Optional[int] = None
+) -> Tuple[ProblemConfig, pyo.ConcreteModel]:
     """Convert a set of features and constraints from BoFire to ENTMOOT.
 
     Problems in BoFire are defined as `Domain`s. Before running an ENTMOOT strategy,
@@ -42,12 +44,13 @@ def domain_to_problem_config(domain: Domain) -> Tuple[ProblemConfig, pyo.Concret
 
     Args:
         domain (Domain): the definition of the optimization problem.
+        seed (int, optional): random seed for ENTMOOT problem config.
 
     Returns:
         A tuple (problem_config, model_pyo), where problem_config is the problem definition
         in an ENTMOOT-friendly format, and model_pyo is the Pyomo model containing constraints.
     """
-    problem_config = ProblemConfig()
+    problem_config = ProblemConfig(seed)
 
     for input_feature in domain.inputs.get():
         _bofire_feat_to_entmoot(problem_config, input_feature)
@@ -168,6 +171,46 @@ def _bofire_constraint_to_entmoot(
     return ent_constraint
 
 
+def _dump_enting_params(data_model: data_models.EntingStrategy) -> dict:
+    """Dump the model in the nested structure required for ENTMOOT.
+
+    Returns:
+        dict: the nested dictionary of entmoot params.
+    """
+    return {
+        "unc_params": {
+            "beta": data_model.beta,
+            "bound_coeff": data_model.bound_coeff,
+            "acq_sense": data_model.acq_sense,
+            "dist_trafo": data_model.dist_trafo,
+            "dist_metric": data_model.dist_metric,
+            "cat_metric": data_model.cat_metric,
+        },
+        "tree_train_params": {
+            "train_params": {
+                "num_boost_round": data_model.num_boost_round,
+                "max_depth": data_model.max_depth,
+                "min_data_in_leaf": data_model.min_data_in_leaf,
+                "min_data_per_group": data_model.min_data_per_group,
+                "verbose": data_model.verbose,
+            },
+        },
+    }
+
+
+def _dump_solver_params(data_model: data_models.EntingStrategy) -> dict:
+    """Dump the solver parameters for pyomo.
+
+    Returns:
+        dict: the nested dictionary of solver params.
+    """
+    return {
+        "solver_name": data_model.solver_name,
+        "verbose": data_model.solver_verbose,
+        **data_model.solver_params,
+    }
+
+
 class EntingStrategy(PredictiveStrategy):
     """Strategy for selecting new candidates using ENTMOOT"""
 
@@ -178,12 +221,12 @@ class EntingStrategy(PredictiveStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self._init_problem_config()
-        self._enting = Enting(self._problem_config, data_model.dump_enting_params())
-        self._solver_params = data_model.dump_solver_params()
+        self._enting = Enting(self._problem_config, _dump_enting_params(data_model))
+        self._solver_params = _dump_solver_params(data_model)
         self._kappa_fantasy = data_model.kappa_fantasy
 
     def _init_problem_config(self) -> None:
-        cfg = domain_to_problem_config(self.domain)
+        cfg = domain_to_problem_config(self.domain, self.seed)
         self._problem_config: ProblemConfig = cfg[0]
         self._model_pyo: pyo.ConcreteModel = cfg[1]
 
@@ -255,7 +298,7 @@ class EntingStrategy(PredictiveStrategy):
         """
         # First, fit the model on fantasies generated for any pending candidates
         # This ensures that new points are far from pending candidates
-        real_experiments = self.experiments
+        real_experiments = self.experiments.copy()
         if self.candidates is not None:
             for i in range(len(self.candidates)):
                 # iterate using indices so that each `candidate` is a DataFrame

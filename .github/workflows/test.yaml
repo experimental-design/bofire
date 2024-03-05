@@ -39,7 +39,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
-          pip install ".[optimization,tests,cheminfo,xgb]"
+          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
       - name: Run tests, Python ${{ matrix.python-version }}
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
