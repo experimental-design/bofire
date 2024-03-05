@@ -1,9 +1,16 @@
+import importlib
 import random
+import warnings
 
 import numpy as np
 import pytest
-from entmoot import EntingParams
-from entmoot.problem_config import FeatureType, ProblemConfig
+
+try:
+    from entmoot import EntingParams
+    from entmoot.problem_config import FeatureType, ProblemConfig
+except ImportError:
+    warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
+
 
 import bofire.data_models.strategies.api as data_models
 from bofire.benchmarks.api import Hartmann
@@ -24,6 +31,8 @@ from bofire.strategies.api import EntingStrategy
 from bofire.strategies.predictives.enting import domain_to_problem_config
 from tests.bofire.strategies.test_base import domains
 
+ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
+
 
 @pytest.fixture
 def common_args():
@@ -35,6 +44,7 @@ def common_args():
     }
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 def test_enting_not_fitted(common_args):
     data_model = data_models.EntingStrategy(domain=domains[0], **common_args)
     strategy = EntingStrategy(data_model=data_model)
@@ -44,6 +54,7 @@ def test_enting_not_fitted(common_args):
         strategy._ask(1)
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 @pytest.mark.parametrize(
     "params",
     [
@@ -70,6 +81,7 @@ def test_enting_param_consistency(params):
     assert strategy._enting._beta == data_model.beta
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 @pytest.mark.parametrize(
     "allowed_k",
     [1, 3, 5, 6],
@@ -90,6 +102,7 @@ def test_nchoosek_constraint_with_enting(common_args, allowed_k):
     assert (input_values != 0).sum().sum() <= allowed_k
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 @pytest.mark.slow
 def test_propose_optimal_point(common_args):
     # regression test, ensure that a good point is proposed
@@ -120,6 +133,7 @@ def test_propose_optimal_point(common_args):
     )
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 @pytest.mark.slow
 def test_propose_unique_points(common_args):
     # ensure that the strategy does not repeat candidates
@@ -146,6 +160,7 @@ def test_propose_unique_points(common_args):
 
 
 # Test utils for converting from bofire problem definition to entmoot
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 def feat_equal(a: FeatureType, b: FeatureType) -> bool:
     """Check if entmoot.FeatureTypes are equal.
 
@@ -197,6 +212,7 @@ constr1 = LinearInequalityConstraint(
 constr2 = LinearEqualityConstraint(features=["if4", "if5"], coefficients=[1, 5], rhs=38)
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 def build_problem_config(inputs, outputs) -> ProblemConfig:
     problem_config = ProblemConfig()
     for feature in inputs:
@@ -208,6 +224,7 @@ def build_problem_config(inputs, outputs) -> ProblemConfig:
     return problem_config
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 def test_domain_to_problem_config():
     domain = Domain.from_lists(inputs=[if1, if2, if3, if4], outputs=[of1, of2])
     ent_problem_config = build_problem_config(
@@ -224,6 +241,7 @@ def test_domain_to_problem_config():
     assert len(ent_problem_config.obj_list) == len(bof_problem_config.obj_list)
 
 
+@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
 def test_convert_constraint_to_entmoot():
     constraints = [constr1, constr2]
     domain = Domain.from_lists(
