@@ -73,6 +73,7 @@ class BotorchStrategy(PredictiveStrategy):
     num_sobol_samples: PositiveInt = 512
     num_restarts: PositiveInt = 8
     num_raw_samples: PositiveInt = 1024
+    maxiter: PositiveInt = 2000
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE

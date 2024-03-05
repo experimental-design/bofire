@@ -1,6 +1,6 @@
 from typing import Annotated, Dict, List, Union
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, Field, PositiveInt
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import AnyMolFeatures
@@ -44,6 +44,15 @@ def make_unique_validator(name: str):
     return validate_unique
 
 
+def validate_power_of_two(value: int):
+    def is_power_of_two(n):
+        return (n != 0) and (n & (n - 1) == 0)
+
+    if not is_power_of_two(value):
+        raise ValueError("Argument is not power of two.")
+    return value
+
+
 TFeatureKeys = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Features"))
 ]
@@ -59,3 +68,5 @@ TDescriptors = Annotated[
 TDiscreteVals = Annotated[List[float], Field(min_length=1)]
 
 TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
+
+TIntPowerOfTwo = Annotated[PositiveInt, AfterValidator(validate_power_of_two)]
