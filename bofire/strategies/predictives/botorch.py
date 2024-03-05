@@ -51,19 +51,6 @@ from bofire.utils.torch_tools import (
 )
 
 
-def is_power_of_two(n):
-    """
-    Check if a number is a power of two.
-
-    Args:
-        n (int): The number to be checked.
-
-    Returns:
-        bool: True if the number is a power of two, False otherwise.
-    """
-    return (n != 0) and (n & (n - 1) == 0)
-
-
 class BotorchStrategy(PredictiveStrategy):
     def __init__(
         self,
@@ -71,7 +58,6 @@ class BotorchStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.num_sobol_samples = data_model.num_sobol_samples
         self.num_restarts = data_model.num_restarts
         self.num_raw_samples = data_model.num_raw_samples
         self.descriptor_method = data_model.descriptor_method

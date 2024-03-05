@@ -297,13 +297,7 @@ data = [
 def test_base_create(domain: Domain):
     with pytest.raises(
         ValueError,
-        match="num_sobol_samples have to be of the power of 2 to increase performance",
-    ):
-        DummyStrategyDataModel(domain=domain, num_sobol_samples=5)
-
-    with pytest.raises(
-        ValueError,
-        match="num_raw_samples have to be of the power of 2 to increase performance",
+        match="Argument is not power of two.",
     ):
         DummyStrategyDataModel(domain=domain, num_raw_samples=5)
 

@@ -74,7 +74,7 @@ class MoboStrategy(BotorchStrategy):
             X_pending=X_pending,
             constraints=constraints,
             eta=etas,
-            mc_samples=self.num_sobol_samples,
+            mc_samples=self.acquisition_function.n_mc_samples,
             cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             alpha=self.acquisition_function.alpha,
             prune_baseline=(
