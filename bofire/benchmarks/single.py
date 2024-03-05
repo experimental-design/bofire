@@ -382,7 +382,7 @@ class Himmelblau(Benchmark):
         )
 
 
-class MultiFidelityHimmelblau(Benchmark):
+class MultiTaskHimmelblau(Benchmark):
     """Himmelblau function for testing optimization algorithms
     Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
     """

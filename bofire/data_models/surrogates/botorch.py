@@ -15,6 +15,11 @@ class BotorchSurrogate(Surrogate):
     @field_validator("input_preprocessing_specs")
     @classmethod
     def validate_input_preprocessing_specs(cls, v, info):
+        # when validator for inputs fails, this validator is still checked and causes an Exception error instead of a ValueError
+        # fix this by checking if inputs is in info.data
+        if "inputs" not in info.data:
+            return
+
         inputs = info.data["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
         descriptor_keys = inputs.get_keys(CategoricalDescriptorInput, exact=True)

@@ -18,6 +18,10 @@ from bofire.data_models.surrogates.mlp import (
     MLPEnsemble,
     RegressionMLPEnsemble,
 )
+from bofire.data_models.surrogates.multi_task_gp import (
+    MultiTaskGPHyperconfig,
+    MultiTaskGPSurrogate,
+)
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -61,5 +65,5 @@ AnyTrainableSurrogate = Union[
     TanimotoGPSurrogate,
     MultiTaskGPSurrogate,
 ]
- 
+
 AnyClassificationSurrogate = ClassificationMLPEnsemble

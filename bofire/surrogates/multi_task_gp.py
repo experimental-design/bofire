@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
-from botorch.models.transforms.input import OneHotToNumeric
 from botorch.models.transforms.outcome import Standardize
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
@@ -54,24 +53,8 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             Y.values
         ).to(**tkwargs)
 
-        features2idx, _ = self.inputs._get_transform_info(
-            self.input_preprocessing_specs
-        )
-
-        task_features = {
-            features2idx[self.task_feature_key][0]: len(
-                features2idx[self.task_feature_key]
-            )
-        }
-
-        self.o2n = OneHotToNumeric(
-            dim=tX.shape[1],
-            categorical_features=task_features,
-            transform_on_train=False,
-        )
-
         self.model = botorch.models.MultiTaskGP(  # type: ignore
-            train_X=self.o2n.transform(tX),
+            train_X=tX,
             train_Y=tY,
             task_feature=X.columns.get_loc(
                 self.task_feature_key
@@ -80,17 +63,19 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(
-                    range(self.o2n.transform(tX).shape[1] - 1)
+                    range(tX.shape[1] - 1)
                 ),  # kernel is for input space so we subtract one for the fidelity index
                 ard_num_dims=1,  # this keyword is ingored
             ),
-            task_covar_prior=priors.map(self.lkj_prior),
             outcome_transform=Standardize(m=tY.shape[-1])
             if self.output_scaler == ScalerEnum.STANDARDIZE
             else None,
             input_transform=scaler,
         )
 
+        self.model.task_covar_module.register_prior(
+            "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
+        )
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
@@ -99,10 +84,13 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     def _predict(self, transformed_X: pd.DataFrame):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
-        X = self.o2n.transform(X)
         with torch.no_grad():
             preds = self.model.posterior(X=X, observation_noise=False).mean.cpu().detach().numpy()  # type: ignore
             vars = self.model.posterior(X=X, observation_noise=False).variance.cpu().detach().numpy()  # type: ignore
             # add the observation noise to the stds
             stds = np.sqrt(vars + self.model.likelihood.noise.cpu().detach().numpy())
         return preds, stds
+
+
+def _index_kernel_prior_closure(m):
+    return m._eval_covar_matrix()
