@@ -47,7 +47,12 @@ class ActiveLearningStrategy(BotorchStrategy):
                     torch.ones(ny, dtype=torch.float64) / ny
                 )  # normalize weights so they add up to one
             else:
-                weights = torch.tensor(self.weights, dtype=torch.float64)
+                weights = []
+                [
+                    weights.append(self.weights.get(key))
+                    for key in self.domain.outputs.get_keys()
+                ]
+                weights = torch.tensor(weights, dtype=torch.float64)
             posterior_transform = ScalarizedPosteriorTransform(weights=weights)
         else:
             posterior_transform = None
