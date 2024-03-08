@@ -90,7 +90,7 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     )
     strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
-    strategy, transform = strategy._get_step()
+    strategy, transform = strategy.get_step()
     assert transform is None
     assert isinstance(strategy, expected_strategy)
 
@@ -116,7 +116,7 @@ def test_StepWiseStrategy_get_step_invalid():
     strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
     with pytest.raises(ValueError, match="No condition could be satisfied."):
-        strategy._get_step()
+        strategy.get_step()
 
 
 def test_StepWiseStrategy_ask():
