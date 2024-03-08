@@ -1,52 +1,14 @@
-from typing import Dict, Literal, Optional, Tuple, Type, TypeVar, Union
+from typing import Literal, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 from pydantic import PositiveInt
 
-import bofire.data_models.strategies.api as data_models
 import bofire.transforms.api as transforms
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
-from bofire.strategies.doe_strategy import DoEStrategy
-from bofire.strategies.factorial import FactorialStrategy
-from bofire.strategies.predictives.mobo import MoboStrategy
-from bofire.strategies.predictives.qehvi import QehviStrategy
-from bofire.strategies.predictives.qnehvi import QnehviStrategy
-from bofire.strategies.predictives.qparego import QparegoStrategy
-from bofire.strategies.predictives.sobo import (
-    AdditiveSoboStrategy,
-    CustomSoboStrategy,
-    MultiplicativeSoboStrategy,
-    SoboStrategy,
-)
-from bofire.strategies.random import RandomStrategy
-from bofire.strategies.shortest_path import ShortestPathStrategy
-from bofire.strategies.space_filling import SpaceFillingStrategy
+from bofire.strategies.mapper_actual import map as map_actual
 from bofire.strategies.strategy import Strategy
 from bofire.transforms.transform import Transform
-
-# we have to duplicate the map functionality due to prevent circular imports
-STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
-    data_models.RandomStrategy: RandomStrategy,
-    data_models.SoboStrategy: SoboStrategy,
-    data_models.AdditiveSoboStrategy: AdditiveSoboStrategy,
-    data_models.MultiplicativeSoboStrategy: MultiplicativeSoboStrategy,
-    data_models.CustomSoboStrategy: CustomSoboStrategy,
-    data_models.QehviStrategy: QehviStrategy,
-    data_models.QnehviStrategy: QnehviStrategy,
-    data_models.QparegoStrategy: QparegoStrategy,
-    data_models.SpaceFillingStrategy: SpaceFillingStrategy,
-    data_models.DoEStrategy: DoEStrategy,
-    data_models.FactorialStrategy: FactorialStrategy,
-    data_models.MoboStrategy: MoboStrategy,
-    data_models.ShortestPathStrategy: ShortestPathStrategy,
-}
-
-
-def _map(data_model: data_models.Strategy) -> Strategy:
-    cls = STRATEGY_MAP[data_model.__class__]
-    return cls.from_spec(data_model=data_model)
-
 
 T = TypeVar("T", pd.DataFrame, Domain)
 
@@ -66,7 +28,7 @@ def _apply_tf(
 class StepwiseStrategy(Strategy):
     def __init__(self, data_model: data_model, **kwargs):
         super().__init__(data_model, **kwargs)
-        self.strategies = [_map(s.strategy_data) for s in data_model.steps]
+        self.strategies = [map_actual(s.strategy_data) for s in data_model.steps]
         self.conditions = [s.condition for s in data_model.steps]
         self.transforms = [
             s.transform and transforms.map(s.transform) for s in data_model.steps
