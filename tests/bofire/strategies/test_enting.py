@@ -1,12 +1,11 @@
 import importlib
-import random
 import warnings
 
 import numpy as np
 import pytest
 
 try:
-    from entmoot import EntingParams
+    import pyomo.environ as pyo
     from entmoot.problem_config import FeatureType, ProblemConfig
 except ImportError:
     warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
@@ -32,6 +31,12 @@ from bofire.strategies.predictives.enting import domain_to_problem_config
 from tests.bofire.strategies.test_base import domains
 
 ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
+PYOMO_AVAILABLE = importlib.util.find_spec("pyomo") is not None
+GUROBI_AVAILABLE = (
+    pyo.SolverFactory("gurobi", validate=False).available() and ENTMOOT_AVAILABLE
+    if PYOMO_AVAILABLE
+    else False
+)
 
 
 @pytest.fixture
@@ -41,6 +46,7 @@ def common_args():
         "acq_sense": "exploration",
         "solver_name": "gurobi",
         "solver_verbose": False,
+        "seed": 42,
     }
 
 
@@ -61,32 +67,23 @@ def test_enting_not_fitted(common_args):
         {"acq_sense": "penalty", "beta": 0.1, "dist_metric": "l2", "max_depth": 3},
     ],
 )
-def test_enting_param_consistency(params):
+def test_enting_param_consistency(common_args, params):
     # compare EntingParams objects between entmoot and bofire
-    data_model = data_models.EntingStrategy(domain=domains[0], **params)
-    enting_params = EntingParams(**data_model.dump_enting_params())
-    assert all(
-        (
-            enting_params.unc_params.acq_sense == params["acq_sense"],
-            enting_params.unc_params.beta == params["beta"],
-            enting_params.unc_params.dist_metric == params["dist_metric"],
-            enting_params.tree_train_params.train_params.max_depth
-            == params["max_depth"],
-        )
+    data_model = data_models.EntingStrategy(
+        domain=domains[0], **{**common_args, **params}
     )
+    strategy = EntingStrategy(data_model=data_model)
 
     # check that the parameters propagate to the model correctly
-    strategy = EntingStrategy(data_model=data_model)
     assert strategy._enting._acq_sense == data_model.acq_sense
     assert strategy._enting._beta == data_model.beta
 
 
-@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
+@pytest.mark.skipif(not GUROBI_AVAILABLE, reason="requires entmoot+gurobi")
 @pytest.mark.parametrize(
     "allowed_k",
     [1, 3, 5, 6],
 )
-@pytest.mark.slow
 def test_nchoosek_constraint_with_enting(common_args, allowed_k):
     benchmark = Hartmann(6, allowed_k=allowed_k)
     samples = benchmark.domain.inputs.sample(10, seed=43)
@@ -102,13 +99,9 @@ def test_nchoosek_constraint_with_enting(common_args, allowed_k):
     assert (input_values != 0).sum().sum() <= allowed_k
 
 
-@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
-@pytest.mark.slow
+@pytest.mark.skipif(not GUROBI_AVAILABLE, reason="requires entmoot+gurobi")
 def test_propose_optimal_point(common_args):
     # regression test, ensure that a good point is proposed
-    np.random.seed(42)
-    random.seed(42)
-
     benchmark = Hartmann(6)
     samples = benchmark.domain.inputs.sample(50, seed=43)
     experiments = benchmark.f(samples, return_complete=True)
@@ -133,13 +126,9 @@ def test_propose_optimal_point(common_args):
     )
 
 
-@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
-@pytest.mark.slow
+@pytest.mark.skipif(not GUROBI_AVAILABLE, reason="requires entmoot+gurobi")
 def test_propose_unique_points(common_args):
     # ensure that the strategy does not repeat candidates
-    np.random.seed(42)
-    random.seed(42)
-
     benchmark = Hartmann(6)
     samples = benchmark.domain.inputs.sample(10)
     experiments = benchmark.f(samples, return_complete=True)

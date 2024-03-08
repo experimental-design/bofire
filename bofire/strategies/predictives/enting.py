@@ -3,10 +3,10 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-import pyomo.environ as pyo
 
 try:
-    import entmoot.constraints as entconstr
+    import entmoot.constraints as entconstr  # type: ignore
+    import pyomo.environ as pyo  # type: ignore
     from entmoot.models.enting import Enting  # type: ignore
     from entmoot.optimizers.pyomo_opt import PyomoOptimizer  # type: ignore
     from entmoot.problem_config import ProblemConfig  # type: ignore
@@ -50,6 +50,8 @@ def domain_to_problem_config(
         A tuple (problem_config, model_pyo), where problem_config is the problem definition
         in an ENTMOOT-friendly format, and model_pyo is the Pyomo model containing constraints.
     """
+    # entmoot expects int, not np.int64
+    seed = int(seed) if isinstance(seed, np.int64) else seed
     problem_config = ProblemConfig(seed)
 
     for input_feature in domain.inputs.get():
@@ -298,7 +300,9 @@ class EntingStrategy(PredictiveStrategy):
         """
         # First, fit the model on fantasies generated for any pending candidates
         # This ensures that new points are far from pending candidates
-        real_experiments = self.experiments.copy()
+        experiments_plus_fantasy = (
+            self.experiments.copy() if self.experiments is not None else pd.DataFrame()
+        )
         if self.candidates is not None:
             for i in range(len(self.candidates)):
                 # iterate using indices so that each `candidate` is a DataFrame
@@ -307,7 +311,10 @@ class EntingStrategy(PredictiveStrategy):
                 preds = self.predict(candidate)
                 candidate = pd.concat((candidate, preds), axis=1)
                 as_experiment = self._fantasy_as_experiment(candidate)
-                self.tell(as_experiment)
+                experiments_plus_fantasies = pd.concat(
+                    (experiments_plus_fantasy, as_experiment)
+                )
+                self._fit(experiments_plus_fantasies)
 
         new_candidates = []
         # Subsequently generate candidates, using fantasies if appropriate
@@ -319,9 +326,12 @@ class EntingStrategy(PredictiveStrategy):
             # only retrain with fantasy if not last candidate in batch
             if i < candidate_count - 1:
                 as_experiment = self._fantasy_as_experiment(candidate)
-                self.tell(as_experiment)
+                experiments_plus_fantasies = pd.concat(
+                    (experiments_plus_fantasy, as_experiment)
+                )
+                self._fit(experiments_plus_fantasies)
 
-        self.tell(real_experiments, replace=True, retrain=True)
+        self._fit(self.experiments)
         return pd.concat(new_candidates)
 
     def _fit(self, experiments: pd.DataFrame):
