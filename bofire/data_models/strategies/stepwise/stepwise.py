@@ -7,8 +7,10 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import Feature
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
-from bofire.data_models.strategies.api import AnyCondition
-from bofire.data_models.strategies.stepwise.conditions import AlwaysTrueCondition
+from bofire.data_models.strategies.stepwise.conditions import (
+    AlwaysTrueCondition,
+    AnyCondition,
+)
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.transforms.api import AnyTransform
 
