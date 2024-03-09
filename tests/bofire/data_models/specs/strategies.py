@@ -34,6 +34,7 @@ strategy_commons = {
     "frequency_hyperopt": 0,
     "folds": 5,
     "maxiter": 2000,
+    "batch_limit": 6,
 }
 
 
@@ -156,6 +157,7 @@ specs.add_valid(
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(
                     domain=tempdomain,
+                    batch_limit=1,
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
                 max_parallelism=2,

@@ -2,7 +2,7 @@ import warnings
 from abc import abstractmethod
 from typing import Annotated, Literal, Optional, Type
 
-from pydantic import Field, PositiveInt, model_validator
+from pydantic import Field, PositiveInt, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -71,6 +71,7 @@ class BotorchStrategy(PredictiveStrategy):
     num_restarts: PositiveInt = 8
     num_raw_samples: TIntPowerOfTwo = 1024
     maxiter: PositiveInt = 2000
+    batch_limit: Optional[Annotated[PositiveInt, Field(validate_default=True)]] = None
     # encoding params
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
@@ -87,6 +88,14 @@ class BotorchStrategy(PredictiveStrategy):
     folds: int = 5
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
+
+    @field_validator("batch_limit")
+    @classmethod
+    def validate_batch_limit(cls, batch_limit: int, info):
+        batch_limit = min(
+            batch_limit or info.data["num_restarts"], info.data["num_restarts"]
+        )
+        return batch_limit
 
     @model_validator(mode="after")
     def validate_local_search_config(self):
