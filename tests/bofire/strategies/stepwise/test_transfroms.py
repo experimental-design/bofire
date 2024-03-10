@@ -52,7 +52,7 @@ def test_dropdata_transform():
         strategy.tell(experiments=experiments)
         strategy.ask()
 
-        last_strategy, _ = strategy._get_step()
+        last_strategy, _ = strategy.get_step()
         assert last_strategy.experiments is not None and len(
             last_strategy.experiments
         ) == n_samples - len(to_be_removed_rows)

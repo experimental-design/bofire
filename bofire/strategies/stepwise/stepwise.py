@@ -75,7 +75,7 @@ class StepwiseStrategy(Strategy):
     def has_sufficient_experiments(self) -> bool:
         return True
 
-    def _get_step(self) -> Tuple[Strategy, Optional[Transform]]:
+    def get_step(self) -> Tuple[Strategy, Optional[Transform]]:
         """Returns the strategy at the current step and the corresponding transform if given."""
         for i, condition in enumerate(self.conditions):
             if condition.evaluate(self.domain, experiments=self.experiments):
@@ -83,7 +83,7 @@ class StepwiseStrategy(Strategy):
         raise ValueError("No condition could be satisfied.")
 
     def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
-        strategy, transform = self._get_step()
+        strategy, transform = self.get_step()
 
         candidate_count = candidate_count or 1
 
