@@ -1,7 +1,9 @@
 from typing import Union
 
+from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -43,22 +45,7 @@ AbstractStrategy = Union[
     MultiobjectiveStrategy,
 ]
 
-AnyStrategy = Union[
-    SoboStrategy,
-    AdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    CustomSoboStrategy,
-    QehviStrategy,
-    QnehviStrategy,
-    QparegoStrategy,
-    SpaceFillingStrategy,
-    RandomStrategy,
-    DoEStrategy,
-    StepwiseStrategy,
-    FactorialStrategy,
-    MoboStrategy,
-    ShortestPathStrategy,
-]
+AnyStrategy = Union[ActualStrategy, MetaStrategy]
 
 AnyPredictive = Union[
     SoboStrategy,
