@@ -78,5 +78,5 @@ In BoFire diffierent types of objectives are implemented. Each output variable c
 - `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful for objectives that are not linear in the output variable(s).
 - `MinimizeSigmoidObjective`: The objective is to minimize the output variable(s) using a sigmoid transformation.
 - `TargetObjective`: The objective is to reach a target value for the output variable(s).
-- `CloseToTargetObjective`: <span style="color:blue"> *TODO* text</span>.: Ask Johannes what is the difference to TargetObjective and how it is used (multiobjective optimization?)
-- `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given. <span style="color:blue"> *TODO* text</span>.: Ask Johannes if this is correct
+- `CloseToTargetObjective`: **TODO**: Ask Johannes what is the difference to TargetObjective and how it is used (multiobjective optimization?)
+- `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given. **TODO**: Ask Johannes if this is correct
