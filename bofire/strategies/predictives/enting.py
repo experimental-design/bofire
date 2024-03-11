@@ -36,7 +36,7 @@ from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 def domain_to_problem_config(
     domain: Domain, seed: Optional[int] = None
-) -> Tuple[ProblemConfig, pyo.ConcreteModel]:
+) -> Tuple["ProblemConfig", "pyo.ConcreteModel"]:
     """Convert a set of features and constraints from BoFire to ENTMOOT.
 
     Problems in BoFire are defined as `Domain`s. Before running an ENTMOOT strategy,
@@ -75,7 +75,7 @@ def domain_to_problem_config(
 
 
 def _bofire_feat_to_entmoot(
-    problem_config: ProblemConfig,
+    problem_config: "ProblemConfig",
     feature: Union[ContinuousInput, CategoricalInput, DiscreteInput],
 ) -> None:
     """Given a Bofire `Input`, create an ENTMOOT `FeatureType`.
@@ -111,7 +111,7 @@ def _bofire_feat_to_entmoot(
 
 
 def _bofire_output_to_entmoot(
-    problem_config: ProblemConfig, feature: AnyOutput
+    problem_config: "ProblemConfig", feature: AnyOutput
 ) -> None:
     """Given a Bofire `Output`, create an ENTMOOT `MinObjective`.
 
@@ -133,7 +133,7 @@ def _bofire_output_to_entmoot(
 
 
 def _bofire_constraint_to_entmoot(
-    problem_config: ProblemConfig,
+    problem_config: "ProblemConfig",
     constraint: Union[
         LinearEqualityConstraint, LinearInequalityConstraint, NChooseKConstraint
     ],
