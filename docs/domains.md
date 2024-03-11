@@ -57,20 +57,50 @@ domain = Domain(
 ```
 
 ## Inputs & Outputs
-BoFire implement eight different user-facing input classes (TODO: check if this is true), these are
+BoFire allows for the following different user-facing input classes (TODO: check if this is true):
 
 - `ContinuousInput`
 - `DiscreteInput` 
 - `CategoricalInput`
 - `MolecularInput`
-- `ContinuousDescriptorInput` 
-- `CategoricalDescriptorInput`
+- `ContinuousDescriptorInput` TODO: Ask Johannes if it is just an alternative name to ContinuousInput
+- `CategoricalDescriptorInput` TODO: dito
 - `CategoricalMolecularInput`
 - `TaskInput`
 
-Each of these inputs can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also (TODO: link to strategy docu)).
+Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also (TODO: link to strategy docu)).
 
-Continuous inputs are used to define real-values input variables with finite upper and lower bounds. 
+### Continuous inputs 
+
+Continuous inputs are used to define real-values input variables with finite upper and lower bounds (see example above).
+
+### Discrete inputs
+
+For discrete inputs, only a finite set of values is allowed. The `DiscreteInput` class requires a list of permissible values as input. For example, the following code defines a new discrete input variable $x_3$ with values $0, 0.1, 0.2$.
+
+```python
+from bofire.data_models.features.api import DiscreteInput
+
+DiscreteInput(key="x3", values=[0, 0.1, 0.2])
+```
+
+### Categorical inputs
+This class of inputs is similar to the discrete inputs, but takes a list of strings as input. The following code defines a new categorical input variable $x_4$ with values "A", "B", "C".
+
+```python   
+from bofire.data_models.features.api import CategoricalInput
+
+CategoricalInput(key="x4", values=["A", "B", "C"])
+```
+
+### Molecular inputs
+Molecular inputs are used to define molecular structures. This requires the optional cheminfo dependencies installed. The `MolecularInput` class transforms a SMILES input into an [rdkit mol object](https://www.rdkit.org/docs/GettingStartedInPython.html). For example, the following code defines a new molecular input variable $x_5$ with a SMILES string.
+
+```python
+from bofire.data_models.features.api import MolecularInput
+
+MolecularInput(key="x5", smiles="CCO")
+```
 
 
 TODO: Inputs() class --> Summarize multiple inputs
