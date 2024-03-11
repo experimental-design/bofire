@@ -35,6 +35,7 @@ from bofire.data_models.constraints.api import LinearEqualityConstraint
 c = LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1,1], rhs=1)
 ```
 The code above corresponds to the linear equation
+
 $$
 x_1 + x_2 = 1
 $$
