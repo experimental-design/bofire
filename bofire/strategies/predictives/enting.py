@@ -25,6 +25,7 @@ from bofire.data_models.constraints.api import (
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import (
+    AnyInput,
     AnyOutput,
     CategoricalInput,
     ContinuousInput,
@@ -51,18 +52,20 @@ def domain_to_problem_config(
         in an ENTMOOT format, and model_pyo is the Pyomo model containing constraints.
     """
     # entmoot expects int, not np.int64
-    seed = int(seed) if isinstance(seed, np.int64) else seed
+    seed = int(seed) if not (isinstance(seed, int) or seed is None) else seed
     problem_config = ProblemConfig(seed)
 
     for input_feature in domain.inputs.get():
-        _bofire_feat_to_entmoot(problem_config, input_feature)
+        _bofire_feat_to_entmoot(problem_config, input_feature)  # type: ignore
 
-    for output_feature in domain.outputs.get():
-        _bofire_output_to_entmoot(problem_config, output_feature)
+    for output_feature in domain.outputs.get_by_objective(
+        includes=[MinimizeObjective, MaximizeObjective]
+    ):
+        _bofire_output_to_entmoot(problem_config, output_feature)  # type: ignore
 
     constraints = []
     for constraint in domain.constraints.get():
-        constraints.append(_bofire_constraint_to_entmoot(problem_config, constraint))
+        constraints.append(_bofire_constraint_to_entmoot(problem_config, constraint))  # type: ignore
 
     # apply constraints to model
     model_pyo = problem_config.get_pyomo_model_core()
@@ -76,7 +79,7 @@ def domain_to_problem_config(
 
 def _bofire_feat_to_entmoot(
     problem_config: "ProblemConfig",
-    feature: Union[ContinuousInput, CategoricalInput, DiscreteInput],
+    feature: AnyInput,
 ) -> None:
     """Given a Bofire `Input`, create an ENTMOOT `FeatureType`.
 
@@ -122,10 +125,10 @@ def _bofire_output_to_entmoot(
         problem_config (ProblemConfig): An ENTMOOT problem definition, modified in-place.
         feature (AnyOutput): An output feature to be added to the problem_config object.
     """
-    if isinstance(feature.objective, MinimizeObjective):
+    if isinstance(feature.objective, MinimizeObjective):  # type: ignore
         problem_config.add_min_objective(name=feature.key)
 
-    elif isinstance(feature.objective, MaximizeObjective):
+    elif isinstance(feature.objective, MaximizeObjective):  # type: ignore
         problem_config.add_max_objective(name=feature.key)
 
     else:
@@ -269,8 +272,8 @@ class EntingStrategy(PredictiveStrategy):
         kappa = self._kappa_fantasy
         # overestimate for minimisation, underestimate for maximisation
         signs = {
-            output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1
-            for output in self.domain.outputs.get()
+            output.key: -1 if isinstance(output.objective, MaximizeObjective) else 1  # type: ignore
+            for output in self.domain.outputs.get_by_objective()
         }
         as_experiment = candidates.assign(
             **{
