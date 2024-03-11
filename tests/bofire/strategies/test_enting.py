@@ -149,8 +149,7 @@ def test_propose_unique_points(common_args):
 
 
 # Test utils for converting from bofire problem definition to entmoot
-@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
-def feat_equal(a: FeatureType, b: FeatureType) -> bool:
+def feat_equal(a: "FeatureType", b: "FeatureType") -> bool:
     """Check if entmoot.FeatureTypes are equal.
 
     Args:
@@ -201,8 +200,7 @@ constr1 = LinearInequalityConstraint(
 constr2 = LinearEqualityConstraint(features=["if4", "if5"], coefficients=[1, 5], rhs=38)
 
 
-@pytest.mark.skipif(not ENTMOOT_AVAILABLE, reason="requires entmoot")
-def build_problem_config(inputs, outputs) -> ProblemConfig:
+def build_problem_config(inputs, outputs) -> "ProblemConfig":
     problem_config = ProblemConfig()
     for feature in inputs:
         problem_config.add_feature(**feature)
