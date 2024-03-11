@@ -47,25 +47,30 @@ BoFire also offers the option to customize surrogate models. In particular, it i
 ### Kernel customization
 Specify the [Kernel](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py):
 
-**Kernel**|**Description**|**Translation invariant**|**Rotation invariant**|**Isotropic**|**Input variable type**
-:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
-[RBFKernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)|Based on Gaussian distribution|Yes|Yes|Yes|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
-[MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; allows setting a smoothness parameter|Yes|Yes|Yes|Continuous
-[PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points|No|Yes|No|Continuous
-[LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points|No|Yes|No|Continuous
-TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similiarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|Not applicable|Not applicable|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
-HammondDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|Not applicable|Not applicable|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
+**Kernel**|**Description**|**Translation invariant**|**Input variable type**
+:-----:|:-----:|:-----:|:-----:|
+[RBFKernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)|Based on Gaussian distribution|Yes|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
+[MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous
+[PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points|No|Continuous
+[LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points|No|Continuous
+TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similiarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
+HammondDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
 
-**Note:**
-- Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only their distance determines the similarity.
-- A kernel being isotropic means that the distance between two points depends only on the Euclidean distance and not on the direction in which one point lies with respect to the other.
-- Rotational invariance means that the similarity measure is not affected by rotating both points by the same angle around a point filled only with zeroes. 
+Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has higher similarity. However, polynomial kernels are predomaninantly suitable in case of high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.
 
 **Note:**
 - SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
 - SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.
 - SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
 - One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.
+
+**Example**:
+
+    surrogate_data_0 = SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs[0]]),
+            kernel=PolynomialKernel(power=2)
+    )
 
 ### Noise model customization
 
@@ -75,7 +80,14 @@ For experimental data being subject to noise, one can specify the distribution o
 [NormalPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)|Noise is Gaussian
 [GammaPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/gamma.py)|Noise has a Gamma distribution
 
+**Example**:
 
+    surrogate_data_0 = SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs[0]]),
+            kernel=PolynomialKernel(power=2),
+            noise_prior=NormalPrior(loc=0, scale=1)
+    )
 
 
 
