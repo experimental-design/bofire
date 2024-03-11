@@ -2,11 +2,14 @@
 
 Welcome to the official documentation of BoFire, a powerful Python package that serves as a comprehensive framework for experimental designs. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the exciting world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
 
+
 ### What is BoFire?
 
 BoFire is a cutting-edge Python library that provides robust and flexible tools for implementing DoE and BO techniques. These methodologies are crucial in various fields such as machine learning, engineering, and scientific research, where they are used to optimize processes and make efficient, data-driven decisions.
 
+
 ### Why BoFire?
+
 With BoFire, you can streamline your experimental design process and enhance the efficiency of your research. The package offers:
 
 **DoE Framework**: BoFire provides a wide range of experimental design techniques, allowing you to choose the one that best fits your research needs.
@@ -16,6 +19,17 @@ With BoFire, you can streamline your experimental design process and enhance the
 **Ease of Use**: BoFire’s problem specifications are json serializable allowing use in RESTful APIs.
 
 **Flexibility**: Whether you’re tuning hyperparameters of a machine learning model, optimizing a manufacturing process, or conducting a scientific experiment, BoFire is versatile enough to handle it all.
+
+
+### What is Design of Experiments (DoE)?
+
+Design of Experiments (DoE) is a systematic method to determine the relationship between different factors affecting a process and the output of that process. It is used to find cause-and-effect relationships. This information is needed to manage process inputs in order to optimize the output.
+
+
+### What is Bayesian Optimization (BO)?
+
+Bayesian Optimization (BO) is a sequential design strategy for global optimization of black-box functions that doesn’t assume any functional forms. It works by constructing a posterior distribution of functions (e.g., Gaussian process) that best describes the function you want to optimize. As the number of observations grows, the posterior distribution improves, and the algorithm becomes more certain of which regions in parameter space are worth exploring and which ones are not.
+
 
 
 BoFire is a framework to define and solve black-box optimization problems. 
