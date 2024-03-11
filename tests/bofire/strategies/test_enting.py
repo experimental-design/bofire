@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 
 try:
-    import pyomo.environ as pyo
+    import gurobipy
     from entmoot.problem_config import FeatureType, ProblemConfig
 except ImportError:
     warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
@@ -31,12 +31,16 @@ from bofire.strategies.predictives.enting import domain_to_problem_config
 from tests.bofire.strategies.test_base import domains
 
 ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
-PYOMO_AVAILABLE = importlib.util.find_spec("pyomo") is not None
-GUROBI_AVAILABLE = (
-    pyo.SolverFactory("gurobi", validate=False).available() and ENTMOOT_AVAILABLE
-    if PYOMO_AVAILABLE
-    else False
-)
+if ENTMOOT_AVAILABLE:
+    try:
+        # this is the recommended way to check precense of gurobi license file
+        gurobipy.Model()
+        GUROBI_AVAILABLE = True
+    except gurobipy.GurobiError:
+        GUROBI_AVAILABLE = False
+
+else:
+    GUROBI_AVAILABLE = False
 
 
 @pytest.fixture

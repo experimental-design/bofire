@@ -295,6 +295,8 @@ class EntingStrategy(PredictiveStrategy):
         much faster to generate a batch in a single function call, such that each candidate
         is only predicted once.
 
+        If you are using subsequent calls to `EntingStrategy.ask()`, then you must add the candidates to the pending list of candidates, by calling `.ask(pending=True)`.
+
         Args:
             candidate_count (PositiveInt, optional): Number of candidates to be generated. Defaults to 1.
 
