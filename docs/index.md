@@ -1,4 +1,22 @@
-# Introduction
+# Welcome to BoFire
+
+Welcome to the official documentation of BoFire, a powerful Python package that serves as a comprehensive framework for experimental designs. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the exciting world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
+
+### What is BoFire?
+
+BoFire is a cutting-edge Python library that provides robust and flexible tools for implementing DoE and BO techniques. These methodologies are crucial in various fields such as machine learning, engineering, and scientific research, where they are used to optimize processes and make efficient, data-driven decisions.
+
+### Why BoFire?
+With BoFire, you can streamline your experimental design process and enhance the efficiency of your research. The package offers:
+
+**DoE Framework**: BoFire provides a wide range of experimental design techniques, allowing you to choose the one that best fits your research needs.
+
+**BO framework**: BoFire implements advanced Bayesian optimization algorithms, enabling you to iteratively find your optimum with high sample efficiency.
+
+**Ease of Use**: BoFire’s problem specifications are json serializable allowing use in RESTful APIs.
+
+**Flexibility**: Whether you’re tuning hyperparameters of a machine learning model, optimizing a manufacturing process, or conducting a scientific experiment, BoFire is versatile enough to handle it all.
+
 
 BoFire is a framework to define and solve black-box optimization problems. 
 These problems can arise in a number of closely related fields including experimental design, multi-objective optimization and active learning.
