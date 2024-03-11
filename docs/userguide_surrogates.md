@@ -3,6 +3,7 @@ In Bayesian Optimization, information from previous experiments is taken into ac
 For the decision about which experiments to propose, one can additionally specify the acquisition function. This function determines if one rather wants to focus on exploitation, i.e., quickly approaching a close local optimum of the black-box function, or on exploration, i.e., exploring multiple regions of the input space first.
 Therefore, three criteria typically determine the next experimental proposals: the value of the surrogate model, its uncertainty, and the acquisition function.
 
+## Surrogate model options
 BoFire offers the following classes of surrogate models.
 
 **Surrogate**|**When to use**|**Type**
@@ -14,40 +15,39 @@ BoFire offers the following classes of surrogate models.
 [XGBoostSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/xgb.py)|Optimizing a single objective at a time|xgboost implementation of gradient boosting trees
 [TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/tanimoto_gp.py)|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points
 
-- empirical
-- fully_bayesian
-- linear
-- mixed_single_task_gp
-- mixed_tanimoto_gp
-- mlp
-- polynomial
-- rf
-- xgb
 
-Defaults: all von botorchStrategy: 5/2 matern kernel with automated relevance detection and normalization of the input features is used.
+- The standard Kernel for all Gaussian Process (GP) strategies is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
+- The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have Kernels but quantify uncertainty through a standard deviation of the predictions of their individual trees.
+- MLP quantifies uncertainty be the standard deviation of multiple predictions that used different dropouts (randomly setting neural network weights to zero).
 
-BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways:
+## Customization
+BoFire also offers the option to customize surrogate models.
+
+### Kernel customization
+In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways:
 - Specify the Kernel. Options are defined in the [API file](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py).
 
 **Kernel**|**When to use**|**Variable type**
 :-----:|:-----:|:-----:
 RBFKernel|Assuming closeness in points yields similartiy in the output value|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
-MaternKernel|Same as RBFKernel with. Allows setting a smoothness parameter|Contnuous
+MaternKernel|Same as RBFKernel with. Allows setting a smoothness parameter|Continuous
 LinearKernel|Assumes linear dependence between output and input variables|Continuous
 PolynomialKernel|Assumes polynomial dependence between output and input variables|Continuous
 TanimotoKernel|Measures similarities between molecular inputs using Tanimoto Similiarity|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
+HammondDistanceKernel|Similarity is defined by number of equal entries between two vectors (e.g., in One-Hot-encoding)|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
 
 
-Note: SingleTaskGPSurrogate with PolynomialKernel is equivalent with PolynomialSurrogate. SingleTaskGPSurrogate with TanimotoKernel is equivalent with TanimotoGP.
+- SingleTaskGPSurrogate with PolynomialKernel is equivalent with PolynomialSurrogate. SingleTaskGPSurrogate with TanimotoKernel is equivalent with TanimotoGP.
+- One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.
 
+### Noise model customization
 
+For experimental data being subject to noise, one can specify this noise. Options are:
+**Noise Model**|**When to use**
+:-----:|:-----:
+[NormalPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)|Noise is Gaussian
+[GammaPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/gamma.py)|Noise has a Gamma distribution
 
-
-- Specify a prior on the noise in the experimental data: Options are
-SingleTaskGPSurrogate(inputs=domain.inputs, outputs=Outputs(features=[domain.outputs[1]]), kernel=PolynomialKernel(power=2),noise_prior=NormalPrior,loc=0, scale=1)
-
-**Kernel API**|**Prior API**|**Type**
-:-----:|:-----:|:-----:
 
 
 
