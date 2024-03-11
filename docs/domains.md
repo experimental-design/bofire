@@ -160,3 +160,36 @@ Different classes for the objectives are implemented in BoFire. These are used t
 If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/). 
 
 ## Constraints
+The optimization problem in BoFire can be solved subject to a variety of different constraint types. These constraints are currently categorized as linear, non-linear, n choose k and interpoint constraints. 
+
+### Linear constraints
+Linear constraints are used to define linear equalities and inequalities. 
+
+Equalities can be defined using the `LinearEqualityConstraint` class. The `features` attribute is used to define the input variables, the `coefficients` attribute is used to define the coefficients of the linear equation and the `rhs` attribute is used to define the right-hand side of the equation.
+
+Inequalities can be defined using the `LinearInequalityConstraint` class. The attributes are defined in the same way as for the `LinearEqualityConstraint` class. 
+
+The following code defines a new linear equality constraint $x_1 + x_2 = 1$ and an inequality constraint $x_1 - x_3 \leq 1$.
+
+```python
+
+from bofire.data_models.constraints.api import LinearEqualityConstraint
+
+constraints = [LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1,1], rhs=1),
+               LinearInequalityConstraint(features=["x1", "x3"], coefficients=[1,-1], rhs=1)]
+```
+
+Note that the variables in the `features` attribute used in the constraints must be previously defined as inputs in the domain, in order to have a well defined optimization problem.
+
+
+The following code defines a new linear inequality constraint $x_1 + x_2 \leq 1$.
+
+```python
+
+The following code defines a new linear equality constraint $x_1 + x_2 = 1$.
+
+```python
+
+
+
+
