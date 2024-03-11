@@ -60,13 +60,21 @@ domain = Domain(
 BoFire implement eight different user-facing input classes (TODO: check if this is true), these are
 
 - `ContinuousInput`
-- `ContinuousDescriptorInput`
-- `DiscreteInput`
+- `DiscreteInput` 
 - `CategoricalInput`
-- `CategoricalDescriptorInput`
 - `MolecularInput`
+- `ContinuousDescriptorInput` 
+- `CategoricalDescriptorInput`
 - `CategoricalMolecularInput`
 - `TaskInput`
+
+Each of these inputs can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also (TODO: link to strategy docu)).
+
+Continuous inputs are used to define real-values input variables with finite upper and lower bounds. 
+
+
+TODO: Inputs() class --> Summarize multiple inputs
+
 
 ## Constraints
 ## Objectives
