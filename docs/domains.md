@@ -56,7 +56,7 @@ domain = Domain(
 )
 ```
 
-## Inputs & Outputs
+## Inputs
 BoFire allows for the following different user-facing input classes (TODO: check if this is true):
 
 - `ContinuousInput`
@@ -92,7 +92,7 @@ This class of inputs is similar to the discrete inputs, but takes a list of stri
 ```python   
 from bofire.data_models.features.api import CategoricalInput
 
-CategoricalInput(key="x4", values=["A", "B", "C"])
+CategoricalInput(key="x4", categories=["A", "B", "C"])
 ```
 
 #### Molecular inputs
@@ -109,12 +109,12 @@ MolecularInput(key="x5")
 #### Categorical descriptor inputs
 
 #### Categorical molecular inputs
-Categorical molecular inputs inherit from both molecular and categorical inputs. In addition to the 'MolecularInput' the user can provide a list of allowed SMILES strings via the `values` attribute. The following code defines a new categorical molecular input variable $x_6$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
+Categorical molecular inputs inherit from both molecular and categorical inputs. In addition to the 'MolecularInput' the user can provide a list of allowed SMILES strings via the `categories` attribute. The following code defines a new categorical molecular input variable $x_6$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
 
 ```python
 from bofire.data_models.features.api import CategoricalMolecularInput
 
-CategoricalMolecularInput(key="x6", values=["C1CCCCC1", "O1CCOCC1"])
+CategoricalMolecularInput(key="x6", categories=["C1CCCCC1", "O1CCOCC1"])
 ```
 
 #### Task inputs
@@ -128,34 +128,35 @@ The `Inputs` class is used to summarize multiple input variables. It is used to 
 from bofire.data_models.api import Inputs
 
 inputs = Inputs(
-    ContinuousInput(key="x1", bounds=(0,1)),
+    features=[ContinuousInput(key="x1", bounds=(0,1)),
     ContinuousInput(key="x2", bounds=(0,1)),
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", values=["A", "B", "C"]),
     MolecularInput(key="x5"),
-    CategoricalMolecularInput(key="x6", values=["C1CCCCC1", "O1CCOCC1"])
-)
+    CategoricalMolecularInput(key="x6", values=["C1CCCCC1", "O1CCOCC1"]])
 ```
 
-
-
-### Outputs
-At the moment only continuous outputs are supported. The `ContinuousOutput` class requires the variable name, an optional objective and a weight. The following code defines a new continuous output variable $y$ with a maximization objective. 
+## Outputs
+At the moment only continuous and categorical outputs are supported. Those are similar to the continuous and categorical inputs, but they additionaly contain the `objective` attribute. The `objective` attribute is used to define the optimization objective for the output variable. Similar to the inputs the outputs can be also summarized in an `Outputs` object. An example with a continuous and a categorical output is given below.
 
 ```python
+from bofire.data_models.features.api import ContinuousOutput, CategoricalOutput
 
-TODO: Inputs() class --> Summarize multiple inputs
-
-
-## Constraints
-## Objectives
-
-In BoFire diffierent types of objectives are implemented. Each output variable can have its own objective. The following objectives are available:
+outputs = Outputs(
+    features=[ContinuousOutput(key="y1", objective=MinimizeObjective()),
+    CategoricalOutput(key="y2", objective=MaximizeObjective())]
+```
+### Objectives
+Different classes for the objectives are implemented in BoFire. These are used to set the `objective` attribute of an output object. Note that each output variable can have its own objective. The following objectives are available:
 
 - `MaximizeObjective`: This is the default value. The objective is to maximize the output variable(s).
 - `MinimizeObjective`: The objective is to minimize the output variable(s). Note that minimization objectives can be transformed into maximization objectives and vice versa just by multiplying the corresponding output by -1.
 - `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful for objectives that are not linear in the output variable(s).
-- `MinimizeSigmoidObjective`: The objective is to minimize the output variable(s) using a sigmoid transformation.
+- `MinimizeSigmoidObjective`: Similar to `MaximizeSigmoidObjective`, but the objective is to minimize the output variable(s).
 - `TargetObjective`: The objective is to reach a target value for the output variable(s).
 - `CloseToTargetObjective`: **TODO**: Ask Johannes what is the difference to TargetObjective and how it is used (multiobjective optimization?)
 - `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given. **TODO**: Ask Johannes if this is correct
+
+If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/). 
+
+## Constraints
