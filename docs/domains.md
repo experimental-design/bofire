@@ -181,8 +181,14 @@ constraints = [LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1,1
 
 Note that the variables in the `features` attribute used in the constraints must be previously defined as inputs in the domain, in order to have a well defined optimization problem.
 
+### Non-linear constraints
+Non-linear constraints can be used to define equalities and inequalities of the form:
 
-The following code defines a new linear inequality constraint $x_1 + x_2 \leq 1$.
+$$
+c(\mathbf{x}) = 0 \quad \text{and} \quad c(x) \leq 0,
+$$
+
+where $c(x)$ can be an arbitrary function of the inputs $x$, defined as a string. 
 
 ```python
 
