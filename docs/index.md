@@ -2,7 +2,7 @@
 
 <!-- Add BoFire Logo -->
 
-Welcome to the official documentation of BoFire, a powerful Python package that serves as a comprehensive framework for experimental designs. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the exciting world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
+Welcome to the official documentation of BoFire, a powerful Python package that serves as a comprehensive framework for experimental design. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the exciting world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
 
 ```mermaid
 flowchart TD
@@ -35,6 +35,17 @@ Design of Experiments (DoE) is a systematic method to determine the relationship
 
 
 ### What is Bayesian Optimization (BO)?
+
+```mermaid
+graph TD
+A[Define search space] --> B[Sample initial points]
+B --> C[Stopping criterion met?]
+C -- No --> D[Train ML model]
+D --> E[Generate proposal by\noptimizing acquisition function]
+E --> F[Perform next experiment]
+F --> C
+C -- Yes --> G[Return the best observation]
+```
 
 Bayesian Optimization (BO) is a sequential design strategy for global optimization of black-box functions that doesn’t assume any functional forms. It works by constructing a posterior distribution of functions (e.g., Gaussian process) that best describes the function you want to optimize. As the number of observations grows, the posterior distribution improves, and the algorithm becomes more certain of which regions in parameter space are worth exploring and which ones are not.
 
