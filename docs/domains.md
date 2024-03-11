@@ -58,6 +58,17 @@ domain = Domain(
 
 ## Inputs & Outputs
 
+BoFire implement eight different user-facing input classes (TODO: check if this is true), these are
+
+- `ContinuousInput`
+- `ContinuousDescriptorInput`
+- `DiscreteInput`
+- `CategoricalInput`
+- `CategoricalDescriptorInput`
+- `MolecularInput`
+- `CategoricalMolecularInput`
+- `TaskInput`
+
 ## Constraints
 
 ## Objectives
