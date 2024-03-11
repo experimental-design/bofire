@@ -185,17 +185,35 @@ Note that the variables in the `features` attribute used in the constraints must
 Non-linear constraints can be used to define equalities and inequalities of the form:
 
 $$
-c(\mathbf{x}) = 0 \quad \text{and} \quad c(x) \leq 0,
+c(\mathbf{x}) = 0 \quad \text{and} \quad c(\mathbf{x}) \leq 0,
 $$
 
-where $c(x)$ can be an arbitrary function of the inputs $x$, defined as a string. 
+where $c(\mathbf{x})$ can be an arbitrary function of the inputs **x** represented by a string attribute `expression` that can be evaluated via the `eval()` method of pandas dataframe. If `sympy` is installed, the derivate expressions are automatically calculated from the `expression` attribute. Otherwise, the user can provide additional expressions for the derivatives using the `jacobian_expressions` attribute. The `features` attrribute should contain the names of the input variables used in the `expression` attribute.
+
+The following code defines a new non-linear inequality constraint $x1**2 + x2**2 - x3 \leq 0$.
 
 ```python
+from bofire.data_models.constraints.api import NonlinearInequalityConstraint
 
-The following code defines a new linear equality constraint $x_1 + x_2 = 1$.
+NonlinearInequalityConstraint(expression="x1**2 + x2**2 - x3", features=["x1","x2","x3"])
+```
+
+### N choose k constraints
+Given a list of N features and attributes `min_count`, `max_count`, the `NChooseKConstraint` class is used to define constraints that require a minimum and maximum number of features to be nonzero. The following code defines a new `NChooseKConstraint` that requires at least 2 and at most 3 features to be selected from the list ["x1", "x2", "x3", "x4"].
 
 ```python
+from bofire.data_models.constraints.api import NChooseKConstraint
 
+NChooseKConstraint(features=["x1", "x2", "x3", "x4"], min_count=2, max_count=3)
+```
 
+### Interpoint constraints
+The `InterpointEqualityConstraint` forces that values of a certain feature of a set/batch of candidates should have the same value. The set is defined using the `multiplicity` attribute. The following code defines a new `InterpointEqualityConstraint` that forces the values of the feature "x1" to be the same for every 3 subsequent candidates.
+
+```python   
+from bofire.data_models.constraints.api import InterpointEqualityConstraint
+
+InterpointEqualityConstraint(features="x1", multiplicity=3)
+```
 
 
