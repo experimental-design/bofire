@@ -64,7 +64,7 @@ jobs:
           pip install --upgrade git+https://github.com/cornellius-gp/gpytorch.git
           export ALLOW_LATEST_GPYTORCH_LINOP=true
           pip install --upgrade git+https://github.com/pytorch/botorch.git
-          pip install ".[optimization,tests,cheminfo,xgb]"
+          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
       - name: Run tests, Python ${{ matrix.python-version }}
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
@@ -86,7 +86,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
-          pip install ".[optimization,tests,cheminfo,xgb]"
+          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
       - name: Run notebooks
         shell: bash -l {0}
         run: python scripts/run_tutorials.py -p "$(pwd)"
