@@ -48,7 +48,7 @@ def domain_to_problem_config(
 
     Returns:
         A tuple (problem_config, model_pyo), where problem_config is the problem definition
-        in an ENTMOOT-friendly format, and model_pyo is the Pyomo model containing constraints.
+        in an ENTMOOT format, and model_pyo is the Pyomo model containing constraints.
     """
     # entmoot expects int, not np.int64
     seed = int(seed) if isinstance(seed, np.int64) else seed
