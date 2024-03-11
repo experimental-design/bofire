@@ -16,9 +16,28 @@ BoFire offers the following classes of surrogate models.
 [MixedSingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process
 [XGBoostSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/xgb.py)|a single objective|Rich data; black-box function does not have to be smooth|xgboost implementation of gradient boosting trees
 [TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points|
+[MultiTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)|a single objective with real valued inputs|Limited data and black-box function is smooth|Gaussian process
 
+All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable [Strategy](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py) has to be chosen. Then for each objective a different surrogate model can be specified, while by default the SingleTaskGPSurrogate is used.
 
-- The standard Kernel for all Gaussian Process (GP) strategies is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
+**Example**:
+
+    surrogate_data_0 = SingleTaskGPSurrogate(
+            inputs=domain.inputs,
+            outputs=Outputs(features=[domain.outputs[0]]),
+    )
+    surrogate_data_1 = XGBoostSurrogate(
+        inputs=domain.inputs,
+        outputs=Outputs(features=[domain.outputs[1]]),
+    )
+    qparego_data_model = QparegoStrategy(
+        domain=domain,
+        surrogate_specs=BotorchSurrogates(
+            surrogates=[surrogate_data_0, surrogate_data_1]
+        ),
+    )
+
+- The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
 - The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have Kernels but quantify uncertainty through a standard deviation of the predictions of their individual trees.
 - MLP quantifies uncertainty be the standard deviation of multiple predictions that come from different dropouts (randomly setting neural network weights to zero).
 
@@ -28,21 +47,21 @@ BoFire also offers the option to customize surrogate models. In particular, it i
 ### Kernel customization
 Specify the [Kernel](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py):
 
-**Kernel**|**Description**|**Input variable type**
-:-----:|:-----:|:-----:
-[RBFKernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)|Based on Gaussian distribution; translation invariant and isotropic|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
-[MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; translation invariant and isotropic; allows setting a smoothness parameter|Continuous
-[PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points; not translation invariant; rotation invariant|Continuous
-[LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points; not translation invariant; rotation invariant|Continuous
-TanimotoKernel|Measures similarities between molecular inputs using [Tanimoto Similiarity](https://en.wikipedia.org/wiki/Jaccard_index)|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
-HammondDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
+**Kernel**|**Description**|**Translation invariant**|**Rotation invariant**|**Isotropic**|**Input variable type**
+:-----:|:-----:|:-----:|:-----:|:-----:|:-----:
+[RBFKernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)|Based on Gaussian distribution|Yes|Yes|Yes|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
+[MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; allows setting a smoothness parameter|Yes|Yes|Yes|Continuous
+[PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points|No|Yes|No|Continuous
+[LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points|No|Yes|No|Continuous
+TanimotoKernel|Measures similarities between binary vectors using [Tanimoto Similiarity](https://en.wikipedia.org/wiki/Jaccard_index)|Not applicable|Not applicable|Not applicable|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
+HammondDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|Not applicable|Not applicable|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
 
-Note:
+**Note:**
 - Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only their distance determines the similarity.
 - A kernel being isotropic means that the distance between two points depends only on the Euclidean distance and not on the direction in which one point lies with respect to the other.
 - Rotational invariance means that the similarity measure is not affected by rotating both points by the same angle around a point filled only with zeroes. 
 
-Note:
+**Note:**
 - SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
 - SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.
 - SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
@@ -50,7 +69,7 @@ Note:
 
 ### Noise model customization
 
-For experimental data being subject to noise, one can specify the distribution of this noise. Options are:
+For experimental data being subject to noise, one can specify the distribution of this noise. The options are:
 **Noise Model**|**When to use**
 :-----:|:-----:
 [NormalPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)|Noise is Gaussian
