@@ -54,5 +54,10 @@ domain = Domain(
     outputs=outputs,
     constraints=constraints
 )
-
 ```
+
+## Inputs & Outputs
+
+## Constraints
+
+## Objectives
