@@ -1,7 +1,15 @@
 # Welcome to BoFire
 
+<!-- Add BoFire Logo -->
+
 Welcome to the official documentation of BoFire, a powerful Python package that serves as a comprehensive framework for experimental designs. BoFire is designed to empower researchers, data scientists, engineers, and enthusiasts who are venturing into the exciting world of Design of Experiments (DoE) and Bayesian optimization (BO) techniques.
 
+```mermaid
+flowchart TD
+    A[BoFire main capabilities] --> B{Iterative process?}
+    B -->|No| C[classical DoE]
+    B -->|Yes| D[Bayesian Optimization]
+```
 
 ### What is BoFire?
 
