@@ -69,7 +69,7 @@ HammondDistanceKernel|Similarity is defined by the [Hamming distance](https://en
 
 ### Noise model customization
 
-For experimental data being subject to noise, one can specify the distribution of this noise. The options are:
+For experimental data being subject to noise, one can specify the distribution of this noise. The [options](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py) are:
 **Noise Model**|**When to use**
 :-----:|:-----:
 [NormalPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)|Noise is Gaussian
