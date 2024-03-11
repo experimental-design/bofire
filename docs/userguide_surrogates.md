@@ -26,19 +26,26 @@ BoFire offers the following classes of surrogate models.
 BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.
 
 ### Kernel customization
-Specify the Kernel (see [API file](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py)).
+Specify the [Kernel](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py):
 
-**Kernel**|**When to use**|**Variable type**
+**Kernel**|**Description**|**Input variable type**
 :-----:|:-----:|:-----:
-RBFKernel|Assuming closeness in points yields similartiy in the output value|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
-MaternKernel|Same as RBFKernel with. Allows setting a smoothness parameter|Continuous
-LinearKernel|Assumes linear dependence between output and input variables|Continuous
-PolynomialKernel|Assumes polynomial dependence between output and input variables|Continuous
-TanimotoKernel|Measures similarities between molecular inputs using Tanimoto Similiarity|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
-HammondDistanceKernel|Similarity is defined by number of equal entries between two vectors (e.g., in One-Hot-encoding)|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
+[RBFKernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)|Based on Gaussian distribution; translation invariant and isotropic|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
+[MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; translation invariant and isotropic; allows setting a smoothness parameter|Continuous
+[PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points; not translation invariant; rotation invariant|Continuous
+[LinearKernel](https://scikit-learn.org/stable/modules/metrics.html)|Equal to dot-product of two vectors of input points; not translation invariant; rotation invariant|Continuous
+TanimotoKernel|Measures similarities between molecular inputs using [Tanimoto Similiarity](https://en.wikipedia.org/wiki/Jaccard_index)|[MolecularInput](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py)
+HammondDistanceKernel|Similarity is defined by the [Hamming distance](https://en.wikipedia.org/wiki/Hamming_distance) which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|[Categorical](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py)
 
 Note:
-- SingleTaskGPSurrogate with PolynomialKernel is equivalent with PolynomialSurrogate. SingleTaskGPSurrogate with TanimotoKernel is equivalent with TanimotoGP.
+- Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only their distance determines the similarity.
+- A kernel being isotropic means that the distance between two points depends only on the Euclidean distance and not on the direction in which one point lies with respect to the other.
+- Rotational invariance means that the similarity measure is not affected by rotating both points by the same angle around a point filled only with zeroes. 
+
+Note:
+- SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
+- SingleTaskGPSurrogate with LinearKernel is equivalent to LinearSurrogate.
+- SingleTaskGPSurrogate with TanimotoKernel is equivalent to TanimotoGP.
 - One can combine two Kernels by using AdditiveKernel or MultiplicativeKernel.
 
 ### Noise model customization
