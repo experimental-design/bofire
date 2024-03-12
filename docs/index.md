@@ -38,13 +38,13 @@ Design of Experiments (DoE) is a systematic method to determine the relationship
 
 ```mermaid
 graph TD
-A[Define search space] --> B[Sample initial points]
-B --> C[Stopping criterion met?]
-C -- No --> D[Train ML model]
-D --> E[Generate proposal by\noptimizing acquisition function]
-E --> F[Perform next experiment]
-F --> C
-C -- Yes --> G[Return the best observation]
+    A[Define search space] --> B[Do initial experiments]
+    B --> C[Stopping criterion\nmet?]
+    C -- No --> D[Train\nsurrogate model]
+    D --> E["Optimize\n(generate proposal)"]
+    E --> F[Perform next experiment]
+    F --> C
+    C --- Yes ---> G["Keep results\n(eg, best observation so far)"]
 ```
 
 Bayesian Optimization (BO) is a sequential design strategy for global optimization of black-box functions that doesn’t assume any functional forms. It works by constructing a posterior distribution of functions (e.g., Gaussian process) that best describes the function you want to optimize. As the number of observations grows, the posterior distribution improves, and the algorithm becomes more certain of which regions in parameter space are worth exploring and which ones are not.
