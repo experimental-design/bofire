@@ -4,7 +4,7 @@ The BoFire domain contains all information about the optimization problem. In ge
 
 A basic example of a domain consists of two continuous inputs $x_1$, $x_2$ and a continuous output $y$. If no objective is given, a maximization objective (TODO: link to later section...) for the output is assumed. If no constraints are defined, an empty set of constraints is assumed.
 
-A continuous input can be defined using the `ContinuousInput` class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume $x_1, x_2 \in (0,1)$
+A continuous input can be defined using the `ContinuousInput` class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume $x_1, x_2 \in (0,1)$.
 ```python
 from bofire.data_models.features.api import ContinousInput
 
@@ -28,7 +28,8 @@ domain = Domain(
     outputs=outputs
 )
 ```
-There are applications of domains, where no optimization of an objective is involved (e.g. randomly sampling from the design space). In such cases, we do not require to provide an outp
+There are applications of domains, where no optimization of an objective is involved (e.g. randomly sampling from the design space). In such cases, we do not require to provide an output definition.
+
 Let's now assume we have an additional linear equality constraint and we want to use a custom objective, e.g. a minimization objective for $y$. The linear constraint can be defined using the `LinearEqualityConstraint` class
 ```python
 from bofire.data_models.constraints.api import LinearEqualityConstraint
@@ -190,7 +191,7 @@ $$
 
 where $c(\mathbf{x})$ can be an arbitrary function of the inputs **x** represented by a string attribute `expression` that can be evaluated via the `eval()` method of pandas dataframe. If `sympy` is installed, the derivate expressions are automatically calculated from the `expression` attribute. Otherwise, the user can provide additional expressions for the derivatives using the `jacobian_expressions` attribute. The `features` attrribute should contain the names of the input variables used in the `expression` attribute.
 
-The following code defines a new non-linear inequality constraint $x1**2 + x2**2 - x3 \leq 0$.
+The following code defines a new non-linear inequality constraint $x1^2 + x2^2 - x3 \leq 0$.
 
 ```python
 from bofire.data_models.constraints.api import NonlinearInequalityConstraint
