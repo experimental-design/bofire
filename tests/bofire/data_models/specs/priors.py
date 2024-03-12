@@ -43,3 +43,47 @@ for rate in [-1.0, 0]:
             },
             error=ValidationError,
         )
+
+specs.add_valid(
+    priors.LKJPrior,
+    lambda: {
+        "n_tasks": random.randint(1, 10),
+        "shape": random.random(),
+        "sd_prior": {
+            "type": "GammaPrior",
+            "concentration": random.random(),
+            "rate": random.random(),
+        },
+    },
+)
+
+for shape in [-1, 0]:
+    specs.add_invalid(
+        priors.LKJPrior,
+        lambda: {
+            "n_tasks": random.randint(1, 10),
+            "shape": shape,  # noqa: B023
+            "sd_prior": {
+                "type": "GammaPrior",
+                "concentration": random.random(),
+                "rate": random.random(),
+            },
+        },
+        error=ValidationError,
+    )
+
+for concentration in [-1, 0]:
+    for rate in [-1, 0]:
+        specs.add_invalid(
+            priors.LKJPrior,
+            lambda: {
+                "n_tasks": random.randint(1, 10),
+                "shape": random.random(),
+                "sd_prior": {
+                    "type": "GammaPrior",
+                    "concentration": concentration,  # noqa: B023
+                    "rate": rate,  # noqa: B023
+                },
+            },
+            error=ValidationError,
+        )

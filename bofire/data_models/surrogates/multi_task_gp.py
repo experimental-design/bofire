@@ -19,7 +19,6 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
-    LKJ_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     AnyPrior,
@@ -92,7 +91,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
-    lkj_prior: LKJPrior = Field(default_factory=lambda: LKJ_PRIOR())
+    task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig()
     )
@@ -110,6 +109,18 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     @field_validator("inputs", mode="before")
     @classmethod
     def validate_task_inputs(cls, v, info):
+        if isinstance(v, dict):
+            if "inputs" in v:
+                check_types = [
+                    1 if feat["type"] == "TaskInput" else 0 for feat in v["features"]
+                ]
+                if sum(check_types) != 1:
+                    raise ValueError(
+                        "Exactly one task input is required for multi-task GPs."
+                    )
+
+            return v
+
         if len(v.get_keys(TaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
         return v
@@ -119,7 +130,11 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     def validate_encoding(cls, v, info):
         # also validate that the task feature has ordinal encoding
         if "inputs" not in info.data:
-            return
+            return v
+
+        if len(info.data["inputs"].get_keys(TaskInput)) == 0:
+            return v
+
         task_feature_id = info.data["inputs"].get_keys(TaskInput)[0]
         if v.get(task_feature_id) is None:
             v[task_feature_id] = CategoricalEncodingEnum.ORDINAL

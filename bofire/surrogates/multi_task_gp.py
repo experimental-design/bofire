@@ -1,3 +1,4 @@
+import warnings
 from typing import Dict, Optional
 
 import botorch
@@ -12,6 +13,7 @@ import bofire.kernels.api as kernels
 import bofire.priors.api as priors
 from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.features.api import TaskInput
+from bofire.data_models.priors.api import LKJPrior
 
 # from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.surrogates.api import MultiTaskGPSurrogate as DataModel
@@ -33,9 +35,10 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.scaler = data_model.scaler
         self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
-        self.lkj_prior = data_model.lkj_prior
-        # set the number of tasks in the prior
-        self.lkj_prior.n_tasks = self.n_tasks
+        self.task_prior = data_model.task_prior
+        if isinstance(data_model.task_prior, LKJPrior):
+            # set the number of tasks in the prior
+            self.task_prior.n_tasks = self.n_tasks
         # obtain the name of the task feature
         self.task_feature_key = data_model.inputs.get_keys(TaskInput)[0]
 
@@ -73,9 +76,15 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=scaler,
         )
 
-        self.model.task_covar_module.register_prior(
-            "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
-        )
+        if isinstance(self.task_prior, LKJPrior):
+            warnings.warn(
+                "The LKJ prior has issues when sampling from the prior, prior has been defaulted to None.",
+                UserWarning,
+            )
+            # once the issue is fixed, the following line should be uncommented
+            # self.model.task_covar_module.register_prior(
+            #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
+            # )
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)

@@ -36,6 +36,7 @@ from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
+    LKJ_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
@@ -505,14 +506,14 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 
 
 @pytest.mark.parametrize(
-    "kernel, scaler, output_scaler",
+    "kernel, scaler, output_scaler, task_prior",
     [
-        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE),
-        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY),
+        (RBFKernel(ard=True), ScalerEnum.NORMALIZE, ScalerEnum.STANDARDIZE, None),
+        (RBFKernel(ard=False), ScalerEnum.STANDARDIZE, ScalerEnum.STANDARDIZE, None),
+        (RBFKernel(ard=False), ScalerEnum.IDENTITY, ScalerEnum.IDENTITY, LKJ_PRIOR()),
     ],
 )
-def test_MultiTaskGPModel(kernel, scaler, output_scaler):
+def test_MultiTaskGPModel(kernel, scaler, output_scaler, task_prior):
     benchmark = MultiTaskHimmelblau()
     inputs = benchmark.domain.inputs
     outputs = benchmark.domain.outputs
@@ -524,12 +525,18 @@ def test_MultiTaskGPModel(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         kernel=kernel,
+        task_prior=task_prior,
     )
 
     model = surrogates.map(model)
     with pytest.raises(ValueError):
         model.dumps()
-    model.fit(experiments)
+    # if task_prior is not None, a warning should be raised
+    if task_prior is not None:
+        with pytest.warns(UserWarning):
+            model.fit(experiments)
+    else:
+        model.fit(experiments)
     # dump the model
     dump = model.dumps()
     # make predictions

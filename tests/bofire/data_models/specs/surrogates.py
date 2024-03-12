@@ -9,6 +9,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     MolecularInput,
+    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     HammondDistanceKernel,
@@ -27,6 +28,7 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
     SumAggregation,
 )
+from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -392,5 +394,38 @@ specs.add_valid(
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
         "dump": None,
         "hyperconfig": None,
+    },
+)
+
+specs.add_valid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [TaskInput(key="task", categories=["a", "b", "c"])]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
 )
