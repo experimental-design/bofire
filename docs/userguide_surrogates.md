@@ -75,7 +75,7 @@ Translational invariance means that the similarity between two input points is n
 
 ### Noise model customization
 
-For experimental data being subject to noise, one can specify the distribution of this noise. The [options](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py) are:
+For experimental data subject to noise, one can specify the distribution of this noise. The [options](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py) are:
 **Noise Model**|**When to use**
 :-----:|:-----:
 [NormalPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)|Noise is Gaussian
