@@ -40,7 +40,7 @@ All of these are single-objective surrogate models. For optimization of multiple
 **Note:**
 - The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
 - The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have kernels but quantify uncertainty using the standard deviation of the predictions of their individual trees.
-- MLP quantifies uncertainty be the standard deviation of multiple predictions that come from different dropouts (randomly setting neural network weights to zero).
+- MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).
 
 ## Customization
 BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.
