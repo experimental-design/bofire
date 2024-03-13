@@ -10,6 +10,7 @@ nav:
   - Examples: examples.md
   - Package Architecture:
     - Data Models vs Functional Components: data_models_functionals.md
+    - Surrogate Models: userguide_surrogates.md
   - API Reference:
     - Domain: ref-domain.md
     - Constraints: ref-constraints.md
