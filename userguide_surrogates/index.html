@@ -750,12 +750,6 @@
 <td style="text-align: center;">At least one input feature is a molecule represented as fingerprint</td>
 <td style="text-align: center;">Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points</td>
 </tr>
-<tr>
-<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single_task_gp.py">MultiTaskGPSurrogate</a></td>
-<td style="text-align: center;">a single objective with real valued inputs</td>
-<td style="text-align: center;">Limited data and black-box function is smooth</td>
-<td style="text-align: center;">Gaussian process</td>
-</tr>
 </tbody>
 </table>
 <p>All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable <a href="https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py">Strategy</a> has to be chosen. Then for each objective a different surrogate model can be specified. By default the SingleTaskGPSurrogate is used.</p>
@@ -775,22 +769,64 @@ qparego_data_model = QparegoStrategy(
     ),
 )
 </code></pre></div>
-<p><strong>Note:</strong>
-- The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
-- The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have kernels but quantify uncertainty using the standard deviation of the predictions of their individual trees.
-- MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).</p>
+<p><strong>Note:</strong></p>
+<ul>
+<li>The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.</li>
+<li>The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have kernels but quantify uncertainty using the standard deviation of the predictions of their individual trees.</li>
+<li>MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).</li>
+</ul>
 <h2 id="customization">Customization</h2>
 <p>BoFire also offers the option to customize surrogate models. In particular, it is possible to customize the SingleTaskGPSurrogate in the following ways.</p>
 <h3 id="kernel-customization">Kernel customization</h3>
 <p>Specify the <a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py">Kernel</a>:</p>
-<p><strong>Kernel</strong>|<strong>Description</strong>|<strong>Translation invariant</strong>|<strong>Input variable type</strong>
-:-----:|:-----:|:-----:|:-----:|
-<a href="https://en.wikipedia.org/wiki/Radial_basis_function_kernel">RBFKernel</a>|Based on Gaussian distribution|Yes|<a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py">Continuous</a>
-<a href="https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function">MaternKernel</a>|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous
-<a href="https://scikit-learn.org/stable/modules/metrics.html">PolynomialKernel</a>|Based on dot-product of two vectors of input points|No|Continuous
-<a href="https://scikit-learn.org/stable/modules/metrics.html">LinearKernel</a>|Equal to dot-product of two vectors of input points|No|Continuous
-TanimotoKernel|Measures similarities between binary vectors using <a href="https://en.wikipedia.org/wiki/Jaccard_index">Tanimoto Similiarity</a>|Not applicable|<a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py">MolecularInput</a>
-HammondDistanceKernel|Similarity is defined by the <a href="https://en.wikipedia.org/wiki/Hamming_distance">Hamming distance</a> which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)|Not applicable|<a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py">Categorical</a></p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Kernel</strong></th>
+<th style="text-align: center;"><strong>Description</strong></th>
+<th style="text-align: center;"><strong>Translation invariant</strong></th>
+<th style="text-align: center;"><strong>Input variable type</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><a href="https://en.wikipedia.org/wiki/Radial_basis_function_kernel">RBFKernel</a></td>
+<td style="text-align: center;">Based on Gaussian distribution</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py">Continuous</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function">MaternKernel</a></td>
+<td style="text-align: center;">Based on Gamma function; allows setting a smoothness parameter</td>
+<td style="text-align: center;">Yes</td>
+<td style="text-align: center;">Continuous</td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="https://scikit-learn.org/stable/modules/metrics.html">PolynomialKernel</a></td>
+<td style="text-align: center;">Based on dot-product of two vectors of input points</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Continuous</td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="https://scikit-learn.org/stable/modules/metrics.html">LinearKernel</a></td>
+<td style="text-align: center;">Equal to dot-product of two vectors of input points</td>
+<td style="text-align: center;">No</td>
+<td style="text-align: center;">Continuous</td>
+</tr>
+<tr>
+<td style="text-align: center;">TanimotoKernel</td>
+<td style="text-align: center;">Measures similarities between binary vectors using <a href="https://en.wikipedia.org/wiki/Jaccard_index">Tanimoto Similiarity</a></td>
+<td style="text-align: center;">Not applicable</td>
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/molecular.py">MolecularInput</a></td>
+</tr>
+<tr>
+<td style="text-align: center;">HammondDistanceKernel</td>
+<td style="text-align: center;">Similarity is defined by the <a href="https://en.wikipedia.org/wiki/Hamming_distance">Hamming distance</a> which considers the number of equal entries between two vectors (e.g., in One-Hot-encoding)</td>
+<td style="text-align: center;">Not applicable</td>
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/categorical.py">Categorical</a></td>
+</tr>
+</tbody>
+</table>
 <p>Translational invariance means that the similarity between two input points is not affected by shifting both points by the same amount but only determined by their distance. Example: with a translationally invariant kernel, the values 10 and 20 are equally similar to each other as the values 20 and 30, while with a polynomial kernel the latter pair has potentially higher similarity. Polynomial kernels are often suitable for high-dimensional inputs while for low-dimensional inputs an RBF or Matérn kernel is recommended.</p>
 <p><strong>Note:</strong>
 - SingleTaskGPSurrogate with PolynomialKernel is equivalent to PolynomialSurrogate.
@@ -805,11 +841,25 @@ HammondDistanceKernel|Similarity is defined by the <a href="https://en.wikipedia
 )
 </code></pre></div>
 <h3 id="noise-model-customization">Noise model customization</h3>
-<p>For experimental data subject to noise, one can specify the distribution of this noise. The <a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py">options</a> are:
-<strong>Noise Model</strong>|<strong>When to use</strong>
-:-----:|:-----:
-<a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py">NormalPrior</a>|Noise is Gaussian
-<a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/gamma.py">GammaPrior</a>|Noise has a Gamma distribution</p>
+<p>For experimental data subject to noise, one can specify the distribution of this noise. The <a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py">options</a> are:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Noise Model</strong></th>
+<th style="text-align: center;"><strong>When to use</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py">NormalPrior</a></td>
+<td style="text-align: center;">Noise is Gaussian</td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/gamma.py">GammaPrior</a></td>
+<td style="text-align: center;">Noise has a Gamma distribution</td>
+</tr>
+</tbody>
+</table>
 <p><strong>Example</strong>:</p>
 <div class="highlight"><pre><span></span><code>surrogate_data_0 = SingleTaskGPSurrogate(
         inputs=domain.inputs,
