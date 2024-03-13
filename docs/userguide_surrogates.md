@@ -10,13 +10,13 @@ BoFire offers the following classes of surrogate models.
 
 **Surrogate**|**Optimization of**|**When to use**|**Type**
 :-----:|:-----:|:-----:|:-----:
-[SingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)|a single objective with real valued inputs|Limited data and black-box function is smooth|Gaussian process
+[SingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)|a single objective with real valued inputs|Limited data and black-box function is smooth; continuous inputs|Gaussian process
 [RandomForestSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/random\_forest.py)|a single objective|Rich data; black-box function does not have to be smooth|sklearn random forest implementation 
 [MLP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mlp.py)|a single objective with real-valued inputs|Rich data and black-box function is smooth|Multi layer perceptron
-[MixedSingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth|Gaussian process
+[MixedSingleTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/mixed\_single\_task\_gp.py)|a single objective with categorical and real valued inputs|Limited data and black-box function is smooth; continuous inputs|Gaussian process
 [XGBoostSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/xgb.py)|a single objective|Rich data; black-box function does not have to be smooth|xgboost implementation of gradient boosting trees
-[TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points|
-[MultiTaskGPSurrogate](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/single\_task\_gp.py)|a single objective with real valued inputs|Limited data and black-box function is smooth|Gaussian process
+[TanimotoGP](https://github.com/experimental-design/bofire/blob/main/bofire/surrogates/tanimoto_gp.py)|a single objective|At least one input feature is a molecule represented as fingerprint; the others are continuous inputs|Gaussian process on a molecule space for which Tanimoto similarity determines the similarity between points|
+
 
 All of these are single-objective surrogate models. For optimization of multiple objectives at the same time, a suitable [Strategy](https://github.com/experimental-design/bofire/blob/main/bofire/strategies/strategy.py) has to be chosen. Then for each objective a different surrogate model can be specified, while by default the SingleTaskGPSurrogate is used.
 
