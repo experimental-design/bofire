@@ -134,7 +134,7 @@ inputs = Inputs(
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", values=["A", "B", "C"]),
     MolecularInput(key="x5"),
-    CategoricalMolecularInput(key="x6", values=["C1CCCCC1", "O1CCOCC1"]])
+    CategoricalMolecularInput(key="x6", values=["C1CCCCC1", "O1CCOCC1"])])
 ```
 
 ## Outputs
