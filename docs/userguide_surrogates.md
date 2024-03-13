@@ -37,6 +37,7 @@ All of these are single-objective surrogate models. For optimization of multiple
     )
 
 **Note:**
+
 - The standard Kernel for all Gaussian Process (GP) surrogates is a 5/2 matern kernel with automated relevance detection and normalization of the input features.
 - The tree-based models (RandomForestSurrogate and XGBoostSurrogate) do not have kernels but quantify uncertainty using the standard deviation of the predictions of their individual trees.
 - MLP quantifies uncertainty using the standard deviation of multiple predictions that come from different dropout rates (randomly setting neural network weights to zero).
@@ -48,7 +49,7 @@ BoFire also offers the option to customize surrogate models. In particular, it i
 Specify the [Kernel](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/kernels/api.py):
 
 **Kernel**|**Description**|**Translation invariant**|**Input variable type**
-:-----:|:-----:|:-----:|:-----:|
+:-----:|:-----:|:-----:|:-----:
 [RBFKernel](https://en.wikipedia.org/wiki/Radial_basis_function_kernel)|Based on Gaussian distribution|Yes|[Continuous](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/features/continuous.py)
 [MaternKernel](https://en.wikipedia.org/wiki/Mat%C3%A9rn_covariance_function)|Based on Gamma function; allows setting a smoothness parameter|Yes|Continuous
 [PolynomialKernel](https://scikit-learn.org/stable/modules/metrics.html)|Based on dot-product of two vectors of input points|No|Continuous
@@ -75,6 +76,7 @@ Translational invariance means that the similarity between two input points is n
 ### Noise model customization
 
 For experimental data subject to noise, one can specify the distribution of this noise. The [options](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/api.py) are:
+
 **Noise Model**|**When to use**
 :-----:|:-----:
 [NormalPrior](https://github.com/experimental-design/bofire/blob/main/bofire/data_models/priors/normal.py)|Noise is Gaussian
