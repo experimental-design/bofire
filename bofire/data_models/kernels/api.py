@@ -28,7 +28,7 @@ AnyContinuousKernel = Union[
     RBFKernel,
 ]
 
-AnyCategoricalKernal = HammondDistanceKernel
+AnyCategoricalKernel = HammondDistanceKernel
 
 AnyMolecularKernel = TanimotoKernel
 

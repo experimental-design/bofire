@@ -11,7 +11,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 from bofire.data_models.kernels.api import (
-    AnyCategoricalKernal,
+    AnyCategoricalKernel,
     AnyContinuousKernel,
     HammondDistanceKernel,
     MaternKernel,
@@ -91,7 +91,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
             ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
         )
     )
-    categorical_kernel: AnyCategoricalKernal = Field(
+    categorical_kernel: AnyCategoricalKernel = Field(
         default_factory=lambda: HammondDistanceKernel(ard=True)
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
