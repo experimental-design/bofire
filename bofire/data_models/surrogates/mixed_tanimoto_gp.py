@@ -8,7 +8,7 @@ from bofire.data_models.kernels.api import (
     AnyCategoricalKernel,
     AnyContinuousKernel,
     AnyMolecularKernel,
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
     TanimotoKernel,
 )
@@ -37,7 +37,7 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
         )
     )
     categorical_kernel: AnyCategoricalKernel = Field(
-        default_factory=lambda: HammondDistanceKernel(ard=True)
+        default_factory=lambda: HammingDistanceKernel(ard=True)
     )
     # Molecular kernel will only be imposed on fingerprints, fragments, or fingerprintsfragments
     molecular_kernel: AnyMolecularKernel = Field(

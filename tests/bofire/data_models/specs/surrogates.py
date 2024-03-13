@@ -11,7 +11,7 @@ from bofire.data_models.features.api import (
     MolecularInput,
 )
 from bofire.data_models.kernels.api import (
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -86,7 +86,7 @@ specs.add_valid(
         ).model_dump(),
         "aggregations": None,
         "continuous_kernel": MaternKernel(ard=True, nu=2.5).model_dump(),
-        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
@@ -382,7 +382,7 @@ specs.add_valid(
         "continuous_kernel": MaternKernel(
             ard=True, nu=random.choice([0.5, 1.5, 2.5])
         ).model_dump(),
-        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {
