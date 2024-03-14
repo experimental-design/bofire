@@ -1,6 +1,6 @@
 from typing import Literal, Optional, Sequence, Union
 
-from bofire.data_models.kernels.categorical import HammondDistanceKernel
+from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
@@ -14,7 +14,7 @@ class AdditiveKernel(Kernel):
             RBFKernel,
             MaternKernel,
             LinearKernel,
-            HammondDistanceKernel,
+            HammingDistanceKernel,
             TanimotoKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
@@ -31,7 +31,7 @@ class MultiplicativeKernel(Kernel):
             RBFKernel,
             MaternKernel,
             LinearKernel,
-            HammondDistanceKernel,
+            HammingDistanceKernel,
             AdditiveKernel,
             TanimotoKernel,
             "MultiplicativeKernel",
@@ -46,7 +46,7 @@ class ScaleKernel(Kernel):
         RBFKernel,
         MaternKernel,
         LinearKernel,
-        HammondDistanceKernel,
+        HammingDistanceKernel,
         AdditiveKernel,
         MultiplicativeKernel,
         TanimotoKernel,

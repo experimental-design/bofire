@@ -154,8 +154,8 @@ def map_TanimotoKernel(
     )
 
 
-def map_HammondDistanceKernel(
-    data_model: data_models.TanimotoKernel,
+def map_HammingDistanceKernel(
+    data_model: data_models.HammingDistanceKernel,
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
@@ -176,7 +176,7 @@ KERNEL_MAP = {
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
-    data_models.HammondDistanceKernel: map_HammondDistanceKernel,
+    data_models.HammingDistanceKernel: map_HammingDistanceKernel,
 }
 
 
