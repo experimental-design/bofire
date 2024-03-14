@@ -116,6 +116,7 @@ venv.bak/
 
 # vscode project settings
 .vscode/
+.devcontainer
 
 # Rope project settings
 .ropeproject
@@ -133,3 +134,4 @@ dmypy.json
 
 # generated version file
 bofire/version.py
+

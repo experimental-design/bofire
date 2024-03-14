@@ -118,14 +118,14 @@ class BotorchSurrogates(BaseModel):
                 for model in v
                 if key in model.inputs.get_keys()
             ]
-            preproccessing = [
+            preprocessing = [
                 model.input_preprocessing_specs[key]
                 for model in v
                 if key in model.input_preprocessing_specs
             ]
             if all(features) is False:
                 raise ValueError(f"Features with key {key} are incompatible.")
-            if all(i == preproccessing[0] for i in preproccessing) is False:
+            if all(i == preprocessing[0] for i in preprocessing) is False:
                 raise ValueError(
                     f"Preprocessing steps for features with {key} are incompatible."
                 )

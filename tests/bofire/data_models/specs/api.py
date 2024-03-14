@@ -21,3 +21,4 @@ from tests.bofire.data_models.specs.priors import specs as priors
 from tests.bofire.data_models.specs.specs import InvalidSpec, Spec, Specs
 from tests.bofire.data_models.specs.strategies import specs as strategies
 from tests.bofire.data_models.specs.surrogates import specs as surrogates
+from tests.bofire.data_models.specs.transforms import specs as transforms

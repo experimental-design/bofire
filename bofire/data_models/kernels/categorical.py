@@ -7,6 +7,6 @@ class CategoricalKernel(Kernel):
     pass
 
 
-class HammondDistanceKernel(CategoricalKernel):
-    type: Literal["HammondDistanceKernel"] = "HammondDistanceKernel"
+class HammingDistanceKernel(CategoricalKernel):
+    type: Literal["HammingDistanceKernel"] = "HammingDistanceKernel"
     ard: bool = True
