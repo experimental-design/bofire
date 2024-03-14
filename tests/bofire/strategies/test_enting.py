@@ -88,6 +88,7 @@ def test_enting_param_consistency(common_args, params):
     "allowed_k",
     [1, 3, 5, 6],
 )
+@pytest.mark.slow
 def test_nchoosek_constraint_with_enting(common_args, allowed_k):
     benchmark = Hartmann(6, allowed_k=allowed_k)
     samples = benchmark.domain.inputs.sample(10, seed=43)
@@ -104,6 +105,7 @@ def test_nchoosek_constraint_with_enting(common_args, allowed_k):
 
 
 @pytest.mark.skipif(not GUROBI_AVAILABLE, reason="requires entmoot+gurobi")
+@pytest.mark.slow
 def test_propose_optimal_point(common_args):
     # regression test, ensure that a good point is proposed
     benchmark = Hartmann(6)
@@ -131,6 +133,7 @@ def test_propose_optimal_point(common_args):
 
 
 @pytest.mark.skipif(not GUROBI_AVAILABLE, reason="requires entmoot+gurobi")
+@pytest.mark.slow
 def test_propose_unique_points(common_args):
     # ensure that the strategy does not repeat candidates
     benchmark = Hartmann(6)
