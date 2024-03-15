@@ -57,7 +57,6 @@ AnyStrategy = Union[
     FactorialStrategy,
     MoboStrategy,
     ShortestPathStrategy,
-    ActiveLearningStrategy,
 ]
 
 AnyPredictive = Union[
@@ -70,7 +69,6 @@ AnyPredictive = Union[
     QnehviStrategy,
     QparegoStrategy,
     MoboStrategy,
-    ActiveLearningStrategy,
 ]
 
 

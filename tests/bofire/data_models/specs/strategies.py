@@ -1,3 +1,6 @@
+from tests.bofire.data_models.specs.api import domain
+from tests.bofire.data_models.specs.specs import Specs
+
 import bofire.data_models.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import (
     qEI,
@@ -19,8 +22,6 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates
-from tests.bofire.data_models.specs.api import domain
-from tests.bofire.data_models.specs.specs import Specs
 
 specs = Specs([])
 
@@ -153,11 +154,17 @@ specs.add_invalid(
                 features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
             ),
         ).model_dump(),
-        "acquisition_function": qNegIntPosVar(n_points=2048).model_dump(),
+        "acquisition_function": qNegIntPosVar(
+            n_points=2048,
+            weights={
+                "alph_invalid": 0.1,
+                "beta_invalid": 0.9,
+            },
+        ).model_dump(),
         **strategy_commons,
     },
     error=ValueError,
-    message="Only one output feature allowed for `ActiveLearningStrategy`, got 2.",
+    message="The provided keys for the weights must match the keys of the output features.",
 )
 
 

@@ -13,6 +13,10 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class ActiveLearningStrategy(BotorchStrategy):
+    """Datamodel for an ActiveLearningStrategy that focusses on pure exploration of the input space.
+    This type of strategy chooses new candidate points in order to minimize the uncertainty.
+    """
+
     type: Literal["ActiveLearningStrategy"] = "ActiveLearningStrategy"
     acquisition_function: AnyActiveLearningAcquisitionFunction = Field(
         default_factory=lambda: qNegIntPosVar()
