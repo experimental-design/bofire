@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Dict, Literal, Optional
 
 from pydantic import Field, PositiveFloat
 
@@ -73,4 +73,5 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
 
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
     type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
-    n_points: Annotated[int, Field(ge=1)] = 1024
+    n_mc_points: Annotated[int, Field(ge=1)] = 128
+    weights: Optional[Dict[str, PositiveFloat]] = Field(default_factory=lambda: None)
