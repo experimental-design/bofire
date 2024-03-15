@@ -5,6 +5,7 @@ from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
+from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -55,6 +56,7 @@ AnyPredictive = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
+    EntingStrategy,
     MoboStrategy,
 ]
 
