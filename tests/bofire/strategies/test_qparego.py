@@ -143,7 +143,7 @@ def test_qparego(num_test_candidates):
 
 @pytest.mark.parametrize(
     "num_test_candidates",
-    list(range(1, 2)),
+    [1, 2],
 )
 def test_qparego_constraints(num_test_candidates):
     # generate data
@@ -153,7 +153,9 @@ def test_qparego_constraints(num_test_candidates):
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
     # init strategy
-    data_model = data_models.QparegoStrategy(domain=benchmark.domain)
+    data_model = data_models.QparegoStrategy(
+        domain=benchmark.domain, num_sobol_samples=1024, num_restarts=1
+    )
     my_strategy = QparegoStrategy(data_model=data_model)
     my_strategy.tell(experiments)
     # test get objective
@@ -161,7 +163,7 @@ def test_qparego_constraints(num_test_candidates):
     assert isinstance(objective, GenericMCObjective)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
-    assert benchmark.domain.constraints.is_fulfilled(candidates)
+    assert benchmark.domain.constraints.is_fulfilled(candidates).all()
     assert len(candidates) == num_test_candidates
 
 
