@@ -14,7 +14,8 @@ from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
-from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
+from bofire.benchmarks.detergent import Detergent
+from bofire.benchmarks.multi import DTLZ2, CrossCoupling
 from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.domain.api import Outputs
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
@@ -146,7 +147,7 @@ def test_qparego(num_test_candidates):
 )
 def test_qparego_constraints(num_test_candidates):
     # generate data
-    benchmark = C2DTLZ2(dim=4)
+    benchmark = Detergent()
     random_strategy = RandomStrategy(
         data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
@@ -160,6 +161,7 @@ def test_qparego_constraints(num_test_candidates):
     assert isinstance(objective, GenericMCObjective)
     # ask
     candidates = my_strategy.ask(num_test_candidates)
+    assert benchmark.domain.constraints.is_fulfilled(candidates)
     assert len(candidates) == num_test_candidates
 
 
