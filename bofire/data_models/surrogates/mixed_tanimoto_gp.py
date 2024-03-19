@@ -5,10 +5,10 @@ from pydantic import Field, validator
 # from bofire.data_models.enum import MolecularEncodingEnum
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import (
-    AnyCategoricalKernal,
+    AnyCategoricalKernel,
     AnyContinuousKernel,
     AnyMolecularKernel,
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
     TanimotoKernel,
 )
@@ -36,8 +36,8 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
             lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
         )
     )
-    categorical_kernel: AnyCategoricalKernal = Field(
-        default_factory=lambda: HammondDistanceKernel(ard=True)
+    categorical_kernel: AnyCategoricalKernel = Field(
+        default_factory=lambda: HammingDistanceKernel(ard=True)
     )
     # Molecular kernel will only be imposed on fingerprints, fragments, or fingerprintsfragments
     molecular_kernel: AnyMolecularKernel = Field(

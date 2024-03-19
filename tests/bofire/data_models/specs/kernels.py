@@ -5,7 +5,7 @@ from tests.bofire.data_models.specs.specs import Specs
 specs = Specs([])
 
 specs.add_valid(
-    kernels.HammondDistanceKernel,
+    kernels.HammingDistanceKernel,
     lambda: {
         "ard": True,
     },

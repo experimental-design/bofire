@@ -27,6 +27,7 @@ from bofire.data_models.features.api import (
     Input,
     MolecularInput,
     Output,
+    TaskInput,
 )
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
@@ -180,6 +181,19 @@ class Inputs(Features):
 
     type: Literal["Inputs"] = "Inputs"
     features: Sequence[AnyInput] = Field(default_factory=lambda: [])
+
+    @field_validator("features")
+    @classmethod
+    def validate_only_one_task_input(cls, features: Sequence[AnyInput]):
+        filtered = filter_by_class(
+            features,
+            includes=TaskInput,
+            excludes=None,
+            exact=False,
+        )
+        if len(filtered) > 1:
+            raise ValueError(f"Only one `TaskInput` is allowed, got {len(filtered)}.")
+        return features
 
     def get_fixed(self) -> "Inputs":
         """Gets all features in `self` that are fixed and returns them as new `Inputs` object.
@@ -702,7 +716,10 @@ class Outputs(Features):
             ]
             + [
                 (
-                    pd.Series(data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")), name=f"{feat.key}_pred")  # type: ignore
+                    pd.Series(
+                        data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")),
+                        name=f"{feat.key}_pred",
+                    )  # type: ignore
                     if predictions
                     else experiments[feat.key]
                 )
@@ -766,7 +783,8 @@ class Outputs(Features):
                 + [
                     [f"{key}_pred", f"{key}_sd"]
                     for key in self.get_keys_by_objective(
-                        excludes=Objective, includes=None  # type: ignore
+                        excludes=Objective,
+                        includes=None,  # type: ignore
                     )
                 ]
             )

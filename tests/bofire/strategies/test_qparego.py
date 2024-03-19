@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 import bofire.data_models.strategies.api as data_models
 import bofire.data_models.surrogates.api as surrogate_data_models
+from bofire.benchmarks.detergent import Detergent
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, CrossCoupling
 from bofire.data_models.acquisition_functions.api import qEI, qLogEI, qLogNEI, qNEI
 from bofire.data_models.domain.api import Outputs
@@ -142,25 +143,32 @@ def test_qparego(num_test_candidates):
 
 @pytest.mark.parametrize(
     "num_test_candidates",
-    list(range(1, 2)),
+    [1, 2],
 )
 def test_qparego_constraints(num_test_candidates):
     # generate data
-    benchmark = C2DTLZ2(dim=4)
-    random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
-    )
-    experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
-    # init strategy
-    data_model = data_models.QparegoStrategy(domain=benchmark.domain)
-    my_strategy = QparegoStrategy(data_model=data_model)
-    my_strategy.tell(experiments)
-    # test get objective
-    objective, _, _ = my_strategy._get_objective_and_constraints()
-    assert isinstance(objective, GenericMCObjective)
-    # ask
-    candidates = my_strategy.ask(num_test_candidates)
-    assert len(candidates) == num_test_candidates
+    def test(benchmark_factory):
+        benchmark = benchmark_factory()
+        random_strategy = RandomStrategy(
+            data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        )
+        experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
+        # init strategy
+        data_model = data_models.QparegoStrategy(
+            domain=benchmark.domain, num_sobol_samples=1024, num_restarts=1
+        )
+        my_strategy = QparegoStrategy(data_model=data_model)
+        my_strategy.tell(experiments)
+        # test get objective
+        objective, _, _ = my_strategy._get_objective_and_constraints()
+        assert isinstance(objective, GenericMCObjective)
+        # ask
+        candidates = my_strategy.ask(num_test_candidates)
+        assert benchmark.domain.constraints.is_fulfilled(candidates).all()
+        assert len(candidates) == num_test_candidates
+
+    test(Detergent)
+    test(lambda: C2DTLZ2(dim=4))
 
 
 @pytest.mark.parametrize(

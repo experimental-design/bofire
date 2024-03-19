@@ -332,8 +332,7 @@ class CategoricalInput(Input):
 
 class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
-    # order_id: ClassVar[int] = 8
-    order_id: ClassVar[int] = 9
+    order_id: ClassVar[int] = 10
 
     categories: TCategoryVals
     objective: AnyCategoricalObjective

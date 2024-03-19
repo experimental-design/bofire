@@ -25,7 +25,7 @@ from bofire.data_models.features.api import (
     MolecularInput,
 )
 from bofire.data_models.kernels.api import (
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
@@ -375,7 +375,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,
-        categorical_kernel=HammondDistanceKernel(),
+        categorical_kernel=HammingDistanceKernel(),
     )
     model = surrogates.map(model)
     with pytest.raises(ValueError):
@@ -454,7 +454,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,
-        categorical_kernel=HammondDistanceKernel(),
+        categorical_kernel=HammingDistanceKernel(),
         input_preprocessing_specs={
             "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             "x_cat": CategoricalEncodingEnum.ONE_HOT,
