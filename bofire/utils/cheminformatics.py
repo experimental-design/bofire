@@ -5,7 +5,11 @@ import numpy as np
 import pandas as pd
 
 try:
+    from rdkit import RDLogger
     from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
+
+    lg = RDLogger.logger()
+    lg.setLevel(RDLogger.CRITICAL)
 
     # from sklearn.feature_extraction.text import CountVectorizer
 except ImportError:
