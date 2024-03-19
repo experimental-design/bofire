@@ -22,7 +22,7 @@ from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
-from bofire.data_models.types import TIntPowerOfTwo
+from bofire.data_models.types import IntPowerOfTwo
 
 
 class LocalSearchConfig(BaseModel):
@@ -69,7 +69,7 @@ AnyLocalSearchConfig = LSRBO
 class BotorchStrategy(PredictiveStrategy):
     # acqf optimizer params
     num_restarts: PositiveInt = 8
-    num_raw_samples: TIntPowerOfTwo = 1024
+    num_raw_samples: IntPowerOfTwo = 1024
     maxiter: PositiveInt = 2000
     batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
     # encoding params

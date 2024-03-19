@@ -3,7 +3,7 @@ from typing import Annotated, Literal
 from pydantic import Field, PositiveFloat
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.types import TIntPowerOfTwo
+from bofire.data_models.types import IntPowerOfTwo
 
 
 class AcquisitionFunction(BaseModel):
@@ -19,7 +19,7 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
 
 
 class MCAcquisitionFunction(BaseModel):
-    n_mc_samples: TIntPowerOfTwo = 512
+    n_mc_samples: IntPowerOfTwo = 512
 
 
 class qNEI(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):

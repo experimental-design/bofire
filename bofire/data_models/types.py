@@ -53,20 +53,20 @@ def validate_power_of_two(value: int):
     return value
 
 
-TFeatureKeys = Annotated[
+FeatureKeys = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Features"))
 ]
 
-TCategoryVals = Annotated[
+CategoryVals = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Categories"))
 ]
 
-TDescriptors = Annotated[
+Descriptors = Annotated[
     List[str], Field(min_length=1), AfterValidator(make_unique_validator("Descriptors"))
 ]
 
-TDiscreteVals = Annotated[List[float], Field(min_length=1)]
+DiscreteVals = Annotated[List[float], Field(min_length=1)]
 
-TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
+InputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
 
-TIntPowerOfTwo = Annotated[PositiveInt, AfterValidator(validate_power_of_two)]
+IntPowerOfTwo = Annotated[PositiveInt, AfterValidator(validate_power_of_two)]

@@ -9,7 +9,7 @@ from bofire.data_models.objectives.objective import (
     Objective,
     TWeight,
 )
-from bofire.data_models.types import TCategoryVals
+from bofire.data_models.types import CategoryVals
 
 
 class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
@@ -24,7 +24,7 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
     """
 
     w: TWeight = 1.0
-    categories: TCategoryVals
+    categories: CategoryVals
     desirability: List[bool]
     type: Literal["ConstrainedCategoricalObjective"] = "ConstrainedCategoricalObjective"
 
