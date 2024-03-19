@@ -71,7 +71,7 @@ class BotorchStrategy(PredictiveStrategy):
     num_restarts: PositiveInt = 8
     num_raw_samples: TIntPowerOfTwo = 1024
     maxiter: PositiveInt = 2000
-    batch_limit: Optional[Annotated[PositiveInt, Field(validate_default=True)]] = None
+    batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
     # encoding params
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
