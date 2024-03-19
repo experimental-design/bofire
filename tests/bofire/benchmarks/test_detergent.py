@@ -16,3 +16,7 @@ def test_detergent():
     random_search = RandomStrategy(random_search_dm)
     candidates = random_search.ask(2)
     assert d.domain.constraints.is_fulfilled(candidates).all()
+    y = d.f(candidates)
+    assert y.shape == (2, 5)
+    for o_key in d.domain.outputs.get_keys():
+        assert o_key in y.columns
