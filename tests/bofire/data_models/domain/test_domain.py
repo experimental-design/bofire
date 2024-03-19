@@ -261,6 +261,47 @@ def test_coerce_invalids():
 
 
 @pytest.mark.parametrize("method", ["mean", "median"])
+def test_aggregate_by_duplicates_no_continuous(method):
+    full = pd.DataFrame.from_dict(
+        {
+            "x1": ["a", "b", "c", "a"],
+            "x2": ["b", "b", "c", "b"],
+            "out1": [4.0, 5.0, 6.0, 3.0],
+            "out2": [-4.0, -5.0, -6.0, -3.0],
+            "valid_out1": [1, 1, 1, 1],
+            "valid_out2": [1, 1, 1, 1],
+        }
+    )
+    expected_aggregated = pd.DataFrame.from_dict(
+        {
+            "labcode": ["1-4", "2", "3"],
+            "x1": ["a", "b", "c"],
+            "x2": ["b", "b", "c"],
+            "out1": [3.5, 5.0, 6.0],
+            "out2": [-3.5, -5.0, -6.0],
+            "valid_out1": [1, 1, 1],
+            "valid_out2": [1, 1, 1],
+        }
+    )
+    domain = Domain(
+        inputs=Inputs(
+            features=[
+                CategoricalInput(key="x1", categories=["a", "b", "c"]),
+                CategoricalInput(key="x2", categories=["a", "b", "c"]),
+            ]
+        ),
+        outputs=Outputs(features=[of1, of2]),
+    )
+    aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
+        full, prec=2, method=method
+    )
+    assert duplicated_labcodes == [["1", "4"]]
+    assert_frame_equal(
+        aggregated, expected_aggregated, check_dtype=False, check_like=True
+    )
+
+
+@pytest.mark.parametrize("method", ["mean", "median"])
 def test_aggregate_by_duplicates(method):
     # dataframe with duplicates
     full = pd.DataFrame.from_dict(
