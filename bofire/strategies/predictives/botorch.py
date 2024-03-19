@@ -330,10 +330,6 @@ class BotorchStrategy(PredictiveStrategy):
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
                 options=self._get_optimizer_options(),  # type: ignore
-                # options={
-                #     "batch_limit": 5 if len(nonlinear_constraints) == 0 else 1,
-                #     "maxiter": 200,
-                # },
             )
         else:
             if fixed_features_list:
