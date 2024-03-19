@@ -1234,10 +1234,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                 <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">experiments</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
             <span class="p">]</span>
 
-        <span class="c1"># round it</span>
-        <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
-        <span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
+        <span class="c1"># round it if continuous inputs are present</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+            <span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
 
         <span class="c1"># coerce invalid to nan</span>
         <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_invalids</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span>
@@ -1622,10 +1623,11 @@ involved output features.</p>
             <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">experiments</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="p">]</span>
 
-    <span class="c1"># round it</span>
-    <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
-    <span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
+    <span class="c1"># round it if continuous inputs are present</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">experiments</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)]</span> <span class="o">=</span> <span class="n">experiments</span><span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">get_feature_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
+        <span class="p">]</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">prec</span><span class="p">)</span>
 
     <span class="c1"># coerce invalid to nan</span>
     <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">coerce_invalids</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span>
