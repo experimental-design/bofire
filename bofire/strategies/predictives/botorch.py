@@ -327,7 +327,7 @@ class BotorchStrategy(PredictiveStrategy):
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
                 options={
-                    "batch_limit": 5 if len(nonlinear_constraints) == 0 else 1,
+                    "batch_limit": 5 if len(nonlinear_constraints or []) == 0 else 1,
                     "maxiter": 200,
                 },
             )
