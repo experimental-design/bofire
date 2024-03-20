@@ -18,59 +18,66 @@ class MultiObjectiveAcquisitionFunction(AcquisitionFunction):
     type: str
 
 
-class MCAcquisitionFunction(BaseModel):
+class qNEI(SingleObjectiveAcquisitionFunction):
+    type: Literal["qNEI"] = "qNEI"
+    prune_baseline: bool = True
     n_mc_samples: IntPowerOfTwo = 512
 
 
-class qNEI(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
-    type: Literal["qNEI"] = "qNEI"
-    prune_baseline: bool = True
-
-
-class qLogNEI(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qLogNEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qLogNEI"] = "qLogNEI"
     prune_baseline: bool = True
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qEI(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qEI"] = "qEI"
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qLogEI(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qLogEI(SingleObjectiveAcquisitionFunction):
     type: Literal["qLogEI"] = "qLogEI"
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qSR(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qSR(SingleObjectiveAcquisitionFunction):
     type: Literal["qSR"] = "qSR"
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qUCB(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qUCB(SingleObjectiveAcquisitionFunction):
     type: Literal["qUCB"] = "qUCB"
     beta: Annotated[float, Field(ge=0)] = 0.2
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qPI(SingleObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qPI(SingleObjectiveAcquisitionFunction):
     type: Literal["qPI"] = "qPI"
     tau: PositiveFloat = 1e-3
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qEHVI(MultiObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qEHVI(MultiObjectiveAcquisitionFunction):
     type: Literal["qEHVI"] = "qEHVI"
     alpha: Annotated[float, Field(ge=0)] = 0.0
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qLogEHVI(MultiObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qLogEHVI(MultiObjectiveAcquisitionFunction):
     type: Literal["qLogEHVI"] = "qLogEHVI"
     alpha: Annotated[float, Field(ge=0)] = 0.0
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qNEHVI(MultiObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qNEHVI(MultiObjectiveAcquisitionFunction):
     type: Literal["qNEHVI"] = "qNEHVI"
     alpha: Annotated[float, Field(ge=0)] = 0.0
     prune_baseline: bool = True
+    n_mc_samples: IntPowerOfTwo = 512
 
 
-class qLogNEHVI(MultiObjectiveAcquisitionFunction, MCAcquisitionFunction):
+class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     type: Literal["qLogNEHVI"] = "qLogNEHVI"
     alpha: Annotated[float, Field(ge=0)] = 0.0
     prune_baseline: bool = True
+    n_mc_samples: IntPowerOfTwo = 512
