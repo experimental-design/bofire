@@ -189,6 +189,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 class Features(_BaseFeatures[AnyFeature]):
     pass
 
+
 class Inputs(_BaseFeatures[AnyInput]):
     """Container of input features, only input features are allowed.
 
