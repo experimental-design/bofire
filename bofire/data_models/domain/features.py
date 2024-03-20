@@ -6,6 +6,7 @@ from enum import Enum
 from typing import (
     Dict,
     Generic,
+    Iterator,
     List,
     Literal,
     Optional,
@@ -75,7 +76,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[F]:
         return iter(self.features)
 
     def __len__(self):
