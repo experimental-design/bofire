@@ -3,13 +3,25 @@ from __future__ import annotations
 import itertools
 import warnings
 from enum import Enum
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast, Generic, TypeVar
+from typing import (
+    Dict,
+    Generic,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
-from typing_extensions import Self
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, validate_call
 from scipy.stats.qmc import LatinHypercube, Sobol
+from typing_extensions import Self
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
