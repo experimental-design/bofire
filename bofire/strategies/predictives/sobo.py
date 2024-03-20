@@ -63,7 +63,7 @@ class SoboStrategy(BotorchStrategy):
             X_observed=X_train,
             X_pending=X_pending,
             constraints=constraint_callables,
-            mc_samples=self.num_sobol_samples,
+            mc_samples=self.acquisition_function.n_mc_samples,
             beta=(
                 self.acquisition_function.beta
                 if isinstance(self.acquisition_function, qUCB)

@@ -155,7 +155,7 @@ def test_qparego_constraints(num_test_candidates):
         experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
         # init strategy
         data_model = data_models.QparegoStrategy(
-            domain=benchmark.domain, num_sobol_samples=1024, num_restarts=1
+            domain=benchmark.domain, num_restarts=1
         )
         my_strategy = QparegoStrategy(data_model=data_model)
         my_strategy.tell(experiments)

@@ -6,7 +6,7 @@ import pandas as pd
 from pydantic import PositiveInt
 
 from bofire.data_models.strategies.api import Strategy as DataModel
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.data_models.values import InputValue, OutputValue
 from bofire.strategies.strategy import Strategy
@@ -32,7 +32,7 @@ class PredictiveStrategy(Strategy):
 
     @property
     @abstractmethod
-    def input_preprocessing_specs(self) -> TInputTransformSpecs:
+    def input_preprocessing_specs(self) -> InputTransformSpecs:
         pass
 
     def ask(
@@ -116,7 +116,9 @@ class PredictiveStrategy(Strategy):
                 data=preds,
                 columns=pred_cols,
             )
-        predictions = postprocess_categorical_predictions(predictions=predictions, outputs=self.domain.outputs)  # type: ignore
+        predictions = postprocess_categorical_predictions(
+            predictions=predictions, outputs=self.domain.outputs
+        )  # type: ignore
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index

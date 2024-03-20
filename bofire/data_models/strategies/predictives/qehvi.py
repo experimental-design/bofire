@@ -12,10 +12,12 @@ from bofire.data_models.objectives.api import (
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
 )
+from bofire.data_models.types import IntPowerOfTwo
 
 
 class QehviStrategy(MultiobjectiveStrategy):
     type: Literal["QehviStrategy"] = "QehviStrategy"
+    num_sobol_samples: IntPowerOfTwo = 512
 
     ref_point: Optional[Dict[str, float]] = None
 

@@ -50,7 +50,7 @@ from bofire.data_models.objectives.api import (
     ConstrainedCategoricalObjective,
     Objective,
 )
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 
 F = TypeVar("F", bound=AnyFeature)
 FeatureSequence = Sequence[F]
@@ -371,14 +371,14 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     # transformation related methods
     def _get_transform_info(
-        self, specs: TInputTransformSpecs
+        self, specs: InputTransformSpecs
     ) -> Tuple[Dict[str, Tuple[int]], Dict[str, Tuple[str]]]:
         """Generates two dictionaries. The first one specifies which key is mapped to
         which column indices when applying `transform`. The second one specifies
         which key is mapped to which transformed keys.
 
         Args:
-            specs (TInputTransformSpecs): Dictionary specifying which
+            specs (InputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
 
         Returns:
@@ -439,7 +439,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         return features2idx, features2names
 
     def transform(
-        self, experiments: pd.DataFrame, specs: TInputTransformSpecs
+        self, experiments: pd.DataFrame, specs: InputTransformSpecs
     ) -> pd.DataFrame:
         """Transform a dataframe to the represenation specified in `specs`.
 
@@ -447,7 +447,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         Args:
             experiments (pd.DataFrame): Data dataframe to be transformed.
-            specs (TInputTransformSpecs): Dictionary specifying which
+            specs (InputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
 
         Returns:
@@ -478,7 +478,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         return pd.concat(transformed, axis=1)
 
     def inverse_transform(
-        self, experiments: pd.DataFrame, specs: TInputTransformSpecs
+        self, experiments: pd.DataFrame, specs: InputTransformSpecs
     ) -> pd.DataFrame:
         """Transform a dataframe back to the original representations.
 
@@ -487,7 +487,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
         Args:
             experiments (pd.DataFrame): Transformed data dataframe.
-            specs (TInputTransformSpecs): Dictionary specifying which
+            specs (InputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
 
         Returns:
@@ -522,12 +522,12 @@ class Inputs(_BaseFeatures[AnyInput]):
         return pd.concat(transformed, axis=1)
 
     def _validate_transform_specs(
-        self, specs: TInputTransformSpecs
-    ) -> TInputTransformSpecs:
+        self, specs: InputTransformSpecs
+    ) -> InputTransformSpecs:
         """Checks the validity of the transform specs .
 
         Args:
-            specs (TInputTransformSpecs): Transform specs to be validated.
+            specs (InputTransformSpecs): Transform specs to be validated.
         """
         # first check that the keys in the specs dict are correct also correct feature keys
         # next check that all values are of type CategoricalEncodingEnum or MolFeatures
@@ -564,7 +564,7 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     def get_bounds(
         self,
-        specs: TInputTransformSpecs,
+        specs: InputTransformSpecs,
         experiments: Optional[pd.DataFrame] = None,
         reference_experiment: Optional[pd.Series] = None,
     ) -> Tuple[List[float], List[float]]:
@@ -572,7 +572,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         defined in the  `specs` dictionary.
 
         Args:
-            specs (TInputTransformSpecs): Dictionary specifying which
+            specs (InputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
             experiments (Optional[pd.DataFrame], optional): Dataframe with input features.
                 If provided the real feature bounds are returned based on both the opt.
@@ -616,13 +616,13 @@ class Inputs(_BaseFeatures[AnyInput]):
 
     def get_feature_indices(
         self,
-        specs: TInputTransformSpecs,
+        specs: InputTransformSpecs,
         feature_keys: List[str],
     ) -> List[int]:
         """Returns a list of indices of the given feature key list.
 
         Args:
-            specs (TInputTransformSpecs): Dictionary specifying which
+            specs (InputTransformSpecs): Dictionary specifying which
                 input feature is transformed by which encoder.
             feature_keys (List[str]): List of feature keys.
 

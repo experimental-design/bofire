@@ -22,7 +22,6 @@ specs = Specs([])
 
 strategy_commons = {
     "num_raw_samples": 1024,
-    "num_sobol_samples": 512,
     "num_restarts": 8,
     "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
@@ -34,6 +33,8 @@ strategy_commons = {
     "frequency_check": 1,
     "frequency_hyperopt": 0,
     "folds": 5,
+    "maxiter": 2000,
+    "batch_limit": 6,
 }
 
 
@@ -41,6 +42,7 @@ specs.add_valid(
     strategies.QehviStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
+        "num_sobol_samples": 512,
         **strategy_commons,
     },
 )
@@ -48,6 +50,7 @@ specs.add_valid(
     strategies.QnehviStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
+        "num_sobol_samples": 512,
         **strategy_commons,
         "alpha": 0.4,
     },
@@ -174,6 +177,7 @@ specs.add_valid(
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(
                     domain=tempdomain,
+                    batch_limit=1,
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
             ).model_dump(),

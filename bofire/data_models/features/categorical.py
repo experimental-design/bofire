@@ -7,7 +7,7 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
 from bofire.data_models.objectives.api import AnyCategoricalObjective
-from bofire.data_models.types import TCategoryVals
+from bofire.data_models.types import CategoryVals
 
 
 class CategoricalInput(Input):
@@ -22,7 +22,7 @@ class CategoricalInput(Input):
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
-    categories: TCategoryVals
+    categories: CategoryVals
     allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
         default=None, validate_default=True
     )
@@ -334,7 +334,7 @@ class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
     order_id: ClassVar[int] = 10
 
-    categories: TCategoryVals
+    categories: CategoryVals
     objective: AnyCategoricalObjective
 
     @model_validator(mode="after")

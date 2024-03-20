@@ -9,7 +9,7 @@ from bofire.data_models.constraints.constraint import (
     InequalityConstraint,
     IntrapointConstraint,
 )
-from bofire.data_models.types import TFeatureKeys
+from bofire.data_models.types import FeatureKeys
 
 
 class LinearConstraint(IntrapointConstraint):
@@ -23,7 +23,7 @@ class LinearConstraint(IntrapointConstraint):
 
     type: Literal["LinearConstraint"] = "LinearConstraint"
 
-    features: TFeatureKeys
+    features: FeatureKeys
     coefficients: Annotated[List[float], Field(min_length=2)]
     rhs: float
 

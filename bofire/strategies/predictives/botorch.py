@@ -37,7 +37,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.random import RandomStrategy
@@ -51,19 +51,6 @@ from bofire.utils.torch_tools import (
 )
 
 
-def is_power_of_two(n):
-    """
-    Check if a number is a power of two.
-
-    Args:
-        n (int): The number to be checked.
-
-    Returns:
-        bool: True if the number is a power of two, False otherwise.
-    """
-    return (n != 0) and (n & (n - 1) == 0)
-
-
 class BotorchStrategy(PredictiveStrategy):
     def __init__(
         self,
@@ -71,7 +58,6 @@ class BotorchStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.num_sobol_samples = data_model.num_sobol_samples
         self.num_restarts = data_model.num_restarts
         self.num_raw_samples = data_model.num_raw_samples
         self.descriptor_method = data_model.descriptor_method
@@ -92,12 +78,14 @@ class BotorchStrategy(PredictiveStrategy):
         self.folds = data_model.folds
         self.surrogates = None
         self.local_search_config = data_model.local_search_config
+        self.maxiter = data_model.maxiter
+        self.batch_limit = data_model.batch_limit
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
 
     @property
-    def input_preprocessing_specs(self) -> TInputTransformSpecs:
+    def input_preprocessing_specs(self) -> InputTransformSpecs:
         return self.surrogate_specs.input_preprocessing_specs  # type: ignore
 
     @property
@@ -113,6 +101,21 @@ class BotorchStrategy(PredictiveStrategy):
             self.input_preprocessing_specs
         )
         return features2names
+
+    def _get_optimizer_options(self) -> Dict[str, int]:
+        """Returns a dictionary of settings passed to `optimize_acqf` controlling
+        the behavior of the optimizer.
+
+        Returns:
+            Dict[str, int]: The dictionary with the settings.
+        """
+        return {
+            "batch_limit": self.batch_limit
+            if len(self.domain.constraints.get([NChooseKConstraint, ProductConstraint]))
+            == 0
+            else 1,  # type: ignore
+            "maxiter": self.maxiter,
+        }
 
     def _fit(self, experiments: pd.DataFrame):
         """[summary]
@@ -326,10 +329,7 @@ class BotorchStrategy(PredictiveStrategy):
                 fixed_features_list=fixed_features_list,
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
-                options={
-                    "batch_limit": 5 if len(nonlinear_constraints or []) == 0 else 1,
-                    "maxiter": 200,
-                },
+                options=self._get_optimizer_options(),  # type: ignore
             )
         else:
             if fixed_features_list:
@@ -351,6 +351,7 @@ class BotorchStrategy(PredictiveStrategy):
                     fixed_features_list=fixed_features_list,
                     ic_generator=ic_generator,
                     ic_gen_kwargs=ic_gen_kwargs,
+                    options=self._get_optimizer_options(),  # type: ignore
                 )
             else:
                 candidates, acqf_vals = optimize_acqf(
@@ -370,6 +371,7 @@ class BotorchStrategy(PredictiveStrategy):
                     fixed_features=fixed_features,
                     nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                     return_best_only=True,
+                    options=self._get_optimizer_options(),  # type: ignore
                     ic_generator=ic_generator,  # type: ignore
                     **ic_gen_kwargs,  # type: ignore
                 )

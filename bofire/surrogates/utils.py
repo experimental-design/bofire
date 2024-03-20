@@ -13,19 +13,19 @@ from bofire.data_models.molfeatures.api import (
     MordredDescriptors,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 from bofire.utils.torch_tools import tkwargs
 
 
 def get_molecular_feature_keys(
-    specs: TInputTransformSpecs,
+    specs: InputTransformSpecs,
 ) -> List[str]:
     """Returns a list of molecular feature keys in the input data.
     These features are features with transform type Fingerprints, Fragments,
     or FingerprintsFragments in `specs`.
 
     Args:
-        specs (TInputTransformSpecs): Dictionary specifying which
+        specs (InputTransformSpecs): Dictionary specifying which
             input feature is transformed by which encoder.
 
     Returns:
@@ -43,7 +43,7 @@ def get_molecular_feature_keys(
 
 def get_continuous_feature_keys(
     inputs: Inputs,
-    specs: TInputTransformSpecs,
+    specs: InputTransformSpecs,
 ) -> List[str]:
     """Returns a list of continuous feature keys in the input data.
     These features include continuous inputs, categorical inputs with transform
@@ -51,7 +51,7 @@ def get_continuous_feature_keys(
 
     Args:
         inputs (Inputs): Input features.
-        specs (TInputTransformSpecs): Dictionary specifying which
+        specs (InputTransformSpecs): Dictionary specifying which
             input feature is transformed by which encoder.
 
     Returns:
@@ -72,14 +72,14 @@ def get_continuous_feature_keys(
 
 
 def get_categorical_feature_keys(
-    specs: TInputTransformSpecs,
+    specs: InputTransformSpecs,
 ) -> List[str]:
     """Returns a list of categorical feature keys in the input data.
     These features are not descriptor-based and are not of type Fingerprints, Fragments, FingerprintsFragments,
     or MordredDescriptors.
 
     Args:
-        specs (TInputTransformSpecs): Dictionary specifying which
+        specs (InputTransformSpecs): Dictionary specifying which
             input feature is transformed by which encoder.
 
     Returns:
@@ -99,7 +99,7 @@ def get_categorical_feature_keys(
 
 def get_scaler(
     inputs: Inputs,
-    input_preprocessing_specs: TInputTransformSpecs,
+    input_preprocessing_specs: InputTransformSpecs,
     scaler: ScalerEnum,
     X: pd.DataFrame,
 ) -> Union[InputStandardize, Normalize, None]:
@@ -109,7 +109,7 @@ def get_scaler(
 
     Args:
         inputs (Inputs): Input features.
-        input_preprocessing_specs (TInputTransformSpecs): Dictionary how to treat
+        input_preprocessing_specs (InputTransformSpecs): Dictionary how to treat
             the categoricals and/or molecules.
         scaler (ScalerEnum): Enum indicating the scaler of interest.
         X (pd.DataFrame): The dataset of interest.
