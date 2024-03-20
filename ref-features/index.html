@@ -1668,7 +1668,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
     <span class="c1"># order_id: ClassVar[int] = 5</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span>
 
-    <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
+    <span class="n">categories</span><span class="p">:</span> <span class="n">CategoryVals</span>
     <span class="n">allowed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Annotated</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">2</span><span class="p">)]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">validate_default</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
@@ -3257,7 +3257,7 @@ CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofir
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalOutput&quot;</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 
-    <span class="n">categories</span><span class="p">:</span> <span class="n">TCategoryVals</span>
+    <span class="n">categories</span><span class="p">:</span> <span class="n">CategoryVals</span>
     <span class="n">objective</span><span class="p">:</span> <span class="n">AnyCategoricalObjective</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
@@ -4546,7 +4546,7 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalDescriptorInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalDescriptorInput&quot;</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">6</span>
 
-    <span class="n">descriptors</span><span class="p">:</span> <span class="n">TDescriptors</span>
+    <span class="n">descriptors</span><span class="p">:</span> <span class="n">Descriptors</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">Annotated</span><span class="p">[</span>
         <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
         <span class="n">Field</span><span class="p">(</span><span class="n">min_length</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
@@ -5522,8 +5522,8 @@ ContinuousDescriptorInput            (<a class="autorefs autorefs-internal" titl
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousDescriptorInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousDescriptorInput&quot;</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
 
-    <span class="n">descriptors</span><span class="p">:</span> <span class="n">TDescriptors</span>
-    <span class="n">values</span><span class="p">:</span> <span class="n">TDiscreteVals</span>
+    <span class="n">descriptors</span><span class="p">:</span> <span class="n">Descriptors</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">DiscreteVals</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_list_lengths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -5821,7 +5821,7 @@ DiscreteInput            (<a class="autorefs autorefs-internal" title="bofire.da
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;DiscreteInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;DiscreteInput&quot;</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">3</span>
 
-    <span class="n">values</span><span class="p">:</span> <span class="n">TDiscreteVals</span>
+    <span class="n">values</span><span class="p">:</span> <span class="n">DiscreteVals</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;values&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
