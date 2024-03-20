@@ -3,8 +3,10 @@ from __future__ import annotations
 import itertools
 import warnings
 from enum import Enum
-from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast
+from typing import Dict, List, Literal, Optional, Sequence, Tuple, Type, Union, cast, Generic, TypeVar
 
+
+from typing_extensions import Self
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, validate_call
@@ -38,10 +40,10 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.types import TInputTransformSpecs
 
-FeatureSequence = Union[List[AnyFeature], Tuple[AnyFeature]]
+F = TypeVar("F", bound=AnyFeature)
+FeatureSequence = Sequence[F]
 
-
-class Features(BaseModel):
+class _BaseFeatures(BaseModel, Generic[F]):
     """Container of features, both input and output features are allowed.
 
     Attributes:
@@ -49,12 +51,12 @@ class Features(BaseModel):
     """
 
     type: Literal["Features"] = "Features"
-    features: FeatureSequence = Field(default_factory=lambda: [])
+    features: Sequence[F] = Field(default_factory=lambda: [])
 
     @field_validator("features")
     @classmethod
     def validate_unique_feature_keys(
-        cls: type[Features], features: FeatureSequence
+        cls: type[_BaseFeatures], features: FeatureSequence
     ) -> FeatureSequence:
         keys = [feat.key for feat in features]
         if len(keys) != len(set(keys)):
@@ -70,7 +72,7 @@ class Features(BaseModel):
     def __getitem__(self, i):
         return self.features[i]
 
-    def __add__(self, other: Union[Sequence[AnyFeature], Features]):
+    def __add__(self, other: Union[Sequence[AnyFeature], _BaseFeatures]):
         if isinstance(other, Features):
             other_feature_seq = other.features
         else:
@@ -95,7 +97,7 @@ class Features(BaseModel):
             return Outputs(features=cast(Tuple[AnyOutput, ...], new_feature_seq))
         return Features(features=new_feature_seq)
 
-    def get_by_key(self, key: str) -> AnyFeature:
+    def get_by_key(self, key: str) -> F:
         """Get a feature by its key.
 
         Args:
@@ -106,7 +108,7 @@ class Features(BaseModel):
         """
         return {f.key: f for f in self.features}[key]
 
-    def get_by_keys(self, keys: Sequence[str]) -> Features:
+    def get_by_keys(self, keys: Sequence[str]) -> Self:
         """Get features of the domain specified by its keys.
 
         Args:
@@ -120,10 +122,10 @@ class Features(BaseModel):
 
     def get(
         self,
-        includes: Union[Type, List[Type]] = AnyFeature,
+        includes: Union[Type, List[Type]] = F,
         excludes: Union[Type, List[Type]] = None,  # type: ignore
         exact: bool = False,
-    ) -> Features:
+    ) -> Self:
         """get features of the domain
 
         Args:
@@ -148,7 +150,7 @@ class Features(BaseModel):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type]] = AnyFeature,
+        includes: Union[Type, List[Type]] = F,
         excludes: Union[Type, List[Type]] = None,  # type: ignore
         exact: bool = False,
     ) -> List[str]:
@@ -171,8 +173,10 @@ class Features(BaseModel):
             )
         ]
 
+class Features(_BaseFeatures[AnyFeature]):
+    pass
 
-class Inputs(Features):
+class Inputs(_BaseFeatures[AnyInput]):
     """Container of input features, only input features are allowed.
 
     Attributes:
@@ -180,7 +184,6 @@ class Inputs(Features):
     """
 
     type: Literal["Inputs"] = "Inputs"
-    features: Sequence[AnyInput] = Field(default_factory=lambda: [])
 
     @field_validator("features")
     @classmethod
@@ -617,7 +620,7 @@ class Inputs(Features):
         )
 
 
-class Outputs(Features):
+class Outputs(_BaseFeatures[AnyOutput]):
     """Container of output features, only output features are allowed.
 
     Attributes:
