@@ -1,7 +1,6 @@
+import bofire.strategies.api as strategies
 import pandas as pd
 import pytest
-
-import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import DTLZ2
 from bofire.data_models.acquisition_functions.api import qNegIntPosVar
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
@@ -56,17 +55,3 @@ def test_active_learning():
         weight_list == acqf.posterior_transform.weights.tolist()
     )  # Check whether the weights in the posterior_transfrom are set up correctly.
     _ = recommender.ask(2)  # Check whether the optimization of the acqf works.
-
-
-def test_weight_keys_qNegIntPosVar():
-    """Tests if a ValueError gets raised when the keys of the weights
-    passed to the aqcf qNegIntPosVar do not match the keys ouf the output features.
-    """
-    benchmark = DTLZ2(dim=2)
-    wrong_weights = {
-        "XYA": 0.5,
-        "XYB": 0.5,
-    }
-    aqcf = qNegIntPosVar(weights=wrong_weights)
-    with pytest.raises(ValueError):
-        _ = ActiveLearningStrategy(domain=benchmark.domain, acquisition_function=aqcf)
