@@ -1,11 +1,14 @@
 from typing import Union
 
+from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,
 )
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
+from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
     MultiobjectiveStrategy,
@@ -25,6 +28,7 @@ from bofire.data_models.strategies.shortest_path import ShortestPathStrategy
 from bofire.data_models.strategies.space_filling import SpaceFillingStrategy
 from bofire.data_models.strategies.stepwise.conditions import (  # noqa: F401
     AlwaysTrueCondition,
+    AnyCondition,
     CombiCondition,
     NumberOfExperimentsCondition,
 )
@@ -33,6 +37,10 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.transforms.api import (
+    AnyTransform,  # noqa: F401
+    DropDataTransform,
+)
 
 AbstractStrategy = Union[
     Strategy,
@@ -41,24 +49,7 @@ AbstractStrategy = Union[
     MultiobjectiveStrategy,
 ]
 
-AnyStrategy = Union[
-    SoboStrategy,
-    ActiveLearningStrategy,
-    AdditiveSoboStrategy,
-    MultiplicativeSoboStrategy,
-    CustomSoboStrategy,
-    QehviStrategy,
-    QnehviStrategy,
-    QparegoStrategy,
-    SpaceFillingStrategy,
-    RandomStrategy,
-    DoEStrategy,
-    StepwiseStrategy,
-    FactorialStrategy,
-    MoboStrategy,
-    ShortestPathStrategy,
-    ActiveLearningStrategy,
-]
+AnyStrategy = Union[ActualStrategy, MetaStrategy]
 
 AnyPredictive = Union[
     SoboStrategy,
@@ -69,12 +60,10 @@ AnyPredictive = Union[
     QehviStrategy,
     QnehviStrategy,
     QparegoStrategy,
+    EntingStrategy,
     MoboStrategy,
     ActiveLearningStrategy,
 ]
-
-
-AnyCondition = Union[NumberOfExperimentsCondition, CombiCondition, AlwaysTrueCondition]
 
 
 AnyLocalSearchConfig = LSRBO

@@ -12,12 +12,15 @@ from bofire.data_models.surrogates.mixed_single_task_gp import (
     MixedSingleTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
-from bofire.data_models.surrogates.mlp import MLPEnsemble
+from bofire.data_models.surrogates.mlp import (
+    ClassificationMLPEnsemble,
+    RegressionMLPEnsemble,
+)
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
@@ -25,7 +28,8 @@ AnyBotorchSurrogate = Union[
     SingleTaskGPSurrogate,
     MixedSingleTaskGPSurrogate,
     MixedTanimotoGPSurrogate,
-    MLPEnsemble,
+    RegressionMLPEnsemble,
+    ClassificationMLPEnsemble,
     SaasSingleTaskGPSurrogate,
     TanimotoGPSurrogate,
     LinearSurrogate,
@@ -41,7 +45,7 @@ class BotorchSurrogates(BaseModel):
     surrogates: List[AnyBotorchSurrogate]
 
     @property
-    def input_preprocessing_specs(self) -> TInputTransformSpecs:
+    def input_preprocessing_specs(self) -> InputTransformSpecs:
         return {
             key: value
             for model in self.surrogates
@@ -112,14 +116,14 @@ class BotorchSurrogates(BaseModel):
                 for model in v
                 if key in model.inputs.get_keys()
             ]
-            preproccessing = [
+            preprocessing = [
                 model.input_preprocessing_specs[key]
                 for model in v
                 if key in model.input_preprocessing_specs
             ]
             if all(features) is False:
                 raise ValueError(f"Features with key {key} are incompatible.")
-            if all(i == preproccessing[0] for i in preproccessing) is False:
+            if all(i == preprocessing[0] for i in preprocessing) is False:
                 raise ValueError(
                     f"Preprocessing steps for features with {key} are incompatible."
                 )

@@ -331,4 +331,4 @@ class RandomStrategy(Strategy):
         for key, value in fixed_features.items():
             samples[key] = value
 
-        return samples
+        return samples[domain.inputs.get_keys()]

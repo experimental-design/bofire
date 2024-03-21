@@ -13,6 +13,7 @@ from bofire.data_models.features.molecular import (
     MolecularInput,
 )
 from bofire.data_models.features.numerical import NumericalInput
+from bofire.data_models.features.task import TaskInput
 
 AbstractFeature = Union[
     Feature,
@@ -32,6 +33,7 @@ AnyFeature = Union[
     CategoricalDescriptorInput,
     MolecularInput,
     CategoricalMolecularInput,
+    TaskInput,
 ]
 
 AnyInput = Union[
@@ -42,6 +44,7 @@ AnyInput = Union[
     CategoricalDescriptorInput,
     MolecularInput,
     CategoricalMolecularInput,
+    TaskInput,
 ]
 
 AnyOutput = Union[ContinuousOutput, CategoricalOutput]

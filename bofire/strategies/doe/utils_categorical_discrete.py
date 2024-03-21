@@ -16,7 +16,7 @@ from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.feature import Feature, Output
-from bofire.data_models.types import TDiscreteVals
+from bofire.data_models.types import DiscreteVals
 
 
 def discrete_to_relaxable_domain_mapper(
@@ -24,7 +24,7 @@ def discrete_to_relaxable_domain_mapper(
 ) -> Tuple[
     Domain,
     List[List[ContinuousInput]],
-    Dict[str, Tuple[ContinuousInput, TDiscreteVals]],
+    Dict[str, Tuple[ContinuousInput, DiscreteVals]],
 ]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
@@ -167,13 +167,15 @@ def NChooseKGroup_with_quantity(
         and group restrictions.
     """
     if quantity_if_picked is not None:
-        if type(quantity_if_picked) is list and len(keys) != len(quantity_if_picked):
+        if isinstance(quantity_if_picked, list) and len(keys) != len(
+            quantity_if_picked
+        ):
             raise ValueError(
                 f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
                 f"and {len(quantity_if_picked)} quantities"
             )
 
-        if type(quantity_if_picked) is list and True in [
+        if isinstance(quantity_if_picked, list) and True in [
             0 in q for q in quantity_if_picked
         ]:
             raise ValueError(
@@ -204,7 +206,7 @@ def NChooseKGroup_with_quantity(
     if True in ["_" in k for k in keys]:
         raise ValueError('"_" is not allowed as an character in the keys')
 
-    if quantity_if_picked is not None and type(quantity_if_picked) != list:
+    if quantity_if_picked is not None and not isinstance(quantity_if_picked, list):
         quantity_if_picked = [quantity_if_picked for k in keys]  # type: ignore
 
     quantity_var, all_new_constraints = [], []

@@ -163,9 +163,11 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
             # else we return the complete bounds
             data = self.to_descriptor_encoding(
                 transform_type=transform_type,
-                values=pd.Series(self.get_allowed_categories())
-                if values is None
-                else pd.Series(self.categories),
+                values=(
+                    pd.Series(self.get_allowed_categories())
+                    if values is None
+                    else pd.Series(self.categories)
+                ),
             )
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()

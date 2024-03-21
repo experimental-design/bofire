@@ -90,9 +90,11 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             cat_dims=cat_dims,
             # cont_kernel_factory=self.continuous_kernel.to_gpytorch,
             cont_kernel_factory=partial(kernels.map, data_model=self.continuous_kernel),
-            outcome_transform=Standardize(m=tY.shape[-1])
-            if self.output_scaler == ScalerEnum.STANDARDIZE
-            else None,
+            outcome_transform=(
+                Standardize(m=tY.shape[-1])
+                if self.output_scaler == ScalerEnum.STANDARDIZE
+                else None
+            ),
             input_transform=tf,
         )
         self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore

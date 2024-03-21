@@ -7,66 +7,74 @@ specs = Specs([])
 
 specs.add_valid(
     acquisition_functions.qEI,
-    lambda: {},
+    lambda: {"n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qLogEI,
-    lambda: {},
+    lambda: {"n_mc_samples": 512},
 )
+
+specs.add_invalid(
+    acquisition_functions.qLogEI,
+    lambda: {"n_mc_samples": 513},
+    error=ValueError,
+    message="Argument is not power of two.",
+)
+
 
 specs.add_valid(
     acquisition_functions.qNEI,
-    lambda: {"prune_baseline": random.choice([True, False])},
+    lambda: {"prune_baseline": random.choice([True, False]), "n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qLogNEI,
-    lambda: {"prune_baseline": random.choice([True, False])},
+    lambda: {"prune_baseline": random.choice([True, False]), "n_mc_samples": 512},
 )
 
 
 specs.add_valid(
     acquisition_functions.qPI,
-    lambda: {
-        "tau": random.random(),
-    },
+    lambda: {"tau": random.random(), "n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qSR,
-    lambda: {},
+    lambda: {"n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qUCB,
-    lambda: {
-        "beta": random.random(),
-    },
+    lambda: {"beta": random.random(), "n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qEHVI,
-    lambda: {
-        "alpha": random.random(),
-    },
+    lambda: {"alpha": random.random(), "n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qLogEHVI,
-    lambda: {
-        "alpha": random.random(),
-    },
+    lambda: {"alpha": random.random(), "n_mc_samples": 512},
 )
 
 specs.add_valid(
     acquisition_functions.qNEHVI,
-    lambda: {"alpha": random.random(), "prune_baseline": random.choice([True, False])},
+    lambda: {
+        "alpha": random.random(),
+        "prune_baseline": random.choice([True, False]),
+        "n_mc_samples": 512,
+    },
 )
 
 specs.add_valid(
     acquisition_functions.qLogNEHVI,
-    lambda: {"alpha": random.random(), "prune_baseline": random.choice([True, False])},
+    lambda: {
+        "alpha": random.random(),
+        "prune_baseline": random.choice([True, False]),
+        "n_mc_samples": 512,
+    },
 )
 
 specs.add_valid(
