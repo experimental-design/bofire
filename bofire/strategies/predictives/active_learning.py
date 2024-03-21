@@ -1,16 +1,16 @@
 from typing import List
 
-import torch
-from botorch.acquisition import qNegIntegratedPosteriorVariance
-from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ScalarizedPosteriorTransform
-
 import bofire.strategies.api as strategies
+import torch
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy as DataModel,
 )
 from bofire.strategies.predictives.botorch import BotorchStrategy
+
+from botorch.acquisition import qNegIntegratedPosteriorVariance
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
 
 class ActiveLearningStrategy(BotorchStrategy):
@@ -32,8 +32,8 @@ class ActiveLearningStrategy(BotorchStrategy):
         # sample mc points for integration with the RandomStrategy
         random_model = RandomStrategy(domain=self.domain)
         sampler = strategies.map(random_model)
-        mc_points = sampler.ask(candidate_count=self.acquisition_function.n_mc_points)
-        mc_points = torch.tensor(mc_points.values)
+        mc_samples = sampler.ask(candidate_count=self.acquisition_function.n_mc_samples)
+        mc_samples = torch.tensor(mc_samples.values)
 
         _, X_pending = self.get_acqf_input_tensors()
 
@@ -59,7 +59,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         # Instantiate active_learning acquisition function
         acqf = qNegIntegratedPosteriorVariance(
             model=self.model,
-            mc_points=mc_points,
+            mc_points=mc_samples,
             X_pending=X_pending,
             posterior_transform=posterior_transform,
         )
