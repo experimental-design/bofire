@@ -163,7 +163,7 @@ specs.add_invalid(
     message="Only one output feature allowed for `ActiveLearningStrategy`, got 2.",
 )
 
-
+specs.add_valid(
     strategies.EntingStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
