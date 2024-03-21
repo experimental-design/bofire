@@ -5,6 +5,7 @@ from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
     BotorchSurrogates,
 )
+from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.linear import LinearSurrogate
@@ -46,6 +47,7 @@ AnySurrogate = Union[
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
+    LinearDeterministicSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -74,6 +76,7 @@ AnyRegressionSurrogate = Union[
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
+    LinearDeterministicSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

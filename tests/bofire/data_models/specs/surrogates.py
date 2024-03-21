@@ -394,3 +394,70 @@ specs.add_valid(
         "hyperconfig": None,
     },
 )
+
+specs.add_valid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0, "c": 5.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="coefficient keys do not match input feature keys.",
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                CategoricalInput(key="b", categories=["a", "b"]),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
+)
