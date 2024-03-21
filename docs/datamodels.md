@@ -440,28 +440,40 @@ Since `fastapi` uses `pydantic`, the data models can be used directly in the API
 Save this to a `fastapi_example.py` and run it with `python fastapi_example.py`. Navigate to `http://localhost:8880/docs` via the browser of your choosing to see the API documentation and try out the route. Note that all the data models (Schemas) are listed in the lower part of the page.
 
 ```python
-# saving this to file, and running the fastapi server will yield a working api endpoint with openapi documentation, which is very useful for browsing through!
+# saving this to file (e.g. to fastapi_minimal.py), and running the fastapi server will yield a working api endpoint with openapi documentation, which is very useful for browsing through!
 
 from fastapi import FastAPI
 from bofire.data_models.domain.api import Domain
+import bofire.data_models.domain.api as domain_api
+from starlette.responses import RedirectResponse
 from bofire.data_models.strategies.api import SoboStrategy, AnyStrategy, RandomStrategy
-from typing import Union
+from typing import Union, Optional
 from fastapi import Body, Response
 import numpy as np
 import json
 
 app = FastAPI()
 # this string was obtained from the domain above via domain.json()
-domain_as_json = '{"type":"Domain","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x1","unit":null,"bounds":[-4.0,4.0],"local_relative_bounds":[Infinity,Infinity],"stepsize":null},{"type":"CategoricalInput","key":"x2","categories":["a","b"],"allowed":[true,true]}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y1","unit":null,"objective":{"type":"MaximizeObjective","w":1.0,"bounds":[0.0,100.0]}}]},"constraints":{"type":"Constraints","constraints":[]}}'
+# local_relative_bounds are set to 200,200 for now, as Infinity could not be parsed properly, and NOne also does not work for now. We'll fix this in the near future!
+domain_as_json = '{"type":"Domain","inputs":{"type":"Inputs","features":[{"type":"ContinuousInput","key":"x1","unit":null,"bounds":[-4.0,4.0],"local_relative_bounds":[200,200],"stepsize":null},{"type":"CategoricalInput","key":"x2","categories":["a","b"],"allowed":[true,true]}]},"outputs":{"type":"Outputs","features":[{"type":"ContinuousOutput","key":"y1","unit":null,"objective":{"type":"MaximizeObjective","w":1.0,"bounds":[0.0,100.0]}}]},"constraints":{"type":"Constraints","constraints":[]}}'
+# model_config = {"json_schema_extra": {"examples": [{'domain':json.loads(domain_as_json)}]}}
 model_config = {"json_schema_extra": {"examples": [json.loads(domain_as_json)]}}
 Domain.model_config = model_config
+from pydantic import TypeAdapter
 
 
 # create a single route that returns a SoboStrategy or RandomStrategy based on a coin flip
-@app.post("/sobo_or_random_strategy/", response_model=Union[SoboStrategy, RandomStrategy])
+@app.post(
+    "/sobo_or_random_strategy/",
+    response_model=Optional[Union[SoboStrategy, RandomStrategy]],
+    description="This takes a domain as input and outputs either a SoboStrategy or a RandomStrategy, based on a coin flip. It's meant mainly for didactic purposes. Note also the data models in the 'Schemas' section of the API documentation.",
+)
 def strategy_post(
-    domain: Domain = Body(embed=True),
+    domain: Domain = Body(
+        embed=True,
+    )
 ):
+    domain = TypeAdapter(domain_api.Domain).validate_python(domain)
     if np.random.normal() >= 0:
         strategy = SoboStrategy(domain=domain)
     else:
@@ -470,15 +482,21 @@ def strategy_post(
     return strategy.dict()
 
 
+@app.get("/", include_in_schema=False)
+def redirect():
+    """Redirect to the API documentation."""
+    return RedirectResponse(url="/docs")
+
+
 if __name__ == "__main__":
-    import uvicorn
+    print("Please run this fastapi server via:")
+    print("uvicorn fastapi_minimal:app --reload --port 8880 --host localhost")
 
-    uvicorn.run(app, host="localhost", port=8880)
-
-# run the server with `python test.py` 
+# run the server with `uvicorn fastapi_minimal:app --reload --port 8880 --host localhost`
 # navigate to http://localhost:8880/docs to see the API documentation
+
 ```
 
 ```bash
-python fastapi_example.py
+uvicorn fastapi_minimal:app --reload --port 8880 --host localhost
 ```
