@@ -25,7 +25,6 @@ class ActiveLearningStrategy(BotorchStrategy):
     ):
         super().__init__(data_model=data_model, **kwargs)
         self.acquisition_function = data_model.acquisition_function
-        self.weights = data_model.weights
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
         assert self.model is not None
@@ -33,7 +32,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         # sample mc points for integration with the RandomStrategy
         random_model = RandomStrategy(domain=self.domain)
         sampler = strategies.map(random_model)
-        mc_points = sampler.ask(candidate_count=self.num_sobol_samples)
+        mc_points = sampler.ask(candidate_count=self.acquisition_function.n_mc_points)
         mc_points = torch.tensor(mc_points.values)
 
         _, X_pending = self.get_acqf_input_tensors()
@@ -41,7 +40,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         ny = len(self.domain.outputs)  # number of outputs
         if ny > 1:
             # create a posterior transform for multi-output models
-            if self.weights == None:
+            if self.acquisition_function.weights == None:
                 # set all weights equally if nothing is specified
                 weights = (
                     torch.ones(ny, dtype=torch.float64) / ny
@@ -49,7 +48,7 @@ class ActiveLearningStrategy(BotorchStrategy):
             else:
                 weights = []
                 [
-                    weights.append(self.weights.get(key))
+                    weights.append(self.acquisition_function.weights.get(key))
                     for key in self.domain.outputs.get_keys()
                 ]
                 weights = torch.tensor(weights, dtype=torch.float64)

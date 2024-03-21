@@ -37,10 +37,8 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.transforms.api import (
-    AnyTransform,  # noqa: F401
-    DropDataTransform,
-)
+from bofire.data_models.transforms.api import AnyTransform  # noqa: F401
+from bofire.data_models.transforms.api import DropDataTransform
 
 AbstractStrategy = Union[
     Strategy,
@@ -62,7 +60,6 @@ AnyPredictive = Union[
     QparegoStrategy,
     EntingStrategy,
     MoboStrategy,
-    ActiveLearningStrategy,
 ]
 
 

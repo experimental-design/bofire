@@ -1,6 +1,6 @@
 from typing import Dict, List, Literal, Optional, Type
 
-from pydantic import Field, field_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.acquisition_functions.api import (
     AnyActiveLearningAcquisitionFunction,
@@ -13,11 +13,26 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 
 class ActiveLearningStrategy(BotorchStrategy):
+    """Datamodel for an ActiveLearningStrategy that focusses on pure exploration of the input space.
+    This type of strategy chooses new candidate points in order to minimize the uncertainty.
+    """
+
     type: Literal["ActiveLearningStrategy"] = "ActiveLearningStrategy"
     acquisition_function: AnyActiveLearningAcquisitionFunction = Field(
         default_factory=lambda: qNegIntPosVar()
     )
-    weights: Optional[Dict[str, float]] = Field(default_factory=lambda: None)
+
+    @model_validator(mode="after")
+    def validate_acquisition_function(self):
+        if isinstance(self.acquisition_function, qNegIntPosVar):
+            if self.acquisition_function.weights is not None:
+                if sorted(self.acquisition_function.weights.keys()) != sorted(
+                    self.domain.outputs.get_keys()
+                ):
+                    raise ValueError(
+                        "The keys provided for the weights do not match the required keys of the output features."
+                    )
+        return self
 
     @classmethod
     def is_feature_implemented(cls, my_type: Type[Feature]) -> bool:

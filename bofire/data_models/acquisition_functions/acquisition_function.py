@@ -1,4 +1,4 @@
-from typing import Annotated, Literal
+from typing import Annotated, Dict, Literal, Optional
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import IntPowerOfTwo
@@ -84,3 +84,4 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
     type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
     n_mc_samples: IntPowerOfTwo = 512
+    weights: Optional[Dict[str, PositiveFloat]] = Field(default_factory=lambda: None)
