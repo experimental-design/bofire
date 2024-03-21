@@ -1,16 +1,16 @@
 from typing import List
 
-import bofire.strategies.api as strategies
 import torch
+from botorch.acquisition import qNegIntegratedPosteriorVariance
+from botorch.acquisition.acquisition import AcquisitionFunction
+from botorch.acquisition.objective import ScalarizedPosteriorTransform
+
+import bofire.strategies.api as strategies
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy as DataModel,
 )
 from bofire.strategies.predictives.botorch import BotorchStrategy
-
-from botorch.acquisition import qNegIntegratedPosteriorVariance
-from botorch.acquisition.acquisition import AcquisitionFunction
-from botorch.acquisition.objective import ScalarizedPosteriorTransform
 
 
 class ActiveLearningStrategy(BotorchStrategy):
@@ -40,7 +40,7 @@ class ActiveLearningStrategy(BotorchStrategy):
         ny = len(self.domain.outputs)  # number of outputs
         if ny > 1:
             # create a posterior transform for multi-output models
-            if self.acquisition_function.weights == None:
+            if self.acquisition_function.weights is None:
                 # set all weights equally if nothing is specified
                 weights = (
                     torch.ones(ny, dtype=torch.float64) / ny

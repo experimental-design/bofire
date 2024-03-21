@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Optional, Type
+from typing import Literal, Type
 
 from pydantic import Field, model_validator
 
@@ -6,7 +6,6 @@ from bofire.data_models.acquisition_functions.api import (
     AnyActiveLearningAcquisitionFunction,
     qNegIntPosVar,
 )
-from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import CategoricalOutput, Feature
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.predictives.botorch import BotorchStrategy

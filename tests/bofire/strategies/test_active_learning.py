@@ -1,10 +1,9 @@
-import bofire.strategies.api as strategies
 import pandas as pd
-import pytest
+
+import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import DTLZ2
 from bofire.data_models.acquisition_functions.api import qNegIntPosVar
-from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.domain.api import Outputs
 from bofire.data_models.strategies.api import ActiveLearningStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSurrogate
 

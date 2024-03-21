@@ -1,8 +1,7 @@
 import random
 
-from tests.bofire.data_models.specs.specs import Specs
-
 import bofire.data_models.acquisition_functions.api as acquisition_functions
+from tests.bofire.data_models.specs.specs import Specs
 
 specs = Specs([])
 
@@ -22,7 +21,6 @@ specs.add_invalid(
     error=ValueError,
     message="Argument is not power of two.",
 )
-
 
 specs.add_valid(
     acquisition_functions.qNEI,
@@ -80,5 +78,5 @@ specs.add_valid(
 
 specs.add_valid(
     acquisition_functions.qNegIntPosVar,
-    lambda: {"n_points": random.randint(1, 1024)},
+    lambda: {"n_mc_samples": 128},
 )

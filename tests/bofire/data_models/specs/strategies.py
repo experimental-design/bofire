@@ -131,7 +131,7 @@ specs.add_valid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
-        "acquisition_function": qNegIntPosVar(n_points=2048).model_dump(),
+        "acquisition_function": qNegIntPosVar(n_mc_samples=2048).model_dump(),
         **strategy_commons,
     },
 )
@@ -157,7 +157,7 @@ specs.add_invalid(
             ),
         ).model_dump(),
         "acquisition_function": qNegIntPosVar(
-            n_points=2048,
+            n_mc_samples=2048,
             weights={
                 "alph_invalid": 0.1,
                 "beta_invalid": 0.9,
