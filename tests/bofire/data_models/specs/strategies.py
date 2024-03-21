@@ -1,6 +1,3 @@
-from tests.bofire.data_models.specs.api import domain
-from tests.bofire.data_models.specs.specs import Specs
-
 import bofire.data_models.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import (
     qEI,
@@ -22,6 +19,8 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates
+from tests.bofire.data_models.specs.api import domain
+from tests.bofire.data_models.specs.specs import Specs
 
 specs = Specs([])
 
@@ -170,7 +169,7 @@ specs.add_invalid(
     message="The provided keys for the weights must match the keys of the output features.",
 )
 
-
+specs.add_valid(
     strategies.EntingStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),

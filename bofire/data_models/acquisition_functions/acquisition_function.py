@@ -79,6 +79,7 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     type: Literal["qLogNEHVI"] = "qLogNEHVI"
     alpha: Annotated[float, Field(ge=0)] = 0.0
     prune_baseline: bool = True
+    n_mc_samples: IntPowerOfTwo = 512
 
 
 class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
