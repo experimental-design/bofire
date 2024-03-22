@@ -10,22 +10,18 @@ from typing import (
     Type,
     TypeVar,
     Union,
-    get_args,
 )
 
 import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.constraints.api import (
-    AnyConstraint,
-)
+from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
 
-C = TypeVar("C", bound=AnyConstraint)
-C_ = TypeVar("C_", bound=AnyConstraint)
-C__ = TypeVar("C__", bound=AnyConstraint)
-AnyConstraintTuple = get_args(AnyConstraint)
+C = TypeVar("C", bound=Union[AnyConstraint, Constraint])
+C_ = TypeVar("C_", bound=Union[AnyConstraint, Constraint])
+C__ = TypeVar("C__", bound=Union[AnyConstraint, Constraint])
 
 
 class Constraints(BaseModel, Generic[C]):
@@ -96,7 +92,7 @@ class Constraints(BaseModel, Generic[C]):
 
     def get(
         self,
-        includes: Union[Type[C_], Sequence[Type[C_]]] = AnyConstraintTuple,
+        includes: Union[Type[C_], Sequence[Type[C_]]] = Constraint,
         excludes: Optional[Union[Type[C__], List[Type[C__]]]] = None,
         exact: bool = False,
     ) -> "Constraints[C_]":
