@@ -1,31 +1,49 @@
 import collections.abc
 from itertools import chain
-from typing import List, Literal, Optional, Sequence, Type, Union
+from typing import (
+    Generic,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+    get_args,
+)
 
 import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.base import BaseModel
-from bofire.data_models.constraints.api import AnyConstraint, Constraint
+from bofire.data_models.constraints.api import (
+    AnyConstraint,
+)
 from bofire.data_models.filters import filter_by_class
 
+C = TypeVar("C", bound=AnyConstraint)
+C_ = TypeVar("C_", bound=AnyConstraint)
+C__ = TypeVar("C__", bound=AnyConstraint)
+AnyConstraintTuple = get_args(AnyConstraint)
 
-class Constraints(BaseModel):
+
+class Constraints(BaseModel, Generic[C]):
     type: Literal["Constraints"] = "Constraints"
-    constraints: Sequence[AnyConstraint] = Field(default_factory=lambda: [])
+    constraints: Sequence[C] = Field(default_factory=lambda: [])
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[C]:
         return iter(self.constraints)
 
     def __len__(self):
         return len(self.constraints)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> C:
         return self.constraints[i]
 
     def __add__(
-        self, other: Union[Sequence[AnyConstraint], "Constraints"]
-    ) -> "Constraints":
+        self, other: Union[Sequence[C_], "Constraints[C_]"]
+    ) -> "Constraints[Union[C, C_]]":
         if isinstance(other, collections.abc.Sequence):
             other_constraints = other
         else:
@@ -78,10 +96,10 @@ class Constraints(BaseModel):
 
     def get(
         self,
-        includes: Union[Type, List[Type]] = Constraint,
-        excludes: Optional[Union[Type, List[Type]]] = None,
+        includes: Union[Type[C_], Sequence[Type[C_]]] = AnyConstraintTuple,
+        excludes: Optional[Union[Type[C__], List[Type[C__]]]] = None,
         exact: bool = False,
-    ) -> "Constraints":
+    ) -> "Constraints[C_]":
         """get constraints of the domain
 
         Args:
