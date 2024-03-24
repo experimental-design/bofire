@@ -25,7 +25,7 @@ from bofire.strategies.doe.utils import (
     metrics,
     nchoosek_constraints_as_bounds,
 )
-from bofire.strategies.enum import OptimalityCriterionEnum
+from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
 from bofire.strategies.random import RandomStrategy
 
 
@@ -42,6 +42,7 @@ def find_local_max_ipopt_BaB(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
+    transform: TransformEnum = TransformEnum.IDENTITY,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
@@ -75,17 +76,20 @@ def find_local_max_ipopt_BaB(
     if categorical_groups is None:
         categorical_groups = []
 
-    n_experiments = get_n_experiments(
-        domain=domain, model_type=model_type, n_experiments=n_experiments
-    )
-
-    # get objective function
     model_formula = get_formula_from_string(
         model_type=model_type, rhs_only=True, domain=domain
     )
+
+    n_experiments = get_n_experiments(model_formula, n_experiments)
+
+    # get objective function
     objective_class = get_objective_class(objective)
     objective_class = objective_class(
-        domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
+        domain=domain,
+        model=model_formula,
+        n_experiments=n_experiments,
+        delta=delta,
+        transform=transform,
     )
 
     # setting up initial node in the branch-and-bound tree
@@ -131,7 +135,7 @@ def find_local_max_ipopt_BaB(
 
     initial_design = find_local_max_ipopt(
         domain,
-        model_type,
+        model_formula,
         n_experiments,
         delta,
         ipopt_options,
@@ -160,7 +164,7 @@ def find_local_max_ipopt_BaB(
     result_node = bnb(
         initial_queue,
         domain=domain,
-        model_type=model_type,
+        model_type=model_formula,
         n_experiments=n_experiments,
         delta=delta,
         ipopt_options=ipopt_options,
@@ -186,6 +190,7 @@ def find_local_max_ipopt_exhaustive(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
+    transform: TransformEnum = TransformEnum.IDENTITY,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
@@ -229,7 +234,11 @@ def find_local_max_ipopt_exhaustive(
     )
     objective_class = get_objective_class(objective)
     objective_class = objective_class(
-        domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
+        domain=domain,
+        model=model_formula,
+        n_experiments=n_experiments,
+        delta=delta,
+        transform=transform,
     )
 
     # get binary variables
@@ -241,9 +250,7 @@ def find_local_max_ipopt_exhaustive(
     for group in categorical_groups:
         allowed_fixations.append(np.eye(len(group)))
 
-    n_experiments = get_n_experiments(
-        domain=domain, model_type=model_type, n_experiments=n_experiments
-    )
+    n_experiments = get_n_experiments(model_formula, n_experiments)
     n_non_fixed_experiments = n_experiments
     if fixed_experiments is not None:
         n_non_fixed_experiments -= len(fixed_experiments)
@@ -322,7 +329,7 @@ def find_local_max_ipopt_exhaustive(
         try:
             current_design = find_local_max_ipopt(
                 domain,
-                model_type,
+                model_formula,
                 n_experiments,
                 delta,
                 ipopt_options,
@@ -363,6 +370,7 @@ def find_local_max_ipopt(
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
+    transform: TransformEnum = TransformEnum.IDENTITY,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
     Args:
@@ -400,10 +408,12 @@ def find_local_max_ipopt(
         )
         raise e
 
-    # determine number of experiments (only relevant if n_experiments is not provided by the user)
-    n_experiments = get_n_experiments(
-        domain=domain, model_type=model_type, n_experiments=n_experiments
+    model_formula = get_formula_from_string(
+        model_type=model_type, rhs_only=True, domain=domain
     )
+
+    # determine number of experiments (only relevant if n_experiments is not provided by the user)
+    n_experiments = get_n_experiments(model_formula, n_experiments)
 
     if partially_fixed_experiments is not None:
         # check if partially fixed experiments are valid
@@ -467,13 +477,13 @@ def find_local_max_ipopt(
             )
 
     # get objective function and its jacobian
-    model_formula = get_formula_from_string(
-        model_type=model_type, rhs_only=True, domain=domain
-    )
-
     objective_class = get_objective_class(objective)
-    d_optimality = objective_class(
-        domain=domain, model=model_formula, n_experiments=n_experiments, delta=delta
+    objective_function = objective_class(
+        domain=domain,
+        model=model_formula,
+        n_experiments=n_experiments,
+        delta=delta,
+        transform=transform,
     )
 
     # write constraints as scipy constraints
@@ -511,13 +521,13 @@ def find_local_max_ipopt(
     #
 
     result = minimize_ipopt(
-        d_optimality.evaluate,
+        objective_function.evaluate,
         x0=x0,
         bounds=bounds,
         # "SLSQP" has no deeper meaning here and just ensures correct constraint standardization
         constraints=standardize_constraints(constraints, x0, "SLSQP"),
         options=_ipopt_options,
-        jac=d_optimality.evaluate_jacobian,
+        jac=objective_function.evaluate_jacobian,
     )
 
     design = pd.DataFrame(
@@ -678,9 +688,7 @@ def check_partially_and_fully_fixed_experiments(
         )
 
 
-def get_n_experiments(
-    domain: Domain, model_type: Union[str, Formula], n_experiments: Optional[int] = None
-):
+def get_n_experiments(model_type: Formula, n_experiments: Optional[int] = None):
     """Determines a number of experiments which is appropriate for the model if no
     number is provided. Otherwise warns if the provided number of experiments is smaller than recommended.
 
@@ -693,12 +701,7 @@ def get_n_experiments(
         n_experiments if an integer value for n_experiments is given. Number of model terms + 3 otherwise.
 
     """
-    n_experiments_min = (
-        len(
-            get_formula_from_string(model_type=model_type, rhs_only=True, domain=domain)
-        )
-        + 3
-    )
+    n_experiments_min = len(model_type) + 3
 
     if n_experiments is None:
         n_experiments = n_experiments_min
