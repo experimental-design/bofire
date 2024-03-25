@@ -2,7 +2,7 @@
 
 The BoFire domain contains all information about the optimization problem. In general, the domain is defined by **inputs**, **outputs**, **objectives** and **constraints**. Numerous types of those elements are implemented in the BoFire framework. A brief description of the usage of domains and the individual elements is given in the following.
 
-A basic example of a domain consists of two continuous inputs $x_1$, $x_2$ and a continuous output $y$. If no objective is given, a maximization objective (TODO: link to later section...) for the output is assumed. If no constraints are defined, an empty set of constraints is assumed.
+A basic example of a domain consists of two continuous inputs $x_1$, $x_2$ and a continuous output $y$. If no objective is given, a maximization objective for the output is assumed. If no constraints are defined, an empty set of constraints is assumed.
 
 A continuous input can be defined using the `ContinuousInput` class, which requires the variable name and its bounds. Please note that unbounded and partially bounded input variables are currently not supported. Here, we assume $x_1, x_2 \in (0,1)$.
 ```python
@@ -30,7 +30,7 @@ domain = Domain(
 ```
 There are applications of domains, where no optimization of an objective is involved (e.g. randomly sampling from the design space). In such cases, we do not require to provide an output definition.
 
-Let's now assume we have an additional linear equality constraint and we want to use a custom objective, e.g. a minimization objective for $y$. The linear constraint can be defined using the `LinearEqualityConstraint` class
+Let us now assume, we have an additional linear equality constraint and we want to use a custom objective, e.g. a minimization objective for $y$. The linear constraint can be defined using the `LinearEqualityConstraint` class
 ```python
 from bofire.data_models.constraints.api import LinearEqualityConstraint
 
@@ -58,18 +58,20 @@ domain = Domain(
 ```
 
 ## Inputs
-BoFire allows for the following different user-facing input classes (TODO: check if this is true):
+BoFire allows for the following different user-facing input classes:
 
 - `ContinuousInput`
 - `DiscreteInput` 
 - `CategoricalInput`
 - `MolecularInput`
-- `ContinuousDescriptorInput` TODO: Ask Johannes if it is just an alternative name to ContinuousInput
-- `CategoricalDescriptorInput` TODO: dito
+- `CategoricalDescriptorInput`
 - `CategoricalMolecularInput`
 - `TaskInput`
+<!-- - `ContinuousDescriptorInput` not used atm -->
 
-Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also (TODO: link to strategy docu)).
+Each of these input classes can be used for defining domains, however some strategies only support a subset of the available input types. You can call the `is_feature_implemented()` function of a given strategy and input class to check whether the input is supported by the strategy (see also 
+# TODO: add link to strategy docu
+).
 
 ### Input types
 
@@ -105,25 +107,39 @@ from bofire.data_models.features.api import MolecularInput
 MolecularInput(key="x5")
 ```
 
-#### Continuous descriptor inputs
-
+<!-- #### Continuous descriptor inputs 
+ -->
 #### Categorical descriptor inputs
+Via the `CategoricalDescriptorInput` one can provide continuous encodings for the different categories via so called descriptors. Imagine, for example, having a categorial input with different categories, where each category corresponds to a specific material. Such descriptors could be e.g., density and hardness. Every material/category would get assigned a number for density and hardness in the hope that these two properties describe the material properly. In the context of fitting a GP, one can then use just these two dimensional vector for describing the material instead of a ten dimensional one-hot encoding, which results in a dimensionality reduction. Of course, this makes sense under the assumption that the descriptors actually correlate with the desired quantities. 
+
+The `CategoricalDescriptorInput` class requires a list of permissible values as input. For example, the following code defines a new categorical descriptor input variable $x_6$ with values "A", "B", "C".
+
+```python
+from bofire.data_models.features.api import CategoricalDescriptorInput
+
+CategoricalDescriptorInput(
+    key="x6",
+    categories=["material_A", "material_B", "material_C"],
+    descriptors=["density", "hardness"],
+    values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]
+)
+
+```
 
 #### Categorical molecular inputs
-Categorical molecular inputs inherit from both molecular and categorical inputs. In addition to the 'MolecularInput' the user can provide a list of allowed SMILES strings via the `categories` attribute. The following code defines a new categorical molecular input variable $x_6$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
+Categorical molecular inputs inherit from both molecular and categorical inputs. In addition to the 'MolecularInput' the user can provide a list of allowed SMILES strings via the `categories` attribute. The following code defines a new categorical molecular input variable $x_7$ where only the values "C1CCCCC1", "O1CCOCC1" are allowed.
 
 ```python
 from bofire.data_models.features.api import CategoricalMolecularInput
 
-CategoricalMolecularInput(key="x6", categories=["C1CCCCC1", "O1CCOCC1"])
+CategoricalMolecularInput(key="x7", categories=["C1CCCCC1", "O1CCOCC1"])
 ```
 
 #### Task inputs
-TODO: Ask Johannes what this is and how it is used
-
+# TODO: I do not feel confident about writing this one. I read the thread but is still unclear to me if this is already done and used or work in progress. Johannes if you could write a short description here, that would be great. Otherwise I would remove it for now.
 
 ### Inputs class
-The `Inputs` class is used to summarize multiple input variables. It is used to define the inputs of a domain. The following code defines a new input class with the above described input variables $x_1, x_2, x_3, x_4, x_5, x_6$.
+The `Inputs` class is used to summarize multiple input variables. It is used to define the inputs of a domain. The following code defines a new input class with the above described input variables $x_1, x_2, x_3, x_4, x_5, x_6, x_7$.
 
 ```python
 from bofire.data_models.api import Inputs
@@ -134,7 +150,8 @@ inputs = Inputs(
     DiscreteInput(key="x3", values=[0, 0.1, 0.2]),
     CategoricalInput(key="x4", values=["A", "B", "C"]),
     MolecularInput(key="x5"),
-    CategoricalMolecularInput(key="x6", values=["C1CCCCC1", "O1CCOCC1"])])
+    CategoricalDescriptorInput(key="x6", categories=["material_A", "material_B", "material_C"], descriptors=["density", "hardness"], values=[[0.1, 0.2], [0.3, 0.4], [0.5, 0.6]]),
+    CategoricalMolecularInput(key="x7", values=["C1CCCCC1", "O1CCOCC1"]])
 ```
 
 ## Outputs
@@ -154,9 +171,10 @@ Different classes for the objectives are implemented in BoFire. These are used t
 - `MinimizeObjective`: The objective is to minimize the output variable(s). Note that minimization objectives can be transformed into maximization objectives and vice versa just by multiplying the corresponding output by -1.
 - `MaximizeSigmoidObjective`: The objective is to maximize the output variable(s) using a sigmoid transformation. This is useful for objectives that are not linear in the output variable(s).
 - `MinimizeSigmoidObjective`: Similar to `MaximizeSigmoidObjective`, but the objective is to minimize the output variable(s).
-- `TargetObjective`: The objective is to reach a target value for the output variable(s).
-- `CloseToTargetObjective`: **TODO**: Ask Johannes what is the difference to TargetObjective and how it is used (multiobjective optimization?)
-- `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given. **TODO**: Ask Johannes if this is correct
+- `TargetObjective`: The objective is to reach a target value for the output variable(s). `TargetObjective` is of type `ConstrainedObjective` as `MaximizeSigmoidObjective` or `MinimizeSigmoidObjective`, i.e., it becomes one if the value is in the target region and falls asymptorically to zero outside that region.
+- `CloseToTargetObjective`: This objective measures the difference to a target value. Such an objective is often meaningful to minimize in a multiobjective optimization, and thus be included in the pareto front. Note that also the objectives of type `ConstrainedObjective` can be used in multiobjective optimization, but for that at least two targets of type `MaximizeSigmoidObjective`,`MinimizeSigmoidObjective` or `TargetObjective` are needed.
+- `ConstrainedCategoricalObjective`: Categorical objective where for each output variable a probability vector for the categories is given. 
+
 
 If many outputs are defined, then different weights can be attributed as optional argument `w`. More detailed descriptions for the individual objecrives can be found in the [API documentation](https://experimental-design.github.io/bofire/ref-objectives/). 
 
