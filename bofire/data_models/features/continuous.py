@@ -17,16 +17,16 @@ class ContinuousInput(NumericalInput):
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
         stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
-            Defaults to (math.inf, math.inf).
+            Defaults to None.
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
     bounds: Tuple[float, float]
-    local_relative_bounds: Tuple[
-        Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]
-    ] = (math.inf, math.inf)
+    local_relative_bounds: Optional[
+        Tuple[Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]]
+    ] = None
     stepsize: Optional[float] = None
 
     @property
@@ -154,14 +154,18 @@ class ContinuousInput(NumericalInput):
             if reference_value is None or self.is_fixed():
                 return [self.lower_bound], [self.upper_bound]
             else:
+                local_relative_bounds = self.local_relative_bounds or (
+                    math.inf,
+                    math.inf,
+                )
                 return [
                     max(
-                        reference_value - self.local_relative_bounds[0],
+                        reference_value - local_relative_bounds[0],
                         self.lower_bound,
                     )
                 ], [
                     min(
-                        reference_value + self.local_relative_bounds[1],
+                        reference_value + local_relative_bounds[1],
                         self.upper_bound,
                     )
                 ]

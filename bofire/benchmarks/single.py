@@ -234,7 +234,7 @@ class Branin(Benchmark):
                                 0.5 * locality_factor,
                             )
                             if locality_factor is not None
-                            else (math.inf, math.inf)
+                            else None
                         ),
                     ),
                     ContinuousInput(
@@ -246,7 +246,7 @@ class Branin(Benchmark):
                                 1.5 * locality_factor,
                             )
                             if locality_factor is not None
-                            else (math.inf, math.inf)
+                            else None
                         ),
                     ),
                 ]
