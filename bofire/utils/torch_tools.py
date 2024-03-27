@@ -40,9 +40,9 @@ def get_linear_constraints(
     """Converts linear constraints to the form required by BoTorch.
 
     Args:
-        domain (Domain): Optimization problem definition.
-        constraint (Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]]): Type of constraint that should be converted.
-        unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
+        domain: Optimization problem definition.
+        constraint: Type of constraint that should be converted.
+        unit_scaled: If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
 
     Returns:
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.

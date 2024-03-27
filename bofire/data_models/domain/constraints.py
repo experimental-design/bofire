@@ -99,9 +99,9 @@ class Constraints(BaseModel, Generic[C]):
         """Get constraints of the domain
 
         Args:
-            includes (Union[Type[Constraint], List[Type[Constraint]]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
-            excludes (Union[Type[Constraint], List[Type[Constraint]]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+            includes: Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
+            excludes: Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
+            exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
 
         Returns:
             Constraints: constraints in the domain fitting to the passed requirements.
