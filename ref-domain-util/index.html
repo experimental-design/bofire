@@ -3594,7 +3594,7 @@ are generated at once.</p></td>
       </tr>
       <tr>
         <td><code>constraint</code></td>
-        <td><code>Union[LinearEqualityConstraint, LinearInequalityConstraint]</code></td>
+        <td><code>Union[Type[bofire.data_models.constraints.linear.LinearEqualityConstraint], Type[bofire.data_models.constraints.linear.LinearInequalityConstraint]]</code></td>
         <td><p>Type of constraint that should be converted.</p></td>
         <td><em>required</em></td>
       </tr>
@@ -3625,15 +3625,15 @@ are generated at once.</p></td>
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_linear_constraints</span><span class="p">(</span>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
-    <span class="n">constraint</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">,</span> <span class="n">LinearInequalityConstraint</span><span class="p">],</span>
+    <span class="n">constraint</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">],</span> <span class="n">Type</span><span class="p">[</span><span class="n">LinearInequalityConstraint</span><span class="p">]],</span>
     <span class="n">unit_scaled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts linear constraints to the form required by BoTorch.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        domain (Domain): Optimization problem definition.</span>
-<span class="sd">        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint]): Type of constraint that should be converted.</span>
-<span class="sd">        unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.</span>
+<span class="sd">        domain: Optimization problem definition.</span>
+<span class="sd">        constraint: Type of constraint that should be converted.</span>
+<span class="sd">        unit_scaled: If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.</span>

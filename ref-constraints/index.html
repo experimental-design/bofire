@@ -735,13 +735,16 @@
 
 
 
+
+
+
   <div class="doc doc-object doc-class">
 
 
 
 <h2 id="bofire.data_models.domain.constraints.Constraints" class="doc doc-heading">
         <code>
-Constraints            (<span title="bofire.data_models.base.BaseModel">BaseModel</span>)
+Constraints            (<span title="bofire.data_models.base.BaseModel">BaseModel</span>, <span title="typing.Generic">Generic</span>)
         </code>
 
 
@@ -753,22 +756,22 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/constraints.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">C</span><span class="p">]):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;Constraints&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Constraints&quot;</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">C</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">C</span><span class="p">]:</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">C</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">AnyConstraint</span><span class="p">],</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">],</span> <span class="s2">&quot;Constraints[CIncludes]&quot;</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints[Union[C, CIncludes]]&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">other</span>
         <span class="k">else</span><span class="p">:</span>
@@ -821,19 +824,19 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
     <span class="k">def</span> <span class="nf">get</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
-        <span class="n">excludes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
+        <span class="n">excludes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CExcludes</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CExcludes</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints[CIncludes]&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get constraints of the domain</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
-<span class="sd">            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
+<span class="sd">            includes: Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
+<span class="sd">            excludes: Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">            exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            List[Constraint]: List of constraints in the domain fitting to the passed requirements.</span>
+<span class="sd">            Constraints: constraints in the domain fitting to the passed requirements.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">filter_by_class</span><span class="p">(</span>
@@ -960,7 +963,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
     <div class="doc doc-contents ">
 
-      <p>get constraints of the domain</p>
+      <p>Get constraints of the domain</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -975,13 +978,13 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
   <tbody>
       <tr>
         <td><code>includes</code></td>
-        <td><code>Union[Constraint, List[Constraint]]</code></td>
+        <td><code>Union[Type[~CIncludes], Sequence[Type[~CIncludes]]]</code></td>
         <td><p>Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</p></td>
         <td><code>&lt;class &#39;bofire.data_models.constraints.constraint.Constraint&#39;&gt;</code></td>
       </tr>
       <tr>
         <td><code>excludes</code></td>
-        <td><code>Union[Type, List[Type]]</code></td>
+        <td><code>Union[Type[~CExcludes], List[Type[~CExcludes]]]</code></td>
         <td><p>Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</p></td>
         <td><code>None</code></td>
       </tr>
@@ -1003,8 +1006,8 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
   </thead>
   <tbody>
     <tr>
-      <td><code>List[Constraint]</code></td>
-      <td><p>List of constraints in the domain fitting to the passed requirements.</p></td>
+      <td><code>Constraints</code></td>
+      <td><p>constraints in the domain fitting to the passed requirements.</p></td>
     </tr>
   </tbody>
 </table>
@@ -1012,19 +1015,19 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
           <summary>Source code in <code>bofire/data_models/domain/constraints.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get</span><span class="p">(</span>
     <span class="bp">self</span><span class="p">,</span>
-    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
-    <span class="n">excludes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">includes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">]]]</span> <span class="o">=</span> <span class="n">Constraint</span><span class="p">,</span>
+    <span class="n">excludes</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CExcludes</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">CExcludes</span><span class="p">]]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">exact</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints&quot;</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;get constraints of the domain</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints[CIncludes]&quot;</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get constraints of the domain</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
-<span class="sd">        excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
-<span class="sd">        exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
+<span class="sd">        includes: Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</span>
+<span class="sd">        excludes: Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.</span>
+<span class="sd">        exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        List[Constraint]: List of constraints in the domain fitting to the passed requirements.</span>
+<span class="sd">        Constraints: constraints in the domain fitting to the passed requirements.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">filter_by_class</span><span class="p">(</span>
