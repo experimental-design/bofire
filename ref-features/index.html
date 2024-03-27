@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.14">
+      <meta name="generator" content="mkdocs-1.5.3, mkdocs-material-9.5.15">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.10ba22f1.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.7e359304.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -3545,7 +3545,7 @@ ContinuousInput            (<a class="autorefs autorefs-internal" title="bofire.
         <td><code>local_relative_bounds</code></td>
         <td><code>Tuple[float, float]</code></td>
         <td><p>A tuple that stores the lower and upper bounds relative to a reference value.
-Defaults to (math.inf, math.inf).</p></td>
+Defaults to None.</p></td>
       </tr>
   </tbody>
 </table>
@@ -3558,16 +3558,16 @@ Defaults to (math.inf, math.inf).</p></td>
 <span class="sd">        bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.</span>
 <span class="sd">        stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.</span>
 <span class="sd">        local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.</span>
-<span class="sd">            Defaults to (math.inf, math.inf).</span>
+<span class="sd">            Defaults to None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousInput&quot;</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
-    <span class="n">local_relative_bounds</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span>
-        <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)],</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)]</span>
-    <span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+    <span class="n">local_relative_bounds</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span>
+        <span class="n">Tuple</span><span class="p">[</span><span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)],</span> <span class="n">Annotated</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Field</span><span class="p">(</span><span class="n">gt</span><span class="o">=</span><span class="mi">0</span><span class="p">)]]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">stepsize</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
@@ -3695,14 +3695,18 @@ Defaults to (math.inf, math.inf).</p></td>
             <span class="k">if</span> <span class="n">reference_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>
                 <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
+                <span class="n">local_relative_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relative_bounds</span> <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                    <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                <span class="p">)</span>
                 <span class="k">return</span> <span class="p">[</span>
                     <span class="nb">max</span><span class="p">(</span>
-                        <span class="n">reference_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                        <span class="n">reference_value</span> <span class="o">-</span> <span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">],</span> <span class="p">[</span>
                     <span class="nb">min</span><span class="p">(</span>
-                        <span class="n">reference_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                        <span class="n">reference_value</span> <span class="o">+</span> <span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                         <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">]</span>
@@ -3877,14 +3881,18 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
         <span class="k">if</span> <span class="n">reference_value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>
             <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
+            <span class="n">local_relative_bounds</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relative_bounds</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+                <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+            <span class="p">)</span>
             <span class="k">return</span> <span class="p">[</span>
                 <span class="nb">max</span><span class="p">(</span>
-                    <span class="n">reference_value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                    <span class="n">reference_value</span> <span class="o">-</span> <span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">],</span> <span class="p">[</span>
                 <span class="nb">min</span><span class="p">(</span>
-                    <span class="n">reference_value</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                    <span class="n">reference_value</span> <span class="o">+</span> <span class="n">local_relative_bounds</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">]</span>
