@@ -20,8 +20,8 @@ from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
 
 C = TypeVar("C", bound=Union[AnyConstraint, Constraint])
-C_ = TypeVar("C_", bound=Union[AnyConstraint, Constraint])
-C__ = TypeVar("C__", bound=Union[AnyConstraint, Constraint])
+CIncludes = TypeVar("CIncludes", bound=Union[AnyConstraint, Constraint])
+CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])
 
 
 class Constraints(BaseModel, Generic[C]):
@@ -38,8 +38,8 @@ class Constraints(BaseModel, Generic[C]):
         return self.constraints[i]
 
     def __add__(
-        self, other: Union[Sequence[C_], "Constraints[C_]"]
-    ) -> "Constraints[Union[C, C_]]":
+        self, other: Union[Sequence[CIncludes], "Constraints[CIncludes]"]
+    ) -> "Constraints[Union[C, CIncludes]]":
         if isinstance(other, collections.abc.Sequence):
             other_constraints = other
         else:
@@ -92,19 +92,19 @@ class Constraints(BaseModel, Generic[C]):
 
     def get(
         self,
-        includes: Union[Type[C_], Sequence[Type[C_]]] = Constraint,
-        excludes: Optional[Union[Type[C__], List[Type[C__]]]] = None,
+        includes: Union[Type[CIncludes], Sequence[Type[CIncludes]]] = Constraint,
+        excludes: Optional[Union[Type[CExcludes], List[Type[CExcludes]]]] = None,
         exact: bool = False,
-    ) -> "Constraints[C_]":
-        """get constraints of the domain
+    ) -> "Constraints[CIncludes]":
+        """Get constraints of the domain
 
         Args:
-            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
-            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
+            includes (Union[Type[Constraint], List[Type[Constraint]]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
+            excludes (Union[Type[Constraint], List[Type[Constraint]]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
             exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
 
         Returns:
-            List[Constraint]: List of constraints in the domain fitting to the passed requirements.
+            Constraints: constraints in the domain fitting to the passed requirements.
         """
         return Constraints(
             constraints=filter_by_class(

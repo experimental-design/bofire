@@ -41,7 +41,7 @@ def get_linear_constraints(
 
     Args:
         domain (Domain): Optimization problem definition.
-        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint]): Type of constraint that should be converted.
+        constraint (Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]]): Type of constraint that should be converted.
         unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
 
     Returns:
