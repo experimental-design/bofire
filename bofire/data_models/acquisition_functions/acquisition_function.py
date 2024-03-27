@@ -1,9 +1,8 @@
-from typing import Annotated, Literal
-
-from pydantic import Field, PositiveFloat
+from typing import Annotated, Dict, Literal, Optional
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import IntPowerOfTwo
+from pydantic import Field, PositiveFloat
 
 
 class AcquisitionFunction(BaseModel):
@@ -81,3 +80,9 @@ class qLogNEHVI(MultiObjectiveAcquisitionFunction):
     alpha: Annotated[float, Field(ge=0)] = 0.0
     prune_baseline: bool = True
     n_mc_samples: IntPowerOfTwo = 512
+
+
+class qNegIntPosVar(SingleObjectiveAcquisitionFunction):
+    type: Literal["qNegIntPosVar"] = "qNegIntPosVar"
+    n_mc_samples: IntPowerOfTwo = 512
+    weights: Optional[Dict[str, PositiveFloat]] = Field(default_factory=lambda: None)

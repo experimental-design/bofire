@@ -1,5 +1,10 @@
 import bofire.data_models.strategies.api as strategies
-from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
+from bofire.data_models.acquisition_functions.api import (
+    qEI,
+    qLogNEHVI,
+    qNegIntPosVar,
+    qPI,
+)
 from bofire.data_models.constraints.api import (
     LinearEqualityConstraint,
     LinearInequalityConstraint,
@@ -109,6 +114,62 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.ActiveLearningStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_function": qNegIntPosVar(n_mc_samples=2048).model_dump(),
+        **strategy_commons,
+    },
+)
+
+specs.add_invalid(
+    strategies.ActiveLearningStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        "acquisition_function": qNegIntPosVar(
+            n_mc_samples=2048,
+            weights={
+                "alph_invalid": 0.1,
+                "beta_invalid": 0.9,
+            },
+        ).model_dump(),
+        **strategy_commons,
+    },
+    error=ValueError,
+    message="The provided keys for the weights must match the keys of the output features.",
+)
+
+specs.add_valid(
     strategies.EntingStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -162,6 +223,7 @@ specs.add_valid(
         "seed": 42,
     },
 )
+
 
 tempdomain = domain.valid().obj()
 
