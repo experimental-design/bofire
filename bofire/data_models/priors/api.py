@@ -11,6 +11,7 @@ AbstractPrior = Prior
 AnyPrior = Union[
     GammaPrior,
     NormalPrior,
+    LKJPrior,
 ]
 
 # default priors of interest
