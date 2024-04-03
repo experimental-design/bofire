@@ -47,7 +47,7 @@ for rate in [-1.0, 0]:
 specs.add_valid(
     priors.LKJPrior,
     lambda: {
-        "n_tasks": random.randint(1, 10),
+        "n_tasks": random.randint(2, 10),
         "shape": random.random(),
         "sd_prior": {
             "type": "GammaPrior",

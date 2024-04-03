@@ -18,4 +18,4 @@ class LKJPrior(Prior):
     type: Literal["LKJPrior"] = "LKJPrior"
     shape: PositiveFloat
     sd_prior: GammaPrior
-    n_tasks: int = 1
+    n_tasks: int = 2
