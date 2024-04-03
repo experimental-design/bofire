@@ -59,7 +59,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.model = botorch.models.MultiTaskGP(  # type: ignore
             train_X=tX,
             train_Y=tY,
-            task_feature=X.columns.get_loc(
+            task_feature=transformed_X.columns.get_loc(
                 self.task_feature_key
             ),  # obtain the fidelity index
             covar_module=kernels.map(

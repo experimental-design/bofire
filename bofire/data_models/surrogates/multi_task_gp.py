@@ -106,24 +106,13 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         """
         return isinstance(my_type, type(ContinuousOutput))
 
-    @field_validator("inputs", mode="before")
+    @field_validator("inputs")
     @classmethod
-    def validate_task_inputs(cls, v, info):
-        if isinstance(v, dict):
-            if "inputs" in v:
-                check_types = [
-                    1 if feat["type"] == "TaskInput" else 0 for feat in v["features"]
-                ]
-                if sum(check_types) != 1:
-                    raise ValueError(
-                        "Exactly one task input is required for multi-task GPs."
-                    )
+    def validate_task_inputs(cls, inputs: Inputs):
 
-            return v
-
-        if len(v.get_keys(TaskInput)) != 1:
+        if len(inputs.get_keys(TaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
-        return v
+        return inputs
 
     @field_validator("input_preprocessing_specs")
     @classmethod
