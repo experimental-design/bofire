@@ -15,7 +15,7 @@ def map_GammaPrior(data_model: data_models.GammaPrior) -> gpytorch.priors.GammaP
 
 def map_LKJPrior(data_model: data_models.LKJPrior) -> gpytorch.priors.LKJPrior:
     return gpytorch.priors.LKJCovariancePrior(
-        n=data_model.n_tasks, eta=data_model.eta, sd_prior=map(data_model.sd_prior)
+        n=data_model.n_tasks, eta=data_model.shape, sd_prior=map(data_model.sd_prior)
     )
 
 
