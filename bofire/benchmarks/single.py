@@ -443,19 +443,17 @@ class MultiTaskHimmelblau(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1 and x_2
+            pd.DataFrame: x values of optima. Colums are x_1, x_2, task_id
         """
-        x = np.array(
-            [
-                [3.0, 2.0],
-                [-2.805118, 3.131312],
-                [-3.779310, -3.283186],
-                [3.584428, -1.848126],
-            ]
-        )
-        y = np.zeros(4)
+        out = [
+            [3.0, 2.0, "task_1", 0],
+            [-2.805118, 3.131312, "task_1", 0],
+            [-3.779310, -3.283186, "task_1", 0],
+            [3.584428, -1.848126, "task_1", 0],
+        ]
+
         return pd.DataFrame(
-            np.c_[x, y],
+            out,
             columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
         )
 
