@@ -8,7 +8,7 @@ import bofire
 import bofire.kernels.api as kernels
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     LinearKernel,
     MaternKernel,
     MultiplicativeKernel,
@@ -28,7 +28,7 @@ EQUIVALENTS = {
     AdditiveKernel: gpytorch.kernels.AdditiveKernel,
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
-    HammondDistanceKernel: CategoricalKernel,
+    HammingDistanceKernel: CategoricalKernel,
 }
 
 

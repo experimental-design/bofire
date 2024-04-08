@@ -22,7 +22,6 @@ specs = Specs([])
 
 strategy_commons = {
     "num_raw_samples": 1024,
-    "num_sobol_samples": 512,
     "num_restarts": 8,
     "descriptor_method": CategoricalMethodEnum.EXHAUSTIVE,
     "categorical_method": CategoricalMethodEnum.EXHAUSTIVE,
@@ -34,6 +33,8 @@ strategy_commons = {
     "frequency_check": 1,
     "frequency_hyperopt": 0,
     "folds": 5,
+    "maxiter": 2000,
+    "batch_limit": 6,
 }
 
 
@@ -41,6 +42,7 @@ specs.add_valid(
     strategies.QehviStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
+        "num_sobol_samples": 512,
         **strategy_commons,
     },
 )
@@ -48,6 +50,7 @@ specs.add_valid(
     strategies.QnehviStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
+        "num_sobol_samples": 512,
         **strategy_commons,
         "alpha": 0.4,
     },
@@ -106,6 +109,27 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.EntingStrategy,
+    lambda: {
+        "domain": domain.valid().obj().model_dump(),
+        "beta": 1.0,
+        "bound_coeff": 0.5,
+        "acq_sense": "exploration",
+        "dist_trafo": "normal",
+        "dist_metric": "euclidean_squared",
+        "cat_metric": "overlap",
+        "num_boost_round": 100,
+        "max_depth": 3,
+        "min_data_in_leaf": 1,
+        "min_data_per_group": 1,
+        "verbose": -1,
+        "solver_name": "gurobi",
+        "solver_verbose": False,
+        "solver_params": {},
+        "kappa_fantasy": 10.0,
+    },
+)
+specs.add_valid(
     strategies.RandomStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -149,14 +173,13 @@ specs.add_valid(
             strategies.Step(
                 strategy_data=strategies.RandomStrategy(domain=tempdomain),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=10),
-                max_parallelism=2,
             ).model_dump(),
             strategies.Step(
                 strategy_data=strategies.QehviStrategy(
                     domain=tempdomain,
+                    batch_limit=1,
                 ),
                 condition=strategies.NumberOfExperimentsCondition(n_experiments=30),
-                max_parallelism=2,
             ).model_dump(),
         ],
         "seed": 42,

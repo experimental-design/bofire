@@ -426,10 +426,11 @@ class Domain(BaseModel):
                 for i in range(experiments.shape[0])
             ]
 
-        # round it
-        experiments[self.get_feature_keys(ContinuousInput)] = experiments[
-            self.get_feature_keys(ContinuousInput)
-        ].round(prec)
+        # round it if continuous inputs are present
+        if len(self.inputs.get(ContinuousInput)) > 0:
+            experiments[self.get_feature_keys(ContinuousInput)] = experiments[
+                self.get_feature_keys(ContinuousInput)
+            ].round(prec)
 
         # coerce invalid to nan
         experiments = self.coerce_invalids(experiments)

@@ -8,7 +8,7 @@ from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.feature import _CAT_SEP, TTransform
-from bofire.data_models.types import TDescriptors, TDiscreteVals
+from bofire.data_models.types import Descriptors, DiscreteVals
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -25,8 +25,8 @@ class ContinuousDescriptorInput(ContinuousInput):
     type: Literal["ContinuousDescriptorInput"] = "ContinuousDescriptorInput"
     order_id: ClassVar[int] = 2
 
-    descriptors: TDescriptors
-    values: TDiscreteVals
+    descriptors: Descriptors
+    values: DiscreteVals
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
@@ -71,7 +71,7 @@ class CategoricalDescriptorInput(CategoricalInput):
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
     order_id: ClassVar[int] = 6
 
-    descriptors: TDescriptors
+    descriptors: Descriptors
     values: Annotated[
         List[List[float]],
         Field(min_length=1),

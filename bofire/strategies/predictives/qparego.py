@@ -123,7 +123,7 @@ class QparegoStrategy(BotorchStrategy):
                 X_pending=X_pending if i == 0 else None,
                 constraints=constraint_callables,
                 eta=torch.tensor(etas).to(**tkwargs),
-                mc_samples=self.num_sobol_samples,
+                mc_samples=self.acquisition_function.n_mc_samples,
                 prune_baseline=True,
                 cache_root=True if isinstance(self.model, GPyTorchModel) else False,
             )

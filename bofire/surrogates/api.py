@@ -1,4 +1,5 @@
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
+from bofire.surrogates.deterministic import LinearDeterministicSurrogate
 from bofire.surrogates.empirical import EmpiricalSurrogate
 from bofire.surrogates.mapper import map
 from bofire.surrogates.mixed_single_task_gp import MixedSingleTaskGPSurrogate

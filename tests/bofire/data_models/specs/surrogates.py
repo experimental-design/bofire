@@ -12,7 +12,7 @@ from bofire.data_models.features.api import (
     TaskInput,
 )
 from bofire.data_models.kernels.api import (
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -88,7 +88,7 @@ specs.add_valid(
         ).model_dump(),
         "aggregations": None,
         "continuous_kernel": MaternKernel(ard=True, nu=2.5).model_dump(),
-        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
@@ -384,7 +384,7 @@ specs.add_valid(
         "continuous_kernel": MaternKernel(
             ard=True, nu=random.choice([0.5, 1.5, 2.5])
         ).model_dump(),
-        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {
@@ -395,6 +395,73 @@ specs.add_valid(
         "dump": None,
         "hyperconfig": None,
     },
+)
+
+specs.add_valid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0, "c": 5.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="coefficient keys do not match input feature keys.",
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                CategoricalInput(key="b", categories=["a", "b"]),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
 )
 
 specs.add_valid(
@@ -498,3 +565,4 @@ specs.add_invalid(
     },
     error=ValueError,
 )
+             

@@ -6,14 +6,14 @@ from pydantic import Field, field_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import AnyOutput
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 
 
 class Surrogate(BaseModel):
     type: str
     inputs: Inputs
     outputs: Outputs
-    input_preprocessing_specs: TInputTransformSpecs = Field(
+    input_preprocessing_specs: InputTransformSpecs = Field(
         default_factory=dict, validate_default=True
     )
     dump: Optional[str] = None

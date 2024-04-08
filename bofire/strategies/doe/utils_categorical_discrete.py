@@ -16,7 +16,7 @@ from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.feature import Feature, Output
-from bofire.data_models.types import TDiscreteVals
+from bofire.data_models.types import DiscreteVals
 
 
 def discrete_to_relaxable_domain_mapper(
@@ -24,7 +24,7 @@ def discrete_to_relaxable_domain_mapper(
 ) -> Tuple[
     Domain,
     List[List[ContinuousInput]],
-    Dict[str, Tuple[ContinuousInput, TDiscreteVals]],
+    Dict[str, Tuple[ContinuousInput, DiscreteVals]],
 ]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
