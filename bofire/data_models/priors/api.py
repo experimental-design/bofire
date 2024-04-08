@@ -2,6 +2,7 @@ from functools import partial
 from typing import Union
 
 from bofire.data_models.priors.gamma import GammaPrior
+from bofire.data_models.priors.lkj import LKJPrior
 from bofire.data_models.priors.normal import NormalPrior
 from bofire.data_models.priors.prior import Prior
 
@@ -10,6 +11,7 @@ AbstractPrior = Prior
 AnyPrior = Union[
     GammaPrior,
     NormalPrior,
+    LKJPrior,
 ]
 
 # default priors of interest
@@ -25,3 +27,8 @@ BOTORCH_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
 MBO_LENGTHCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.2)
 MBO_NOISE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 MBO_OUTPUTSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
+
+# prior for multitask kernel
+LKJ_PRIOR = partial(
+    LKJPrior, shape=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
+)
