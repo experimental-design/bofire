@@ -70,9 +70,11 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 ),  # kernel is for input space so we subtract one for the fidelity index
                 ard_num_dims=1,  # this keyword is ingored
             ),
-            outcome_transform=Standardize(m=tY.shape[-1])
-            if self.output_scaler == ScalerEnum.STANDARDIZE
-            else None,
+            outcome_transform=(
+                Standardize(m=tY.shape[-1])
+                if self.output_scaler == ScalerEnum.STANDARDIZE
+                else None
+            ),
             input_transform=scaler,
         )
 

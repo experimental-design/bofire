@@ -110,10 +110,14 @@ class BotorchStrategy(PredictiveStrategy):
             Dict[str, int]: The dictionary with the settings.
         """
         return {
-            "batch_limit": self.batch_limit
-            if len(self.domain.constraints.get([NChooseKConstraint, ProductConstraint]))
-            == 0
-            else 1,  # type: ignore
+            "batch_limit": (
+                self.batch_limit
+                if len(
+                    self.domain.constraints.get([NChooseKConstraint, ProductConstraint])
+                )
+                == 0
+                else 1
+            ),  # type: ignore
             "maxiter": self.maxiter,
         }
 

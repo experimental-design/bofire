@@ -565,4 +565,3 @@ specs.add_invalid(
     },
     error=ValueError,
 )
-             
