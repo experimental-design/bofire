@@ -36,7 +36,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.output_scaler = data_model.output_scaler
         self.noise_prior = data_model.noise_prior
         self.task_prior = data_model.task_prior
-        if isinstance(data_model.task_prior, LKJPrior):
+        if isinstance(self.task_prior, LKJPrior):
             # set the number of tasks in the prior
             self.task_prior.n_tasks = self.n_tasks
         # obtain the name of the task feature
@@ -99,7 +99,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             preds = self.model.posterior(X=X, observation_noise=False).mean.cpu().detach().numpy()  # type: ignore
             vars = self.model.posterior(X=X, observation_noise=False).variance.cpu().detach().numpy()  # type: ignore
             # add the observation noise to the stds
-            stds = np.sqrt(vars + self.model.likelihood.noise.cpu().detach().numpy())
+            stds = np.sqrt(vars + self.model.likelihood.noise.cpu().detach().numpy())  # type: ignore
         return preds, stds
 
 
