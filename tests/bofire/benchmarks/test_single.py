@@ -8,6 +8,7 @@ from bofire.benchmarks.single import (
     DiscreteHimmelblau,
     Hartmann,
     Himmelblau,
+    MultiTaskHimmelblau,
     _CategoricalDiscreteHimmelblau,
 )
 
@@ -41,6 +42,8 @@ def test_hartmann():
         (Branin, False, {}),
         (Branin30, True, {}),
         (Branin30, False, {}),
+        (MultiTaskHimmelblau, False, {}),
+        (MultiTaskHimmelblau, True, {}),
         # TO DO: Implement feature that tests Ackley for categorical and descriptive inputs.
         # (Ackley, {"categorical": True}),
         # (Ackley, {"descriptor": True}),

@@ -17,6 +17,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    TaskInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -377,6 +378,82 @@ class Himmelblau(Benchmark):
         y = np.zeros(4)
         return pd.DataFrame(
             np.c_[x, y],
+            columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
+        )
+
+
+class MultiTaskHimmelblau(Benchmark):
+    """Himmelblau function for testing optimization algorithms
+    Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
+    """
+
+    def __init__(self, use_constraints: bool = False, **kwargs):
+        """Initialiszes class of type Himmelblau.
+
+        Args:
+            best_possible_f (float, optional): Not implemented yet. Defaults to 0.0.
+            use_constraints (bool, optional): Whether constraints should be used or not (Not implemented yet.). Defaults to False.
+
+        Raises:
+            ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
+        """
+        super().__init__(**kwargs)
+        self.use_constraints = use_constraints
+        inputs = []
+
+        inputs.append(TaskInput(key="task_id", categories=["task_1", "task_2"]))
+        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+
+        objective = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", objective=objective)
+        if self.use_constraints:
+            raise ValueError("Not implemented yet!")
+        self._domain = Domain(
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[output_feature]),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Evaluates benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+        """
+        # initialize y outputs
+        Y = pd.DataFrame({"y": np.zeros(len(X)), "valid_y": 0})
+        # evaluate task 1
+        X_temp = X.query("task_id == 'task_1'").eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=False
+        )
+        Y.loc[X_temp.index, "y"] = X_temp["y"]
+        Y.loc[X_temp.index, "valid_y"] = 1
+        # evaluate task 2
+        X_temp = X.query("task_id == 'task_2'").eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2", inplace=False
+        )
+        Y.loc[X_temp.index, "y"] = X_temp["y"]
+        Y.loc[X_temp.index, "valid_y"] = 1
+        return Y
+
+    def get_optima(self) -> pd.DataFrame:
+        """Returns positions of optima of the benchmark function.
+
+        Returns:
+            pd.DataFrame: x values of optima. Colums are x_1, x_2, task_id
+        """
+        out = [
+            [3.0, 2.0, "task_1", 0],
+            [-2.805118, 3.131312, "task_1", 0],
+            [-3.779310, -3.283186, "task_1", 0],
+            [3.584428, -1.848126, "task_1", 0],
+        ]
+
+        return pd.DataFrame(
+            out,
             columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
         )
 

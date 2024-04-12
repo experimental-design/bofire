@@ -290,9 +290,9 @@ class RandomStrategy(Strategy):
                 n=1,
                 q=n,
                 bounds=bounds.to(**tkwargs),
-                inequality_constraints=unfixed_ineqs
-                if len(unfixed_ineqs) > 0  # type: ignore
-                else None,
+                inequality_constraints=(
+                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
+                ),
                 equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
                 n_burnin=n_burnin,
                 thinning=n_thinning,
