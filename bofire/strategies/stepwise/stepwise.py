@@ -1,4 +1,4 @@
-from typing import Literal, Optional, Tuple, TypeVar, Union
+from typing import List, Literal, Optional, Tuple, TypeVar, Union
 
 import pandas as pd
 from pydantic import PositiveInt
@@ -6,6 +6,7 @@ from pydantic import PositiveInt
 import bofire.transforms.api as transforms
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.strategies.api import StepwiseStrategy as data_model
+from bofire.strategies.data_models.candidate import Candidate
 from bofire.strategies.mapper_actual import map as map_actual
 from bofire.strategies.strategy import Strategy
 from bofire.transforms.transform import Transform
@@ -69,3 +70,11 @@ class StepwiseStrategy(Strategy):
             return transform.untransform_candidates(candidates)
         else:
             return candidates
+
+    def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
+
+        strategy, _ = self.get_step()
+
+        candiate_list = strategy.to_candidates(candidates=candidates)
+
+        return candiate_list
