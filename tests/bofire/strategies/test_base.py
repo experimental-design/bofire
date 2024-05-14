@@ -763,7 +763,7 @@ def test_base_predict(domain, data, acquisition_function):
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy.tell(experiments=data)
     predictions = myStrategy.predict(data)
-    assert len(predictions.columns.tolist()) == 3 * len(domain.get_feature_keys(Output))
+    assert len(predictions.columns.tolist()) == 3 * len(domain.outputs.get_keys(Output))
     assert data.index[-1] == predictions.index[-1]
 
 

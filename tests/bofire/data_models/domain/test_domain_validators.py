@@ -59,16 +59,16 @@ def generate_experiments(
             {
                 **{
                     f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)  # type: ignore
-                    for f in domain.get_features(ContinuousInput)
+                    for f in domain.inputs.get(ContinuousInput)
                 },
                 **{
                     f.key: random.choice(f.values)  # type: ignore
-                    for f in domain.get_features(DiscreteInput)
+                    for f in domain.inputs.get(DiscreteInput)
                 },
                 **{
                     k: random.random()
                     for k in [
-                        *domain.get_feature_keys(ContinuousOutput),
+                        *domain.outputs.get_keys(ContinuousOutput),
                     ]
                 },
                 **{
@@ -77,7 +77,7 @@ def generate_experiments(
                         if not only_allowed_categories
                         else random.choice(f.get_allowed_categories())
                     )  # type: ignore
-                    for f in domain.get_features(CategoricalInput)
+                    for f in domain.inputs.get(CategoricalInput)
                 },
             }
             for _ in range(row_count)
@@ -86,7 +86,7 @@ def generate_experiments(
     if include_labcode:
         experiments["labcode"] = [str(i) for i in range(row_count)]
     if force_all_categories:
-        for feat in domain.get_features(CategoricalInput):
+        for feat in domain.inputs.get(CategoricalInput):
             categories = (
                 feat.categories  # type: ignore
                 if len(feat.categories) <= row_count  # type: ignore
@@ -103,23 +103,23 @@ def generate_candidates(domain: Domain, row_count: int = 5):
             {
                 **{
                     feat.key: random.uniform(feat.lower_bound, feat.upper_bound)  # type: ignore
-                    for feat in domain.get_features(ContinuousInput)
+                    for feat in domain.inputs.get(ContinuousInput)
                 },
                 **{
                     f"{k}_pred": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutput)
+                    for k in domain.outputs.get_keys(ContinuousOutput)
                 },
                 **{
                     f"{k}_sd": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutput)
+                    for k in domain.outputs.get_keys(ContinuousOutput)
                 },
                 **{
                     f"{k}_des": random.random()
-                    for k in domain.get_feature_keys(ContinuousOutput)
+                    for k in domain.outputs.get_keys(ContinuousOutput)
                 },
                 **{
                     f.key: random.choice(f.get_allowed_categories())  # type: ignore
-                    for f in domain.get_features(CategoricalInput)
+                    for f in domain.inputs.get(CategoricalInput)
                 },
             }
             for _ in range(row_count)
@@ -130,12 +130,12 @@ def generate_candidates(domain: Domain, row_count: int = 5):
 def generate_invalid_candidates_bounds(domain, row_count: int = 5, error="lower"):
     candidates = generate_candidates(domain, row_count)
     if error == "lower":
-        candidates.loc[0, domain.get_feature_keys(ContinuousInput)[0]] = (
-            domain.get_features(ContinuousInput)[0].lower_bound - 0.1
+        candidates.loc[0, domain.inputs.get_keys(ContinuousInput)[0]] = (
+            domain.inputs.get(ContinuousInput)[0].lower_bound - 0.1
         )
     else:
-        candidates.loc[0, domain.get_feature_keys(ContinuousInput)[0]] = (
-            domain.get_features(ContinuousInput)[0].upper_bound + 0.1
+        candidates.loc[0, domain.inputs.get_keys(ContinuousInput)[0]] = (
+            domain.inputs.get(ContinuousInput)[0].upper_bound + 0.1
         )
     return candidates
 
@@ -278,12 +278,12 @@ def test_domain_validate_candidates_valid(
     [
         (d, generate_candidates(d).drop(key, axis=1))
         for d in [domain0]
-        for key in d.get_feature_keys(Input)
+        for key in d.inputs.get_keys(Input)
     ]
     + [
         (d, generate_candidates(d).drop(key, axis=1))
         for d in [domain0]
-        for key_ in d.get_feature_keys(Output)
+        for key_ in d.outputs.get_keys(Output)
         for key in [f"{key_}_pred", f"{key_}_sd", f"{key_}_des"]
     ],
 )
@@ -321,12 +321,12 @@ def test_domain_validate_candidates_invalid_categories():
     [
         (d, generate_candidates(d), key)
         for d in domains
-        for key in d.get_feature_keys(Input)
+        for key in d.inputs.get_keys(Input)
     ]
     + [
         (d, generate_candidates(d), key)
         for d in domains
-        for key_ in d.get_feature_keys(ContinuousOutput)
+        for key_ in d.outputs.get_keys(ContinuousOutput)
         for key in [f"{key_}_pred", f"{key_}_sd", f"{key_}_des"]
     ],
 )

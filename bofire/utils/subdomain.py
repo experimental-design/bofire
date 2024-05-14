@@ -31,7 +31,7 @@ def get_subdomain(
     inputs = []
     for key in feature_keys:
         try:
-            feat = domain.get_feature(key)
+            feat = (domain.inputs + domain.outputs).get_by_key(key)
         except KeyError:
             raise ValueError(f"Feature {key} not present in domain.")
         if isinstance(feat, Input):

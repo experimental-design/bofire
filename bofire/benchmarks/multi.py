@@ -61,7 +61,7 @@ class DTLZ2(Benchmark):
             outputs=Outputs(features=outputs),
         )
         self.ref_point = {
-            feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
+            feat: 1.1 for feat in domain.outputs.get_keys(ContinuousOutput)
         }
         self._domain = domain
 
@@ -96,7 +96,7 @@ class DTLZ2(Benchmark):
         Returns:
             pd.DataFrame: Function values in output vector. Columns are f0 and f1.
         """
-        X = candidates[self.domain.get_feature_keys(Input)].values  # type: ignore
+        X = candidates[self.domain.inputs.get_keys(Input)].values  # type: ignore
         X_m = X[..., -self.k :]  # type: ignore
         g_X = ((X_m - 0.5) ** 2).sum(axis=-1)  # type: ignore
         g_X_plus1 = 1 + g_X
@@ -110,7 +110,9 @@ class DTLZ2(Benchmark):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
 
-        col_names = self.domain.outputs.get_keys_by_objective(includes=MinimizeObjective)  # type: ignore
+        col_names = self.domain.outputs.get_keys_by_objective(
+            includes=MinimizeObjective
+        )  # type: ignore
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[

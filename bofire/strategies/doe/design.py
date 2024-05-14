@@ -118,7 +118,7 @@ def find_local_max_ipopt_BaB(
                         ),
                         None,
                     ),
-                    columns=domain.get_feature_keys(includes=Input),
+                    columns=domain.inputs.get_keys(includes=Input),
                 ),
             ]
         ).reset_index(drop=True)
@@ -265,7 +265,7 @@ def find_local_max_ipopt_exhaustive(
                         ),
                         None,
                     ),
-                    columns=domain.get_feature_keys(includes=Input),
+                    columns=domain.inputs.get_keys(includes=Input),
                 ),
             ]
         ).reset_index(drop=True)
