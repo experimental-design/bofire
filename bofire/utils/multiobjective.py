@@ -38,7 +38,7 @@ def get_ref_point_mask(
         raise ValueError("At least two output features have to be provided.")
     mask = []
     for key in output_feature_keys:
-        feat = domain.get_feature(key)
+        feat = domain.outputs.get_by_key(key)
         if isinstance(feat.objective, MaximizeObjective):  # type: ignore
             mask.append(1.0)
         elif isinstance(feat.objective, MinimizeObjective):  # type: ignore

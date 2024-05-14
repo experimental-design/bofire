@@ -114,3 +114,21 @@ class Constraints(BaseModel, Generic[C]):
                 exact=exact,
             )
         )
+
+    def get_reps_df(self):
+        """Provides a tabular overwiev of all constraints within the domain
+
+        Returns:
+            pd.DataFrame: DataFrame listing all constraints of the domain with a description
+        """
+        df = pd.DataFrame(
+            index=range(len(self.constraints)),
+            columns=["Type", "Description"],
+            data={
+                "Type": [feat.__class__.__name__ for feat in self.get(Constraint)],
+                "Description": [
+                    constraint.__str__() for constraint in self.get(Constraint)
+                ],
+            },
+        )
+        return df

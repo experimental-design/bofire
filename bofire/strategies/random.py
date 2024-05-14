@@ -243,13 +243,13 @@ class RandomStrategy(Strategy):
 
         lower = [
             feat.lower_bound  # type: ignore
-            for feat in domain.get_features(ContinuousInput)
+            for feat in domain.inputs.get(ContinuousInput)
             if feat.key not in fixed_features.keys()  # type: ignore
         ]
 
         upper = [
             feat.upper_bound  # type: ignore
-            for feat in domain.get_features(ContinuousInput)
+            for feat in domain.inputs.get(ContinuousInput)
             if feat.key not in fixed_features.keys()  # type: ignore
         ]
 
@@ -305,7 +305,7 @@ class RandomStrategy(Strategy):
 
             free_continuals = [
                 feat.key
-                for feat in domain.get_features(ContinuousInput)
+                for feat in domain.inputs.get(ContinuousInput)
                 if feat.key not in fixed_features.keys()  # type: ignore
             ]
             # setup the output

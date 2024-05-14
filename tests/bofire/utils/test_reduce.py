@@ -114,8 +114,8 @@ def test_reduce_1_independent_linear_equality_constraints():
 
     assert len(_domain.inputs) == 3
     assert len(_domain.constraints) == 0
-    assert _domain.get_feature("x2").lower_bound == -1.0
-    assert _domain.get_feature("x2").upper_bound == -1.0
+    assert _domain.inputs.get_by_key("x2").lower_bound == -1.0
+    assert _domain.inputs.get_by_key("x2").upper_bound == -1.0
 
     # define problem: irreducible problem
     domain = Domain(
@@ -191,8 +191,8 @@ def test_reduce_2_independent_linear_equality_constraints():
 
     assert len(_domain.inputs) == 1
     assert _domain.inputs[0].key == "x3"
-    assert _domain.get_feature("x3").lower_bound == -1.0
-    assert _domain.get_feature("x3").upper_bound == 1.0
+    assert _domain.inputs.get_by_key("x3").lower_bound == -1.0
+    assert _domain.inputs.get_by_key("x3").upper_bound == 1.0
 
     assert transform.equalities == [("x1", ["x3"], [-1.0, 0.0]), ("x2", [], [1.0])]
 
@@ -260,13 +260,19 @@ def test_doc_simple():
 
     _domain, transform = reduce_domain(domain)
 
-    assert len(_domain.get_features()) == 3
+    assert len(_domain.inputs + _domain.outputs) == 3
     assert np.allclose(
-        [_domain.get_feature("x2").lower_bound, _domain.get_feature("x2").upper_bound],
+        [
+            _domain.inputs.get_by_key("x2").lower_bound,
+            _domain.inputs.get_by_key("x2").upper_bound,
+        ],
         [0.0, 0.8],
     )
     assert np.allclose(
-        [_domain.get_feature("x3").lower_bound, _domain.get_feature("x3").upper_bound],
+        [
+            _domain.inputs.get_by_key("x3").lower_bound,
+            _domain.inputs.get_by_key("x3").upper_bound,
+        ],
         [0.3, 0.9],
     )
 
@@ -332,27 +338,42 @@ def test_doc_complex():
     domain = Domain(inputs=inputs, constraints=constraints)
     _domain, transform = reduce_domain(domain)
 
-    assert len(_domain.get_features()) == 7
-    assert len(_domain.get_features(ContinuousInput)) == 5
+    assert len(_domain.inputs + _domain.outputs) == 7
+    assert len(_domain.inputs.get(ContinuousInput)) == 5
 
     assert np.allclose(
-        [_domain.get_feature("A2").lower_bound, _domain.get_feature("A2").upper_bound],
+        [
+            _domain.inputs.get_by_key("A2").lower_bound,
+            _domain.inputs.get_by_key("A2").upper_bound,
+        ],
         [0.0, 0.8],
     )
     assert np.allclose(
-        [_domain.get_feature("A3").lower_bound, _domain.get_feature("A3").upper_bound],
+        [
+            _domain.inputs.get_by_key("A3").lower_bound,
+            _domain.inputs.get_by_key("A3").upper_bound,
+        ],
         [0.0, 0.9],
     )
     assert np.allclose(
-        [_domain.get_feature("A4").lower_bound, _domain.get_feature("A4").upper_bound],
+        [
+            _domain.inputs.get_by_key("A4").lower_bound,
+            _domain.inputs.get_by_key("A4").upper_bound,
+        ],
         [0.0, 0.9],
     )
     assert np.allclose(
-        [_domain.get_feature("B2").lower_bound, _domain.get_feature("B2").upper_bound],
+        [
+            _domain.inputs.get_by_key("B2").lower_bound,
+            _domain.inputs.get_by_key("B2").upper_bound,
+        ],
         [0.0, 0.8],
     )
     assert np.allclose(
-        [_domain.get_feature("B3").lower_bound, _domain.get_feature("B3").upper_bound],
+        [
+            _domain.inputs.get_by_key("B3").lower_bound,
+            _domain.inputs.get_by_key("B3").upper_bound,
+        ],
         [0.1, 1.0],
     )
     assert all(
@@ -392,82 +413,6 @@ def test_doc_complex():
         ],
     )
     assert np.allclose(_domain.constraints[4].rhs, 0.7)
-
-
-# def test_AffineTransform_augment_data():
-#    domain = Domain()
-#    domain.add_feature(
-#        ContinuousInputFeature(key="x1", bounds=(0.1, 1),)
-#    )
-#    domain.add_feature(
-#        ContinuousInputFeature(key="x2", bounds=(0, 0.8),)
-#    )
-#    domain.add_feature(
-#        ContinuousInputFeature(key="x3", bounds=(0.3, 0.9),)
-#    )
-#    domain.add_feature(ContinuousOutputFeature(key="y"))
-#    domain.add_constraint(
-#        LinearEqualityConstraint(
-#            features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
-#        )
-#    )
-#
-#    _domain, transform = reduce_domain(domain)
-#
-#    rec = RandomStrategy.from_domain(domain)
-#    data, _ = rec.ask(4)
-#    data.drop(columns=["y_pred", "y_sd", "y_des"], inplace=True)
-#    data["y"] = [random.random() for _ in range(4)]
-#    data["valid_y"] = 1
-#    domain.validate_experiments(data)
-#
-#    data_rec = transform.augment_data(data[_domain.get_feature_keys()])
-#    assert np.allclose(
-#        data[domain.get_feature_keys()].values,
-#        data_rec[domain.get_feature_keys()].values,
-#    )
-#    domain.validate_experiments(data_rec)
-
-
-# def test_AffineTransform_drop_data():
-#    # define problem and transform
-#    domain = Domain()
-#    domain.add_feature(
-#        ContinuousInputFeature(key="x1", bounds=(0.1, 1),)
-#    )
-#    domain.add_feature(
-#        ContinuousInputFeature(key="x2", bounds=(0, 0.8),)
-#    )
-#    domain.add_feature(
-#        ContinuousInputFeature(key="x3", bounds=(0.3, 0.9),)
-#    )
-#    domain.add_feature(ContinuousOutputFeature(key="y"))
-#    domain.add_constraint(
-#        LinearEqualityConstraint(
-#            features=["x1", "x2", "x3"], coefficients=[1.0, 1.0, 1.0], rhs=1
-#        )
-#    )
-#
-#    _domain, transform = reduce_domain(domain)
-#
-#    rec = RandomStrategy.from_domain(domain)
-#    data, _ = rec.ask(4)
-#    data.drop(columns=["y_pred", "y_sd", "y_des"], inplace=True)
-#    data["y"] = [random.random() for _ in range(4)]
-#    data["valid_y"] = 1
-#    domain.validate_experiments(data)
-#
-#    _data = transform.drop_data(data)
-#
-#    with pytest.raises(ValueError):
-#        domain.validate_experiments(_data)
-#
-#    _domain.validate_experiments(_data)
-#
-#    assert np.allclose(
-#        data[_domain.get_feature_keys()].values,
-#        _data[_domain.get_feature_keys()].values,
-#    )
 
 
 def test_reduce_large_problem():
@@ -531,11 +476,17 @@ def test_reduce_large_problem():
     assert np.allclose(_domain.constraints[2].rhs, 1.0)
 
     assert np.allclose(
-        [_domain.get_feature("x3").lower_bound, _domain.get_feature("x3").upper_bound],
+        [
+            _domain.inputs.get_by_key("x3").lower_bound,
+            _domain.inputs.get_by_key("x3").upper_bound,
+        ],
         [-0.0, 5000.0],
     )
     assert np.allclose(
-        [_domain.get_feature("x4").lower_bound, _domain.get_feature("x4").upper_bound],
+        [
+            _domain.inputs.get_by_key("x4").lower_bound,
+            _domain.inputs.get_by_key("x4").upper_bound,
+        ],
         [-1.0, 1.0],
     )
 

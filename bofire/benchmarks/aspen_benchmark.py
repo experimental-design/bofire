@@ -64,7 +64,7 @@ class Aspen_benchmark(Benchmark):
         self._domain = domain
         self.additional_output_keys = additional_output_keys or []
 
-        for key in self.domain.get_feature_keys():
+        for key in self.domain.inputs.get_keys() + self.domain.outputs.get_keys():
             # Check, if every input and output variable has a path to Aspen provided.
             if key not in paths.keys():
                 raise ValueError("Path for " + key + " is not provided.")

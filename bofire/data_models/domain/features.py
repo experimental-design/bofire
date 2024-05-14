@@ -38,6 +38,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    Feature,
     Input,
     MolecularInput,
     Output,
@@ -185,6 +186,18 @@ class _BaseFeatures(BaseModel, Generic[F]):
                 exact=exact,
             )
         ]
+
+    def get_reps_df(self) -> pd.DataFrame:
+        """Returns a pandas dataframe describing the features contained in the optimization domain."""
+        df = pd.DataFrame(
+            index=self.get_keys(Feature),
+            columns=["Type", "Description"],
+            data={
+                "Type": [feat.__class__.__name__ for feat in self.get(Feature)],
+                "Description": [feat.__str__() for feat in self.get(Feature)],
+            },
+        )
+        return df
 
 
 class Features(_BaseFeatures[AnyFeature]):
