@@ -4,6 +4,9 @@ from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
+from bofire.data_models.strategies.predictives.active_learning import (
+    ActiveLearningStrategy,
+)
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
@@ -34,10 +37,8 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.transforms.api import (  # noqa: F401
-    AnyTransform,
-    DropDataTransform,
-)
+from bofire.data_models.transforms.api import AnyTransform  # noqa: F401
+from bofire.data_models.transforms.api import DropDataTransform
 
 AbstractStrategy = Union[
     Strategy,
@@ -50,6 +51,7 @@ AnyStrategy = Union[ActualStrategy, MetaStrategy]
 
 AnyPredictive = Union[
     SoboStrategy,
+    ActiveLearningStrategy,
     AdditiveSoboStrategy,
     MultiplicativeSoboStrategy,
     CustomSoboStrategy,
