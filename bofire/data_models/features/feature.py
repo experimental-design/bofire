@@ -158,6 +158,3 @@ def is_numeric(s: Union[pd.Series, pd.DataFrame]) -> bool:
 
 def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
-
-
-_CAT_SEP = "_"
