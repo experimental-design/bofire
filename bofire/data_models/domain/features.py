@@ -27,7 +27,6 @@ from typing_extensions import Self
 from bofire.data_models.base import BaseModel
 from bofire.data_models.enum import CategoricalEncodingEnum, SamplingMethodEnum
 from bofire.data_models.features.api import (
-    _CAT_SEP,
     AnyFeature,
     AnyInput,
     AnyOutput,
@@ -44,6 +43,7 @@ from bofire.data_models.features.api import (
     Output,
     TaskInput,
 )
+from bofire.data_models.features.feature import get_encoded_name
 from bofire.data_models.filters import filter_by_attribute, filter_by_class
 from bofire.data_models.molfeatures.api import MolFeatures
 from bofire.data_models.objectives.api import (
@@ -414,7 +414,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     (np.array(range(len(feat.categories))) + counter).tolist()
                 )
                 features2names[feat.key] = tuple(
-                    [f"{feat.key}{_CAT_SEP}{c}" for c in feat.categories]
+                    [get_encoded_name(feat.key, c) for c in feat.categories]
                 )
                 counter += len(feat.categories)
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
@@ -427,7 +427,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     (np.array(range(len(feat.categories) - 1)) + counter).tolist()
                 )
                 features2names[feat.key] = tuple(
-                    [f"{feat.key}{_CAT_SEP}{c}" for c in feat.categories[1:]]
+                    [get_encoded_name(feat.key, c) for c in feat.categories[1:]]
                 )
                 counter += len(feat.categories) - 1
             elif specs[feat.key] == CategoricalEncodingEnum.DESCRIPTOR:
@@ -436,7 +436,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     (np.array(range(len(feat.descriptors))) + counter).tolist()
                 )
                 features2names[feat.key] = tuple(
-                    [f"{feat.key}{_CAT_SEP}{d}" for d in feat.descriptors]
+                    [get_encoded_name(feat.key, d) for d in feat.descriptors]
                 )
                 counter += len(feat.descriptors)
             elif isinstance(specs[feat.key], MolFeatures):
@@ -446,7 +446,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                     (np.array(range(len(descriptor_names))) + counter).tolist()
                 )
                 features2names[feat.key] = tuple(
-                    [f"{feat.key}{_CAT_SEP}{d}" for d in descriptor_names]
+                    [get_encoded_name(feat.key, d) for d in descriptor_names]
                 )
                 counter += len(descriptor_names)
         return features2idx, features2names

@@ -5,11 +5,14 @@ import pandas as pd
 from pydantic import Field, field_validator, model_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import Input, Output, TTransform
+from bofire.data_models.features.feature import (
+    Input,
+    Output,
+    TTransform,
+    get_encoded_name,
+)
 from bofire.data_models.objectives.api import AnyCategoricalObjective
 from bofire.data_models.types import CategoryVals
-
-_CAT_SEP = "_"
 
 
 class CategoricalInput(Input):
@@ -166,10 +169,6 @@ class CategoricalInput(Input):
         """
         return sorted(set(list(set(values.tolist())) + self.get_allowed_categories()))
 
-    def get_encoded_name(self, category: str) -> str:
-        """Returns the names for the encoded column."""
-        return f"{self.key}{_CAT_SEP}{category}"
-
     def to_onehot_encoding(self, values: pd.Series) -> pd.DataFrame:
         """Converts values to a one-hot encoding.
 
@@ -180,7 +179,7 @@ class CategoricalInput(Input):
             pd.DataFrame: One-hot transformed data frame.
         """
         return pd.DataFrame(
-            {self.get_encoded_name(c): values == c for c in self.categories},
+            {get_encoded_name(self.key, c): values == c for c in self.categories},
             dtype=float,
             index=values.index,
         )
@@ -197,7 +196,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: Series with categorical values.
         """
-        cat_cols = [self.get_encoded_name(c) for c in self.categories]
+        cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):
@@ -218,7 +217,7 @@ class CategoricalInput(Input):
             pd.DataFrame: Dummy-hot transformed data frame.
         """
         return pd.DataFrame(
-            {self.get_encoded_name(c): values == c for c in self.categories[1:]},
+            {get_encoded_name(self.key, c): values == c for c in self.categories[1:]},
             dtype=float,
             index=values.index,
         )
@@ -235,7 +234,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: Series with categorical values.
         """
-        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols[1:]]):
