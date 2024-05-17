@@ -135,8 +135,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Optional[Union[Type, List[Type]]] = AnyFeature,
-        excludes: Optional[Union[Type, List[Type]]] = None,
+        includes: Union[Type, List[Type], None] = AnyFeature,
+        excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
         """get features of the domain
