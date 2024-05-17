@@ -139,7 +139,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
-        """Get features of the domain and filter via includes and excludes. Only one of includes or excludes can be set.
+        """Get features of this container and filter via includes and excludes. Only one of includes or excludes can be set.
 
         Args:
             includes: All features in this container that are instances of an include are returned. If None, the include filter is not active.
@@ -170,7 +170,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
-        """Get feature-keys of the domain and filter via includes and excludes. Only one of includes or excludes can be set.
+        """Get feature-keys of this container and filter via includes and excludes. Only one of includes or excludes can be set.
 
         Args:
             includes: All features in this container that are instances of an include are returned. If None, the include filter is not active.
