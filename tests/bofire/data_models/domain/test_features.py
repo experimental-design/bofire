@@ -1,9 +1,12 @@
+from collections.abc import Sequence
+
 import pytest
 from pydantic.error_wrappers import ValidationError
 
 import tests.bofire.data_models.specs.api as specs
 from bofire.data_models.domain.api import Features, Inputs, Outputs
 from bofire.data_models.features.api import (
+    AnyFeature,
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
@@ -150,3 +153,24 @@ def test_features_get_by_keys():
 def test_features_get_by_key_invalid(features, key):
     with pytest.raises(KeyError):
         features.get_by_key(key)
+
+
+def test_exclude_include():
+    def test(includes, excludes, expected: Sequence[Feature]):
+        features = Inputs(features=[if1, if2, if3, if4, if5, if7])
+        filtered = features.get(includes=includes, excludes=excludes)
+        assert set(filtered.get_keys()) == {e.key for e in expected}
+
+    test(includes=None, excludes=[ContinuousInput], expected=[if4, if5, if7])
+    test(includes=[ContinuousInput], excludes=None, expected=[if1, if2, if3])
+    test(includes=[CategoricalInput], excludes=None, expected=[if4, if7])
+    test(includes=None, excludes=[CategoricalInput], expected=[if1, if2, if3, if5])
+    test(includes=AnyFeature, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
+    with pytest.raises(ValueError):
+        test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
+    with pytest.raises(ValueError):
+        test(
+            includes=AnyFeature,
+            excludes=[CategoricalInput],
+            expected=[if1, if2, if3, if5],
+        )

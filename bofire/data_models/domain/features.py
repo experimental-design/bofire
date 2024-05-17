@@ -61,7 +61,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
     """Container of features, both input and output features are allowed.
 
     Attributes:
-        features (List(Features)): list of the features.
+        features: list of the features.
     """
 
     type: Literal["Features"] = "Features"
@@ -115,7 +115,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
         """Get a feature by its key.
 
         Args:
-            key (str): Feature key of the feature of interest
+            key: Feature key of the feature of interest
 
         Returns:
             Feature: Feature of interest
@@ -126,8 +126,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
         """Get features of the domain specified by its keys.
 
         Args:
-            keys (Sequence[str]): List of the keys of the features that should be
-                returned.
+            keys: List of the keys of the features that should be returned.
 
         Returns:
             Features: Features object with the requested features.
@@ -136,17 +135,16 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type]] = None,  # type: ignore
+        includes: Optional[Union[Type, List[Type]]] = AnyFeature,
+        excludes: Optional[Union[Type, List[Type]]] = None,
         exact: bool = False,
     ) -> Self:
         """get features of the domain
 
         Args:
-            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
-            excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-            by_attribute (str, optional): If set it is filtered by the attribute specified in by `by_attribute`. Defaults to None.
+            includes: Feature class or list of specific feature classes to be returned.
+            excludes: Feature class or list of specific feature classes to be excluded from the return.
+            exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned.
 
         Returns:
             List[Feature]: List of features in the domain fitting to the passed requirements.
@@ -164,17 +162,16 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type]] = AnyFeature,
-        excludes: Union[Type, List[Type]] = None,  # type: ignore
+        includes: Union[Type, List[Type], None] = AnyFeature,
+        excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
 
         Args:
-            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
-            excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-
+            includes: Feature class or list of specific feature classes to be returned.
+            excludes: Feature class or list of specific feature classes to be excluded from the return.
+            exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned.
         Returns:
             List[str]: List of feature keys fitting to the passed requirements.
         """
