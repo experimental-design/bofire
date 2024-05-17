@@ -14,6 +14,7 @@ from bofire.data_models.features.api import (
     Feature,
     Output,
 )
+from bofire.data_models.features.descriptor import CategoricalDescriptorInput
 
 # test features container
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
@@ -27,6 +28,11 @@ if7 = specs.features.valid(CategoricalInput).obj(
     key="if7",
     categories=["c", "d", "e"],
     allowed=[True, False, False],
+)
+if8 = specs.features.valid(CategoricalDescriptorInput).obj(
+    key="if8",
+    categories=["d1", "d2", "d3"],
+    allowed=[True, True, True],
 )
 
 
@@ -157,26 +163,28 @@ def test_features_get_by_key_invalid(features, key):
 
 def test_exclude_include():
     def test(includes, excludes, expected: Sequence[Feature]):
-        features = Inputs(features=[if1, if2, if3, if4, if5, if7])
+        features = Inputs(features=[if1, if2, if3, if4, if5, if7, if8])
         filtered = features.get_keys(includes=includes, excludes=excludes)
         assert set(filtered) == {e.key for e in expected}
 
-    test(includes=None, excludes=[ContinuousInput], expected=[if4, if5, if7])
+    test(
+        includes=CategoricalInput,
+        excludes=CategoricalDescriptorInput,
+        expected=[if4, if7],
+    )
+    test(includes=CategoricalInput, excludes=None, expected=[if4, if7, if8])
+    test(includes=None, excludes=[ContinuousInput], expected=[if4, if5, if7, if8])
     test(includes=[ContinuousInput], excludes=None, expected=[if1, if2, if3])
-    test(includes=[CategoricalInput], excludes=None, expected=[if4, if7])
     test(includes=None, excludes=[CategoricalInput], expected=[if1, if2, if3, if5])
-    test(includes=AnyFeature, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
+    test(
+        includes=AnyFeature, excludes=None, expected=[if1, if2, if3, if4, if5, if7, if8]
+    )
+    test(
+        includes=AnyFeature, excludes=[CategoricalInput], expected=[if1, if2, if3, if5]
+    )
 
     with pytest.raises(ValueError, match="no filter provided"):
         test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
-    with pytest.raises(
-        ValueError, match="Only one of includes or excludes can be set."
-    ):
-        test(
-            includes=AnyFeature,
-            excludes=[CategoricalInput],
-            expected=[if1, if2, if3, if5],
-        )
 
 
 if __name__ == "__main__":

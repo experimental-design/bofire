@@ -83,6 +83,9 @@ def filter_by_class(
     if len(includes) == 0:
         includes = [object]
 
+    if len([x for x in includes if x in excludes]) > 0:
+        raise ValueError("includes and excludes overlap")
+
     includes_ = []
     for incl in includes:
         if get_origin(incl) is Union:
@@ -98,16 +101,14 @@ def filter_by_class(
             excludes_.append(excl)
     excludes = excludes_
 
-    if len([x for x in includes if x in excludes]) > 0:
-        raise ValueError("includes and excludes overlap")
-
     if exact:
         return [
             d for d in data if type(key(d)) in includes and type(key(d)) not in excludes
         ]
-    return [
-        d
-        for d in data
-        if isinstance(key(d), tuple(includes))  # type: ignore
-        and not isinstance(key(d), tuple(excludes))  # type: ignore
-    ]
+    else:
+        return [
+            d
+            for d in data
+            if isinstance(key(d), tuple(includes))  # type: ignore
+            and not isinstance(key(d), tuple(excludes))  # type: ignore
+        ]
