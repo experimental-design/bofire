@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.22">
+      <meta name="generator" content="mkdocs-1.6.0, mkdocs-material-9.5.23">
     
     
       
@@ -26,7 +26,7 @@
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.732c4fb1.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.6543a935.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
@@ -1268,6 +1268,15 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.features.feature.get_encoded_name" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_encoded_name()
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1820,7 +1829,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">            pd.DataFrame: One-hot transformed data frame.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">},</span>
+            <span class="p">{</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">},</span>
             <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
             <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
         <span class="p">)</span>
@@ -1837,7 +1846,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.Series: Series with categorical values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
+        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
         <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
         <span class="c1"># easier in the backtransform.</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">]):</span>
@@ -1858,7 +1867,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">            pd.DataFrame: Dummy-hot transformed data frame.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">[</span><span class="mi">1</span><span class="p">:]},</span>
+            <span class="p">{</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">[</span><span class="mi">1</span><span class="p">:]},</span>
             <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
             <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
         <span class="p">)</span>
@@ -1875,7 +1884,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.Series: Series with categorical values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
+        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
         <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
         <span class="c1"># easier in the backtransform.</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]):</span>
@@ -2194,7 +2203,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.Series: Series with categorical values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
+    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
     <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
     <span class="c1"># easier in the backtransform.</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">[</span><span class="mi">1</span><span class="p">:]]):</span>
@@ -2291,7 +2300,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.Series: Series with categorical values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
+    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">]</span>
     <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
     <span class="c1"># easier in the backtransform.</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">]):</span>
@@ -2865,7 +2874,7 @@ that can be used in the optimization</p>
 <span class="sd">        pd.DataFrame: Dummy-hot transformed data frame.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-        <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">[</span><span class="mi">1</span><span class="p">:]},</span>
+        <span class="p">{</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">[</span><span class="mi">1</span><span class="p">:]},</span>
         <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
         <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="p">)</span>
@@ -2937,7 +2946,7 @@ that can be used in the optimization</p>
 <span class="sd">        pd.DataFrame: One-hot transformed data frame.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-        <span class="p">{</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">c</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">:</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">},</span>
+        <span class="p">{</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span> <span class="n">values</span> <span class="o">==</span> <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">},</span>
         <span class="n">dtype</span><span class="o">=</span><span class="nb">float</span><span class="p">,</span>
         <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="p">)</span>
@@ -4698,7 +4707,7 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>  <span class="c1"># type: ignore</span>
-            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">],</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">],</span>
             <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -4714,7 +4723,7 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.Series: Series with categorical values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">]</span>
+        <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">]</span>
         <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
         <span class="c1"># easier in the backtransform.</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">]):</span>
@@ -4897,7 +4906,7 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.Series: Series with categorical values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">]</span>
+    <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">]</span>
     <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
     <span class="c1"># easier in the backtransform.</span>
     <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">([</span><span class="n">c</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">values</span><span class="o">.</span><span class="n">columns</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">cat_cols</span><span class="p">]):</span>
@@ -5165,7 +5174,7 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
         <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>  <span class="c1"># type: ignore</span>
-        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">],</span>
+        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">],</span>
         <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="p">)</span>
 </code></pre></div>
@@ -7371,6 +7380,33 @@ Output            (<a class="autorefs autorefs-internal" title="bofire.data_mode
 
 
 
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.data_models.features.feature.get_encoded_name" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_encoded_name</span><span class="p">(</span><span class="n">feature_key</span><span class="p">,</span> <span class="n">option_name</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Get the name of the encoded column. Option could be the category or the descriptor name.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/features/feature.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_encoded_name</span><span class="p">(</span><span class="n">feature_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">option_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the name of the encoded column. Option could be the category or the descriptor name.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feature_key</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">option_name</span><span class="si">}</span><span class="s2">&quot;</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
 
 
 
@@ -7512,7 +7548,7 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
         <span class="c1"># This method is modified based on the categorical descriptor feature</span>
         <span class="c1"># TODO: move it to more central place</span>
         <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+            <span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
         <span class="p">]</span>
         <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
         <span class="c1"># easier in the backtransform.</span>
@@ -7653,7 +7689,7 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
     <span class="c1"># This method is modified based on the categorical descriptor feature</span>
     <span class="c1"># TODO: move it to more central place</span>
     <span class="n">cat_cols</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+        <span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
     <span class="p">]</span>
     <span class="c1"># we allow here explicitly that the dataframe can have more columns than needed to have it</span>
     <span class="c1"># easier in the backtransform.</span>
@@ -8012,7 +8048,7 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
         <span class="n">descriptor_values</span> <span class="o">=</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
         <span class="n">descriptor_values</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+            <span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
         <span class="p">]</span>
         <span class="n">descriptor_values</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">index</span>
 
@@ -8372,7 +8408,7 @@ Defaults to None.</p></td>
     <span class="n">descriptor_values</span> <span class="o">=</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_values</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
 
     <span class="n">descriptor_values</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="si">}{</span><span class="n">_CAT_SEP</span><span class="si">}{</span><span class="n">d</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
+        <span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">transform_type</span><span class="o">.</span><span class="n">get_descriptor_names</span><span class="p">()</span>
     <span class="p">]</span>
     <span class="n">descriptor_values</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">values</span><span class="o">.</span><span class="n">index</span>
 
@@ -9321,7 +9357,7 @@ Defaults to False.</p></td>
     <script id="__config" type="application/json">{"base": "..", "features": ["toc.integrate"], "search": "../assets/javascripts/workers/search.b8dbb3d2.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
     
     
-      <script src="../assets/javascripts/bundle.5cfa9459.min.js"></script>
+      <script src="../assets/javascripts/bundle.ebd0bdb7.min.js"></script>
       
         <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
       
