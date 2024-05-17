@@ -135,7 +135,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = None,
+        includes: Union[Type, List[Type], None] = AnyFeature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -166,7 +166,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = None,
+        includes: Union[Type, List[Type], None] = AnyFeature,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
