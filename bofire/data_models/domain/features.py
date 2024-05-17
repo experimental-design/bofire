@@ -142,8 +142,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
         """Get features of the domain and filter via includes and excludes. Only one of includes or excludes can be set.
 
         Args:
-            includes: All features in this container that are instances of an include are returned.
-            excludes: All features in this container that are not instances of an exclude are returned.
+            includes: All features in this container that are instances of an include are returned. If None, the include filter is not active.
+            excludes: All features in this container that are not instances of an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned.
 
         Returns:
@@ -173,8 +173,8 @@ class _BaseFeatures(BaseModel, Generic[F]):
         """Get feature-keys of the domain and filter via includes and excludes. Only one of includes or excludes can be set.
 
         Args:
-            includes: All features in this container that are instances of an include are returned.
-            excludes: All features in this container that are not instances of an exclude are returned.
+            includes: All features in this container that are instances of an include are returned. If None, the include filter is not active.
+            excludes: All features in this container that are not instances of an exclude are returned. If None, the exclude filter is not active.
             exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned.
         Returns:
             List of feature keys fitting to the passed requirements.
