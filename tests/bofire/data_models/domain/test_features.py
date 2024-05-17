@@ -166,9 +166,10 @@ def test_exclude_include():
     test(includes=[CategoricalInput], excludes=None, expected=[if4, if7])
     test(includes=None, excludes=[CategoricalInput], expected=[if1, if2, if3, if5])
     test(includes=AnyFeature, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
-    with pytest.raises(ValueError):
-        test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
-    with pytest.raises(ValueError):
+    test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
+    with pytest.raises(
+        ValueError, match="Only one of includes or excludes can be set."
+    ):
         test(
             includes=AnyFeature,
             excludes=[CategoricalInput],

@@ -135,20 +135,24 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,
+        includes: Union[Type, List[Type], None] = None,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
         """get features of the domain
 
         Args:
-            includes: Feature class or list of specific feature classes to be returned.
-            excludes: Feature class or list of specific feature classes to be excluded from the return.
+            includes: All features in this container that are instances of an include are returned.
+            excludes: All features in this container that are not instances of an exclude are returned.
             exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned.
 
         Returns:
-            List[Feature]: List of features in the domain fitting to the passed requirements.
+            List of features in the domain fitting to the passed requirements.
         """
+
+        if includes is not None and excludes is not None:
+            raise ValueError("Only one of includes or excludes can be set.")
+
         return self.__class__(
             features=sorted(
                 filter_by_class(
@@ -162,18 +166,18 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,
+        includes: Union[Type, List[Type], None] = None,
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
         """Method to get feature keys of the domain
 
         Args:
-            includes: Feature class or list of specific feature classes to be returned.
-            excludes: Feature class or list of specific feature classes to be excluded from the return.
+            includes: All features in this container that are instances of an include are returned.
+            excludes: All features in this container that are not instances of an exclude are returned.
             exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned.
         Returns:
-            List[str]: List of feature keys fitting to the passed requirements.
+            List of feature keys fitting to the passed requirements.
         """
         return [
             f.key
