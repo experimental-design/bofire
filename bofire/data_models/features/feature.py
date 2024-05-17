@@ -160,4 +160,6 @@ def is_categorical(s: pd.Series, categories: List[str]):
     return sum(s.isin(categories)) == len(s)
 
 
-_CAT_SEP = "_"
+def get_encoded_name(feature_key: str, option_name: str) -> str:
+    """Get the name of the encoded column. Option could be the category or the descriptor name."""
+    return f"{feature_key}_{option_name}"
