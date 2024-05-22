@@ -49,6 +49,7 @@ setup(
             "cloudpickle>=2.0.0",
             "sympy>=1.12",
             "cvxpy[CLARABEL]",
+            "pyDOE3",
             sklearn_dependency,
         ],
         "entmoot": ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"],
