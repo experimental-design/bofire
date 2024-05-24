@@ -41,7 +41,6 @@ class FractionalFactorialStrategy(Strategy):
         design = pd.concat([design, centers], ignore_index=True)
         # scale the design to 0 and 1
         design = (design + 1.0) / 2.0
-        print(design)
         # scale to correct bounds
         lower, upper = self.domain.inputs.get_bounds(specs={})
         lower, upper = np.array(lower), np.array(upper)

@@ -53,7 +53,7 @@ def test_get_generator_invalid(n_factors, n_generators):
     [
         (2, "a b c", "Generator does not match the number of factors."),
         (2, "a a", "Main factors are confounded with each other."),
-        (2, "a c", "Main factors are not in alphabetical order."),
+        (2, "a c", "Use the letters `a b` for the main factors."),
         (5, "a b c ab ab", "Generators are not unique."),
         (5, "a b c ab ad", "Generators are not valid."),
         (2, "ab ac", "Generators are not valid."),

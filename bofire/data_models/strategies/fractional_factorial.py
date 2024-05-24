@@ -49,9 +49,7 @@ class FractionalFactorialStrategy(Strategy):
         idx_main = [i for i, item in enumerate(lengthes) if item == 1]
 
         # Check that single letters (main factors) are unique
-        if len([generators[i] for i in idx_main]) != len(
-            {generators[i] for i in idx_main}
-        ):
+        if len(idx_main) != len({generators[i] for i in idx_main}):
             raise ValueError("Main factors are confounded with each other.")
 
         # Check that single letters (main factors) follow the alphabet
@@ -59,15 +57,15 @@ class FractionalFactorialStrategy(Strategy):
             "".join(sorted([generators[i] for i in idx_main]))
             != string.ascii_lowercase[: len(idx_main)]
         ):
-            raise ValueError("Main factors are not in alphabetical order.")
+            raise ValueError(
+                f'Use the letters `{" ".join(string.ascii_lowercase[: len(idx_main)])}` for the main factors.'
+            )
 
-        # Indices of letter combinations (we need them to fill out H2 properly).
+        # Indices of letter combinations.
         idx_combi = [i for i, item in enumerate(generators) if item != 1]
 
         # Check that letter combinations are unique
-        if len([generators[i] for i in idx_combi]) != len(
-            {generators[i] for i in idx_combi}
-        ):
+        if len(idx_combi) != len({generators[i] for i in idx_combi}):
             raise ValueError("Generators are not unique.")
 
         # Check that only letters are used in the combinations that are also single letters (main factors)
