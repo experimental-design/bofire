@@ -8,3 +8,4 @@ This is a collection of code examples to allow for an easy exploration of the fu
 - [optimizing designs with respect to various optimality criteria](optimality_criteria.ipynb)
 - [creating designs for a custom model](design_with_explicit_formula.ipynb)
 - [creating designs with NChooseK constraints](nchoosek_constraint.ipynb)
+- [creating full and fractional factorial designs](fractional_factorial.ipynb)

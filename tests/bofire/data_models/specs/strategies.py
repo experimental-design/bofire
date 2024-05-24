@@ -415,3 +415,64 @@ specs.add_invalid(
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
 )
+
+specs.add_valid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "n_repetitions": 1,
+        "n_center": 0,
+        "n_generators": 0,
+        "generator": "",
+    },
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "n_repetitions": 1,
+        "n_center": 0,
+        "n_generators": 1,
+        "generator": "",
+    },
+    error=ValueError,
+    message="Design not possible, as main factors are confounded with each other.",
+)
+
+specs.add_invalid(
+    strategies.FractionalFactorialStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="a", bounds=(0, 1)),
+                    ContinuousInput(key="b", bounds=(0, 1)),
+                ]
+            ),
+        ).model_dump(),
+        "seed": 42,
+        "n_repetitions": 1,
+        "n_center": 0,
+        "n_generators": 0,
+        "generator": "a b c",
+    },
+    error=ValueError,
+    message="Generator does not match the number of factors.",
+)
