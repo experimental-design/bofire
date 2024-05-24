@@ -86,7 +86,7 @@ jobs:
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
-          pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+          pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
       - name: Run notebooks
         shell: bash -l {0}
         run: python scripts/run_tutorials.py -p "$(pwd)"
