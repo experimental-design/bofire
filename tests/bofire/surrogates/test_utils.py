@@ -3,10 +3,7 @@ import importlib
 import pandas as pd
 import pytest
 import torch
-from botorch.models.transforms.input import (
-    InputStandardize,
-    Normalize,
-)
+from botorch.models.transforms.input import InputStandardize, Normalize
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.enum import CategoricalEncodingEnum
@@ -22,9 +19,7 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.surrogates.api import (
-    ScalerEnum,
-)
+from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.utils import (
     get_categorical_feature_keys,
     get_continuous_feature_keys,
@@ -34,6 +29,25 @@ from bofire.surrogates.utils import (
 from bofire.utils.torch_tools import tkwargs
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
+
+
+def test_get_scaler_none():
+    inputs = Inputs(
+        features=[
+            CategoricalInput(key="x_cat", categories=["mama", "papa"]),
+            CategoricalInput(key="x_desc", categories=["alpha", "beta"]),
+        ]
+    )
+    scaler = get_scaler(
+        inputs=inputs,
+        input_preprocessing_specs={
+            "x_cat": CategoricalEncodingEnum.ONE_HOT,
+            "x_desc": CategoricalEncodingEnum.ONE_HOT,
+        },
+        scaler=ScalerEnum.NORMALIZE,
+        X=inputs.sample(n=10),
+    )
+    assert scaler is None
 
 
 @pytest.mark.parametrize(
