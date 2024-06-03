@@ -2,7 +2,7 @@ import pytest
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.domain.features import ContinuousInput
-from bofire.utils.doe import get_confounding_matrix
+from bofire.utils.doe import ff2n, get_confounding_matrix
 
 inputs = Inputs(
     features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]]
@@ -37,3 +37,7 @@ def test_get_confounding_matrix_valid(powers, interactions):
         powers=powers,
         interactions=interactions,
     )
+
+
+def test_ff2n():
+    assert ff2n(3).shape == (8, 3)
