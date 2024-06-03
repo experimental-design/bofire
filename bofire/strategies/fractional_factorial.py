@@ -2,10 +2,10 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from pyDOE3 import fracfact
 
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
 from bofire.strategies.strategy import Strategy
+from bofire.utils.doe import fracfact
 
 
 class FractionalFactorialStrategy(Strategy):
