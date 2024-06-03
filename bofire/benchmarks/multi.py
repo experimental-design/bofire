@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
+from botorch.test_functions.multi_objective import ZDT1 as BotorchZDT1
 from pydantic import field_validator
 from pydantic.types import PositiveInt
 from scipy.integrate import solve_ivp
@@ -29,6 +30,7 @@ from bofire.data_models.objectives.api import (
     MinimizeObjective,
 )
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.utils.torch_tools import tkwargs
 
 
 class DTLZ2(Benchmark):
@@ -351,6 +353,7 @@ class ZDT1(Benchmark):
         ]
         outputs = Outputs(features=outputs)
         self._domain = Domain(inputs=inputs, outputs=outputs)
+        self.zdt = BotorchZDT1(dim=n_inputs)
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
@@ -361,12 +364,10 @@ class ZDT1(Benchmark):
         Returns:
             pd.DataFrame: Function values. Columns are y1, y2, valid_y1 and valid_y2.
         """
-        x = X[self._domain.inputs.get_keys()[1:]].to_numpy()
-        g = 1 + 9 / (self.n_inputs - 1) * np.sum(x, axis=1)
-        y1 = X["x1"].to_numpy()
-        y2 = g * (1 - (y1 / g) ** 0.5)
+        Xt = torch.from_numpy(X.values).to(**tkwargs)
+        Y = self.zdt(Xt).numpy()
         return pd.DataFrame(
-            {"y1": y1, "y2": y2, "valid_y1": 1, "valid_y2": 1}, index=X.index
+            {"y1": Y[:, 0], "y2": Y[:, 1], "valid_y1": 1, "valid_y2": 1}, index=X.index
         )
 
     def get_optima(self, points=100) -> pd.DataFrame:
