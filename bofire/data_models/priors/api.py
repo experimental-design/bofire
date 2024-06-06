@@ -3,7 +3,11 @@ from typing import Union
 
 from bofire.data_models.priors.gamma import GammaPrior
 from bofire.data_models.priors.lkj import LKJPrior
-from bofire.data_models.priors.normal import NormalPrior
+from bofire.data_models.priors.normal import (
+    DimensionalityScaledLogNormalPrior,
+    LogNormalPrior,
+    NormalPrior,
+)
 from bofire.data_models.priors.prior import Prior
 
 AbstractPrior = Prior
@@ -12,7 +16,13 @@ AnyPrior = Union[
     GammaPrior,
     NormalPrior,
     LKJPrior,
+    LogNormalPrior,
+    DimensionalityScaledLogNormalPrior,
 ]
+
+# these are priors that are generally applicable
+# and does not depend on problem specific extrea parameters
+AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
 
 # default priors of interest
 # botorch defaults
@@ -32,3 +42,7 @@ MBO_OUTPUTSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 LKJ_PRIOR = partial(
     LKJPrior, shape=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
 )
+
+# Hvarfner priors
+HVARFNER_NOISE_PRIOR = partial(LogNormalPrior, loc=-4, scale=1)
+HVARFNER_LENGTHSCALE_PRIOR = DimensionalityScaledLogNormalPrior

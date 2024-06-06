@@ -21,7 +21,7 @@ def map_RBFKernel(
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,  # type: ignore
         lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior)
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
             if data_model.lengthscale_prior is not None
             else None
         ),
@@ -40,7 +40,7 @@ def map_MaternKernel(
         active_dims=active_dims,
         nu=data_model.nu,
         lengthscale_prior=(
-            priors.map(data_model.lengthscale_prior)
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
             if data_model.lengthscale_prior is not None
             else None
         ),
