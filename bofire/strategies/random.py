@@ -318,7 +318,7 @@ class RandomStrategy(Strategy):
                     if len(combined_eqs) > 0
                     else None,
                     n_burnin=n_burnin,
-                    thinning=n_thinning,
+                    n_thinning=n_thinning,  # type: ignore
                     seed=seed,
                 ).squeeze(dim=0)
 
