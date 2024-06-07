@@ -1,8 +1,16 @@
 import pytest
+from numpy.testing import assert_array_equal
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.domain.features import ContinuousInput
-from bofire.utils.doe import ff2n, get_confounding_matrix
+from bofire.utils.doe import (
+    ff2n,
+    fracfact,
+    get_alias_structure,
+    get_confounding_matrix,
+    get_generator,
+    validate_generator,
+)
 
 inputs = Inputs(
     features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]]
@@ -40,4 +48,128 @@ def test_get_confounding_matrix_valid(powers, interactions):
 
 
 def test_ff2n():
-    assert ff2n(3).shape == (8, 3)
+    design = ff2n(1)
+    assert_array_equal(design, [[-1], [1]])
+    design = ff2n(2)
+    assert_array_equal(design, [[-1, -1], [-1, 1], [1, -1], [1, 1]])
+    design = ff2n(3)
+    assert_array_equal(
+        design,
+        [
+            [-1, -1, -1],
+            [-1, -1, 1],
+            [-1, 1, -1],
+            [-1, 1, 1],
+            [1, -1, -1],
+            [1, -1, 1],
+            [1, 1, -1],
+            [1, 1, 1],
+        ],
+    )
+
+
+def test_fracfact():
+    design = fracfact("a b c")
+    assert_array_equal(design, ff2n(3))
+    design = fracfact("a b ab")
+    assert_array_equal(
+        design,
+        [
+            [-1, -1, 1],
+            [-1, 1, -1],
+            [1, -1, -1],
+            [1, 1, 1],
+        ],
+    )
+    design = fracfact("a b -ab")
+    assert_array_equal(
+        design,
+        [
+            [-1, -1, -1],
+            [-1, 1, 1],
+            [1, -1, 1],
+            [1, 1, -1],
+        ],
+    )
+    design = fracfact("a b c ab ac")
+    assert_array_equal(
+        design,
+        [
+            [-1, -1, -1, 1, 1],
+            [-1, -1, 1, 1, -1],
+            [-1, 1, -1, -1, 1],
+            [-1, 1, 1, -1, -1],
+            [1, -1, -1, -1, -1],
+            [1, -1, 1, -1, 1],
+            [1, 1, -1, 1, -1],
+            [1, 1, 1, 1, 1],
+        ],
+    )
+
+
+def test_get_alias_structure():
+    alias_structure = get_alias_structure("a b c")
+    assert sorted(alias_structure) == sorted(
+        ["a", "b", "c", "I", "ab", "ac", "bc", "abc"]
+    )
+    alias_structure = get_alias_structure("a b ab")
+    assert sorted(alias_structure) == sorted(["I = abc", "a = bc", "b = ac", "c = ab"])
+
+
+@pytest.mark.parametrize(
+    "n_factors, generator, message",
+    [
+        (2, "a b c", "Generator does not match the number of factors."),
+        (2, "a a", "Main factors are confounded with each other."),
+        (2, "a c", "Use the letters `a b` for the main factors."),
+        (5, "a b c ab ab", "Generators are not unique."),
+        (5, "a b c ab ad", "Generators are not valid."),
+        (2, "ab ac", "At least one unconfounded main factor is needed."),
+    ],
+)
+def test_validate_generator_invalid(n_factors: int, generator: str, message: str):
+    with pytest.raises(ValueError, match=message):
+        validate_generator(n_factors, generator)
+
+
+@pytest.mark.parametrize(
+    "n_factors, n_generators, expected",
+    [
+        (1, 0, "a"),
+        (2, 0, "a b"),
+        (3, 0, "a b c"),
+        (3, 1, "a b ab"),
+        (4, 0, "a b c d"),
+        (4, 1, "a b c abc"),
+        (5, 1, "a b c d abcd"),
+        (5, 2, "a b c ab ac"),
+        (6, 0, "a b c d e f"),
+        (6, 1, "a b c d e abcde"),
+        (6, 2, "a b c d abc abd"),
+        (6, 3, "a b c ab ac bc"),
+        (7, 0, "a b c d e f g"),
+        (7, 1, "a b c d e f abcdef"),
+        (7, 2, "a b c d e abcd abce"),
+        (7, 3, "a b c d abc abd acd"),
+        (7, 4, "a b c ab ac bc abc"),
+        (8, 0, "a b c d e f g h"),
+        (8, 1, "a b c d e f g abcdefg"),
+        (8, 2, "a b c d e f abcde abcdf"),  # minitab is giving here abcd, abef
+        (8, 3, "a b c d e abcd abce abde"),  # minitab is giving here abc abd bcde
+        (8, 4, "a b c d abc abd acd bcd"),
+    ],
+)
+def test_get_generator(n_factors, n_generators, expected):
+    assert get_generator(n_factors, n_generators) == expected
+
+
+@pytest.mark.parametrize(
+    "n_factors, n_generators",
+    [(2, 1), (3, 2), (4, 3), (4, 2), (5, 3), (6, 4), (7, 5), (8, 5)],
+)
+def test_get_generator_invalid(n_factors, n_generators):
+    with pytest.raises(
+        ValueError,
+        match="Design not possible, as main factors are confounded with each other.",
+    ):
+        get_generator(n_factors, n_generators)

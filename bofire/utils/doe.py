@@ -76,6 +76,8 @@ def ff2n(n_factors: int) -> np.ndarray:
 
 
 def validate_generator(n_factors: int, generator: str) -> str:
+    """Validates the generator and thows an error if it is not valid."""
+
     if len(generator.split(" ")) != n_factors:
         raise ValueError("Generator does not match the number of factors.")
     # clean it and transform it into a list
@@ -84,6 +86,9 @@ def validate_generator(n_factors: int, generator: str) -> str:
 
     # Indices of single letters (main factors)
     idx_main = [i for i, item in enumerate(lengthes) if item == 1]
+
+    if len(idx_main) == 0:
+        raise ValueError("At least one unconfounded main factor is needed.")
 
     # Check that single letters (main factors) are unique
     if len(idx_main) != len({generators[i] for i in idx_main}):
@@ -197,7 +202,7 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
         )  # this is the product of the combination
         scontrast = "".join(np.where(contrast == 1, "+", "-").tolist())
         aliases[scontrast] = aliases.get(scontrast, [])
-        aliases[scontrast].append(combination)
+        aliases[scontrast].append(combination)  # type: ignore
 
     aliases_list = []
     for alias in aliases.values():
@@ -216,3 +221,49 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
         )
 
     return aliases_readable
+
+
+def get_generator(n_factors: int, n_generators: int) -> str:
+    """Computes a generator for a given number of factors and generators.
+
+    Args:
+        n_factors: The number of factors.
+        n_generators: The number of generators.
+
+    Returns:
+        The generator.
+    """
+    if n_generators == 0:
+        return " ".join(list(string.ascii_lowercase[:n_factors]))
+    n_base_factors = n_factors - n_generators
+    if n_generators == 1:
+        if n_base_factors == 1:
+            raise ValueError(
+                "Design not possible, as main factors are confounded with each other."
+            )
+        return " ".join(
+            list(string.ascii_lowercase[:n_base_factors])
+            + [string.ascii_lowercase[:n_base_factors]]
+        )
+    n_base_factors = n_factors - n_generators
+    if n_base_factors - 1 < 2:
+        raise ValueError(
+            "Design not possible, as main factors are confounded with each other."
+        )
+    generators = [
+        "".join(i)
+        for i in (
+            itertools.combinations(
+                string.ascii_lowercase[:n_base_factors], n_base_factors - 1
+            )
+        )
+    ]
+    if len(generators) > n_generators:
+        generators = generators[:n_generators]
+    elif (n_generators - len(generators) == 1) and (n_base_factors > 1):
+        generators += [string.ascii_lowercase[:n_base_factors]]
+    elif n_generators - len(generators) >= 1:
+        raise ValueError(
+            "Design not possible, as main factors are confounded with each other."
+        )
+    return " ".join(list(string.ascii_lowercase[:n_base_factors]) + generators)
