@@ -6,7 +6,6 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import MinMaxScaler
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
@@ -33,6 +32,8 @@ def get_confounding_matrix(
     Returns:
         _type_: _description_
     """
+    from sklearn.preprocessing import MinMaxScaler
+
     if len(inputs.get(CategoricalInput)) > 0:
         warnings.warn("Categorical input features will be ignored.")
 
