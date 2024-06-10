@@ -672,9 +672,54 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#bofire.utils.doe.ff2n" class="md-nav__link">
+    <span class="md-ellipsis">
+      ff2n()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.doe.fracfact" class="md-nav__link">
+    <span class="md-ellipsis">
+      fracfact()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.doe.get_alias_structure" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_alias_structure()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.utils.doe.get_confounding_matrix" class="md-nav__link">
     <span class="md-ellipsis">
       get_confounding_matrix()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.doe.get_generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_generator()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.utils.doe.validate_generator" class="md-nav__link">
+    <span class="md-ellipsis">
+      validate_generator()
     </span>
   </a>
   
@@ -1472,6 +1517,292 @@
 
 
 
+<h3 id="bofire.utils.doe.ff2n" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">ff2n</span><span class="p">(</span><span class="n">n_factors</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Computes the full factorial design for a given number of factors.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>n_factors</code></td>
+        <td><code>int</code></td>
+        <td><p>The number of factors.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray</code></td>
+      <td><p>The full factorial design.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">ff2n</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the full factorial design for a given number of factors.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n_factors: The number of factors.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The full factorial design.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">repeat</span><span class="o">=</span><span class="n">n_factors</span><span class="p">)))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.doe.fracfact" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Computes the fractional factorial design for a given generator.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>gen</code></td>
+        <td></td>
+        <td><p>The generator.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>ndarray</code></td>
+      <td><p>The fractional factorial design.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the fractional factorial design for a given generator.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gen: The generator.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The fractional factorial design.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gen</span> <span class="o">=</span> <span class="n">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="o">=</span><span class="n">gen</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">gen</span><span class="p">)</span>
+
+    <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\-|\s|\+&quot;</span><span class="p">,</span> <span class="n">gen</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="p">]</span>
+    <span class="n">lengthes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">]</span>
+
+    <span class="c1"># Indices of single letters (main factors)</span>
+    <span class="n">idx_main</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengthes</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Indices of letter combinations.</span>
+    <span class="n">idx_combi</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># Check if there are &quot;-&quot; operators in gen</span>
+    <span class="n">idx_negative</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">gen</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">))</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span>
+    <span class="p">]</span>  <span class="c1"># remove empty strings</span>
+
+    <span class="c1"># Fill in design with two level factorial design</span>
+    <span class="n">H1</span> <span class="o">=</span> <span class="n">ff2n</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">))</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">H1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengthes</span><span class="p">)))</span>
+    <span class="n">H</span><span class="p">[:,</span> <span class="n">idx_main</span><span class="p">]</span> <span class="o">=</span> <span class="n">H1</span>
+
+    <span class="c1"># Recognize combinations and fill in the rest of matrix H2 with the proper</span>
+    <span class="c1"># products</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">idx_combi</span><span class="p">:</span>
+        <span class="c1"># For lowercase letters</span>
+        <span class="n">xx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">[</span><span class="n">k</span><span class="p">]])</span> <span class="o">-</span> <span class="mi">97</span>
+
+        <span class="n">H</span><span class="p">[:,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">H1</span><span class="p">[:,</span> <span class="n">xx</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Update design if gen includes &quot;-&quot; operator</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_negative</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">H</span><span class="p">[:,</span> <span class="n">idx_negative</span><span class="p">]</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+
+    <span class="c1"># Return the fractional factorial design</span>
+    <span class="k">return</span> <span class="n">H</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.doe.get_alias_structure" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_alias_structure</span><span class="p">(</span><span class="n">gen</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Computes the alias structure of the design matrix. Works only for generators
+with positive signs.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>gen</code></td>
+        <td><code>str</code></td>
+        <td><p>The generator.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>order</code></td>
+        <td><code>int</code></td>
+        <td><p>The order up to wich the alias structure should be calculated. Defaults to 4.</p></td>
+        <td><code>4</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>List[str]</code></td>
+      <td><p>The alias structure of the design matrix.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_alias_structure</span><span class="p">(</span><span class="n">gen</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">order</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes the alias structure of the design matrix. Works only for generators</span>
+<span class="sd">    with positive signs.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        gen: The generator.</span>
+<span class="sd">        order: The order up to wich the alias structure should be calculated. Defaults to 4.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The alias structure of the design matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">design</span> <span class="o">=</span> <span class="n">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span>
+
+    <span class="n">n_experiments</span><span class="p">,</span> <span class="n">n_factors</span> <span class="o">=</span> <span class="n">design</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">all_names</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span> <span class="o">+</span> <span class="s2">&quot;I&quot;</span>
+    <span class="n">factors</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_factors</span><span class="p">)</span>
+    <span class="n">all_combinations</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">factors</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">aliases</span> <span class="o">=</span> <span class="p">{</span><span class="n">n_experiments</span> <span class="o">*</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="mi">26</span><span class="p">,)]}</span>  <span class="c1"># 26 is mapped to I</span>
+
+    <span class="k">for</span> <span class="n">combination</span> <span class="ow">in</span> <span class="n">all_combinations</span><span class="p">:</span>
+        <span class="c1"># positive sign</span>
+        <span class="n">contrast</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span>
+            <span class="n">design</span><span class="p">[:,</span> <span class="n">combination</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>  <span class="c1"># this is the product of the combination</span>
+        <span class="n">scontrast</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">contrast</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+        <span class="n">aliases</span><span class="p">[</span><span class="n">scontrast</span><span class="p">]</span> <span class="o">=</span> <span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">scontrast</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="n">aliases</span><span class="p">[</span><span class="n">scontrast</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">combination</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+
+    <span class="n">aliases_list</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">aliases</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+        <span class="n">aliases_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">alias</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">a</span><span class="p">))</span>
+        <span class="p">)</span>  <span class="c1"># sort by length and then by the combination</span>
+    <span class="n">aliases_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+        <span class="n">aliases_list</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="nb">list</span><span class="p">:</span> <span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span>
+    <span class="p">)</span>  <span class="c1"># sort by the length of the alias</span>
+
+    <span class="n">aliases_readable</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">aliases_list</span><span class="p">:</span>
+        <span class="n">aliases_readable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot; = &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">all_names</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">a</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alias</span><span class="p">])</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">aliases_readable</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
 <h3 id="bofire.utils.doe.get_confounding_matrix" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="p">,</span> <span class="n">powers</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
@@ -1560,6 +1891,8 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        _type_: _description_</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span>
+
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Categorical input features will be ignored.&quot;</span><span class="p">)</span>
 
@@ -1588,6 +1921,185 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
             <span class="n">scaled_design</span><span class="p">[</span><span class="s2">&quot;:&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span> <span class="o">=</span> <span class="n">scaled_design</span><span class="p">[</span><span class="nb">list</span><span class="p">(</span><span class="n">combi</span><span class="p">)]</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">scaled_design</span><span class="o">.</span><span class="n">corr</span><span class="p">()</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.doe.get_generator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Computes a generator for a given number of factors and generators.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>n_factors</code></td>
+        <td><code>int</code></td>
+        <td><p>The number of factors.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>n_generators</code></td>
+        <td><code>int</code></td>
+        <td><p>The number of generators.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>str</code></td>
+      <td><p>The generator.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Computes a generator for a given number of factors and generators.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        n_factors: The number of factors.</span>
+<span class="sd">        n_generators: The number of generators.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The generator.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">n_generators</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_factors</span><span class="p">]))</span>
+    <span class="n">n_base_factors</span> <span class="o">=</span> <span class="n">n_factors</span> <span class="o">-</span> <span class="n">n_generators</span>
+    <span class="k">if</span> <span class="n">n_generators</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">n_base_factors</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">])</span>
+            <span class="o">+</span> <span class="p">[</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">]]</span>
+        <span class="p">)</span>
+    <span class="n">n_base_factors</span> <span class="o">=</span> <span class="n">n_factors</span> <span class="o">-</span> <span class="n">n_generators</span>
+    <span class="k">if</span> <span class="n">n_base_factors</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span>
+            <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span>
+                <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">],</span> <span class="n">n_base_factors</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">n_generators</span><span class="p">:</span>
+        <span class="n">generators</span> <span class="o">=</span> <span class="n">generators</span><span class="p">[:</span><span class="n">n_generators</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">n_generators</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">n_base_factors</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">generators</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">]]</span>
+    <span class="k">elif</span> <span class="n">n_generators</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">])</span> <span class="o">+</span> <span class="n">generators</span><span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-function">
+
+
+
+<h3 id="bofire.utils.doe.validate_generator" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">generator</span><span class="p">)</span></code>
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Validates the generator and thows an error if it is not valid.</p>
+
+        <details class="quote">
+          <summary>Source code in <code>bofire/utils/doe.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">generator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validates the generator and thows an error if it is not valid.&quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n_factors</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generator does not match the number of factors.&quot;</span><span class="p">)</span>
+    <span class="c1"># clean it and transform it into a list</span>
+    <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\-|\s|\+&quot;</span><span class="p">,</span> <span class="n">generator</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="p">]</span>
+    <span class="n">lengthes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">]</span>
+
+    <span class="c1"># Indices of single letters (main factors)</span>
+    <span class="n">idx_main</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengthes</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one unconfounded main factor is needed.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check that single letters (main factors) are unique</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">({</span><span class="n">generators</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_main</span><span class="p">}):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Main factors are confounded with each other.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check that single letters (main factors) follow the alphabet</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">sorted</span><span class="p">([</span><span class="n">generators</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_main</span><span class="p">]))</span>
+        <span class="o">!=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)]</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;Use the letters `</span><span class="si">{</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)])</span><span class="si">}</span><span class="s1">` for the main factors.&#39;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Indices of letter combinations.</span>
+    <span class="n">idx_combi</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># check that main factors come before combinations</span>
+    <span class="k">if</span> <span class="nb">min</span><span class="p">(</span><span class="n">idx_combi</span><span class="p">)</span> <span class="o">&gt;</span> <span class="nb">max</span><span class="p">(</span><span class="n">idx_main</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Main factors have to come before combinations.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check that letter combinations are unique</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_combi</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">({</span><span class="n">generators</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_combi</span><span class="p">}):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generators are not unique.&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Check that only letters are used in the combinations that are also single letters (main factors)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span>
+        <span class="nb">set</span><span class="p">(</span><span class="n">item</span><span class="p">)</span><span class="o">.</span><span class="n">issubset</span><span class="p">({</span><span class="n">generators</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_main</span><span class="p">})</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="p">[</span><span class="n">generators</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx_combi</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generators are not valid.&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">generator</span>
 </code></pre></div>
         </details>
     </div>
