@@ -21,7 +21,7 @@ def test_FractionalFactorialStrategy_ask():
         )
     )
     strategy = strategies.map(strategy_data)
-    candidates = strategy.ask(None)
+    candidates = strategy.ask(None).sort_values(by=["a", "b"]).reset_index(drop=True)
     assert len(candidates) == 5
     assert_frame_equal(
         pd.DataFrame(
@@ -29,7 +29,9 @@ def test_FractionalFactorialStrategy_ask():
                 "a": [0.0, 1.0, 0.0, 1.0, 0.5],
                 "b": [-2.0, -2.0, 8.0, 8.0, 3.0],
             }
-        ),
+        )
+        .sort_values(by=["a", "b"])
+        .reset_index(drop=True),
         candidates,
     )
     # with repetitions

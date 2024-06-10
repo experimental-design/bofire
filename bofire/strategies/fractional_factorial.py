@@ -2,10 +2,10 @@ from typing import Optional
 
 import numpy as np
 import pandas as pd
-from pyDOE3 import fracfact
 
 from bofire.data_models.strategies.api import FractionalFactorialStrategy as DataModel
 from bofire.strategies.strategy import Strategy
+from bofire.utils.doe import fracfact, get_generator
 
 
 class FractionalFactorialStrategy(Strategy):
@@ -27,7 +27,7 @@ class FractionalFactorialStrategy(Strategy):
                 "The strategy automatically determines how many candidates to "
                 "propose."
             )
-        gen = self.generator or DataModel.get_generator(
+        gen = self.generator or get_generator(
             n_factors=len(self.domain.inputs), n_generators=self.n_generators
         )
         design = pd.DataFrame(fracfact(gen=gen), columns=self.domain.inputs.get_keys())
