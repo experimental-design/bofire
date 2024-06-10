@@ -286,18 +286,41 @@ class RandomStrategy(Strategy):
             combined_eqs = unfixed_eqs + unfixed_interpoints  # type: ignore
 
             # now use the hit and run sampler
-            candidates = sample_q_batches_from_polytope(
-                n=1,
-                q=n,
-                bounds=bounds.to(**tkwargs),
-                inequality_constraints=(
-                    unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
-                ),
-                equality_constraints=combined_eqs if len(combined_eqs) > 0 else None,
-                n_burnin=n_burnin,
-                thinning=n_thinning,
-                seed=seed,
-            ).squeeze(dim=0)
+            # this try except is needed as in the main branch of botorch the keyword argument
+            # `thinning` was changed to `n_thinning`, which is not yet in the latest release
+            # so we need to catch the TypeError and use the old keyword argument. As soon as the
+            # new release is out, we can remove this try except block.
+            # TODO: remove this try except block when the new release of botorch is out
+            try:
+                candidates = sample_q_batches_from_polytope(
+                    n=1,
+                    q=n,
+                    bounds=bounds.to(**tkwargs),
+                    inequality_constraints=(
+                        unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
+                    ),
+                    equality_constraints=combined_eqs
+                    if len(combined_eqs) > 0
+                    else None,
+                    n_burnin=n_burnin,
+                    thinning=n_thinning,
+                    seed=seed,
+                ).squeeze(dim=0)
+            except TypeError:
+                candidates = sample_q_batches_from_polytope(
+                    n=1,
+                    q=n,
+                    bounds=bounds.to(**tkwargs),
+                    inequality_constraints=(
+                        unfixed_ineqs if len(unfixed_ineqs) > 0 else None  # type: ignore
+                    ),
+                    equality_constraints=combined_eqs
+                    if len(combined_eqs) > 0
+                    else None,
+                    n_burnin=n_burnin,
+                    n_thinning=n_thinning,  # type: ignore
+                    seed=seed,
+                ).squeeze(dim=0)
 
             # check that the random generated candidates are not always the same
             if (candidates.unique(dim=0).shape[0] != n) and (n > 1):
