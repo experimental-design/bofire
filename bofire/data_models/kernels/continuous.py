@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from pydantic import field_validator
 
 from bofire.data_models.kernels.kernel import Kernel
-from bofire.data_models.priors.api import AnyPrior
+from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior
 
 
 class ContinuousKernel(Kernel):
@@ -31,10 +31,10 @@ class MaternKernel(ContinuousKernel):
 
 class LinearKernel(ContinuousKernel):
     type: Literal["LinearKernel"] = "LinearKernel"
-    variance_prior: Optional[AnyPrior] = None
+    variance_prior: Optional[AnyGeneralPrior] = None
 
 
 class PolynomialKernel(ContinuousKernel):
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
-    offset_prior: Optional[AnyPrior] = None
+    offset_prior: Optional[AnyGeneralPrior] = None
     power: int = 2
