@@ -21,7 +21,7 @@ AnyPrior = Union[
 ]
 
 # these are priors that are generally applicable
-# and does not depend on problem specific extrea parameters
+# and do not depend on problem specific extra parameters
 AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
 
 # default priors of interest
