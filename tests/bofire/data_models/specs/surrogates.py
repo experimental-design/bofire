@@ -13,6 +13,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
+    InfiniteWidthBNNKernel,
     MaternKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -86,6 +87,14 @@ specs.add_valid(
                 features.valid(ContinuousOutput).obj(),
             ]
         ).model_dump(),
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "aggregations": None,
+        "dump": None,
+        "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
     },
 )
 
