@@ -33,6 +33,12 @@ specs.add_invalid(
     error=ValueError,
     message="nu expected to be 0.5, 1.5, or 2.5",
 )
+specs.add_valid(
+    kernels.InfiniteWidthBNNKernel,
+    lambda: {
+        "depth": 3,
+    },
+)
 
 specs.add_valid(
     kernels.RBFKernel,

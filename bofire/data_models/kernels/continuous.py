@@ -1,6 +1,6 @@
 from typing import Literal, Optional
 
-from pydantic import field_validator
+from pydantic import PositiveInt, field_validator
 
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.priors.api import AnyGeneralPrior, AnyPrior
@@ -38,3 +38,8 @@ class PolynomialKernel(ContinuousKernel):
     type: Literal["PolynomialKernel"] = "PolynomialKernel"
     offset_prior: Optional[AnyGeneralPrior] = None
     power: int = 2
+
+
+class InfiniteWidthBNNKernel(Kernel):
+    type: Literal["InfiniteWidthBNNKernel"] = "InfiniteWidthBNNKernel"
+    depth: PositiveInt = 3

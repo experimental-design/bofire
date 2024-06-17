@@ -1,7 +1,13 @@
+import warnings
 from typing import List
 
 import gpytorch
 import torch
+
+try:
+    from botorch.models.kernels import InfiniteWidthBNNKernel
+except ImportError:
+    warnings.warn("Please update to botorch development version to use this feature.")
 from botorch.models.kernels.categorical import CategoricalKernel
 from gpytorch.kernels import Kernel as GpytorchKernel
 
@@ -44,6 +50,19 @@ def map_MaternKernel(
             if data_model.lengthscale_prior is not None
             else None
         ),
+    )
+
+
+def map_InfiniteWidthBNNKernel(
+    data_model: data_models.InfiniteWidthBNNKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> "InfiniteWidthBNNKernel":
+    return InfiniteWidthBNNKernel(
+        batch_shape=batch_shape,
+        active_dims=tuple(active_dims),
+        depth=data_model.depth,
     )
 
 
@@ -177,6 +196,7 @@ KERNEL_MAP = {
     data_models.ScaleKernel: map_ScaleKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
+    data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
 }
 
 

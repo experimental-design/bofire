@@ -73,6 +73,23 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    models.SingleTaskIBNNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+    },
+)
+
+specs.add_valid(
     models.MixedSingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
