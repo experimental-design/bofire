@@ -54,7 +54,9 @@ def test_map(kernel_spec: Spec):
 @pytest.mark.skipif(BNN_AVAILABLE is False, reason="requires latest botorch")
 def test_map_infinite_width_bnn_kernel():
     kernel = InfiniteWidthBNNKernel(depth=3)
-    gkernel = kernels.map(kernel, batch_shape=torch.Size(), active_dims=list(range(5)))
+    gkernel = kernels.map(
+        kernel, batch_shape=torch.Size(), active_dims=list(range(5)), ard_num_dims=10
+    )
     assert isinstance(gkernel, BNNKernel)
 
 
