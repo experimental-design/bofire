@@ -36,6 +36,65 @@ additionally, e.g., via
 conda install -c conda-forge cyipopt
 ```
 
+## Getting Started
+For a more complete introduction to BoFire, please look at the [Getting Started documentation](https://experimental-design.github.io/bofire/getting_started/).
+
+We first must define the domain of the optimization problem.
+
+```python
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.constraints.api import NChooseKConstraint
+from bofire.data_models.domain.api import Domain, Inputs, Outputs, Constraints
+
+input_features = Inputs(features=[
+    ContinuousInput(key="x1", bounds=(0,1)),
+    ContinuousInput(key="x2", bounds=(0,1)),
+    ContinuousInput(key="x3", bounds=(0,1)),
+])
+
+output_features = Outputs(features=[
+    ContinuousOutput(key="y", objective=MaximizeObjective())
+])
+
+constraints = Constraints(constraints=[
+    NChooseKConstraint(
+        features=["x1", "x2", "x3"],
+        min_count=1, max_count=2, none_also_valid=False)
+])
+
+domain = Domain(
+    inputs=input_features, 
+    outputs=output_features, 
+    constraints=constraints
+)
+```
+
+You can also use one of the many benchmarks available in BoFire.
+Here, we use the Himmelblau benchmark to demonstrate the ask/tell interface for
+proposing new experiments.
+
+```python
+from bofire.benchmarks.single import Himmelblau
+
+benchmark = Himmelblau()
+samples = benchmark.domain.inputs.sample(10)
+experiments = benchmark.f(samples, return_complete=True)
+
+from bofire.data_models.strategies.api import SoboStrategy
+from bofire.data_models.acquisition_functions.api import qNEI
+
+sobo_strategy_data_model = SoboStrategy(domain=benchmark.domain, acquisition_function=qNEI())
+
+sobo_strategy = strategies.map(sobo_strategy_data_model)
+
+sobo_strategy.tell(experiments=experiments)
+sobo_strategy.ask(candidate_count=1)
+```
+
+This gives one step in the optimization loop. We can repeat this many times to
+perform Bayesian optimization, exploring the space using intelligent strategies.
+
 ## Documentation
 
 Documentation including a section on how to get started can be found under https://experimental-design.github.io/bofire/.
