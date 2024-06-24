@@ -83,7 +83,7 @@ experiments = benchmark.f(samples, return_complete=True)
 
 from bofire.data_models.strategies.api import SoboStrategy
 from bofire.data_models.acquisition_functions.api import qNEI
-
+import bofire.strategies.api as strategies
 sobo_strategy_data_model = SoboStrategy(domain=benchmark.domain, acquisition_function=qNEI())
 
 sobo_strategy = strategies.map(sobo_strategy_data_model)
