@@ -425,7 +425,7 @@ def _MiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simpson(Cqs - qs, qs)  # type: ignore
+        res = simpson(Cqs - qs, x=qs)  # type: ignore
 
         return float(res)
     except ValueError:
@@ -461,7 +461,7 @@ def _AbsoluteMiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simpson(np.abs(Cqs - qs), qs)  # type: ignore
+        res = simpson(np.abs(Cqs - qs), x=qs)  # type: ignore
 
         return float(res)
     except ValueError:
