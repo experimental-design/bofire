@@ -52,7 +52,7 @@ def map_InfiniteWidthBNNKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
-) -> "InfiniteWidthBNNKernel":  # noqa: F821
+) -> "InfiniteWidthBNNKernel":  # noqa: F821 # type: ignore
     try:
         from botorch.models.kernels import InfiniteWidthBNNKernel
     except ImportError:
