@@ -495,14 +495,19 @@ def test_get_n_experiments():
     )
 
     # keyword
-    assert get_n_experiments(domain, "linear") == 7
+    assert get_n_experiments(get_formula_from_string("linear", domain)) == 7
 
     # explicit formula
-    assert get_n_experiments(domain, "x1 + x2 + x3 + x1:x2 + {x2**2}") == 9
+    assert (
+        get_n_experiments(
+            get_formula_from_string("x1 + x2 + x3 + x1:x2 + {x2**2}", domain)
+        )
+        == 9
+    )
 
     # user provided n_experiment
     with pytest.warns(UserWarning):
-        assert get_n_experiments(domain, "linear", 4) == 4
+        assert get_n_experiments(get_formula_from_string("linear", domain), 4) == 4
 
 
 @pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
