@@ -1,5 +1,6 @@
 from typing import Union
 
+from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
@@ -53,6 +54,7 @@ AnySurrogate = Union[
     TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
+    SingleTaskIBNNSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -66,6 +68,7 @@ AnyTrainableSurrogate = Union[
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
+    SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
 ]
 
@@ -83,6 +86,7 @@ AnyRegressionSurrogate = Union[
     TanimotoGPSurrogate,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
+    SingleTaskIBNNSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

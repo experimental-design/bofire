@@ -47,6 +47,25 @@ def map_MaternKernel(
     )
 
 
+def map_InfiniteWidthBNNKernel(
+    data_model: data_models.InfiniteWidthBNNKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> "InfiniteWidthBNNKernel":  # noqa: F821 # type: ignore
+    try:
+        from botorch.models.kernels import InfiniteWidthBNNKernel
+    except ImportError:
+        raise ImportError(
+            "Please update to botorch development version to use this feature."
+        )
+    return InfiniteWidthBNNKernel(
+        batch_shape=batch_shape,
+        active_dims=tuple(active_dims),
+        depth=data_model.depth,
+    )
+
+
 def map_LinearKernel(
     data_model: data_models.LinearKernel,
     batch_shape: torch.Size,
@@ -177,6 +196,7 @@ KERNEL_MAP = {
     data_models.ScaleKernel: map_ScaleKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
     data_models.HammingDistanceKernel: map_HammingDistanceKernel,
+    data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
 }
 
 

@@ -11,6 +11,7 @@ from bofire.data_models.kernels.categorical import (
 )
 from bofire.data_models.kernels.continuous import (
     ContinuousKernel,
+    InfiniteWidthBNNKernel,
     LinearKernel,
     MaternKernel,
     PolynomialKernel,
@@ -22,10 +23,7 @@ from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
 AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
 
 AnyContinuousKernel = Union[
-    MaternKernel,
-    LinearKernel,
-    PolynomialKernel,
-    RBFKernel,
+    MaternKernel, LinearKernel, PolynomialKernel, RBFKernel, InfiniteWidthBNNKernel
 ]
 
 AnyCategoricalKernel = HammingDistanceKernel
@@ -42,4 +40,5 @@ AnyKernel = Union[
     MaternKernel,
     RBFKernel,
     TanimotoKernel,
+    InfiniteWidthBNNKernel,
 ]
