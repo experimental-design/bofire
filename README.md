@@ -1,4 +1,8 @@
-# BoFire
+<a href="https://botorch.org">
+  <img width="350" src="./graphics/logos/bofire-long.png" alt="BoTorch Logo" />
+</a>
+
+<hr/>
 
 [![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
 [![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
