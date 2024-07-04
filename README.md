@@ -1,5 +1,5 @@
 <a href=https://experimental-design.github.io/bofire/>
-  <img width="350" src="./graphics/logos/bofire-long.png" alt="BoTorch Logo" />
+  <img width="350" src="./graphics/logos/bofire-long.png" alt="BoFire Logo" />
 </a>
 
 <hr/>
