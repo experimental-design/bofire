@@ -1,4 +1,4 @@
-![BoFire logo](../graphics/logos/bofire-long.png)
+![BoFire logo](../graphics/logos/bofire-long.png){: style="height:300px"}
 
 # Introduction
 
