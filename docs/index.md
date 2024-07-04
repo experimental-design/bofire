@@ -1,4 +1,4 @@
-![BoFire logo](../graphics/logos/bofire-long.png){align = left}
+![BoFire logo](../graphics/logos/bofire-long.png){ align=left }
 
 # Introduction
 
