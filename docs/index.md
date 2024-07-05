@@ -1,3 +1,5 @@
+![BoFire logo](../graphics/logos/bofire-long.png)
+
 # Introduction
 
 BoFire is a framework to define and solve black-box optimization problems. 
