@@ -87,7 +87,7 @@ from bofire.data_models.strategies.api import QnehviStrategy, RandomStrategy
 detergent = Detergent()
 domain = detergent.domain
 
-# create initial data
+# create initial data with the random strategy while satisfying constraints
 sampler = strategies.map(RandomStrategy(domain=domain))
 initial_samples = sampler.ask(2)
 experiments = detergent.f(initial_samples, return_complete=True)
@@ -100,12 +100,9 @@ for _ in range(n_experiments):
     candidates = mobo_strategy.ask(candidate_count=1)
     experiments = detergent.f(candidates, return_complete=True)
 
-# print all told experiments
+# Print all told experiments
 print(mobo_strategy.experiments)
 ```
-
-This gives one step in the optimization loop. We can repeat this many times to
-perform Bayesian optimization, exploring the space using intelligent strategies.
 
 ## Documentation
 
