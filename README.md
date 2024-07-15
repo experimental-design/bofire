@@ -75,29 +75,34 @@ domain = Domain(
 ```
 
 You can also use one of the many benchmarks available in BoFire.
-Here, we use the Himmelblau benchmark to demonstrate the ask/tell interface for
-proposing new experiments.
+Here, we use the Detergent benchmark to demonstrate the ask/tell interface for
+proposing new experiments with multi-objective Bayesian optimization.
 
 ```python
-from bofire.benchmarks.single import Himmelblau
-
-benchmark = Himmelblau()
-samples = benchmark.domain.inputs.sample(10)
-experiments = benchmark.f(samples, return_complete=True)
-
-from bofire.data_models.strategies.api import SoboStrategy
-from bofire.data_models.acquisition_functions.api import qNEI
 import bofire.strategies.api as strategies
-sobo_strategy_data_model = SoboStrategy(domain=benchmark.domain, acquisition_function=qNEI())
+from bofire.benchmarks.detergent import Detergent
+from bofire.data_models.strategies.api import QnehviStrategy, RandomStrategy
 
-sobo_strategy = strategies.map(sobo_strategy_data_model)
+# create benchmark
+detergent = Detergent()
+domain = detergent.domain
 
-sobo_strategy.tell(experiments=experiments)
-sobo_strategy.ask(candidate_count=1)
+# create initial data with the random strategy while satisfying constraints
+sampler = strategies.map(RandomStrategy(domain=domain))
+initial_samples = sampler.ask(2)
+experiments = detergent.f(initial_samples, return_complete=True)
+
+# Bayesian optimization
+mobo_strategy = strategies.map(QnehviStrategy(domain=domain))
+n_experiments = 4
+for _ in range(n_experiments):
+    mobo_strategy.tell(experiments=experiments)
+    candidates = mobo_strategy.ask(candidate_count=1)
+    experiments = detergent.f(candidates, return_complete=True)
+
+# Print all told experiments
+print(mobo_strategy.experiments)
 ```
-
-This gives one step in the optimization loop. We can repeat this many times to
-perform Bayesian optimization, exploring the space using intelligent strategies.
 
 ## Documentation
 
