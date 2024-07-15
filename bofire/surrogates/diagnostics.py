@@ -4,13 +4,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator, validator
-
-# this try except accounts for the renaming from simps to simpson in scipy 1.14.0
-try:
-    from scipy.integrate import simps as simpson
-except ImportError:
-    from scipy.integrate import simpson
-
+from scipy.integrate import simpson
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
     accuracy_score,
