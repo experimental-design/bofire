@@ -54,6 +54,7 @@ plugins:
   - mike:
 
 markdown_extensions:
+  # https://squidfunk.github.io/mkdocs-material/reference/math/?h=math#mathjax
   - pymdownx.arithmatex:
       generic: true
   - pymdownx.superfences
@@ -63,8 +64,8 @@ markdown_extensions:
   - admonition
 
 extra_javascript:
-  - https://polyfill.io/v3/polyfill.min.js?features=es6
-  - https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js
+  - javascripts/mathjax.js
+  - https://unpkg.com/mathjax@3/es5/tex-mml-chtml.js
 
 extra:
   version:
