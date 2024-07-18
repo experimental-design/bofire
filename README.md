@@ -80,7 +80,7 @@ proposing new experiments with multi-objective Bayesian optimization.
 
 ```python
 import bofire.strategies.api as strategies
-from bofire.benchmarks.detergent import Detergent
+from bofire.benchmarks.api import Detergent
 from bofire.data_models.strategies.api import QnehviStrategy, RandomStrategy
 
 # create benchmark
