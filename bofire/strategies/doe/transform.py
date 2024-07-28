@@ -1,10 +1,9 @@
 from abc import ABC, abstractmethod
-from typing import Tuple, Type, Union
+from typing import Tuple, Union
 
 import numpy as np
 
 from bofire.data_models.domain.api import Inputs
-from bofire.strategies.enum import TransformEnum
 
 
 class Transform(ABC):
@@ -54,12 +53,3 @@ class MinMaxTransform(Transform):
 
 
 AnyTransform = Union[IndentityTransform, MinMaxTransform]
-
-
-def get_transform_class(transform: TransformEnum) -> Type:
-    if transform == TransformEnum.IDENTITY:
-        return IndentityTransform
-    elif transform == TransformEnum.MIN_MAX_TRANSFORM:
-        return MinMaxTransform
-    else:
-        raise ValueError(f"Transform {transform} not implemented")

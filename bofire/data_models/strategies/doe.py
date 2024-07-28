@@ -1,5 +1,7 @@
 from typing import Literal, Tuple, Type, Union
 
+from pydantic import field_validator
+
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
     Feature,
@@ -7,7 +9,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
+from bofire.strategies.enum import OptimalityCriterionEnum
 
 
 class DoEStrategy(Strategy):
@@ -34,8 +36,19 @@ class DoEStrategy(Strategy):
 
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY
 
-    transform: TransformEnum = TransformEnum.IDENTITY
-    transform_range: Union[None, Tuple[float, float]] = (-1, 1)
+    transform_range: Union[None, Tuple[float, float]] = None
+
+    @field_validator("transform_range")
+    @classmethod
+    def validate_feature_range(cls, value):
+        if value is not None:
+            if not isinstance(value, tuple) or len(value) != 2:
+                raise ValueError("feature_range must be a tuple of length 2")
+            if value[0] >= value[1]:
+                raise ValueError(
+                    "feature_range[0] must be smaller than feature_range[1]"
+                )
+            return value
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:

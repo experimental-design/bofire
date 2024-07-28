@@ -17,7 +17,6 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.strategies.api import DoEStrategy
-from bofire.strategies.enum import TransformEnum
 
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
@@ -300,7 +299,7 @@ def test_scaled_doe():
         constraints=[],
     )
     data_model = data_models.DoEStrategy(
-        domain=domain, formula="linear", transform=TransformEnum.MIN_MAX_TRANSFORM
+        domain=domain, formula="linear", transform_range=(-1, 1)
     )
     strategy = DoEStrategy(data_model=data_model)
     candidates = strategy.ask(candidate_count=4).to_numpy()

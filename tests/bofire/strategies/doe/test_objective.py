@@ -13,7 +13,6 @@ from bofire.strategies.doe.objective import (
     SpaceFilling,
 )
 from bofire.strategies.doe.utils import get_formula_from_string
-from bofire.strategies.enum import TransformEnum
 
 
 def test_Objective_model_jacobian_t():
@@ -790,14 +789,14 @@ def test_MinMaxTransform():
             model=model,
             n_experiments=4,
             delta=0,
-            transform=TransformEnum.IDENTITY,
+            transform_range=None,
         )
         objective_scaled = cls(
             domain=domain,
             model=model,
             n_experiments=4,
             delta=0,
-            transform=TransformEnum.MIN_MAX_TRANSFORM,
+            transform_range=(-1.0, 1.0),
         )
         assert np.allclose(
             objective_unscaled.evaluate(x_scaled), objective_scaled.evaluate(x)

@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Tuple, Type
+from typing import Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
@@ -9,8 +9,8 @@ from formulaic import Formula
 from torch import Tensor
 
 from bofire.data_models.domain.api import Domain
-from bofire.strategies.doe.transform import get_transform_class
-from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
+from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
+from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.utils.torch_tools import tkwargs
 
 
@@ -21,8 +21,7 @@ class Objective:
         model: Formula,
         n_experiments: int,
         delta: float = 1e-6,
-        transform: TransformEnum = TransformEnum.IDENTITY,
-        transform_range: Tuple[float, float] = (-1, 1),
+        transform_range: Optional[Tuple[float, float]] = None,
     ) -> None:
         """
         Args:
@@ -35,9 +34,14 @@ class Objective:
 
         self.model = deepcopy(model)
         self.domain = deepcopy(domain)
-        self.transform = get_transform_class(transform)(
-            inputs=self.domain.inputs, feature_range=transform_range
-        )
+
+        if transform_range is None:
+            self.transform = IndentityTransform()
+        else:
+            self.transform = MinMaxTransform(
+                inputs=self.domain.inputs, feature_range=transform_range
+            )
+
         self.n_experiments = n_experiments
         self.delta = delta
 
@@ -149,15 +153,13 @@ class DOptimality(Objective):
         model: Formula,
         n_experiments: int,
         delta: float = 1e-7,
-        transform: TransformEnum = TransformEnum.IDENTITY,
-        transform_range: Tuple[float, float] = (-1, 1),
+        transform_range: Optional[Tuple[float, float]] = None,
     ) -> None:
         super().__init__(
             domain=domain,
             model=model,
             n_experiments=n_experiments,
             delta=delta,
-            transform=transform,
             transform_range=transform_range,
         )
 

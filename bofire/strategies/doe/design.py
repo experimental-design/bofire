@@ -25,7 +25,7 @@ from bofire.strategies.doe.utils import (
     metrics,
     nchoosek_constraints_as_bounds,
 )
-from bofire.strategies.enum import OptimalityCriterionEnum, TransformEnum
+from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.strategies.random import RandomStrategy
 
 
@@ -42,7 +42,7 @@ def find_local_max_ipopt_BaB(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
-    transform: TransformEnum = TransformEnum.IDENTITY,
+    transform_range: Optional[Tuple[float, float]] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
@@ -67,6 +67,8 @@ def find_local_max_ipopt_BaB(
             discrete_variables (Optional[Dict[str, Tuple[ContinuousInput, List[float]]]]): dict of relaxed discrete inputs
                 with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
+            transform_range (Optional[Tuple[float, float]]): range to which the input variables are transformed.
+                If None is provided, the features will not be scaled. Defaults to None.
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -89,7 +91,7 @@ def find_local_max_ipopt_BaB(
         model=model_formula,
         n_experiments=n_experiments,
         delta=delta,
-        transform=transform,
+        transform_range=transform_range,
     )
 
     # setting up initial node in the branch-and-bound tree
@@ -190,7 +192,7 @@ def find_local_max_ipopt_exhaustive(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
-    transform: TransformEnum = TransformEnum.IDENTITY,
+    transform_range: Optional[Tuple[float, float]] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
@@ -215,6 +217,7 @@ def find_local_max_ipopt_exhaustive(
             discrete_variables (Optional[Dict[str, Tuple[ContinuousInput, List[float]]]]): dict of relaxed discrete inputs
                 with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
+            transform_range (Optional[Tuple[float, float]]): range to which the input variables are transformed.
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -238,7 +241,7 @@ def find_local_max_ipopt_exhaustive(
         model=model_formula,
         n_experiments=n_experiments,
         delta=delta,
-        transform=transform,
+        transform_range=transform_range,
     )
 
     # get binary variables
@@ -370,7 +373,7 @@ def find_local_max_ipopt(
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
-    transform: TransformEnum = TransformEnum.IDENTITY,
+    transform_range: Optional[Tuple[float, float]] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
     Args:
@@ -389,6 +392,7 @@ def find_local_max_ipopt(
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
         objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
+        transform_range (Optional[Tuple[float, float]]): range to which the input variables are transformed.
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.
@@ -483,7 +487,7 @@ def find_local_max_ipopt(
         model=model_formula,
         n_experiments=n_experiments,
         delta=delta,
-        transform=transform,
+        transform_range=transform_range,
     )
 
     # write constraints as scipy constraints

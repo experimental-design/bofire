@@ -103,7 +103,7 @@ class DoEStrategy(Strategy):
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 objective=self.data_model.objective,
-                transform=self.data_model.transform,
+                transform_range=self.data_model.transform_range,
             )
         # todo adapt to when exhaustive search accepts discrete variables
         elif (
@@ -120,7 +120,7 @@ class DoEStrategy(Strategy):
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
                 objective=self.data_model.objective,
-                transform=self.data_model.transform,
+                transform_range=self.data_model.transform_range,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -137,7 +137,7 @@ class DoEStrategy(Strategy):
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
                 objective=self.data_model.objective,
-                transform=self.data_model.transform,
+                transform_range=self.data_model.transform_range,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -162,7 +162,7 @@ class DoEStrategy(Strategy):
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
                     objective=self.data_model.objective,
-                    transform=self.data_model.transform,
+                    transform_range=self.data_model.transform_range,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [
