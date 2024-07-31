@@ -1,6 +1,6 @@
-from typing import Annotated, Literal, Type
+from typing import Annotated, Literal, Tuple, Type, Union
 
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from bofire.data_models.constraints.api import (
     Constraint,
@@ -32,6 +32,20 @@ class SpaceFillingStrategy(Strategy):
     type: Literal["SpaceFillingStrategy"] = "SpaceFillingStrategy"
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
     ipopt_options: dict = {"maxiter": 200, "disp": 0}
+
+    transform_range: Union[None, Tuple[float, float]] = None
+
+    @field_validator("transform_range")
+    @classmethod
+    def validate_feature_range(cls, value):
+        if value is not None:
+            if not isinstance(value, tuple) or len(value) != 2:
+                raise ValueError("feature_range must be a tuple of length 2")
+            if value[0] >= value[1]:
+                raise ValueError(
+                    "feature_range[0] must be smaller than feature_range[1]"
+                )
+            return value
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
