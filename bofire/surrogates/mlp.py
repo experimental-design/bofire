@@ -152,7 +152,7 @@ def fit_mlp(
     """
     mlp.train()
     train_loader = DataLoader(dataset=dataset, batch_size=batch_size, shuffle=shuffle)
-    optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)
+    optimizer = torch.optim.Adam(mlp.parameters(), lr=lr, weight_decay=weight_decay)  # type: ignore
     loss_function = loss_function()
     for _ in range(n_epoches):
         current_loss = 0.0

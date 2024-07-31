@@ -3,11 +3,12 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
+from bofire.data_models.types import Bounds
 
 
 class ContinuousInput(NumericalInput):
@@ -23,7 +24,7 @@ class ContinuousInput(NumericalInput):
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
-    bounds: Tuple[float, float]
+    bounds: Bounds
     local_relative_bounds: Optional[
         Tuple[Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]]
     ] = None
@@ -77,26 +78,6 @@ class ContinuousInput(NumericalInput):
         return pd.Series(
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
-
-    @field_validator("bounds")
-    @classmethod
-    def validate_lower_upper(cls, bounds):
-        """Validates that the lower bound is lower than the upper bound
-
-        Args:
-            values (Dict): Dictionary with attributes key, lower and upper bound
-
-        Raises:
-            ValueError: when the lower bound is higher than the upper bound
-
-        Returns:
-            Dict: The attributes as dictionary
-        """
-        if bounds[0] > bounds[1]:
-            raise ValueError(
-                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
-            )
-        return bounds
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
