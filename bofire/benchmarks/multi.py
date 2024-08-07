@@ -28,6 +28,7 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
 )
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.utils.torch_tools import tkwargs
@@ -126,6 +127,97 @@ class DTLZ2(Benchmark):
             ]
         ] = 1
         return Y
+
+
+class BNH(Benchmark):
+    def __init__(self, constraints: bool = True, **kwargs):
+        super().__init__(**kwargs)
+        self.constraints = constraints
+
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x1", bounds=(0, 5)),
+                    ContinuousInput(key="x2", bounds=(0, 3)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
+                ]
+            ),
+        )
+        if self.constraints:
+            self._domain.outputs.features.append(  # type: ignore
+                ContinuousOutput(
+                    key="c1",
+                    objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
+                )
+            )
+            self._domain.outputs.features.append(  # type: ignore
+                ContinuousOutput(
+                    key="c2",
+                    objective=MaximizeSigmoidObjective(tp=7.7, steepness=1000),
+                ),
+            )
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        experiments = candidates.eval("f1=4*x1**2 + 4*x2**2", inplace=False)
+        experiments = experiments.eval("f2=(x1-5)**2 + (x2-5)**2", inplace=False)
+        experiments["valid_f1"] = 1
+        experiments["valid_f2"] = 1
+        if not self.constraints:
+            return experiments[["f1", "f2", "valid_f1", "valid_f2"]].copy()
+        experiments = experiments.eval("c1=(x1-5)**2 + x2**2", inplace=False)
+        experiments = experiments.eval("c2=(x1-8)**2 + (x2+3)**2", inplace=False)
+        experiments["valid_c1"] = 1
+        experiments["valid_c2"] = 1
+        return experiments[
+            ["f1", "f2", "c1", "c2", "valid_c1", "valid_c2", "valid_f1", "valid_f2"]
+        ].copy()
+
+
+class TNK(Benchmark):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x1", bounds=(0, math.pi)),
+                    ContinuousInput(key="x2", bounds=(0, math.pi)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(
+                        key="c1",
+                        objective=MaximizeSigmoidObjective(tp=0.0, steepness=500),
+                    ),
+                    ContinuousOutput(
+                        key="c2",
+                        objective=MinimizeSigmoidObjective(tp=0.5, steepness=500),
+                    ),
+                ]
+            ),
+        )
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        experiments = candidates.eval("f1=x1", inplace=False)
+        experiments = experiments.eval("f2=x2", inplace=False)
+        experiments = experiments.eval(
+            "c1=x1**2 + x2**2 -1 -0.1*cos(16*arctan(x1/x2))", inplace=False
+        )
+        experiments = experiments.eval("c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False)
+        experiments["valid_c1"] = 1
+        experiments["valid_c2"] = 1
+        experiments["valid_f1"] = 1
+        experiments["valid_f2"] = 1
+        return experiments[
+            ["f1", "f2", "c1", "c2", "valid_c1", "valid_c2", "valid_f1", "valid_f2"]
+        ].copy()
 
 
 class C2DTLZ2(DTLZ2):
