@@ -1,6 +1,14 @@
 import pytest
 
-from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, ZDT1, CrossCoupling, SnarBenchmark
+from bofire.benchmarks.multi import (
+    BNH,
+    C2DTLZ2,
+    DTLZ2,
+    TNK,
+    ZDT1,
+    CrossCoupling,
+    SnarBenchmark,
+)
 
 
 @pytest.mark.parametrize(
@@ -24,6 +32,10 @@ from bofire.benchmarks.multi import C2DTLZ2, DTLZ2, ZDT1, CrossCoupling, SnarBen
         ),
         (C2DTLZ2, True, {"dim": 4}),
         (C2DTLZ2, False, {"dim": 4}),
+        (BNH, False, {"constraints": True}),
+        (BNH, False, {"constraints": False}),
+        (TNK, False, {}),
+        (TNK, True, {}),
     ],
 )
 def test_multi_objective_benchmarks(cls_benchmark, return_complete, kwargs):
@@ -43,6 +55,7 @@ def test_multi_objective_benchmarks(cls_benchmark, return_complete, kwargs):
 
     # Define expected number of output variables
     expected_output_variables = len(benchmark_function.domain.outputs) * 2
+    print(Y.shape, expected_output_variables)
     # Check, whether expected number of output variables match the actual number
     if return_complete:
         assert Y.shape == (
