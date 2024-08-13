@@ -77,3 +77,17 @@ By default IPOPT uses the freely available linear solver MUMPS. For large models
 ```
 find_local_max_ipopt(domain, "fully-quadratic", ipopt_options={"linear_solver":"ma57", "hsllib":"libcoinhsl.so"})
 ```
+
+## Reference
+
+We would love for you to use BoFire in your work! If you do, please cite [our paper](https://arxiv.org/abs/2408.05040):
+
+    @misc{durholt2024bofire,
+      title={BoFire: Bayesian Optimization Framework Intended for Real Experiments}, 
+      author={Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Wagner Steuer Costa and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and David Walz and Niklas Wulkow and Behrang Shafei},
+      year={2024},
+      eprint={2408.05040},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2408.05040}, 
+    }
