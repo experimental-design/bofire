@@ -350,6 +350,15 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reference
+    </span>
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -744,6 +753,18 @@ An acquisition function <span class="arithmatex">\(a\)</span> then formulates th
 <p>By default IPOPT uses the freely available linear solver MUMPS. For large models choosing a different linear solver (e.g. ma57 from Coin-HSL) can vastly reduce optimization time. A free academic license for Coin-HSL can be obtained <a href="https://licences.stfc.ac.uk/product/coin-hsl">here</a>. Instructions on how to install additional linear solvers for IPOPT are given in the <a href="https://coin-or.github.io/Ipopt/INSTALL.html#DOWNLOAD_HSL">IPOPT documentation</a>. For choosing a specific (HSL) linear solver in BoFire you can just pass the name of the solver to <code>find_local_max_ipopt()</code> with the <code>linear_solver</code> option together with the library's name in the option <code>hsllib</code>, e.g.
 <div class="highlight"><pre><span></span><code>find_local_max_ipopt(domain, &quot;fully-quadratic&quot;, ipopt_options={&quot;linear_solver&quot;:&quot;ma57&quot;, &quot;hsllib&quot;:&quot;libcoinhsl.so&quot;})
 </code></pre></div></p>
+<h2 id="reference">Reference</h2>
+<p>We would love for you to use BoFire in your work! If you do, please cite <a href="https://arxiv.org/abs/2408.05040">our paper</a>:</p>
+<div class="highlight"><pre><span></span><code>@misc{durholt2024bofire,
+  title={BoFire: Bayesian Optimization Framework Intended for Real Experiments}, 
+  author={Johannes P. D{\&quot;{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Wagner Steuer Costa and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and David Walz and Niklas Wulkow and Behrang Shafei},
+  year={2024},
+  eprint={2408.05040},
+  archivePrefix={arXiv},
+  primaryClass={cs.LG},
+  url={https://arxiv.org/abs/2408.05040}, 
+}
+</code></pre></div>
 
 
 
