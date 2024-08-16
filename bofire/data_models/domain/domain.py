@@ -21,6 +21,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
     ConstraintNotFulfilledError,
+    InterpointEqualityConstraint,
     LinearConstraint,
     NChooseKConstraint,
     ProductConstraint,
@@ -154,6 +155,9 @@ class Domain(BaseModel):
             for f in c.features:  # type: ignore
                 if f not in keys:
                     raise ValueError(f"feature {f} in constraint unknown ({keys})")
+        for c in self.constraints.get(InterpointEqualityConstraint):
+            if c.feature not in keys:
+                raise ValueError(f"feature {c.feature} not known.")
         return self
 
     @model_validator(mode="after")

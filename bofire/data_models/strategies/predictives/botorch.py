@@ -7,13 +7,18 @@ from pydantic import Field, PositiveInt, field_validator, model_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     Constraint,
+    InterpointConstraint,
     LinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+)
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.shortest_path import has_local_search_region
@@ -125,6 +130,16 @@ class BotorchStrategy(PredictiveStrategy):
         if my_type in [NonlinearInequalityConstraint, NonlinearEqualityConstraint]:
             return False
         return True
+
+    @model_validator(mode="after")
+    def validate_interpoint_constraints(self):
+        if self.domain.constraints.get(InterpointConstraint) and len(
+            self.domain.inputs.get(ContinuousInput)
+        ) != len(self.domain.inputs):
+            raise ValueError(
+                "Interpoint constraints can only be used for pure continuous search spaces."
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_surrogate_specs(self):

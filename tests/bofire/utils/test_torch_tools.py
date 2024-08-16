@@ -352,6 +352,8 @@ def test_get_interpoint_equality_constraints():
             dtype=torch.int64,
         ),
     )
+    constraints = get_interpoint_constraints(domain=domain, n_candidates=1)
+    assert len(constraints) == 0
 
 
 def test_get_linear_constraints():
