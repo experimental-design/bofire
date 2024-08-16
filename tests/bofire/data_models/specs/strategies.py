@@ -1,6 +1,7 @@
 import bofire.data_models.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -414,6 +415,29 @@ specs.add_invalid(
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=k, bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    )
+                    for k in ["a", "b", "c"]
+                ]
+                + [CategoricalInput(key="d", categories=["a", "b", "c"])]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+            constraints=Constraints(
+                constraints=[InterpointEqualityConstraint(feature="a")]
+            ),
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="Interpoint constraints can only be used for pure continuous search spaces.",
 )
 
 specs.add_valid(

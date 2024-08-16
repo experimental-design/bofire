@@ -106,6 +106,8 @@ def get_interpoint_constraints(
             of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
+    if n_candidates == 1:
+        return constraints
     for constraint in domain.constraints.get(InterpointEqualityConstraint):
         assert isinstance(constraint, InterpointEqualityConstraint)
         coefficients = torch.tensor([1.0, -1.0]).to(**tkwargs)

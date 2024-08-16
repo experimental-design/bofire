@@ -45,6 +45,7 @@ from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
+    get_interpoint_constraints,
     get_linear_constraints,
     get_nonlinear_constraints,
     tkwargs,
@@ -358,6 +359,9 @@ class BotorchStrategy(PredictiveStrategy):
                     options=self._get_optimizer_options(),  # type: ignore
                 )
             else:
+                interpoints = get_interpoint_constraints(
+                    domain=self.domain, n_candidates=candidate_count
+                )
                 candidates, acqf_vals = optimize_acqf(
                     acq_function=acqfs[0],
                     bounds=bounds,
@@ -367,7 +371,8 @@ class BotorchStrategy(PredictiveStrategy):
                     equality_constraints=get_linear_constraints(
                         domain=self.domain,
                         constraint=LinearEqualityConstraint,  # type: ignore
-                    ),
+                    )
+                    + interpoints,
                     inequality_constraints=get_linear_constraints(
                         domain=self.domain,
                         constraint=LinearInequalityConstraint,  # type: ignore
