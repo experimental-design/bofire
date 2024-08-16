@@ -4043,6 +4043,8 @@ are generated at once.</p></td>
 <span class="sd">            of a tensor with the feature indices, coefficients and a float for the rhs.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">if</span> <span class="n">n_candidates</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">constraints</span>
     <span class="k">for</span> <span class="n">constraint</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InterpointEqualityConstraint</span><span class="p">):</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">constraint</span><span class="p">,</span> <span class="n">InterpointEqualityConstraint</span><span class="p">)</span>
         <span class="n">coefficients</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">])</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
