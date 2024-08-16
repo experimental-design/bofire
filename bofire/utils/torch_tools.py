@@ -3,7 +3,9 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
+from botorch.models.transforms.input import InputTransform
 from torch import Tensor
+from torch.nn import Module
 
 from bofire.data_models.api import AnyObjective, Domain, Outputs
 from bofire.data_models.constraints.api import (
@@ -559,3 +561,98 @@ def get_initial_conditions_generator(
             )
 
     return generator
+
+
+@torch.jit.script
+def interp1d(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    x_new: torch.Tensor,
+) -> torch.Tensor:
+    """
+    Interpolates values in the y tensor based on the x tensor using linear interpolation.
+
+    Args:
+        x (torch.Tensor): The x-coordinates of the data points.
+        y (torch.Tensor): The y-coordinates of the data points.
+        x_new (torch.Tensor): The x-coordinates at which to interpolate the values.
+
+    Returns:
+        torch.Tensor: The interpolated values at the x_new x-coordinates.
+    """
+    m = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
+    b = y[:-1] - (m * x[:-1])
+
+    idx = torch.sum(torch.ge(x_new[:, None], x[None, :]), 1) - 1
+    idx = torch.clamp(idx, 0, len(m) - 1)
+
+    itp = m[idx] * x_new + b[idx]
+
+    return itp
+
+
+class InterpolateTransform(InputTransform, Module):
+    def __init__(
+        self,
+        new_x: Tensor,
+        idx_x: List[int],
+        idx_y: List[int],
+        prepend_x: float,
+        prepend_y: float,
+        append_x: float,
+        append_y: float,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ):
+        super().__init__()
+        if len(idx_x) != len(idx_y):
+            raise ValueError("Indices of x and y are of different length.")
+        if len(set(idx_x + idx_y)) != len(idx_x) + len(idx_y):
+            raise ValueError("Indices are not unique.")
+
+        self.idx_x = torch.as_tensor(idx_x, dtype=torch.long)
+        self.idx_y = torch.as_tensor(idx_y, dtype=torch.long)
+
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.new_x = new_x
+
+        self.prepend_x = prepend_x
+        self.prepend_y = prepend_y
+        self.append_x = append_x
+        self.append_y = append_y
+
+    def _to(self, X: Tensor) -> None:
+        self.new_x = self.coefficient.to(X)
+
+    def transform(self, X: Tensor):
+        shapeX = X.shape
+        # print(shapeX)
+
+        ps = list(X.shape)
+        ps[-1] = len(self.idx_x) + 2
+        ps = tuple(ps)
+
+        x = torch.zeros(ps)
+        x[..., 1:-1] = X[..., self.idx_x]
+        x[..., 0] = self.prepend_x
+        x[..., -1] = self.append_x
+
+        y = torch.zeros(ps)
+        y[..., 1:-1] = X[..., self.idx_y]
+        y[..., 0] = self.prepend_y
+        y[..., -1] = self.append_y
+
+        if X.dim() == 3:
+            x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
+            y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
+
+        new_x = self.new_x.expand(x.shape[0], -1)
+        new_y = torch.vmap(interp1d)(x, y, new_x)
+
+        if X.dim() == 3:
+            new_y = new_y.reshape((shapeX[0], shapeX[1], new_y.shape[-1]))
+
+        return new_y

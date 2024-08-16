@@ -19,6 +19,7 @@ from bofire.data_models.kernels.continuous import (
 )
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
+from bofire.data_models.kernels.shape import WassersteinKernel
 
 AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
 
@@ -41,4 +42,5 @@ AnyKernel = Union[
     RBFKernel,
     TanimotoKernel,
     InfiniteWidthBNNKernel,
+    WassersteinKernel,
 ]

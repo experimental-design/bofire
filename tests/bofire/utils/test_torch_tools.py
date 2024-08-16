@@ -33,6 +33,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
+    InterpolateTransform,
     constrained_objective2botorch,
     get_additive_botorch_objective,
     get_custom_botorch_objective,
@@ -46,6 +47,7 @@ from bofire.utils.torch_tools import (
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
+    interp1d,
     tkwargs,
 )
 
@@ -876,3 +878,59 @@ def test_constrained_objective():
         .ravel()
     )
     assert np.allclose(true_y.numpy(), result)
+
+
+def test_interp1d():
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([0.0, 10, 40, 60])
+    y = np.array([0.0, 0.2, 0.5, 0.9])
+    y_new = np.interp(x_new, x, y)
+    tx_new = torch.from_numpy(x_new).to(**tkwargs)
+    tx = torch.from_numpy(np.array([0.0, 10, 40, 60])).to(**tkwargs)
+    ty = torch.from_numpy(np.array([0.0, 0.2, 0.5, 0.9])).to(**tkwargs)
+    ty_new = interp1d(tx, ty, tx_new).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+
+def test_InterpolateTransform():
+    new_x = torch.from_numpy(np.linspace(0, 60, 200)).to(**tkwargs)
+    with pytest.raises(ValueError, match="Indices of x and y are of different length."):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[2, 3],
+            prepend_x=0,
+            append_x=60,
+            prepend_y=0,
+            append_y=1,
+            new_x=new_x,
+        )
+    with pytest.raises(ValueError, match="Indices are not unique."):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[2, 3, 4],
+            prepend_x=0,
+            append_x=60,
+            prepend_y=0,
+            append_y=1,
+            new_x=new_x,
+        )
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2],
+        idx_y=[3, 4, 5],
+        prepend_x=0,
+        append_x=60,
+        prepend_y=0,
+        append_y=1,
+        new_x=new_x,
+    )
+
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+
+    tX = torch.tensor([[10, 40, 55, 0.2, 0.5, 0.75], [10, 20, 55, 0.2, 0.5, 0.7]]).to(
+        **tkwargs
+    )
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)

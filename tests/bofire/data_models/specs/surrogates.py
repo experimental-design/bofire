@@ -17,12 +17,14 @@ from bofire.data_models.kernels.api import (
     MaternKernel,
     ScaleKernel,
     TanimotoKernel,
+    WassersteinKernel,
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
+    LogNormalPrior,
 )
 from bofire.data_models.surrogates.api import (
     MeanAggregation,
@@ -590,4 +592,156 @@ specs.add_invalid(
         "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
     },
     error=ValueError,
+)
+
+
+specs.add_valid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 400,
+        "x_keys": [f"x_{i}" for i in range(4)],
+        "y_keys": [f"y_{i}" for i in range(4)],
+        "x_bounds": (0, 60),
+        "y_bounds": (0, 1),
+        "kernel": ScaleKernel(
+            base_kernel=WassersteinKernel(
+                squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+)
+
+specs.add_invalid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 400,
+        "x_keys": [f"x_{i}" for i in range(4)],
+        "y_keys": [f"y_{i}" for i in range(3)],
+        "x_bounds": (0, 60),
+        "y_bounds": (0, 1),
+        "kernel": ScaleKernel(
+            base_kernel=WassersteinKernel(
+                squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+    error=ValueError,
+    message="Different number of x and y keys.",
+)
+
+specs.add_invalid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 400,
+        "x_keys": [f"x_{i}" for i in range(4)],
+        "y_keys": [f"z_{i}" for i in range(4)],
+        "x_bounds": (0, 60),
+        "y_bounds": (0, 1),
+        "kernel": ScaleKernel(
+            base_kernel=WassersteinKernel(
+                squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+    error=ValueError,
+    message="Feature keys do not match input keys.",
+)
+
+specs.add_invalid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 400,
+        "x_keys": [f"x_{i}" for i in range(4)],
+        "y_keys": [f"z_{i}" for i in range(4)],
+        "x_bounds": (0, 60),
+        "y_bounds": (0, 1),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+    error=ValueError,
+    message="PiecewiseLinearGPSurrogate can only be used with a Wasserstein kernel.",
+)
+
+specs.add_invalid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 400,
+        "x_keys": [f"x_{i}" for i in range(4)],
+        "y_keys": [f"z_{i}" for i in range(4)],
+        "x_bounds": (0, 60),
+        "y_bounds": (0, 1),
+        "kernel": MaternKernel().model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+    error=ValueError,
+    message="PiecewiseLinearGPSurrogate can only be used with a Wasserstein kernel.",
 )
