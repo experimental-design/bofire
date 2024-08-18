@@ -78,9 +78,11 @@ def hyperoptimize(
     # analyze the results and get the best
     experiments = experiments.sort_values(
         by=benchmark.target_metric.name,
-        ascending=True
-        if isinstance(benchmark.domain.outputs[0].objective, MinimizeObjective)
-        else False,
+        ascending=(
+            True
+            if isinstance(benchmark.domain.outputs[0].objective, MinimizeObjective)
+            else False
+        ),
     )
 
     surrogate_data.update_hyperparameters(experiments.iloc[0])

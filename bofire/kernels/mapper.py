@@ -20,9 +20,11 @@ def map_RBFKernel(
         batch_shape=batch_shape,
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,  # type: ignore
-        lengthscale_prior=priors.map(data_model.lengthscale_prior)
-        if data_model.lengthscale_prior is not None
-        else None,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
     )
 
 
@@ -37,9 +39,30 @@ def map_MaternKernel(
         ard_num_dims=len(active_dims) if data_model.ard else None,
         active_dims=active_dims,
         nu=data_model.nu,
-        lengthscale_prior=priors.map(data_model.lengthscale_prior)
-        if data_model.lengthscale_prior is not None
-        else None,
+        lengthscale_prior=(
+            priors.map(data_model.lengthscale_prior, d=len(active_dims))
+            if data_model.lengthscale_prior is not None
+            else None
+        ),
+    )
+
+
+def map_InfiniteWidthBNNKernel(
+    data_model: data_models.InfiniteWidthBNNKernel,
+    batch_shape: torch.Size,
+    ard_num_dims: int,
+    active_dims: List[int],
+) -> "InfiniteWidthBNNKernel":  # noqa: F821 # type: ignore
+    try:
+        from botorch.models.kernels import InfiniteWidthBNNKernel
+    except ImportError:
+        raise ImportError(
+            "Please update to botorch development version to use this feature."
+        )
+    return InfiniteWidthBNNKernel(
+        batch_shape=batch_shape,
+        active_dims=tuple(active_dims),
+        depth=data_model.depth,
     )
 
 
@@ -52,9 +75,11 @@ def map_LinearKernel(
     return gpytorch.kernels.LinearKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
-        variance_prior=priors.map(data_model.variance_prior)
-        if data_model.variance_prior is not None
-        else None,
+        variance_prior=(
+            priors.map(data_model.variance_prior)
+            if data_model.variance_prior is not None
+            else None
+        ),
     )
 
 
@@ -68,9 +93,11 @@ def map_PolynomialKernel(
         batch_shape=batch_shape,
         active_dims=active_dims,
         power=data_model.power,
-        offset_prior=priors.map(data_model.offset_prior)
-        if data_model.offset_prior is not None
-        else None,
+        offset_prior=(
+            priors.map(data_model.offset_prior)
+            if data_model.offset_prior is not None
+            else None
+        ),
     )
 
 
@@ -125,9 +152,11 @@ def map_ScaleKernel(
             ard_num_dims=ard_num_dims,
             active_dims=active_dims,
         ),
-        outputscale_prior=priors.map(data_model.outputscale_prior)
-        if data_model.outputscale_prior is not None
-        else None,
+        outputscale_prior=(
+            priors.map(data_model.outputscale_prior)
+            if data_model.outputscale_prior is not None
+            else None
+        ),
     )
 
 
@@ -144,8 +173,8 @@ def map_TanimotoKernel(
     )
 
 
-def map_HammondDistanceKernel(
-    data_model: data_models.TanimotoKernel,
+def map_HammingDistanceKernel(
+    data_model: data_models.HammingDistanceKernel,
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
@@ -166,7 +195,8 @@ KERNEL_MAP = {
     data_models.MultiplicativeKernel: map_MultiplicativeKernel,
     data_models.ScaleKernel: map_ScaleKernel,
     data_models.TanimotoKernel: map_TanimotoKernel,
-    data_models.HammondDistanceKernel: map_HammondDistanceKernel,
+    data_models.HammingDistanceKernel: map_HammingDistanceKernel,
+    data_models.InfiniteWidthBNNKernel: map_InfiniteWidthBNNKernel,
 }
 
 

@@ -27,6 +27,7 @@ class QehviStrategy(BotorchStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
+        self.num_sobol_samples = data_model.num_sobol_samples
         self.ref_point = data_model.ref_point
         self.ref_point_mask = get_ref_point_mask(self.domain)
 

@@ -30,7 +30,7 @@ from bofire.data_models.enum import (
 )
 from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataModel
 
-# from bofire.data_models.kernels.categorical import HammondDistanceKernel
+# from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.trainable import TrainableSurrogate
 from bofire.surrogates.utils import (

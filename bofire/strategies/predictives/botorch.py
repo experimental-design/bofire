@@ -37,7 +37,7 @@ from bofire.data_models.strategies.api import (
 )
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import AnyTrainableSurrogate
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 from bofire.outlier_detection.outlier_detections import OutlierDetections
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 from bofire.strategies.random import RandomStrategy
@@ -45,23 +45,11 @@ from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
+    get_interpoint_constraints,
     get_linear_constraints,
     get_nonlinear_constraints,
     tkwargs,
 )
-
-
-def is_power_of_two(n):
-    """
-    Check if a number is a power of two.
-
-    Args:
-        n (int): The number to be checked.
-
-    Returns:
-        bool: True if the number is a power of two, False otherwise.
-    """
-    return (n != 0) and (n & (n - 1) == 0)
 
 
 class BotorchStrategy(PredictiveStrategy):
@@ -71,7 +59,6 @@ class BotorchStrategy(PredictiveStrategy):
         **kwargs,
     ):
         super().__init__(data_model=data_model, **kwargs)
-        self.num_sobol_samples = data_model.num_sobol_samples
         self.num_restarts = data_model.num_restarts
         self.num_raw_samples = data_model.num_raw_samples
         self.descriptor_method = data_model.descriptor_method
@@ -92,12 +79,14 @@ class BotorchStrategy(PredictiveStrategy):
         self.folds = data_model.folds
         self.surrogates = None
         self.local_search_config = data_model.local_search_config
+        self.maxiter = data_model.maxiter
+        self.batch_limit = data_model.batch_limit
         torch.manual_seed(self.seed)
 
     model: Optional[GPyTorchModel] = None
 
     @property
-    def input_preprocessing_specs(self) -> TInputTransformSpecs:
+    def input_preprocessing_specs(self) -> InputTransformSpecs:
         return self.surrogate_specs.input_preprocessing_specs  # type: ignore
 
     @property
@@ -113,6 +102,25 @@ class BotorchStrategy(PredictiveStrategy):
             self.input_preprocessing_specs
         )
         return features2names
+
+    def _get_optimizer_options(self) -> Dict[str, int]:
+        """Returns a dictionary of settings passed to `optimize_acqf` controlling
+        the behavior of the optimizer.
+
+        Returns:
+            Dict[str, int]: The dictionary with the settings.
+        """
+        return {
+            "batch_limit": (
+                self.batch_limit
+                if len(
+                    self.domain.constraints.get([NChooseKConstraint, ProductConstraint])
+                )
+                == 0
+                else 1
+            ),  # type: ignore
+            "maxiter": self.maxiter,
+        }
 
     def _fit(self, experiments: pd.DataFrame):
         """[summary]
@@ -135,13 +143,15 @@ class BotorchStrategy(PredictiveStrategy):
             from bofire.runners.hyperoptimize import hyperoptimize
 
             self.surrogate_specs.surrogates = [  # type: ignore
-                hyperoptimize(
-                    surrogate_data=surrogate_data,  # type: ignore
-                    training_data=experiments,
-                    folds=self.folds,
-                )[0]
-                if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
-                else surrogate_data
+                (
+                    hyperoptimize(
+                        surrogate_data=surrogate_data,  # type: ignore
+                        training_data=experiments,
+                        folds=self.folds,
+                    )[0]
+                    if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
+                    else surrogate_data
+                )
                 for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
             ]
 
@@ -201,7 +211,7 @@ class BotorchStrategy(PredictiveStrategy):
     def _setup_ask(self):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
         num_categorical_features = len(
-            self.domain.get_features([CategoricalInput, DiscreteInput])
+            self.domain.inputs.get([CategoricalInput, DiscreteInput])
         )
         num_categorical_combinations = len(
             self.domain.inputs.get_categorical_combinations()
@@ -324,10 +334,7 @@ class BotorchStrategy(PredictiveStrategy):
                 fixed_features_list=fixed_features_list,
                 ic_gen_kwargs=ic_gen_kwargs,
                 ic_generator=ic_generator,
-                options={
-                    "batch_limit": 5 if len(nonlinear_constraints) == 0 else 1,
-                    "maxiter": 200,
-                },
+                options=self._get_optimizer_options(),  # type: ignore
             )
         else:
             if fixed_features_list:
@@ -349,8 +356,12 @@ class BotorchStrategy(PredictiveStrategy):
                     fixed_features_list=fixed_features_list,
                     ic_generator=ic_generator,
                     ic_gen_kwargs=ic_gen_kwargs,
+                    options=self._get_optimizer_options(),  # type: ignore
                 )
             else:
+                interpoints = get_interpoint_constraints(
+                    domain=self.domain, n_candidates=candidate_count
+                )
                 candidates, acqf_vals = optimize_acqf(
                     acq_function=acqfs[0],
                     bounds=bounds,
@@ -360,7 +371,8 @@ class BotorchStrategy(PredictiveStrategy):
                     equality_constraints=get_linear_constraints(
                         domain=self.domain,
                         constraint=LinearEqualityConstraint,  # type: ignore
-                    ),
+                    )
+                    + interpoints,
                     inequality_constraints=get_linear_constraints(
                         domain=self.domain,
                         constraint=LinearInequalityConstraint,  # type: ignore
@@ -368,6 +380,7 @@ class BotorchStrategy(PredictiveStrategy):
                     fixed_features=fixed_features,
                     nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                     return_best_only=True,
+                    options=self._get_optimizer_options(),  # type: ignore
                     ic_generator=ic_generator,  # type: ignore
                     **ic_gen_kwargs,  # type: ignore
                 )
@@ -504,7 +517,7 @@ class BotorchStrategy(PredictiveStrategy):
         fixed_features = {}
         features2idx = self._features2idx
 
-        for _, feat in enumerate(self.domain.get_features(Input)):
+        for _, feat in enumerate(self.domain.inputs.get(Input)):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
@@ -610,7 +623,7 @@ class BotorchStrategy(PredictiveStrategy):
 
                 for pair in combo:
                     feat, val = pair
-                    feature = self.domain.get_feature(feat)
+                    feature = self.domain.inputs.get_by_key(feat)
                     if (
                         isinstance(feature, CategoricalDescriptorInput)
                         and self.input_preprocessing_specs[feat]
@@ -657,7 +670,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         # TODO: should this be selectable?
         clean_experiments = experiments.drop_duplicates(
-            subset=[var.key for var in self.domain.get_features(Input)],
+            subset=[var.key for var in self.domain.inputs.get(Input)],
             keep="first",
             inplace=False,
         )

@@ -1,9 +1,9 @@
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Type, Union
 
 from pydantic import Field
 from typing_extensions import Annotated
 
-from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 
 
@@ -30,5 +30,13 @@ class RandomForestSurrogate(TrainableBotorchSurrogate):
     random_state: Optional[int] = None
     ccp_alpha: Annotated[float, Field(ge=0)] = 0.0
     max_samples: Optional[Union[int, float]] = None
-    scaler: ScalerEnum = ScalerEnum.IDENTITY
-    output_scaler: ScalerEnum = ScalerEnum.IDENTITY
+
+    @classmethod
+    def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:
+        """Abstract method to check output type for surrogate models
+        Args:
+            my_type: continuous or categorical output
+        Returns:
+            bool: True if the output type is valid for the surrogate chosen, False otherwise
+        """
+        return isinstance(my_type, type(ContinuousOutput))

@@ -7,12 +7,13 @@ from bofire.data_models.features.descriptor import (
     ContinuousDescriptorInput,
 )
 from bofire.data_models.features.discrete import DiscreteInput
-from bofire.data_models.features.feature import _CAT_SEP, Feature, Input, Output
+from bofire.data_models.features.feature import Feature, Input, Output
 from bofire.data_models.features.molecular import (
     CategoricalMolecularInput,
     MolecularInput,
 )
 from bofire.data_models.features.numerical import NumericalInput
+from bofire.data_models.features.task import TaskInput
 
 AbstractFeature = Union[
     Feature,
@@ -32,6 +33,7 @@ AnyFeature = Union[
     CategoricalDescriptorInput,
     MolecularInput,
     CategoricalMolecularInput,
+    TaskInput,
 ]
 
 AnyInput = Union[
@@ -42,6 +44,7 @@ AnyInput = Union[
     CategoricalDescriptorInput,
     MolecularInput,
     CategoricalMolecularInput,
+    TaskInput,
 ]
 
 AnyOutput = Union[ContinuousOutput, CategoricalOutput]

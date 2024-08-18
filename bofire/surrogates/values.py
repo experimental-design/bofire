@@ -1,3 +1,5 @@
+from typing import Union
+
 from pydantic import Field
 from typing_extensions import Annotated
 
@@ -15,5 +17,5 @@ class PredictedValue(BaseModel):
             Has to be greater/equal than zero.
     """
 
-    predictedValue: float
+    predictedValue: Union[float, str]
     standardDeviation: Annotated[float, Field(ge=0)]

@@ -16,7 +16,7 @@ from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
 from bofire.data_models.features.discrete import DiscreteInput
 from bofire.data_models.features.feature import Feature, Output
-from bofire.data_models.types import TDiscreteVals
+from bofire.data_models.types import DiscreteVals
 
 
 def discrete_to_relaxable_domain_mapper(
@@ -24,7 +24,7 @@ def discrete_to_relaxable_domain_mapper(
 ) -> Tuple[
     Domain,
     List[List[ContinuousInput]],
-    Dict[str, Tuple[ContinuousInput, TDiscreteVals]],
+    Dict[str, Tuple[ContinuousInput, DiscreteVals]],
 ]:
     """Converts a domain with discrete and categorical inputs to a domain with relaxable inputs.
 
@@ -33,8 +33,9 @@ def discrete_to_relaxable_domain_mapper(
     """
 
     # get all discrete and categorical inputs
-    kept_inputs = domain.get_features(
-        excludes=[CategoricalInput, DiscreteInput, Output]
+    kept_inputs = domain.inputs.get(
+        includes=None,  # type: ignore
+        excludes=[CategoricalInput, DiscreteInput],
     ).features
     discrete_inputs = domain.inputs.get(DiscreteInput)
     categorical_inputs = domain.inputs.get(CategoricalInput)
@@ -86,7 +87,7 @@ def nchoosek_to_relaxable_domain_mapper(
         var_occuring_in_nchoosek.extend(constr.features)  # type: ignore
 
         current_features: List[Feature] = [
-            domain.get_feature(k) for k in constr.features  # type: ignore
+            domain.inputs.get_by_key(k) for k in constr.features  # type: ignore
         ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
             current_features,
@@ -167,13 +168,15 @@ def NChooseKGroup_with_quantity(
         and group restrictions.
     """
     if quantity_if_picked is not None:
-        if type(quantity_if_picked) is list and len(keys) != len(quantity_if_picked):
+        if isinstance(quantity_if_picked, list) and len(keys) != len(
+            quantity_if_picked
+        ):
             raise ValueError(
                 f"number of keys must be the same as corresponding quantities. Received {len(keys)} keys "
                 f"and {len(quantity_if_picked)} quantities"
             )
 
-        if type(quantity_if_picked) is list and True in [
+        if isinstance(quantity_if_picked, list) and True in [
             0 in q for q in quantity_if_picked
         ]:
             raise ValueError(
@@ -204,7 +207,7 @@ def NChooseKGroup_with_quantity(
     if True in ["_" in k for k in keys]:
         raise ValueError('"_" is not allowed as an character in the keys')
 
-    if quantity_if_picked is not None and type(quantity_if_picked) != list:
+    if quantity_if_picked is not None and not isinstance(quantity_if_picked, list):
         quantity_if_picked = [quantity_if_picked for k in keys]  # type: ignore
 
     quantity_var, all_new_constraints = [], []
@@ -506,10 +509,13 @@ def design_from_new_to_original_domain(
 ) -> pd.DataFrame:
     # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random for multiple solutions
     transformed_design = design[
-        original_domain.get_feature_keys(excludes=[CategoricalInput, Output])
+        original_domain.inputs.get_keys(
+            includes=None,  # type: ignore
+            excludes=[CategoricalInput, Output],
+        )
     ]
 
-    for group in original_domain.get_features(includes=CategoricalInput):
+    for group in original_domain.inputs.get(includes=CategoricalInput):
         categorical_columns = design[group.categories]  # type: ignore
         mask = ~np.isclose(categorical_columns.to_numpy(), 0)
 
@@ -544,7 +550,7 @@ def design_from_new_to_original_domain(
         transformed_design[group.key] = categorical_columns.apply("".join, axis=1)
 
     # map the ContinuousInput describing the discrete to the closest valid value
-    for var in original_domain.get_features(includes=DiscreteInput):
+    for var in original_domain.inputs.get(includes=DiscreteInput):
         closest_solution = var.from_continuous(transformed_design)  # type: ignore
         transformed_design[var.key] = closest_solution
 

@@ -1,4 +1,3 @@
-import math
 from typing import Annotated, Dict, Literal, Type, Union
 
 import pandas as pd
@@ -30,7 +29,7 @@ def has_local_search_region(domain: Domain) -> bool:
     is_lsr = False
     for feat in domain.inputs.get(ContinuousInput):
         assert isinstance(feat, ContinuousInput)
-        if feat.local_relative_bounds != (math.inf, math.inf):
+        if feat.local_relative_bounds is not None:
             is_lsr = True
     return is_lsr
 

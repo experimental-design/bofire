@@ -1,13 +1,18 @@
-from typing import ClassVar, Dict, List, Literal, Optional, Tuple, Union
+from typing import Annotated, ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.feature import _CAT_SEP, Input, Output, TTransform
-from bofire.data_models.types import TCategoryVals
+from bofire.data_models.features.feature import (
+    Input,
+    Output,
+    TTransform,
+    get_encoded_name,
+)
+from bofire.data_models.objectives.api import AnyCategoricalObjective
+from bofire.data_models.types import CategoryVals
 
 
 class CategoricalInput(Input):
@@ -22,7 +27,7 @@ class CategoricalInput(Input):
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
-    categories: TCategoryVals
+    categories: CategoryVals
     allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
         default=None, validate_default=True
     )
@@ -174,7 +179,7 @@ class CategoricalInput(Input):
             pd.DataFrame: One-hot transformed data frame.
         """
         return pd.DataFrame(
-            {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories},
+            {get_encoded_name(self.key, c): values == c for c in self.categories},
             dtype=float,
             index=values.index,
         )
@@ -191,7 +196,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: Series with categorical values.
         """
-        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):
@@ -212,7 +217,7 @@ class CategoricalInput(Input):
             pd.DataFrame: Dummy-hot transformed data frame.
         """
         return pd.DataFrame(
-            {f"{self.key}{_CAT_SEP}{c}": values == c for c in self.categories[1:]},
+            {get_encoded_name(self.key, c): values == c for c in self.categories[1:]},
             dtype=float,
             index=values.index,
         )
@@ -229,7 +234,7 @@ class CategoricalInput(Input):
         Returns:
             pd.Series: Series with categorical values.
         """
-        cat_cols = [f"{self.key}{_CAT_SEP}{c}" for c in self.categories]
+        cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols[1:]]):
@@ -332,23 +337,33 @@ class CategoricalInput(Input):
 
 class CategoricalOutput(Output):
     type: Literal["CategoricalOutput"] = "CategoricalOutput"
-    # order_id: ClassVar[int] = 8
-    order_id: ClassVar[int] = 9
+    order_id: ClassVar[int] = 10
 
-    categories: TCategoryVals
-    objective: Annotated[List[Annotated[float, Field(ge=0, le=1)]], Field(min_length=2)]
+    categories: CategoryVals
+    objective: AnyCategoricalObjective
 
-    @field_validator("objective")
-    @classmethod
-    def validate_objective(cls, objective, info):
-        if len(objective) != len(info.data["categories"]):
-            raise ValueError("Length of objectives and categories do not match.")
-        for o in objective:
-            if o > 1:
-                raise ValueError("Objective values has to be smaller equal than 1.")
-            if o < 0:
-                raise ValueError("Objective values has to be larger equal than zero")
-        return objective
+    @model_validator(mode="after")
+    def validate_objective_categories(self):
+        """validates that objective categories match the output categories
+
+        Raises:
+            ValueError: when categories do not match objective categories
+
+        Returns:
+            self
+        """
+        if self.objective.categories != self.categories:  # type: ignore
+            raise ValueError("categories must match to objective categories")
+        return self
+
+    def __call__(self, values: pd.Series) -> pd.Series:
+        if self.objective is None:
+            return pd.Series(
+                data=[np.nan for _ in range(len(values))],
+                index=values.index,
+                name=values.name,
+            )
+        return self.objective(values)  # type: ignore
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)
@@ -358,9 +373,5 @@ class CategoricalOutput(Output):
             )
         return values
 
-    def to_dict(self) -> Dict:
-        """Returns the catergories and corresponding objective values as dictionary"""
-        return dict(zip(self.categories, self.objective))
-
-    def __call__(self, values: pd.Series) -> pd.Series:
-        return values.map(self.to_dict()).astype(float)
+    def __str__(self) -> str:
+        return "CategoricalOutputFeature"

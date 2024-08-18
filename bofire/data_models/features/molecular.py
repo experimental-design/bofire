@@ -6,8 +6,8 @@ import pandas as pd
 from pydantic import field_validator
 
 from bofire.data_models.enum import CategoricalEncodingEnum
-from bofire.data_models.features.categorical import _CAT_SEP, CategoricalInput
-from bofire.data_models.features.feature import Input
+from bofire.data_models.features.categorical import CategoricalInput
+from bofire.data_models.features.feature import Input, get_encoded_name
 from bofire.data_models.molfeatures.api import (
     AnyMolFeatures,
     Fingerprints,
@@ -98,7 +98,7 @@ class MolecularInput(Input):
         descriptor_values = transform_type.get_descriptor_values(values)
 
         descriptor_values.columns = [
-            f"{self.key}{_CAT_SEP}{d}" for d in transform_type.get_descriptor_names()
+            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
         ]
         descriptor_values.index = values.index
 
@@ -163,9 +163,11 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
             # else we return the complete bounds
             data = self.to_descriptor_encoding(
                 transform_type=transform_type,
-                values=pd.Series(self.get_allowed_categories())
-                if values is None
-                else pd.Series(self.categories),
+                values=(
+                    pd.Series(self.get_allowed_categories())
+                    if values is None
+                    else pd.Series(self.categories)
+                ),
             )
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
@@ -189,7 +191,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
         # This method is modified based on the categorical descriptor feature
         # TODO: move it to more central place
         cat_cols = [
-            f"{self.key}{_CAT_SEP}{d}" for d in transform_type.get_descriptor_names()
+            get_encoded_name(self.key, d) for d in transform_type.get_descriptor_names()
         ]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.

@@ -62,6 +62,10 @@ def test_condition_should_be_invalid(invalid_condition_spec: InvalidSpec):
     _invalidate(invalid_condition_spec)
 
 
+def test_transform_should_be_invalid(invalid_condition_spec: InvalidSpec):
+    _invalidate(invalid_condition_spec)
+
+
 def test_outlier_detection_should_be_invalid(
     invalid_outlier_detection_spec: InvalidSpec,
 ):

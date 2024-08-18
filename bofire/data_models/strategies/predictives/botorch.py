@@ -7,13 +7,18 @@ from pydantic import Field, PositiveInt, field_validator, model_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     Constraint,
+    InterpointConstraint,
     LinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+)
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.shortest_path import has_local_search_region
@@ -22,10 +27,7 @@ from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
-
-
-def is_power_of_two(n):
-    return (n != 0) and (n & (n - 1) == 0)
+from bofire.data_models.types import IntPowerOfTwo
 
 
 class LocalSearchConfig(BaseModel):
@@ -70,9 +72,12 @@ AnyLocalSearchConfig = LSRBO
 
 
 class BotorchStrategy(PredictiveStrategy):
-    num_sobol_samples: PositiveInt = 512
+    # acqf optimizer params
     num_restarts: PositiveInt = 8
-    num_raw_samples: PositiveInt = 1024
+    num_raw_samples: IntPowerOfTwo = 1024
+    maxiter: PositiveInt = 2000
+    batch_limit: Optional[PositiveInt] = Field(default=None, validate_default=True)
+    # encoding params
     descriptor_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     categorical_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
     discrete_method: CategoricalMethodEnum = CategoricalMethodEnum.EXHAUSTIVE
@@ -88,6 +93,14 @@ class BotorchStrategy(PredictiveStrategy):
     folds: int = 5
     # local search region params
     local_search_config: Optional[AnyLocalSearchConfig] = None
+
+    @field_validator("batch_limit")
+    @classmethod
+    def validate_batch_limit(cls, batch_limit: int, info):
+        batch_limit = min(
+            batch_limit or info.data["num_restarts"], info.data["num_restarts"]
+        )
+        return batch_limit
 
     @model_validator(mode="after")
     def validate_local_search_config(self):
@@ -118,14 +131,15 @@ class BotorchStrategy(PredictiveStrategy):
             return False
         return True
 
-    @field_validator("num_sobol_samples", "num_raw_samples")
-    @classmethod
-    def validate_num_sobol_samples(cls, v, info):
-        if is_power_of_two(v) is False:
+    @model_validator(mode="after")
+    def validate_interpoint_constraints(self):
+        if self.domain.constraints.get(InterpointConstraint) and len(
+            self.domain.inputs.get(ContinuousInput)
+        ) != len(self.domain.inputs):
             raise ValueError(
-                f"{info.field_name} have to be of the power of 2 to increase performance"
+                "Interpoint constraints can only be used for pure continuous search spaces."
             )
-        return v
+        return self
 
     @model_validator(mode="after")
     def validate_surrogate_specs(self):

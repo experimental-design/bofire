@@ -44,9 +44,11 @@ class SaasSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         self.model = SaasFullyBayesianSingleTaskGP(
             train_X=tX,
             train_Y=tY,
-            outcome_transform=Standardize(m=1)
-            if self.output_scaler == ScalerEnum.STANDARDIZE
-            else None,
+            outcome_transform=(
+                Standardize(m=1)
+                if self.output_scaler == ScalerEnum.STANDARDIZE
+                else None
+            ),
             input_transform=scaler,
         )
         fit_fully_bayesian_model_nuts(

@@ -25,14 +25,12 @@ from bofire.data_models.features.api import (
     MolecularInput,
 )
 from bofire.data_models.kernels.api import (
-    HammondDistanceKernel,
+    HammingDistanceKernel,
     MaternKernel,
     RBFKernel,
     ScaleKernel,
 )
-from bofire.data_models.molfeatures.api import (
-    MordredDescriptors,
-)
+from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
@@ -283,6 +281,46 @@ def test_SingleTaskGPHyperconfig():
         )
 
 
+def test_MixedSingleTaskGPHyperconfig():
+    inputs = Inputs(
+        features=[
+            ContinuousInput(
+                key=f"x_{i+1}",
+                bounds=(-4, 4),
+            )
+            for i in range(2)
+        ]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+    )
+    outputs = Outputs(features=[ContinuousOutput(key="y")])
+    surrogate_data = MixedSingleTaskGPSurrogate(
+        inputs=inputs,
+        outputs=outputs,
+    )
+    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
+    surrogate_data.update_hyperparameters(candidate)
+    assert surrogate_data.continuous_kernel.ard == (candidate["ard"] == "True")
+    if candidate.continuous_kernel == "matern_1.5":
+        assert isinstance(surrogate_data.continuous_kernel, MaternKernel)
+        assert surrogate_data.continuous_kernel.nu == 1.5
+    elif candidate.continuous_kernel == "matern_2.5":
+        assert isinstance(surrogate_data.continuous_kernel, MaternKernel)
+        assert surrogate_data.continuous_kernel.nu == 2.5
+    else:
+        assert isinstance(surrogate_data.continuous_kernel, RBFKernel)
+    if candidate.prior == "mbo":
+        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        assert (
+            surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
+        )
+    else:
+        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+        assert (
+            surrogate_data.continuous_kernel.lengthscale_prior
+            == BOTORCH_LENGTHCALE_PRIOR()
+        )
+
+
 def test_MixedSingleTaskGPModel_invalid_preprocessing():
     inputs = Inputs(
         features=[
@@ -337,7 +375,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,
-        categorical_kernel=HammondDistanceKernel(),
+        categorical_kernel=HammingDistanceKernel(),
     )
     model = surrogates.map(model)
     with pytest.raises(ValueError):
@@ -416,7 +454,7 @@ def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         continuous_kernel=kernel,
-        categorical_kernel=HammondDistanceKernel(),
+        categorical_kernel=HammingDistanceKernel(),
         input_preprocessing_specs={
             "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
             "x_cat": CategoricalEncodingEnum.ONE_HOT,

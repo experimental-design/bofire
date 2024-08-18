@@ -5,12 +5,15 @@ from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.api import (
     CategoricalInput,
+    CategoricalOutput,
     ContinuousInput,
     ContinuousOutput,
     MolecularInput,
+    TaskInput,
 )
 from bofire.data_models.kernels.api import (
-    HammondDistanceKernel,
+    HammingDistanceKernel,
+    InfiniteWidthBNNKernel,
     MaternKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -26,6 +29,7 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
     SumAggregation,
 )
+from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -70,6 +74,31 @@ specs.add_valid(
 )
 
 specs.add_valid(
+    models.SingleTaskIBNNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "aggregations": None,
+        "dump": None,
+        "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
+    },
+)
+
+specs.add_valid(
     models.MixedSingleTaskGPSurrogate,
     lambda: {
         "inputs": Inputs(
@@ -85,7 +114,7 @@ specs.add_valid(
         ).model_dump(),
         "aggregations": None,
         "continuous_kernel": MaternKernel(ard=True, nu=2.5).model_dump(),
-        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
@@ -158,7 +187,7 @@ specs.add_valid(
     },
 )
 specs.add_valid(
-    models.MLPEnsemble,
+    models.RegressionMLPEnsemble,
     lambda: {
         "inputs": Inputs(
             features=[
@@ -174,6 +203,7 @@ specs.add_valid(
         "n_estimators": 2,
         "hidden_layer_sizes": (100,),
         "activation": "relu",
+        "final_activation": "identity",
         "dropout": 0.0,
         "batch_size": 10,
         "n_epochs": 200,
@@ -181,12 +211,111 @@ specs.add_valid(
         "weight_decay": 0.0,
         "subsample_fraction": 1.0,
         "shuffle": True,
-        "scaler": ScalerEnum.NORMALIZE,
-        "output_scaler": ScalerEnum.STANDARDIZE,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": None,
     },
+)
+specs.add_invalid(
+    models.RegressionMLPEnsemble,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(CategoricalOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "final_activation": "softmax",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
+)
+
+specs.add_valid(
+    models.ClassificationMLPEnsemble,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(CategoricalOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "final_activation": "softmax",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+)
+specs.add_invalid(
+    models.ClassificationMLPEnsemble,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "aggregations": None,
+        "n_estimators": 2,
+        "hidden_layer_sizes": (100,),
+        "activation": "relu",
+        "final_activation": "identity",
+        "dropout": 0.0,
+        "batch_size": 10,
+        "n_epochs": 200,
+        "lr": 1e-4,
+        "weight_decay": 0.0,
+        "subsample_fraction": 1.0,
+        "shuffle": True,
+        "scaler": ScalerEnum.IDENTITY,
+        "output_scaler": ScalerEnum.IDENTITY,
+        "input_preprocessing_specs": {},
+        "dump": None,
+        "hyperconfig": None,
+    },
+    error=ValueError,
 )
 
 specs.add_valid(
@@ -281,7 +410,7 @@ specs.add_valid(
         "continuous_kernel": MaternKernel(
             ard=True, nu=random.choice([0.5, 1.5, 2.5])
         ).model_dump(),
-        "categorical_kernel": HammondDistanceKernel(ard=True).model_dump(),
+        "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
         "input_preprocessing_specs": {
@@ -292,4 +421,173 @@ specs.add_valid(
         "dump": None,
         "hyperconfig": None,
     },
+)
+
+specs.add_valid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0, "c": 5.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="coefficient keys do not match input feature keys.",
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                CategoricalInput(key="b", categories=["a", "b"]),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
+)
+
+specs.add_valid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [TaskInput(key="task", categories=["a", "b", "c"])]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+)
+
+# if wrong encoding (one-hot) is used, there should be a validation error
+specs.add_invalid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [TaskInput(key="task", categories=["a", "b", "c"])]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ONE_HOT,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
+)
+
+# if there is no task input, there should be a validation error
+specs.add_invalid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
 )

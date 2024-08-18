@@ -7,8 +7,8 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.feature import _CAT_SEP, TTransform
-from bofire.data_models.types import TDescriptors, TDiscreteVals
+from bofire.data_models.features.feature import TTransform, get_encoded_name
+from bofire.data_models.types import Descriptors, DiscreteVals
 
 
 # TODO: write a Descriptor base class from which both Categorical and Continuous Descriptor are inheriting
@@ -25,8 +25,8 @@ class ContinuousDescriptorInput(ContinuousInput):
     type: Literal["ContinuousDescriptorInput"] = "ContinuousDescriptorInput"
     order_id: ClassVar[int] = 2
 
-    descriptors: TDescriptors
-    values: TDiscreteVals
+    descriptors: Descriptors
+    values: DiscreteVals
 
     @model_validator(mode="after")
     def validate_list_lengths(self):
@@ -71,7 +71,7 @@ class CategoricalDescriptorInput(CategoricalInput):
     type: Literal["CategoricalDescriptorInput"] = "CategoricalDescriptorInput"
     order_id: ClassVar[int] = 6
 
-    descriptors: TDescriptors
+    descriptors: Descriptors
     values: Annotated[
         List[List[float]],
         Field(min_length=1),
@@ -215,7 +215,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         """
         return pd.DataFrame(
             data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
-            columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
+            columns=[get_encoded_name(self.key, d) for d in self.descriptors],
             index=values.index,
         )
 
@@ -231,7 +231,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             pd.Series: Series with categorical values.
         """
-        cat_cols = [f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors]
+        cat_cols = [get_encoded_name(self.key, d) for d in self.descriptors]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):

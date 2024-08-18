@@ -10,7 +10,7 @@ from botorch.models.transforms.input import ChainedInputTransform, FilterFeature
 
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.surrogates.api import BotorchSurrogates as DataModel
-from bofire.data_models.types import TInputTransformSpecs
+from bofire.data_models.types import InputTransformSpecs
 from bofire.surrogates.botorch import BotorchSurrogate
 from bofire.surrogates.mapper import map as map_surrogate
 from bofire.surrogates.trainable import TrainableSurrogate
@@ -27,7 +27,7 @@ class BotorchSurrogates(ABC):
         self.surrogates = [map_surrogate(model) for model in data_model.surrogates]  # type: ignore
 
     @property
-    def input_preprocessing_specs(self) -> TInputTransformSpecs:
+    def input_preprocessing_specs(self) -> InputTransformSpecs:
         return {
             key: value
             for model in self.surrogates

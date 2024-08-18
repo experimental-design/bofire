@@ -1,10 +1,10 @@
 from typing import Literal, Optional, Sequence, Union
 
-from bofire.data_models.kernels.categorical import HammondDistanceKernel
+from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.kernels.molecular import TanimotoKernel
-from bofire.data_models.priors.api import AnyPrior
+from bofire.data_models.priors.api import AnyGeneralPrior
 
 
 class AdditiveKernel(Kernel):
@@ -14,7 +14,7 @@ class AdditiveKernel(Kernel):
             RBFKernel,
             MaternKernel,
             LinearKernel,
-            HammondDistanceKernel,
+            HammingDistanceKernel,
             TanimotoKernel,
             "AdditiveKernel",
             "MultiplicativeKernel",
@@ -31,7 +31,7 @@ class MultiplicativeKernel(Kernel):
             RBFKernel,
             MaternKernel,
             LinearKernel,
-            HammondDistanceKernel,
+            HammingDistanceKernel,
             AdditiveKernel,
             TanimotoKernel,
             "MultiplicativeKernel",
@@ -46,13 +46,13 @@ class ScaleKernel(Kernel):
         RBFKernel,
         MaternKernel,
         LinearKernel,
-        HammondDistanceKernel,
+        HammingDistanceKernel,
         AdditiveKernel,
         MultiplicativeKernel,
         TanimotoKernel,
         "ScaleKernel",
     ]
-    outputscale_prior: Optional[AnyPrior] = None
+    outputscale_prior: Optional[AnyGeneralPrior] = None
 
 
 AdditiveKernel.model_rebuild()

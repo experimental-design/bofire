@@ -35,7 +35,7 @@ class DoEStrategy(Strategy):
         self._fixed_candidates = None
 
     def set_candidates(self, candidates: pd.DataFrame):
-        original_columns = self.domain.get_feature_keys(includes=Input)
+        original_columns = self.domain.inputs.get_keys(includes=Input)
         to_many_columns = []
         for col in candidates.columns:
             if col not in original_columns:
@@ -183,7 +183,9 @@ class DoEStrategy(Strategy):
         # mapping the solution to the variables from the original domain
         transformed_design = design_from_new_to_original_domain(self.domain, design)
 
-        return transformed_design.iloc[fixed_experiments_count:, :].reset_index(drop=True)  # type: ignore
+        return transformed_design.iloc[fixed_experiments_count:, :].reset_index(
+            drop=True
+        )  # type: ignore
 
     def has_sufficient_experiments(
         self,
@@ -207,7 +209,7 @@ class DoEStrategy(Strategy):
             for col in missing_columns:
                 intermediate_candidates.insert(0, col, None)
 
-            cat_columns = self.domain.get_features(includes=CategoricalInput)
+            cat_columns = self.domain.inputs.get(includes=CategoricalInput)
             for cat in cat_columns:
                 for row_index, c in enumerate(intermediate_candidates[cat.key].values):
                     if pd.isnull(c):

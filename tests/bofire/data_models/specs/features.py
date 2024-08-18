@@ -3,7 +3,10 @@ import random
 import uuid
 
 import bofire.data_models.features.api as features
-from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.objectives.api import (
+    ConstrainedCategoricalObjective,
+    MaximizeObjective,
+)
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -42,6 +45,14 @@ specs.add_valid(
         "stepsize": None,
     },
 )
+
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": (5, 3)},
+    error=ValueError,
+    message="lower bound must be <= upper bound, got 5.0 > 3.0",
+)
+
 specs.add_valid(
     features.ContinuousDescriptorInput,
     lambda: {
@@ -120,7 +131,16 @@ specs.add_valid(
     },
 )
 
-
+specs.add_valid(
+    features.CategoricalOutput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": ["a", "b", "c"],
+        "objective": ConstrainedCategoricalObjective(
+            categories=["a", "b", "c"], desirability=[True, True, False]
+        ).model_dump(),
+    },
+)
 specs.add_valid(
     features.MolecularInput,
     lambda: {
@@ -141,11 +161,50 @@ specs.add_valid(
         "allowed": [True, True, True, True],
     },
 )
+
+
 specs.add_valid(
-    features.CategoricalOutput,
+    features.TaskInput,
     lambda: {
         "key": str(uuid.uuid4()),
-        "categories": ["a", "b", "c"],
-        "objective": [0.0, 1.0, 0.0],
+        "categories": [
+            "process_1",
+            "process_2",
+            "process_3",
+        ],
+        "allowed": [True, True, True],
+        "fidelities": [0, 1, 2],
     },
+)
+
+specs.add_invalid(
+    features.TaskInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": [
+            "process_1",
+            "process_2",
+            "process_3",
+        ],
+        "allowed": [True, True, True],
+        "fidelities": [0, 1],
+    },
+    error=ValueError,
+    message="Length of fidelity lists must be equal to the number of tasks",
+)
+
+specs.add_invalid(
+    features.TaskInput,
+    lambda: {
+        "key": str(uuid.uuid4()),
+        "categories": [
+            "process_1",
+            "process_2",
+            "process_3",
+        ],
+        "allowed": [True, True, True],
+        "fidelities": [0, 1, 3],
+    },
+    error=ValueError,
+    message="Fidelities must be a list containing integers, starting from 0 and increasing by 1",
 )

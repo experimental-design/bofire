@@ -31,6 +31,10 @@ from bofire.data_models.acquisition_functions.api import (
     qSR,
     qUCB,
 )
+from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
+    NChooseKConstraint,
+)
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import (
@@ -449,3 +453,42 @@ def test_sobo_lsrbo():
     strategy.tell(experiments)
     strategy.ask(1)
     np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.05276, 11.192913])
+
+
+def test_sobo_get_optimizer_options():
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            ContinuousInput(key="b", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="c")],
+    )
+    strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
+    strategy = SoboStrategy(data_model=strategy_data)
+    assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 4}
+    domain = Domain(
+        inputs=[
+            ContinuousInput(key="a", bounds=(0, 1)),
+            ContinuousInput(key="b", bounds=(0, 1)),
+        ],
+        outputs=[ContinuousOutput(key="c")],
+        constraints=[
+            NChooseKConstraint(
+                features=["a", "b"], max_count=1, min_count=0, none_also_valid=True
+            )
+        ],
+    )
+    strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
+    strategy = SoboStrategy(data_model=strategy_data)
+    assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 1}
+
+
+def test_sobo_interpoint():
+    bench = Himmelblau()
+    experiments = bench.f(bench.domain.inputs.sample(4), return_complete=True)
+    domain = bench._domain
+    domain.constraints.constraints.append(InterpointEqualityConstraint(feature="x_1"))
+    strategy_data = data_models.SoboStrategy(domain=domain)
+    strategy = SoboStrategy(data_model=strategy_data)
+    strategy.tell(experiments)
+    strategy.ask(2)

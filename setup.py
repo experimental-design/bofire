@@ -42,7 +42,7 @@ setup(
     ],
     extras_require={
         "optimization": [
-            "botorch>=0.9.5",
+            "botorch>=0.10.0",
             "multiprocess",
             "plotly",
             "formulaic>=1.0.1",
@@ -51,6 +51,7 @@ setup(
             "cvxpy[CLARABEL]",
             sklearn_dependency,
         ],
+        "entmoot": ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"],
         "xgb": ["xgboost>=1.7.5"],
         "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
         "tests": [
@@ -60,8 +61,6 @@ setup(
             "pytest",
             "pytest-cov",
             "papermill",
-            "jupyter",
-            "matplotlib",
         ],
         "docs": [
             "mkdocs",
@@ -71,5 +70,6 @@ setup(
             "mkdocstrings-python-legacy",
             "mike",
         ],
+        "tutorials": ["jupyter", "matplotlib", "seaborn"],
     },
 )

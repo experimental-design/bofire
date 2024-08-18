@@ -6,7 +6,7 @@ from pydantic import field_validator
 
 from bofire.data_models.features.feature import TTransform
 from bofire.data_models.features.numerical import NumericalInput
-from bofire.data_models.types import TDiscreteVals
+from bofire.data_models.types import DiscreteVals
 
 
 class DiscreteInput(NumericalInput):
@@ -20,7 +20,7 @@ class DiscreteInput(NumericalInput):
     type: Literal["DiscreteInput"] = "DiscreteInput"
     order_id: ClassVar[int] = 3
 
-    values: TDiscreteVals
+    values: DiscreteVals
 
     @field_validator("values")
     @classmethod

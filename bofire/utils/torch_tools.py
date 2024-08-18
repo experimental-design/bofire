@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -16,6 +16,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
+    ConstrainedCategoricalObjective,
     ConstrainedObjective,
     MaximizeObjective,
     MaximizeSigmoidObjective,
@@ -33,15 +34,15 @@ tkwargs = {
 
 def get_linear_constraints(
     domain: Domain,
-    constraint: Union[LinearEqualityConstraint, LinearInequalityConstraint],
+    constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Converts linear constraints to the form required by BoTorch.
 
     Args:
-        domain (Domain): Optimization problem definition.
-        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint]): Type of constraint that should be converted.
-        unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
+        domain: Optimization problem definition.
+        constraint: Type of constraint that should be converted.
+        unit_scaled: If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
 
     Returns:
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
@@ -54,8 +55,8 @@ def get_linear_constraints(
         upper = []
         rhs = 0.0
         for i, featkey in enumerate(c.features):  # type: ignore
-            idx = domain.get_feature_keys(Input).index(featkey)
-            feat = domain.get_feature(featkey)
+            idx = domain.inputs.get_keys(Input).index(featkey)
+            feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():  # type: ignore
                 rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
             else:
@@ -105,10 +106,12 @@ def get_interpoint_constraints(
             of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
+    if n_candidates == 1:
+        return constraints
     for constraint in domain.constraints.get(InterpointEqualityConstraint):
         assert isinstance(constraint, InterpointEqualityConstraint)
         coefficients = torch.tensor([1.0, -1.0]).to(**tkwargs)
-        feat_idx = domain.get_feature_keys(Input).index(constraint.feature)
+        feat_idx = domain.inputs.get_keys(Input).index(constraint.feature)
         feat = domain.inputs.get_by_key(constraint.feature)
         assert isinstance(feat, ContinuousInput)
         if feat.is_fixed():
@@ -159,7 +162,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     for c in domain.constraints.get(NChooseKConstraint):
         assert isinstance(c, NChooseKConstraint)
         indices = torch.tensor(
-            [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
+            [domain.inputs.get_keys(ContinuousInput).index(key) for key in c.features],
             dtype=torch.int64,
         )
         if c.max_count != len(c.features):
@@ -197,7 +200,7 @@ def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     for c in domain.constraints.get(ProductInequalityConstraint):
         assert isinstance(c, ProductInequalityConstraint)
         indices = torch.tensor(
-            [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
+            [domain.inputs.get_keys(ContinuousInput).index(key) for key in c.features],
             dtype=torch.int64,
         )
         constraints.append(
@@ -222,9 +225,8 @@ def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]
 
 
 def constrained_objective2botorch(
-    idx: int,
-    objective: ConstrainedObjective,
-) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
+    idx: int, objective: ConstrainedObjective, eps: float = 1e-8
+) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
     to setup ouput constrained optimizations.
 
@@ -233,24 +235,57 @@ def constrained_objective2botorch(
         objective (BotorchConstrainedObjective): The objective that should be transformed.
 
     Returns:
-        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of callables that can be used by botorch for setting up the constrained objective, and
-            list of the corresponding botorch eta values.
+        Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,
+            list of the corresponding botorch eta values, final index used by the method (to track for categorical variables)
     """
     assert isinstance(
         objective, ConstrainedObjective
     ), "Objective is not a `ConstrainedObjective`."
     if isinstance(objective, MaximizeSigmoidObjective):
-        return [lambda Z: (Z[..., idx] - objective.tp) * -1.0], [
-            1.0 / objective.steepness
-        ]
+        return (
+            [lambda Z: (Z[..., idx] - objective.tp) * -1.0],
+            [1.0 / objective.steepness],
+            idx + 1,
+        )
     elif isinstance(objective, MinimizeSigmoidObjective):
-        return [lambda Z: (Z[..., idx] - objective.tp)], [1.0 / objective.steepness]
+        return (
+            [lambda Z: (Z[..., idx] - objective.tp)],
+            [1.0 / objective.steepness],
+            idx + 1,
+        )
     elif isinstance(objective, TargetObjective):
-        return [
-            lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
-            * -1.0,
-            lambda Z: (Z[..., idx] - (objective.target_value + objective.tolerance)),
-        ], [1.0 / objective.steepness, 1.0 / objective.steepness]
+        return (
+            [
+                lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
+                * -1.0,
+                lambda Z: (
+                    Z[..., idx] - (objective.target_value + objective.tolerance)
+                ),
+            ],
+            [1.0 / objective.steepness, 1.0 / objective.steepness],
+            idx + 1,
+        )
+    elif isinstance(objective, ConstrainedCategoricalObjective):
+        # The output of a categorical objective has final dim `c` where `c` is number of classes
+        # Pass in the expected acceptance probability and perform an inverse sigmoid to atain the original probabilities
+        return (
+            [
+                lambda Z: torch.log(
+                    1
+                    / torch.clamp(
+                        (
+                            Z[..., idx : idx + len(objective.desirability)]
+                            * torch.tensor(objective.desirability).to(**tkwargs)
+                        ).sum(-1),
+                        min=eps,
+                        max=1 - eps,
+                    )
+                    - 1,
+                )
+            ],
+            [1.0],
+            idx + len(objective.desirability),
+        )
     else:
         raise ValueError(f"Objective {objective.__class__.__name__} not known.")
 
@@ -271,14 +306,17 @@ def get_output_constraints(
     """
     constraints = []
     etas = []
-    for idx, feat in enumerate(outputs.get()):
+    idx = 0
+    for feat in outputs.get():
         if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
-            iconstraints, ietas = constrained_objective2botorch(
+            iconstraints, ietas, idx = constrained_objective2botorch(
                 idx,
                 objective=feat.objective,  # type: ignore
             )
             constraints += iconstraints
             etas += ietas
+        else:
+            idx += 1
     return constraints, etas
 
 

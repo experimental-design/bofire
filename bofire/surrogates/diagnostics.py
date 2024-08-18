@@ -4,9 +4,11 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator, validator
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
+    accuracy_score,
+    f1_score,
     mean_absolute_error,
     mean_absolute_percentage_error,
     mean_squared_error,
@@ -15,7 +17,49 @@ from sklearn.metrics import (
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.domain import is_numeric
-from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEnum
+from bofire.data_models.enum import (
+    ClassificationMetricsEnum,
+    RegressionMetricsEnum,
+    UQRegressionMetricsEnum,
+)
+
+
+def _accuracy_score(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the standard accuracy score.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: Accuracy score.
+    """
+    return float(accuracy_score(observed, predicted))
+
+
+def _f1_score(
+    observed: np.ndarray,
+    predicted: np.ndarray,
+    standard_deviation: Optional[np.ndarray] = None,
+) -> float:
+    """Calculates the f1 accuracy score.
+
+    Args:
+        observed (np.ndarray): Observed data.
+        predicted (np.ndarray): Predicted data.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
+            Ignored in the calculation. Defaults to None.
+
+    Returns:
+        float: Accuracy score.
+    """
+    return float(f1_score(observed, predicted, average="micro"))
 
 
 def _mean_absolute_error(
@@ -375,7 +419,7 @@ def _MiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simps(Cqs - qs, qs)  # type: ignore
+        res = simpson(Cqs - qs, x=qs)  # type: ignore
 
         return float(res)
     except ValueError:
@@ -411,7 +455,7 @@ def _AbsoluteMiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simps(np.abs(Cqs - qs), qs)  # type: ignore
+        res = simpson(np.abs(Cqs - qs), x=qs)  # type: ignore
 
         return float(res)
     except ValueError:
@@ -431,6 +475,11 @@ metrics = {
     RegressionMetricsEnum.FISHER: _fisher_exact_test_p,
 }
 
+classification_metrics = {
+    ClassificationMetricsEnum.ACCURACY: _accuracy_score,
+    ClassificationMetricsEnum.F1: _f1_score,
+}
+
 UQ_metrics = {
     UQRegressionMetricsEnum.PEARSON_UQ: _pearson_UQ,
     UQRegressionMetricsEnum.SPEARMAN_UQ: _spearman_UQ,
@@ -440,7 +489,7 @@ UQ_metrics = {
     UQRegressionMetricsEnum.ABSOLUTEMISCALIBRATIONAREA: _AbsoluteMiscalibrationArea,
 }
 
-all_metrics = {**metrics, **UQ_metrics}
+all_metrics = {**metrics, **UQ_metrics, **classification_metrics}
 
 
 class CvResult(BaseModel):
@@ -511,7 +560,10 @@ class CvResult(BaseModel):
         return len(self.observed)
 
     def get_metric(
-        self, metric: Union[RegressionMetricsEnum, UQRegressionMetricsEnum]
+        self,
+        metric: Union[
+            ClassificationMetricsEnum, RegressionMetricsEnum, UQRegressionMetricsEnum
+        ],
     ) -> float:
         """Calculates a metric for the fold.
 
@@ -630,7 +682,9 @@ class CvResults(BaseModel):
 
     def get_metric(
         self,
-        metric: Union[RegressionMetricsEnum, UQRegressionMetricsEnum],
+        metric: Union[
+            ClassificationMetricsEnum, RegressionMetricsEnum, UQRegressionMetricsEnum
+        ],
         combine_folds: bool = True,
     ) -> pd.Series:
         """Calculates a metric for every fold and returns them as pd.Series.
@@ -654,7 +708,13 @@ class CvResults(BaseModel):
 
     def get_metrics(
         self,
-        metrics: Sequence[Union[RegressionMetricsEnum, UQRegressionMetricsEnum]] = [
+        metrics: Sequence[
+            Union[
+                ClassificationMetricsEnum,
+                RegressionMetricsEnum,
+                UQRegressionMetricsEnum,
+            ]
+        ] = [
             RegressionMetricsEnum.MAE,
             RegressionMetricsEnum.MSD,
             RegressionMetricsEnum.R2,
@@ -703,9 +763,11 @@ def CvResults2CrossValidationValues(
             CrossValidationValues(
                 observed=fold.observed.tolist(),
                 predicted=fold.predicted.tolist(),
-                standardDeviation=fold.standard_deviation.tolist()
-                if fold.standard_deviation is not None
-                else None,
+                standardDeviation=(
+                    fold.standard_deviation.tolist()
+                    if fold.standard_deviation is not None
+                    else None
+                ),
                 metrics=metrics.loc[i].to_dict() if fold.n_samples > 1 else None,
             )
         )

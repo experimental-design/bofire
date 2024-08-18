@@ -1,6 +1,6 @@
-from typing import Annotated, Dict, List, Union
+from typing import Annotated, Dict, List, Tuple, Union
 
-from pydantic import AfterValidator, Field
+from pydantic import AfterValidator, Field, PositiveInt
 
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.molfeatures.api import AnyMolFeatures
@@ -44,18 +44,50 @@ def make_unique_validator(name: str):
     return validate_unique
 
 
-TFeatureKeys = Annotated[
+def validate_power_of_two(value: int):
+    def is_power_of_two(n):
+        return (n != 0) and (n & (n - 1) == 0)
+
+    if not is_power_of_two(value):
+        raise ValueError("Argument is not power of two.")
+    return value
+
+
+def validate_bounds(bounds: Tuple[float, float]) -> Tuple[float, float]:
+    """Validate that the lower bound is less than or equal to the upper bound.
+
+    Args:
+        bounds: Tuple of lower and upper bounds.
+
+    Raises:
+        ValueError: If lower bound is greater than upper bound.
+
+    Returns:
+        Validated bounds.
+    """
+    if bounds[0] > bounds[1]:
+        raise ValueError(
+            f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
+        )
+    return bounds
+
+
+FeatureKeys = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Features"))
 ]
 
-TCategoryVals = Annotated[
+CategoryVals = Annotated[
     List[str], Field(min_length=2), AfterValidator(make_unique_validator("Categories"))
 ]
 
-TDescriptors = Annotated[
+Descriptors = Annotated[
     List[str], Field(min_length=1), AfterValidator(make_unique_validator("Descriptors"))
 ]
 
-TDiscreteVals = Annotated[List[float], Field(min_length=1)]
+Bounds = Annotated[Tuple[float, float], AfterValidator(validate_bounds)]
 
-TInputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
+DiscreteVals = Annotated[List[float], Field(min_length=1)]
+
+InputTransformSpecs = Dict[str, Union[CategoricalEncodingEnum, AnyMolFeatures]]
+
+IntPowerOfTwo = Annotated[PositiveInt, AfterValidator(validate_power_of_two)]
