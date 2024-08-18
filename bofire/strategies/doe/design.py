@@ -18,6 +18,7 @@ from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.types import Bounds
 from bofire.strategies.doe.objective import get_objective_class
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
@@ -42,7 +43,7 @@ def find_local_max_ipopt_BaB(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
-    transform_range: Optional[Tuple[float, float]] = None,
+    transform_range: Optional[Bounds] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by Branch-and-Bound
@@ -67,7 +68,7 @@ def find_local_max_ipopt_BaB(
             discrete_variables (Optional[Dict[str, Tuple[ContinuousInput, List[float]]]]): dict of relaxed discrete inputs
                 with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
-            transform_range (Optional[Tuple[float, float]]): range to which the input variables are transformed.
+            transform_range (Optional[Bounds]): range to which the input variables are transformed.
                 If None is provided, the features will not be scaled. Defaults to None.
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
@@ -192,7 +193,7 @@ def find_local_max_ipopt_exhaustive(
     categorical_groups: Optional[List[List[ContinuousInput]]] = None,
     discrete_variables: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     verbose: bool = False,
-    transform_range: Optional[Tuple[float, float]] = None,
+    transform_range: Optional[Bounds] = None,
 ) -> pd.DataFrame:
     """Function computing a d-optimal design" for a given domain and model.
     It allows for the problem to have categorical values which is solved by exhaustive search
@@ -217,7 +218,7 @@ def find_local_max_ipopt_exhaustive(
             discrete_variables (Optional[Dict[str, Tuple[ContinuousInput, List[float]]]]): dict of relaxed discrete inputs
                 with key:(relaxed variable, valid values). Defaults to None
             verbose (bool): if true, print information during the optimization process
-            transform_range (Optional[Tuple[float, float]]): range to which the input variables are transformed.
+            transform_range (Optional[Bounds]): range to which the input variables are transformed.
         Returns:
             A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
             local optimum.
@@ -373,7 +374,7 @@ def find_local_max_ipopt(
     fixed_experiments: Optional[pd.DataFrame] = None,
     partially_fixed_experiments: Optional[pd.DataFrame] = None,
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY,
-    transform_range: Optional[Tuple[float, float]] = None,
+    transform_range: Optional[Bounds] = None,
 ) -> pd.DataFrame:
     """Function computing an optimal design for a given domain and model.
     Args:
@@ -392,7 +393,7 @@ def find_local_max_ipopt(
             Variables can be fixed to one value or can be set to a range by setting a tuple with lower and upper bound
             Non-fixed variables have to be set to None or nan.
         objective (OptimalityCriterionEnum): OptimalityCriterionEnum object indicating which objective function to use.
-        transform_range (Optional[Tuple[float, float]]): range to which the input variables are transformed.
+        transform_range (Optional[Bounds]): range to which the input variables are transformed.
     Returns:
         A pd.DataFrame object containing the best found input for the experiments. In general, this is only a
         local optimum.

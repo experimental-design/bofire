@@ -8,8 +8,3 @@ class OptimalityCriterionEnum(Enum):
     G_OPTIMALITY = "G_OPTIMALITY"
     K_OPTIMALITY = "K_OPTIMALITY"
     SPACE_FILLING = "SPACE_FILLING"
-
-
-class TransformEnum(Enum):
-    IDENTITY = "IDENTITY"
-    MIN_MAX_TRANSFORM = "MIN_MAX_TRANSFORM"

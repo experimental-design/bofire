@@ -1,6 +1,6 @@
 from abc import abstractmethod
 from copy import deepcopy
-from typing import Optional, Tuple, Type
+from typing import Optional, Type
 
 import numpy as np
 import pandas as pd
@@ -9,6 +9,7 @@ from formulaic import Formula
 from torch import Tensor
 
 from bofire.data_models.domain.api import Domain
+from bofire.data_models.types import Bounds
 from bofire.strategies.doe.transform import IndentityTransform, MinMaxTransform
 from bofire.strategies.enum import OptimalityCriterionEnum
 from bofire.utils.torch_tools import tkwargs
@@ -21,7 +22,7 @@ class Objective:
         model: Formula,
         n_experiments: int,
         delta: float = 1e-6,
-        transform_range: Optional[Tuple[float, float]] = None,
+        transform_range: Optional[Bounds] = None,
     ) -> None:
         """
         Args:
@@ -29,6 +30,7 @@ class Objective:
             model_type (str or Formula): A formula containing all model terms.
             n_experiments (int): Number of experiments
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
+            transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
 
         """
 
@@ -153,7 +155,7 @@ class DOptimality(Objective):
         model: Formula,
         n_experiments: int,
         delta: float = 1e-7,
-        transform_range: Optional[Tuple[float, float]] = None,
+        transform_range: Optional[Bounds] = None,
     ) -> None:
         super().__init__(
             domain=domain,
