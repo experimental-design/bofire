@@ -6,6 +6,8 @@ import pandas as pd
 from pydantic import Field
 
 from bofire.data_models.constraints.constraint import Constraint
+from bofire.data_models.domain.features import Inputs
+from bofire.data_models.features.api import ContinuousInput
 
 
 class InterpointConstraint(Constraint):
@@ -18,7 +20,7 @@ class InterpointConstraint(Constraint):
 
 class InterpointEqualityConstraint(InterpointConstraint):
     """Constraint that forces that values of a certain feature of a set/batch of
-    candidates should have the same value.
+    candidates should have the same value. Currently this is only implemented for ContinuousInput features.
 
     Attributes:
         feature(str): The constrained feature.
@@ -29,6 +31,12 @@ class InterpointEqualityConstraint(InterpointConstraint):
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
     feature: str
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
+
+    def validate_inputs(self, inputs: Inputs):  # type: ignore
+        if self.feature not in inputs.get_keys(ContinuousInput):
+            raise ValueError(
+                f"Feature {self.feature} is not a continuous input feature in the provided Inputs object."
+            )
 
     def is_fulfilled(
         self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
