@@ -35,7 +35,7 @@ class DoEStrategy(Strategy):
 
     objective: OptimalityCriterionEnum = OptimalityCriterionEnum.D_OPTIMALITY
 
-    transform_range: Union[None, Bounds] = None
+    transform_range: Optional[Bounds] = None
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
