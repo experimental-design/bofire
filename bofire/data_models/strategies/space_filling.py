@@ -34,7 +34,7 @@ class SpaceFillingStrategy(Strategy):
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
     ipopt_options: dict = {"maxiter": 200, "disp": 0}
 
-    transform_range: Union[None, Bounds] = None
+    transform_range: Optional[Bounds] = None
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
