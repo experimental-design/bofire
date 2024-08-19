@@ -1,4 +1,4 @@
-from typing import Literal, Type, Union
+from typing import Literal, Optional, Type, Union
 
 from bofire.data_models.constraints.api import Constraint
 from bofire.data_models.features.api import (
