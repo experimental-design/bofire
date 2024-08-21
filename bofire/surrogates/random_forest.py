@@ -168,4 +168,4 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
     def loads(self, data: str):
         """Loads the actual random forest from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         buffer = io.BytesIO(base64.b64decode(data.encode()))
-        self.model = torch.load(buffer, weights_only=True)
+        self.model = torch.load(buffer, weights_only=False)
