@@ -19,7 +19,7 @@ from bofire.strategies.strategy import Strategy
 class DoEStrategy(Strategy):
     """Strategy for design of experiments. This strategy is used to generate a set of
     experiments for a given domain.
-    The experiments are generated via minimization of the D-optimality criterion.
+    The experiments are generated via minimization of a user defined optimality criterion.
 
     """
 
@@ -102,6 +102,8 @@ class DoEStrategy(Strategy):
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
+                objective=self.data_model.objective,
+                transform_range=self.data_model.transform_range,
             )
         # todo adapt to when exhaustive search accepts discrete variables
         elif (
@@ -117,6 +119,8 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
+                objective=self.data_model.objective,
+                transform_range=self.data_model.transform_range,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -132,6 +136,8 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
+                objective=self.data_model.objective,
+                transform_range=self.data_model.transform_range,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -155,6 +161,8 @@ class DoEStrategy(Strategy):
                     partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
+                    objective=self.data_model.objective,
+                    transform_range=self.data_model.transform_range,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [

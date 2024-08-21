@@ -771,3 +771,37 @@ def test_SpaceFilling_evaluate_jacobian():
     x = np.array([1, 0.4, 0, 0.1])
 
     assert np.allclose(space_filling.evaluate_jacobian(x), [-1, -1, 2, 0])
+
+
+def test_MinMaxTransform():
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
+    )
+    model = get_formula_from_string("linear", domain=domain)
+
+    x = np.array([1, 0.8, 0.55, 0.65])
+    x_scaled = x * 2 - 1
+
+    for cls in [DOptimality, AOptimality, EOptimality, GOptimality, SpaceFilling]:
+        objective_unscaled = cls(
+            domain=domain,
+            model=model,
+            n_experiments=4,
+            delta=0,
+            transform_range=None,
+        )
+        objective_scaled = cls(
+            domain=domain,
+            model=model,
+            n_experiments=4,
+            delta=0,
+            transform_range=(-1.0, 1.0),
+        )
+        assert np.allclose(
+            objective_unscaled.evaluate(x_scaled), objective_scaled.evaluate(x)
+        )
+        assert np.allclose(
+            2 * objective_unscaled.evaluate_jacobian(x_scaled),
+            objective_scaled.evaluate_jacobian(x),
+        )
