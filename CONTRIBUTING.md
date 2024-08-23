@@ -20,7 +20,7 @@ git clone https://github.com/experimental-design/bofire.git
 ```
 and cd `bofire`, you can proceed with
 ```
-pip install -e .[optimization,cheminfo,testing,docs]
+pip install -e .[optimization,cheminfo,tests,docs]
 ```
 Afterwards, you can check that the tests are successful via
 ```
