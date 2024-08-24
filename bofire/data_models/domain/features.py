@@ -506,7 +506,9 @@ class Inputs(_BaseFeatures[AnyInput]):
                 transformed.append(feat.from_onehot_encoding(experiments))
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
                 assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.from_ordinal_encoding(experiments[feat.key]))
+                transformed.append(
+                    feat.from_ordinal_encoding(experiments[feat.key].astype(int))
+                )
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
                 assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.from_dummy_encoding(experiments))
