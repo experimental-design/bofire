@@ -87,3 +87,18 @@ for concentration in [-1, 0]:
             },
             error=ValidationError,
         )
+
+specs.add_valid(
+    priors.LogNormalPrior, lambda: {"loc": random.random(), "scale": random.random()}
+)
+
+
+specs.add_valid(
+    priors.DimensionalityScaledLogNormalPrior,
+    lambda: {
+        "loc": random.random(),
+        "loc_scaling": random.random(),
+        "scale": random.random(),
+        "scale_scaling": random.random(),
+    },
+)

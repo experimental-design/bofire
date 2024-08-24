@@ -1,3 +1,4 @@
+from bofire.data_models.constraints.api import InterpointEqualityConstraint
 from bofire.data_models.domain.api import Constraints, Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from tests.bofire.data_models.specs.features import specs as features
@@ -70,4 +71,26 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Feature keys are not unique",
+)
+
+specs.add_invalid(
+    Domain,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(key="i1"),
+                features.valid(ContinuousInput).obj(key="i2"),
+            ]
+        ),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(key="o1"),
+            ]
+        ),
+        "constraints": Constraints(
+            constraints=[InterpointEqualityConstraint(feature="i3")]
+        ),
+    },
+    error=ValueError,
+    message="feature i3 not known.",
 )

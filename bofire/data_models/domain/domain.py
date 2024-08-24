@@ -4,12 +4,10 @@ import warnings
 from typing import (
     Any,
     Dict,
-    List,
     Literal,
     Optional,
     Sequence,
     Tuple,
-    Type,
     Union,
     get_args,
     get_origin,
@@ -23,18 +21,18 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
     ConstraintNotFulfilledError,
+    InterpointEqualityConstraint,
     LinearConstraint,
     NChooseKConstraint,
     ProductConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
-from bofire.data_models.domain.features import Features, Inputs, Outputs
+from bofire.data_models.domain.features import Inputs, Outputs
 from bofire.data_models.features.api import (
     AnyInput,
     AnyOutput,
     ContinuousInput,
     ContinuousOutput,
-    Feature,
     Input,
     Output,
 )
@@ -157,6 +155,9 @@ class Domain(BaseModel):
             for f in c.features:  # type: ignore
                 if f not in keys:
                     raise ValueError(f"feature {f} in constraint unknown ({keys})")
+        for c in self.constraints.get(InterpointEqualityConstraint):
+            if c.feature not in keys:
+                raise ValueError(f"feature {c.feature} not known.")
         return self
 
     @model_validator(mode="after")
@@ -182,96 +183,6 @@ class Domain(BaseModel):
                 assert f in keys, f"{f} must be continuous."
         return self
 
-    def get_feature_reps_df(self) -> pd.DataFrame:
-        """Returns a pandas dataframe describing the features contained in the optimization domain."""
-        df = pd.DataFrame(
-            index=self.get_feature_keys(Feature),
-            columns=["Type", "Description"],
-            data={
-                "Type": [
-                    feat.__class__.__name__ for feat in self.get_features(Feature)
-                ],
-                "Description": [feat.__str__() for feat in self.get_features(Feature)],
-            },
-        )
-        return df
-
-    def get_constraint_reps_df(self):
-        """Provides a tabular overwiev of all constraints within the domain
-
-        Returns:
-            pd.DataFrame: DataFrame listing all constraints of the domain with a description
-        """
-        df = pd.DataFrame(
-            index=range(len(self.constraints)),
-            columns=["Type", "Description"],
-            data={
-                "Type": [feat.__class__.__name__ for feat in self.constraints],
-                "Description": [
-                    constraint.__str__() for constraint in self.constraints
-                ],
-            },
-        )
-        return df
-
-    def get_features(
-        self,
-        includes: Union[Type[Feature], List[Type[Feature]]] = Feature,
-        excludes: Union[Type[Feature], List[Type[Feature]], None] = None,
-        exact: bool = False,
-    ) -> Features:
-        """get features of the domain
-
-        Args:
-            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
-            excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-            by_attribute (str, optional): If set it is filtered by the attribute specified in by `by_attribute`. Defaults to None.
-
-        Returns:
-            List[Feature]: List of features in the domain fitting to the passed requirements.
-        """
-        assert isinstance(self.inputs, Inputs)
-        features = self.inputs + self.outputs
-        return features.get(includes, excludes, exact)  # type: ignore
-
-    def get_feature_keys(
-        self,
-        includes: Union[Type, List[Type]] = Feature,
-        excludes: Optional[Union[Type, List[Type]]] = None,
-        exact: bool = False,
-    ) -> List[str]:
-        """Method to get feature keys of the domain
-
-        Args:
-            includes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be returned. Defaults to Feature.
-            excludes (Union[Type, List[Type]], optional): Feature class or list of specific feature classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
-
-        Returns:
-            List[str]: List of feature keys fitting to the passed requirements.
-        """
-        return [
-            f.key
-            for f in self.get_features(
-                includes=includes,
-                excludes=excludes,
-                exact=exact,
-            )
-        ]
-
-    def get_feature(self, key: str):
-        """get a specific feature by its key
-
-        Args:
-            key (str): Feature key
-
-        Returns:
-            Feature: The feature with the passed key
-        """
-        assert isinstance(self.inputs, Inputs)
-        return {f.key: f for f in self.inputs + self.outputs}[key]
-
     # TODO: tidy this up
     def get_nchoosek_combinations(self, exhaustive: bool = False):  # noqa: C901
         """get all possible NChooseK combinations
@@ -285,7 +196,7 @@ class Domain(BaseModel):
         """
 
         if len(self.constraints.get(NChooseKConstraint)) == 0:
-            used_continuous_features = self.get_feature_keys(ContinuousInput)
+            used_continuous_features = self.inputs.get_keys(ContinuousInput)
             return used_continuous_features, []
 
         used_features_list_all = []
@@ -388,7 +299,7 @@ class Domain(BaseModel):
             pd.DataFrame: coerced dataframe
         """
         # coerce invalid to nan
-        for feat in self.get_feature_keys(Output):
+        for feat in self.outputs.get_keys(Output):
             experiments.loc[experiments[f"valid_{feat}"] == 0, feat] = np.nan
         return experiments
 
@@ -428,8 +339,8 @@ class Domain(BaseModel):
 
         # round it if continuous inputs are present
         if len(self.inputs.get(ContinuousInput)) > 0:
-            experiments[self.get_feature_keys(ContinuousInput)] = experiments[
-                self.get_feature_keys(ContinuousInput)
+            experiments[self.inputs.get_keys(ContinuousInput)] = experiments[
+                self.inputs.get_keys(ContinuousInput)
             ].round(prec)
 
         # coerce invalid to nan
@@ -437,13 +348,13 @@ class Domain(BaseModel):
 
         # group and aggregate
         agg: Dict[str, Any] = {
-            feat: method for feat in self.get_feature_keys(ContinuousOutput)
+            feat: method for feat in self.outputs.get_keys(ContinuousOutput)
         }
         agg["labcode"] = lambda x: delimiter.join(sorted(x.tolist()))
-        for feat in self.get_feature_keys(Output):
+        for feat in self.outputs.get_keys(Output):
             agg[f"valid_{feat}"] = lambda x: 1
 
-        grouped = experiments.groupby(self.get_feature_keys(Input))
+        grouped = experiments.groupby(self.inputs.get_keys(Input))
         duplicated_labcodes = [
             sorted(group.labcode.to_numpy().tolist())
             for _, group in grouped
@@ -451,7 +362,7 @@ class Domain(BaseModel):
         ]
 
         experiments = grouped.aggregate(agg).reset_index(drop=False)
-        for feat in self.get_feature_keys(Output):
+        for feat in self.outputs.get_keys(Output):
             experiments.loc[experiments[feat].isna(), f"valid_{feat}"] = 0
 
         experiments = experiments.sort_values(by="labcode")
@@ -515,7 +426,7 @@ class Domain(BaseModel):
             pd.DataFrame: Dataframe with counts how many measurements and how many valid entries are included in the input data for each output feature
         """
         data = {}
-        for feat in self.get_feature_keys(Output):
+        for feat in self.outputs.get_keys(Output):
             data[feat] = [
                 experiments.loc[experiments[feat].notna()].shape[0],
                 experiments.loc[experiments[feat].notna(), "valid_%s" % feat].sum(),
@@ -582,9 +493,9 @@ class Domain(BaseModel):
         Returns:
             List[str]: List of columns in the experiment dataframe (output feature keys + valid_output feature keys)
         """
-        return self.get_feature_keys() + [
+        return (self.inputs + self.outputs).get_keys() + [
             f"valid_{output_feature_key}"
-            for output_feature_key in self.get_feature_keys(Output)
+            for output_feature_key in self.outputs.get_keys(Output)
         ]
 
     @property
@@ -596,7 +507,7 @@ class Domain(BaseModel):
         """
         assert isinstance(self.outputs, Outputs)
         return (
-            self.get_feature_keys(Input)
+            self.inputs.get_keys(Input)
             + [
                 f"{output_feature_key}_pred"
                 for output_feature_key in self.outputs.get_keys_by_objective(Objective)
@@ -610,7 +521,3 @@ class Domain(BaseModel):
                 for output_feature_key in self.outputs.get_keys_by_objective(Objective)
             ]
         )
-
-
-if __name__ == "__main__":
-    pass

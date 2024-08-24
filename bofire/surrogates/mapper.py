@@ -28,6 +28,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.TanimotoGPSurrogate: SingleTaskGPSurrogate,
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
+    data_models.SingleTaskIBNNSurrogate: SingleTaskGPSurrogate,
 }
 
 

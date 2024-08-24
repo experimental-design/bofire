@@ -45,6 +45,7 @@ from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.utils.torch_tools import (
     get_initial_conditions_generator,
+    get_interpoint_constraints,
     get_linear_constraints,
     get_nonlinear_constraints,
     tkwargs,
@@ -218,7 +219,7 @@ class BotorchStrategy(PredictiveStrategy):
     def _setup_ask(self):
         """Generates argument that can by passed to one of botorch's `optimize_acqf` method."""
         num_categorical_features = len(
-            self.domain.get_features([CategoricalInput, DiscreteInput])
+            self.domain.inputs.get([CategoricalInput, DiscreteInput])
         )
         num_categorical_combinations = len(
             self.domain.inputs.get_categorical_combinations()
@@ -366,6 +367,9 @@ class BotorchStrategy(PredictiveStrategy):
                     options=self._get_optimizer_options(),  # type: ignore
                 )
             else:
+                interpoints = get_interpoint_constraints(
+                    domain=self.domain, n_candidates=candidate_count
+                )
                 candidates, acqf_vals = optimize_acqf(
                     acq_function=acqfs[0],
                     bounds=bounds,
@@ -375,7 +379,8 @@ class BotorchStrategy(PredictiveStrategy):
                     equality_constraints=get_linear_constraints(
                         domain=self.domain,
                         constraint=LinearEqualityConstraint,  # type: ignore
-                    ),
+                    )
+                    + interpoints,
                     inequality_constraints=get_linear_constraints(
                         domain=self.domain,
                         constraint=LinearInequalityConstraint,  # type: ignore
@@ -520,7 +525,7 @@ class BotorchStrategy(PredictiveStrategy):
         fixed_features = {}
         features2idx = self._features2idx
 
-        for _, feat in enumerate(self.domain.get_features(Input)):
+        for _, feat in enumerate(self.domain.inputs.get(Input)):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
@@ -626,7 +631,7 @@ class BotorchStrategy(PredictiveStrategy):
 
                 for pair in combo:
                     feat, val = pair
-                    feature = self.domain.get_feature(feat)
+                    feature = self.domain.inputs.get_by_key(feat)
                     if (
                         isinstance(feature, CategoricalDescriptorInput)
                         and self.input_preprocessing_specs[feat]
@@ -673,7 +678,7 @@ class BotorchStrategy(PredictiveStrategy):
 
         # TODO: should this be selectable?
         clean_experiments = experiments.drop_duplicates(
-            subset=[var.key for var in self.domain.get_features(Input)],
+            subset=[var.key for var in self.domain.inputs.get(Input)],
             keep="first",
             inplace=False,
         )

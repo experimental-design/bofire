@@ -3,6 +3,9 @@ from typing import Union
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.fractional_factorial import (
+    FractionalFactorialStrategy,
+)
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
@@ -34,8 +37,8 @@ from bofire.data_models.strategies.stepwise.stepwise import (  # noqa: F401
     StepwiseStrategy,
 )
 from bofire.data_models.strategies.strategy import Strategy
-from bofire.data_models.transforms.api import (  # noqa: F401
-    AnyTransform,
+from bofire.data_models.transforms.api import (
+    AnyTransform,  # noqa: F401
     DropDataTransform,
 )
 

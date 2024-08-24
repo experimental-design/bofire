@@ -1,4 +1,8 @@
-# BoFire
+<a href=https://experimental-design.github.io/bofire/>
+  <img width="350" src="https://raw.githubusercontent.com/experimental-design/bofire/main/graphics/logos/bofire-long.png" alt="BoFire Logo" />
+</a>
+
+<hr/>
 
 [![Test](https://github.com/experimental-design/bofire/workflows/Tests/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ATests)
 [![Lint](https://github.com/experimental-design/bofire/workflows/Lint/badge.svg)](https://github.com/experimental-design/bofire/actions?query=workflow%3ALint)
@@ -36,9 +40,87 @@ additionally, e.g., via
 conda install -c conda-forge cyipopt
 ```
 
+## Getting Started
+For a more complete introduction to BoFire, please look at the [Getting Started documentation](https://experimental-design.github.io/bofire/getting_started/).
+
+We first must define the domain of the optimization problem.
+
+```python
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
+from bofire.data_models.objectives.api import MaximizeObjective
+from bofire.data_models.constraints.api import NChooseKConstraint
+from bofire.data_models.domain.api import Domain, Inputs, Outputs, Constraints
+
+input_features = Inputs(features=[
+    ContinuousInput(key="x1", bounds=(0,1)),
+    ContinuousInput(key="x2", bounds=(0,1)),
+    ContinuousInput(key="x3", bounds=(0,1)),
+])
+
+output_features = Outputs(features=[
+    ContinuousOutput(key="y", objective=MaximizeObjective())
+])
+
+constraints = Constraints(constraints=[
+    NChooseKConstraint(
+        features=["x1", "x2", "x3"],
+        min_count=1, max_count=2, none_also_valid=False)
+])
+
+domain = Domain(
+    inputs=input_features, 
+    outputs=output_features, 
+    constraints=constraints
+)
+```
+
+You can also use one of the many benchmarks available in BoFire.
+Here, we use the Detergent benchmark to demonstrate the ask/tell interface for
+proposing new experiments with multi-objective Bayesian optimization.
+
+```python
+import bofire.strategies.api as strategies
+from bofire.benchmarks.api import Detergent
+from bofire.data_models.strategies.api import QnehviStrategy, RandomStrategy
+
+# create benchmark
+detergent = Detergent()
+domain = detergent.domain
+
+# create initial data with the random strategy while satisfying constraints
+sampler = strategies.map(RandomStrategy(domain=domain))
+initial_samples = sampler.ask(2)
+experiments = detergent.f(initial_samples, return_complete=True)
+
+# Bayesian optimization
+mobo_strategy = strategies.map(QnehviStrategy(domain=domain))
+n_experiments = 4
+for _ in range(n_experiments):
+    mobo_strategy.tell(experiments=experiments)
+    candidates = mobo_strategy.ask(candidate_count=1)
+    experiments = detergent.f(candidates, return_complete=True)
+
+# Print all told experiments
+print(mobo_strategy.experiments)
+```
+
 ## Documentation
 
 Documentation including a section on how to get started can be found under https://experimental-design.github.io/bofire/.
+
+## Reference
+
+We would love for you to use BoFire in your work! If you do, please cite [our paper](https://arxiv.org/abs/2408.05040):
+
+    @misc{durholt2024bofire,
+      title={BoFire: Bayesian Optimization Framework Intended for Real Experiments}, 
+      author={Johannes P. D{\"{u}}rholt and Thomas S. Asche and Johanna Kleinekorte and Gabriel Mancino-Ball and Benjamin Schiller and Simon Sung and Julian Keupp and Aaron Osburg and Toby Boyne and Ruth Misener and Rosona Eldred and Wagner Steuer Costa and Chrysoula Kappatou and Robert M. Lee and Dominik Linzner and David Walz and Niklas Wulkow and Behrang Shafei},
+      year={2024},
+      eprint={2408.05040},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2408.05040}, 
+    }
 
 ## Contributing
 

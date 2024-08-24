@@ -19,7 +19,7 @@ from bofire.strategies.strategy import Strategy
 class DoEStrategy(Strategy):
     """Strategy for design of experiments. This strategy is used to generate a set of
     experiments for a given domain.
-    The experiments are generated via minimization of the D-optimality criterion.
+    The experiments are generated via minimization of a user defined optimality criterion.
 
     """
 
@@ -35,7 +35,7 @@ class DoEStrategy(Strategy):
         self._fixed_candidates = None
 
     def set_candidates(self, candidates: pd.DataFrame):
-        original_columns = self.domain.get_feature_keys(includes=Input)
+        original_columns = self.domain.inputs.get_keys(includes=Input)
         to_many_columns = []
         for col in candidates.columns:
             if col not in original_columns:
@@ -102,6 +102,8 @@ class DoEStrategy(Strategy):
                 n_experiments=_candidate_count,
                 fixed_experiments=None,
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
+                objective=self.data_model.objective,
+                transform_range=self.data_model.transform_range,
             )
         # todo adapt to when exhaustive search accepts discrete variables
         elif (
@@ -117,6 +119,8 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
+                objective=self.data_model.objective,
+                transform_range=self.data_model.transform_range,
             )
         elif self.data_model.optimization_strategy in [
             "branch-and-bound",
@@ -132,6 +136,8 @@ class DoEStrategy(Strategy):
                 partially_fixed_experiments=adapted_partially_fixed_candidates,
                 categorical_groups=all_new_categories,
                 discrete_variables=new_discretes,
+                objective=self.data_model.objective,
+                transform_range=self.data_model.transform_range,
             )
         elif self.data_model.optimization_strategy == "iterative":
             # a dynamic programming approach to shrink the optimization space by optimizing one experiment at a time
@@ -155,6 +161,8 @@ class DoEStrategy(Strategy):
                     partially_fixed_experiments=adapted_partially_fixed_candidates,
                     categorical_groups=all_new_categories,
                     discrete_variables=new_discretes,
+                    objective=self.data_model.objective,
+                    transform_range=self.data_model.transform_range,
                 )
                 adapted_partially_fixed_candidates = pd.concat(
                     [
@@ -175,7 +183,9 @@ class DoEStrategy(Strategy):
         # mapping the solution to the variables from the original domain
         transformed_design = design_from_new_to_original_domain(self.domain, design)
 
-        return transformed_design.iloc[fixed_experiments_count:, :].reset_index(drop=True)  # type: ignore
+        return transformed_design.iloc[fixed_experiments_count:, :].reset_index(
+            drop=True
+        )  # type: ignore
 
     def has_sufficient_experiments(
         self,
@@ -199,7 +209,7 @@ class DoEStrategy(Strategy):
             for col in missing_columns:
                 intermediate_candidates.insert(0, col, None)
 
-            cat_columns = self.domain.get_features(includes=CategoricalInput)
+            cat_columns = self.domain.inputs.get(includes=CategoricalInput)
             for cat in cat_columns:
                 for row_index, c in enumerate(intermediate_candidates[cat.key].values):
                     if pd.isnull(c):

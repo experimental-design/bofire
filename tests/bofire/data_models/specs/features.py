@@ -45,6 +45,14 @@ specs.add_valid(
         "stepsize": None,
     },
 )
+
+specs.add_invalid(
+    features.ContinuousInput,
+    lambda: {"key": "a", "bounds": (5, 3)},
+    error=ValueError,
+    message="lower bound must be <= upper bound, got 5.0 > 3.0",
+)
+
 specs.add_valid(
     features.ContinuousDescriptorInput,
     lambda: {

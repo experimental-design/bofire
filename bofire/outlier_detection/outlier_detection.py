@@ -76,8 +76,9 @@ class IterativeTrimming(OutlierDetection):
                 break  # converged
             ix_old = ix_sub
 
-            self.surrogate.fit(experiments[experiments.index.isin(indices[ix_sub])])  # type: ignore
-
+            self.surrogate.fit(  # type: ignore
+                experiments[experiments.index.isin(indices[ix_sub])].copy()
+            )
             # make prediction
             pred = self.surrogate.predict(experiments)
             d_sq = (

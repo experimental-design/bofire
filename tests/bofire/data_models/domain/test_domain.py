@@ -22,8 +22,6 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     DiscreteInput,
     Feature,
-    Input,
-    Output,
 )
 from bofire.data_models.objectives.api import TargetObjective
 from bofire.utils.subdomain import get_subdomain
@@ -390,41 +388,6 @@ domain = Domain(
 
 
 @pytest.mark.parametrize(
-    "domain, FeatureType, exact, expected",
-    [
-        (domain, Output, True, []),
-        (domain, Output, False, [of1, of2, of1_, of2_]),
-        (domain, Output, None, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutput, True, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutput, False, [of1, of2, of1_, of2_]),
-        (domain, ContinuousOutput, None, [of1, of2, of1_, of2_]),
-        (domain, Input, True, []),
-        (domain, Input, False, [if1, if2]),
-        (domain, Input, None, [if1, if2]),
-    ],
-)
-def test_get_features(domain, FeatureType, exact, expected):
-    assert domain.get_features(FeatureType, exact=exact).features == expected
-
-
-@pytest.mark.parametrize(
-    "domain, FeatureType, exact, expected",
-    [
-        (domain, Output, True, []),
-        (domain, Output, False, ["out1", "out2", "out3", "out4"]),
-        (domain, Output, None, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutput, True, ["out1", "out2", "out3", "out4"]),
-        (domain, ContinuousOutput, None, ["out1", "out2", "out3", "out4"]),
-        (domain, Input, True, []),
-        (domain, Input, False, ["x1", "x2"]),
-        (domain, Input, None, ["x1", "x2"]),
-    ],
-)
-def test_get_feature_keys(domain, FeatureType, exact, expected):
-    assert domain.get_feature_keys(FeatureType, exact=exact) == expected
-
-
-@pytest.mark.parametrize(
     "domain, feature_keys",
     [
         (domain, ["x1", "x2", "out1", "out2"]),
@@ -436,7 +399,7 @@ def test_get_feature_keys(domain, FeatureType, exact, expected):
 )
 def test_get_subdomain(domain, feature_keys):
     subdomain = get_subdomain(domain, feature_keys)
-    assert subdomain.get_feature_keys(Feature) == feature_keys
+    assert (subdomain.inputs + subdomain.outputs).get_keys(Feature) == feature_keys
 
 
 @pytest.mark.parametrize(
