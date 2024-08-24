@@ -1,4 +1,4 @@
-from typing import ClassVar, List, Literal
+from typing import ClassVar, List, Literal, Optional
 
 import numpy as np
 from pydantic import model_validator
@@ -10,6 +10,7 @@ class TaskInput(CategoricalInput):
     order_id: ClassVar[int] = 8
     type: Literal["TaskInput"] = "TaskInput"
     fidelities: List[int] = []
+    output_task: Optional[str] = None
 
     @model_validator(mode="after")
     def validate_fidelities(self):
@@ -25,4 +26,10 @@ class TaskInput(CategoricalInput):
             raise ValueError(
                 "Fidelities must be a list containing integers, starting from 0 and increasing by 1"
             )
+        return self
+
+    @model_validator(mode="after")
+    def validate_output_task(self):
+        if self.output_task is not None and self.output_task not in self.categories:
+            raise ValueError("Output task must be one of the task categories")
         return self

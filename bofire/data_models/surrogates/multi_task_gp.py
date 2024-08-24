@@ -95,6 +95,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig()
     )
+    output_task: Optional[str] = None
 
     @classmethod
     def is_output_implemented(cls, my_type: Type[AnyOutput]) -> bool:

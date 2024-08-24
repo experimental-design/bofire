@@ -170,13 +170,21 @@ class BotorchStrategy(PredictiveStrategy):
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
-            posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+            # observation noise is not implemented for MultiTaskGPSurrogate, has to be treated differently
+            if self.surrogate_specs.surrogates[0].type == "MultiTaskGPSurrogate":
+                posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
+                likelihood_noise = self.model.likelihood.noise.cpu().detach().numpy()
+            else:
+                posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
+                likelihood_noise = 0
         if len(posterior.mean.shape) == 2:
             preds = posterior.mean.cpu().detach().numpy()
-            stds = np.sqrt(posterior.variance.cpu().detach().numpy())
+            stds = np.sqrt(posterior.variance.cpu().detach().numpy() + likelihood_noise)
         elif len(posterior.mean.shape) == 3:
             preds = posterior.mean.mean(dim=0).cpu().detach().numpy()
-            stds = np.sqrt(posterior.variance.mean(dim=0).cpu().detach().numpy())
+            stds = np.sqrt(
+                posterior.variance.mean(dim=0).cpu().detach().numpy() + likelihood_noise
+            )
         else:
             raise ValueError("Wrong dimension of posterior mean. Expecting 2 or 3.")
         return preds, stds

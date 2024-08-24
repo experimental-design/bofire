@@ -88,7 +88,6 @@ for concentration in [-1, 0]:
             error=ValidationError,
         )
 
-
 specs.add_valid(
     priors.LogNormalPrior, lambda: {"loc": random.random(), "scale": random.random()}
 )

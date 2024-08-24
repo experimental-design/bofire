@@ -45,7 +45,6 @@ def test_lkj_map():
     assert prior.sd_prior.concentration == gprior.sd_prior.concentration
     assert prior.sd_prior.rate == gprior.sd_prior.rate
 
-
 @pytest.mark.parametrize(
     "loc, loc_scaling, scale, scale_scaling, d",
     [

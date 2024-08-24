@@ -41,6 +41,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             self.task_prior.n_tasks = self.n_tasks
         # obtain the name of the task feature
         self.task_feature_key = data_model.inputs.get_keys(TaskInput)[0]
+        self.output_task = data_model.inputs.get(TaskInput).features[0].output_task
 
         super().__init__(data_model=data_model, **kwargs)
 
@@ -51,6 +52,17 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
+
+        if self.output_task is not None:
+            # find out the encoding of the output task
+            output_task_encoding = (
+                self.inputs.get(TaskInput)
+                .features[0]
+                .categories.index(self.output_task)
+            )
+            output_tasks = [output_task_encoding]
+        else:
+            output_tasks = None
 
         tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
             Y.values
@@ -76,6 +88,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 else None
             ),
             input_transform=scaler,
+            output_tasks=output_tasks,
         )
 
         if isinstance(self.task_prior, LKJPrior):

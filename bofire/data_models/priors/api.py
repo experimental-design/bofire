@@ -43,6 +43,5 @@ LKJ_PRIOR = partial(
     LKJPrior, shape=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
 )
 
-# Hvarfner priors
 HVARFNER_NOISE_PRIOR = partial(LogNormalPrior, loc=-4, scale=1)
 HVARFNER_LENGTHSCALE_PRIOR = DimensionalityScaledLogNormalPrior
