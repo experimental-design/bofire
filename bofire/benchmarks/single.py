@@ -522,8 +522,8 @@ class Multinormalpdfs(Benchmark):
         eigscale: float = 0.5,
         opt_on_boundary: bool = False,
         N_unimportant_inputs: int = 2,
-        means: list | None = None,
-        covmats: np.ndarray | None = None,
+        means: Optional[list] = None,
+        covmats: Optional[np.ndarray] = None,
         **kwargs,
     ) -> None:
         """Initializes the class of type Multinormalpdfs
