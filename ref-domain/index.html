@@ -618,15 +618,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.domain.domain.Domain.validate_linear_constraints_and_nchoosek" class="md-nav__link">
-    <span class="md-ellipsis">
-      validate_linear_constraints_and_nchoosek()
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.domain.domain.Domain.validate_unique_feature_keys" class="md-nav__link">
     <span class="md-ellipsis">
       validate_unique_feature_keys()
@@ -900,7 +891,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate that the constraints defined in the domain fit to the input features.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
@@ -912,40 +903,8 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Constraint]: List of constraints defined for the domain</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">,</span> <span class="n">ProductConstraint</span><span class="p">]</span>
-        <span class="p">):</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-                <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> in constraint unknown (</span><span class="si">{</span><span class="n">keys</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InterpointEqualityConstraint</span><span class="p">):</span>
-            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">feature</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">feature</span><span class="si">}</span><span class="s2"> not known.&quot;</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span>
-
-    <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">validate_linear_constraints_and_nchoosek</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
-
-<span class="sd">        Args:</span>
-<span class="sd">            v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
-<span class="sd">            values (List[Input]): List of input features of the domain</span>
-
-<span class="sd">        Raises:</span>
-<span class="sd">            ValueError: _description_</span>
-
-
-<span class="sd">        Returns:</span>
-<span class="sd">           List[Constraint]: List of constraints defined for the domain</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
-
-        <span class="c1"># check if non continuous input features appear in linear constraints</span>
-        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">]):</span>
-            <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-                <span class="k">assert</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+            <span class="n">c</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="c1"># TODO: tidy this up</span>
@@ -2012,7 +1971,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Validate if all features included in the constraints are also defined as features for the domain.</p>
+      <p>Validate that the constraints defined in the domain fit to the input features.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2073,7 +2032,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">validate_constraints</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate if all features included in the constraints are also defined as features for the domain.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate that the constraints defined in the domain fit to the input features.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
@@ -2085,17 +2044,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Constraint]: List of constraints defined for the domain</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">,</span> <span class="n">ProductConstraint</span><span class="p">]</span>
-    <span class="p">):</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-            <span class="k">if</span> <span class="n">f</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> in constraint unknown (</span><span class="si">{</span><span class="n">keys</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">InterpointEqualityConstraint</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">feature</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;feature </span><span class="si">{</span><span class="n">c</span><span class="o">.</span><span class="n">feature</span><span class="si">}</span><span class="s2"> not known.&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
+        <span class="n">c</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
     <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div>
         </details>
@@ -2255,107 +2205,6 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
   </div>
 
-
-
-
-  <div class="doc doc-object doc-method">
-
-
-
-<h3 id="bofire.data_models.domain.domain.Domain.validate_linear_constraints_and_nchoosek" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">validate_linear_constraints_and_nchoosek</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Validate if all features included in linear constraints are continuous ones.</p>
-
-<p><strong>Parameters:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Type</th>
-      <th>Description</th>
-      <th>Default</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>v</code></td>
-        <td><code>List[Constraint]</code></td>
-        <td><p>List of constraints or empty if no constraints are defined</p></td>
-        <td><em>required</em></td>
-      </tr>
-      <tr>
-        <td><code>values</code></td>
-        <td><code>List[Input]</code></td>
-        <td><p>List of input features of the domain</p></td>
-        <td><em>required</em></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Exceptions:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-      <tr>
-        <td><code>ValueError</code></td>
-        <td><p><em>description</em></p></td>
-      </tr>
-  </tbody>
-</table>
-<p><strong>Returns:</strong></p>
-<table>
-  <thead>
-    <tr>
-      <th>Type</th>
-      <th>Description</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><code>List[Constraint]</code></td>
-      <td><p>List of constraints defined for the domain</p></td>
-    </tr>
-  </tbody>
-</table>
-        <details class="quote">
-          <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">validate_linear_constraints_and_nchoosek</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate if all features included in linear constraints are continuous ones.</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        v (List[Constraint]): List of constraints or empty if no constraints are defined</span>
-<span class="sd">        values (List[Input]): List of input features of the domain</span>
-
-<span class="sd">    Raises:</span>
-<span class="sd">        ValueError: _description_</span>
-
-
-<span class="sd">    Returns:</span>
-<span class="sd">       List[Constraint]: List of constraints defined for the domain</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
-
-    <span class="c1"># check if non continuous input features appear in linear constraints</span>
-    <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearConstraint</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">]):</span>
-        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
-            <span class="k">assert</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2"> must be continuous.&quot;</span>
-    <span class="k">return</span> <span class="bp">self</span>
-</code></pre></div>
-        </details>
-    </div>
-
-  </div>
 
 
 
