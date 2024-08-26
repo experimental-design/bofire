@@ -8,6 +8,7 @@ from bofire.benchmarks.single import (
     DiscreteHimmelblau,
     Hartmann,
     Himmelblau,
+    Multinormalpdfs,
     MultiTaskHimmelblau,
     _CategoricalDiscreteHimmelblau,
 )
@@ -44,6 +45,17 @@ def test_hartmann():
         (Branin30, False, {}),
         (MultiTaskHimmelblau, False, {}),
         (MultiTaskHimmelblau, True, {}),
+        (Multinormalpdfs, False, {}),
+        (Multinormalpdfs, True, {}),
+        (
+            Multinormalpdfs,  # user supplies own mean vectors and covariance matrices
+            True,
+            {
+                "means": np.ones(shape=(10, 7)) * 0.5,
+                "covmats": [np.diag(np.ones(7))] * 10,
+                "dim": 7,
+            },
+        ),
         # TO DO: Implement feature that tests Ackley for categorical and descriptive inputs.
         # (Ackley, {"categorical": True}),
         # (Ackley, {"descriptor": True}),
