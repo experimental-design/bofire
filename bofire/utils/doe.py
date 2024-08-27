@@ -9,6 +9,7 @@ import pandas as pd
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
+from bofire.utils.default_fracfac_generators import default_fracfac_generators
 
 
 def get_confounding_matrix(
@@ -224,7 +225,42 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
     return aliases_readable
 
 
-def get_generator(n_factors: int, n_generators: int) -> str:
+def get_default_generator(n_factors: int, n_generators: int) -> str:
+    """Returns the default generator for a given number of factors and generators.
+
+    In case the combination is not available, the function will raise an error.
+
+    Args:
+        n_factors: The number of factors.
+        n_generators: The number of generators.
+
+    Returns:
+        The generator.
+    """
+    if n_generators == 0:
+        return " ".join(list(string.ascii_lowercase[:n_factors]))
+    df_generators = default_fracfac_generators
+    n_base_factors = n_factors - n_generators
+    if df_generators.loc[
+        (df_generators.n_factors == n_factors)
+        & (df_generators.n_generators == n_generators)
+    ].empty:
+        raise ValueError("No generator available for the requested combination.")
+    generators = (
+        df_generators.loc[
+            (df_generators.n_factors == n_factors)
+            & (df_generators.n_generators == n_generators),
+            "generator",
+        ]
+        .to_list()[0]
+        .split(";")
+    )
+    assert len(generators) == n_generators, "Number of generators does not match."
+    generators = [generator.split("=")[1].strip().lower() for generator in generators]
+    return " ".join(list(string.ascii_lowercase[:n_base_factors]) + generators)
+
+
+def compute_generator(n_factors: int, n_generators: int) -> str:
     """Computes a generator for a given number of factors and generators.
 
     Args:
@@ -268,3 +304,22 @@ def get_generator(n_factors: int, n_generators: int) -> str:
             "Design not possible, as main factors are confounded with each other."
         )
     return " ".join(list(string.ascii_lowercase[:n_base_factors]) + generators)
+
+
+def get_generator(n_factors: int, n_generators: int) -> str:
+    """Returns a generator for a given number of factors and generators.
+
+    If the requested combination is available in the default generators, it will return
+    this one. Otherwise, it will compute a new one using `get_bofire_generator`.
+
+    Args:
+        n_factors: The number of factors.
+        n_generators: The number of generators.
+
+    Returns:
+        The generator.
+    """
+    try:
+        return get_default_generator(n_factors, n_generators)
+    except ValueError:
+        return compute_generator(n_factors, n_generators)
