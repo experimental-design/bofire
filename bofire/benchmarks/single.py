@@ -522,6 +522,7 @@ class Multinormalpdfs(Benchmark):
         eigscale: float = 0.5,
         opt_on_boundary: bool = False,
         N_unimportant_inputs: int = 2,
+        seed: Optional[int] = None,
         means: Optional[list] = None,
         covmats: Optional[np.ndarray] = None,
         **kwargs,
@@ -577,8 +578,8 @@ class Multinormalpdfs(Benchmark):
                 features=[ContinuousOutput(key="y", objective=MaximizeObjective())]
             ),
         )
+        np.random.seed(seed)
 
-        rng = np.random.default_rng()
         gaussians = []
         if means is not None and covmats is not None:
             # user has define the parameters of the distributions
@@ -594,7 +595,7 @@ class Multinormalpdfs(Benchmark):
                 list(range(self.dim)), self.N_unimportant_inputs, replace=False
             )
             for _ in range(n_gaussians):
-                mean = rng.random(size=dim)
+                mean = np.random.random(size=dim)
                 if opt_on_boundary:
                     mean[0] = 0.0
                 eigs = np.ravel(dirichlet.rvs(alpha=[eigscale] * dim, size=1))
@@ -618,7 +619,6 @@ class Multinormalpdfs(Benchmark):
                 ),
                 "valid_y": np.ones(len(X)),
             },
-            index=range(len(X)),
         )
 
     def get_optima(self) -> pd.DataFrame:
@@ -632,3 +632,7 @@ class Multinormalpdfs(Benchmark):
                 index=[0],
             )
             return pd.concat([x_opt, self._f(x_opt)], axis=1)
+
+
+if __name__ == "__main__":
+    mv = Multinormalpdfs()
