@@ -1,7 +1,7 @@
 import pandas as pd
 
 # this are the default generators used for fractional factorial designs in BoFire
-default_generators = pd.DataFrame.from_dict(
+default_fracfac_generators = pd.DataFrame.from_dict(
     [
         {"n_factors": 3, "n_generators": 1, "generator": "C = AB"},
         {"n_factors": 4, "n_generators": 1, "generator": "D = ABC"},
