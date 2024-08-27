@@ -617,7 +617,8 @@ class Multinormalpdfs(Benchmark):
                     lambda x: sum([g.pdf(x.to_numpy()) for g in self.gaussians]), axis=1
                 ),
                 "valid_y": np.ones(len(X)),
-            }
+            },
+            index=range(len(X)),
         )
 
     def get_optima(self) -> pd.DataFrame:
@@ -626,11 +627,8 @@ class Multinormalpdfs(Benchmark):
                 "Position of optima only implemented for benchmark with n_gaussians = 1"
             )
         else:
-            return pd.DataFrame(
+            x_opt = pd.DataFrame(
                 {f"x_{i}": self.gaussians[0].mean[i] for i in range(self.dim)},
                 index=[0],
             )
-
-
-if __name__ == "__main__":
-    Multinormalpdfs()
+            return pd.concat([x_opt, self._f(x_opt)], axis=1)
