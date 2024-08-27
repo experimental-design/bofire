@@ -3,7 +3,7 @@ from numpy.testing import assert_array_equal
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.domain.features import ContinuousInput
-from bofire.utils.default_generators import default_generators
+from bofire.utils.default_fracfac_generators import default_fracfac_generators
 from bofire.utils.doe import (
     compute_generator,
     ff2n,
@@ -179,7 +179,7 @@ def test_compute_generator_invalid(n_factors, n_generators):
 
 
 def test_get_default_generator():
-    for _, row in default_generators.iterrows():
+    for _, row in default_fracfac_generators.iterrows():
         n_factors = row["n_factors"]
         n_generators = row["n_generators"]
         g = get_default_generator(n_factors, n_generators)

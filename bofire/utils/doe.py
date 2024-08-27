@@ -9,7 +9,7 @@ import pandas as pd
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.features.api import CategoricalInput, ContinuousInput
-from bofire.utils.default_generators import default_generators
+from bofire.utils.default_fracfac_generators import default_fracfac_generators
 
 
 def get_confounding_matrix(
@@ -239,7 +239,7 @@ def get_default_generator(n_factors: int, n_generators: int) -> str:
     """
     if n_generators == 0:
         return " ".join(list(string.ascii_lowercase[:n_factors]))
-    df_generators = default_generators
+    df_generators = default_fracfac_generators
     n_base_factors = n_factors - n_generators
     if df_generators.loc[
         (df_generators.n_factors == n_factors)
