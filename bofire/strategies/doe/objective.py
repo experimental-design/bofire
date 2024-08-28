@@ -524,20 +524,20 @@ class IOptimality(Objective):
 
         # uniformly fill the design space
         if n_space is None:
-            n_space = n_experiments
+            n_space = n_experiments * 5
         print(
             f"Filling the design space for the I-optimality criterion with {n_space} points..."
         )
         x0 = (
-            domain.inputs.sample(n=n_experiments, method=SamplingMethodEnum.UNIFORM)
+            domain.inputs.sample(n=n_space, method=SamplingMethodEnum.UNIFORM)
             .to_numpy()
             .flatten()
         )
         objective = SpaceFilling(domain, model, n_space, delta, transform_range=None)
         constraints = constraints_as_scipy_constraints(
-            domain, n_experiments, ignore_nchoosek=True
+            domain, n_space, ignore_nchoosek=True
         )
-        bounds = nchoosek_constraints_as_bounds(domain, n_experiments)
+        bounds = nchoosek_constraints_as_bounds(domain, n_space)
         if ipopt_options is None:
             ipopt_options = {}
         _ipopt_options = {"maxiter": 500, "disp": 0}
@@ -556,9 +556,9 @@ class IOptimality(Objective):
         )
 
         design = pd.DataFrame(
-            result["x"].reshape(n_experiments, len(domain.inputs)),
+            result["x"].reshape(n_space, len(domain.inputs)),
             columns=domain.inputs.get_keys(),
-            index=[f"exp{i}" for i in range(n_experiments)],
+            index=[f"exp{i}" for i in range(n_space)],
         )
         try:
             domain.validate_candidates(
@@ -577,6 +577,7 @@ class IOptimality(Objective):
             model_type=model, rhs_only=True, domain=domain
         )
         X = model_formula.get_model_matrix(design).to_numpy()
+        self.space_filling_design = design.to_numpy()
 
         self.YtY = torch.from_numpy(X.T @ X) / n_space
         self.YtY.requires_grad = False
@@ -622,9 +623,7 @@ class IOptimality(Objective):
         # first part of jacobian
         torch.trace(
             self.YtY.detach()
-            @ torch.linalg.inv(
-                X.detach().T @ X.detach() + self.delta * torch.eye(self.n_model_terms)
-            )
+            @ torch.linalg.inv(X.T @ X + self.delta * torch.eye(self.n_model_terms))
         ).backward()
         J1 = X.grad.detach().numpy()  # type: ignore
         J1 = np.repeat(J1, self.n_vars, axis=0).reshape(
