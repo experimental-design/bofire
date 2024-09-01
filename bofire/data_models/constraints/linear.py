@@ -9,6 +9,8 @@ from bofire.data_models.constraints.constraint import (
     InequalityConstraint,
     IntrapointConstraint,
 )
+from bofire.data_models.domain.features import Inputs
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.types import FeatureKeys
 
 
@@ -35,6 +37,14 @@ class LinearConstraint(IntrapointConstraint):
                 f"must provide same number of features and coefficients, got {len(self.features)} != {len(self.coefficients)}"
             )
         return self
+
+    def validate_inputs(self, inputs: Inputs):
+        keys = inputs.get_keys(ContinuousInput)
+        for f in self.features:  # type: ignore
+            if f not in keys:
+                raise ValueError(
+                    f"Feature {f} is not a continuous input feature in the provided Inputs object."
+                )
 
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
         return (

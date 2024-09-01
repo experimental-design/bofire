@@ -1,10 +1,12 @@
-from typing import List, Literal
+from typing import Literal
 
 import numpy as np
 import pandas as pd
-from pydantic import field_validator, model_validator
+from pydantic import model_validator
 
 from bofire.data_models.constraints.constraint import IntrapointConstraint
+from bofire.data_models.domain.features import Inputs
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.types import FeatureKeys
 
 
@@ -29,13 +31,13 @@ class NChooseKConstraint(IntrapointConstraint):
     max_count: int
     none_also_valid: bool
 
-    @field_validator("features")
-    @classmethod
-    def validate_features_unique(cls, features: List[str]):
-        """Validates that provided feature keys are unique."""
-        if len(features) != len(set(features)):
-            raise ValueError("features must be unique")
-        return features
+    def validate_inputs(self, inputs: Inputs):
+        keys = inputs.get_keys(ContinuousInput)
+        for f in self.features:  # type: ignore
+            if f not in keys:
+                raise ValueError(
+                    f"Feature {f} is not a continuous input feature in the provided Inputs object."
+                )
 
     @model_validator(mode="after")
     def validate_counts(self):

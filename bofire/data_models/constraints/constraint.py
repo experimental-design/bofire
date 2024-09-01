@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.domain.features import Inputs
 
 
 class Constraint(BaseModel):
@@ -47,6 +48,15 @@ class Constraint(BaseModel):
             experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
         Returns:
             pd.DataFrame: the i-th row contains the jacobian evaluated at the i-th experiment
+        """
+        pass
+
+    @abstractmethod
+    def validate_inputs(self, inputs: Inputs):
+        """Validates that the features stored in Inputs are compatible with the constraint.
+
+        Args:
+            inputs (Inputs): Inputs to validate.
         """
         pass
 

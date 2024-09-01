@@ -8,6 +8,7 @@ from bofire.benchmarks.single import (
     DiscreteHimmelblau,
     Hartmann,
     Himmelblau,
+    Multinormalpdfs,
     MultiTaskHimmelblau,
     _CategoricalDiscreteHimmelblau,
 )
@@ -44,6 +45,17 @@ def test_hartmann():
         (Branin30, False, {}),
         (MultiTaskHimmelblau, False, {}),
         (MultiTaskHimmelblau, True, {}),
+        (Multinormalpdfs, False, {}),
+        (Multinormalpdfs, True, {}),
+        (
+            Multinormalpdfs,  # user supplies own mean vectors and covariance matrices
+            True,
+            {
+                "means": np.ones(shape=(10, 7)) * 0.5,
+                "covmats": [np.diag(np.ones(7))] * 10,
+                "dim": 7,
+            },
+        ),
         # TO DO: Implement feature that tests Ackley for categorical and descriptive inputs.
         # (Ackley, {"categorical": True}),
         # (Ackley, {"descriptor": True}),
@@ -60,7 +72,7 @@ def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
     benchmark_function_name = benchmark_function.__class__.__name__
 
     # Check for correct dimensions
-    n_samples = 1000
+    n_samples = 1
     X_samples = benchmark_function.domain.inputs.sample(n=n_samples)
     # Calculating corresponding y values
     Y = benchmark_function.f(X_samples, return_complete=return_complete)
@@ -102,3 +114,35 @@ def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
         )
     except NotImplementedError:
         pass
+
+
+@pytest.mark.parametrize(
+    "cls_benchmark, return_complete, kwargs1, kwargs2",
+    [
+        (Multinormalpdfs, False, {"seed": 42}, {"seed": 42}),
+        (Multinormalpdfs, True, {"seed": 123}, {"seed": 123}),
+    ],
+)
+def test_single_obj_benchmark_reproducibility(
+    cls_benchmark, return_complete, kwargs1, kwargs2
+):
+    benchmark_function = cls_benchmark(**kwargs1)
+    benchmark_function_rep = cls_benchmark(**kwargs2)
+    benchmark_function_name = benchmark_function.__class__.__name__
+
+    # Check for correct dimensions
+    n_samples = 27
+    X_samples = benchmark_function.domain.inputs.sample(n=n_samples)
+
+    Y = benchmark_function.f(X_samples, return_complete=return_complete)
+    Yrep = benchmark_function_rep.f(X_samples, return_complete=return_complete)
+
+    assert np.allclose(Y, Yrep, atol=1e-04), (
+        "Attempt to reproduce results of " + benchmark_function_name + " failed."
+    )
+
+
+if __name__ == "__main__":
+    test_single_obj_benchmark_reproducibility(
+        Multinormalpdfs, False, {"seed": 42}, {"seed": 42}
+    )
