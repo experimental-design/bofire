@@ -5,7 +5,7 @@ import pandas as pd
 from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.constraint import (
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
@@ -54,7 +54,7 @@ class LinearConstraint(IntrapointConstraint):
         )
 
 
-class LinearEqualityConstraint(LinearConstraint, EqalityConstraint):
+class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):
     """Linear equality constraint of the form `coefficients * x = rhs`.
 
     Attributes:

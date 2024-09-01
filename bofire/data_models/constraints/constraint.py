@@ -59,7 +59,7 @@ class IntrapointConstraint(Constraint):
     type: str
 
 
-class EqalityConstraint(IntrapointConstraint):
+class EqualityConstraint(IntrapointConstraint):
     type: str
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
