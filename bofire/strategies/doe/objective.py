@@ -1,6 +1,7 @@
 import warnings
 from abc import abstractmethod
 from copy import deepcopy
+from itertools import product
 from typing import Optional, Type
 
 import numpy as np
@@ -11,7 +12,10 @@ from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 from torch import Tensor
 
-from bofire.data_models.constraints.api import ConstraintNotFulfilledError
+from bofire.data_models.constraints.api import (
+    ConstraintNotFulfilledError,
+    EqualityConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.types import Bounds
@@ -509,7 +513,10 @@ class IOptimality(Objective):
             delta (float): A regularization parameter for the information matrix. Default value is 1e-3.
             transform_range (Bounds, optional): range to which the input variables are transformed before applying the objective function. Default is None.
             n_space (int, optional): Number of space filling points. If none is provided,
-                n_space = n_experiments is assumed.
+                n_space = n_experiments is assumed. Only relevant if SpaceFilling is used
+                to fill the feasible space, i.e. in presence of equality constraints.
+                Otherwise a uniform grid is generated. If None is provided, n_space = 10 * n_experiments is assumed.
+                Default is None.
             ipopt_options (dict, optional): Options for the Ipopt solver to generate space filling point.
                 If None is provided, the default options (maxiter = 500) are used.
         """
@@ -523,43 +530,82 @@ class IOptimality(Objective):
         )
 
         # uniformly fill the design space
-        if n_space is None:
-            n_space = n_experiments * 5
-        print(
-            f"Filling the design space for the I-optimality criterion with {n_space} points..."
-        )
-        x0 = (
-            domain.inputs.sample(n=n_space, method=SamplingMethodEnum.UNIFORM)
-            .to_numpy()
-            .flatten()
-        )
-        objective = SpaceFilling(domain, model, n_space, delta, transform_range=None)
-        constraints = constraints_as_scipy_constraints(
-            domain, n_space, ignore_nchoosek=True
-        )
-        bounds = nchoosek_constraints_as_bounds(domain, n_space)
-        if ipopt_options is None:
-            ipopt_options = {}
-        _ipopt_options = {"maxiter": 500, "disp": 0}
-        for key in ipopt_options.keys():
-            _ipopt_options[key] = ipopt_options[key]
-        if _ipopt_options["disp"] > 12:
-            _ipopt_options["disp"] = 0
+        if np.any([isinstance(obj, EqualityConstraint) for obj in domain.constraints]):
+            warnings.warn(
+                "Equality constraints were detected. No equidistant grid of points can be generated. The design space will be filled via SpaceFilling.",
+                UserWarning,
+            )
+            if n_space is None:
+                n_space = n_experiments * 10
 
-        result = minimize_ipopt(
-            objective.evaluate,
-            x0=x0,
-            bounds=bounds,
-            constraints=standardize_constraints(constraints, x0, "SLSQP"),
-            options=_ipopt_options,
-            jac=objective.evaluate_jacobian,
-        )
+            print(
+                f"Filling the design space for the I-optimality criterion with {n_space} points..."
+            )
+            x0 = (
+                domain.inputs.sample(n=n_space, method=SamplingMethodEnum.UNIFORM)
+                .to_numpy()
+                .flatten()
+            )
+            objective = SpaceFilling(
+                domain, model, n_space, delta, transform_range=None
+            )
+            constraints = constraints_as_scipy_constraints(
+                domain, n_space, ignore_nchoosek=True
+            )
+            bounds = nchoosek_constraints_as_bounds(domain, n_space)
+            if ipopt_options is None:
+                ipopt_options = {}
+            _ipopt_options = {"maxiter": 500, "disp": 0}
+            for key in ipopt_options.keys():
+                _ipopt_options[key] = ipopt_options[key]
+            if _ipopt_options["disp"] > 12:
+                _ipopt_options["disp"] = 0
 
-        design = pd.DataFrame(
-            result["x"].reshape(n_space, len(domain.inputs)),
-            columns=domain.inputs.get_keys(),
-            index=[f"exp{i}" for i in range(n_space)],
-        )
+            result = minimize_ipopt(
+                objective.evaluate,
+                x0=x0,
+                bounds=bounds,
+                constraints=standardize_constraints(constraints, x0, "SLSQP"),
+                options=_ipopt_options,
+                jac=objective.evaluate_jacobian,
+            )
+
+            design = pd.DataFrame(
+                result["x"].reshape(n_space, len(domain.inputs)),
+                columns=domain.inputs.get_keys(),
+                index=[f"exp{i}" for i in range(n_space)],
+            )
+        else:
+            low, high = domain.inputs.get_bounds(specs={})
+            points = [
+                list(
+                    np.linspace(
+                        low[i],
+                        high[i],
+                        int(100 * (high[i] - low[i])),
+                    )
+                )
+                for i in range(len(low))
+            ]
+            points = np.array(list(product(*points)))
+            points = pd.DataFrame(points, columns=domain.inputs.get_keys())
+            if len(domain.constraints) > 0:
+                fulfilled = domain.constraints(experiments=points)
+                fulfilled = np.array(
+                    [
+                        np.array(fulfilled.iloc[:, i]) <= 0.0
+                        for i in range(fulfilled.shape[1])
+                    ]
+                )
+                fulfilled = np.array(np.prod(fulfilled, axis=0), dtype=bool)
+                design = points[fulfilled]
+            else:
+                design = points
+            n_space = len(design)
+            print(
+                f"Filling the design space with {len(design)} equally spaced grid points."
+            )
+
         try:
             domain.validate_candidates(
                 candidates=design.apply(lambda x: np.round(x, 8)),
