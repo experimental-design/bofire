@@ -835,7 +835,7 @@ def test_IOptimality_instantiation():
 
     assert np.all(domain.constraints(i_optimality.space_filling_design))
 
-    
+
 def test_MinMaxTransform():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
