@@ -7,7 +7,7 @@ from typing import Optional, Type
 import numpy as np
 import pandas as pd
 import torch
-from cyipopt import minimize_ipopt
+from cyipopt import minimize_ipopt  # type: ignore
 from formulaic import Formula
 from scipy.optimize._minimize import standardize_constraints
 from torch import Tensor
