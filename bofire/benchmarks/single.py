@@ -524,7 +524,7 @@ class Multinormalpdfs(Benchmark):
         N_unimportant_inputs: int = 2,
         seed: Optional[int] = None,
         means: Optional[list] = None,
-        covmats: Optional[np.ndarray] = None,
+        covmats: Optional[list] = None,
         **kwargs,
     ) -> None:
         """Initializes the class of type Multinormalpdfs
@@ -581,6 +581,7 @@ class Multinormalpdfs(Benchmark):
         np.random.seed(seed)
 
         gaussians = []
+        prefactors = []
         if means is not None and covmats is not None:
             # user has define the parameters of the distributions
             for mean, cov_mat in zip(means, covmats):
@@ -589,6 +590,7 @@ class Multinormalpdfs(Benchmark):
                         "Length of mean should equal dimensionality in Multinormalpdfs"
                     )
                 gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
+            n_gaussians = len(gaussians)
         else:
             # Generate the multivariate normal distributions
             unimportant_dims = np.random.choice(
@@ -608,14 +610,24 @@ class Multinormalpdfs(Benchmark):
                     cov_mat[:, i] = 0.0
                     cov_mat[i, i] = 10.0
                 gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
-
+        for i in range(n_gaussians):
+            prefactors.append(
+                (2 * np.pi) ** (-dim / 2) / np.sqrt(np.linalg.det(gaussians[i].cov))
+            )
         self.gaussians = gaussians
+        self.prefactors = prefactors
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         return pd.DataFrame(
             {
                 "y": X.apply(
-                    lambda x: sum([g.pdf(x.to_numpy()) for g in self.gaussians]), axis=1
+                    lambda x: sum(
+                        [
+                            g.pdf(x.to_numpy()) / prefac
+                            for prefac, g in zip(self.prefactors, self.gaussians)
+                        ]
+                    ),
+                    axis=1,
                 ),
                 "valid_y": np.ones(len(X)),
             },
