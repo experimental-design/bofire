@@ -22,6 +22,8 @@ from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
@@ -99,16 +101,12 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
     kernel: AnyKernel = Field(
-        default_factory=lambda: ScaleKernel(
-            base_kernel=MaternKernel(
-                ard=True,
-                nu=2.5,
-                lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
-            ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        default_factory=lambda: RBFKernel(
+            ard=True,
+            lengthscale_prior=HVARFNER_LENGTHSCALE_PRIOR(),
         )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
         default_factory=lambda: SingleTaskGPHyperconfig()
     )
