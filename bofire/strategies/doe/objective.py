@@ -489,11 +489,7 @@ class SpaceFilling(Objective):
 
 
 class IOptimality(Objective):
-    """A class implementing the evaluation of ??? and its jacobian w.r.t. the inputs where
-    ??? = ???. The jacobian evaluation is done analogously
-    to DOptimality with the first part of the jacobian being the jacobian of ??? instead of
-    ???.
-    """
+    """A class implementing the evaluation of I-criterion and its jacobian w.r.t. the inputs."""
 
     def __init__(
         self,
@@ -520,6 +516,11 @@ class IOptimality(Objective):
             ipopt_options (dict, optional): Options for the Ipopt solver to generate space filling point.
                 If None is provided, the default options (maxiter = 500) are used.
         """
+
+        if transform_range is not None:
+            raise ValueError(
+                "IOptimality does not support transformations of the input variables."
+            )
 
         super().__init__(
             domain=domain,
@@ -623,7 +624,7 @@ class IOptimality(Objective):
             model_type=model, rhs_only=True, domain=domain
         )
         X = model_formula.get_model_matrix(design).to_numpy()
-        self.space_filling_design = design.to_numpy()
+        self.space_filling_design = design
 
         self.YtY = torch.from_numpy(X.T @ X) / n_space
         self.YtY.requires_grad = False

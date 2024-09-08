@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pytest
 from formulaic import Formula
 
 from bofire.data_models.constraints.linear import (
@@ -794,7 +795,7 @@ def test_IOptimality_instantiation():
     )
 
     assert np.allclose(
-        np.linspace(0, 1, 100), i_optimality.space_filling_design.flatten()
+        np.linspace(0, 1, 100), i_optimality.space_filling_design.to_numpy().flatten()
     )
 
     # inequality constraints
@@ -808,6 +809,8 @@ def test_IOptimality_instantiation():
         ],
     )
 
+    model = get_formula_from_string("linear", domain=domain)
+
     i_optimality = IOptimality(
         domain=domain,
         model=model,
@@ -815,7 +818,8 @@ def test_IOptimality_instantiation():
     )
 
     assert np.allclose(
-        np.linspace(0, 1, 100)[:50], np.unique(i_optimality.space_filling_design[:, 0])
+        np.linspace(0, 1, 100)[:50],
+        np.unique(i_optimality.space_filling_design.to_numpy()[:, 0]),
     )
 
     # equality constraints
@@ -827,13 +831,15 @@ def test_IOptimality_instantiation():
         ],
     )
 
+    model = get_formula_from_string("linear", domain=domain)
+
     i_optimality = IOptimality(
         domain=domain,
         model=model,
         n_experiments=2,
     )
 
-    assert np.all(domain.constraints(i_optimality.space_filling_design))
+    assert np.allclose(domain.constraints(i_optimality.space_filling_design), 0.0)
 
 
 def test_MinMaxTransform():
@@ -852,7 +858,6 @@ def test_MinMaxTransform():
         EOptimality,
         GOptimality,
         SpaceFilling,
-        IOptimality,
     ]:
         objective_unscaled = cls(
             domain=domain,
@@ -874,4 +879,14 @@ def test_MinMaxTransform():
         assert np.allclose(
             2 * objective_unscaled.evaluate_jacobian(x_scaled),
             objective_scaled.evaluate_jacobian(x),
+        )
+
+    # test with IOptimality
+    with pytest.raises(ValueError):
+        IOptimality(
+            domain=domain,
+            model=model,
+            n_experiments=4,
+            delta=0,
+            transform_range=(-1.0, 1.0),
         )
