@@ -21,9 +21,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     AnyConstraint,
     ConstraintNotFulfilledError,
-    LinearConstraint,
     NChooseKConstraint,
-    ProductConstraint,
 )
 from bofire.data_models.domain.constraints import Constraints
 from bofire.data_models.domain.features import Inputs, Outputs
@@ -134,7 +132,7 @@ class Domain(BaseModel):
 
     @model_validator(mode="after")
     def validate_constraints(self):
-        """Validate if all features included in the constraints are also defined as features for the domain.
+        """Validate that the constraints defined in the domain fit to the input features.
 
         Args:
             v (List[Constraint]): List of constraints or empty if no constraints are defined
@@ -146,37 +144,8 @@ class Domain(BaseModel):
         Returns:
             List[Constraint]: List of constraints defined for the domain
         """
-
-        keys = self.inputs.get_keys()
-        for c in self.constraints.get(
-            [LinearConstraint, NChooseKConstraint, ProductConstraint]
-        ):
-            for f in c.features:  # type: ignore
-                if f not in keys:
-                    raise ValueError(f"feature {f} in constraint unknown ({keys})")
-        return self
-
-    @model_validator(mode="after")
-    def validate_linear_constraints_and_nchoosek(self):
-        """Validate if all features included in linear constraints are continuous ones.
-
-        Args:
-            v (List[Constraint]): List of constraints or empty if no constraints are defined
-            values (List[Input]): List of input features of the domain
-
-        Raises:
-            ValueError: _description_
-
-
-        Returns:
-           List[Constraint]: List of constraints defined for the domain
-        """
-        keys = self.inputs.get_keys(ContinuousInput)
-
-        # check if non continuous input features appear in linear constraints
-        for c in self.constraints.get(includes=[LinearConstraint, NChooseKConstraint]):
-            for f in c.features:  # type: ignore
-                assert f in keys, f"{f} must be continuous."
+        for c in self.constraints.get():
+            c.validate_inputs(self.inputs)
         return self
 
     # TODO: tidy this up

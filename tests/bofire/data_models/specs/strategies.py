@@ -1,6 +1,7 @@
 import bofire.data_models.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
 from bofire.data_models.constraints.api import (
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
     NChooseKConstraint,
@@ -14,6 +15,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 from bofire.data_models.surrogates.api import BotorchSurrogates
+from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -151,6 +153,8 @@ specs.add_valid(
         "optimization_strategy": "default",
         "verbose": False,
         "seed": 42,
+        "objective": OptimalityCriterionEnum.D_OPTIMALITY,
+        "transform_range": None,
     },
 )
 specs.add_valid(
@@ -160,6 +164,7 @@ specs.add_valid(
         "sampling_fraction": 0.3,
         "ipopt_options": {"maxiter": 200, "disp": 0},
         "seed": 42,
+        "transform_range": (-1, 1),
     },
 )
 
@@ -414,6 +419,29 @@ specs.add_invalid(
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=k, bounds=(0, 1), local_relative_bounds=(0.1, 0.1)
+                    )
+                    for k in ["a", "b", "c"]
+                ]
+                + [CategoricalInput(key="d", categories=["a", "b", "c"])]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+            constraints=Constraints(
+                constraints=[InterpointEqualityConstraint(feature="a")]
+            ),
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="Interpoint constraints can only be used for pure continuous search spaces.",
 )
 
 specs.add_valid(

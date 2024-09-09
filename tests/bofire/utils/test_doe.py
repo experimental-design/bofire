@@ -3,11 +3,14 @@ from numpy.testing import assert_array_equal
 
 from bofire.data_models.domain.api import Inputs
 from bofire.data_models.domain.features import ContinuousInput
+from bofire.utils.default_fracfac_generators import default_fracfac_generators
 from bofire.utils.doe import (
+    compute_generator,
     ff2n,
     fracfact,
     get_alias_structure,
     get_confounding_matrix,
+    get_default_generator,
     get_generator,
     validate_generator,
 )
@@ -159,17 +162,34 @@ def test_validate_generator_invalid(n_factors: int, generator: str, message: str
         (8, 4, "a b c d abc abd acd bcd"),
     ],
 )
-def test_get_generator(n_factors, n_generators, expected):
-    assert get_generator(n_factors, n_generators) == expected
+def test_compute_generator(n_factors, n_generators, expected):
+    assert compute_generator(n_factors, n_generators) == expected
 
 
 @pytest.mark.parametrize(
     "n_factors, n_generators",
     [(2, 1), (3, 2), (4, 3), (4, 2), (5, 3), (6, 4), (7, 5), (8, 5)],
 )
-def test_get_generator_invalid(n_factors, n_generators):
+def test_compute_generator_invalid(n_factors, n_generators):
     with pytest.raises(
         ValueError,
         match="Design not possible, as main factors are confounded with each other.",
     ):
-        get_generator(n_factors, n_generators)
+        compute_generator(n_factors, n_generators)
+
+
+def test_get_default_generator():
+    for _, row in default_fracfac_generators.iterrows():
+        n_factors = row["n_factors"]
+        n_generators = row["n_generators"]
+        g = get_default_generator(n_factors, n_generators)
+        validate_generator(n_factors, g)
+    with pytest.raises(
+        ValueError, match="No generator available for the requested combination."
+    ):
+        get_default_generator(100, 1)
+
+
+def test_get_generator():
+    assert get_generator(6, 2) != compute_generator(6, 2)
+    assert get_generator(16, 1) == compute_generator(16, 1)
