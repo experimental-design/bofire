@@ -173,7 +173,7 @@ class BotorchStrategy(PredictiveStrategy):
             # observation noise is not implemented for MultiTaskGPSurrogate, has to be treated differently
             if self.surrogate_specs.surrogates[0].type == "MultiTaskGPSurrogate":
                 posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
-                likelihood_noise = self.model.likelihood.noise.cpu().detach().numpy()
+                likelihood_noise = self.model.likelihood.noise.cpu().detach().numpy()  # type: ignore
             else:
                 posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
                 likelihood_noise = 0
