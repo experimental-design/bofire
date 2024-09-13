@@ -38,10 +38,10 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             new_x=new_ts,
             idx_x=idx_x,
             idx_y=idx_y,
-            prepend_x=data_model.x_bounds[0],
-            prepend_y=data_model.y_bounds[0],
-            append_x=data_model.x_bounds[1],
-            append_y=data_model.y_bounds[1],
+            prepend_x=torch.tensor(data_model.prepend_x).to(**tkwargs),
+            prepend_y=torch.tensor(data_model.prepend_y).to(**tkwargs),
+            append_x=torch.tensor(data_model.append_x).to(**tkwargs),
+            append_y=torch.tensor(data_model.append_y).to(**tkwargs),
         )
 
         super().__init__(data_model=data_model, **kwargs)

@@ -607,8 +607,10 @@ specs.add_valid(
         "n_interpolation_points": 400,
         "x_keys": [f"x_{i}" for i in range(4)],
         "y_keys": [f"y_{i}" for i in range(4)],
-        "x_bounds": (0, 60),
-        "y_bounds": (0, 1),
+        "prepend_x": [0],
+        "append_x": [60],
+        "prepend_y": [0],
+        "append_y": [1],
         "kernel": ScaleKernel(
             base_kernel=WassersteinKernel(
                 squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
@@ -636,9 +638,11 @@ specs.add_invalid(
         "interpolation_range": (0, 1),
         "n_interpolation_points": 400,
         "x_keys": [f"x_{i}" for i in range(4)],
-        "y_keys": [f"y_{i}" for i in range(3)],
-        "x_bounds": (0, 60),
-        "y_bounds": (0, 1),
+        "y_keys": [f"y_{i}" for i in range(4)],
+        "prepend_x": [0, 1],
+        "append_x": [60],
+        "prepend_y": [0],
+        "append_y": [1],
         "kernel": ScaleKernel(
             base_kernel=WassersteinKernel(
                 squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
@@ -654,7 +658,7 @@ specs.add_invalid(
         "output_scaler": ScalerEnum.STANDARDIZE,
     },
     error=ValueError,
-    message="Different number of x and y keys.",
+    message="Different number of x and y values for interpolation.",
 )
 
 specs.add_invalid(
@@ -669,8 +673,10 @@ specs.add_invalid(
         "n_interpolation_points": 400,
         "x_keys": [f"x_{i}" for i in range(4)],
         "y_keys": [f"z_{i}" for i in range(4)],
-        "x_bounds": (0, 60),
-        "y_bounds": (0, 1),
+        "prepend_x": [0],
+        "append_x": [60],
+        "prepend_y": [0],
+        "append_y": [1],
         "kernel": ScaleKernel(
             base_kernel=WassersteinKernel(
                 squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
@@ -701,8 +707,10 @@ specs.add_invalid(
         "n_interpolation_points": 400,
         "x_keys": [f"x_{i}" for i in range(4)],
         "y_keys": [f"z_{i}" for i in range(4)],
-        "x_bounds": (0, 60),
-        "y_bounds": (0, 1),
+        "prepend_x": [0],
+        "append_x": [60],
+        "prepend_y": [0],
+        "append_y": [1],
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
@@ -731,8 +739,10 @@ specs.add_invalid(
         "n_interpolation_points": 400,
         "x_keys": [f"x_{i}" for i in range(4)],
         "y_keys": [f"z_{i}" for i in range(4)],
-        "x_bounds": (0, 60),
-        "y_bounds": (0, 1),
+        "prepend_x": [0],
+        "append_x": [60],
+        "prepend_y": [0],
+        "append_y": [1],
         "kernel": MaternKernel().model_dump(),
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
         "dump": None,

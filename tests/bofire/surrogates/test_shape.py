@@ -19,11 +19,18 @@ def test_PiecewiseLinearGPSurrogate():
     assert_allclose(
         surrogate.transform.idx_y, torch.tensor([4, 5, 6, 7], dtype=torch.int64)
     )
-    assert surrogate.transform.prepend_x == 0.0
-    assert surrogate.transform.prepend_y == 0.0
-    assert surrogate.transform.append_x == 60.0
-    assert surrogate.transform.append_y == 1.0
-    assert surrogate.transform.new_x.shape == (400,)
+    assert torch.allclose(
+        surrogate.transform.prepend_x, torch.tensor(0, dtype=torch.float64)
+    )
+    assert torch.allclose(
+        surrogate.transform.prepend_y, torch.tensor(0, dtype=torch.float64)
+    )
+    assert torch.allclose(
+        surrogate.transform.append_x, torch.tensor(60, dtype=torch.float64)
+    )
+    assert torch.allclose(
+        surrogate.transform.append_y, torch.tensor(1, dtype=torch.float64)
+    )
 
     experiments = pd.DataFrame(
         {

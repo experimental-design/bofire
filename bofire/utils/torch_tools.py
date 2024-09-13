@@ -599,17 +599,15 @@ class InterpolateTransform(InputTransform, Module):
         new_x: Tensor,
         idx_x: List[int],
         idx_y: List[int],
-        prepend_x: float,
-        prepend_y: float,
-        append_x: float,
-        append_y: float,
+        prepend_x: Tensor,
+        prepend_y: Tensor,
+        append_x: Tensor,
+        append_y: Tensor,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
     ):
         super().__init__()
-        if len(idx_x) != len(idx_y):
-            raise ValueError("Indices of x and y are of different length.")
         if len(set(idx_x + idx_y)) != len(idx_x) + len(idx_y):
             raise ValueError("Indices are not unique.")
 
@@ -626,26 +624,36 @@ class InterpolateTransform(InputTransform, Module):
         self.append_x = append_x
         self.append_y = append_y
 
+        if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
+            self.idx_y
+        ) + len(self.prepend_y) + len(self.append_y):
+            raise ValueError("The number of x and y indices must be equal.")
+
     def _to(self, X: Tensor) -> None:
         self.new_x = self.coefficient.to(X)
 
+    def append(self, X: Tensor, values: Tensor) -> Tensor:
+        shape = X.shape
+        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
+        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
+        return torch.cat([X, values_expanded], dim=-1)
+
+    def prepend(self, X: Tensor, values: Tensor) -> Tensor:
+        shape = X.shape
+        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
+        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
+        return torch.cat([values_expanded, X], dim=-1)
+
     def transform(self, X: Tensor):
         shapeX = X.shape
-        # print(shapeX)
 
-        ps = list(X.shape)
-        ps[-1] = len(self.idx_x) + 2
-        ps = tuple(ps)
+        x = X[..., self.idx_x]
+        x = self.prepend(x, self.prepend_x)
+        x = self.append(x, self.append_x)
 
-        x = torch.zeros(ps)
-        x[..., 1:-1] = X[..., self.idx_x]
-        x[..., 0] = self.prepend_x
-        x[..., -1] = self.append_x
-
-        y = torch.zeros(ps)
-        y[..., 1:-1] = X[..., self.idx_y]
-        y[..., 0] = self.prepend_y
-        y[..., -1] = self.append_y
+        y = X[..., self.idx_y]
+        y = self.prepend(y, self.prepend_y)
+        y = self.append(y, self.append_y)
 
         if X.dim() == 3:
             x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
