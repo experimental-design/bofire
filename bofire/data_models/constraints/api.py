@@ -4,7 +4,7 @@ from bofire.data_models.constraints.constraint import (
     Constraint,
     ConstraintError,
     ConstraintNotFulfilledError,
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
@@ -37,7 +37,7 @@ AbstractConstraint = Union[
     InterpointConstraint,
     ProductConstraint,
     InequalityConstraint,
-    EqalityConstraint,
+    EqualityConstraint,
 ]
 
 AnyConstraint = Union[

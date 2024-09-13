@@ -5,7 +5,7 @@ import pandas as pd
 from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.constraint import (
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
@@ -84,7 +84,7 @@ class ProductConstraint(IntrapointConstraint):
         )
 
 
-class ProductEqualityConstraint(ProductConstraint, EqalityConstraint):
+class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
     """
     Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
 
