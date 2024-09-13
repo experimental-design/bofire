@@ -131,4 +131,10 @@ class BotorchSurrogates(BaseModel):
                 raise ValueError(
                     f"Preprocessing steps for features with {key} are incompatible."
                 )
+        # check that if any surrogate is a MultiTaskGPSurrogate, all have to be
+        if any(isinstance(model, MultiTaskGPSurrogate) for model in v):
+            if not all(isinstance(model, MultiTaskGPSurrogate) for model in v):
+                raise ValueError(
+                    "If a MultiTaskGPSurrogate is used, all surrogates need to be MultiTask."
+                )
         return v
