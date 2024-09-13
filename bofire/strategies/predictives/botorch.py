@@ -173,20 +173,44 @@ class BotorchStrategy(PredictiveStrategy):
             # observation noise is not implemented for MultiTaskGPSurrogate, has to be treated differently
             if self.surrogate_specs.surrogates[0].type == "MultiTaskGPSurrogate":
                 posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
-                likelihood_noise = self.model.likelihood.noise.cpu().detach().numpy()  # type: ignore
+                if len(posterior.mean.shape) == 2:
+                    if len(self.surrogate_specs.surrogates) > 1:
+                        likelihood_noise = torch.zeros(
+                            1, len(self.surrogate_specs.surrogates)
+                        )
+                        for i in range(len(self.surrogate_specs.surrogates)):
+                            likelihood_noise[0, i] = self.model.models[i].likelihood.noise.item()  # type: ignore
+                    else:
+                        likelihood_noise = self.model.likelihood.noise.cpu().detach().numpy()  # type: ignore
+                    preds = posterior.mean.cpu().detach().numpy()
+                    vars = posterior.variance + likelihood_noise
+                    stds = np.sqrt(vars.cpu().detach().numpy())
+                elif len(posterior.mean.shape) == 3:
+                    # loop over models to obtain the different likelihood noises
+                    likelihood_noises = torch.zeros(posterior.mean.shape[0])
+                    for i in range(posterior.mean.shape[0]):
+                        likelihood_noises[i] = self.model.models[i].likelihood.noise.item()  # type: ignore
+                    preds = posterior.mean.mean(dim=0).cpu().detach().numpy()
+                    vars = posterior.variance + likelihood_noises
+                    stds = np.sqrt(vars.mean(dim=0).cpu().detach().numpy())
+                else:
+                    raise ValueError(
+                        "Wrong dimension of posterior mean. Expecting 2 or 3."
+                    )
             else:
                 posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
-                likelihood_noise = 0
-        if len(posterior.mean.shape) == 2:
-            preds = posterior.mean.cpu().detach().numpy()
-            stds = np.sqrt(posterior.variance.cpu().detach().numpy() + likelihood_noise)
-        elif len(posterior.mean.shape) == 3:
-            preds = posterior.mean.mean(dim=0).cpu().detach().numpy()
-            stds = np.sqrt(
-                posterior.variance.mean(dim=0).cpu().detach().numpy() + likelihood_noise
-            )
-        else:
-            raise ValueError("Wrong dimension of posterior mean. Expecting 2 or 3.")
+                if len(posterior.mean.shape) == 2:
+                    preds = posterior.mean.cpu().detach().numpy()
+                    stds = np.sqrt(posterior.variance.cpu().detach().numpy())
+                elif len(posterior.mean.shape) == 3:
+                    preds = posterior.mean.mean(dim=0).cpu().detach().numpy()
+                    stds = np.sqrt(
+                        posterior.variance.mean(dim=0).cpu().detach().numpy()
+                    )
+                else:
+                    raise ValueError(
+                        "Wrong dimension of posterior mean. Expecting 2 or 3."
+                    )
         return preds, stds
 
     def calc_acquisition(
