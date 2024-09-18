@@ -173,7 +173,7 @@ class BotorchStrategy(PredictiveStrategy):
             try:
                 posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
             except NotImplementedError:  # NotImplementedEerror is thrown for MultiTaskGPSurrogate
-                posterior = self.model.posterior(X=X, observation_noise=False)
+                posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
 
             if len(posterior.mean.shape) == 2:
                 preds = posterior.mean.cpu().detach().numpy()
