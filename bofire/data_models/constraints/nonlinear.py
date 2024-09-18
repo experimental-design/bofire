@@ -6,7 +6,7 @@ import pandas as pd
 from pydantic import Field, field_validator
 
 from bofire.data_models.constraints.constraint import (
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
@@ -89,7 +89,7 @@ class NonlinearConstraint(IntrapointConstraint):
         )
 
 
-class NonlinearEqualityConstraint(NonlinearConstraint, EqalityConstraint):
+class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
     """Nonlinear equality constraint of the form 'expression == 0'.
 
     Attributes:
