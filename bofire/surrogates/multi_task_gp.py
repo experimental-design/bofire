@@ -2,7 +2,6 @@ import warnings
 from typing import Dict, Optional
 
 import botorch
-import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -96,10 +95,13 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            preds = self.model.posterior(X=X, observation_noise=False).mean.cpu().detach().numpy()  # type: ignore
-            vars = self.model.posterior(X=X, observation_noise=False).variance.cpu().detach().numpy()  # type: ignore
-            # add the observation noise to the stds
-            stds = np.sqrt(vars + self.model.likelihood.noise.cpu().detach().numpy())  # type: ignore
+            try:
+                posterior = self.model.posterior(X=X, observation_noise=True)
+            except NotImplementedError:
+                posterior = self.model.posterior(X=X, observation_noise=False)
+            preds = posterior.mean.cpu().detach().numpy()  # type: ignore
+            stds = posterior.variance.cpu().detach().numpy()  # type: ignore
+
         return preds, stds
 
 
