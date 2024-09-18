@@ -13,8 +13,12 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    TaskInput,
 )
-from bofire.data_models.surrogates.api import BotorchSurrogates
+from bofire.data_models.surrogates.api import (
+    BotorchSurrogates,
+    MultiTaskGPSurrogate,
+)
 from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -503,4 +507,42 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Generator does not match the number of factors.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    TaskInput(
+                        key="task",
+                        categories=["task_1", "task_2"],
+                        allowed=[True, True],
+                    ),
+                    ContinuousInput(key="x", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(
+            surrogates=[
+                MultiTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            TaskInput(
+                                key="task",
+                                categories=["task_1", "task_2"],
+                                allowed=[True, True],
+                            ),
+                            ContinuousInput(key="x", bounds=(0, 1)),
+                        ]
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                )
+            ]
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="Exactly one allowed task category must be specified for strategies with MultiTask models.",
 )
