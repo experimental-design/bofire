@@ -2,6 +2,7 @@ import warnings
 from typing import Dict, Optional
 
 import botorch
+import numpy as np
 import pandas as pd
 import torch
 from botorch.fit import fit_gpytorch_mll
@@ -100,7 +101,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             except NotImplementedError:
                 posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
             preds = posterior.mean.cpu().detach().numpy()  # type: ignore
-            stds = posterior.variance.cpu().detach().numpy()  # type: ignore
+            stds = np.sqrt(posterior.variance.cpu().detach().numpy())  # type: ignore
 
         return preds, stds
 
