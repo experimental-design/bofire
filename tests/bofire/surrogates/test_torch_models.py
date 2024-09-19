@@ -25,6 +25,7 @@ from bofire.data_models.features.api import (
     CategoricalInput,
     ContinuousInput,
     ContinuousOutput,
+    TaskInput,
 )
 from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.surrogates.api import BotorchSurrogates
@@ -959,3 +960,48 @@ def test_empirical_model_io():
     surrogate3 = surrogates.map(data_model)
     preds3 = surrogate3.predict(samples)
     assert_frame_equal(preds, preds3)
+
+
+def test_multitask_invalid_processing():
+    inputs = Inputs(
+        features=[
+            TaskInput(key="task", categories=["task1", "task2"], allowed=[True, False]),
+            ContinuousInput(key="x", bounds=(-1, 1)),
+        ]
+    )
+
+    outputs_1 = Outputs(
+        features=[ContinuousOutput(key="y1")],
+    )
+    outputs_2 = Outputs(
+        features=[ContinuousOutput(key="y2")],
+    )
+
+    data_model_1 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
+
+    data_model_2 = data_models.SingleTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
+
+    with pytest.raises(ValueError):
+        data_models.BotorchSurrogates(surrogates=[data_model_1, data_model_2])
+
+
+def test_multitask_valid_processing():
+    inputs = Inputs(
+        features=[
+            TaskInput(key="task", categories=["task1", "task2"], allowed=[True, False]),
+            ContinuousInput(key="x", bounds=(-1, 1)),
+        ]
+    )
+
+    outputs_1 = Outputs(
+        features=[ContinuousOutput(key="y1")],
+    )
+    outputs_2 = Outputs(
+        features=[ContinuousOutput(key="y2")],
+    )
+
+    data_model_1 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
+
+    data_model_2 = data_models.MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
+
+    data_models.BotorchSurrogates(surrogates=[data_model_1, data_model_2])
