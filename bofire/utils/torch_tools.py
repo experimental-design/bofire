@@ -603,6 +603,7 @@ class InterpolateTransform(InputTransform, Module):
         prepend_y: Tensor,
         append_x: Tensor,
         append_y: Tensor,
+        keep_original: bool = False,
         transform_on_train: bool = True,
         transform_on_eval: bool = True,
         transform_on_fantasize: bool = True,
@@ -623,6 +624,8 @@ class InterpolateTransform(InputTransform, Module):
         self.prepend_y = prepend_y
         self.append_x = append_x
         self.append_y = append_y
+
+        self.keep_original = keep_original
 
         if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
             self.idx_y
@@ -664,5 +667,8 @@ class InterpolateTransform(InputTransform, Module):
 
         if X.dim() == 3:
             new_y = new_y.reshape((shapeX[0], shapeX[1], new_y.shape[-1]))
+
+        if self.keep_original:
+            return torch.cat([new_y, X], dim=-1)
 
         return new_y

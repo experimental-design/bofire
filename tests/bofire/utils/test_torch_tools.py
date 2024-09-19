@@ -1087,3 +1087,35 @@ def test_InterpolateTransform():
     ).to(**tkwargs)
     ty_new = t(tX).numpy()
     np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test keep original
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+        keep_original=True,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(
+        np.concatenate([y_new, tX.numpy()], axis=-1), ty_new, rtol=1e-6
+    )
