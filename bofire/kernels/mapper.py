@@ -200,6 +200,7 @@ def map_WassersteinKernel(
             if data_model.lengthscale_prior is not None
             else None
         ),
+        active_dims=active_dims,
     )
 
 

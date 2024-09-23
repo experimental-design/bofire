@@ -1,5 +1,7 @@
 import pandas as pd
 import torch
+from gpytorch.kernels import MaternKernel, ProductKernel, ScaleKernel
+from gpytorch.priors import GammaPrior, LogNormalPrior
 from pandas.testing import assert_frame_equal
 from torch.testing import assert_allclose
 
@@ -14,40 +16,65 @@ def test_PiecewiseLinearGPSurrogate():
     surrogate = surrogates.map(surrogate_data)
     assert isinstance(surrogate, surrogates.PiecewiseLinearGPSurrogate)
     assert_allclose(
-        surrogate.transform.idx_x, torch.tensor([0, 1, 2, 3], dtype=torch.int64)
+        surrogate.transform.tf1.idx_x, torch.tensor([4, 5], dtype=torch.int64)
     )
     assert_allclose(
-        surrogate.transform.idx_y, torch.tensor([4, 5, 6, 7], dtype=torch.int64)
+        surrogate.transform.tf1.idx_y, torch.tensor([0, 1, 2, 3], dtype=torch.int64)
     )
     assert torch.allclose(
-        surrogate.transform.prepend_x, torch.tensor(0, dtype=torch.float64)
+        surrogate.transform.tf1.prepend_x, torch.tensor([0], dtype=torch.float64)
     )
     assert torch.allclose(
-        surrogate.transform.prepend_y, torch.tensor(0, dtype=torch.float64)
+        surrogate.transform.tf1.prepend_y, torch.tensor([], dtype=torch.float64)
     )
     assert torch.allclose(
-        surrogate.transform.append_x, torch.tensor(60, dtype=torch.float64)
+        surrogate.transform.tf1.append_x, torch.tensor([1], dtype=torch.float64)
     )
     assert torch.allclose(
-        surrogate.transform.append_y, torch.tensor(1, dtype=torch.float64)
+        surrogate.transform.tf1.append_y, torch.tensor([], dtype=torch.float64)
     )
-
-    experiments = pd.DataFrame(
+    assert torch.allclose(
+        surrogate.transform.tf2.bounds, torch.tensor([[2], [60]], dtype=torch.float64)
+    )
+    assert torch.allclose(
+        surrogate.transform.tf2.indices, torch.tensor([1006], dtype=torch.int64)
+    )
+    experiments = pd.DataFrame.from_dict(
         {
-            "x_0": [10, 10],
-            "x_1": [20, 20],
-            "x_2": [30, 30],
-            "x_3": [40, 40],
-            "y_0": [0, 0],
-            "y_1": [0, 0],
-            "y_2": [1, 0],
-            "y_3": [1, 1],
-            "alpha": [15, 5],
+            "phi_0": {0: 0.2508421787324221, 1: 0.4163841440870552},
+            "phi_1": {0: 0.433484737895208, 1: 0.6113523601901784},
+            "phi_2": {0: 0.5286771157519854, 1: 0.6648468998497129},
+            "phi_3": {0: 0.5755781889180437, 1: 0.7274116735640798},
+            "t_1": {0: 0.22223684134422478, 1: 0.23491735169040232},
+            "t_2": {0: 0.8253013968891976, 1: 0.7838135122442911},
+            "t_3": {0: 20.589423292016406, 1: 6.836910327501014},
+            "alpha": {0: 7, 1: 3},
         }
     )
     surrogate.fit(experiments)
+    assert isinstance(surrogate.model.covar_module, ScaleKernel)
+    assert isinstance(surrogate.model.covar_module.outputscale_prior, GammaPrior)
+    assert isinstance(surrogate.model.covar_module.base_kernel, ProductKernel)
+    assert isinstance(surrogate.model.covar_module.base_kernel.kernels[0], MaternKernel)
+    assert isinstance(
+        surrogate.model.covar_module.base_kernel.kernels[0].lengthscale_prior,
+        GammaPrior,
+    )
+    assert surrogate.model.covar_module.base_kernel.kernels[
+        0
+    ].active_dims == torch.tensor([1006], dtype=torch.int64)
+    assert isinstance(
+        surrogate.model.covar_module.base_kernel.kernels[1], WassersteinKernel
+    )
+    assert torch.allclose(
+        surrogate.model.covar_module.base_kernel.kernels[1].active_dims,
+        torch.tensor(list(range(1000)), dtype=torch.int64),
+    )
+    assert isinstance(
+        surrogate.model.covar_module.base_kernel.kernels[1].lengthscale_prior,
+        LogNormalPrior,
+    )
 
-    assert isinstance(surrogate.model.covar_module.base_kernel, WassersteinKernel)
     preds1 = surrogate.predict(experiments)
     dump = surrogate.dumps()
     surrogate2 = surrogates.map(surrogate_data)

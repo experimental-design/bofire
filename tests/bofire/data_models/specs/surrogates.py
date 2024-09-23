@@ -599,25 +599,28 @@ specs.add_valid(
     models.PiecewiseLinearGPSurrogate,
     lambda: {
         "inputs": Inputs(
-            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
+            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
+            + [ContinuousInput(key=f"t_{3}", bounds=(2, 60))]
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
-        "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(4)],
-        "y_keys": [f"y_{i}" for i in range(4)],
-        "prepend_x": [0],
-        "append_x": [60],
-        "prepend_y": [0],
-        "append_y": [1],
-        "kernel": ScaleKernel(
-            base_kernel=WassersteinKernel(
-                squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
-            ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        "n_interpolation_points": 1000,
+        "x_keys": ["t_1", "t_2"],
+        "y_keys": [f"phi_{i}" for i in range(4)],
+        "continuous_keys": ["t_3"],
+        "prepend_x": [0.0],
+        "append_x": [1.0],
+        "prepend_y": [],
+        "append_y": [],
+        "shape_kernel": WassersteinKernel(
+            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+        ).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
         ).model_dump(),
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "outputscale_prior": BOTORCH_SCALE_PRIOR().model_dump(),
         "dump": None,
         "aggregations": None,
         "hyperconfig": None,
@@ -631,25 +634,100 @@ specs.add_invalid(
     models.PiecewiseLinearGPSurrogate,
     lambda: {
         "inputs": Inputs(
+            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
+            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 1000,
+        "x_keys": ["t_1", "t_2"],
+        "y_keys": [f"phi_{i}" for i in range(4)],
+        "continuous_keys": [],
+        "prepend_x": [0.0],
+        "append_x": [1.0],
+        "prepend_y": [],
+        "append_y": [],
+        "shape_kernel": WassersteinKernel(
+            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+        ).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+        ).model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "outputscale_prior": BOTORCH_SCALE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+    error=ValueError,
+    message="Continuous kernel specified but no features for continuous kernel.",
+)
+
+specs.add_invalid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
+            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(3)]
+        ).model_dump(),
+        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
+        "interpolation_range": (0, 1),
+        "n_interpolation_points": 1000,
+        "x_keys": [],
+        "y_keys": [],
+        "continuous_keys": ["t_1", "t_2", "t_3"] + [f"phi_{i}" for i in range(4)],
+        "prepend_x": [0.0],
+        "append_x": [1.0],
+        "prepend_y": [],
+        "append_y": [],
+        "shape_kernel": WassersteinKernel(
+            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+        ).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+        ).model_dump(),
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "outputscale_prior": BOTORCH_SCALE_PRIOR().model_dump(),
+        "dump": None,
+        "aggregations": None,
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+    },
+    error=ValueError,
+    message="No features for interpolation. Please provide `x_keys` and `y_keys`.",
+)
+
+
+specs.add_invalid(
+    models.PiecewiseLinearGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
             features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
             + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
         "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(4)],
+        "x_keys": [f"x_{i}" for i in range(3)],
         "y_keys": [f"y_{i}" for i in range(4)],
-        "prepend_x": [0, 1],
-        "append_x": [60],
-        "prepend_y": [0],
-        "append_y": [1],
-        "kernel": ScaleKernel(
-            base_kernel=WassersteinKernel(
-                squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
-            ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        "continuous_keys": ["x_3"],
+        "prepend_x": [],
+        "append_x": [],
+        "prepend_y": [],
+        "append_y": [],
+        "shape_kernel": WassersteinKernel(
+            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+        ).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
         ).model_dump(),
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "outputscale_prior": BOTORCH_SCALE_PRIOR().model_dump(),
         "dump": None,
         "aggregations": None,
         "hyperconfig": None,
@@ -671,19 +749,21 @@ specs.add_invalid(
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
         "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(4)],
-        "y_keys": [f"z_{i}" for i in range(4)],
-        "prepend_x": [0],
+        "x_keys": [f"x_{i}" for i in range(3)],
+        "y_keys": [f"y_{i}" for i in range(4)],
+        "continuous_keys": ["x_3", "dummy"],
+        "prepend_x": [],
         "append_x": [60],
-        "prepend_y": [0],
-        "append_y": [1],
-        "kernel": ScaleKernel(
-            base_kernel=WassersteinKernel(
-                squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
-            ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        "prepend_y": [],
+        "append_y": [],
+        "shape_kernel": WassersteinKernel(
+            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+        ).model_dump(),
+        "continuous_kernel": MaternKernel(
+            ard=True, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
         ).model_dump(),
         "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "outputscale_prior": BOTORCH_SCALE_PRIOR().model_dump(),
         "dump": None,
         "aggregations": None,
         "hyperconfig": None,
@@ -693,65 +773,4 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Feature keys do not match input keys.",
-)
-
-specs.add_invalid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
-        "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(4)],
-        "y_keys": [f"z_{i}" for i in range(4)],
-        "prepend_x": [0],
-        "append_x": [60],
-        "prepend_y": [0],
-        "append_y": [1],
-        "kernel": ScaleKernel(
-            base_kernel=MaternKernel(),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        ).model_dump(),
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
-        "dump": None,
-        "aggregations": None,
-        "hyperconfig": None,
-        "input_preprocessing_specs": {},
-        "scaler": ScalerEnum.NORMALIZE,
-        "output_scaler": ScalerEnum.STANDARDIZE,
-    },
-    error=ValueError,
-    message="PiecewiseLinearGPSurrogate can only be used with a Wasserstein kernel.",
-)
-
-specs.add_invalid(
-    models.PiecewiseLinearGPSurrogate,
-    lambda: {
-        "inputs": Inputs(
-            features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
-        ).model_dump(),
-        "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
-        "interpolation_range": (0, 1),
-        "n_interpolation_points": 400,
-        "x_keys": [f"x_{i}" for i in range(4)],
-        "y_keys": [f"z_{i}" for i in range(4)],
-        "prepend_x": [0],
-        "append_x": [60],
-        "prepend_y": [0],
-        "append_y": [1],
-        "kernel": MaternKernel().model_dump(),
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
-        "dump": None,
-        "aggregations": None,
-        "hyperconfig": None,
-        "input_preprocessing_specs": {},
-        "scaler": ScalerEnum.NORMALIZE,
-        "output_scaler": ScalerEnum.STANDARDIZE,
-    },
-    error=ValueError,
-    message="PiecewiseLinearGPSurrogate can only be used with a Wasserstein kernel.",
 )
