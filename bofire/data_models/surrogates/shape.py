@@ -1,19 +1,89 @@
 from typing import Annotated, List, Literal, Optional, Type, Union
 
+import pandas as pd
 from pydantic import AfterValidator, Field, PositiveInt, model_validator
 
+from bofire.data_models.domain.api import Inputs
+from bofire.data_models.enum import RegressionMetricsEnum
+
 # from bofire.data_models.strategies.api import FactorialStrategy
-from bofire.data_models.features.api import AnyOutput, ContinuousOutput
+from bofire.data_models.features.api import (
+    AnyOutput,
+    CategoricalInput,
+    ContinuousOutput,
+)
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel, WassersteinKernel
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
     BOTORCH_SCALE_PRIOR,
+    MBO_LENGTHCALE_PRIOR,
+    MBO_NOISE_PRIOR,
+    MBO_OUTPUTSCALE_PRIOR,
     AnyPrior,
     LogNormalPrior,
 )
+
+# from bofire.data_models.strategies.api import FactorialStrategy
+from bofire.data_models.surrogates.trainable import Hyperconfig
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 from bofire.data_models.types import Bounds, validate_monotonically_increasing
+
+
+class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
+    type: Literal[
+        "PiecewiseLinearGPSurrogateHyperconfig"
+    ] = "PiecewiseLinearGPSurrogateHyperconfig"
+    inputs: Inputs = Inputs(
+        features=[
+            CategoricalInput(
+                key="continuous_kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+            ),
+            CategoricalInput(key="prior", categories=["mbo", "botorch"]),
+            CategoricalInput(key="ard", categories=["True", "False"]),
+        ]
+    )
+    target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
+    hyperstrategy: Literal[
+        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
+    ] = "FactorialStrategy"
+
+    @staticmethod
+    def _update_hyperparameters(
+        surrogate_data: "PiecewiseLinearGPSurrogate", hyperparameters: pd.Series
+    ):
+        if hyperparameters.prior == "mbo":
+            noise_prior, lengthscale_prior, outputscale_prior = (
+                MBO_NOISE_PRIOR(),
+                MBO_LENGTHCALE_PRIOR(),
+                MBO_OUTPUTSCALE_PRIOR(),
+            )
+        else:
+            noise_prior, lengthscale_prior, outputscale_prior = (
+                BOTORCH_NOISE_PRIOR(),
+                BOTORCH_LENGTHCALE_PRIOR(),
+                BOTORCH_SCALE_PRIOR(),
+            )
+        surrogate_data.noise_prior = noise_prior
+        surrogate_data.outputscale_prior = outputscale_prior
+
+        if hyperparameters.continuous_kernel == "rbf":
+            surrogate_data.continuous_kernel = RBFKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_2.5":
+            surrogate_data.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=2.5
+            )
+
+        elif hyperparameters.continuous_kernel == "matern_1.5":
+            surrogate_data.continuous_kernel = MaternKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=1.5
+            )
+
+        else:
+            raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
 
 
 class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
@@ -27,6 +97,9 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     append_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
+    hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(
+        default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig()
+    )
 
     shape_kernel: WassersteinKernel = Field(
         default_factory=lambda: WassersteinKernel(

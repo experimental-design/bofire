@@ -51,10 +51,12 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             keep_original=True,
         )
 
-        self.idx_continuous = [
-            data_model.inputs.get_keys().index(k) + new_ts.shape[0]
-            for k in data_model.continuous_keys
-        ]
+        self.idx_continuous = sorted(
+            [
+                data_model.inputs.get_keys().index(k) + new_ts.shape[0]
+                for k in data_model.continuous_keys
+            ]
+        )
         self.idx_shape = list(range(new_ts.shape[0]))
         bounds = torch.tensor(
             data_model.inputs.get_by_keys(data_model.continuous_keys).get_bounds(

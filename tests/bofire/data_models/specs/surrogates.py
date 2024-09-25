@@ -32,6 +32,7 @@ from bofire.data_models.surrogates.api import (
     SumAggregation,
 )
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
+from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogateHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -623,10 +624,10 @@ specs.add_valid(
         "outputscale_prior": BOTORCH_SCALE_PRIOR().model_dump(),
         "dump": None,
         "aggregations": None,
-        "hyperconfig": None,
         "input_preprocessing_specs": {},
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
+        "hyperconfig": PiecewiseLinearGPSurrogateHyperconfig().model_dump(),
     },
 )
 

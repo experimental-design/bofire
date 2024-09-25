@@ -7,6 +7,16 @@ from torch.testing import assert_allclose
 
 import bofire.surrogates.api as surrogates
 import tests.bofire.data_models.specs.api as specs
+from bofire.data_models.kernels.api import MaternKernel as MaternKernelDataModel
+from bofire.data_models.kernels.api import RBFKernel as RBFKernelDataModel
+
+# , RBFKernel, ScaleKernel
+from bofire.data_models.priors.api import (
+    BOTORCH_LENGTHCALE_PRIOR,
+    BOTORCH_NOISE_PRIOR,
+    MBO_LENGTHCALE_PRIOR,
+    MBO_NOISE_PRIOR,
+)
 from bofire.data_models.surrogates.api import PiecewiseLinearGPSurrogate
 from bofire.kernels.shape import WassersteinKernel
 
@@ -81,3 +91,30 @@ def test_PiecewiseLinearGPSurrogate():
     surrogate2.loads(dump)
     preds2 = surrogate2.predict(experiments)
     assert_frame_equal(preds1, preds2)
+
+
+def test_PiecewiseLinearGPHyperconfig():
+    surrogate_data = specs.surrogates.valid(PiecewiseLinearGPSurrogate).obj()
+
+    candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
+    surrogate_data.update_hyperparameters(candidate)
+    assert surrogate_data.continuous_kernel.ard == (candidate["ard"] == "True")
+    if candidate.continuous_kernel == "matern_1.5":
+        assert isinstance(surrogate_data.continuous_kernel, MaternKernelDataModel)
+        assert surrogate_data.continuous_kernel.nu == 1.5
+    elif candidate.continuous_kernel == "matern_2.5":
+        assert isinstance(surrogate_data.continuous_kernel, MaternKernelDataModel)
+        assert surrogate_data.continuous_kernel.nu == 2.5
+    else:
+        assert isinstance(surrogate_data.continuous_kernel, RBFKernelDataModel)
+    if candidate.prior == "mbo":
+        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+        assert (
+            surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
+        )
+    else:
+        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+        assert (
+            surrogate_data.continuous_kernel.lengthscale_prior
+            == BOTORCH_LENGTHCALE_PRIOR()
+        )
