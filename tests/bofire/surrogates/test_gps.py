@@ -32,6 +32,8 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
@@ -235,7 +237,7 @@ def test_hyperconfig_invalid():
     ):
         SingleTaskGPHyperconfig(n_iterations=3, hyperstrategy="RandomStrategy")
     hy = SingleTaskGPHyperconfig(n_iterations=None, hyperstrategy="RandomStrategy")
-    assert hy.n_iterations == 13
+    assert hy.n_iterations == 14
 
 
 def test_SingleTaskGPHyperconfig():
@@ -256,29 +258,37 @@ def test_SingleTaskGPHyperconfig():
     )
     candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
     surrogate_data.update_hyperparameters(candidate)
-    assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
-    if candidate.kernel == "matern_1.5":
-        assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-        assert surrogate_data.kernel.base_kernel.nu == 1.5
-    elif candidate.kernel == "matern_2.5":
-        assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-        assert surrogate_data.kernel.base_kernel.nu == 2.5
-    else:
-        assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-        assert (
-            surrogate_data.kernel.base_kernel.lengthscale_prior
-            == MBO_LENGTHCALE_PRIOR()
-        )
-    else:
-        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
-        assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
-        assert (
-            surrogate_data.kernel.base_kernel.lengthscale_prior
-            == THREESIX_LENGTHSCALE_PRIOR()
-        )
+    if hasattr(surrogate_data.kernel, "base_kernel"):
+        assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
+        if candidate.kernel == "matern_1.5":
+            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+            assert surrogate_data.kernel.base_kernel.nu == 1.5
+        elif candidate.kernel == "matern_2.5":
+            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+            assert surrogate_data.kernel.base_kernel.nu == 2.5
+        else:
+            assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
+        if candidate.prior == "mbo":
+            assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == MBO_LENGTHCALE_PRIOR()
+            )
+        elif candidate.prior == "threesix":
+            assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == THREESIX_LENGTHSCALE_PRIOR()
+            )
+        else:
+            assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == HVARFNER_LENGTHSCALE_PRIOR()
+            )
 
 
 def test_MixedSingleTaskGPHyperconfig():

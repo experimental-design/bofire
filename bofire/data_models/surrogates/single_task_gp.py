@@ -40,7 +40,8 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             CategoricalInput(
                 key="kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
             ),
-            CategoricalInput(key="prior", categories=["mbo", "botorch"]),
+            CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
+            CategoricalInput(key="scalekernel", categories=["True", "False"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
         ]
     )
@@ -65,33 +66,52 @@ class SingleTaskGPHyperconfig(Hyperconfig):
                 MBO_LENGTHCALE_PRIOR(),
                 MBO_OUTPUTSCALE_PRIOR(),
             )
-        else:
+        elif hyperparameters.prior == "threesix":
             noise_prior, lengthscale_prior, outputscale_prior = (
                 THREESIX_NOISE_PRIOR(),
                 THREESIX_LENGTHSCALE_PRIOR(),
                 THREESIX_SCALE_PRIOR(),
             )
+        else:
+            noise_prior, lengthscale_prior, outputscale_prior = (
+                HVARFNER_NOISE_PRIOR(),
+                HVARFNER_LENGTHSCALE_PRIOR(),
+                THREESIX_SCALE_PRIOR(),
+            )
         surrogate_data.noise_prior = noise_prior
+
+        # Define a kernel that wraps the base kernel in a scale kernel if necessary
+        def outer_kernel(base_kernel, outputscale_prior, use_scale) -> AnyKernel:
+            if use_scale:
+                return ScaleKernel(
+                    base_kernel=base_kernel, outputscale_prior=outputscale_prior
+                )
+            else:
+                return base_kernel
+
         if hyperparameters.kernel == "rbf":
-            surrogate_data.kernel = ScaleKernel(
+            surrogate_data.kernel = outer_kernel(
                 base_kernel=RBFKernel(
                     ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
                 ),
                 outputscale_prior=outputscale_prior,
+                use_scale=hyperparameters.scalekernel,
             )
         elif hyperparameters.kernel == "matern_2.5":
-            surrogate_data.kernel = ScaleKernel(
+            surrogate_data.kernel = outer_kernel(
                 base_kernel=matern_25(
                     ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
                 ),
                 outputscale_prior=outputscale_prior,
+                use_scale=hyperparameters.scalekernel,
             )
         elif hyperparameters.kernel == "matern_1.5":
-            surrogate_data.kernel = ScaleKernel(
+            surrogate_data.kernel = outer_kernel(
                 base_kernel=matern_15(
                     ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
                 ),
                 outputscale_prior=outputscale_prior,
+                use_scale=hyperparameters.scalekernel,
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
