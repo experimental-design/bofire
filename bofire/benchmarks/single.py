@@ -221,6 +221,60 @@ class Hartmann(Benchmark):
         )
 
 
+class Hartmann6plus(Benchmark):
+    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+            constraints=(
+                Constraints(
+                    constraints=[
+                        NChooseKConstraint(
+                            features=[f"x_{i}" for i in range(dim)],
+                            min_count=0,
+                            max_count=allowed_k,
+                            none_also_valid=True,
+                        )
+                    ]
+                )
+                if allowed_k
+                else Constraints()
+            ),
+        )
+        if dim < 6:
+            raise ValueError("Hartmann6plus available for dim>=6.")
+        self._hartmann = botorch_hartmann(dim=6)
+
+    def get_optima(self) -> pd.DataFrame:
+        if len(self.domain.constraints) > 0:
+            raise ValueError("Not defined for NChooseK use case.")
+        return pd.DataFrame(
+            columns=[f"x_{i}" for i in range(6)] + ["y"],
+            data=[[0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, -3.32237]],
+        )
+
+    @property
+    def dim(self) -> int:
+        return len(self.domain.inputs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "y": self._hartmann(
+                    torch.from_numpy(candidates[[f"x_{i}" for i in range(6)]].values)
+                ),
+                "valid_y": [1 for _ in range(len(candidates))],
+            }
+        )
+
+
 class Branin(Benchmark):
     def __init__(self, locality_factor: Optional[float] = None, **kwargs) -> None:
         super().__init__(**kwargs)

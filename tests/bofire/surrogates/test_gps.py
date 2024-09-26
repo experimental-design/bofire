@@ -32,12 +32,12 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
 )
 from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
@@ -273,11 +273,11 @@ def test_SingleTaskGPHyperconfig():
             == MBO_LENGTHCALE_PRIOR()
         )
     else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
-        assert surrogate_data.kernel.outputscale_prior == BOTORCH_SCALE_PRIOR()
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
         assert (
             surrogate_data.kernel.base_kernel.lengthscale_prior
-            == BOTORCH_LENGTHCALE_PRIOR()
+            == THREESIX_LENGTHSCALE_PRIOR()
         )
 
 
@@ -314,10 +314,10 @@ def test_MixedSingleTaskGPHyperconfig():
             surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
         )
     else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         assert (
             surrogate_data.continuous_kernel.lengthscale_prior
-            == BOTORCH_LENGTHCALE_PRIOR()
+            == THREESIX_LENGTHSCALE_PRIOR()
         )
 
 

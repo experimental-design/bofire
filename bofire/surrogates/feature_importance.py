@@ -18,10 +18,15 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
     Returns:
         pd.Series: The importance values (inverse of the individual lenght scales).
     """
+    # If we are using a base kernel wrapped in a scale kernel, get the lengthscales
+    # from the base kernel. Otherwise, get the lengthscales from the top-level kernel.
     try:
         scales = surrogate.model.covar_module.base_kernel.lengthscale  # type: ignore
     except AttributeError:
-        raise ValueError("No lenghtscale based kernel found.")
+        try:
+            scales = surrogate.model.covar_module.lengthscale  # type: ignore
+        except AttributeError:
+            raise ValueError("No lenghtscale based kernel found.")
     scales = 1.0 / scales.squeeze().detach().numpy()  # type: ignore
     if isinstance(scales, float):
         raise ValueError("Only one lengthscale found, use `ard=True`.")

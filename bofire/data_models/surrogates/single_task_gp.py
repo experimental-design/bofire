@@ -19,14 +19,14 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
 )
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
     HVARFNER_LENGTHSCALE_PRIOR,
     HVARFNER_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
     AnyPrior,
 )
 from bofire.data_models.surrogates.trainable import Hyperconfig
@@ -67,9 +67,9 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             )
         else:
             noise_prior, lengthscale_prior, outputscale_prior = (
-                BOTORCH_NOISE_PRIOR(),
-                BOTORCH_LENGTHCALE_PRIOR(),
-                BOTORCH_SCALE_PRIOR(),
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
+                THREESIX_SCALE_PRIOR(),
             )
         surrogate_data.noise_prior = noise_prior
         if hyperparameters.kernel == "rbf":
@@ -99,6 +99,21 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
+
+    # kernel: AnyKernel = Field(
+    #     default_factory=lambda: ScaleKernel(
+    #         base_kernel=MaternKernel(
+    #             ard=True,
+    #             nu=2.5,
+    #             lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+    #         ),
+    #         outputscale_prior=THREESIX_SCALE_PRIOR(),
+    #     )
+    # )
+    # noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
+    # hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
+    #     default_factory=lambda: SingleTaskGPHyperconfig()
+    # )
 
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(

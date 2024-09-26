@@ -18,7 +18,7 @@ from bofire.data_models.kernels.api import (
     ScaleKernel,
     TanimotoKernel,
 )
-from bofire.data_models.priors.api import BOTORCH_SCALE_PRIOR, GammaPrior
+from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR, GammaPrior
 from tests.bofire.data_models.specs.api import Spec
 
 try:
@@ -62,7 +62,7 @@ def test_map_infinite_width_bnn_kernel():
 
 def test_map_scale_kernel():
     kernel = ScaleKernel(
-        base_kernel=RBFKernel(), outputscale_prior=BOTORCH_SCALE_PRIOR()
+        base_kernel=RBFKernel(), outputscale_prior=THREESIX_SCALE_PRIOR()
     )
     k = kernels.map(
         kernel,
@@ -83,7 +83,7 @@ def test_map_scale_kernel():
 
 
 def test_map_polynomial_kernel():
-    kernel = PolynomialKernel(power=2, offset_prior=BOTORCH_SCALE_PRIOR())
+    kernel = PolynomialKernel(power=2, offset_prior=THREESIX_SCALE_PRIOR())
     k = kernels.map(
         kernel,
         batch_shape=torch.Size(),
