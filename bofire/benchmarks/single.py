@@ -7,6 +7,7 @@ import torch
 from botorch.test_functions import Hartmann as botorch_hartmann
 from botorch.test_functions.synthetic import Branin as torchBranin
 from pydantic.types import PositiveInt
+from scipy.stats import dirichlet, multivariate_normal, random_correlation
 
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.data_models.constraints.api import NChooseKConstraint
@@ -17,6 +18,7 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    TaskInput,
 )
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 from bofire.utils.torch_tools import tkwargs
@@ -234,7 +236,7 @@ class Branin(Benchmark):
                                 0.5 * locality_factor,
                             )
                             if locality_factor is not None
-                            else (math.inf, math.inf)
+                            else None
                         ),
                     ),
                     ContinuousInput(
@@ -246,7 +248,7 @@ class Branin(Benchmark):
                                 1.5 * locality_factor,
                             )
                             if locality_factor is not None
-                            else (math.inf, math.inf)
+                            else None
                         ),
                     ),
                 ]
@@ -381,6 +383,82 @@ class Himmelblau(Benchmark):
         )
 
 
+class MultiTaskHimmelblau(Benchmark):
+    """Himmelblau function for testing optimization algorithms
+    Link to the definition: https://en.wikipedia.org/wiki/Himmelblau%27s_function
+    """
+
+    def __init__(self, use_constraints: bool = False, **kwargs):
+        """Initialiszes class of type Himmelblau.
+
+        Args:
+            best_possible_f (float, optional): Not implemented yet. Defaults to 0.0.
+            use_constraints (bool, optional): Whether constraints should be used or not (Not implemented yet.). Defaults to False.
+
+        Raises:
+            ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
+        """
+        super().__init__(**kwargs)
+        self.use_constraints = use_constraints
+        inputs = []
+
+        inputs.append(TaskInput(key="task_id", categories=["task_1", "task_2"]))
+        inputs.append(ContinuousInput(key="x_1", bounds=(-6, 6)))
+        inputs.append(ContinuousInput(key="x_2", bounds=(-6, 6)))
+
+        objective = MinimizeObjective(w=1.0)
+        output_feature = ContinuousOutput(key="y", objective=objective)
+        if self.use_constraints:
+            raise ValueError("Not implemented yet!")
+        self._domain = Domain(
+            inputs=Inputs(features=inputs),
+            outputs=Outputs(features=[output_feature]),
+        )
+
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+        """Evaluates benchmark function.
+
+        Args:
+            X (pd.DataFrame): Input values. Columns are x_1 and x_2
+
+        Returns:
+            pd.DataFrame: y values of the function. Columns are y and valid_y.
+        """
+        # initialize y outputs
+        Y = pd.DataFrame({"y": np.zeros(len(X)), "valid_y": 0})
+        # evaluate task 1
+        X_temp = X.query("task_id == 'task_1'").eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=False
+        )
+        Y.loc[X_temp.index, "y"] = X_temp["y"]
+        Y.loc[X_temp.index, "valid_y"] = 1
+        # evaluate task 2
+        X_temp = X.query("task_id == 'task_2'").eval(
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2", inplace=False
+        )
+        Y.loc[X_temp.index, "y"] = X_temp["y"]
+        Y.loc[X_temp.index, "valid_y"] = 1
+        return Y
+
+    def get_optima(self) -> pd.DataFrame:
+        """Returns positions of optima of the benchmark function.
+
+        Returns:
+            pd.DataFrame: x values of optima. Colums are x_1, x_2, task_id
+        """
+        out = [
+            [3.0, 2.0, "task_1", 0],
+            [-2.805118, 3.131312, "task_1", 0],
+            [-3.779310, -3.283186, "task_1", 0],
+            [3.584428, -1.848126, "task_1", 0],
+        ]
+
+        return pd.DataFrame(
+            out,
+            columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
+        )
+
+
 class DiscreteHimmelblau(Himmelblau):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -417,3 +495,144 @@ class _CategoricalDiscreteHimmelblau(Himmelblau):  # only used for testing
 
     def get_optima(self):
         raise NotImplementedError()
+
+
+class Multinormalpdfs(Benchmark):
+    """The sum of probability density functions of multivariate Gaussian distributions
+
+    A virtual experiment in this benchmark class is evaluated by summing one or more
+    multivariate normal PDFs:
+        y_expt = sum_i {const_i * exp(-0.5 * (x - mu_i)^T Sigma_i^-1 (x - mu_i))}
+    where mu_i is the i-th mean vector and Sigma_i is the i-th covariance matrix.
+
+    This allows us to control
+        * the possible presence of multiple optima by choosing the number of Gaussians
+        * the position of the optimum/optima by setting the mean(s)
+        * the axis-alignment of each elliptical dip in the objective landscape by modifying the
+          covariance matrix/matrices
+        * the presence of non-influential variables by setting the corresponding elements in the
+          covariance matrix to zero or a large number
+    """
+
+    def __init__(
+        self,
+        dim: int = 5,
+        n_gaussians: int = 1,
+        stdev: float = 0.4,
+        eigscale: float = 0.5,
+        opt_on_boundary: bool = False,
+        N_unimportant_inputs: int = 2,
+        seed: Optional[int] = None,
+        means: Optional[list] = None,
+        covmats: Optional[np.ndarray] = None,
+        **kwargs,
+    ) -> None:
+        """Initializes the class of type Multinormalpdfs
+
+        Args:
+        dim : number of input dimensions
+        n_gaussians : number of gaussian pdfs in the sum
+        stdev : standard deviation used to generate the covariance matrices
+        eigscale : the concentration parameter (this value repeated dim times)
+            of a Dirichlet distribution used to sample scaled eigenvalues of the
+            correlation matrix, which is used to create the covariance matrix. Larger values
+            will make the covariance matrix more dominated by the diagonal and thus the shape
+            of the objective landscape nice and axis-parallel. Smaller values will
+            emphasize the off-diagonal elements of the covariance matrix. See details.
+        opt_on_boundary : if True, the first element of the mean vector(s) is set to
+            zero to put the optimum on the boundary of the space
+        N_unimportant_inputs : this many inputs receive zeroed rows and columns in the
+            covariance matrix and a large number on the diagonal. This essentially
+            makes them noise variables that don't do anything (or only have a very
+            weak effect)
+        means : a list of mean vectors in case the user wants to specify them and
+            bypass generation. Setting this causes above args except dim to be ignored
+        covmats : a list of covariance matrices in case the user wants to specify them
+            and bypass generation. As with means
+
+        Details:
+            The way the covariance matrix is generated is pehaps nontrivial:
+            1) sample n_dims values from a dirichlet distribution, and call this sample eigs. sum(eigs)=1
+            2) scale eigs so that the sum equals n_dims
+            3) generate a random correlation matrix with the eigenvalues eigs
+            4) make this into a covariance matrix using cov_mat = stdevs @ corrmat @ stdevs
+            5) make any required additional changes to make the PDF almost flat in some directions
+
+        """
+
+        super().__init__(**kwargs)
+        self.dim = dim
+        self.n_gaussians = n_gaussians
+        self.stdev = stdev
+        self.eigscale = eigscale
+        self.opt_on_boundary = opt_on_boundary
+        self.N_unimportant_inputs = N_unimportant_inputs
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1))
+                    for i in range(self.dim)
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MaximizeObjective())]
+            ),
+        )
+        np.random.seed(seed)
+
+        gaussians = []
+        if means is not None and covmats is not None:
+            # user has define the parameters of the distributions
+            for mean, cov_mat in zip(means, covmats):
+                if len(mean) != dim:
+                    raise ValueError(
+                        "Length of mean should equal dimensionality in Multinormalpdfs"
+                    )
+                gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
+        else:
+            # Generate the multivariate normal distributions
+            unimportant_dims = np.random.choice(
+                list(range(self.dim)), self.N_unimportant_inputs, replace=False
+            )
+            for _ in range(n_gaussians):
+                mean = np.random.random(size=dim)
+                if opt_on_boundary:
+                    mean[0] = 0.0
+                eigs = np.ravel(dirichlet.rvs(alpha=[eigscale] * dim, size=1))
+                eigs = dim * eigs
+                corrmat = random_correlation.rvs(eigs)
+                stdevs = np.diag([stdev] * dim)
+                cov_mat = stdevs @ corrmat @ stdevs
+                for i in unimportant_dims:
+                    cov_mat[i, :] = 0.0
+                    cov_mat[:, i] = 0.0
+                    cov_mat[i, i] = 10.0
+                gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
+
+        self.gaussians = gaussians
+
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "y": X.apply(
+                    lambda x: sum([g.pdf(x.to_numpy()) for g in self.gaussians]), axis=1
+                ),
+                "valid_y": np.ones(len(X)),
+            },
+        )
+
+    def get_optima(self) -> pd.DataFrame:
+        if self.n_gaussians != 1:
+            raise NotImplementedError(
+                "Position of optima only implemented for benchmark with n_gaussians = 1"
+            )
+        else:
+            x_opt = pd.DataFrame(
+                {f"x_{i}": self.gaussians[0].mean[i] for i in range(self.dim)},
+                index=[0],
+            )
+            return pd.concat([x_opt, self._f(x_opt)], axis=1)
+
+
+if __name__ == "__main__":
+    mv = Multinormalpdfs()

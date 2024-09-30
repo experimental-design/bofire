@@ -1,10 +1,12 @@
 from typing import Union
 
+from bofire.data_models.surrogates.bnn import SingleTaskIBNNSurrogate
 from bofire.data_models.surrogates.botorch import BotorchSurrogate
 from bofire.data_models.surrogates.botorch_surrogates import (
     AnyBotorchSurrogate,
     BotorchSurrogates,
 )
+from bofire.data_models.surrogates.deterministic import LinearDeterministicSurrogate
 from bofire.data_models.surrogates.empirical import EmpiricalSurrogate
 from bofire.data_models.surrogates.fully_bayesian import SaasSingleTaskGPSurrogate
 from bofire.data_models.surrogates.linear import LinearSurrogate
@@ -17,6 +19,10 @@ from bofire.data_models.surrogates.mlp import (
     ClassificationMLPEnsemble,
     MLPEnsemble,
     RegressionMLPEnsemble,
+)
+from bofire.data_models.surrogates.multi_task_gp import (
+    MultiTaskGPHyperconfig,
+    MultiTaskGPSurrogate,
 )
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
@@ -46,6 +52,9 @@ AnySurrogate = Union[
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
+    LinearDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+    SingleTaskIBNNSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -59,6 +68,7 @@ AnyTrainableSurrogate = Union[
     XGBoostSurrogate,
     LinearSurrogate,
     PolynomialSurrogate,
+    SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
 ]
 
@@ -74,6 +84,9 @@ AnyRegressionSurrogate = Union[
     LinearSurrogate,
     PolynomialSurrogate,
     TanimotoGPSurrogate,
+    LinearDeterministicSurrogate,
+    MultiTaskGPSurrogate,
+    SingleTaskIBNNSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

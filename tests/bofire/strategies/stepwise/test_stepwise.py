@@ -90,9 +90,17 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     )
     strategy = cast(strategies.StepwiseStrategy, strategies.map(data_model))
     strategy.tell(experiments)
-    strategy, transform = strategy.get_step()
+    _strategy, transform = strategy.get_step()
     assert transform is None
-    assert isinstance(strategy, expected_strategy)
+    assert isinstance(_strategy, expected_strategy)
+    if isinstance(_strategy, strategies.RandomStrategy):
+        with pytest.raises(ValueError):
+            surrogates = strategy.surrogates  # noqa: F841
+        with pytest.raises(ValueError):
+            surrogate_specs = strategy.surrogates_specs  # noqa: F841
+    else:
+        assert strategy.surrogates == _strategy.surrogates
+        assert strategy.surrogates_specs == _strategy.surrogate_specs
 
 
 def test_StepWiseStrategy_get_step_invalid():

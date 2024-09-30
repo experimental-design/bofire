@@ -2,6 +2,9 @@ from typing import Union
 
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.fractional_factorial import (
+    FractionalFactorialStrategy,
+)
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.qehvi import QehviStrategy
@@ -32,4 +35,5 @@ ActualStrategy = Union[
     FactorialStrategy,
     MoboStrategy,
     ShortestPathStrategy,
+    FractionalFactorialStrategy,
 ]

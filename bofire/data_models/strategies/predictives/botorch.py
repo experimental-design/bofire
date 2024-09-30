@@ -7,19 +7,26 @@ from pydantic import Field, PositiveInt, field_validator, model_validator
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
     Constraint,
+    InterpointConstraint,
     LinearConstraint,
     NonlinearEqualityConstraint,
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain, Outputs
 from bofire.data_models.enum import CategoricalEncodingEnum, CategoricalMethodEnum
-from bofire.data_models.features.api import CategoricalDescriptorInput, CategoricalInput
+from bofire.data_models.features.api import (
+    CategoricalDescriptorInput,
+    CategoricalInput,
+    ContinuousInput,
+    TaskInput,
+)
 from bofire.data_models.outlier_detection.api import OutlierDetections
 from bofire.data_models.strategies.predictives.predictive import PredictiveStrategy
 from bofire.data_models.strategies.shortest_path import has_local_search_region
 from bofire.data_models.surrogates.api import (
     BotorchSurrogates,
     MixedSingleTaskGPSurrogate,
+    MultiTaskGPSurrogate,
     SingleTaskGPSurrogate,
 )
 from bofire.data_models.types import IntPowerOfTwo
@@ -127,6 +134,16 @@ class BotorchStrategy(PredictiveStrategy):
         return True
 
     @model_validator(mode="after")
+    def validate_interpoint_constraints(self):
+        if self.domain.constraints.get(InterpointConstraint) and len(
+            self.domain.inputs.get(ContinuousInput)
+        ) != len(self.domain.inputs):
+            raise ValueError(
+                "Interpoint constraints can only be used for pure continuous search spaces."
+            )
+        return self
+
+    @model_validator(mode="after")
     def validate_surrogate_specs(self):
         """Ensures that a prediction model is specified for each output feature"""
         BotorchStrategy._generate_surrogate_specs(
@@ -212,3 +229,17 @@ class BotorchStrategy(PredictiveStrategy):
         surrogate_specs.surrogates = _surrogate_specs
         surrogate_specs._check_compability(inputs=domain.inputs, outputs=domain.outputs)
         return surrogate_specs
+
+    @model_validator(mode="after")
+    def validate_multitask_allowed(self):
+        """Ensures that if a multitask model is used there is only a single allowed task category"""
+        if any(
+            isinstance(m, MultiTaskGPSurrogate) for m in self.surrogate_specs.surrogates
+        ):
+            # find the task input
+            task_input = self.domain.inputs.get(TaskInput, exact=True)
+            # check if there is only one allowed task category
+            assert (
+                sum(task_input.features[0].allowed) == 1
+            ), "Exactly one allowed task category must be specified for strategies with MultiTask models."
+        return self

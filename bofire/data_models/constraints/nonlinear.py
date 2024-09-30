@@ -6,10 +6,12 @@ import pandas as pd
 from pydantic import Field, field_validator
 
 from bofire.data_models.constraints.constraint import (
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
+from bofire.data_models.domain.features import Inputs
+from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.types import FeatureKeys
 
 
@@ -25,6 +27,15 @@ class NonlinearConstraint(IntrapointConstraint):
     expression: str
     features: Optional[FeatureKeys] = None
     jacobian_expression: Optional[str] = Field(default=None, validate_default=True)
+
+    def validate_inputs(self, inputs: Inputs):
+        if self.features is not None:
+            keys = inputs.get_keys(ContinuousInput)
+            for f in self.features:  # type: ignore
+                if f not in keys:
+                    raise ValueError(
+                        f"Feature {f} is not a continuous input feature in the provided Inputs object."
+                    )
 
     @field_validator("jacobian_expression")
     @classmethod
@@ -78,7 +89,7 @@ class NonlinearConstraint(IntrapointConstraint):
         )
 
 
-class NonlinearEqualityConstraint(NonlinearConstraint, EqalityConstraint):
+class NonlinearEqualityConstraint(NonlinearConstraint, EqualityConstraint):
     """Nonlinear equality constraint of the form 'expression == 0'.
 
     Attributes:

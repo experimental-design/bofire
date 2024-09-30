@@ -7,7 +7,7 @@ from pydantic import Field, field_validator, model_validator
 from bofire.data_models.enum import CategoricalEncodingEnum
 from bofire.data_models.features.categorical import CategoricalInput
 from bofire.data_models.features.continuous import ContinuousInput
-from bofire.data_models.features.feature import _CAT_SEP, TTransform
+from bofire.data_models.features.feature import TTransform, get_encoded_name
 from bofire.data_models.types import Descriptors, DiscreteVals
 
 
@@ -215,7 +215,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         """
         return pd.DataFrame(
             data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
-            columns=[f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors],
+            columns=[get_encoded_name(self.key, d) for d in self.descriptors],
             index=values.index,
         )
 
@@ -231,7 +231,7 @@ class CategoricalDescriptorInput(CategoricalInput):
         Returns:
             pd.Series: Series with categorical values.
         """
-        cat_cols = [f"{self.key}{_CAT_SEP}{d}" for d in self.descriptors]
+        cat_cols = [get_encoded_name(self.key, d) for d in self.descriptors]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):

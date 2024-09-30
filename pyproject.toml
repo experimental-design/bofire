@@ -22,6 +22,8 @@ max-complexity = 18
 
 [tool.ruff.per-file-ignores]
 "bofire/surrogates/api.py" = ["F401"]
+"bofire/data_models/priors/api.py" = ["F401"]
+"bofire/priors/api.py" = ["F401"]
 "bofire/utils/annotated.py" = ["F401"]
 "bofire/data_models/outlier_detection/api.py" = ["F401"]
 "bofire/outlier_detection/api.py" = ["F401"]
@@ -34,6 +36,7 @@ max-complexity = 18
 "bofire/strategies/api.py" = ["F401"]
 "bofire/data_models/features/api.py" = ["F401"]
 "bofire/data_models/strategies/api.py" = ["F401"]
+"bofire/plot/api.py" = ["F401"]
 
 [tool.pyright]
 include = ["bofire"]

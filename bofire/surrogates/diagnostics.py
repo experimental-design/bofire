@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union
 import numpy as np
 import pandas as pd
 from pydantic import Field, field_validator, model_validator, validator
-from scipy.integrate import simps
+from scipy.integrate import simpson
 from scipy.stats import fisher_exact, kendalltau, norm, pearsonr, spearmanr
 from sklearn.metrics import (
     accuracy_score,
@@ -419,7 +419,7 @@ def _MiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simps(Cqs - qs, qs)  # type: ignore
+        res = simpson(Cqs - qs, x=qs)  # type: ignore
 
         return float(res)
     except ValueError:
@@ -455,7 +455,7 @@ def _AbsoluteMiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simps(np.abs(Cqs - qs), qs)  # type: ignore
+        res = simpson(np.abs(Cqs - qs), x=qs)  # type: ignore
 
         return float(res)
     except ValueError:

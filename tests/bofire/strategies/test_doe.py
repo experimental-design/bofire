@@ -283,6 +283,31 @@ def test_partially_fixed_experiments():
     assert test_df.sum().sum() == 0
 
 
+def test_scaled_doe():
+    domain = Domain.from_lists(
+        inputs=[
+            ContinuousInput(
+                key=f"x{1}",
+                bounds=(0.0, 1.0),
+            ),
+            ContinuousInput(
+                key=f"x{2}",
+                bounds=(0.0, 1.0),
+            ),
+        ],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[],
+    )
+    data_model = data_models.DoEStrategy(
+        domain=domain, formula="linear", transform_range=(-1, 1)
+    )
+    strategy = DoEStrategy(data_model=data_model)
+    candidates = strategy.ask(candidate_count=4).to_numpy()
+    expected_candidates = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])
+    for c in candidates:
+        assert np.any([np.allclose(c, e) for e in expected_candidates])
+
+
 def test_categorical_doe_iterative():
     quantity_a = [
         ContinuousInput(key=f"quantity_a_{i}", bounds=(20, 100)) for i in range(2)

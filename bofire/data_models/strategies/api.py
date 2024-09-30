@@ -3,6 +3,9 @@ from typing import Union
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
 from bofire.data_models.strategies.doe import DoEStrategy
 from bofire.data_models.strategies.factorial import FactorialStrategy
+from bofire.data_models.strategies.fractional_factorial import (
+    FractionalFactorialStrategy,
+)
 from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,

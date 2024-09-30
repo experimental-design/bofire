@@ -1,5 +1,5 @@
 import math
-from typing import Callable, Dict, List, Optional, Tuple, Union
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 import torch
@@ -34,15 +34,15 @@ tkwargs = {
 
 def get_linear_constraints(
     domain: Domain,
-    constraint: Union[LinearEqualityConstraint, LinearInequalityConstraint],
+    constraint: Union[Type[LinearEqualityConstraint], Type[LinearInequalityConstraint]],
     unit_scaled: bool = False,
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Converts linear constraints to the form required by BoTorch.
 
     Args:
-        domain (Domain): Optimization problem definition.
-        constraint (Union[LinearEqualityConstraint, LinearInequalityConstraint]): Type of constraint that should be converted.
-        unit_scaled (bool, optional): If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
+        domain: Optimization problem definition.
+        constraint: Type of constraint that should be converted.
+        unit_scaled: If True, transforms constraints by assuming that the bound for the continuous features are [0,1]. Defaults to False.
 
     Returns:
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
@@ -55,8 +55,8 @@ def get_linear_constraints(
         upper = []
         rhs = 0.0
         for i, featkey in enumerate(c.features):  # type: ignore
-            idx = domain.get_feature_keys(Input).index(featkey)
-            feat = domain.get_feature(featkey)
+            idx = domain.inputs.get_keys(Input).index(featkey)
+            feat = domain.inputs.get_by_key(featkey)
             if feat.is_fixed():  # type: ignore
                 rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
             else:
@@ -106,10 +106,12 @@ def get_interpoint_constraints(
             of a tensor with the feature indices, coefficients and a float for the rhs.
     """
     constraints = []
+    if n_candidates == 1:
+        return constraints
     for constraint in domain.constraints.get(InterpointEqualityConstraint):
         assert isinstance(constraint, InterpointEqualityConstraint)
         coefficients = torch.tensor([1.0, -1.0]).to(**tkwargs)
-        feat_idx = domain.get_feature_keys(Input).index(constraint.feature)
+        feat_idx = domain.inputs.get_keys(Input).index(constraint.feature)
         feat = domain.inputs.get_by_key(constraint.feature)
         assert isinstance(feat, ContinuousInput)
         if feat.is_fixed():
@@ -160,7 +162,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     for c in domain.constraints.get(NChooseKConstraint):
         assert isinstance(c, NChooseKConstraint)
         indices = torch.tensor(
-            [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
+            [domain.inputs.get_keys(ContinuousInput).index(key) for key in c.features],
             dtype=torch.int64,
         )
         if c.max_count != len(c.features):
@@ -198,7 +200,7 @@ def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     for c in domain.constraints.get(ProductInequalityConstraint):
         assert isinstance(c, ProductInequalityConstraint)
         indices = torch.tensor(
-            [domain.get_feature_keys(ContinuousInput).index(key) for key in c.features],
+            [domain.inputs.get_keys(ContinuousInput).index(key) for key in c.features],
             dtype=torch.int64,
         )
         constraints.append(
@@ -308,7 +310,8 @@ def get_output_constraints(
     for feat in outputs.get():
         if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
             iconstraints, ietas, idx = constrained_objective2botorch(
-                idx, objective=feat.objective  # type: ignore
+                idx,
+                objective=feat.objective,  # type: ignore
             )
             constraints += iconstraints
             etas += ietas

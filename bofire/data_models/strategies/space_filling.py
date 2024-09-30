@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, Type
+from typing import Annotated, Literal, Optional, Type
 
 from pydantic import Field
 
@@ -17,6 +17,7 @@ from bofire.data_models.features.api import (
     Feature,
 )
 from bofire.data_models.strategies.strategy import Strategy
+from bofire.data_models.types import Bounds
 
 
 class SpaceFillingStrategy(Strategy):
@@ -32,6 +33,8 @@ class SpaceFillingStrategy(Strategy):
     type: Literal["SpaceFillingStrategy"] = "SpaceFillingStrategy"
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
     ipopt_options: dict = {"maxiter": 200, "disp": 0}
+
+    transform_range: Optional[Bounds] = None
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
