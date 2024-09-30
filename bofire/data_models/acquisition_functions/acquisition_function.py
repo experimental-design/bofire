@@ -1,8 +1,9 @@
 from typing import Annotated, Dict, Literal, Optional
 
+from pydantic import Field, PositiveFloat
+
 from bofire.data_models.base import BaseModel
 from bofire.data_models.types import IntPowerOfTwo
-from pydantic import Field, PositiveFloat
 
 
 class AcquisitionFunction(BaseModel):

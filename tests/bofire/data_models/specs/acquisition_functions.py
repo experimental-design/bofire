@@ -78,5 +78,11 @@ specs.add_valid(
 
 specs.add_valid(
     acquisition_functions.qNegIntPosVar,
-    lambda: {"n_mc_samples": 128},
+    lambda: {
+        "n_mc_samples": 128,
+        "weights": {
+            "y_1": 0.5,
+            "y_2": 0.5,
+        },
+    },
 )
