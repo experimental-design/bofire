@@ -3,11 +3,12 @@ from typing import Annotated, ClassVar, List, Literal, Optional, Tuple
 
 import numpy as np
 import pandas as pd
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, model_validator
 
 from bofire.data_models.features.feature import Output, TTransform
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.objectives.api import AnyObjective, MaximizeObjective
+from bofire.data_models.types import Bounds
 
 
 class ContinuousInput(NumericalInput):
@@ -17,16 +18,16 @@ class ContinuousInput(NumericalInput):
         bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
         stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
-            Defaults to (math.inf, math.inf).
+            Defaults to None.
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"
     order_id: ClassVar[int] = 1
 
-    bounds: Tuple[float, float]
-    local_relative_bounds: Tuple[
-        Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]
-    ] = (math.inf, math.inf)
+    bounds: Bounds
+    local_relative_bounds: Optional[
+        Tuple[Annotated[float, Field(gt=0)], Annotated[float, Field(gt=0)]]
+    ] = None
     stepsize: Optional[float] = None
 
     @property
@@ -77,26 +78,6 @@ class ContinuousInput(NumericalInput):
         return pd.Series(
             data=self.lower_bound + idx * self.stepsize, index=values.index
         )
-
-    @field_validator("bounds")
-    @classmethod
-    def validate_lower_upper(cls, bounds):
-        """Validates that the lower bound is lower than the upper bound
-
-        Args:
-            values (Dict): Dictionary with attributes key, lower and upper bound
-
-        Raises:
-            ValueError: when the lower bound is higher than the upper bound
-
-        Returns:
-            Dict: The attributes as dictionary
-        """
-        if bounds[0] > bounds[1]:
-            raise ValueError(
-                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
-            )
-        return bounds
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
         """Method to validate the suggested candidates
@@ -154,14 +135,18 @@ class ContinuousInput(NumericalInput):
             if reference_value is None or self.is_fixed():
                 return [self.lower_bound], [self.upper_bound]
             else:
+                local_relative_bounds = self.local_relative_bounds or (
+                    math.inf,
+                    math.inf,
+                )
                 return [
                     max(
-                        reference_value - self.local_relative_bounds[0],
+                        reference_value - local_relative_bounds[0],
                         self.lower_bound,
                     )
                 ], [
                     min(
-                        reference_value + self.local_relative_bounds[1],
+                        reference_value + local_relative_bounds[1],
                         self.upper_bound,
                     )
                 ]

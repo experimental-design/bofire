@@ -61,8 +61,6 @@ setup(
             "pytest",
             "pytest-cov",
             "papermill",
-            "jupyter",
-            "matplotlib",
         ],
         "docs": [
             "mkdocs",
@@ -72,5 +70,6 @@ setup(
             "mkdocstrings-python-legacy",
             "mike",
         ],
+        "tutorials": ["jupyter", "matplotlib", "seaborn"],
     },
 )

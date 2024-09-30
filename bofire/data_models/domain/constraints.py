@@ -1,6 +1,16 @@
 import collections.abc
 from itertools import chain
-from typing import List, Literal, Optional, Sequence, Type, Union
+from typing import (
+    Generic,
+    Iterator,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Type,
+    TypeVar,
+    Union,
+)
 
 import pandas as pd
 from pydantic import Field
@@ -9,23 +19,27 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
 
+C = TypeVar("C", bound=Union[AnyConstraint, Constraint])
+CIncludes = TypeVar("CIncludes", bound=Union[AnyConstraint, Constraint])
+CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])
 
-class Constraints(BaseModel):
+
+class Constraints(BaseModel, Generic[C]):
     type: Literal["Constraints"] = "Constraints"
-    constraints: Sequence[AnyConstraint] = Field(default_factory=lambda: [])
+    constraints: Sequence[C] = Field(default_factory=lambda: [])
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[C]:
         return iter(self.constraints)
 
     def __len__(self):
         return len(self.constraints)
 
-    def __getitem__(self, i):
+    def __getitem__(self, i) -> C:
         return self.constraints[i]
 
     def __add__(
-        self, other: Union[Sequence[AnyConstraint], "Constraints"]
-    ) -> "Constraints":
+        self, other: Union[Sequence[CIncludes], "Constraints[CIncludes]"]
+    ) -> "Constraints[Union[C, CIncludes]]":
         if isinstance(other, collections.abc.Sequence):
             other_constraints = other
         else:
@@ -78,19 +92,19 @@ class Constraints(BaseModel):
 
     def get(
         self,
-        includes: Union[Type, List[Type]] = Constraint,
-        excludes: Optional[Union[Type, List[Type]]] = None,
+        includes: Union[Type[CIncludes], Sequence[Type[CIncludes]]] = Constraint,
+        excludes: Optional[Union[Type[CExcludes], List[Type[CExcludes]]]] = None,
         exact: bool = False,
-    ) -> "Constraints":
-        """get constraints of the domain
+    ) -> "Constraints[CIncludes]":
+        """Get constraints of the domain
 
         Args:
-            includes (Union[Constraint, List[Constraint]], optional): Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
-            excludes (Union[Type, List[Type]], optional): Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
-            exact (bool, optional): Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
+            includes: Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.
+            excludes: Constraint class or list of specific constraint classes to be excluded from the return. Defaults to None.
+            exact: Boolean to distinguish if only the exact class listed in includes and no subclasses inherenting from this class shall be returned. Defaults to False.
 
         Returns:
-            List[Constraint]: List of constraints in the domain fitting to the passed requirements.
+            Constraints: constraints in the domain fitting to the passed requirements.
         """
         return Constraints(
             constraints=filter_by_class(
@@ -100,3 +114,21 @@ class Constraints(BaseModel):
                 exact=exact,
             )
         )
+
+    def get_reps_df(self):
+        """Provides a tabular overwiev of all constraints within the domain
+
+        Returns:
+            pd.DataFrame: DataFrame listing all constraints of the domain with a description
+        """
+        df = pd.DataFrame(
+            index=range(len(self.constraints)),
+            columns=["Type", "Description"],
+            data={
+                "Type": [feat.__class__.__name__ for feat in self.get(Constraint)],
+                "Description": [
+                    constraint.__str__() for constraint in self.get(Constraint)
+                ],
+            },
+        )
+        return df

@@ -25,6 +25,7 @@ class SpaceFillingStrategy(Strategy):
         assert data_model.sampling_fraction > 0 and data_model.sampling_fraction <= 1
         self.sampling_fraction = data_model.sampling_fraction
         self.ipopt_options = data_model.ipopt_options
+        self.transform_range = data_model.transform_range
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:
         samples = find_local_max_ipopt(
@@ -35,6 +36,7 @@ class SpaceFillingStrategy(Strategy):
             ipopt_options=self.ipopt_options,
             objective=OptimalityCriterionEnum.SPACE_FILLING,
             fixed_experiments=self.candidates,
+            transform_range=self.transform_range,
         )
 
         samples = samples.iloc[

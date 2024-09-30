@@ -1,1 +1,1 @@
-from bofire.priors.mapper import map  # noqa: F401
+from bofire.priors.mapper import map

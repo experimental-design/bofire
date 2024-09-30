@@ -90,7 +90,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
 
     # only consider continuous inputs
     continuous_inputs = [
-        cast(ContinuousInput, f) for f in domain.get_features(ContinuousInput)
+        cast(ContinuousInput, f) for f in domain.inputs.get(ContinuousInput)
     ]
     other_inputs = domain.inputs.get(Input, excludes=[ContinuousInput])
 
@@ -158,7 +158,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 constraints.append(c)
             else:
                 key = names[ind][0]
-                feat = cast(ContinuousInput, _domain.get_feature(key))
+                feat = cast(ContinuousInput, _domain.inputs.get_by_key(key))
                 adjust_boundary(feat, (-1.0 * B[i, ind])[0], B[i, -1] * -1.0)
         else:
             if B[i, -1] < -1e-16:
@@ -176,7 +176,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
                 constraints.append(c)
             else:
                 key = names[ind][0]
-                feat = cast(ContinuousInput, _domain.get_feature(key))
+                feat = cast(ContinuousInput, _domain.inputs.get_by_key(key))
                 adjust_boundary(
                     feat,
                     (-1.0 * B[i + M - 1, ind])[0],
@@ -233,7 +233,7 @@ def check_domain_for_reduction(domain: Domain) -> bool:
         return False
 
     # are there continuous inputs
-    continuous_inputs = domain.get_features(ContinuousInput)
+    continuous_inputs = domain.inputs.get(ContinuousInput)
     if len(continuous_inputs) == 0:
         return False
 
@@ -241,7 +241,7 @@ def check_domain_for_reduction(domain: Domain) -> bool:
     for c in linear_equalities:
         assert isinstance(c, LinearConstraint)
         for feat in c.features:
-            if feat not in domain.get_feature_keys(ContinuousInput):
+            if feat not in domain.inputs.get_keys(ContinuousInput):
                 return False
     return True
 
@@ -283,7 +283,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
     Returns:
         Domain: Purged domain.
     """
-    inputs_names = domain.get_feature_keys()
+    inputs_names = domain.inputs.get_keys()
     M = len(inputs_names)
 
     # write the equalities for the backtransformation into one matrix
@@ -339,7 +339,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                     totally_removed = True
                 else:
                     feat: ContinuousInput = ContinuousInput(
-                        **domain.get_feature(_features[0]).dict()
+                        **domain.inputs.get_by_key(_features[0]).model_dump()
                     )
                     feat.bounds = (_coefficients[0], _coefficients[0])
                     totally_removed = True
@@ -353,7 +353,7 @@ def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Doma
                 elif len(_features) == 0:
                     totally_removed = True
                 else:
-                    feat = cast(ContinuousInput, domain.get_feature(_features[0]))
+                    feat = cast(ContinuousInput, domain.inputs.get_by_key(_features[0]))
                     adjust_boundary(feat, _coefficients[0], _rhs)
                     totally_removed = True
 

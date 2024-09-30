@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from bofire.data_models.base import BaseModel
+from bofire.data_models.domain.features import Inputs
 
 
 class Constraint(BaseModel):
@@ -50,6 +51,15 @@ class Constraint(BaseModel):
         """
         pass
 
+    @abstractmethod
+    def validate_inputs(self, inputs: Inputs):
+        """Validates that the features stored in Inputs are compatible with the constraint.
+
+        Args:
+            inputs (Inputs): Inputs to validate.
+        """
+        pass
+
 
 class IntrapointConstraint(Constraint):
     """An intrapoint constraint describes required relationships within a candidate
@@ -59,7 +69,7 @@ class IntrapointConstraint(Constraint):
     type: str
 
 
-class EqalityConstraint(IntrapointConstraint):
+class EqualityConstraint(IntrapointConstraint):
     type: str
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:

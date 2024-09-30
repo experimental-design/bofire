@@ -127,9 +127,13 @@ def get_scaler(
         continuous_feature_keys = get_continuous_feature_keys(
             inputs=inputs, specs=input_preprocessing_specs
         )
+
         ord_dims = inputs.get_feature_indices(
             specs=input_preprocessing_specs, feature_keys=continuous_feature_keys
         )
+
+        if len(ord_dims) == 0:
+            return None
 
         if scaler == ScalerEnum.NORMALIZE:
             lower, upper = inputs.get_bounds(

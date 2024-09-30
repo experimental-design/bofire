@@ -9,9 +9,11 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     MolecularInput,
+    TaskInput,
 )
 from bofire.data_models.kernels.api import (
     HammingDistanceKernel,
+    InfiniteWidthBNNKernel,
     MaternKernel,
     ScaleKernel,
     TanimotoKernel,
@@ -27,6 +29,7 @@ from bofire.data_models.surrogates.api import (
     ScalerEnum,
     SumAggregation,
 )
+from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPHyperconfig
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPHyperconfig
 from tests.bofire.data_models.specs.features import specs as features
 from tests.bofire.data_models.specs.specs import Specs
@@ -67,6 +70,31 @@ specs.add_valid(
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
+    },
+)
+
+specs.add_valid(
+    models.SingleTaskIBNNSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "hyperconfig": None,
+        "input_preprocessing_specs": {},
+        "aggregations": None,
+        "dump": None,
+        "kernel": InfiniteWidthBNNKernel(depth=3).model_dump(),
     },
 )
 
@@ -393,4 +421,173 @@ specs.add_valid(
         "dump": None,
         "hyperconfig": None,
     },
+)
+
+specs.add_valid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                ContinuousInput(key="b", bounds=(0, 1)),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0, "c": 5.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="coefficient keys do not match input feature keys.",
+)
+
+specs.add_invalid(
+    models.LinearDeterministicSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                ContinuousInput(key="a", bounds=(0, 1)),
+                CategoricalInput(key="b", categories=["a", "b"]),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "intercept": 5.0,
+        "coefficients": {"a": 2.0, "b": -3.0},
+        "input_preprocessing_specs": {},
+        "dump": None,
+    },
+    error=ValueError,
+    message="Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
+)
+
+specs.add_valid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [TaskInput(key="task", categories=["a", "b", "c"])]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+)
+
+# if wrong encoding (one-hot) is used, there should be a validation error
+specs.add_invalid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+            + [TaskInput(key="task", categories=["a", "b", "c"])]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ONE_HOT,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
+)
+
+# if there is no task input, there should be a validation error
+specs.add_invalid(
+    models.MultiTaskGPSurrogate,
+    lambda: {
+        "inputs": Inputs(
+            features=[
+                features.valid(ContinuousInput).obj(),
+            ]
+        ).model_dump(),
+        "outputs": Outputs(
+            features=[
+                features.valid(ContinuousOutput).obj(),
+            ]
+        ).model_dump(),
+        "kernel": ScaleKernel(
+            base_kernel=MaternKernel(
+                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+            ),
+            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+        ).model_dump(),
+        "aggregations": None,
+        "scaler": ScalerEnum.NORMALIZE,
+        "output_scaler": ScalerEnum.STANDARDIZE,
+        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "task_prior": None,
+        "input_preprocessing_specs": {
+            "task": CategoricalEncodingEnum.ORDINAL,
+        },
+        "dump": None,
+        "hyperconfig": MultiTaskGPHyperconfig().model_dump(),
+    },
+    error=ValueError,
 )

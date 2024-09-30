@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import torch
+from botorch.test_functions.multi_objective import ZDT1 as BotorchZDT1
 from pydantic import field_validator
 from pydantic.types import PositiveInt
 from scipy.integrate import solve_ivp
@@ -27,8 +28,10 @@ from bofire.data_models.objectives.api import (
     MaximizeObjective,
     MaximizeSigmoidObjective,
     MinimizeObjective,
+    MinimizeSigmoidObjective,
 )
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
+from bofire.utils.torch_tools import tkwargs
 
 
 class DTLZ2(Benchmark):
@@ -61,7 +64,7 @@ class DTLZ2(Benchmark):
             outputs=Outputs(features=outputs),
         )
         self.ref_point = {
-            feat: 1.1 for feat in domain.get_feature_keys(ContinuousOutput)
+            feat: 1.1 for feat in domain.outputs.get_keys(ContinuousOutput)
         }
         self._domain = domain
 
@@ -96,7 +99,7 @@ class DTLZ2(Benchmark):
         Returns:
             pd.DataFrame: Function values in output vector. Columns are f0 and f1.
         """
-        X = candidates[self.domain.get_feature_keys(Input)].values  # type: ignore
+        X = candidates[self.domain.inputs.get_keys(Input)].values  # type: ignore
         X_m = X[..., -self.k :]  # type: ignore
         g_X = ((X_m - 0.5) ** 2).sum(axis=-1)  # type: ignore
         g_X_plus1 = 1 + g_X
@@ -110,7 +113,9 @@ class DTLZ2(Benchmark):
                 f_i *= np.sin(X[..., idx] * pi_over_2)
             fs.append(f_i)
 
-        col_names = self.domain.outputs.get_keys_by_objective(includes=MinimizeObjective)  # type: ignore
+        col_names = self.domain.outputs.get_keys_by_objective(
+            includes=MinimizeObjective
+        )  # type: ignore
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
@@ -122,6 +127,97 @@ class DTLZ2(Benchmark):
             ]
         ] = 1
         return Y
+
+
+class BNH(Benchmark):
+    def __init__(self, constraints: bool = True, **kwargs):
+        super().__init__(**kwargs)
+        self.constraints = constraints
+
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x1", bounds=(0, 5)),
+                    ContinuousInput(key="x2", bounds=(0, 3)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
+                ]
+            ),
+        )
+        if self.constraints:
+            self._domain.outputs.features.append(  # type: ignore
+                ContinuousOutput(
+                    key="c1",
+                    objective=MinimizeSigmoidObjective(tp=25, steepness=1000),
+                )
+            )
+            self._domain.outputs.features.append(  # type: ignore
+                ContinuousOutput(
+                    key="c2",
+                    objective=MaximizeSigmoidObjective(tp=7.7, steepness=1000),
+                ),
+            )
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        experiments = candidates.eval("f1=4*x1**2 + 4*x2**2", inplace=False)
+        experiments = experiments.eval("f2=(x1-5)**2 + (x2-5)**2", inplace=False)
+        experiments["valid_f1"] = 1
+        experiments["valid_f2"] = 1
+        if not self.constraints:
+            return experiments[["f1", "f2", "valid_f1", "valid_f2"]].copy()
+        experiments = experiments.eval("c1=(x1-5)**2 + x2**2", inplace=False)
+        experiments = experiments.eval("c2=(x1-8)**2 + (x2+3)**2", inplace=False)
+        experiments["valid_c1"] = 1
+        experiments["valid_c2"] = 1
+        return experiments[
+            ["f1", "f2", "c1", "c2", "valid_c1", "valid_c2", "valid_f1", "valid_f2"]
+        ].copy()
+
+
+class TNK(Benchmark):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key="x1", bounds=(0, math.pi)),
+                    ContinuousInput(key="x2", bounds=(0, math.pi)),
+                ]
+            ),
+            outputs=Outputs(
+                features=[
+                    ContinuousOutput(key="f1", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(key="f2", objective=MinimizeObjective(w=1.0)),
+                    ContinuousOutput(
+                        key="c1",
+                        objective=MaximizeSigmoidObjective(tp=0.0, steepness=500),
+                    ),
+                    ContinuousOutput(
+                        key="c2",
+                        objective=MinimizeSigmoidObjective(tp=0.5, steepness=500),
+                    ),
+                ]
+            ),
+        )
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        experiments = candidates.eval("f1=x1", inplace=False)
+        experiments = experiments.eval("f2=x2", inplace=False)
+        experiments = experiments.eval(
+            "c1=x1**2 + x2**2 -1 -0.1*cos(16*arctan(x1/x2))", inplace=False
+        )
+        experiments = experiments.eval("c2=(x1-0.5)**2+(x2-0.5)**2", inplace=False)
+        experiments["valid_c1"] = 1
+        experiments["valid_c2"] = 1
+        experiments["valid_f1"] = 1
+        experiments["valid_f2"] = 1
+        return experiments[
+            ["f1", "f2", "c1", "c2", "valid_c1", "valid_c2", "valid_f1", "valid_f2"]
+        ].copy()
 
 
 class C2DTLZ2(DTLZ2):
@@ -349,6 +445,7 @@ class ZDT1(Benchmark):
         ]
         outputs = Outputs(features=outputs)
         self._domain = Domain(inputs=inputs, outputs=outputs)
+        self.zdt = BotorchZDT1(dim=n_inputs)
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:
         """Function evaluation.
@@ -359,12 +456,10 @@ class ZDT1(Benchmark):
         Returns:
             pd.DataFrame: Function values. Columns are y1, y2, valid_y1 and valid_y2.
         """
-        x = X[self._domain.inputs.get_keys()[1:]].to_numpy()
-        g = 1 + 9 / (self.n_inputs - 1) * np.sum(x, axis=1)
-        y1 = X["x1"].to_numpy()
-        y2 = g * (1 - (y1 / g) ** 0.5)
+        Xt = torch.from_numpy(X.values).to(**tkwargs)
+        Y = self.zdt(Xt).numpy()
         return pd.DataFrame(
-            {"y1": y1, "y2": y2, "valid_y1": 1, "valid_y2": 1}, index=X.index
+            {"y1": Y[:, 0], "y2": Y[:, 1], "valid_y1": 1, "valid_y2": 1}, index=X.index
         )
 
     def get_optima(self, points=100) -> pd.DataFrame:
