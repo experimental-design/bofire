@@ -68,7 +68,7 @@ def get_pareto_front(
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
         experiments, output_feature_keys
     )
-    objective = get_multiobjective_objective(outputs=outputs)  # type: ignore
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)  # type: ignore
     pareto_mask = np.array(
         is_non_dominated(
             objective(

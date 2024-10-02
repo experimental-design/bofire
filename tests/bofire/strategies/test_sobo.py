@@ -2,6 +2,7 @@ import math
 from itertools import chain
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from botorch.acquisition import (
@@ -252,11 +253,13 @@ def test_custom_get_objective():
         return (samples[..., 0] + samples[..., 1]) * (samples[..., 0] * samples[..., 1])
 
     benchmark = DTLZ2(3)
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     data_model = data_models.CustomSoboStrategy(
         domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
     strategy.f = f
+    strategy._experiments = experiments
     generic_objective, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(generic_objective, GenericMCObjective)
 
@@ -267,6 +270,8 @@ def test_custom_get_objective_invalid():
         domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy = CustomSoboStrategy(data_model=data_model)
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
+    strategy._experiments = experiments
 
     with pytest.raises(ValueError):
         strategy._get_objective_and_constraints()
@@ -288,6 +293,8 @@ def test_custom_dumps_loads():
         use_output_constraints=False,
     )
     strategy1 = CustomSoboStrategy(data_model=data_model1)
+    experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
+    strategy1._experiments = experiments
     strategy1.f = f
     f_str = strategy1.dumps()
 
@@ -298,11 +305,13 @@ def test_custom_dumps_loads():
         dump=f_str,
     )
     strategy2 = CustomSoboStrategy(data_model=data_model2)
+    strategy2._experiments = experiments
 
     data_model3 = data_models.CustomSoboStrategy(
         domain=benchmark.domain, acquisition_function=qNEI()
     )
     strategy3 = CustomSoboStrategy(data_model=data_model3)
+    strategy3._experiments = experiments
     strategy3.loads(f_str)
 
     assert isinstance(strategy2.f, type(f))
@@ -365,14 +374,16 @@ def test_sobo_fully_combinatorical(candidate_count):
         ),
     ],
 )
-def test_sobo_get_obective(outputs, expected_objective):
+def test_sobo_get_objective(outputs, expected_objective):
     strategy_data = data_models.SoboStrategy(
         domain=Domain(
             inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
             outputs=outputs,
         )
     )
+    experiments = pd.DataFrame({"a": [0.5], "alpha": [0.5], "valid_alpha": [1]})
     strategy = SoboStrategy(data_model=strategy_data)
+    strategy._experiments = experiments
     obj, _, _ = strategy._get_objective_and_constraints()
     assert isinstance(obj, expected_objective)
 
