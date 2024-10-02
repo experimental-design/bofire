@@ -85,7 +85,9 @@ def compute_hypervolume(
     outputs = domain.outputs.get_by_objective(
         includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
     )
-    objective = get_multiobjective_objective(outputs=outputs)
+    objective = get_multiobjective_objective(
+        outputs=outputs, experiments=optimal_experiments
+    )  # type: ignore
     ref_point_mask = torch.from_numpy(get_ref_point_mask(domain)).to(**tkwargs)
     hv = Hypervolume(
         ref_point=torch.tensor(
@@ -127,7 +129,7 @@ def infer_ref_point(
         includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
     )
     keys = [f.key for f in outputs]
-    objective = get_multiobjective_objective(outputs=outputs)
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)  # type: ignore
 
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
         experiments, output_feature_keys=keys

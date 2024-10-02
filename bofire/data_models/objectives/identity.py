@@ -1,4 +1,4 @@
-from typing import Literal, Tuple, Union
+from typing import Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -48,11 +48,17 @@ class IdentityObjective(Objective):
             )
         return bounds
 
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    def __call__(
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+    ) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
             x (np.ndarray): An array of x values
+            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to
+                update the objective parameters on the fly. Defaults to None.
 
         Returns:
             np.ndarray: The identity as reward, might be normalized to the passed lower and upper bounds
@@ -81,11 +87,17 @@ class MinimizeObjective(IdentityObjective):
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
 
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    def __call__(
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+    ) -> Union[pd.Series, np.ndarray]:
         """The call function returning a reward for passed x values
 
         Args:
             x (np.ndarray): An array of x values
+            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to
+                update the objective parameters on the fly. Defaults to None.
 
         Returns:
             np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds

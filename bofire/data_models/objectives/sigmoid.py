@@ -1,4 +1,4 @@
-from typing import Literal, Union
+from typing import Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -37,16 +37,52 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 
     type: Literal["MaximizeSigmoidObjective"] = "MaximizeSigmoidObjective"
 
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    def __call__(
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+    ) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
             x (np.ndarray): An array of x values
+            x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.
 
         Returns:
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
+
+
+class MovingMaximizeSigmoidObjective(SigmoidObjective):
+    type: Literal["MovingMaximizeSigmoidObjective"] = "MovingMaximizeSigmoidObjective"
+
+    def get_adjusted_tp(self, x: Union[pd.Series, np.ndarray]) -> float:
+        """Get the adjusted turning point for the sigmoid function.
+
+        Args:
+            x (np.ndarray): An array of x values
+
+        Returns:
+            float: The adjusted turning point for the sigmoid function.
+        """
+        return x.max() + self.tp
+
+    def __call__(
+        self, x: Union[pd.Series, np.ndarray], x_adapt: Union[pd.Series, np.ndarray]
+    ) -> Union[pd.Series, np.ndarray]:
+        """The call function returning a sigmoid shaped reward for passed x values.
+
+        Args:
+            x (np.ndarray): An array of x values
+            x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.
+
+        Returns:
+            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+        """
+        return 1 / (
+            1 + np.exp(-1 * self.steepness * (x - self.get_adjusted_tp(x_adapt)))
+        )
 
 
 class MinimizeSigmoidObjective(SigmoidObjective):
@@ -60,11 +96,16 @@ class MinimizeSigmoidObjective(SigmoidObjective):
 
     type: Literal["MinimizeSigmoidObjective"] = "MinimizeSigmoidObjective"
 
-    def __call__(self, x: Union[pd.Series, np.ndarray]) -> Union[pd.Series, np.ndarray]:
+    def __call__(
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
+    ) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
         Args:
             x (np.ndarray): An array of x values
+            x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.
 
         Returns:
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.

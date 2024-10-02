@@ -739,7 +739,10 @@ class Outputs(_BaseFeatures[AnyOutput]):
         """
         desis = pd.concat(
             [
-                feat(experiments[f"{feat.key}_pred" if predictions else feat.key])  # type: ignore
+                feat(
+                    experiments[f"{feat.key}_pred" if predictions else feat.key],
+                    experiments[f"{feat.key}_pred" if predictions else feat.key],
+                )  # type: ignore
                 for feat in self.features
                 if feat.objective is not None
                 and not isinstance(feat, CategoricalOutput)
@@ -747,7 +750,10 @@ class Outputs(_BaseFeatures[AnyOutput]):
             + [
                 (
                     pd.Series(
-                        data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")),
+                        data=feat(
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                        ),
                         name=f"{feat.key}_pred",
                     )  # type: ignore
                     if predictions

@@ -356,14 +356,14 @@ class CategoricalOutput(Output):
             raise ValueError("categories must match to objective categories")
         return self
 
-    def __call__(self, values: pd.Series) -> pd.Series:
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],
                 index=values.index,
                 name=values.name,
             )
-        return self.objective(values)  # type: ignore
+        return self.objective(values, values_adapt)  # type: ignore
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)
