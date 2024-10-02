@@ -83,6 +83,17 @@ class PredictiveStrategy(Strategy):
             self.set_experiments(experiments)
         else:
             self.add_experiments(experiments)
+        # we check here that the experiments do not have completely fixed columns
+        cleaned_experiments = (
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                experiments=experiments
+            )
+        )
+        for feature in self.domain.inputs.get_fixed():
+            if (cleaned_experiments[feature.key] == feature.fixed_value()[0]).all():  # type: ignore
+                raise ValueError(
+                    f"No variance in experiments for fixed feature {feature.key}"
+                )
         if retrain and self.has_sufficient_experiments():
             self.fit()
             # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
