@@ -227,7 +227,10 @@ def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]
 
 
 def constrained_objective2botorch(
-    idx: int, objective: ConstrainedObjective, x_adapt: Tensor, eps: float = 1e-8
+    idx: int,
+    objective: ConstrainedObjective,
+    x_adapt: Optional[Tensor],
+    eps: float = 1e-8,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
     to setup ouput constrained optimizations.
@@ -250,6 +253,7 @@ def constrained_objective2botorch(
             idx + 1,
         )
     elif isinstance(objective, MovingMaximizeSigmoidObjective):
+        assert x_adapt is not None
         tp = x_adapt.max().item() + objective.tp
         return (
             [lambda Z: (Z[..., idx] - tp) * -1.0],
@@ -321,13 +325,14 @@ def get_output_constraints(
             cleaned_experiments = outputs.preprocess_experiments_one_valid_output(
                 feat.key, experiments
             )
-            x_adapt = torch.from_numpy(cleaned_experiments[feat.key].values).to(
-                **tkwargs
-            )
             iconstraints, ietas, idx = constrained_objective2botorch(
                 idx,
                 objective=feat.objective,  # type: ignore
-                x_adapt=x_adapt,
+                x_adapt=torch.from_numpy(cleaned_experiments[feat.key].values).to(
+                    **tkwargs
+                )
+                if not isinstance(feat.objective, ConstrainedCategoricalObjective)
+                else None,
             )
             constraints += iconstraints
             etas += ietas
