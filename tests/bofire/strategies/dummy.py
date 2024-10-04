@@ -88,9 +88,9 @@ class DummyStrategy(Strategy):
 
 
 class DummyPredictiveStrategyDataModel(data_models.PredictiveStrategy):
-    type: Literal["DummyPredictiveStrategyDataModel"] = (
+    type: Literal[
         "DummyPredictiveStrategyDataModel"
-    )
+    ] = "DummyPredictiveStrategyDataModel"
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
