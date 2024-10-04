@@ -20,10 +20,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    MultiTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -172,7 +169,7 @@ specs.add_invalid(
         **strategy_commons,
     },
     error=ValueError,
-    message="The provided keys for the weights must match the keys of the output features.",
+    message="The keys provided for the weights do not match the required keys of the output features.",
 )
 
 specs.add_valid(
