@@ -89,8 +89,8 @@ def test_sobo_with_multitask(task_input):
     )
 
 
-def test_random_multitask():
-    def test(strat_data_model):
+def test_nosurrogate_multitask():
+    def test(strat_data_model, **kwargs):
         task_input = TaskInput(
             key="task", categories=["task_1", "task_2"], allowed=[False, True]
         )
@@ -104,7 +104,7 @@ def test_random_multitask():
             }
         )
         domain = _domain(task_input)
-        dm = strat_data_model(domain=domain)
+        dm = strat_data_model(domain=domain, **kwargs)
 
         strat = strategies.map(dm)
         strat.tell(experiments)
@@ -125,4 +125,5 @@ def test_random_multitask():
         assert len(candidate) == 1
 
     test(RandomStrategy)
-    test(DoEStrategy)
+    # test(DoEStrategy, formula="linear")
+

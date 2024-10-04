@@ -1,6 +1,6 @@
 from typing import List
+from unittest import mock
 
-import mock
 import numpy as np
 import pandas as pd
 import pytest
@@ -246,6 +246,8 @@ def test_strategy_no_variance():
     strategy = dummy.DummyStrategy(
         data_model=dummy.DummyStrategyDataModel(domain=domain)
     )
+    strategy.tell(experiments)
+    strategy = dummy.DummyPredictiveStrategy(data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain))
     with pytest.raises(ValueError):
         strategy.tell(experiments)
     # introduce variance but in an invalid experiment
