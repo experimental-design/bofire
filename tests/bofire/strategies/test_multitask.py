@@ -126,4 +126,3 @@ def test_nosurrogate_multitask():
 
     test(RandomStrategy)
     # test(DoEStrategy, formula="linear")
-

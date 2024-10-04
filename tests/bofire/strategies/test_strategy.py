@@ -247,7 +247,9 @@ def test_strategy_no_variance():
         data_model=dummy.DummyStrategyDataModel(domain=domain)
     )
     strategy.tell(experiments)
-    strategy = dummy.DummyPredictiveStrategy(data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain))
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+    )
     with pytest.raises(ValueError):
         strategy.tell(experiments)
     # introduce variance but in an invalid experiment
