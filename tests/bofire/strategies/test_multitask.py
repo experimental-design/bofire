@@ -8,7 +8,6 @@ from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import (
-    DoEStrategy,
     RandomStrategy,
     SoboStrategy,
 )
