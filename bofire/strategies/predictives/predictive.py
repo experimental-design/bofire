@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
+from bofire.data_models.features.task import TaskInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
@@ -89,8 +90,18 @@ class PredictiveStrategy(Strategy):
                 experiments=experiments
             )
         )
-        for feature in self.domain.inputs.get_fixed():
-            if (cleaned_experiments[feature.key] == feature.fixed_value()[0]).all():  # type: ignore
+
+        fixed_nontasks = (
+            feat
+            for feat in self.domain.inputs.get_fixed()
+            if not isinstance(feat, TaskInput)
+        )
+        for feature in fixed_nontasks:
+            fixed_value = feature.fixed_value()
+            assert fixed_value is not None
+            if (
+                cleaned_experiments[feature.key] == fixed_value[0]
+            ).all() and isinstance(feature, TaskInput):
                 raise ValueError(
                     f"No variance in experiments for fixed feature {feature.key}"
                 )
