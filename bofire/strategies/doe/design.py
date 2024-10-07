@@ -19,7 +19,7 @@ from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput, Input
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
 from bofire.data_models.types import Bounds
-from bofire.strategies.doe.objective import get_objective_class
+from bofire.strategies.doe.objective import Objective, get_objective_class
 from bofire.strategies.doe.utils import (
     constraints_as_scipy_constraints,
     get_formula_from_string,
@@ -482,14 +482,17 @@ def find_local_max_ipopt(
             )
 
     # get objective function and its jacobian
-    objective_class = get_objective_class(objective)
-    objective_function = objective_class(
-        domain=domain,
-        model=model_formula,
-        n_experiments=n_experiments,
-        delta=delta,
-        transform_range=transform_range,
-    )
+    if isinstance(objective, Objective):
+        objective_function = objective
+    else:
+        objective_class = get_objective_class(objective)
+        objective_function = objective_class(
+            domain=domain,
+            model=model_formula,
+            n_experiments=n_experiments,
+            delta=delta,
+            transform_range=transform_range,
+        )
 
     # write constraints as scipy constraints
     constraints = constraints_as_scipy_constraints(

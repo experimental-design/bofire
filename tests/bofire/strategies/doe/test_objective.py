@@ -1,7 +1,12 @@
 import numpy as np
 import pandas as pd
+import pytest
 from formulaic import Formula
 
+from bofire.data_models.constraints.linear import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+)
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.objective import (
@@ -9,6 +14,7 @@ from bofire.strategies.doe.objective import (
     DOptimality,
     EOptimality,
     GOptimality,
+    IOptimality,
     Objective,
     SpaceFilling,
 )
@@ -773,6 +779,69 @@ def test_SpaceFilling_evaluate_jacobian():
     assert np.allclose(space_filling.evaluate_jacobian(x), [-1, -1, 2, 0])
 
 
+def test_IOptimality_instantiation():
+    # no constraints
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
+        outputs=[ContinuousOutput(key="y")],
+    )
+
+    model = get_formula_from_string("linear", domain=domain)
+
+    i_optimality = IOptimality(
+        domain=domain,
+        model=model,
+        n_experiments=2,
+    )
+
+    assert np.allclose(
+        np.linspace(0, 1, 100), i_optimality.space_filling_design.to_numpy().flatten()
+    )
+
+    # inequality constraints
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(2)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearInequalityConstraint(
+                features=["x1", "x2"], coefficients=[1, 0], rhs=0.5
+            )
+        ],
+    )
+
+    model = get_formula_from_string("linear", domain=domain)
+
+    i_optimality = IOptimality(
+        domain=domain,
+        model=model,
+        n_experiments=2,
+    )
+
+    assert np.allclose(
+        np.linspace(0, 1, 100)[:50],
+        np.unique(i_optimality.space_filling_design.to_numpy()[:, 0]),
+    )
+
+    # equality constraints
+    domain = Domain.from_lists(
+        inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(2)],
+        outputs=[ContinuousOutput(key="y")],
+        constraints=[
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=1)
+        ],
+    )
+
+    model = get_formula_from_string("linear", domain=domain)
+
+    i_optimality = IOptimality(
+        domain=domain,
+        model=model,
+        n_experiments=2,
+    )
+
+    assert np.allclose(domain.constraints(i_optimality.space_filling_design), 0.0)
+
+
 def test_MinMaxTransform():
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key="x1", bounds=(0, 1))],
@@ -783,7 +852,13 @@ def test_MinMaxTransform():
     x = np.array([1, 0.8, 0.55, 0.65])
     x_scaled = x * 2 - 1
 
-    for cls in [DOptimality, AOptimality, EOptimality, GOptimality, SpaceFilling]:
+    for cls in [
+        DOptimality,
+        AOptimality,
+        EOptimality,
+        GOptimality,
+        SpaceFilling,
+    ]:
         objective_unscaled = cls(
             domain=domain,
             model=model,
@@ -804,4 +879,14 @@ def test_MinMaxTransform():
         assert np.allclose(
             2 * objective_unscaled.evaluate_jacobian(x_scaled),
             objective_scaled.evaluate_jacobian(x),
+        )
+
+    # test with IOptimality
+    with pytest.raises(ValueError):
+        IOptimality(
+            domain=domain,
+            model=model,
+            n_experiments=4,
+            delta=0,
+            transform_range=(-1.0, 1.0),
         )
