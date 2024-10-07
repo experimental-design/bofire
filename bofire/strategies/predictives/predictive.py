@@ -99,9 +99,7 @@ class PredictiveStrategy(Strategy):
         for feature in fixed_nontasks:
             fixed_value = feature.fixed_value()
             assert fixed_value is not None
-            if (
-                cleaned_experiments[feature.key] == fixed_value[0]
-            ).all() and isinstance(feature, TaskInput):
+            if (cleaned_experiments[feature.key] == fixed_value[0]).all():
                 raise ValueError(
                     f"No variance in experiments for fixed feature {feature.key}"
                 )
