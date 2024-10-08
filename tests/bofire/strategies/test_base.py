@@ -50,6 +50,7 @@ from tests.bofire.strategies.specs import (
     VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
 )
 
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
 
@@ -162,14 +163,14 @@ of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }  # type: ignore
+    }
 )
 
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }  # type: ignore
+    }
 )
 
 domains = [
@@ -312,9 +313,9 @@ def test_base_invalid_descriptor_method():
                     outputs=domains[0].outputs,
                     input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
                 )
-            ],  # type: ignore
-            descriptor_method="FREE",  # type: ignore
-            categorical_method="EXHAUSTIVE",  # type: ignore
+            ],
+            descriptor_method="FREE",
+            categorical_method="EXHAUSTIVE",
         )
 
 
@@ -679,7 +680,7 @@ def test_base_invalid_pair_encoding_method(domain):
         DummyStrategyDataModel(
             domain=domain,
             categorical_encoding="ORDINAL",
-            categorical_method="FREE",  # type: ignore
+            categorical_method="FREE",
         )
 
 
@@ -902,7 +903,7 @@ def test_base_setup_ask():
     )
     assert ic_generator == gen_batch_initial_conditions
     assert list(ic_gen_kwargs.keys()) == ["generator"]
-    assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))  # type: ignore
+    assert len(nchooseks) == len(get_nchoosek_constraints(domain=benchmark.domain))
     assert fixed_features == {}
     assert fixed_features_list is None
     # test for nchooseks with product constraints

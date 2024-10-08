@@ -18,6 +18,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.strategies.api import DoEStrategy
 
+
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -344,7 +345,3 @@ def test_categorical_doe_iterative():
     )
 
     assert candidates.shape == (5, 3)
-
-
-if __name__ == "__main__":
-    test_categorical_doe_iterative()

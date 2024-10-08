@@ -211,7 +211,7 @@ class BotorchStrategy(PredictiveStrategy):
                     MixedSingleTaskGPSurrogate(
                         inputs=domain.inputs,
                         outputs=Outputs(
-                            features=[domain.outputs.get_by_key(output_feature)]  # type: ignore
+                            features=[domain.outputs.get_by_key(output_feature)]
                         ),
                     )
                 )
@@ -221,7 +221,7 @@ class BotorchStrategy(PredictiveStrategy):
                         inputs=domain.inputs,
                         outputs=Outputs(
                             features=[
-                                domain.outputs.get_by_key(output_feature)  # type:ignore
+                                domain.outputs.get_by_key(output_feature)  # type: ignore
                             ]
                         ),
                     )

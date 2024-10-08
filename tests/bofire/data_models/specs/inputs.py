@@ -7,6 +7,7 @@ from bofire.data_models.features.api import (
 )
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(

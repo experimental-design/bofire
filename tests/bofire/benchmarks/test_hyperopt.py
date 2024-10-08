@@ -4,6 +4,7 @@ from bofire.benchmarks.api import Himmelblau, Hyperopt
 from bofire.data_models.enum import RegressionMetricsEnum
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 
+
 benchmark = Himmelblau()
 experiments = benchmark.f(benchmark.domain.inputs.sample(9), return_complete=True)
 

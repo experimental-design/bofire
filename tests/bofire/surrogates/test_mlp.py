@@ -117,8 +117,9 @@ def test_fit_mlp(mlp, weight_decay, n_epoches, lr, shuffle):
     benchmark = Himmelblau()
     samples = benchmark.domain.inputs.sample(10)
     experiments = benchmark.f(candidates=samples, return_complete=True)
-    X, y = torch.from_numpy(experiments[["x_1", "x_2"]].values), torch.from_numpy(
-        experiments[["y"]].values
+    X, y = (
+        torch.from_numpy(experiments[["x_1", "x_2"]].values),
+        torch.from_numpy(experiments[["y"]].values),
     )
     dset = MLPDataset(X=X, y=y)
     fit_mlp(

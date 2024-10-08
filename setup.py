@@ -14,6 +14,7 @@ with open(os.path.join(root_dir, "README.md"), "r") as f:
 extras_require = {
     "optimization": [
         "botorch>=0.10.0",
+        "numpy",
         "multiprocess",
         "plotly",
         "formulaic>=1.0.1",

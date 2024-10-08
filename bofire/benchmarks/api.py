@@ -23,6 +23,7 @@ from bofire.benchmarks.single import (
     MultiTaskHimmelblau,
 )
 
+
 AnyMultiBenchmark = Union[
     C2DTLZ2, Detergent, DTLZ2, ZDT1, CrossCoupling, SnarBenchmark, BNH, TNK
 ]

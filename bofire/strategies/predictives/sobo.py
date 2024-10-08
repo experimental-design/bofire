@@ -2,6 +2,7 @@ import base64
 import warnings
 from typing import Callable, List, Tuple, Union
 
+
 try:
     import cloudpickle
 except ModuleNotFoundError:
@@ -124,7 +125,7 @@ class SoboStrategy(BotorchStrategy):
         ):
             return (
                 ConstrainedMCObjective(
-                    objective=objective_callable,  # type: ignore
+                    objective=objective_callable,
                     constraints=constraint_callables,
                     eta=torch.tensor(etas).to(**tkwargs),
                     infeasible_cost=self.get_infeasible_cost(
@@ -184,7 +185,7 @@ class AdditiveSoboStrategy(SoboStrategy):
                 return (
                     ConstrainedMCObjective(
                         objective=objective_callable,  # type: ignore
-                        constraints=constraint_callables,
+                        constraints=constraint_callables,  # type: ignore
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
                             objective=objective_callable
@@ -195,7 +196,7 @@ class AdditiveSoboStrategy(SoboStrategy):
                 )
             else:
                 return (
-                    GenericMCObjective(objective=objective_callable),
+                    GenericMCObjective(objective=objective_callable),  # type: ignore
                     constraint_callables,
                     etas,
                 )
@@ -203,8 +204,9 @@ class AdditiveSoboStrategy(SoboStrategy):
         # we absorb all constraints into the objective
         return (
             GenericMCObjective(
-                objective=get_additive_botorch_objective(  # type: ignore
-                    outputs=self.domain.outputs, exclude_constraints=False
+                objective=get_additive_botorch_objective(
+                    outputs=self.domain.outputs,
+                    exclude_constraints=False,  # type: ignore
                 )
             ),
             constraint_callables,
@@ -231,9 +233,9 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_botorch_objective(
+                objective=get_multiplicative_botorch_objective(  # type: ignore
                     outputs=self.domain.outputs,
-                    experiments=self.experiments,  # type: ignore
+                    experiments=self.experiments,
                 )
             ),
             None,
@@ -288,7 +290,7 @@ class CustomSoboStrategy(SoboStrategy):
                 return (
                     ConstrainedMCObjective(
                         objective=objective_callable,  # type: ignore
-                        constraints=constraint_callables,
+                        constraints=constraint_callables,  # type: ignore
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
                             objective=objective_callable
@@ -299,7 +301,7 @@ class CustomSoboStrategy(SoboStrategy):
                 )
             else:
                 return (
-                    GenericMCObjective(objective=objective_callable),
+                    GenericMCObjective(objective=objective_callable),  # type: ignore
                     constraint_callables,
                     etas,
                 )
@@ -307,11 +309,11 @@ class CustomSoboStrategy(SoboStrategy):
         # we absorb all constraints into the objective
         return (
             GenericMCObjective(
-                objective=get_custom_botorch_objective(
+                objective=get_custom_botorch_objective(  # type: ignore
                     outputs=self.domain.outputs,
                     f=self.f,
                     exclude_constraints=False,
-                    experiments=self.experiments,  # type: ignore
+                    experiments=self.experiments,
                 )
             ),
             constraint_callables,
@@ -322,10 +324,10 @@ class CustomSoboStrategy(SoboStrategy):
         """Dumps the function to a string via pickle as this is not directly json serializable."""
         if self.f is None:
             raise ValueError("No function has been provided for the strategy")
-        f_bytes_dump = cloudpickle.dumps(self.f)
+        f_bytes_dump = cloudpickle.dumps(self.f)  # type: ignore
         return base64.b64encode(f_bytes_dump).decode()
 
     def loads(self, data: str):
         """Loads the function from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         f_bytes_load = base64.b64decode(data.encode())
-        self.f = cloudpickle.loads(f_bytes_load)
+        self.f = cloudpickle.loads(f_bytes_load)  # type: ignore

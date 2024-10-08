@@ -3,6 +3,7 @@ from bofire.data_models.domain.api import Constraints
 from bofire.data_models.features.api import CategoricalInput
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(

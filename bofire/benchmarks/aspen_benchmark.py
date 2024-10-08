@@ -7,6 +7,7 @@ import pandas as pd
 from bofire.benchmarks.benchmark import Benchmark
 from bofire.data_models.domain.api import Domain
 
+
 # Create a folder for the log file, if not alredy exists.
 if not os.path.exists("bofire_logs"):
     os.makedirs("bofire_logs")

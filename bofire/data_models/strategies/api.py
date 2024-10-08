@@ -45,6 +45,7 @@ from bofire.data_models.transforms.api import (
     DropDataTransform,
 )
 
+
 AbstractStrategy = Union[
     Strategy,
     BotorchStrategy,

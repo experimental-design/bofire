@@ -48,6 +48,7 @@ from bofire.data_models.unions import to_list
 from bofire.strategies.api import CustomSoboStrategy, RandomStrategy, SoboStrategy
 from tests.bofire.strategies.test_base import domains
 
+
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 VALID_BOTORCH_SOBO_STRATEGY_SPEC = {
@@ -203,7 +204,7 @@ def test_SOBO_init_qUCB():
         for acqf in specs.acquisition_functions.valids
         for num_experiments in range(8, 10)
         for num_candidates in range(1, 3)
-        if isinstance(acqf, to_list(AnySingleObjectiveAcquisitionFunction))
+        if isinstance(acqf, to_list(AnySingleObjectiveAcquisitionFunction))  # type: ignore
     ],
 )
 @pytest.mark.slow
@@ -214,7 +215,8 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
         data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
-        random_strategy._ask(n=num_experiments), return_complete=True
+        random_strategy._ask(n=num_experiments),
+        return_complete=True,  # type: ignore
     )
 
     data_model = data_models.SoboStrategy(
@@ -392,7 +394,7 @@ def test_sobo_get_constrained_objective():
     benchmark = DTLZ2(dim=6)
     experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     domain = benchmark.domain
-    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(
+    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(  # type: ignore
         tp=1.5, steepness=2.0
     )
     strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qUCB())
@@ -406,7 +408,7 @@ def test_sobo_get_constrained_objective2():
     benchmark = DTLZ2(dim=6)
     experiments = benchmark.f(benchmark.domain.inputs.sample(5), return_complete=True)
     domain = benchmark.domain
-    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(
+    domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(  # type: ignore
         tp=1.5, steepness=2.0
     )
     strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qEI())
@@ -422,7 +424,7 @@ def test_sobo_hyperoptimize():
     strategy_data = data_models.SoboStrategy(
         domain=benchmark.domain, acquisition_function=qEI(), frequency_hyperopt=1
     )
-    strategy_data.surrogate_specs.surrogates[0].hyperconfig = None
+    strategy_data.surrogate_specs.surrogates[0].hyperconfig = None  # type: ignore
     strategy = SoboStrategy(data_model=strategy_data)
     with pytest.warns(
         match="No hyperopt is possible as no hyperopt config is available. Returning initial config."
@@ -440,12 +442,12 @@ def test_sobo_lsrbo():
     candidates = strategy.ask(1)
     candidates.loc[
         (
-            (candidates.x_1 > experiments.loc[2, "x_1"] + 0.25)
-            | (candidates.x_1 < experiments.loc[2, "x_1"] - 0.25)
+            (candidates.x_1 > experiments.loc[2, "x_1"] + 0.25)  # type: ignore
+            | (candidates.x_1 < experiments.loc[2, "x_1"] - 0.25)  # type: ignore
         )
         & (
-            (candidates.x_1 > experiments.loc[2, "x_2"] + 0.75)
-            | (candidates.x_1 < experiments.loc[2, "x_2"] - 0.75)
+            (candidates.x_1 > experiments.loc[2, "x_2"] + 0.75)  # type: ignore
+            | (candidates.x_1 < experiments.loc[2, "x_2"] - 0.75)  # type: ignore
         )
     ]
     # local search
@@ -455,7 +457,7 @@ def test_sobo_lsrbo():
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
     strategy.ask(1)
-    np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.55276, 11.192913])
+    np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.55276, 11.192913])  # type: ignore
     # global search
     strategy_data = data_models.SoboStrategy(
         domain=bench.domain, seed=42, local_search_config=LSRBO(gamma=500000)
@@ -463,27 +465,27 @@ def test_sobo_lsrbo():
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)
     strategy.ask(1)
-    np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.05276, 11.192913])
+    np.allclose(candidates.loc[0, ["x_1", "x_2"]].tolist(), [-2.05276, 11.192913])  # type: ignore
 
 
 def test_sobo_get_optimizer_options():
     domain = Domain(
-        inputs=[
+        inputs=[  # type: ignore
             ContinuousInput(key="a", bounds=(0, 1)),
             ContinuousInput(key="b", bounds=(0, 1)),
         ],
-        outputs=[ContinuousOutput(key="c")],
+        outputs=[ContinuousOutput(key="c")],  # type: ignore
     )
     strategy_data = data_models.SoboStrategy(domain=domain, maxiter=500, batch_limit=4)
     strategy = SoboStrategy(data_model=strategy_data)
     assert strategy._get_optimizer_options() == {"maxiter": 500, "batch_limit": 4}
     domain = Domain(
-        inputs=[
+        inputs=[  # type: ignore
             ContinuousInput(key="a", bounds=(0, 1)),
             ContinuousInput(key="b", bounds=(0, 1)),
         ],
-        outputs=[ContinuousOutput(key="c")],
-        constraints=[
+        outputs=[ContinuousOutput(key="c")],  # type: ignore
+        constraints=[  # type: ignore
             NChooseKConstraint(
                 features=["a", "b"], max_count=1, min_count=0, none_also_valid=True
             )
@@ -498,7 +500,7 @@ def test_sobo_interpoint():
     bench = Himmelblau()
     experiments = bench.f(bench.domain.inputs.sample(4), return_complete=True)
     domain = bench._domain
-    domain.constraints.constraints.append(InterpointEqualityConstraint(feature="x_1"))
+    domain.constraints.constraints.append(InterpointEqualityConstraint(feature="x_1"))  # type: ignore
     strategy_data = data_models.SoboStrategy(domain=domain)
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments)

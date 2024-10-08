@@ -143,7 +143,7 @@ def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
     discrete_vars = node.discrete_vars
     for _key, (var, values) in discrete_vars.items():
         value = design_matrix.get(var.key)
-        if False in [True in np.isclose(v, values, atol=tolerance) for v in value]:  # type: ignore
+        if False in [True in np.isclose(v, values, atol=tolerance) for v in value]:
             return False
     return True
 

@@ -19,12 +19,12 @@ from bofire.utils.cheminformatics import smiles2mol
 
 
 class MolecularInput(Input):
-    type: Literal["MolecularInput"] = "MolecularInput"
+    type: Literal["MolecularInput"] = "MolecularInput"  # type: ignore
     # order_id: ClassVar[int] = 6
     order_id: ClassVar[int] = 4
 
     @staticmethod
-    def valid_transform_types() -> List[AnyMolFeatures]:
+    def valid_transform_types() -> List[AnyMolFeatures]:  # type: ignore
         return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]  # type: ignore
 
     def validate_experimental(
@@ -45,13 +45,13 @@ class MolecularInput(Input):
     def is_fixed(self) -> bool:
         return False
 
-    def fixed_value(self, transform_type: Optional[AnyMolFeatures] = None) -> None:
+    def fixed_value(self, transform_type: Optional[AnyMolFeatures] = None) -> None:  # type: ignore
         return None
 
     def sample(self, n: int, seed: Optional[int] = None) -> pd.Series:
         raise ValueError("Sampling not supported for `MolecularInput`")
 
-    def get_bounds(
+    def get_bounds(  # type: ignore
         self,
         transform_type: AnyMolFeatures,
         values: pd.Series,
@@ -105,8 +105,8 @@ class MolecularInput(Input):
         return descriptor_values
 
 
-class CategoricalMolecularInput(CategoricalInput, MolecularInput):
-    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"
+class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: ignore
+    type: Literal["CategoricalMolecularInput"] = "CategoricalMolecularInput"  # type: ignore
     # order_id: ClassVar[int] = 7
     order_id: ClassVar[int] = 5
 
@@ -137,15 +137,15 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):
         return categories
 
     @staticmethod
-    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:
-        return CategoricalInput.valid_transform_types() + [
+    def valid_transform_types() -> List[Union[AnyMolFeatures, CategoricalEncodingEnum]]:  # type: ignore
+        return CategoricalInput.valid_transform_types() + [  # type: ignore
             Fingerprints,
             FingerprintsFragments,
             Fragments,
-            MordredDescriptors,  # type: ignore
+            MordredDescriptors,
         ]
 
-    def get_bounds(
+    def get_bounds(  # type: ignore
         self,
         transform_type: Union[CategoricalEncodingEnum, AnyMolFeatures],
         values: Optional[pd.Series] = None,

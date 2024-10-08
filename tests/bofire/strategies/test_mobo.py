@@ -24,10 +24,7 @@ from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
 from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    MultiTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.api import RandomStrategy
 from tests.bofire.utils.test_multiobjective import (
     dfs,
@@ -230,7 +227,6 @@ def test_no_objective():
     ],
 )
 def test_mobo_with_multitask(acqf, target_task):
-
     # set the data
     def task_1_f(x):
         return np.sin(x * 2 * np.pi)

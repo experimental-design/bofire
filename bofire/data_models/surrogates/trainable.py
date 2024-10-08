@@ -11,6 +11,7 @@ from bofire.data_models.enum import RegressionMetricsEnum, UQRegressionMetricsEn
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjective
 
+
 metrics2objectives = {
     RegressionMetricsEnum.MAE: MinimizeObjective,
     RegressionMetricsEnum.MAPE: MinimizeObjective,
@@ -35,11 +36,11 @@ class Aggregation(BaseModel):
 
 
 class SumAggregation(Aggregation):
-    type: Literal["SumAggregation"] = "SumAggregation"
+    type: Literal["SumAggregation"] = "SumAggregation"  # type: ignore
 
 
 class MeanAggregation(Aggregation):
-    type: Literal["MeanAggregation"] = "MeanAggregation"
+    type: Literal["MeanAggregation"] = "MeanAggregation"  # type: ignore
 
 
 AnyAggregation = Union[SumAggregation, MeanAggregation]

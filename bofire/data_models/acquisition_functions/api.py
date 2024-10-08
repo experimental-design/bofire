@@ -18,6 +18,7 @@ from bofire.data_models.acquisition_functions.acquisition_function import (
     qUCB,
 )
 
+
 AbstractAcquisitionFunction = [
     AcquisitionFunction,
     SingleObjectiveAcquisitionFunction,

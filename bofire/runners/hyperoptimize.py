@@ -50,7 +50,7 @@ def hyperoptimize(
         random_state=random_state,
     )
 
-    if surrogate_data.hyperconfig.hyperstrategy == "FactorialStrategy":  # type: ignore
+    if surrogate_data.hyperconfig.hyperstrategy == "FactorialStrategy":
         strategy = strategies.map(FactorialStrategy(domain=benchmark.domain))
         experiments = benchmark.f(
             strategy.ask(candidate_count=None), return_complete=True

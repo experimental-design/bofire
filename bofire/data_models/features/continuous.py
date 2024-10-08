@@ -21,7 +21,7 @@ class ContinuousInput(NumericalInput):
             Defaults to None.
     """
 
-    type: Literal["ContinuousInput"] = "ContinuousInput"
+    type: Literal["ContinuousInput"] = "ContinuousInput"  # type: ignore
     order_id: ClassVar[int] = 1
 
     bounds: Bounds
@@ -122,7 +122,7 @@ class ContinuousInput(NumericalInput):
             ),
         )
 
-    def get_bounds(
+    def get_bounds(  # type: ignore
         self,
         transform_type: Optional[TTransform] = None,
         values: Optional[pd.Series] = None,
@@ -150,8 +150,8 @@ class ContinuousInput(NumericalInput):
                         self.upper_bound,
                     )
                 ]
-        lower = min(self.lower_bound, values.min())  # type: ignore
-        upper = max(self.upper_bound, values.max())  # type: ignore
+        lower = min(self.lower_bound, values.min())
+        upper = max(self.upper_bound, values.max())
         return [lower], [upper]
 
     def __str__(self) -> str:
@@ -170,7 +170,7 @@ class ContinuousOutput(Output):
         objective (objective, optional): objective of the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.
     """
 
-    type: Literal["ContinuousOutput"] = "ContinuousOutput"
+    type: Literal["ContinuousOutput"] = "ContinuousOutput"  # type: ignore
     order_id: ClassVar[int] = 9
     unit: Optional[str] = None
 
@@ -178,7 +178,7 @@ class ContinuousOutput(Output):
         default_factory=lambda: MaximizeObjective(w=1.0)
     )
 
-    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],

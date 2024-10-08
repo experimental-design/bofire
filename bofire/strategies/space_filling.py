@@ -39,9 +39,7 @@ class SpaceFillingStrategy(Strategy):
             transform_range=self.transform_range,
         )
 
-        samples = samples.iloc[
-            self.num_candidates :,
-        ]
+        samples = samples.iloc[self.num_candidates :,]
         samples = samples.sample(
             n=candidate_count,
             replace=False,

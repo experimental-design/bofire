@@ -34,7 +34,7 @@ def discrete_to_relaxable_domain_mapper(
 
     # get all discrete and categorical inputs
     kept_inputs = domain.inputs.get(
-        includes=None,  # type: ignore
+        includes=None,
         excludes=[CategoricalInput, DiscreteInput],
     ).features
     discrete_inputs = domain.inputs.get(DiscreteInput)
@@ -42,13 +42,13 @@ def discrete_to_relaxable_domain_mapper(
 
     # convert discrete inputs to continuous inputs
     relaxable_discrete_inputs = {
-        d_input.key: (  # type: ignore
+        d_input.key: (
             ContinuousInput(
                 key=d_input.key,
                 bounds=(min(d_input.values), max(d_input.values)),  # type: ignore
-            ),  # type: ignore
+            ),
             d_input.values,  # type: ignore
-        )  # type: ignore
+        )
         for d_input in discrete_inputs
     }
 
@@ -65,9 +65,9 @@ def discrete_to_relaxable_domain_mapper(
 
     # create new domain with continuous inputs
     new_domain = Domain(
-        inputs=kept_inputs
-        + [var for key, (var, values) in relaxable_discrete_inputs.items()]  # type: ignore
-        + relaxable_categorical_inputs,  # type: ignore
+        inputs=kept_inputs  # type: ignore
+        + [var for key, (var, values) in relaxable_discrete_inputs.items()]
+        + relaxable_categorical_inputs,
         outputs=domain.outputs.features,  # type: ignore
         constraints=domain.constraints + new_constraints,
     )
@@ -84,16 +84,16 @@ def nchoosek_to_relaxable_domain_mapper(
     n_choose_k_constraints = domain.constraints.get(includes=NChooseKConstraint)
 
     for constr in n_choose_k_constraints:
-        var_occuring_in_nchoosek.extend(constr.features)  # type: ignore
+        var_occuring_in_nchoosek.extend(constr.features)
 
         current_features: List[Feature] = [
-            domain.inputs.get_by_key(k) for k in constr.features  # type: ignore
+            domain.inputs.get_by_key(k) for k in constr.features
         ]
         new_relaxable_categorical_vars, new_nchoosek_constraints = NChooseKGroup(
             current_features,
-            constr.min_count,  # type: ignore
-            constr.max_count,  # type: ignore
-            constr.none_also_valid,  # type: ignore
+            constr.min_count,
+            constr.max_count,
+            constr.none_also_valid,
         )
         new_categories.append(new_relaxable_categorical_vars)
         new_constraints.extend(new_nchoosek_constraints)
@@ -107,12 +107,12 @@ def nchoosek_to_relaxable_domain_mapper(
                 current_var.bounds = (current_var.lower_bound, 0)  # type: ignore
 
     new_domain = Domain(
-        inputs=domain.inputs.features
-        + [var for group in new_categories for var in group],  # type: ignore
+        inputs=domain.inputs.features  # type: ignore
+        + [var for group in new_categories for var in group],
         outputs=domain.outputs,
         constraints=domain.constraints.get(excludes=NChooseKConstraint)
         + new_constraints,
-    )  # type: ignore
+    )
     return new_domain, new_categories
 
 
@@ -208,7 +208,7 @@ def NChooseKGroup_with_quantity(
         raise ValueError('"_" is not allowed as an character in the keys')
 
     if quantity_if_picked is not None and not isinstance(quantity_if_picked, list):
-        quantity_if_picked = [quantity_if_picked for k in keys]  # type: ignore
+        quantity_if_picked = [quantity_if_picked for k in keys]
 
     quantity_var, all_new_constraints = [], []
     quantity_constraints_lb, quantity_constraints_ub = [], []
@@ -510,7 +510,7 @@ def design_from_new_to_original_domain(
     # map the ContinuousInput describing the categoricals to the corresponding CategoricalInputs, choose random for multiple solutions
     transformed_design = design[
         original_domain.inputs.get_keys(
-            includes=None,  # type: ignore
+            includes=None,
             excludes=[CategoricalInput, Output],
         )
     ]

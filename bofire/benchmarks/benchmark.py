@@ -16,7 +16,7 @@ class OutlierPrior(BaseModel):
 
 
 class UniformOutlierPrior(OutlierPrior):
-    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"
+    type: Literal["UniformOutlierPrior"] = "UniformOutlierPrior"  # type: ignore
     bounds: Tuple[float, float]
 
     def sample(self, n_samples: int) -> np.ndarray:
@@ -27,7 +27,7 @@ class UniformOutlierPrior(OutlierPrior):
 
 
 class NormalOutlierPrior(OutlierPrior):
-    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"
+    type: Literal["NormalOutlierPrior"] = "NormalOutlierPrior"  # type: ignore
     loc: float
     scale: PositiveFloat
 
@@ -61,7 +61,9 @@ class Benchmark:
                 # ix2[np.random.choice(len(Y), no_outliers, replace=False)] = True
                 ix2 = ix1 <= self.outlier_rate
                 n_outliers = sum(ix2)
-                Y.loc[ix2, output_feature] = Y.loc[ix2, output_feature] + self.outlier_prior.sample(n_outliers)  # type: ignore
+                Y.loc[ix2, output_feature] = Y.loc[
+                    ix2, output_feature
+                ] + self.outlier_prior.sample(n_outliers)
         if return_complete:
             return pd.concat([candidates, Y], axis=1)
 

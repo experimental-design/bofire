@@ -44,13 +44,13 @@ def test_IterativeTrimming():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
+    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model = data_models.IterativeTrimming(
@@ -59,7 +59,7 @@ def test_IterativeTrimming():
         )
     )
     ITGP = mapper.map(ITGP_model)
-    assert isinstance(ITGP.base_gp, SingleTaskGPSurrogate)  # type: ignore
+    assert isinstance(ITGP.base_gp, SingleTaskGPSurrogate)
     assert isinstance(ITGP, mapper.IterativeTrimming)
     # detect
     experiments1 = ITGP.detect(experiments=experiments)
@@ -89,13 +89,13 @@ def test_OutlierDetections():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
         ]
     )
-    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
+    outputs = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model1 = data_models.IterativeTrimming(
@@ -136,14 +136,14 @@ def test_OutlierDetections():
     inputs = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
         ]
     )
-    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])  # type: ignore
-    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])  # type: ignore
+    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[1])])
+    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE
     ITGP_model1 = data_models.IterativeTrimming(
@@ -196,7 +196,7 @@ def test_OutlierDetections():
     inputs1 = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[0],  # type: ignore
+                key=experiments.keys()[0],
                 bounds=(-3, 3),
             )
             for i in range(1)
@@ -205,14 +205,14 @@ def test_OutlierDetections():
     inputs2 = Inputs(
         features=[
             ContinuousInput(
-                key=experiments.keys()[1],  # type: ignore
+                key=experiments.keys()[1],
                 bounds=(-3, 3),
             )
             for i in range(1)
         ]
     )
-    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])  # type: ignore
-    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[3])])  # type: ignore
+    outputs1 = Outputs(features=[ContinuousOutput(key=experiments.keys()[2])])
+    outputs2 = Outputs(features=[ContinuousOutput(key=experiments.keys()[3])])
 
     kernel = ScaleKernel(base_kernel=RBFKernel(ard=True))
     scaler = ScalerEnum.NORMALIZE

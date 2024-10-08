@@ -17,6 +17,7 @@ from bofire.data_models.molfeatures.api import (
     MordredDescriptors,
 )
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 smiles = [

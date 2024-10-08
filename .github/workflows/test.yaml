@@ -22,10 +22,15 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Minimal Bofire, Python ${{ matrix.python-version }}
-        run: pip install "." pytest
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v2
+        with:
+          enable-cache: true
 
-      - name: Run domain-only test, Python ${{ matrix.python-version }}
+      - name: Install Dependencies
+        run: uv pip install "." pytest --system
+
+      - name: Run domain-only test
         run: pytest tests/bofire/data_models
 
   testing:
@@ -44,22 +49,25 @@ jobs:
           activate-environment: test
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Dependencies, Python ${{ matrix.python-version }}
+      - name: Install Dependencies
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
 
-      - name: Run tests, Python ${{ matrix.python-version }}
+      - name: Run tests
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
 
-      - name: Run pip freeze, Python ${{ matrix.python-version }}
+      - name: Run pip freeze
         shell: bash -l {0}
         run: pip freeze
 
   testing_against_latest_botorch:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [ '3.10' ]
     steps:
       - name: Check out repo
         uses: actions/checkout@v4
@@ -68,7 +76,7 @@ jobs:
         with:
           miniconda-version: "latest"
           activate-environment: test
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Dependencies
         shell: bash -l {0}
@@ -80,11 +88,11 @@ jobs:
           pip install --upgrade git+https://github.com/pytorch/botorch.git
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
 
-      - name: Run tests, Python ${{ matrix.python-version }}
+      - name: Run tests
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
 
-      - name: Run pip freeze, Python ${{ matrix.python-version }}
+      - name: Run pip freeze
         shell: bash -l {0}
         run: pip freeze
 
@@ -100,7 +108,7 @@ jobs:
         with:
           miniconda-version: "latest"
           activate-environment: test
-          python-version: '3.10'
+          python-version: ${{ matrix.python-version }}
 
       - name: Install Dependencies
         shell: bash -l {0}
@@ -108,6 +116,6 @@ jobs:
           conda install -c conda-forge cyipopt
           pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
 
-      - name: Run notebooks
+      - name: Run Notebooks
         shell: bash -l {0}
         run: python scripts/run_tutorials.py -p "$(pwd)"

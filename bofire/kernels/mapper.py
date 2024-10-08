@@ -52,13 +52,19 @@ def map_InfiniteWidthBNNKernel(
     batch_shape: torch.Size,
     ard_num_dims: int,
     active_dims: List[int],
-) -> "InfiniteWidthBNNKernel":  # noqa: F821 # type: ignore
+) -> "InfiniteWidthBNNKernel":  # type: ignore # noqa: F821
     try:
-        from botorch.models.kernels import InfiniteWidthBNNKernel
+        from botorch.models.kernels.infinite_width_bnn import (  # type: ignore
+            InfiniteWidthBNNKernel,
+        )
+
     except ImportError:
         raise ImportError(
-            "Please update to botorch development version to use this feature."
+            "InfiniteWidthBNNKernel requires botorch>=0.11.3 to be installed. "
+            "This can be installed by running `pip install 'botorch>=0.11.3'`, "
+            "requires python 3.10+."
         )
+
     return InfiniteWidthBNNKernel(
         batch_shape=batch_shape,
         active_dims=tuple(active_dims),
@@ -206,6 +212,6 @@ def map(
     ard_num_dims: int,
     active_dims: List[int],
 ) -> GpytorchKernel:
-    return KERNEL_MAP[data_model.__class__](  # type: ignore
+    return KERNEL_MAP[data_model.__class__](
         data_model, batch_shape, ard_num_dims, active_dims
     )

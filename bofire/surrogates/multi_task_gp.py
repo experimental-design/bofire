@@ -48,18 +48,19 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
-        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
-            Y.values
-        ).to(**tkwargs)
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
 
-        self.model = botorch.models.MultiTaskGP(  # type: ignore
+        self.model = botorch.models.MultiTaskGP(
             train_X=tX,
             train_Y=tY,
-            task_feature=transformed_X.columns.get_loc(
+            task_feature=transformed_X.columns.get_loc(  # type: ignore
                 self.task_feature_key
             ),  # obtain the fidelity index
             covar_module=kernels.map(
@@ -87,7 +88,7 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             # self.model.task_covar_module.register_prior(
             #     "IndexKernelPrior", priors.map(self.lkj_prior), _index_kernel_prior_closure
             # )
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)
@@ -100,8 +101,8 @@ class MultiTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
             except NotImplementedError:
                 posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
-            preds = posterior.mean.cpu().detach().numpy()  # type: ignore
-            stds = np.sqrt(posterior.variance.cpu().detach().numpy())  # type: ignore
+            preds = posterior.mean.cpu().detach().numpy()
+            stds = np.sqrt(posterior.variance.cpu().detach().numpy())
 
         return preds, stds
 

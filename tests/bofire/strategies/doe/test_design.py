@@ -12,10 +12,7 @@ from bofire.data_models.constraints.api import (
     NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.features.api import (
-    ContinuousInput,
-    ContinuousOutput,
-)
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
 from bofire.strategies.doe.design import (
     check_fixed_experiments,
     check_partially_and_fully_fixed_experiments,
@@ -24,6 +21,7 @@ from bofire.strategies.doe.design import (
     get_n_experiments,
 )
 from bofire.strategies.doe.utils import get_formula_from_string, n_zero_eigvals
+
 
 CYIPOPT_AVAILABLE = importlib.util.find_spec("cyipopt") is not None
 
@@ -270,7 +268,7 @@ def test_find_local_max_ipopt_fixed_experiments():
     #     domain,
     #     "linear",
     #     n_experiments=12,
-    #     fixed_experiments=fixed_experiments,  # type: ignore
+    #     fixed_experiments=fixed_experiments,
     # )
     # opt = np.array(
     #     [
@@ -336,7 +334,9 @@ def test_find_local_max_ipopt_fixed_experiments():
         domain,
         "fully-quadratic",
         ipopt_options={"maxiter": 100},
-        fixed_experiments=pd.DataFrame([[1, 0, 0], [0, 1, 0]], columns=["x1", "x2", "x3"]),  # type: ignore
+        fixed_experiments=pd.DataFrame(
+            [[1, 0, 0], [0, 1, 0]], columns=["x1", "x2", "x3"]
+        ),
     )
     opt = np.eye(3)
     for row in A.to_numpy():
@@ -794,8 +794,3 @@ def test_partially_fixed_experiments():
         assert e == ValueError(
             "Domain contains inputs that are not part of partially fixed experiments. Every input must be present as a column."
         )
-
-
-if __name__ == "__main__":
-    test_fixed_experiments_checker()
-    test_partially_fixed_experiments()

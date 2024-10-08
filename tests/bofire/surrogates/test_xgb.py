@@ -14,6 +14,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.surrogates.api import XGBoostSurrogate
 
+
 XGB_AVAILABLE = importlib.util.find_spec("xgboost") is not None
 
 

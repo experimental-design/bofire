@@ -11,6 +11,7 @@ from tests.bofire.strategies.specs import (
 )
 from tests.bofire.strategies.test_qehvi import VALID_BOTORCH_QEHVI_STRATEGY_SPEC
 
+
 if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,

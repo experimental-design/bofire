@@ -3,6 +3,7 @@ import random
 import bofire.data_models.acquisition_functions.api as acquisition_functions
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(

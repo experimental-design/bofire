@@ -33,16 +33,16 @@ def plot_objective_plotly(
         )
 
     x = pd.Series(np.linspace(lower, upper, 5000))
-    reward = feature.objective.__call__(x, x_adapt=adapt_values)  # type: ignore
+    reward = feature.objective.__call__(x, x_adapt=adapt_values)
 
     fig1 = px.line(x=x, y=reward, title=feature.key)
 
     if values is not None:
         fig2 = px.scatter(
             x=values,
-            y=feature.objective.__call__(values, x_adapt=adapt_values),  # type: ignore
+            y=feature.objective.__call__(values, x_adapt=adapt_values),
         )
-        fig = go.Figure(data=fig1.data + fig2.data)  # type: ignore
+        fig = go.Figure(data=fig1.data + fig2.data)
     else:
         fig = fig1
 

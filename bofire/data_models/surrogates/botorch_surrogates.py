@@ -24,6 +24,7 @@ from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
 
+
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
     RandomForestSurrogate,
@@ -61,7 +62,7 @@ class BotorchSurrogates(BaseModel):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]  # type: ignore
+                    [model.outputs.get() for model in self.surrogates]
                 )
             )
         )

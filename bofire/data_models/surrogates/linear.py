@@ -5,10 +5,7 @@ from pydantic import Field
 # from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
-from bofire.data_models.priors.api import (
-    BOTORCH_NOISE_PRIOR,
-    AnyPrior,
-)
+from bofire.data_models.priors.api import BOTORCH_NOISE_PRIOR, AnyPrior
 from bofire.data_models.surrogates.scaler import ScalerEnum
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
 

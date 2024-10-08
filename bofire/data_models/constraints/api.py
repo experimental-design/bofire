@@ -29,6 +29,7 @@ from bofire.data_models.constraints.product import (
     ProductInequalityConstraint,
 )
 
+
 AbstractConstraint = Union[
     Constraint,
     LinearConstraint,

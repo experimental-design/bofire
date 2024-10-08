@@ -20,6 +20,7 @@ from bofire.data_models.domain.api import Constraints, Inputs
 from bofire.data_models.enum import SamplingMethodEnum
 from bofire.data_models.features.api import ContinuousInput
 
+
 # test the Constraints Class
 c1 = specs.constraints.valid(LinearEqualityConstraint).obj()
 c2 = specs.constraints.valid(LinearInequalityConstraint).obj()

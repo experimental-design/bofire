@@ -12,6 +12,7 @@ from bofire.utils.naming_conventions import (
     postprocess_categorical_predictions,
 )
 
+
 continuous_output = ContinuousOutput(key="cont", objective=MinimizeObjective(w=1))
 categorical_output = CategoricalOutput(
     key="cat",

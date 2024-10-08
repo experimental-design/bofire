@@ -15,6 +15,7 @@ from bofire.utils.doe import (
     validate_generator,
 )
 
+
 inputs = Inputs(
     features=[ContinuousInput(key=i, bounds=(0, 10)) for i in ["a", "b", "c"]]
 )

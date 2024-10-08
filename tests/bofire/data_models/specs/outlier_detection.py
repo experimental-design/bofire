@@ -3,6 +3,7 @@ from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from tests.bofire.data_models.specs.specs import Specs
 from tests.bofire.data_models.specs.surrogates import specs as surrogates
 
+
 specs = Specs([])
 
 specs.add_valid(

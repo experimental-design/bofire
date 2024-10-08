@@ -10,6 +10,7 @@ from tests.bofire.strategies.test_sobo import (
     BOTORCH_SOBO_STRATEGY_SPECS,
 )
 
+
 STRATEGY_SPECS = {
     data_models.SoboStrategy: BOTORCH_SOBO_STRATEGY_SPECS,
     data_models.AdditiveSoboStrategy: BOTORCH_ADDITIVE_AND_MULTIPLICATIVE_SOBO_STRATEGY_SPECS,

@@ -20,6 +20,7 @@ from bofire.data_models.kernels.continuous import (
 from bofire.data_models.kernels.kernel import Kernel
 from bofire.data_models.kernels.molecular import MolecularKernel, TanimotoKernel
 
+
 AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
 
 AnyContinuousKernel = Union[

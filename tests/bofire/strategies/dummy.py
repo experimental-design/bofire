@@ -22,7 +22,7 @@ from bofire.strategies.api import BotorchStrategy, PredictiveStrategy, Strategy
 
 
 class DummyStrategyDataModel(data_models.BotorchStrategy):
-    type: Literal["DummyStrategyDataModel"] = "DummyStrategyDataModel"
+    type: Literal["DummyStrategyDataModel"] = "DummyStrategyDataModel"  # type: ignore
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -61,7 +61,7 @@ class DummyStrategy(Strategy):
     ) -> None:
         pass
 
-    def _ask(
+    def _ask(  # type: ignore
         self,
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
@@ -84,13 +84,13 @@ class DummyStrategy(Strategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        return len(self.experiments) >= 3
+        return len(self.experiments) >= 3  # type: ignore
 
 
 class DummyPredictiveStrategyDataModel(data_models.PredictiveStrategy):
-    type: Literal[
+    type: Literal["DummyPredictiveStrategyDataModel"] = (  # type: ignore
         "DummyPredictiveStrategyDataModel"
-    ] = "DummyPredictiveStrategyDataModel"
+    )
 
     @classmethod
     def is_constraint_implemented(cls, my_type: Type[Constraint]) -> bool:
@@ -129,16 +129,16 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     ) -> None:
         pass
 
-    def _fit(self, transformed: pd.DataFrame):
+    def _fit(self, transformed: pd.DataFrame):  # type: ignore
         pass
 
-    def _predict(self, experiments: pd.DataFrame):
+    def _predict(self, experiments: pd.DataFrame):  # type: ignore
         return (
             np.ones([len(experiments), len(self.domain.outputs)]) * 4,
             np.ones([len(experiments), len(self.domain.outputs)]) * 5,
         )
 
-    def _ask(
+    def _ask(  # type: ignore
         self,
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
@@ -165,7 +165,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        return len(self.experiments) >= 3
+        return len(self.experiments) >= 3  # type: ignore
 
 
 class DummyBotorchPredictiveStrategy(BotorchStrategy):
@@ -181,13 +181,13 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
     ) -> None:
         pass
 
-    def _predict(self, experiments: pd.DataFrame):
+    def _predict(self, experiments: pd.DataFrame):  # type: ignore
         return (
             np.ones([len(experiments), len(self.domain.outputs)]) * 4,
             np.ones([len(experiments), len(self.domain.outputs)]) * 5,
         )
 
-    def _ask(
+    def _ask(  # type: ignore
         self,
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
@@ -217,7 +217,7 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
     def has_sufficient_experiments(
         self,
     ) -> bool:
-        return len(self.experiments) >= 3
+        return len(self.experiments) >= 3  # type: ignore
 
 
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {

@@ -30,7 +30,7 @@ class LookupTableBenchmark(Benchmark):
         self.lookup_table = lookup_table
         self.domain.validate_experiments(self.lookup_table)
 
-    def _f(self, sampled: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    def _f(self, sampled: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
         """return output values for matching SMILE candidates.
 
         Args:

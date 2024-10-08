@@ -99,9 +99,9 @@ class DTLZ2(Benchmark):
         Returns:
             pd.DataFrame: Function values in output vector. Columns are f0 and f1.
         """
-        X = candidates[self.domain.inputs.get_keys(Input)].values  # type: ignore
-        X_m = X[..., -self.k :]  # type: ignore
-        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)  # type: ignore
+        X = candidates[self.domain.inputs.get_keys(Input)].values
+        X_m = X[..., -self.k :]
+        g_X = ((X_m - 0.5) ** 2).sum(axis=-1)
         g_X_plus1 = 1 + g_X
         fs = []
         pi_over_2 = math.pi / 2
@@ -115,13 +115,13 @@ class DTLZ2(Benchmark):
 
         col_names = self.domain.outputs.get_keys_by_objective(
             includes=MinimizeObjective
-        )  # type: ignore
+        )
         y_values = np.stack(fs, axis=-1)
         Y = pd.DataFrame(data=y_values, columns=col_names)
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
+                for feat in self.domain.outputs.get_keys_by_objective(
                     includes=MinimizeObjective
                 )
             ]
@@ -249,7 +249,7 @@ class C2DTLZ2(DTLZ2):
         )
         term1 = (f_X - 1).pow(2)
         mask = ~(torch.eye(f_X.shape[-1], device=f_X.device).bool())
-        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)  # type: ignore
+        indices = torch.arange(f_X.shape[1], device=f_X.device).repeat(f_X.shape[1], 1)
         indexer = indices[mask].view(f_X.shape[1], f_X.shape[-1] - 1)
         term2_inner = (
             f_X.unsqueeze(1)
@@ -341,9 +341,7 @@ class SnarBenchmark(Benchmark):
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
-                    excludes=None
-                )
+                for feat in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
         ] = 1
         return Y
@@ -410,7 +408,7 @@ class SnarBenchmark(Benchmark):
         # Reaction Rates
         r = np.zeros(5)
         for i in [0, 1]:  # Set to reactants when close
-            C[i] = 0 if C[i] < 1e-6 * self.C_i[i] else C[i]  # type: ignore
+            C[i] = 0 if C[i] < 1e-6 * self.C_i[i] else C[i]
         r[0] = -(k_a + k_b) * C[0] * C[1]
         r[1] = -(k_a + k_b) * C[0] * C[1] - k_c * C[1] * C[2] - k_d * C[1] * C[3]
         r[2] = k_a * C[0] * C[1] - k_c * C[1] * C[2]
@@ -447,7 +445,7 @@ class ZDT1(Benchmark):
         self._domain = Domain(inputs=inputs, outputs=outputs)
         self.zdt = BotorchZDT1(dim=n_inputs)
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         """Function evaluation.
 
         Args:
@@ -605,9 +603,7 @@ class CrossCoupling(Benchmark):
         Y[
             [
                 "valid_%s" % feat
-                for feat in self.domain.outputs.get_keys_by_objective(  # type: ignore
-                    excludes=None
-                )
+                for feat in self.domain.outputs.get_keys_by_objective(excludes=None)
             ]
         ] = 1
         return Y
@@ -648,7 +644,7 @@ class CrossCoupling(Benchmark):
         )
         tot_cost = cost_triflate + cost_anniline + cost_catalyst + cost_base
         if len(tot_cost) == 1:
-            tot_cost = tot_cost[0]  # type: ignore
+            tot_cost = tot_cost[0]
         return tot_cost
 
     def _get_catalyst_cost(self, catalyst, catalyst_mmol):

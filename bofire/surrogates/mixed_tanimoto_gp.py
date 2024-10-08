@@ -25,9 +25,7 @@ from torch import Tensor
 
 import bofire.kernels.api as kernels
 import bofire.priors.api as priors
-from bofire.data_models.enum import (
-    OutputFilteringEnum,
-)
+from bofire.data_models.enum import OutputFilteringEnum
 from bofire.data_models.surrogates.api import MixedTanimotoGPSurrogate as DataModel
 
 # from bofire.data_models.kernels.categorical import HammingDistanceKernel
@@ -69,7 +67,7 @@ class MixedTanimotoGP(SingleTaskGP):
         _, aug_batch_shape = self.get_batch_dimensions(train_X=train_X, train_Y=train_Y)
 
         d = train_X.shape[-1]
-        mol_dims = normalize_indices(indices=mol_dims, d=d)
+        mol_dims = normalize_indices(indices=mol_dims, d=d)  # type: ignore
         cat_dims = normalize_indices(indices=cat_dims, d=d)
         ord_dims = sorted(set(range(d)) - set(cat_dims) - set(mol_dims))  # type: ignore
 
@@ -93,7 +91,9 @@ class MixedTanimotoGP(SingleTaskGP):
             likelihood = GaussianLikelihood(
                 batch_shape=aug_batch_shape,
                 noise_constraint=GreaterThan(
-                    min_noise, transform=None, initial_value=1e-3
+                    min_noise,
+                    transform=None,
+                    initial_value=1e-3,  # type: ignore
                 ),
                 noise_prior=GammaPrior(0.9, 10.0),
             )
@@ -103,7 +103,7 @@ class MixedTanimotoGP(SingleTaskGP):
                 CategoricalKernel(
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(cat_dims),  # type: ignore
-                    active_dims=cat_dims,
+                    active_dims=cat_dims,  # type: ignore
                     lengthscale_constraint=GreaterThan(1e-06),
                 )
             ) + ScaleKernel(
@@ -118,7 +118,7 @@ class MixedTanimotoGP(SingleTaskGP):
                 CategoricalKernel(
                     batch_shape=aug_batch_shape,
                     ard_num_dims=len(cat_dims),  # type: ignore
-                    active_dims=cat_dims,
+                    active_dims=cat_dims,  # type: ignore
                     lengthscale_constraint=GreaterThan(1e-06),
                 )
             ) * ScaleKernel(
@@ -182,7 +182,7 @@ class MixedTanimotoGP(SingleTaskGP):
                     CategoricalKernel(
                         batch_shape=aug_batch_shape,
                         ard_num_dims=len(cat_dims),  # type: ignore
-                        active_dims=cat_dims,
+                        active_dims=cat_dims,  # type: ignore
                         lengthscale_constraint=GreaterThan(1e-06),
                     )
                 )
@@ -207,7 +207,7 @@ class MixedTanimotoGP(SingleTaskGP):
                     CategoricalKernel(
                         batch_shape=aug_batch_shape,
                         ard_num_dims=len(cat_dims),  # type: ignore
-                        active_dims=cat_dims,
+                        active_dims=cat_dims,  # type: ignore
                         lengthscale_constraint=GreaterThan(1e-06),
                     )
                 )
@@ -241,7 +241,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
     _output_filtering: OutputFilteringEnum = OutputFilteringEnum.ALL
     training_specs: Dict = {}
 
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
         molecular_feature_keys = get_molecular_feature_keys(
             self.input_preprocessing_specs
         )
@@ -275,9 +275,10 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
-        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
-            Y.values
-        ).to(**tkwargs)
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
 
         if len(categorical_feature_keys) == 0:
             tf = scaler
@@ -317,7 +318,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=tf,
         )
 
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)

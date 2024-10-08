@@ -109,7 +109,7 @@ class Objective:
     def _model_jacobian_t(self, x: np.ndarray) -> np.ndarray:
         """Computes the transpose of the model jacobian for each experiment in input x."""
         X = pd.DataFrame(x.reshape(self.n_experiments, self.n_vars), columns=self.vars)
-        jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)
+        jacobians = np.swapaxes(X.eval(self.terms_jacobian_t), 0, 2)  # type: ignore
         return np.swapaxes(jacobians, 1, 2)
 
 
@@ -459,7 +459,7 @@ class SpaceFilling(Objective):
             -torch.sum(torch.sort(torch.pdist(X.detach()))[0][: self.n_experiments])
         )
 
-    def _evaluate_jacobian(self, x: np.ndarray) -> float:
+    def _evaluate_jacobian(self, x: np.ndarray) -> float:  # type: ignore
         X = self._convert_input_to_tensor(x, requires_grad=True)
         torch.sum(torch.sort(torch.pdist(X))[0][: self.n_experiments]).backward()
 

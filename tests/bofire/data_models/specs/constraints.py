@@ -3,6 +3,7 @@ import random
 import bofire.data_models.constraints.api as constraints
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(

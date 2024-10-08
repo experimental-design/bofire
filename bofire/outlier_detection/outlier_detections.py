@@ -10,6 +10,7 @@ from bofire.outlier_detection.api import (  # noqa: F401
 )
 from bofire.outlier_detection.api import map as map_outlier
 
+
 AnyOutlierDetector = IterativeTrimming
 
 
@@ -24,7 +25,7 @@ class OutlierDetections(ABC):
         self.detectors = [map_outlier(model) for model in data_model.detectors]  # type: ignore
 
     def detect(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        for outlier_model in self.detectors:  # type: ignore
+        for outlier_model in self.detectors:
             experiments = outlier_model.detect(experiments)
 
         return experiments
