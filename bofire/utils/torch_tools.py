@@ -238,6 +238,10 @@ def constrained_objective2botorch(
     Args:
         idx (int): Index of the constraint objective in the list of outputs.
         objective (BotorchConstrainedObjective): The objective that should be transformed.
+        x_adapt (Optional[Tensor]): The tensor that should be used to adapt the objective,
+            for example in case of a moving turning point in the `MovingMaximizeSigmoidObjective`.
+        eps (float, optional): Small value to avoid numerical instabilities in case of the `ConstrainedCategoricalObjective`.
+            Defaults to 1e-8.
 
     Returns:
         Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,
@@ -312,6 +316,9 @@ def get_output_constraints(
     Args:
         outputs (Outputs): Output feature object that should
             be processed.
+        experiments (pd.DataFrame): DataFrame containing the experiments that are used for
+            adapting the objectives on the fly, for example in the case of the
+            `MovingMaximizeSigmoidObjective`.
 
     Returns:
         Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,
@@ -537,10 +544,13 @@ def get_additive_botorch_objective(
 def get_multiobjective_objective(
     outputs: Outputs, experiments: pd.DataFrame
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
-    """Returns
+    """Returns a callable that can be used by botorch for multiobjective optimization.
 
     Args:
-        outputs (Outputs): _description_
+        outputs (Outputs): Outputs object for which the callable should be generated.
+        experiments (pd.DataFrame): DataFrame containing the experiments that are used for
+            adapting the objectives on the fly, for example in the case of the
+            `MovingMaximizeSigmoidObjective`.
 
     Returns:
         Callable[[Tensor], Tensor]: _description_

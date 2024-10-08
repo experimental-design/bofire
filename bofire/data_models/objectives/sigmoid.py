@@ -55,6 +55,15 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 
 
 class MovingMaximizeSigmoidObjective(SigmoidObjective):
+    """Class for a maximizing sigmoid objective with a moving turning point that depends on so far observed x values.
+
+    Attributes:
+        w (float): float between zero and one for weighting the objective when used in a weighting based strategy.
+        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
+        tp (float): Relative turning point of the sigmoid function. The actual turning point is calculated by adding
+            the maximum of the observed x values to the relative turning point.
+    """
+
     type: Literal["MovingMaximizeSigmoidObjective"] = "MovingMaximizeSigmoidObjective"
 
     def get_adjusted_tp(self, x: Union[pd.Series, np.ndarray]) -> float:
