@@ -1593,6 +1593,147 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective" class="md-nav__link">
+    <span class="md-ellipsis">
+      MovingMaximizeSigmoidObjective
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="MovingMaximizeSigmoidObjective">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__class_vars__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __class_vars__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__private_attributes__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __private_attributes__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_complete__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_complete__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_custom_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_custom_init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_decorators__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_decorators__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_generic_metadata__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_generic_metadata__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_parent_namespace__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_parent_namespace__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_post_init__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_post_init__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__signature__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __signature__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.model_computed_fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      model_computed_fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.model_config" class="md-nav__link">
+    <span class="md-ellipsis">
+      model_config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.model_fields" class="md-nav__link">
+    <span class="md-ellipsis">
+      model_fields
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__call__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __call__()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.get_adjusted_tp" class="md-nav__link">
+    <span class="md-ellipsis">
+      get_adjusted_tp()
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.data_models.objectives.sigmoid.SigmoidObjective" class="md-nav__link">
     <span class="md-ellipsis">
       SigmoidObjective
@@ -2227,12 +2368,16 @@ ConstrainedCategoricalObjective            (<a class="autorefs autorefs-internal
         <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">values</span><span class="p">(),</span> <span class="n">d</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a probabilistic reward for x.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.ndarray): A matrix of x values</span>
+<span class="sd">            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">                update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.ndarray: A reward calculated as inner product of probabilities and feasible objectives.</span>
@@ -2520,7 +2665,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.categorical.ConstrainedCategoricalObjective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -2549,6 +2694,13 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <td><p>A matrix of x values</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>Optional[np.ndarray]</code></td>
+        <td><p>An array of x values which are used to
+update the objective parameters on the fly. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -2569,12 +2721,16 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/categorical.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
-    <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a probabilistic reward for x.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (np.ndarray): A matrix of x values</span>
+<span class="sd">        x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">            update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: A reward calculated as inner product of probabilities and feasible objectives.</span>
@@ -2890,11 +3046,17 @@ The return can be scaled, when a lower and upper bound are provided.</p>
             <span class="p">)</span>
         <span class="k">return</span> <span class="n">bounds</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.ndarray): An array of x values</span>
+<span class="sd">            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">                update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.ndarray: The identity as reward, might be normalized to the passed lower and upper bounds</span>
@@ -3184,7 +3346,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.identity.IdentityObjective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -3213,6 +3375,13 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <td><p>An array of x values</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>Optional[np.ndarray]</code></td>
+        <td><p>An array of x values which are used to
+update the objective parameters on the fly. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -3232,11 +3401,17 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/identity.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (np.ndarray): An array of x values</span>
+<span class="sd">        x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">            update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: The identity as reward, might be normalized to the passed lower and upper bounds</span>
@@ -3743,11 +3918,17 @@ MinimizeObjective            (<a class="autorefs autorefs-internal" title="bofir
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MinimizeObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MinimizeObjective&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.ndarray): An array of x values</span>
+<span class="sd">            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">                update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds</span>
@@ -4035,7 +4216,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.identity.MinimizeObjective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -4064,6 +4245,13 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <td><p>An array of x values</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>Optional[np.ndarray]</code></td>
+        <td><p>An array of x values which are used to
+update the objective parameters on the fly. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -4083,11 +4271,17 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/identity.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (np.ndarray): An array of x values</span>
+<span class="sd">        x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">            update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds</span>
@@ -4205,11 +4399,17 @@ Objective            (<span title="bofire.data_models.base.BaseModel">BaseModel<
     <span class="nb">type</span><span class="p">:</span> <span class="nb">str</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Abstract method to define the call function for the class Objective</span>
 
 <span class="sd">        Args:</span>
-<span class="sd">            x (np.ndarray): An array of x values</span>
+<span class="sd">            x (np.ndarray): An array of x values for which the objective should be evaluated.</span>
+<span class="sd">            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">                update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.ndarray: The desirability of the passed x values</span>
@@ -4497,7 +4697,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.objective.Objective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -4523,8 +4723,15 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
       <tr>
         <td><code>x</code></td>
         <td><code>np.ndarray</code></td>
-        <td><p>An array of x values</p></td>
+        <td><p>An array of x values for which the objective should be evaluated.</p></td>
         <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>Optional[np.ndarray]</code></td>
+        <td><p>An array of x values which are used to
+update the objective parameters on the fly. Defaults to None.</p></td>
+        <td><code>None</code></td>
       </tr>
   </tbody>
 </table>
@@ -4546,11 +4753,17 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/objective.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="nd">@abstractmethod</span>
-<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract method to define the call function for the class Objective</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        x (np.ndarray): An array of x values</span>
+<span class="sd">        x (np.ndarray): An array of x values for which the objective should be evaluated.</span>
+<span class="sd">        x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">            update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: The desirability of the passed x values</span>
@@ -4668,11 +4881,16 @@ MaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MaximizeSigmoidObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MaximizeSigmoidObjective&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.ndarray): An array of x values</span>
+<span class="sd">            x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
@@ -4960,7 +5178,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.sigmoid.MaximizeSigmoidObjective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -4989,6 +5207,12 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <td><p>An array of x values</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>np.ndarray</code></td>
+        <td><p>An array of x values which are used to update the objective parameters on the fly.</p></td>
+        <td><code>None</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -5008,11 +5232,16 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/sigmoid.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (np.ndarray): An array of x values</span>
+<span class="sd">        x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
@@ -5093,11 +5322,16 @@ MinimizeSigmoidObjective            (<a class="autorefs autorefs-internal" title
 
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MinimizeSigmoidObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MinimizeSigmoidObjective&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.ndarray): An array of x values</span>
+<span class="sd">            x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
@@ -5385,7 +5619,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.sigmoid.MinimizeSigmoidObjective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -5396,6 +5630,539 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
     <div class="doc doc-contents ">
 
       <p>The call function returning a sigmoid shaped reward for passed x values.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>x</code></td>
+        <td><code>np.ndarray</code></td>
+        <td><p>An array of x values</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>np.ndarray</code></td>
+        <td><p>An array of x values which are used to update the objective parameters on the fly.</p></td>
+        <td><code>None</code></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/sigmoid.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (np.ndarray): An array of x values</span>
+<span class="sd">        x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)))</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+
+
+  </div>
+
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-class">
+
+
+
+<h3 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective" class="doc doc-heading">
+        <code>
+MovingMaximizeSigmoidObjective            (<a class="autorefs autorefs-internal" title="bofire.data_models.objectives.sigmoid.SigmoidObjective" href="#bofire.data_models.objectives.sigmoid.SigmoidObjective">SigmoidObjective</a>)
+        </code>
+
+
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>Class for a maximizing sigmoid objective with a moving turning point that depends on so far observed x values.</p>
+
+<p><strong>Attributes:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>w</code></td>
+        <td><code>float</code></td>
+        <td><p>float between zero and one for weighting the objective when used in a weighting based strategy.</p></td>
+      </tr>
+      <tr>
+        <td><code>steepness</code></td>
+        <td><code>float</code></td>
+        <td><p>Steepness of the sigmoid function. Has to be greater than zero.</p></td>
+      </tr>
+      <tr>
+        <td><code>tp</code></td>
+        <td><code>float</code></td>
+        <td><p>Relative turning point of the sigmoid function. The actual turning point is calculated by adding
+the maximum of the observed x values to the relative turning point.</p></td>
+      </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/sigmoid.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">MovingMaximizeSigmoidObjective</span><span class="p">(</span><span class="n">SigmoidObjective</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class for a maximizing sigmoid objective with a moving turning point that depends on so far observed x values.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        w (float): float between zero and one for weighting the objective when used in a weighting based strategy.</span>
+<span class="sd">        steepness (float): Steepness of the sigmoid function. Has to be greater than zero.</span>
+<span class="sd">        tp (float): Relative turning point of the sigmoid function. The actual turning point is calculated by adding</span>
+<span class="sd">            the maximum of the observed x values to the relative turning point.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MovingMaximizeSigmoidObjective&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MovingMaximizeSigmoidObjective&quot;</span>
+
+    <span class="k">def</span> <span class="nf">get_adjusted_tp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the adjusted turning point for the sigmoid function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (np.ndarray): An array of x values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: The adjusted turning point for the sigmoid function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (np.ndarray): An array of x values</span>
+<span class="sd">            x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span>
+            <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_adjusted_tp</span><span class="p">(</span><span class="n">x_adapt</span><span class="p">)))</span>
+        <span class="p">)</span>
+</code></pre></div>
+        </details>
+
+
+
+  <div class="doc doc-children">
+
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__class_vars__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__class_vars__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The names of the class variables defined on the model.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__private_attributes__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__private_attributes__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata about the private attributes of the model.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_complete__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_complete__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Whether model building is completed, or if there are still undefined fields.</p>
+    </div>
+
+  </div>
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_custom_init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_custom_init__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Whether the model has a custom <code>__init__</code> method.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_decorators__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_decorators__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata containing the decorators defined on the model.
+This replaces <code>Model.__validators__</code> and <code>Model.__root_validators__</code> from Pydantic V1.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_generic_metadata__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_generic_metadata__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata for generic models; contains data used for a similar purpose to
+<strong>args</strong>, <strong>origin</strong>, <strong>parameters</strong> in typing-module generics. May eventually be replaced by these.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_parent_namespace__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_parent_namespace__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Parent namespace of the model, used for automatic rebuilding of models.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__pydantic_post_init__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_post_init__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The name of the post-init method for the model, if defined.</p>
+    </div>
+
+  </div>
+
+
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__signature__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__signature__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The synthesized <code>__init__</code> [<code>Signature</code>][inspect.Signature] of the model.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.model_computed_fields" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">model_computed_fields</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>A dictionary of computed field names and their corresponding <code>ComputedFieldInfo</code> objects.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.model_config" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">model_config</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Configuration for the model, should be a dictionary conforming to [<code>ConfigDict</code>][pydantic.config.ConfigDict].</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.model_fields" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">model_fields</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Metadata about the fields defined on the model,
+mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] objects.</p>
+<p>This replaces <code>Model.__fields__</code> from Pydantic V1.</p>
+    </div>
+
+  </div>
+
+
+
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.__call__" class="doc doc-heading">
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="p">)</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>The call function returning a sigmoid shaped reward for passed x values.</p>
+
+<p><strong>Parameters:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Default</th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td><code>x</code></td>
+        <td><code>np.ndarray</code></td>
+        <td><p>An array of x values</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>np.ndarray</code></td>
+        <td><p>An array of x values which are used to update the objective parameters on the fly.</p></td>
+        <td><em>required</em></td>
+      </tr>
+  </tbody>
+</table>
+<p><strong>Returns:</strong></p>
+<table>
+  <thead>
+    <tr>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code>np.ndarray</code></td>
+      <td><p>A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</p></td>
+    </tr>
+  </tbody>
+</table>
+        <details class="quote">
+          <summary>Source code in <code>bofire/data_models/objectives/sigmoid.py</code></summary>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x (np.ndarray): An array of x values</span>
+<span class="sd">        x_adapt (np.ndarray): An array of x values which are used to update the objective parameters on the fly.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span>
+        <span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_adjusted_tp</span><span class="p">(</span><span class="n">x_adapt</span><span class="p">)))</span>
+    <span class="p">)</span>
+</code></pre></div>
+        </details>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-method">
+
+
+
+<h4 id="bofire.data_models.objectives.sigmoid.MovingMaximizeSigmoidObjective.get_adjusted_tp" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">get_adjusted_tp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+
+
+</h4>
+
+    <div class="doc doc-contents ">
+
+      <p>Get the adjusted turning point for the sigmoid function.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -5426,23 +6193,23 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
   </thead>
   <tbody>
     <tr>
-      <td><code>np.ndarray</code></td>
-      <td><p>A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</p></td>
+      <td><code>float</code></td>
+      <td><p>The adjusted turning point for the sigmoid function.</p></td>
     </tr>
   </tbody>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/sigmoid.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a sigmoid shaped reward for passed x values.</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_adjusted_tp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get the adjusted turning point for the sigmoid function.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (np.ndarray): An array of x values</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.</span>
+<span class="sd">        float: The adjusted turning point for the sigmoid function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">steepness</span> <span class="o">*</span> <span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">x</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">tp</span>
 </code></pre></div>
         </details>
     </div>
@@ -5904,7 +6671,11 @@ in multiobjective scenarios.</p>
     <span class="n">target_value</span><span class="p">:</span> <span class="nb">float</span>
     <span class="n">exponent</span><span class="p">:</span> <span class="nb">float</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
         <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_value</span><span class="p">)</span> <span class="o">**</span> <span class="bp">self</span><span class="o">.</span><span class="n">exponent</span><span class="p">)</span>
 </code></pre></div>
         </details>
@@ -6262,11 +7033,17 @@ TargetObjective            (<a class="autorefs autorefs-internal" title="bofire.
     <span class="n">tolerance</span><span class="p">:</span> <span class="n">TGe0</span>
     <span class="n">steepness</span><span class="p">:</span> <span class="n">TGt0</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            x (np.array): An array of x values</span>
+<span class="sd">            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">                update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            np.array: An array of reward values calculated by the product of two sigmoidal shaped functions resulting in a maximum at the target value.</span>
@@ -6572,7 +7349,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 
 <h4 id="bofire.data_models.objectives.target.TargetObjective.__call__" class="doc doc-heading">
-<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">x_adapt</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span></code>
 
   <span class="doc doc-properties">
       <small class="doc doc-property doc-property-special"><code>special</code></small>
@@ -6601,6 +7378,13 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
         <td><p>An array of x values</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>Optional[np.ndarray]</code></td>
+        <td><p>An array of x values which are used to
+update the objective parameters on the fly. Defaults to None.</p></td>
+        <td><code>None</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -6620,11 +7404,17 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/objectives/target.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
+    <span class="bp">self</span><span class="p">,</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The call function returning a reward for passed x values.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        x (np.array): An array of x values</span>
+<span class="sd">        x_adapt (Optional[np.ndarray], optional): An array of x values which are used to</span>
+<span class="sd">            update the objective parameters on the fly. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.array: An array of reward values calculated by the product of two sigmoidal shaped functions resulting in a maximum at the target value.</span>

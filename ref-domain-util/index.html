@@ -3905,7 +3905,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
 
 <h3 id="bofire.utils.torch_tools.constrained_objective2botorch" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">constrained_objective2botorch</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-08</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">constrained_objective2botorch</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">objective</span><span class="p">,</span> <span class="n">x_adapt</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-08</span><span class="p">)</span></code>
 
 
 </h3>
@@ -3938,6 +3938,20 @@ to setup ouput constrained optimizations.</p>
         <td><p>The objective that should be transformed.</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>x_adapt</code></td>
+        <td><code>Optional[Tensor]</code></td>
+        <td><p>The tensor that should be used to adapt the objective,
+for example in case of a moving turning point in the <code>MovingMaximizeSigmoidObjective</code>.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>eps</code></td>
+        <td><code>float</code></td>
+        <td><p>Small value to avoid numerical instabilities in case of the <code>ConstrainedCategoricalObjective</code>.
+Defaults to 1e-8.</p></td>
+        <td><code>1e-08</code></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -3959,7 +3973,10 @@ to setup ouput constrained optimizations.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">constrained_objective2botorch</span><span class="p">(</span>
-    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">objective</span><span class="p">:</span> <span class="n">ConstrainedObjective</span><span class="p">,</span> <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span>
+    <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">ConstrainedObjective</span><span class="p">,</span>
+    <span class="n">x_adapt</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints`</span>
 <span class="sd">    to setup ouput constrained optimizations.</span>
@@ -3967,6 +3984,10 @@ to setup ouput constrained optimizations.</p>
 <span class="sd">    Args:</span>
 <span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
 <span class="sd">        objective (BotorchConstrainedObjective): The objective that should be transformed.</span>
+<span class="sd">        x_adapt (Optional[Tensor]): The tensor that should be used to adapt the objective,</span>
+<span class="sd">            for example in case of a moving turning point in the `MovingMaximizeSigmoidObjective`.</span>
+<span class="sd">        eps (float, optional): Small value to avoid numerical instabilities in case of the `ConstrainedCategoricalObjective`.</span>
+<span class="sd">            Defaults to 1e-8.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,</span>
@@ -3978,6 +3999,14 @@ to setup ouput constrained optimizations.</p>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeSigmoidObjective</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span>
+            <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
+            <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MovingMaximizeSigmoidObjective</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">x_adapt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">tp</span> <span class="o">=</span> <span class="n">x_adapt</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">tp</span><span class="p">)</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">],</span>
             <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
             <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
@@ -4405,14 +4434,14 @@ are generated at once.</p></td>
 
 
 <h3 id="bofire.utils.torch_tools.get_multiobjective_objective" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_multiobjective_objective</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_multiobjective_objective</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span></code>
 
 
 </h3>
 
     <div class="doc doc-contents ">
 
-      <p>Returns</p>
+      <p>Returns a callable that can be used by botorch for multiobjective optimization.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -4428,7 +4457,15 @@ are generated at once.</p></td>
       <tr>
         <td><code>outputs</code></td>
         <td><code>Outputs</code></td>
-        <td><p><em>description</em></p></td>
+        <td><p>Outputs object for which the callable should be generated.</p></td>
+        <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>experiments</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>DataFrame containing the experiments that are used for
+adapting the objectives on the fly, for example in the case of the
+<code>MovingMaximizeSigmoidObjective</code>.</p></td>
         <td><em>required</em></td>
       </tr>
   </tbody>
@@ -4451,18 +4488,29 @@ are generated at once.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_multiobjective_objective</span><span class="p">(</span>
-    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a callable that can be used by botorch for multiobjective optimization.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        outputs (Outputs): _description_</span>
+<span class="sd">        outputs (Outputs): Outputs object for which the callable should be generated.</span>
+<span class="sd">        experiments (pd.DataFrame): DataFrame containing the experiments that are used for</span>
+<span class="sd">            adapting the objectives on the fly, for example in the case of the</span>
+<span class="sd">            `MovingMaximizeSigmoidObjective`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Callable[[Tensor], Tensor]: _description_</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">callables</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">get_objective_callable</span><span class="p">(</span><span class="n">idx</span><span class="o">=</span><span class="n">i</span><span class="p">,</span> <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="n">get_objective_callable</span><span class="p">(</span>
+            <span class="n">idx</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">x_adapt</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
+                <span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_one_valid_output</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)[</span>
+                    <span class="n">feat</span><span class="o">.</span><span class="n">key</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">values</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
+        <span class="p">)</span>  <span class="c1"># type: ignore</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
         <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
         <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
@@ -4673,7 +4721,7 @@ as input and return a float value representing the constraint evaluation.</p></t
 
 
 <h3 id="bofire.utils.torch_tools.get_output_constraints" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">get_output_constraints</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span></code>
+<code class="highlight language-python"><span class="n">get_output_constraints</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)</span></code>
 
 
 </h3>
@@ -4701,6 +4749,14 @@ callables and list of etas for use in botorch.</p>
 be processed.</p></td>
         <td><em>required</em></td>
       </tr>
+      <tr>
+        <td><code>experiments</code></td>
+        <td><code>pd.DataFrame</code></td>
+        <td><p>DataFrame containing the experiments that are used for
+adapting the objectives on the fly, for example in the case of the
+<code>MovingMaximizeSigmoidObjective</code>.</p></td>
+        <td><em>required</em></td>
+      </tr>
   </tbody>
 </table>
 <p><strong>Returns:</strong></p>
@@ -4722,7 +4778,7 @@ be processed.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_constraints</span><span class="p">(</span>
-    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to translate output constraint objectives into a list of</span>
 <span class="sd">    callables and list of etas for use in botorch.</span>
@@ -4730,6 +4786,9 @@ be processed.</p></td>
 <span class="sd">    Args:</span>
 <span class="sd">        outputs (Outputs): Output feature object that should</span>
 <span class="sd">            be processed.</span>
+<span class="sd">        experiments (pd.DataFrame): DataFrame containing the experiments that are used for</span>
+<span class="sd">            adapting the objectives on the fly, for example in the case of the</span>
+<span class="sd">            `MovingMaximizeSigmoidObjective`.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,</span>
@@ -4740,9 +4799,17 @@ be processed.</p></td>
     <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+            <span class="n">cleaned_experiments</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_one_valid_output</span><span class="p">(</span>
+                <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">experiments</span>
+            <span class="p">)</span>
             <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
                 <span class="n">idx</span><span class="p">,</span>
                 <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">x_adapt</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">cleaned_experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
+                    <span class="o">**</span><span class="n">tkwargs</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedCategoricalObjective</span><span class="p">)</span>
+                <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">constraints</span> <span class="o">+=</span> <span class="n">iconstraints</span>
             <span class="n">etas</span> <span class="o">+=</span> <span class="n">ietas</span>
