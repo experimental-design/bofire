@@ -75,17 +75,6 @@ class Strategy(ABC):
             self.set_experiments(experiments=experiments)
         else:
             self.add_experiments(experiments=experiments)
-        # we check here that the experiments do not have completely fixed columns
-        cleaned_experiments = (
-            self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                experiments=experiments
-            )
-        )
-        for feature in self.domain.inputs.get_fixed():
-            if (cleaned_experiments[feature.key] == feature.fixed_value()[0]).all():  # type: ignore
-                raise ValueError(
-                    f"No variance in experiments for fixed feature {feature.key}"
-                )
         self._tell()
 
     def _tell(self) -> None:

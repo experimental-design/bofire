@@ -55,7 +55,6 @@ setup(
         "xgb": ["xgboost>=1.7.5"],
         "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
         "tests": [
-            "mock",
             "mopti",
             "pyright==1.1.305",
             "pytest",

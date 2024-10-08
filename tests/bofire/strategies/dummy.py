@@ -3,6 +3,7 @@ from typing import Dict, List, Literal, Optional, Tuple, Type
 
 import numpy as np
 import pandas as pd
+from botorch.acquisition.acquisition import AcquisitionFunction
 from pydantic.types import NonNegativeInt
 
 import bofire.data_models.strategies.api as data_models
@@ -86,7 +87,7 @@ class DummyStrategy(Strategy):
         return len(self.experiments) >= 3
 
 
-class DummyPredictiveStrategyDataModel(data_models.Strategy):
+class DummyPredictiveStrategyDataModel(data_models.PredictiveStrategy):
     type: Literal[
         "DummyPredictiveStrategyDataModel"
     ] = "DummyPredictiveStrategyDataModel"
@@ -194,8 +195,8 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
             f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
         )
 
-    def _get_acqfs(self, n: int):
-        pass
+    def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:
+        return []
 
     def _choose_from_pool(
         self,
