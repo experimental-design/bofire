@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
@@ -29,6 +30,7 @@ from bofire.data_models.objectives.api import (
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     TargetObjective,
 )
 from bofire.data_models.strategies.api import RandomStrategy
@@ -94,18 +96,32 @@ c3 = LinearInequalityConstraint(
         MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
         TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
         CloseToTargetObjective(target_value=2.0, exponent=1.0, w=0.5),
+        MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1),
         # ConstantObjective(w=0.5, value=1.0),
     ],
 )
 def test_get_objective_callable(objective):
     samples = (torch.rand(50, 3, requires_grad=True) * 5.0).to(**tkwargs)
     a_samples = samples.detach().numpy()
-    callable = get_objective_callable(idx=1, objective=objective)
+    x_adapt = (torch.rand(10) * 3).to(**tkwargs)
+    callable = get_objective_callable(idx=1, objective=objective, x_adapt=x_adapt)
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
         callable(samples).detach().numpy(),
-        objective(a_samples[:, 1]),
+        objective.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
         rtol=1e-06,
+    )
+
+
+def test_moving_maximize_sigmoid_objective():
+    samples = (torch.rand(50, 3, requires_grad=True) * 5.0).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    x_adapt = torch.tensor([1.0, 2.0, 3.0]).to(**tkwargs)
+    o1 = MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1)
+    o2 = MaximizeSigmoidObjective(steepness=1.0, tp=2, w=1)
+    assert np.allclose(
+        o1.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
+        o2.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
     )
 
 
@@ -133,6 +149,16 @@ def f2(samples, callables, weights, X):
 
 @pytest.mark.parametrize("f, exclude_constraints", [(f1, True), (f2, False)])
 def test_get_custom_botorch_objective(f, exclude_constraints):
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "gamma": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+            "valid_gamma": [1] * 10,
+        }
+    )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective(w=1.0)
@@ -155,7 +181,7 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
         ]
     )
     objective = get_custom_botorch_objective(
-        outputs, f=f, exclude_constraints=exclude_constraints
+        outputs, f=f, exclude_constraints=exclude_constraints, experiments=experiments
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -178,7 +204,9 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
         rtol=1e-06,
     )
     if exclude_constraints:
-        constraints, etas = get_output_constraints(outputs=outputs)
+        constraints, etas = get_output_constraints(
+            outputs=outputs, experiments=experiments
+        )
         generic_objective = ConstrainedMCObjective(
             objective=objective,
             constraints=constraints,
@@ -201,6 +229,14 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
 
 
 def test_get_multiplicative_botorch_objective():
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+        }
+    )
     (obj1, obj2) = random.choices(
         [
             MaximizeObjective(w=0.5),
@@ -218,7 +254,7 @@ def test_get_multiplicative_botorch_objective():
             ContinuousOutput(key="beta", objective=obj2),
         ]
     )
-    objective = get_multiplicative_botorch_objective(outputs)
+    objective = get_multiplicative_botorch_objective(outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
     samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
@@ -237,6 +273,16 @@ def test_get_multiplicative_botorch_objective():
 
 @pytest.mark.parametrize("exclude_constraints", [True, False])
 def test_get_additive_botorch_objective(exclude_constraints):
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "gamma": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+            "valid_gamma": [1] * 10,
+        }
+    )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective(w=0.5)
@@ -260,7 +306,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
         ]
     )
     objective = get_additive_botorch_objective(
-        outputs, exclude_constraints=exclude_constraints
+        outputs, exclude_constraints=exclude_constraints, experiments=experiments
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -281,7 +327,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
         rtol=1e-06,
     )
     if exclude_constraints:
-        constraints, etas = get_output_constraints(outputs=outputs)
+        constraints, etas = get_output_constraints(
+            outputs=outputs, experiments=experiments
+        )
         generic_objective = ConstrainedMCObjective(
             objective=objective,
             constraints=constraints,
@@ -480,7 +528,17 @@ of3 = ContinuousOutput(
     ],
 )
 def test_get_output_constraints(outputs):
-    constraints, etas = get_output_constraints(outputs=outputs)
+    experiments = pd.DataFrame(
+        {
+            "of1": np.random.rand(10),
+            "of2": np.random.rand(10),
+            "of3": np.random.rand(10),
+            "valid_of1": [1] * 10,
+            "valid_of2": [1] * 10,
+            "valid_of3": [1] * 10,
+        }
+    )
+    constraints, etas = get_output_constraints(outputs=outputs, experiments=experiments)
     assert len(constraints) == len(etas)
     assert np.allclose(etas, [0.5, 0.25, 0.25])
 
@@ -763,7 +821,19 @@ def test_get_multiobjective_objective():
             ),
         ]
     )
-    objective = get_multiobjective_objective(outputs=outputs)
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "gamma": np.random.rand(10),
+            "omega": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+            "valid_gamma": [1] * 10,
+            "valid_omega": [1] * 10,
+        }
+    )
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
     # check the shape
     objective_forward = generic_objective.forward(samples2)
@@ -821,10 +891,14 @@ def test_get_initial_conditions_generator(sequential: bool):
         (MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
         (MinimizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
         (TargetObjective(w=1, target_value=15, steepness=2, tolerance=5)),
+        (MovingMaximizeSigmoidObjective(w=1, tp=-1, steepness=0.5)),
     ],
 )
 def test_constrained_objective2botorch(objective):
-    cs, etas, _ = constrained_objective2botorch(idx=0, objective=objective)
+    x_adapt = torch.tensor([1.0, 2.0, 3.0]).to(**tkwargs)
+    cs, etas, _ = constrained_objective2botorch(
+        idx=0, objective=objective, x_adapt=x_adapt
+    )
 
     x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1).to(**tkwargs)
 
@@ -840,7 +914,17 @@ def test_constrained_objective2botorch(objective):
         .ravel()
     )
 
-    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), result)
+    assert np.allclose(
+        objective.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()), result
+    )
+    if isinstance(objective, MovingMaximizeSigmoidObjective):
+        objective2 = MaximizeSigmoidObjective(
+            w=1, tp=x_adapt.max().item() + objective.tp, steepness=objective.steepness
+        )
+        assert np.allclose(
+            objective2.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()),
+            result,
+        )
 
 
 def test_constrained_objective():
@@ -848,7 +932,7 @@ def test_constrained_objective():
     obj1 = ConstrainedCategoricalObjective(
         categories=["c1", "c2", "c3"], desirability=desirability
     )
-    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1)
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1, x_adapt=None)
 
     x = torch.zeros((50, 3))
     x[:, 0] = torch.arange(50) / 50

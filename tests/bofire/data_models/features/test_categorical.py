@@ -473,5 +473,5 @@ def test_categorical_output_call():
             categories=["c1", "c2"], desirability=[True, False]
         ),
     )
-    output = categorical_output(test_df)
+    output = categorical_output(test_df, test_df)
     assert output.tolist() == test_df["c1"].tolist()

@@ -28,6 +28,10 @@ specs.add_valid(
     lambda: {"w": 1.0, "bounds": (0.1, 0.9)},
 )
 
+specs.add_valid(
+    objectives.MovingMaximizeSigmoidObjective,
+    lambda: {"w": 1.0, "tp": 0.3, "steepness": 0.2},
+)
 
 specs.add_valid(
     objectives.MinimizeSigmoidObjective,

@@ -42,11 +42,14 @@ class MoboStrategy(BotorchStrategy):
 
     def _get_acqfs(self, n) -> List[AcquisitionFunction]:
         assert self.is_fitted is True, "Model not trained."
+        assert self.experiments is not None, "No experiments available."
 
         X_train, X_pending = self.get_acqf_input_tensors()
 
         # get etas and constraints
-        constraints, etas = get_output_constraints(self.domain.outputs)
+        constraints, etas = get_output_constraints(
+            self.domain.outputs, experiments=self.experiments
+        )
         if len(constraints) == 0:
             constraints, etas = None, 1e-3
         else:
@@ -87,10 +90,14 @@ class MoboStrategy(BotorchStrategy):
         return [acqf]
 
     def _get_objective(self) -> GenericMCMultiOutputObjective:
-        objective = get_multiobjective_objective(outputs=self.domain.outputs)
+        assert self.experiments is not None
+        objective = get_multiobjective_objective(
+            outputs=self.domain.outputs, experiments=self.experiments
+        )
         return GenericMCMultiOutputObjective(objective=objective)
 
     def get_adjusted_refpoint(self) -> List[float]:
+        assert self.experiments is not None, "No experiments available."
         if self.ref_point is None:
             df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
                 self.experiments

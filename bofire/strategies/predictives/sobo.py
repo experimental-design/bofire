@@ -91,6 +91,7 @@ class SoboStrategy(BotorchStrategy):
         Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
+        assert self.experiments is not None, "No experiments available."
         try:
             target_feature = self.domain.outputs.get_by_objective(
                 excludes=ConstrainedObjective
@@ -98,8 +99,13 @@ class SoboStrategy(BotorchStrategy):
         except IndexError:
             target_feature = self.domain.outputs.get_by_objective(includes=Objective)[0]
         target_index = self.domain.outputs.get_keys().index(target_feature.key)
+        x_adapt = torch.from_numpy(
+            self.domain.outputs.preprocess_experiments_one_valid_output(
+                target_feature.key, self.experiments
+            )[target_feature.key].values
+        ).to(**tkwargs)
         objective_callable = get_objective_callable(
-            idx=target_index, objective=target_feature.objective
+            idx=target_index, objective=target_feature.objective, x_adapt=x_adapt
         )
 
         # get the constraints
@@ -107,7 +113,7 @@ class SoboStrategy(BotorchStrategy):
             len(self.domain.outputs.get_by_objective(Objective)) > 1
         ):
             constraint_callables, etas = get_output_constraints(
-                outputs=self.domain.outputs
+                outputs=self.domain.outputs, experiments=self.experiments
             )
         else:
             constraint_callables, etas = None, 1e-3
@@ -153,6 +159,7 @@ class AdditiveSoboStrategy(SoboStrategy):
         Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
+        assert self.experiments is not None, "No experiments available."
         # get the constraints
         if (
             (len(self.domain.outputs.get_by_objective(ConstrainedObjective)) > 0)
@@ -160,14 +167,16 @@ class AdditiveSoboStrategy(SoboStrategy):
             and self.use_output_constraints
         ):
             constraint_callables, etas = get_output_constraints(
-                outputs=self.domain.outputs
+                outputs=self.domain.outputs, experiments=self.experiments
             )
         else:
             constraint_callables, etas = None, 1e-3
         # TODO: test this
         if self.use_output_constraints:
             objective_callable = get_additive_botorch_objective(
-                outputs=self.domain.outputs, exclude_constraints=True
+                outputs=self.domain.outputs,
+                exclude_constraints=True,
+                experiments=self.experiments,
             )
 
             # special cases of qUCB and qSR do not work with separate constraints
@@ -219,10 +228,12 @@ class MultiplicativeSoboStrategy(SoboStrategy):
         Union[List, float],
     ]:
         # we absorb all constraints into the objective
+        assert self.experiments is not None, "No experiments available."
         return (
             GenericMCObjective(
-                objective=get_multiplicative_botorch_objective(  # type: ignore
-                    outputs=self.domain.outputs
+                objective=get_multiplicative_botorch_objective(
+                    outputs=self.domain.outputs,
+                    experiments=self.experiments,  # type: ignore
                 )
             ),
             None,
@@ -250,6 +261,7 @@ class CustomSoboStrategy(SoboStrategy):
         Union[List[Callable[[torch.Tensor], torch.Tensor]], None],
         Union[List, float],
     ]:
+        assert self.experiments is not None, "No experiments available."
         if self.f is None:
             raise ValueError("No function has been provided for the strategy")
         # get the constraints
@@ -259,14 +271,17 @@ class CustomSoboStrategy(SoboStrategy):
             and self.use_output_constraints
         ):
             constraint_callables, etas = get_output_constraints(
-                outputs=self.domain.outputs
+                outputs=self.domain.outputs, experiments=self.experiments
             )
         else:
             constraint_callables, etas = None, 1e-3
 
         if self.use_output_constraints:
             objective_callable = get_custom_botorch_objective(
-                outputs=self.domain.outputs, f=self.f, exclude_constraints=True
+                outputs=self.domain.outputs,
+                f=self.f,
+                exclude_constraints=True,
+                experiments=self.experiments,
             )
             # special cases of qUCB and qSR do not work with separate constraints
             if isinstance(self.acquisition_function, (qSR, qUCB)):
@@ -293,7 +308,10 @@ class CustomSoboStrategy(SoboStrategy):
         return (
             GenericMCObjective(
                 objective=get_custom_botorch_objective(
-                    outputs=self.domain.outputs, f=self.f, exclude_constraints=False
+                    outputs=self.domain.outputs,
+                    f=self.f,
+                    exclude_constraints=False,
+                    experiments=self.experiments,  # type: ignore
                 )
             ),
             constraint_callables,
