@@ -20,7 +20,7 @@ git clone https://github.com/experimental-design/bofire.git
 ```
 and cd `bofire`, you can proceed with
 ```
-pip install -e .[optimization,cheminfo,tests,docs]
+pip install -e ".[all]"
 ```
 Afterwards, you can check that the tests are successful via
 ```
@@ -31,8 +31,8 @@ We format our code with [Black](https://github.com/psf/black).
 Our doc-strings are in [Google-style](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html).
 Further, we use [Ruff](https://beta.ruff.rs/docs/) for linting.
 
-In our CI/CD pipeline we check if contributions are compliant to Black and Ruff. 
-To make contributors' lives easier, we have pre-commit hooks for Black and Ruff configured in the versions corresponding to the pipeline. 
+In our CI/CD pipeline we check if contributions are compliant to Black and Ruff.
+To make contributors' lives easier, we have pre-commit hooks for Black and Ruff configured in the versions corresponding to the pipeline.
 Pre-commit hooks can be installed via
 
 ```

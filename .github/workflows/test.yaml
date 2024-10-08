@@ -14,12 +14,17 @@ jobs:
       matrix:
         python-version: ['3.9', '3.10', '3.11' ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Minimal Bofire, Python ${{ matrix.python-version }}
         run: pip install "." pytest
+
       - name: Run domain-only test, Python ${{ matrix.python-version }}
         run: pytest tests/bofire/data_models
 
@@ -29,20 +34,26 @@ jobs:
       matrix:
         python-version: [ '3.9', '3.11' ]
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
           activate-environment: test
           python-version: ${{ matrix.python-version }}
+
       - name: Install Dependencies, Python ${{ matrix.python-version }}
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+
       - name: Run tests, Python ${{ matrix.python-version }}
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
+
       - name: Run pip freeze, Python ${{ matrix.python-version }}
         shell: bash -l {0}
         run: pip freeze
@@ -50,12 +61,15 @@ jobs:
   testing_against_latest_botorch:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
           activate-environment: test
           python-version: '3.10'
+
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
@@ -65,29 +79,35 @@ jobs:
           export ALLOW_LATEST_GPYTORCH_LINOP=true
           pip install --upgrade git+https://github.com/pytorch/botorch.git
           pip install ".[optimization,tests,cheminfo,xgb,entmoot]"
+
       - name: Run tests, Python ${{ matrix.python-version }}
         shell: bash -l {0}
         run: pytest -ra --cov=bofire --cov-report term-missing tests
+
       - name: Run pip freeze, Python ${{ matrix.python-version }}
         shell: bash -l {0}
-        run: pip freeze    
+        run: pip freeze
 
 
   testing_tutorials:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - name: Check out repo
+        uses: actions/checkout@v4
+
+      - name: Setup Conda
+        uses: conda-incubator/setup-miniconda@v3
         with:
           miniconda-version: "latest"
           activate-environment: test
           python-version: '3.10'
+
       - name: Install Dependencies
         shell: bash -l {0}
         run: |
           conda install -c conda-forge cyipopt
           pip install ".[optimization,tests,cheminfo,xgb,entmoot,tutorials]"
+
       - name: Run notebooks
         shell: bash -l {0}
         run: python scripts/run_tutorials.py -p "$(pwd)"
-          
