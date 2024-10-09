@@ -11,6 +11,7 @@ from bofire.surrogates.mlp import (
 )
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
+from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.trainable import TrainableSurrogate

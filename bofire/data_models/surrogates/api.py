@@ -27,6 +27,7 @@ from bofire.data_models.surrogates.multi_task_gp import (
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
 from bofire.data_models.surrogates.scaler import ScalerEnum
+from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import (
     SingleTaskGPHyperconfig,
     SingleTaskGPSurrogate,
@@ -55,6 +56,7 @@ AnySurrogate = Union[
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 AnyTrainableSurrogate = Union[
@@ -70,6 +72,7 @@ AnyTrainableSurrogate = Union[
     PolynomialSurrogate,
     SingleTaskIBNNSurrogate,
     TanimotoGPSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 AnyRegressionSurrogate = Union[
@@ -87,6 +90,7 @@ AnyRegressionSurrogate = Union[
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
     SingleTaskIBNNSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 AnyClassificationSurrogate = ClassificationMLPEnsemble

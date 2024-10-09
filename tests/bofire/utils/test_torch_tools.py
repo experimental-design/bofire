@@ -35,6 +35,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
+    InterpolateTransform,
     constrained_objective2botorch,
     get_additive_botorch_objective,
     get_custom_botorch_objective,
@@ -48,6 +49,7 @@ from bofire.utils.torch_tools import (
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
+    interp1d,
     tkwargs,
 )
 
@@ -962,3 +964,242 @@ def test_constrained_objective():
         .ravel()
     )
     assert np.allclose(true_y.numpy(), result)
+
+
+def test_interp1d():
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([0.0, 10, 40, 60])
+    y = np.array([0.0, 0.2, 0.5, 0.9])
+    y_new = np.interp(x_new, x, y)
+    tx_new = torch.from_numpy(x_new).to(**tkwargs)
+    tx = torch.from_numpy(np.array([0.0, 10, 40, 60])).to(**tkwargs)
+    ty = torch.from_numpy(np.array([0.0, 0.2, 0.5, 0.9])).to(**tkwargs)
+    ty_new = interp1d(tx, ty, tx_new).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+
+def test_InterpolateTransform():
+    new_x = torch.from_numpy(np.linspace(0, 60, 200)).to(**tkwargs)
+    with pytest.raises(ValueError, match="Indices are not unique."):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[2, 3, 4],
+            prepend_x=torch.tensor([0]),
+            append_x=torch.tensor([60]),
+            prepend_y=torch.tensor([0]),
+            append_y=torch.tensor([1]),
+            new_x=new_x,
+        )
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2],
+        idx_y=[3, 4, 5],
+        prepend_x=torch.tensor([0]),
+        append_x=torch.tensor([60]),
+        prepend_y=torch.tensor([0]),
+        append_y=torch.tensor([1]),
+        new_x=new_x,
+    )
+
+    # test the append and prepend functionality for 2 dim data
+    X = torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs)
+    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor(
+            [
+                [
+                    1,
+                    2,
+                    10,
+                    40,
+                    55,
+                ],
+                [1, 2, 10, 20, 55],
+            ]
+        ).to(**tkwargs),
+    )
+
+    values = torch.tensor([1.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[10, 40, 55, 1], [10, 20, 55, 1]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[1, 10, 40, 55], [1, 10, 20, 55]]).to(**tkwargs),
+    )
+
+    values = torch.tensor([]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs),
+    )
+
+    # test the append and prepend functionality for 3 dim data
+    X = torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs)
+    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor(
+            [
+                [
+                    1,
+                    2,
+                    10,
+                    40,
+                    55,
+                ],
+                [1, 2, 10, 20, 55],
+            ]
+        ).to(**tkwargs),
+    )
+
+    values = torch.tensor([1.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[[10, 40, 55, 1], [10, 20, 55, 1]]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[1, 10, 40, 55], [1, 10, 20, 55]]]).to(**tkwargs),
+    )
+
+    values = torch.tensor([]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs),
+    )
+
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+
+    tX = torch.tensor([[10, 40, 55, 0.2, 0.5, 0.75], [10, 20, 55, 0.2, 0.5, 0.7]]).to(
+        **tkwargs
+    )
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test error handling
+    with pytest.raises(
+        ValueError, match="The number of x and y indices must be equal."
+    ):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[3, 4, 5],
+            prepend_x=torch.tensor([0, 0.1]),
+            append_x=torch.tensor([60]),
+            prepend_y=torch.tensor([0]),
+            append_y=torch.tensor([1]),
+            new_x=new_x,
+        )
+
+    # test without prepend and append
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3, 4],
+        idx_y=[5, 6, 7, 8, 9],
+        prepend_x=torch.tensor([]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([]),
+        new_x=new_x,
+    )
+
+    tX = torch.tensor(
+        [
+            [0, 10, 40, 55, 60, 0, 0.2, 0.5, 0.75, 1],
+            [0, 10, 20, 55, 60, 0, 0.2, 0.5, 0.7, 1],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test different prepend and append
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test keep original
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+        keep_original=True,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(
+        np.concatenate([y_new, tX.numpy()], axis=-1), ty_new, rtol=1e-6
+    )

@@ -9,6 +9,7 @@ from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.surrogates.mlp import ClassificationMLPEnsemble, RegressionMLPEnsemble
 from bofire.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.surrogates.random_forest import RandomForestSurrogate
+from bofire.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.surrogates.surrogate import Surrogate
 from bofire.surrogates.xgb import XGBoostSurrogate
@@ -29,6 +30,7 @@ SURROGATE_MAP: Dict[Type[data_models.Surrogate], Type[Surrogate]] = {
     data_models.LinearDeterministicSurrogate: LinearDeterministicSurrogate,
     data_models.MultiTaskGPSurrogate: MultiTaskGPSurrogate,
     data_models.SingleTaskIBNNSurrogate: SingleTaskGPSurrogate,
+    data_models.PiecewiseLinearGPSurrogate: PiecewiseLinearGPSurrogate,
 }
 
 

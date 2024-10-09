@@ -12,6 +12,13 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    kernels.WassersteinKernel,
+    lambda: {
+        "squared": False,
+        "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
+    },
+)
+specs.add_valid(
     kernels.LinearKernel,
     lambda: {"variance_prior": priors.valid(GammaPrior).obj().model_dump()},
 )

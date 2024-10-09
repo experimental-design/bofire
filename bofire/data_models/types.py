@@ -1,4 +1,4 @@
-from typing import Annotated, Dict, List, Tuple, Union
+from typing import Annotated, Dict, List, Sequence, Tuple, Union
 
 from pydantic import AfterValidator, Field, PositiveInt
 
@@ -53,23 +53,22 @@ def validate_power_of_two(value: int):
     return value
 
 
-def validate_bounds(bounds: Tuple[float, float]) -> Tuple[float, float]:
-    """Validate that the lower bound is less than or equal to the upper bound.
+def validate_monotonically_increasing(sequence: Sequence[float]) -> Sequence[float]:
+    """Validate that the sequence is monotonically increasing.
 
     Args:
-        bounds: Tuple of lower and upper bounds.
+        sequence: Sequence of values.
 
     Raises:
         ValueError: If lower bound is greater than upper bound.
 
     Returns:
-        Validated bounds.
+        Validated sequence
     """
-    if bounds[0] > bounds[1]:
-        raise ValueError(
-            f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
-        )
-    return bounds
+    if len(sequence) > 1:
+        if not all(x <= y for x, y in zip(sequence, sequence[1:])):
+            raise ValueError("Sequence is not monotonically increasing.")
+    return sequence
 
 
 FeatureKeys = Annotated[
@@ -84,7 +83,9 @@ Descriptors = Annotated[
     List[str], Field(min_length=1), AfterValidator(make_unique_validator("Descriptors"))
 ]
 
-Bounds = Annotated[Tuple[float, float], AfterValidator(validate_bounds)]
+Bounds = Annotated[
+    Tuple[float, float], AfterValidator(validate_monotonically_increasing)
+]
 
 DiscreteVals = Annotated[List[float], Field(min_length=1)]
 
