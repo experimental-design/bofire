@@ -594,6 +594,8 @@ def interp1d(
 
 
 class InterpolateTransform(InputTransform, Module):
+    """Botorch input transform that interpolates values between given x and y values."""
+
     def __init__(
         self,
         new_x: Tensor,

@@ -87,6 +87,31 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
 
 
 class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
+    """GP surrogate that is based on a `WassersteinKernel` for modeling functions
+    that take a monotonically increasing piecewise linear function as input. The
+    computation of the covariance between the piecewise linears is done by the
+    Wasserstein distance kernel. The continuous features are modeled by a separate
+    kernel, which can be either of Matern or RBF type. Both kernels are then combined
+    by a product kernel.
+
+    Attributes:
+        interpolation_range: The range of the interpolation for the piecewise linear
+            functions.
+        n_interpolation_points: Number of interpolation points in the interpolation range.
+        x_keys: The keys of the features that are used as x values for the interpolation.
+        y_keys: The keys of the features that are used as y values for the interpolation.
+        continuous_keys: The keys of the features that are used for the continuous kernel.
+        prepend_x: The x values that are prepended to the values of the `x_keys`.
+        append_x: The x values that are appended to the values of the `x_keys`.
+        prepend_y: The y values that are prepended to the values of the `y_keys`.
+        append_y: The y values that are appended to the values of the `y_keys`.
+        shape_kernel: The Wasserstein distance kernel to be used.
+        continuous_kernel: The kernel that is used for the continuous features.
+        outputscale_prior: Prior for the outputscale of the GP.
+        noise_prior: Prior for the noise of the GP.
+        hyperconfig: The hyperconfig that is used for training the GP.
+    """
+
     type: Literal["PiecewiseLinearGPSurrogate"] = "PiecewiseLinearGPSurrogate"
     interpolation_range: Bounds
     n_interpolation_points: PositiveInt = 1000
