@@ -42,33 +42,34 @@ def get_model_and_data():
 
 def test_lengthscale_importance_invalid():
     model, experiments = get_model_and_data()
-    surrogate_data = SingleTaskGPSurrogate(
-        inputs=model.inputs, outputs=model.outputs, kernel=RBFKernel()
-    )
-    surrogate = surrogates.map(surrogate_data)
-    surrogate.fit(experiments)
-    with pytest.raises(ValueError, match="No lenghtscale based kernel found."):
-        lengthscale_importance(surrogate=surrogate)
-    surrogate_data = SingleTaskGPSurrogate(
-        inputs=model.inputs,
-        outputs=model.outputs,
-        kernel=ScaleKernel(base_kernel=RBFKernel(ard=False)),
-    )
-    surrogate = surrogates.map(surrogate_data)
-    surrogate.fit(experiments)
-    with pytest.raises(ValueError, match="Only one lengthscale found, use `ard=True`."):
-        lengthscale_importance(surrogate=surrogate)
+    for kernel in [ScaleKernel(base_kernel=RBFKernel(ard=False)), RBFKernel(ard=False)]:
+        surrogate_data = SingleTaskGPSurrogate(
+            inputs=model.inputs,
+            outputs=model.outputs,
+            kernel=kernel,
+        )
+        surrogate = surrogates.map(surrogate_data)
+        surrogate.fit(experiments)
+        with pytest.raises(
+            ValueError, match="Only one lengthscale found, use `ard=True`."
+        ):
+            lengthscale_importance(surrogate=surrogate)
 
 
 def test_lengthscale_importance():
-    surrogate, experiments = get_model_and_data()
-    surrogate.fit(experiments)
-    importance = lengthscale_importance(surrogate=surrogate)
-    assert isinstance(importance, pd.Series)
-    assert list(importance.index) == surrogate.inputs.get_keys()
-    importance = lengthscale_importance_hook(surrogate=surrogate)
-    assert isinstance(importance, pd.Series)
-    assert list(importance.index) == surrogate.inputs.get_keys()
+    model, experiments = get_model_and_data()
+    for kernel in [ScaleKernel(base_kernel=RBFKernel()), RBFKernel()]:
+        surrogate_data = SingleTaskGPSurrogate(
+            inputs=model.inputs, outputs=model.outputs, kernel=kernel
+        )
+        surrogate = surrogates.map(surrogate_data)
+        surrogate.fit(experiments)
+        importance = lengthscale_importance(surrogate=surrogate)
+        assert isinstance(importance, pd.Series)
+        assert list(importance.index) == surrogate.inputs.get_keys()
+        importance = lengthscale_importance_hook(surrogate=surrogate)
+        assert isinstance(importance, pd.Series)
+        assert list(importance.index) == surrogate.inputs.get_keys()
 
 
 def test_combine_lengthscale_importances():

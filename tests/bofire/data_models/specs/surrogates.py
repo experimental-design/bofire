@@ -20,9 +20,9 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.molfeatures.api import Fingerprints
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
 )
 from bofire.data_models.surrogates.api import (
     MeanAggregation,
@@ -52,9 +52,9 @@ specs.add_valid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
         "aggregations": [
             random.choice(
@@ -66,7 +66,7 @@ specs.add_valid(
         ],
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -89,7 +89,7 @@ specs.add_valid(
         ).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "hyperconfig": None,
         "input_preprocessing_specs": {},
         "aggregations": None,
@@ -117,7 +117,7 @@ specs.add_valid(
         "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {"cat1": CategoricalEncodingEnum.ONE_HOT},
         "dump": None,
         "hyperconfig": None,
@@ -138,14 +138,14 @@ specs.add_valid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {},
         "dump": None,
         "hyperconfig": SingleTaskGPHyperconfig().model_dump(),
@@ -376,12 +376,12 @@ specs.add_valid(
             base_kernel=TanimotoKernel(
                 ard=True,
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.IDENTITY,
         "output_scaler": ScalerEnum.IDENTITY,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {
             "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump()
         },
@@ -417,7 +417,7 @@ specs.add_valid(
             "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
             "cat1": CategoricalEncodingEnum.ONE_HOT,
         },
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "dump": None,
         "hyperconfig": None,
     },
@@ -506,14 +506,14 @@ specs.add_valid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,
@@ -540,14 +540,14 @@ specs.add_invalid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ONE_HOT,
@@ -574,14 +574,14 @@ specs.add_invalid(
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
-                ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
+                ard=True, nu=2.5, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
         ).model_dump(),
         "aggregations": None,
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
-        "noise_prior": BOTORCH_NOISE_PRIOR().model_dump(),
+        "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "task_prior": None,
         "input_preprocessing_specs": {
             "task": CategoricalEncodingEnum.ORDINAL,

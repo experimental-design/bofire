@@ -24,11 +24,11 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
 )
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
     LKJ_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
 )
 from bofire.data_models.surrogates.api import (
     MultiTaskGPSurrogate,
@@ -71,8 +71,8 @@ def test_MultiTaskGPHyperconfig():
         assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
         assert surrogate_data.kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
     else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
-        assert surrogate_data.kernel.lengthscale_prior == BOTORCH_LENGTHCALE_PRIOR()
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+        assert surrogate_data.kernel.lengthscale_prior == THREESIX_LENGTHSCALE_PRIOR()
 
 
 def test_MultiTask_input_preprocessing():

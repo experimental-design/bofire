@@ -7,7 +7,7 @@ from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import (
     PolynomialKernel,
 )
-from bofire.data_models.priors.api import BOTORCH_NOISE_PRIOR, AnyPrior
+from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, AnyPrior
 
 # from bofire.data_models.strategies.api import FactorialStrategy
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate
@@ -17,7 +17,7 @@ class PolynomialSurrogate(TrainableBotorchSurrogate):
     type: Literal["PolynomialSurrogate"] = "PolynomialSurrogate"
 
     kernel: PolynomialKernel = Field(default_factory=lambda: PolynomialKernel(power=2))
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
 
     @staticmethod
     def from_power(power: int, inputs: Inputs, outputs: Outputs):

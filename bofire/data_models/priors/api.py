@@ -26,9 +26,9 @@ AnyGeneralPrior = Union[GammaPrior, NormalPrior, LKJPrior, LogNormalPrior]
 
 # default priors of interest
 # botorch defaults
-BOTORCH_LENGTHCALE_PRIOR = partial(GammaPrior, concentration=3.0, rate=6.0)
-BOTORCH_NOISE_PRIOR = partial(GammaPrior, concentration=1.1, rate=0.05)
-BOTORCH_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
+THREESIX_LENGTHSCALE_PRIOR = partial(GammaPrior, concentration=3.0, rate=6.0)
+THREESIX_NOISE_PRIOR = partial(GammaPrior, concentration=1.1, rate=0.05)
+THREESIX_SCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=0.15)
 
 # mbo priors
 # By default BoTorch places a highly informative prior on the kernel lengthscales,

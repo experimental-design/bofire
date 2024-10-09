@@ -6,7 +6,7 @@ from pydantic import Field
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.kernels.api import LinearKernel
 from bofire.data_models.priors.api import (
-    BOTORCH_NOISE_PRIOR,
+    THREESIX_NOISE_PRIOR,
     AnyPrior,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -17,7 +17,7 @@ class LinearSurrogate(TrainableBotorchSurrogate):
     type: Literal["LinearSurrogate"] = "LinearSurrogate"
 
     kernel: LinearKernel = Field(default_factory=lambda: LinearKernel())
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
 
     @classmethod
