@@ -121,4 +121,4 @@ jobs:
 
       - name: Run Notebooks
         shell: bash -l {0}
-        run: python scripts/run_tutorials.py -p "$(pwd)"
+        run: python scripts/run_tutorials.py
