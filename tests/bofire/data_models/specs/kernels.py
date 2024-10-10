@@ -3,6 +3,7 @@ from bofire.data_models.priors.api import GammaPrior, LogNormalPrior
 from tests.bofire.data_models.specs.priors import specs as priors
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(

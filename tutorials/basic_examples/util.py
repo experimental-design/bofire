@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 
+
 # Reaction Optimization Notebook util code
 
 T0 = 25

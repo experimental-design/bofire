@@ -6,6 +6,7 @@ from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.surrogates.api import SingleTaskGPSurrogate
 from bofire.runners.api import hyperoptimize
 
+
 benchmark = Himmelblau()
 experiments = benchmark.f(benchmark.domain.inputs.sample(9), return_complete=True)
 

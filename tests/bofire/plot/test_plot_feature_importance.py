@@ -4,6 +4,7 @@ import pytest
 
 from bofire.plot.feature_importance import plot_feature_importance_by_feature_plotly
 
+
 sensitivity_values = {
     "MAE": pd.DataFrame.from_dict(
         {

@@ -23,6 +23,7 @@ from bofire.strategies.api import QparegoStrategy, RandomStrategy
 from tests.bofire.strategies.test_base import domains
 from tests.bofire.utils.test_multiobjective import invalid_domains
 
+
 VALID_BOTORCH_QPAREGO_STRATEGY_SPEC = {
     "domain": domains[6],
     "surrogate_specs": surrogate_data_models.BotorchSurrogates(
@@ -223,7 +224,7 @@ def test_get_acqf_input(specs, benchmark, num_experiments, num_candidates):
         num_experiments,
         len(set(chain(*names.values()))),
     )
-    assert X_pending.shape == (
+    assert X_pending.shape == (  # type: ignore
         num_candidates,
         len(set(chain(*names.values()))),
     )

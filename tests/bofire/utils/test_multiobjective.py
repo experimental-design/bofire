@@ -19,6 +19,7 @@ from bofire.utils.multiobjective import (
     infer_ref_point,
 )
 
+
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
 

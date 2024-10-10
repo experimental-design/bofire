@@ -32,7 +32,7 @@ class NumericalInput(Input):
             pd.Series: transformed values.
         """
         if use_real_bounds:
-            lower, upper = self.get_bounds(transform_type=None, values=values)
+            lower, upper = self.get_bounds(transform_type=None, values=values)  # type: ignore
             lower = lower[0]
             upper = upper[0]
         else:

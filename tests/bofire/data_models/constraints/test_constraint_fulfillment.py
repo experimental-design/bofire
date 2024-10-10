@@ -14,6 +14,7 @@ from bofire.data_models.constraints.api import (
     ProductInequalityConstraint,
 )
 
+
 F = FEATURES = ["f" + str(i) for i in range(1, 11)]
 
 C = list(range(1, 11))

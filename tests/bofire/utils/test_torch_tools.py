@@ -51,6 +51,7 @@ from bofire.utils.torch_tools import (
     tkwargs,
 )
 
+
 if1 = ContinuousInput(
     bounds=(0, 1),
     key="if1",
@@ -193,8 +194,7 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
     # do the comparison
     assert np.allclose(
         (
-            (reward1**obj1.w + reward3**obj3.w)
-            * (reward1**obj1.w * reward3**obj3.w)
+            (reward1**obj1.w + reward3**obj3.w) * (reward1**obj1.w * reward3**obj3.w)
             if exclude_constraints
             else (reward1**obj1.w + reward2**obj2.w)
             * (reward1**obj1.w * reward2**obj2.w)

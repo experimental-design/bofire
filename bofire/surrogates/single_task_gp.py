@@ -40,11 +40,12 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         scaler = get_scaler(self.inputs, self.input_preprocessing_specs, self.scaler, X)
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 
-        tX, tY = torch.from_numpy(transformed_X.values).to(**tkwargs), torch.from_numpy(
-            Y.values
-        ).to(**tkwargs)
+        tX, tY = (
+            torch.from_numpy(transformed_X.values).to(**tkwargs),
+            torch.from_numpy(Y.values).to(**tkwargs),
+        )
 
-        self.model = botorch.models.SingleTaskGP(  # type: ignore
+        self.model = botorch.models.SingleTaskGP(
             train_X=tX,
             train_Y=tY,
             covar_module=kernels.map(
@@ -61,7 +62,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             input_transform=scaler,
         )
 
-        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)  # type: ignore
+        self.model.likelihood.noise_covar.noise_prior = priors.map(self.noise_prior)
 
         mll = ExactMarginalLogLikelihood(self.model.likelihood, self.model)
         fit_gpytorch_mll(mll, options=self.training_specs, max_attempts=10)

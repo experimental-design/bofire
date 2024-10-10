@@ -7,14 +7,8 @@ from bofire.data_models.acquisition_functions.api import qLogEI
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
 from bofire.data_models.objectives.api import MaximizeObjective
-from bofire.data_models.strategies.api import (
-    RandomStrategy,
-    SoboStrategy,
-)
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    MultiTaskGPSurrogate,
-)
+from bofire.data_models.strategies.api import RandomStrategy, SoboStrategy
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 
 
 def _task_1_f(x):
@@ -69,7 +63,7 @@ def test_sobo_with_multitask(task_input):
         MultiTaskGPSurrogate(inputs=domain.inputs, outputs=domain.outputs)
     ]
 
-    surrogate_specs = BotorchSurrogates(surrogates=surrogate_data)
+    surrogate_specs = BotorchSurrogates(surrogates=surrogate_data)  # type: ignore
 
     strategy_data_model = SoboStrategy(
         domain=domain,

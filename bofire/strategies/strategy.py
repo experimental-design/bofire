@@ -22,7 +22,7 @@ class Strategy(ABC):
     ):
         self.domain = data_model.domain
         self.seed = data_model.seed or np.random.default_rng().integers(1000)
-        self.rng = np.random.default_rng(self.seed)  # type: ignore
+        self.rng = np.random.default_rng(self.seed)
         self._experiments = None
         self._candidates = None
 
@@ -202,7 +202,7 @@ class Strategy(ABC):
             self._candidates = pd.concat(
                 (self.candidates, candidates[self.domain.inputs.get_keys()]),
                 ignore_index=True,
-            )  # type: ignore
+            )
 
     def reset_candidates(self):
         """Resets the pending candidates of the strategy."""

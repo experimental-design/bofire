@@ -10,17 +10,21 @@ jobs:
   build-n-publish:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@master
+      - name: Check out repo
+        uses: actions/checkout@v4
+
       - name: Set up Python 3.9
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v5
         with:
           python-version: 3.9
+
       - name: Install pypa/build
         run: >-
           python -m
           pip install
           build
           --user
+
       - name: Build a binary wheel and a source tarball
         run: >-
           python -m
@@ -29,6 +33,7 @@ jobs:
           --wheel
           --outdir dist/
           .
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@master
         with:

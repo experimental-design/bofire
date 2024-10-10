@@ -21,6 +21,7 @@ from bofire.strategies.shortest_path import ShortestPathStrategy
 from bofire.strategies.space_filling import SpaceFillingStrategy
 from bofire.strategies.strategy import Strategy
 
+
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.ActiveLearningStrategy: ActiveLearningStrategy,
     data_models.RandomStrategy: RandomStrategy,

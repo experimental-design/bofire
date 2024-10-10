@@ -15,6 +15,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Constraints, Domain, Inputs
 from bofire.data_models.features.api import ContinuousInput, Input
 
+
 ### this module is based on the original implementation in basf/opti.
 
 
@@ -104,7 +105,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
     for i in range(len(linear_equalities)):
         c = linear_equalities[i]
         assert isinstance(c, LinearEqualityConstraint)
-        A_aug.loc[i, c.features] = c.coefficients  # type: ignore
+        A_aug.loc[i, c.features] = c.coefficients
         A_aug.loc[i, "rhs"] = c.rhs
     A_aug = A_aug.values
 
@@ -399,7 +400,7 @@ def rref(A: np.ndarray, tol: float = 1e-8) -> Tuple[np.ndarray, List[int]]:
             pivots.append(col)
             max_row = np.argmax(np.abs(A[row:, col])) + row
             # switch to most stable row
-            A[[row, max_row], :] = A[[max_row, row], :]  # type: ignore
+            A[[row, max_row], :] = A[[max_row, row], :]
             # normalize row
             A[row, :] /= A[row, col]
             # eliminate other elements from column

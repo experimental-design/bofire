@@ -11,11 +11,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     TaskInput,
 )
-from bofire.data_models.kernels.api import (
-    AnyKernel,
-    MaternKernel,
-    RBFKernel,
-)
+from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
@@ -42,9 +38,9 @@ class MultiTaskGPHyperconfig(Hyperconfig):
         ]
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal[
-        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FactorialStrategy"
+    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
+        "FactorialStrategy"
+    )
 
     @staticmethod
     def _update_hyperparameters(
@@ -109,7 +105,6 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     @field_validator("inputs")
     @classmethod
     def validate_task_inputs(cls, inputs: Inputs):
-
         if len(inputs.get_keys(TaskInput)) != 1:
             raise ValueError("Exactly one task input is required for multi-task GPs.")
         return inputs

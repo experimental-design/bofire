@@ -126,7 +126,7 @@ class PredictiveStrategy(Strategy):
             experiments=experiments, specs=self.input_preprocessing_specs
         )
         preds, stds = self._predict(transformed)
-        pred_cols, sd_cols = get_column_names(self.domain.outputs)  # type: ignore
+        pred_cols, sd_cols = get_column_names(self.domain.outputs)
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)), columns=pred_cols + sd_cols
@@ -138,7 +138,7 @@ class PredictiveStrategy(Strategy):
             )
         predictions = postprocess_categorical_predictions(
             predictions=predictions, outputs=self.domain.outputs
-        )  # type: ignore
+        )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index
@@ -185,7 +185,7 @@ class PredictiveStrategy(Strategy):
                         standardDeviation=row[f"{feat.key}_sd"],
                         objective=(
                             row[f"{feat.key}_des"]
-                            if feat.objective is not None  # type: ignore
+                            if feat.objective is not None
                             else 1.0
                         ),
                     )

@@ -34,7 +34,7 @@ class QehviStrategy(BotorchStrategy):
     ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
-    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:
+    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:  # type: ignore
         assert self.experiments is not None, "No experiments available."
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments

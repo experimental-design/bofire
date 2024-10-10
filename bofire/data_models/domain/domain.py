@@ -212,9 +212,7 @@ class Domain(BaseModel):
         # remove combinations not fulfilling constraints
         used_features_list_final = []
         for combo in used_features_list_no_dup:
-            fulfil_constraints = (
-                []
-            )  # list of bools tracking if constraints are fulfilled
+            fulfil_constraints = []  # list of bools tracking if constraints are fulfilled
             for con in self.constraints.get(NChooseKConstraint):
                 assert isinstance(con, NChooseKConstraint)
                 count = 0  # count of features in combo that are in con.features

@@ -4,10 +4,7 @@ import pytest
 
 from bofire.benchmarks.LookupTableBenchmark import LookupTableBenchmark
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
-from bofire.data_models.features.api import (
-    CategoricalInput,
-    ContinuousOutput,
-)
+from bofire.data_models.features.api import CategoricalInput, ContinuousOutput
 from bofire.data_models.objectives.api import MaximizeObjective
 
 

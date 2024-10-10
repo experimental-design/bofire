@@ -70,7 +70,7 @@ class BotorchStrategy(PredictiveStrategy):
                 data_model=data_model.outlier_detection_specs
             )
         else:
-            self.outlier_detection_specs = None  # type: ignore
+            self.outlier_detection_specs = None
         self.min_experiments_before_outlier_check = (
             data_model.min_experiments_before_outlier_check
         )
@@ -87,7 +87,7 @@ class BotorchStrategy(PredictiveStrategy):
 
     @property
     def input_preprocessing_specs(self) -> InputTransformSpecs:
-        return self.surrogate_specs.input_preprocessing_specs  # type: ignore
+        return self.surrogate_specs.input_preprocessing_specs
 
     @property
     def _features2idx(self) -> Dict[str, Tuple[int]]:
@@ -111,14 +111,14 @@ class BotorchStrategy(PredictiveStrategy):
             Dict[str, int]: The dictionary with the settings.
         """
         return {
-            "batch_limit": (
+            "batch_limit": (  # type: ignore
                 self.batch_limit
                 if len(
                     self.domain.constraints.get([NChooseKConstraint, ProductConstraint])
                 )
                 == 0
                 else 1
-            ),  # type: ignore
+            ),
             "maxiter": self.maxiter,
         }
 
@@ -152,27 +152,29 @@ class BotorchStrategy(PredictiveStrategy):
                     if isinstance(surrogate_data, get_args(AnyTrainableSurrogate))
                     else surrogate_data
                 )
-                for surrogate_data in self.surrogate_specs.surrogates  # type: ignore
+                for surrogate_data in self.surrogate_specs.surrogates
             ]
 
         # map the surrogate spec, we keep it here as attribute to be able to save/dump
         # the surrogate
-        self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs)  # type: ignore
+        self.surrogates = BotorchSurrogates(data_model=self.surrogate_specs)
 
-        self.surrogates.fit(experiments)  # type: ignore
+        self.surrogates.fit(experiments)
         self.model = self.surrogates.compatibilize(  # type: ignore
-            inputs=self.domain.inputs,  # type: ignore
-            outputs=self.domain.outputs,  # type: ignore
+            inputs=self.domain.inputs,
+            outputs=self.domain.outputs,
         )
 
-    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:
+    def _predict(self, transformed: pd.DataFrame) -> Tuple[np.ndarray, np.ndarray]:  # type: ignore
         # we are using self.model here for this purpose we have to take the transformed
         # input and further transform it to a torch tensor
         X = torch.from_numpy(transformed.values).to(**tkwargs)
         with torch.no_grad():
             try:
                 posterior = self.model.posterior(X=X, observation_noise=True)  # type: ignore
-            except NotImplementedError:  # NotImplementedEerror is thrown for MultiTaskGPSurrogate
+            except (
+                NotImplementedError
+            ):  # NotImplementedEerror is thrown for MultiTaskGPSurrogate
                 posterior = self.model.posterior(X=X, observation_noise=False)  # type: ignore
 
             if len(posterior.mean.shape) == 2:
@@ -200,7 +202,7 @@ class BotorchStrategy(PredictiveStrategy):
         """
         acqf = self._get_acqfs(1)[0]
 
-        transformed = self.domain.inputs.transform(  # type: ignore
+        transformed = self.domain.inputs.transform(
             candidates, self.input_preprocessing_specs
         )
         X = torch.from_numpy(transformed.values).to(**tkwargs)
@@ -327,11 +329,11 @@ class BotorchStrategy(PredictiveStrategy):
                 raw_samples=self.num_raw_samples,
                 equality_constraints=get_linear_constraints(
                     domain=self.domain,
-                    constraint=LinearEqualityConstraint,  # type: ignore
+                    constraint=LinearEqualityConstraint,
                 ),
                 inequality_constraints=get_linear_constraints(
                     domain=self.domain,
-                    constraint=LinearInequalityConstraint,  # type: ignore
+                    constraint=LinearInequalityConstraint,
                 ),
                 nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                 fixed_features=fixed_features,
@@ -350,11 +352,11 @@ class BotorchStrategy(PredictiveStrategy):
                     raw_samples=self.num_raw_samples,
                     equality_constraints=get_linear_constraints(
                         domain=self.domain,
-                        constraint=LinearEqualityConstraint,  # type: ignore
+                        constraint=LinearEqualityConstraint,
                     ),
                     inequality_constraints=get_linear_constraints(
                         domain=self.domain,
-                        constraint=LinearInequalityConstraint,  # type: ignore
+                        constraint=LinearInequalityConstraint,
                     ),
                     nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                     fixed_features_list=fixed_features_list,
@@ -374,23 +376,23 @@ class BotorchStrategy(PredictiveStrategy):
                     raw_samples=self.num_raw_samples,
                     equality_constraints=get_linear_constraints(
                         domain=self.domain,
-                        constraint=LinearEqualityConstraint,  # type: ignore
+                        constraint=LinearEqualityConstraint,
                     )
                     + interpoints,
                     inequality_constraints=get_linear_constraints(
                         domain=self.domain,
-                        constraint=LinearInequalityConstraint,  # type: ignore
+                        constraint=LinearInequalityConstraint,
                     ),
                     fixed_features=fixed_features,
                     nonlinear_inequality_constraints=nonlinear_constraints,  # type: ignore
                     return_best_only=True,
                     options=self._get_optimizer_options(),  # type: ignore
-                    ic_generator=ic_generator,  # type: ignore
-                    **ic_gen_kwargs,  # type: ignore
+                    ic_generator=ic_generator,
+                    **ic_gen_kwargs,
                 )
         return candidates, acqf_vals
 
-    def _ask(self, candidate_count: int) -> pd.DataFrame:
+    def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """[summary]
 
         Args:
@@ -416,8 +418,8 @@ class BotorchStrategy(PredictiveStrategy):
                 )
             # generate the choices as pandas dataframe
             choices = pd.DataFrame.from_dict(
-                [
-                    {e[0]: e[1] for e in combi}  # type: ignore
+                [  # type: ignore
+                    {e[0]: e[1] for e in combi}
                     for combi in self.domain.inputs.get_categorical_combinations()
                 ]
             )
@@ -525,9 +527,7 @@ class BotorchStrategy(PredictiveStrategy):
             assert isinstance(feat, Input)
             if feat.fixed_value() is not None:
                 fixed_values = feat.fixed_value(
-                    transform_type=self.input_preprocessing_specs.get(
-                        feat.key
-                    )  # type:ignore
+                    transform_type=self.input_preprocessing_specs.get(feat.key)  # type: ignore
                 )
                 for j, idx in enumerate(features2idx[feat.key]):
                     fixed_features[idx] = fixed_values[j]  # type: ignore
@@ -645,7 +645,7 @@ class BotorchStrategy(PredictiveStrategy):
                             fixed_features[idx] = transformed.values[0, j]
 
                     elif isinstance(feature, DiscreteInput):
-                        fixed_features[features2idx[feat][0]] = val
+                        fixed_features[features2idx[feat][0]] = val  # type: ignore
 
                 list_of_fixed_features.append(fixed_features)
         return list_of_fixed_features

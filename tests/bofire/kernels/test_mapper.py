@@ -21,6 +21,7 @@ from bofire.data_models.kernels.api import (
 from bofire.data_models.priors.api import BOTORCH_SCALE_PRIOR, GammaPrior
 from tests.bofire.data_models.specs.api import Spec
 
+
 try:
     from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
 except ImportError:

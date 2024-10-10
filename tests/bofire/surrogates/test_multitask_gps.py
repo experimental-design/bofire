@@ -2,10 +2,7 @@ import importlib
 
 import pytest
 from botorch.models import MultiTaskGP
-from botorch.models.transforms.input import (
-    InputStandardize,
-    Normalize,
-)
+from botorch.models.transforms.input import InputStandardize, Normalize
 from botorch.models.transforms.outcome import Standardize
 from pandas.testing import assert_frame_equal
 
@@ -19,10 +16,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
     TaskInput,
 )
-from bofire.data_models.kernels.api import (
-    MaternKernel,
-    RBFKernel,
-)
+from bofire.data_models.kernels.api import MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
     BOTORCH_LENGTHCALE_PRIOR,
     BOTORCH_NOISE_PRIOR,
@@ -30,10 +24,8 @@ from bofire.data_models.priors.api import (
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
 )
-from bofire.data_models.surrogates.api import (
-    MultiTaskGPSurrogate,
-    ScalerEnum,
-)
+from bofire.data_models.surrogates.api import MultiTaskGPSurrogate, ScalerEnum
+
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 

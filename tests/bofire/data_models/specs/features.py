@@ -10,6 +10,7 @@ from bofire.data_models.objectives.api import (
 from tests.bofire.data_models.specs.objectives import specs as objectives
 from tests.bofire.data_models.specs.specs import Specs
 
+
 # RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 specs = Specs([])

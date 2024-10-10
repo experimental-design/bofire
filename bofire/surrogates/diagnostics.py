@@ -243,7 +243,7 @@ def _spearman_UQ(
         )
         return np.nan
     else:
-        ae = np.abs(observed - predicted)  # type: ignore
+        ae = np.abs(observed - predicted)
         with np.errstate(invalid="ignore"):
             rho, _ = spearmanr(ae, standard_deviation)
         return float(rho)
@@ -275,7 +275,7 @@ def _pearson_UQ(
         )
         return np.nan
     else:
-        ae = np.abs(observed - predicted)  # type: ignore
+        ae = np.abs(observed - predicted)
         with np.errstate(invalid="ignore"):
             rho, _ = pearsonr(ae, standard_deviation)
         return float(rho)
@@ -307,7 +307,7 @@ def _kendall_UQ(
         )
         return np.nan
     else:
-        ae = np.abs(observed - predicted)  # type: ignore
+        ae = np.abs(observed - predicted)
         with np.errstate(invalid="ignore"):
             rho, _ = kendalltau(ae, standard_deviation)
         return float(rho)
@@ -339,7 +339,7 @@ def _CVPPDiagram(
             "Calibration metric without standard deviation is not possible"
         )
     else:
-        lhs = np.abs((predicted - observed) / standard_deviation)  # type: ignore
+        lhs = np.abs((predicted - observed) / standard_deviation)
         qs = np.linspace(0, 1, num_bins)
         Cqs = np.empty(qs.shape)
         for ix, q in enumerate(qs):
@@ -379,7 +379,7 @@ def _MaximumMiscalibration(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = np.max(np.abs(Cqs - qs))  # type: ignore
+        res = np.max(np.abs(Cqs - qs))
 
         return float(res)
     except ValueError:
@@ -419,7 +419,7 @@ def _MiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simpson(Cqs - qs, x=qs)  # type: ignore
+        res = simpson(Cqs - qs, x=qs)
 
         return float(res)
     except ValueError:
@@ -455,7 +455,7 @@ def _AbsoluteMiscalibrationArea(
             standard_deviation=standard_deviation,
             num_bins=num_bins,
         )
-        res = simpson(np.abs(Cqs - qs), x=qs)  # type: ignore
+        res = simpson(np.abs(Cqs - qs), x=qs)
 
         return float(res)
     except ValueError:
@@ -580,7 +580,7 @@ class CvResult(BaseModel):
             return np.nan
         return all_metrics[metric](
             self.observed.values, self.predicted.values, self.standard_deviation
-        )  # type: ignore
+        )
 
 
 class CvResults(BaseModel):
@@ -655,20 +655,20 @@ class CvResults(BaseModel):
         predicted = pd.concat([cv.predicted for cv in self.results], ignore_index=True)
         if self.results[0].standard_deviation is not None:
             sd = pd.concat(
-                [cv.standard_deviation for cv in self.results],  # type: ignore
+                [cv.standard_deviation for cv in self.results],
                 ignore_index=True,
             )
         else:
             sd = None
         if self.results[0].labcodes is not None:
             labcodes = pd.concat(
-                [cv.labcodes for cv in self.results],  # type: ignore
+                [cv.labcodes for cv in self.results],
                 ignore_index=True,
             )
         else:
             labcodes = None
         if self.results[0].X is not None:
-            X = pd.concat([cv.X for cv in self.results], ignore_index=True)  # type: ignore
+            X = pd.concat([cv.X for cv in self.results], ignore_index=True)
         else:
             X = None
         return CvResult(

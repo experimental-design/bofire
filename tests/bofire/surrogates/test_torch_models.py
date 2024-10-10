@@ -32,6 +32,7 @@ from bofire.surrogates.api import BotorchSurrogates
 from bofire.surrogates.random_forest import _RandomForest
 from bofire.utils.torch_tools import tkwargs
 
+
 CLOUDPICKLE_NOT_AVAILABLE = find_spec("cloudpickle") is None
 
 

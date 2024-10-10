@@ -39,11 +39,11 @@ def get_ref_point_mask(
     mask = []
     for key in output_feature_keys:
         feat = domain.outputs.get_by_key(key)
-        if isinstance(feat.objective, MaximizeObjective):  # type: ignore
+        if isinstance(feat.objective, MaximizeObjective):
             mask.append(1.0)
-        elif isinstance(feat.objective, MinimizeObjective):  # type: ignore
+        elif isinstance(feat.objective, MinimizeObjective):
             mask.append(-1.0)
-        elif isinstance(feat.objective, CloseToTargetObjective):  # type: ignore
+        elif isinstance(feat.objective, CloseToTargetObjective):
             mask.append(-1.0)
         else:
             raise ValueError(
@@ -68,7 +68,7 @@ def get_pareto_front(
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
         experiments, output_feature_keys
     )
-    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)  # type: ignore
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
     pareto_mask = np.array(
         is_non_dominated(
             objective(
@@ -87,7 +87,7 @@ def compute_hypervolume(
     )
     objective = get_multiobjective_objective(
         outputs=outputs, experiments=optimal_experiments
-    )  # type: ignore
+    )
     ref_point_mask = torch.from_numpy(get_ref_point_mask(domain)).to(**tkwargs)
     hv = Hypervolume(
         ref_point=torch.tensor(
@@ -106,7 +106,7 @@ def compute_hypervolume(
     )
 
     return hv.compute(
-        objective(  # type: ignore
+        objective(
             torch.from_numpy(
                 optimal_experiments[
                     domain.outputs.get_keys_by_objective(
@@ -116,7 +116,7 @@ def compute_hypervolume(
                             CloseToTargetObjective,
                         ]
                     )
-                ].values
+                ].values  # type: ignore
             ).to(**tkwargs)
         )
     )
@@ -129,7 +129,7 @@ def infer_ref_point(
         includes=[MaximizeObjective, MinimizeObjective, CloseToTargetObjective]
     )
     keys = [f.key for f in outputs]
-    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)  # type: ignore
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
 
     df = domain.outputs.preprocess_experiments_all_valid_outputs(
         experiments, output_feature_keys=keys

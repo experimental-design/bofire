@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (
     Output,
 )
 
+
 # TODO: split this into the individual methods in the `Inputs` and `Outputs` classes
 
 
@@ -58,11 +59,11 @@ def generate_experiments(
         [
             {
                 **{
-                    f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)  # type: ignore
+                    f.key: random.uniform(f.lower_bound - tol, f.upper_bound + tol)
                     for f in domain.inputs.get(ContinuousInput)
                 },
                 **{
-                    f.key: random.choice(f.values)  # type: ignore
+                    f.key: random.choice(f.values)
                     for f in domain.inputs.get(DiscreteInput)
                 },
                 **{
@@ -73,10 +74,10 @@ def generate_experiments(
                 },
                 **{
                     f.key: (
-                        random.choice(f.categories)  # type: ignore
+                        random.choice(f.categories)
                         if not only_allowed_categories
                         else random.choice(f.get_allowed_categories())
-                    )  # type: ignore
+                    )
                     for f in domain.inputs.get(CategoricalInput)
                 },
             }
@@ -88,9 +89,9 @@ def generate_experiments(
     if force_all_categories:
         for feat in domain.inputs.get(CategoricalInput):
             categories = (
-                feat.categories  # type: ignore
-                if len(feat.categories) <= row_count  # type: ignore
-                else feat.categories[:row_count]  # type: ignore
+                feat.categories
+                if len(feat.categories) <= row_count
+                else feat.categories[:row_count]
             )
             experiments.loc[: len(categories) - 1, feat.key] = categories
 
@@ -102,7 +103,7 @@ def generate_candidates(domain: Domain, row_count: int = 5):
         [
             {
                 **{
-                    feat.key: random.uniform(feat.lower_bound, feat.upper_bound)  # type: ignore
+                    feat.key: random.uniform(feat.lower_bound, feat.upper_bound)
                     for feat in domain.inputs.get(ContinuousInput)
                 },
                 **{
@@ -118,7 +119,7 @@ def generate_candidates(domain: Domain, row_count: int = 5):
                     for k in domain.outputs.get_keys(ContinuousOutput)
                 },
                 **{
-                    f.key: random.choice(f.get_allowed_categories())  # type: ignore
+                    f.key: random.choice(f.get_allowed_categories())
                     for f in domain.inputs.get(CategoricalInput)
                 },
             }

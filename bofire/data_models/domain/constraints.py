@@ -19,6 +19,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import AnyConstraint, Constraint
 from bofire.data_models.filters import filter_by_class
 
+
 C = TypeVar("C", bound=Union[AnyConstraint, Constraint])
 CIncludes = TypeVar("CIncludes", bound=Union[AnyConstraint, Constraint])
 CExcludes = TypeVar("CExcludes", bound=Union[AnyConstraint, Constraint])

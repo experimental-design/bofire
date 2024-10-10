@@ -15,6 +15,7 @@ from bofire.data_models.features.molecular import (
 from bofire.data_models.features.numerical import NumericalInput
 from bofire.data_models.features.task import TaskInput
 
+
 AbstractFeature = Union[
     Feature,
     Input,

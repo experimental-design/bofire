@@ -52,7 +52,7 @@ class ProductConstraint(IntrapointConstraint):
 
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys(ContinuousInput)
-        for f in self.features:  # type: ignore
+        for f in self.features:
             if f not in keys:
                 raise ValueError(
                     f"Feature {f} is not a continuous input feature in the provided Inputs object."

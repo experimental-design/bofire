@@ -28,6 +28,7 @@ from bofire.surrogates.utils import (
 )
 from bofire.utils.torch_tools import tkwargs
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 

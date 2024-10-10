@@ -36,6 +36,7 @@ from bofire.data_models.surrogates.api import (
     Surrogate,
 )
 
+
 data_model_list = [
     AnyAcquisitionFunction,
     AnyCondition,

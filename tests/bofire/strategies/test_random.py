@@ -22,6 +22,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
 )
 
+
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=UserWarning, append=True)
 

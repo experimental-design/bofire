@@ -13,6 +13,7 @@ from bofire.data_models.features.api import (
     ContinuousOutput,
 )
 
+
 # NChooseKConstraint constraints 1
 cc1a = NChooseKConstraint(
     features=["0", "1", "2", "3"], min_count=2, max_count=3, none_also_valid=True

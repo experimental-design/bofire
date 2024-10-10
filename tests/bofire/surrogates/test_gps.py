@@ -47,6 +47,7 @@ from bofire.data_models.surrogates.api import (
 )
 from bofire.data_models.surrogates.trainable import metrics2objectives
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 

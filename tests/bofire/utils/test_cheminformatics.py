@@ -11,6 +11,7 @@ from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
     smiles2mordred,
 )
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 

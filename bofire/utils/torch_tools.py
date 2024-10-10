@@ -28,6 +28,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.strategies.strategy import Strategy
 
+
 tkwargs = {
     "dtype": torch.double,
     "device": "cpu",
@@ -56,17 +57,17 @@ def get_linear_constraints(
         lower = []
         upper = []
         rhs = 0.0
-        for i, featkey in enumerate(c.features):  # type: ignore
+        for i, featkey in enumerate(c.features):
             idx = domain.inputs.get_keys(Input).index(featkey)
             feat = domain.inputs.get_by_key(featkey)
-            if feat.is_fixed():  # type: ignore
+            if feat.is_fixed():
                 rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
             else:
                 lower.append(feat.lower_bound)  # type: ignore
                 upper.append(feat.upper_bound)  # type: ignore
                 indices.append(idx)
                 coefficients.append(
-                    c.coefficients[i]  # type: ignore
+                    c.coefficients[i]
                 )  # if unit_scaled == False else c_scaled.coefficients[i])
         if unit_scaled:
             lower = np.array(lower)
@@ -77,7 +78,7 @@ def get_linear_constraints(
                 (
                     torch.tensor(indices),
                     -torch.tensor(scaled_coefficients).to(**tkwargs),
-                    -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),  # type: ignore
+                    -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),
                 )
             )
         else:
@@ -85,7 +86,7 @@ def get_linear_constraints(
                 (
                     torch.tensor(indices),
                     -torch.tensor(coefficients).to(**tkwargs),
-                    -(rhs + c.rhs),  # type: ignore
+                    -(rhs + c.rhs),
                 )
             )
     return constraints
@@ -328,13 +329,13 @@ def get_output_constraints(
     etas = []
     idx = 0
     for feat in outputs.get():
-        if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
+        if isinstance(feat.objective, ConstrainedObjective):
             cleaned_experiments = outputs.preprocess_experiments_one_valid_output(
                 feat.key, experiments
             )
             iconstraints, ietas, idx = constrained_objective2botorch(
                 idx,
-                objective=feat.objective,  # type: ignore
+                objective=feat.objective,
                 x_adapt=torch.from_numpy(cleaned_experiments[feat.key].values).to(
                     **tkwargs
                 )
@@ -350,7 +351,7 @@ def get_output_constraints(
 
 def get_objective_callable(
     idx: int, objective: AnyObjective, x_adapt: Tensor
-) -> Callable[[Tensor, Optional[Tensor]], Tensor]:  # type: ignore
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     if isinstance(objective, MaximizeObjective):
         return lambda y, X=None: (
             (y[..., idx] - objective.lower_bound)
@@ -440,21 +441,21 @@ def get_custom_botorch_objective(
                     feat.key
                 ].values
             ).to(**tkwargs),
-        )  # type: ignore
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
     ]
     weights = [
-        feat.objective.w  # type: ignore
+        feat.objective.w
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
@@ -479,14 +480,14 @@ def get_multiplicative_botorch_objective(
                     feat.key
                 ].values
             ).to(**tkwargs),
-        )  # type: ignore
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
     ]
     weights = [
-        feat.objective.w  # type: ignore
+        feat.objective.w
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
     ]
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
@@ -512,21 +513,21 @@ def get_additive_botorch_objective(
                     feat.key
                 ].values
             ).to(**tkwargs),
-        )  # type: ignore
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
     ]
     weights = [
-        feat.objective.w  # type: ignore
+        feat.objective.w
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
@@ -564,11 +565,11 @@ def get_multiobjective_objective(
                     feat.key
                 ].values
             ).to(**tkwargs),
-        )  # type: ignore
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and isinstance(
-            feat.objective,  # type: ignore
+            feat.objective,
             (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
         )
     ]

@@ -12,6 +12,7 @@ from bofire.strategies.api import RandomStrategy
 from tests.bofire.strategies.test_qehvi import VALID_BOTORCH_QEHVI_STRATEGY_SPEC
 from tests.bofire.strategies.test_sobo import VALID_BOTORCH_SOBO_STRATEGY_SPEC
 
+
 STRATEGY_SPECS_SINGLE_OBJECTIVE = {
     # BoTorchSoboAdditiveStrategy: VALID_BOTORCH_SOBO_STRATEGY_SPEC,
     data_models.MultiplicativeSoboStrategy: VALID_BOTORCH_SOBO_STRATEGY_SPEC,

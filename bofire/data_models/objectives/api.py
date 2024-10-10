@@ -19,6 +19,7 @@ from bofire.data_models.objectives.target import (
     TargetObjective,
 )
 
+
 AbstractObjective = Union[
     Objective,
     IdentityObjective,

@@ -18,6 +18,7 @@ from bofire.utils.reduce import (
     rref,
 )
 
+
 if1 = ContinuousInput(key="if1", bounds=(0, 0.8))
 
 if2 = ContinuousInput(key="if2", bounds=(0, 0.8))
