@@ -166,7 +166,7 @@ def test_SOBO_calc_acquisition():
     experiments = benchmark.f(benchmark.domain.inputs.sample(10), return_complete=True)
     samples = benchmark.domain.inputs.sample(2)
     data_model = data_models.SoboStrategy(
-        domain=benchmark.domain, acquisition_function=qEI()
+        domain=benchmark.domain, acquisition_function=qLogEI()
     )
     strategy = SoboStrategy(data_model=data_model)
     strategy.tell(experiments=experiments)
@@ -215,7 +215,7 @@ def test_get_acqf_input(acqf, num_experiments, num_candidates):
         data_model=RandomStrategyDataModel(domain=benchmark.domain)
     )
     experiments = benchmark.f(
-        random_strategy._ask(n=num_experiments),
+        random_strategy._ask(candidate_count=num_experiments),
         return_complete=True,  # type: ignore
     )
 
@@ -411,7 +411,9 @@ def test_sobo_get_constrained_objective2():
     domain.outputs.get_by_key("f_1").objective = MaximizeSigmoidObjective(  # type: ignore
         tp=1.5, steepness=2.0
     )
-    strategy_data = data_models.SoboStrategy(domain=domain, acquisition_function=qEI())
+    strategy_data = data_models.SoboStrategy(
+        domain=domain, acquisition_function=qLogEI()
+    )
     strategy = SoboStrategy(data_model=strategy_data)
     strategy.tell(experiments=experiments)
     obj, _, _ = strategy._get_objective_and_constraints()
@@ -422,7 +424,7 @@ def test_sobo_hyperoptimize():
     benchmark = Himmelblau()
     experiments = benchmark.f(benchmark.domain.inputs.sample(3), return_complete=True)
     strategy_data = data_models.SoboStrategy(
-        domain=benchmark.domain, acquisition_function=qEI(), frequency_hyperopt=1
+        domain=benchmark.domain, acquisition_function=qLogEI(), frequency_hyperopt=1
     )
     strategy_data.surrogate_specs.surrogates[0].hyperconfig = None  # type: ignore
     strategy = SoboStrategy(data_model=strategy_data)

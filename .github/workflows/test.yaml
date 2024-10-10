@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  testing_minimal:
+  testing_data_models:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -30,7 +30,7 @@ jobs:
       - name: Install Dependencies
         run: uv pip install "." pytest --system
 
-      - name: Run domain-only test
+      - name: Run data model tests
         run: pytest tests/bofire/data_models
 
   testing:
