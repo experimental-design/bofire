@@ -1061,7 +1061,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-1">
@@ -1074,31 +1074,31 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">from</span> <span class="nn">matplotlib.ticker</span> <span class="kn">import</span> <span class="n">FormatStrFormatter</span>
 
 <span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">NonlinearEqualityConstraint</span><span class="p">,</span>
-    <span class="n">NonlinearInequalityConstraint</span><span class="p">,</span>
+    <span class="n">InterpointEqualityConstraint</span><span class="p">,</span>
     <span class="n">LinearEqualityConstraint</span><span class="p">,</span>
     <span class="n">LinearInequalityConstraint</span><span class="p">,</span>
-    <span class="n">InterpointEqualityConstraint</span><span class="p">,</span>
+    <span class="n">NonlinearEqualityConstraint</span><span class="p">,</span>
+    <span class="n">NonlinearInequalityConstraint</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Domain</span>
 <span class="kn">from</span> <span class="nn">bofire.data_models.features.api</span> <span class="kn">import</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">ContinuousOutput</span>
 <span class="kn">from</span> <span class="nn">bofire.strategies.doe.design</span> <span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">import numpy as np
-import matplotlib.pyplot as plt
+<div class="clipboard-copy-txt" id="cell-1">import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.ticker import FormatStrFormatter
 
 from bofire.data_models.constraints.api import (
-    NonlinearEqualityConstraint,
-    NonlinearInequalityConstraint,
+    InterpointEqualityConstraint,
     LinearEqualityConstraint,
     LinearInequalityConstraint,
-    InterpointEqualityConstraint,
+    NonlinearEqualityConstraint,
+    NonlinearInequalityConstraint,
 )
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
@@ -1125,7 +1125,7 @@ from bofire.strategies.doe.design import find_local_max_ipopt</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
@@ -1139,36 +1139,52 @@ from bofire.strategies.doe.design import find_local_max_ipopt</div>
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
-   <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-    <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
-    <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">))</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">)),</span>
     <span class="p">],</span>
-   <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-   <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
-       <span class="n">LinearEqualityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">,</span><span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-       <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">4</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">3.9</span><span class="p">),</span>
-       <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span><span class="mi">5</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=-</span><span class="mi">3</span><span class="p">)</span>
-   <span class="p">]</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">LinearEqualityConstraint</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">),</span>
+        <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">3.9</span><span class="p">),</span>
+        <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=-</span><span class="mi">3</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">d_optimal_design</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"disp"</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+<span class="n">d_optimal_design</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">})</span>
+    <span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">T</span>
+<span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">domain = Domain(
-   inputs = [
-    ContinuousInput(key="x1", bounds = (0,1)),
-    ContinuousInput(key="x2", bounds = (0.1, 1)),
-    ContinuousInput(key="x3", bounds = (0, 0.6))
+    inputs=[
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        ContinuousInput(key="x2", bounds=(0.1, 1)),
+        ContinuousInput(key="x3", bounds=(0, 0.6)),
     ],
-   outputs = [ContinuousOutput(key="y")],
-   constraints = [
-       LinearEqualityConstraint(features=["x1","x2","x3"], coefficients=[1,1,1], rhs=1),
-       LinearInequalityConstraint(features=["x1","x2"], coefficients=[5,4], rhs=3.9),
-       LinearInequalityConstraint(features=["x1","x2"], coefficients=[-20,5], rhs=-3)
-   ]
+    outputs=[ContinuousOutput(key="y")],
+    constraints=[
+        LinearEqualityConstraint(
+            features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
+        ),
+        LinearInequalityConstraint(features=["x1", "x2"], coefficients=[5, 4], rhs=3.9),
+        LinearInequalityConstraint(
+            features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+        ),
+    ],
 )
 
-d_optimal_design = find_local_max_ipopt(domain, "linear", n_experiments=12, ipopt_options={"disp":0}).to_numpy().T</div>
+d_optimal_design = (
+    find_local_max_ipopt(domain, "linear", n_experiments=12, ipopt_options={"disp": 0})
+    .to_numpy()
+    .T
+)</div>
 </div>
 </div>
 </div>
@@ -1180,7 +1196,7 @@ d_optimal_design = find_local_max_ipopt(domain, "linear", n_experiments=12, ipop
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [13]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -1193,24 +1209,24 @@ d_optimal_design = find_local_max_ipopt(domain, "linear", n_experiments=12, ipop
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">)))</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">'3d'</span><span class="p">)</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">"3d"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span> <span class="mi">45</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"Linear model"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"$x_1$"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$x_2$"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s2">"$x_3$"</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">"figure.figsize"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">"figure.figsize"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 
-<span class="c1">#plot feasible polytope</span>
+<span class="c1"># plot feasible polytope</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">xs</span><span class="o">=</span><span class="p">[</span><span class="mi">7</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="o">/</span><span class="mi">10</span><span class="p">],</span>
-    <span class="n">ys</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">],</span>
-    <span class="n">zs</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">],</span>
-    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span>
+    <span class="n">xs</span><span class="o">=</span><span class="p">[</span><span class="mi">7</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">7</span> <span class="o">/</span> <span class="mi">10</span><span class="p">],</span>
+    <span class="n">ys</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">],</span>
+    <span class="n">zs</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1">#plot D-optimal solutions</span>
+<span class="c1"># plot D-optimal solutions</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
     <span class="n">xs</span><span class="o">=</span><span class="n">d_optimal_design</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="n">ys</span><span class="o">=</span><span class="n">d_optimal_design</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
@@ -1218,29 +1234,29 @@ d_optimal_design = find_local_max_ipopt(domain, "linear", n_experiments=12, ipop
     <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
     <span class="n">s</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"orange"</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">"optimal_design solution, 12 points"</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">"optimal_design solution, 12 points"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-3">fig = plt.figure(figsize=((10,10)))
-ax = fig.add_subplot(111, projection='3d')
+<div class="clipboard-copy-txt" id="cell-3">fig = plt.figure(figsize=((10, 10)))
+ax = fig.add_subplot(111, projection="3d")
 ax.view_init(45, 45)
 ax.set_title("Linear model")
 ax.set_xlabel("$x_1$")
 ax.set_ylabel("$x_2$")
 ax.set_zlabel("$x_3$")
-plt.rcParams["figure.figsize"] = (10,8)
+plt.rcParams["figure.figsize"] = (10, 8)
 
-#plot feasible polytope
+# plot feasible polytope
 ax.plot(
-    xs=[7/10, 3/10, 1/5, 3/10, 7/10],
-    ys=[1/10, 3/5, 1/5, 1/10, 1/10],
-    zs=[1/5, 1/10, 3/5, 3/5, 1/5],
-    linewidth=2
+    xs=[7 / 10, 3 / 10, 1 / 5, 3 / 10, 7 / 10],
+    ys=[1 / 10, 3 / 5, 1 / 5, 1 / 10, 1 / 10],
+    zs=[1 / 5, 1 / 10, 3 / 5, 3 / 5, 1 / 5],
+    linewidth=2,
 )
 
-#plot D-optimal solutions
+# plot D-optimal solutions
 ax.scatter(
     xs=d_optimal_design[0],
     ys=d_optimal_design[1],
@@ -1248,7 +1264,7 @@ ax.scatter(
     marker="o",
     s=40,
     color="orange",
-    label="optimal_design solution, 12 points"
+    label="optimal_design solution, 12 points",
 )
 
 plt.legend()</div>
@@ -1261,7 +1277,7 @@ plt.legend()</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[13]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>&lt;matplotlib.legend.Legend at 0x2920b6bd0&gt;</pre>
 </div>
@@ -1292,7 +1308,7 @@ plt.legend()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [14]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
@@ -1305,33 +1321,69 @@ plt.legend()</div>
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">d_optimal_design</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3"</span><span class="p">,</span> <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="n">d_optimal_design</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">find_local_max_ipopt</span><span class="p">(</span>
+        <span class="n">domain</span><span class="p">,</span>
+        <span class="s2">"x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3"</span><span class="p">,</span>
+        <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="o">.</span><span class="n">to_numpy</span><span class="p">()</span>
+    <span class="o">.</span><span class="n">T</span>
+<span class="p">)</span>
 
-<span class="n">d_opt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
-    <span class="p">[</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.3</span><span class="p">,</span> <span class="mf">0.5902</span><span class="p">,</span> <span class="mf">0.4098</span><span class="p">,</span> <span class="mf">0.2702</span><span class="p">,</span> <span class="mf">0.2279</span><span class="p">,</span> <span class="mf">0.4118</span><span class="p">,</span> <span class="mf">0.5738</span><span class="p">,</span> <span class="mf">0.4211</span><span class="p">,</span> <span class="mf">0.3360</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2373</span><span class="p">,</span> <span class="mf">0.4628</span><span class="p">,</span> <span class="mf">0.4808</span><span class="p">,</span> <span class="mf">0.3117</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2911</span><span class="p">,</span> <span class="mf">0.2264</span><span class="p">],</span>
-    <span class="p">[</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.1725</span><span class="p">,</span> <span class="mf">0.1274</span><span class="p">,</span> <span class="mf">0.249</span><span class="p">,</span> <span class="mf">0.4604</span><span class="p">,</span> <span class="mf">0.4882</span><span class="p">,</span> <span class="mf">0.3262</span><span class="p">,</span> <span class="mf">0.2878</span><span class="p">,</span> <span class="mf">0.4376</span><span class="p">],</span>
-<span class="p">])</span> <span class="c1"># values taken from paper</span>
+<span class="n">d_opt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span>
+            <span class="mf">0.7</span><span class="p">,</span>
+            <span class="mf">0.3</span><span class="p">,</span>
+            <span class="mf">0.2</span><span class="p">,</span>
+            <span class="mf">0.3</span><span class="p">,</span>
+            <span class="mf">0.5902</span><span class="p">,</span>
+            <span class="mf">0.4098</span><span class="p">,</span>
+            <span class="mf">0.2702</span><span class="p">,</span>
+            <span class="mf">0.2279</span><span class="p">,</span>
+            <span class="mf">0.4118</span><span class="p">,</span>
+            <span class="mf">0.5738</span><span class="p">,</span>
+            <span class="mf">0.4211</span><span class="p">,</span>
+            <span class="mf">0.3360</span><span class="p">,</span>
+        <span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2373</span><span class="p">,</span> <span class="mf">0.4628</span><span class="p">,</span> <span class="mf">0.4808</span><span class="p">,</span> <span class="mf">0.3117</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.2911</span><span class="p">,</span> <span class="mf">0.2264</span><span class="p">],</span>
+        <span class="p">[</span>
+            <span class="mf">0.2</span><span class="p">,</span>
+            <span class="mf">0.1</span><span class="p">,</span>
+            <span class="mf">0.6</span><span class="p">,</span>
+            <span class="mf">0.6</span><span class="p">,</span>
+            <span class="mf">0.1725</span><span class="p">,</span>
+            <span class="mf">0.1274</span><span class="p">,</span>
+            <span class="mf">0.249</span><span class="p">,</span>
+            <span class="mf">0.4604</span><span class="p">,</span>
+            <span class="mf">0.4882</span><span class="p">,</span>
+            <span class="mf">0.3262</span><span class="p">,</span>
+            <span class="mf">0.2878</span><span class="p">,</span>
+            <span class="mf">0.4376</span><span class="p">,</span>
+        <span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>  <span class="c1"># values taken from paper</span>
 
 
-<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span><span class="mi">10</span><span class="p">)))</span>
-<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s1">'3d'</span><span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">((</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">)))</span>
+<span class="n">ax</span> <span class="o">=</span> <span class="n">fig</span><span class="o">.</span><span class="n">add_subplot</span><span class="p">(</span><span class="mi">111</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="s2">"3d"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">"cubic model"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">view_init</span><span class="p">(</span><span class="mi">45</span><span class="p">,</span> <span class="mi">45</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"$x_1$"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"$x_2$"</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set_zlabel</span><span class="p">(</span><span class="s2">"$x_3$"</span><span class="p">)</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">"figure.figsize"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">8</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">"figure.figsize"</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
 
-<span class="c1">#plot feasible polytope</span>
+<span class="c1"># plot feasible polytope</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <span class="n">xs</span><span class="o">=</span><span class="p">[</span><span class="mi">7</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="o">/</span><span class="mi">10</span><span class="p">],</span>
-    <span class="n">ys</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">],</span>
-    <span class="n">zs</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="mi">5</span><span class="p">],</span>
-    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span>
+    <span class="n">xs</span><span class="o">=</span><span class="p">[</span><span class="mi">7</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">7</span> <span class="o">/</span> <span class="mi">10</span><span class="p">],</span>
+    <span class="n">ys</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">],</span>
+    <span class="n">zs</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">1</span> <span class="o">/</span> <span class="mi">5</span><span class="p">],</span>
+    <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
 <span class="p">)</span>
 
-<span class="c1">#plot D-optimal solution</span>
+<span class="c1"># plot D-optimal solution</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
     <span class="n">xs</span><span class="o">=</span><span class="n">d_opt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="n">ys</span><span class="o">=</span><span class="n">d_opt</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
@@ -1339,7 +1391,7 @@ plt.legend()</div>
     <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
     <span class="n">s</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"darkgreen"</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">"D-optimal design, 12 points"</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">"D-optimal design, 12 points"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span>
@@ -1349,38 +1401,74 @@ plt.legend()</div>
     <span class="n">marker</span><span class="o">=</span><span class="s2">"o"</span><span class="p">,</span>
     <span class="n">s</span><span class="o">=</span><span class="mi">40</span><span class="p">,</span>
     <span class="n">color</span><span class="o">=</span><span class="s2">"orange"</span><span class="p">,</span>
-    <span class="n">label</span><span class="o">=</span><span class="s2">"optimal_design solution, 12 points"</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">"optimal_design solution, 12 points"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-4">d_optimal_design = find_local_max_ipopt(domain, "x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3", n_experiments=12).to_numpy().T
+<div class="clipboard-copy-txt" id="cell-4">d_optimal_design = (
+    find_local_max_ipopt(
+        domain,
+        "x1 + x2 + x3 + {x1**2} + {x2**2} + {x3**2} + {x1**3} + {x2**3} + {x3**3} + x1:x2 + x1:x3 + x2:x3 + x1:x2:x3",
+        n_experiments=12,
+    )
+    .to_numpy()
+    .T
+)
 
-d_opt = np.array([
-    [0.7, 0.3, 0.2, 0.3, 0.5902, 0.4098, 0.2702, 0.2279, 0.4118, 0.5738, 0.4211, 0.3360],
-    [0.1, 0.6, 0.2, 0.1, 0.2373, 0.4628, 0.4808, 0.3117, 0.1, 0.1, 0.2911, 0.2264],
-    [0.2, 0.1, 0.6, 0.6, 0.1725, 0.1274, 0.249, 0.4604, 0.4882, 0.3262, 0.2878, 0.4376],
-]) # values taken from paper
+d_opt = np.array(
+    [
+        [
+            0.7,
+            0.3,
+            0.2,
+            0.3,
+            0.5902,
+            0.4098,
+            0.2702,
+            0.2279,
+            0.4118,
+            0.5738,
+            0.4211,
+            0.3360,
+        ],
+        [0.1, 0.6, 0.2, 0.1, 0.2373, 0.4628, 0.4808, 0.3117, 0.1, 0.1, 0.2911, 0.2264],
+        [
+            0.2,
+            0.1,
+            0.6,
+            0.6,
+            0.1725,
+            0.1274,
+            0.249,
+            0.4604,
+            0.4882,
+            0.3262,
+            0.2878,
+            0.4376,
+        ],
+    ]
+)  # values taken from paper
 
 
-fig = plt.figure(figsize=((10,10)))
-ax = fig.add_subplot(111, projection='3d')
+fig = plt.figure(figsize=((10, 10)))
+ax = fig.add_subplot(111, projection="3d")
 ax.set_title("cubic model")
 ax.view_init(45, 45)
 ax.set_xlabel("$x_1$")
 ax.set_ylabel("$x_2$")
 ax.set_zlabel("$x_3$")
-plt.rcParams["figure.figsize"] = (10,8)
+plt.rcParams["figure.figsize"] = (10, 8)
 
-#plot feasible polytope
+# plot feasible polytope
 ax.plot(
-    xs=[7/10, 3/10, 1/5, 3/10, 7/10],
-    ys=[1/10, 3/5, 1/5, 1/10, 1/10],
-    zs=[1/5, 1/10, 3/5, 3/5, 1/5],
-    linewidth=2
+    xs=[7 / 10, 3 / 10, 1 / 5, 3 / 10, 7 / 10],
+    ys=[1 / 10, 3 / 5, 1 / 5, 1 / 10, 1 / 10],
+    zs=[1 / 5, 1 / 10, 3 / 5, 3 / 5, 1 / 5],
+    linewidth=2,
 )
 
-#plot D-optimal solution
+# plot D-optimal solution
 ax.scatter(
     xs=d_opt[0],
     ys=d_opt[1],
@@ -1388,7 +1476,7 @@ ax.scatter(
     marker="o",
     s=40,
     color="darkgreen",
-    label="D-optimal design, 12 points"
+    label="D-optimal design, 12 points",
 )
 
 ax.scatter(
@@ -1398,7 +1486,7 @@ ax.scatter(
     marker="o",
     s=40,
     color="orange",
-    label="optimal_design solution, 12 points"
+    label="optimal_design solution, 12 points",
 )
 
 plt.legend()</div>
@@ -1419,7 +1507,7 @@ plt.legend()</div>
 </div>
 </div>
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[14]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>&lt;matplotlib.legend.Legend at 0x29200b010&gt;</pre>
 </div>
@@ -1450,7 +1538,7 @@ plt.legend()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [15]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
@@ -1481,8 +1569,8 @@ plt.legend()</div>
         <span class="n">color</span><span class="o">=</span><span class="s2">"red"</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">zlabel</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">)</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s1">'</span><span class="si">%.2f</span><span class="s1">'</span><span class="p">))</span>
-    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s1">'</span><span class="si">%.2f</span><span class="s1">'</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">xaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s2">"</span><span class="si">%.2f</span><span class="s2">"</span><span class="p">))</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">yaxis</span><span class="o">.</span><span class="n">set_major_formatter</span><span class="p">(</span><span class="n">FormatStrFormatter</span><span class="p">(</span><span class="s2">"</span><span class="si">%.2f</span><span class="s2">"</span><span class="p">))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-5">def plot_results_3d(result, surface_func):
     u, v = np.mgrid[0 : 2 * np.pi : 100j, 0 : np.pi : 80j]
@@ -1502,8 +1590,8 @@ plt.legend()</div>
         color="red",
     )
     ax.set(xlabel="x1", ylabel="x2", zlabel="x3")
-    ax.xaxis.set_major_formatter(FormatStrFormatter('%.2f'))
-    ax.yaxis.set_major_formatter(FormatStrFormatter('%.2f'))</div>
+    ax.xaxis.set_major_formatter(FormatStrFormatter("%.2f"))
+    ax.yaxis.set_major_formatter(FormatStrFormatter("%.2f"))</div>
 </div>
 </div>
 </div>
@@ -1529,7 +1617,7 @@ The optimization is done for a linear model and places the points on the surface
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [16]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
@@ -1544,27 +1632,41 @@ The optimization is done for a linear model and places the points on the surface
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
     <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))],</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+    <span class="p">],</span>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">NonlinearInequalityConstraint</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">,</span><span class="s2">"x3"</span><span class="p">])],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">NonlinearInequalityConstraint</span><span class="p">(</span>
+            <span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span><span class="mi">0</span><span class="p">})</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span>
+    <span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+<span class="p">)</span>
 <span class="n">result</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">plot_results_3d</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">surface_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-6">domain = Domain(
     inputs=[
-        ContinuousInput(key="x1", bounds = (-1,1)),
-        ContinuousInput(key="x2", bounds = (-1,1)),
-        ContinuousInput(key="x3", bounds = (0,1))],
+        ContinuousInput(key="x1", bounds=(-1, 1)),
+        ContinuousInput(key="x2", bounds=(-1, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+    ],
     outputs=[ContinuousOutput(key="y")],
-    constraints=[NonlinearInequalityConstraint(expression="(x1**2 + x2**2)**0.5 - x3", features=["x1","x2","x3"])],
+    constraints=[
+        NonlinearInequalityConstraint(
+            expression="(x1**2 + x2**2)**0.5 - x3", features=["x1", "x2", "x3"]
+        )
+    ],
 )
 
-result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100, "disp":0})
+result = find_local_max_ipopt(
+    domain, "linear", ipopt_options={"maxiter": 100, "disp": 0}
+)
 result.round(3)
 plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div>
 </div>
@@ -1611,7 +1713,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [17]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
@@ -1626,11 +1728,16 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
     <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))],</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+    <span class="p">],</span>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">NonlinearInequalityConstraint</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="s2">"x1**2 + x2**2 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">,</span><span class="s2">"x3"</span><span class="p">])],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">NonlinearInequalityConstraint</span><span class="p">(</span>
+            <span class="n">expression</span><span class="o">=</span><span class="s2">"x1**2 + x2**2 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
@@ -1639,11 +1746,16 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-7">domain = Domain(
     inputs=[
-        ContinuousInput(key="x1", bounds = (-1,1)),
-        ContinuousInput(key="x2", bounds = (-1,1)),
-        ContinuousInput(key="x3", bounds = (0,1))],
+        ContinuousInput(key="x1", bounds=(-1, 1)),
+        ContinuousInput(key="x2", bounds=(-1, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+    ],
     outputs=[ContinuousOutput(key="y")],
-    constraints=[NonlinearInequalityConstraint(expression="x1**2 + x2**2 - x3", features=["x1","x2","x3"])],
+    constraints=[
+        NonlinearInequalityConstraint(
+            expression="x1**2 + x2**2 - x3", features=["x1", "x2", "x3"]
+        )
+    ],
 )
 
 result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100})
@@ -1694,7 +1806,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: x1**2 + x2**2)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [18]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
@@ -1709,11 +1821,16 @@ plot_results_3d(result, surface_func=lambda x1, x2: x1**2 + x2**2)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
     <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))],</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+    <span class="p">],</span>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">NonlinearEqualityConstraint</span><span class="p">(</span><span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">,</span><span class="s2">"x3"</span><span class="p">])],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">NonlinearEqualityConstraint</span><span class="p">(</span>
+            <span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">]</span>
+        <span class="p">)</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
@@ -1722,11 +1839,16 @@ plot_results_3d(result, surface_func=lambda x1, x2: x1**2 + x2**2)</div>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-8">domain = Domain(
     inputs=[
-        ContinuousInput(key="x1", bounds = (-1,1)),
-        ContinuousInput(key="x2", bounds = (-1,1)),
-        ContinuousInput(key="x3", bounds = (0,1))],
+        ContinuousInput(key="x1", bounds=(-1, 1)),
+        ContinuousInput(key="x2", bounds=(-1, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+    ],
     outputs=[ContinuousOutput(key="y")],
-    constraints=[NonlinearEqualityConstraint(expression="(x1**2 + x2**2)**0.5 - x3", features=["x1","x2","x3"])],
+    constraints=[
+        NonlinearEqualityConstraint(
+            expression="(x1**2 + x2**2)**0.5 - x3", features=["x1", "x2", "x3"]
+        )
+    ],
 )
 
 result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100})
@@ -1776,7 +1898,7 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [19]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
@@ -1791,26 +1913,32 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
     <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))],</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x2"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"x3"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)),</span>
+    <span class="p">],</span>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">InterpointEqualityConstraint</span><span class="p">(</span><span class="n">feature</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">multiplicity</span><span class="o">=</span><span class="mi">3</span><span class="p">)]</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">InterpointEqualityConstraint</span><span class="p">(</span><span class="n">feature</span><span class="o">=</span><span class="s2">"x1"</span><span class="p">,</span> <span class="n">multiplicity</span><span class="o">=</span><span class="mi">3</span><span class="p">)],</span>
 <span class="p">)</span>
 
-<span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span><span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span>
+    <span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span>
+<span class="p">)</span>
 <span class="n">result</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-9">domain = Domain(
     inputs=[
-        ContinuousInput(key="x1", bounds = (0,1)),
-        ContinuousInput(key="x2", bounds = (0,1)),
-        ContinuousInput(key="x3", bounds = (0,1))],
+        ContinuousInput(key="x1", bounds=(0, 1)),
+        ContinuousInput(key="x2", bounds=(0, 1)),
+        ContinuousInput(key="x3", bounds=(0, 1)),
+    ],
     outputs=[ContinuousOutput(key="y")],
-    constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=3)]
+    constraints=[InterpointEqualityConstraint(feature="x1", multiplicity=3)],
 )
 
-result = find_local_max_ipopt(domain, "linear", ipopt_options={"maxiter": 100}, n_experiments=12)
+result = find_local_max_ipopt(
+    domain, "linear", ipopt_options={"maxiter": 100}, n_experiments=12
+)
 result.round(3)</div>
 </div>
 </div>
@@ -1821,7 +1949,7 @@ result.round(3)</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[19]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">

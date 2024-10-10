@@ -1083,7 +1083,7 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-1">
@@ -1096,55 +1096,87 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
 </div>
 </clipboard-copy>
 </div>
-<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">from</span> <span class="nn">bofire.strategies.doe.design</span> <span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
+<div class="highlight-ipynb hl-python"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LinearEqualityConstraint</span><span class="p">,</span>
+    <span class="n">LinearInequalityConstraint</span><span class="p">,</span>
+    <span class="n">NChooseKConstraint</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Domain</span>
-<span class="kn">from</span> <span class="nn">bofire.data_models.constraints.api</span> <span class="kn">import</span> <span class="n">NChooseKConstraint</span><span class="p">,</span> <span class="n">LinearEqualityConstraint</span><span class="p">,</span> <span class="n">LinearInequalityConstraint</span>
 <span class="kn">from</span> <span class="nn">bofire.data_models.features.api</span> <span class="kn">import</span> <span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">ContinuousOutput</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">bofire.strategies.doe.design</span> <span class="kn">import</span> <span class="n">find_local_max_ipopt</span>
+
 
 <span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
-    <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)],</span>
-    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
-    <span class="n">constraints</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">LinearEqualityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span>
-        <span class="n">NChooseKConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">,</span><span class="s2">"x3"</span><span class="p">],</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">none_also_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
-        <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span><span class="s2">"x2"</span><span class="p">,</span><span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.7</span><span class="p">),</span>
-        <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span><span class="s2">"x8"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">),</span>
-        <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span><span class="s2">"x8"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
-    <span class="p">]</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)],</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">LinearEqualityConstraint</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="sa">f</span><span class="s2">"x</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">)],</span>
+            <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">NChooseKConstraint</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">none_also_valid</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">),</span>
+        <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.7</span>
+        <span class="p">),</span>
+        <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span> <span class="s2">"x8"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=-</span><span class="mf">0.1</span>
+        <span class="p">),</span>
+        <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span> <span class="s2">"x8"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 
 <span class="n">res</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
     <span class="n">model_type</span><span class="o">=</span><span class="s2">"fully-quadratic"</span><span class="p">,</span>
-    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span><span class="mi">500</span><span class="p">},</span>
+    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">500</span><span class="p">},</span>
 <span class="p">)</span>
-<span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">res</span><span class="p">,</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
 </pre></div>
-<div class="clipboard-copy-txt" id="cell-1">from bofire.strategies.doe.design import find_local_max_ipopt
+<div class="clipboard-copy-txt" id="cell-1">import numpy as np
+
+from bofire.data_models.constraints.api import (
+    LinearEqualityConstraint,
+    LinearInequalityConstraint,
+    NChooseKConstraint,
+)
 from bofire.data_models.domain.api import Domain
-from bofire.data_models.constraints.api import NChooseKConstraint, LinearEqualityConstraint, LinearInequalityConstraint
 from bofire.data_models.features.api import ContinuousInput, ContinuousOutput
-import numpy as np
+from bofire.strategies.doe.design import find_local_max_ipopt
+
 
 domain = Domain(
-    inputs = [ContinuousInput(key=f"x{i+1}", bounds=(0,1)) for i in range(8)],
-    outputs = [ContinuousOutput(key="y")],
-    constraints = [
-        LinearEqualityConstraint(features=[f"x{i+1}" for i in range(8)], coefficients=[1,1,1,1,1,1,1,1], rhs=1),
-        NChooseKConstraint(features=["x1","x2","x3"], min_count=0, max_count=1, none_also_valid=True),
-        LinearInequalityConstraint(features=["x1","x2","x3"], coefficients=[1,1,1], rhs=0.7),
-        LinearInequalityConstraint(features=["x7","x8"], coefficients=[-1,-1], rhs=-0.1),
-        LinearInequalityConstraint(features=["x7","x8"], coefficients=[1,1], rhs=0.9),
-    ]
+    inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 1)) for i in range(8)],
+    outputs=[ContinuousOutput(key="y")],
+    constraints=[
+        LinearEqualityConstraint(
+            features=[f"x{i+1}" for i in range(8)],
+            coefficients=[1, 1, 1, 1, 1, 1, 1, 1],
+            rhs=1,
+        ),
+        NChooseKConstraint(
+            features=["x1", "x2", "x3"], min_count=0, max_count=1, none_also_valid=True
+        ),
+        LinearInequalityConstraint(
+            features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=0.7
+        ),
+        LinearInequalityConstraint(
+            features=["x7", "x8"], coefficients=[-1, -1], rhs=-0.1
+        ),
+        LinearInequalityConstraint(features=["x7", "x8"], coefficients=[1, 1], rhs=0.9),
+    ],
 )
 
 res = find_local_max_ipopt(
     domain=domain,
     model_type="fully-quadratic",
-    ipopt_options={"maxiter":500},
+    ipopt_options={"maxiter": 500},
 )
-np.round(res,3)</div>
+np.round(res, 3)</div>
 </div>
 </div>
 </div>
@@ -1154,7 +1186,7 @@ np.round(res,3)</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[10]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedHTMLCommon jp-RenderedHTML jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/html" tabindex="0">
 <div>
 <style scoped="">
@@ -1716,33 +1748,6 @@ np.round(res,3)</div>
 </tbody>
 </table>
 </div>
-</div>
-</div>
-</div>
-</div>
-</div>
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs">
-<div class="jp-Cell-inputWrapper" tabindex="0">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-<div class="CodeMirror cm-s-jupyter">
-<div class="zeroclipboard-container">
-<clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
-<div>
-<span class="notice" hidden="">Copied!</span>
-<svg aria-hidden="true" class="clipboard-copy-icon" data-view-component="true" height="20" version="1.1" viewbox="0 0 16 16" width="20">
-<path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 010 1.5h-1.5a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-1.5a.75.75 0 011.5 0v1.5A1.75 1.75 0 019.25 16h-7.5A1.75 1.75 0 010 14.25v-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-<path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0114.25 11h-7.5A1.75 1.75 0 015 9.25v-7.5zm1.75-.25a.25.25 0 00-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 00.25-.25v-7.5a.25.25 0 00-.25-.25h-7.5z" fill="currentColor" fill-rule="evenodd"></path>
-</svg>
-</div>
-</clipboard-copy>
-</div>
-<div class="highlight-ipynb hl-python"><pre><span></span>
-</pre></div>
-<div class="clipboard-copy-txt" id="cell-2"></div>
 </div>
 </div>
 </div>

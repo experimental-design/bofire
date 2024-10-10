@@ -3206,7 +3206,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalInput&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalInput&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="c1"># order_id: ClassVar[int] = 5</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">7</span>
 
@@ -3232,7 +3232,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
         <span class="k">return</span> <span class="p">[</span>
             <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">ONE_HOT</span><span class="p">,</span>
             <span class="n">CategoricalEncodingEnum</span><span class="o">.</span><span class="n">DUMMY</span><span class="p">,</span>
@@ -3473,7 +3473,7 @@ CategoricalInput            (<a class="autorefs autorefs-internal" title="bofire
             <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">transform_type</span><span class="p">:</span> <span class="n">TTransform</span><span class="p">,</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -4314,7 +4314,7 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">transform_type</span><span class="p">:</span> <span class="n">TTransform</span><span class="p">,</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -5043,7 +5043,7 @@ CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofir
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/categorical.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalOutput</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalOutput&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalOutput&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">10</span>
 
     <span class="n">categories</span><span class="p">:</span> <span class="n">CategoryVals</span>
@@ -5059,11 +5059,11 @@ CategoricalOutput            (<a class="autorefs autorefs-internal" title="bofir
 <span class="sd">        Returns:</span>
 <span class="sd">            self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">categories</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">categories</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must match to objective categories&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">values_adapt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">values_adapt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
                 <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))],</span>
@@ -5483,7 +5483,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 <span class="sd">    Returns:</span>
 <span class="sd">        self</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">categories</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span><span class="o">.</span><span class="n">categories</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;categories must match to objective categories&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="bp">self</span>
 </code></pre></div>
@@ -5597,7 +5597,7 @@ Defaults to None.</p></td>
 <span class="sd">            Defaults to None.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousInput&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousInput&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
 
     <span class="n">bounds</span><span class="p">:</span> <span class="n">Bounds</span>
@@ -5698,7 +5698,7 @@ Defaults to None.</p></td>
             <span class="p">),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -5726,8 +5726,8 @@ Defaults to None.</p></td>
                         <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span>
                     <span class="p">)</span>
                 <span class="p">]</span>
-        <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
-        <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">lower</span><span class="p">],</span> <span class="p">[</span><span class="n">upper</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -6131,7 +6131,7 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/continuous.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TTransform</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -6159,8 +6159,8 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
                     <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">]</span>
-    <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
-    <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">lower</span><span class="p">],</span> <span class="p">[</span><span class="n">upper</span><span class="p">]</span>
 </code></pre></div>
         </details>
@@ -6485,7 +6485,7 @@ ContinuousOutput            (<a class="autorefs autorefs-internal" title="bofire
 <span class="sd">        objective (objective, optional): objective of the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousOutput&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;ContinuousOutput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;ContinuousOutput&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">9</span>
     <span class="n">unit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -6493,7 +6493,7 @@ ContinuousOutput            (<a class="autorefs autorefs-internal" title="bofire
         <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">MaximizeObjective</span><span class="p">(</span><span class="n">w</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
     <span class="p">)</span>
 
-    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">values_adapt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span> <span class="n">values_adapt</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">(</span>
                 <span class="n">data</span><span class="o">=</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))],</span>
@@ -7050,8 +7050,8 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span>
-            <span class="n">lower</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
-            <span class="n">upper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
             <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
 
     <span class="k">def</span> <span class="nf">validate_experimental</span><span class="p">(</span>
@@ -7112,7 +7112,7 @@ CategoricalDescriptorInput            (<a class="autorefs autorefs-internal" tit
 <span class="sd">            pd.DataFrame: Descriptor encoded dataframe.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-            <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>  <span class="c1"># type: ignore</span>
+            <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
             <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">],</span>
             <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
         <span class="p">)</span>
@@ -7755,8 +7755,8 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
             <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">get_allowed_categories</span><span class="p">()]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">df</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">to_df</span><span class="p">()</span>
-        <span class="n">lower</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
-        <span class="n">upper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="n">df</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span>
 </code></pre></div>
         </details>
@@ -7826,7 +7826,7 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 <span class="sd">        pd.DataFrame: Descriptor encoded dataframe.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
-        <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>  <span class="c1"># type: ignore</span>
+        <span class="n">data</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">categories</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">values</span><span class="p">)))</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
         <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="n">get_encoded_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">descriptors</span><span class="p">],</span>
         <span class="n">index</span><span class="o">=</span><span class="n">values</span><span class="o">.</span><span class="n">index</span><span class="p">,</span>
     <span class="p">)</span>
@@ -8836,10 +8836,10 @@ DiscreteInput            (<a class="autorefs autorefs-internal" title="bofire.da
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
         <span class="k">assert</span> <span class="n">transform_type</span> <span class="ow">is</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
-        <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
-        <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">lower</span><span class="p">],</span> <span class="p">[</span><span class="n">upper</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+            <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>
+        <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+        <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">lower</span><span class="p">],</span> <span class="p">[</span><span class="n">upper</span><span class="p">]</span>
 </code></pre></div>
         </details>
 
@@ -9314,10 +9314,10 @@ details, it is referred to https://www.merl.com/publications/docs/TR2023-057.pdf
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
     <span class="k">assert</span> <span class="n">transform_type</span> <span class="ow">is</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">values</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
-    <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
-    <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>  <span class="c1"># type: ignore</span>
-    <span class="k">return</span> <span class="p">[</span><span class="n">lower</span><span class="p">],</span> <span class="p">[</span><span class="n">upper</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">],</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">]</span>
+    <span class="n">lower</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">min</span><span class="p">())</span>
+    <span class="n">upper</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">,</span> <span class="n">values</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">lower</span><span class="p">],</span> <span class="p">[</span><span class="n">upper</span><span class="p">]</span>
 </code></pre></div>
         </details>
     </div>
@@ -11350,8 +11350,8 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
 
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalMolecularInput</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">,</span> <span class="n">MolecularInput</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalMolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalMolecularInput&quot;</span>
+          <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">CategoricalMolecularInput</span><span class="p">(</span><span class="n">CategoricalInput</span><span class="p">,</span> <span class="n">MolecularInput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;CategoricalMolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;CategoricalMolecularInput&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="c1"># order_id: ClassVar[int] = 7</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span>
 
@@ -11382,15 +11382,15 @@ CategoricalMolecularInput            (<a class="autorefs autorefs-internal" titl
         <span class="k">return</span> <span class="n">categories</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">]]:</span>
-        <span class="k">return</span> <span class="n">CategoricalInput</span><span class="o">.</span><span class="n">valid_transform_types</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">,</span> <span class="n">CategoricalEncodingEnum</span><span class="p">]]:</span>  <span class="c1"># type: ignore</span>
+        <span class="k">return</span> <span class="n">CategoricalInput</span><span class="o">.</span><span class="n">valid_transform_types</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>  <span class="c1"># type: ignore</span>
             <span class="n">Fingerprints</span><span class="p">,</span>
             <span class="n">FingerprintsFragments</span><span class="p">,</span>
             <span class="n">Fragments</span><span class="p">,</span>
-            <span class="n">MordredDescriptors</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+            <span class="n">MordredDescriptors</span><span class="p">,</span>
         <span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">transform_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">,</span> <span class="n">AnyMolFeatures</span><span class="p">],</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -11937,7 +11937,7 @@ Defaults to None.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">transform_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">CategoricalEncodingEnum</span><span class="p">,</span> <span class="n">AnyMolFeatures</span><span class="p">],</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -12104,12 +12104,12 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">MolecularInput</span><span class="p">(</span><span class="n">Input</span><span class="p">):</span>
-    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MolecularInput&quot;</span>
+    <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;MolecularInput&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;MolecularInput&quot;</span>  <span class="c1"># type: ignore</span>
     <span class="c1"># order_id: ClassVar[int] = 6</span>
     <span class="n">order_id</span><span class="p">:</span> <span class="n">ClassVar</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">4</span>
 
     <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">valid_transform_types</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]:</span>  <span class="c1"># type: ignore</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">Fingerprints</span><span class="p">,</span> <span class="n">FingerprintsFragments</span><span class="p">,</span> <span class="n">Fragments</span><span class="p">,</span> <span class="n">MordredDescriptors</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
 
     <span class="k">def</span> <span class="nf">validate_experimental</span><span class="p">(</span>
@@ -12130,13 +12130,13 @@ MolecularInput            (<a class="autorefs autorefs-internal" title="bofire.d
     <span class="k">def</span> <span class="nf">is_fixed</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="kc">False</span>
 
-    <span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
         <span class="k">return</span> <span class="kc">None</span>
 
     <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">seed</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Sampling not supported for `MolecularInput`&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span>
         <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
@@ -12497,7 +12497,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">fixed_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transform_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">AnyMolFeatures</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
     <span class="k">return</span> <span class="kc">None</span>
 </code></pre></div>
         </details>
@@ -12585,7 +12585,7 @@ Defaults to None.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/features/molecular.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_bounds</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
     <span class="bp">self</span><span class="p">,</span>
     <span class="n">transform_type</span><span class="p">:</span> <span class="n">AnyMolFeatures</span><span class="p">,</span>
     <span class="n">values</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">,</span>
@@ -13030,7 +13030,7 @@ NumericalInput            (<a class="autorefs autorefs-internal" title="bofire.d
 <span class="sd">            pd.Series: transformed values.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">use_real_bounds</span><span class="p">:</span>
-            <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+            <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
             <span class="n">lower</span> <span class="o">=</span> <span class="n">lower</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="n">upper</span> <span class="o">=</span> <span class="n">upper</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
@@ -13685,7 +13685,7 @@ Defaults to False.</p></td>
 <span class="sd">        pd.Series: transformed values.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">use_real_bounds</span><span class="p">:</span>
-        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>
+        <span class="n">lower</span><span class="p">,</span> <span class="n">upper</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bounds</span><span class="p">(</span><span class="n">transform_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
         <span class="n">lower</span> <span class="o">=</span> <span class="n">lower</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">upper</span> <span class="o">=</span> <span class="n">upper</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="k">else</span><span class="p">:</span>

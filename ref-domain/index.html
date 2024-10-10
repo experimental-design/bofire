@@ -1079,9 +1079,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="c1"># remove combinations not fulfilling constraints</span>
         <span class="n">used_features_list_final</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">used_features_list_no_dup</span><span class="p">:</span>
-            <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="p">[]</span>
-            <span class="p">)</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
+            <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
             <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
                 <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
                 <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># count of features in combo that are in con.features</span>
@@ -2114,9 +2112,7 @@ involved output features.</p>
     <span class="c1"># remove combinations not fulfilling constraints</span>
     <span class="n">used_features_list_final</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">combo</span> <span class="ow">in</span> <span class="n">used_features_list_no_dup</span><span class="p">:</span>
-        <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="p">[]</span>
-        <span class="p">)</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
+        <span class="n">fulfil_constraints</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of bools tracking if constraints are fulfilled</span>
         <span class="k">for</span> <span class="n">con</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">):</span>
             <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">NChooseKConstraint</span><span class="p">)</span>
             <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># count of features in combo that are in con.features</span>

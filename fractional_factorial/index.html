@@ -1072,7 +1072,7 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [11]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-1">
@@ -1093,21 +1093,21 @@ span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 
 <span class="kn">from</span> <span class="nn">bofire.data_models.domain.api</span> <span class="kn">import</span> <span class="n">Domain</span>
 <span class="kn">from</span> <span class="nn">bofire.data_models.features.api</span> <span class="kn">import</span> <span class="n">ContinuousInput</span>
 <span class="kn">from</span> <span class="nn">bofire.data_models.strategies.api</span> <span class="kn">import</span> <span class="n">FractionalFactorialStrategy</span>
-<span class="kn">from</span> <span class="nn">bofire.utils.doe</span> <span class="kn">import</span> <span class="n">get_confounding_matrix</span><span class="p">,</span> <span class="n">get_generator</span><span class="p">,</span> <span class="n">get_alias_structure</span>
+<span class="kn">from</span> <span class="nn">bofire.utils.doe</span> <span class="kn">import</span> <span class="n">get_alias_structure</span><span class="p">,</span> <span class="n">get_confounding_matrix</span><span class="p">,</span> <span class="n">get_generator</span>
 
 
 <span class="k">def</span> <span class="nf">plot_design</span><span class="p">(</span><span class="n">design</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">):</span>
     <span class="c1"># we do a plot with three subplots in one row in which the three degrees of freedom (temperature, time and ph) are plotted</span>
     <span class="n">_</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">subplots</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">))</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="s1">'temperature'</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="s1">'time'</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Temperature'</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'Time'</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="s1">'temperature'</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="s1">'ph'</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Temperature'</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'pH'</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="s1">'time'</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="s1">'ph'</span><span class="p">])</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">'Time'</span><span class="p">)</span>
-    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">'pH'</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="s2">"time"</span><span class="p">])</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Temperature"</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"Time"</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="s2">"temperature"</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="s2">"ph"</span><span class="p">])</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Temperature"</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"pH"</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">design</span><span class="p">[</span><span class="s2">"time"</span><span class="p">],</span> <span class="n">design</span><span class="p">[</span><span class="s2">"ph"</span><span class="p">])</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s2">"Time"</span><span class="p">)</span>
+    <span class="n">axs</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s2">"pH"</span><span class="p">)</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-1">import matplotlib.pyplot as plt
@@ -1118,21 +1118,21 @@ import bofire.strategies.api as strategies
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput
 from bofire.data_models.strategies.api import FractionalFactorialStrategy
-from bofire.utils.doe import get_confounding_matrix, get_generator, get_alias_structure
+from bofire.utils.doe import get_alias_structure, get_confounding_matrix, get_generator
 
 
 def plot_design(design: pd.DataFrame):
     # we do a plot with three subplots in one row in which the three degrees of freedom (temperature, time and ph) are plotted
     _, axs = plt.subplots(1, 3, figsize=(15, 5))
-    axs[0].scatter(design['temperature'], design['time'])
-    axs[0].set_xlabel('Temperature')
-    axs[0].set_ylabel('Time')
-    axs[1].scatter(design['temperature'], design['ph'])
-    axs[1].set_xlabel('Temperature')
-    axs[1].set_ylabel('pH')
-    axs[2].scatter(design['time'], design['ph'])
-    axs[2].set_xlabel('Time')
-    axs[2].set_ylabel('pH')
+    axs[0].scatter(design["temperature"], design["time"])
+    axs[0].set_xlabel("Temperature")
+    axs[0].set_ylabel("Time")
+    axs[1].scatter(design["temperature"], design["ph"])
+    axs[1].set_xlabel("Temperature")
+    axs[1].set_ylabel("pH")
+    axs[2].scatter(design["time"], design["ph"])
+    axs[2].set_xlabel("Time")
+    axs[2].set_ylabel("pH")
     plt.show()</div>
 </div>
 </div>
@@ -1156,7 +1156,7 @@ def plot_design(design: pd.DataFrame):
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [2]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-2">
@@ -1171,17 +1171,17 @@ def plot_design(design: pd.DataFrame):
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span>
     <span class="n">inputs</span><span class="o">=</span><span class="p">[</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span><span class="mi">80</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"time"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span><span class="mi">120</span><span class="p">)),</span>
-        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"ph"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span><span class="mi">13</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"temperature"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">80</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"time"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">)),</span>
+        <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"ph"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">13</span><span class="p">)),</span>
     <span class="p">],</span>
 <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-2">domain = Domain(
     inputs=[
-        ContinuousInput(key="temperature", bounds=(20,80)),
-        ContinuousInput(key="time", bounds=(60,120)),
-        ContinuousInput(key="ph", bounds=(7,13)),
+        ContinuousInput(key="temperature", bounds=(20, 80)),
+        ContinuousInput(key="time", bounds=(60, 120)),
+        ContinuousInput(key="ph", bounds=(7, 13)),
     ],
 )</div>
 </div>
@@ -1206,7 +1206,7 @@ def plot_design(design: pd.DataFrame):
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [3]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-3">
@@ -1221,8 +1221,8 @@ def plot_design(design: pd.DataFrame):
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">strategy_data</span> <span class="o">=</span> <span class="n">FractionalFactorialStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
-    <span class="n">n_center</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of center points</span>
-    <span class="n">n_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of repetitions, we do only one round here</span>
+    <span class="n">n_center</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of center points</span>
+    <span class="n">n_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of repetitions, we do only one round here</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">strategy_data</span><span class="p">)</span>
 <span class="n">design</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">()</span>
@@ -1232,8 +1232,8 @@ def plot_design(design: pd.DataFrame):
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-3">strategy_data = FractionalFactorialStrategy(
     domain=domain,
-    n_center=1, # number of center points
-    n_repetitions=1, # number of repetitions, we do only one round here
+    n_center=1,  # number of center points
+    n_repetitions=1,  # number of repetitions, we do only one round here
 )
 strategy = strategies.map(strategy_data)
 design = strategy.ask()
@@ -1360,7 +1360,7 @@ plot_design(design=design)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [4]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-4">
@@ -1375,12 +1375,12 @@ plot_design(design=design)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
-<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span><span class="mi">7</span><span class="p">},</span><span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span> <span class="mi">7</span><span class="p">},</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-4">m = get_confounding_matrix(domain.inputs, design=design, interactions=[2])
 
-sns.heatmap(m, annot=True, annot_kws={"fontsize":7},fmt="2.1f")
+sns.heatmap(m, annot=True, annot_kws={"fontsize": 7}, fmt="2.1f")
 plt.show()</div>
 </div>
 </div>
@@ -1427,7 +1427,7 @@ plt.show()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [5]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-5">
@@ -1442,9 +1442,9 @@ plt.show()</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">strategy_data</span> <span class="o">=</span> <span class="n">FractionalFactorialStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
-    <span class="n">n_center</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of center points</span>
-    <span class="n">n_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of repetitions, we do only one round here</span>
-    <span class="n">n_generators</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of generators, ie number of reducing factors</span>
+    <span class="n">n_center</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of center points</span>
+    <span class="n">n_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of repetitions, we do only one round here</span>
+    <span class="n">n_generators</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of generators, ie number of reducing factors</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">strategy_data</span><span class="p">)</span>
 <span class="n">design</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">()</span>
@@ -1452,9 +1452,9 @@ plt.show()</div>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-5">strategy_data = FractionalFactorialStrategy(
     domain=domain,
-    n_center=1, # number of center points
-    n_repetitions=1, # number of repetitions, we do only one round here
-    n_generators=1, # number of generators, ie number of reducing factors
+    n_center=1,  # number of center points
+    n_repetitions=1,  # number of repetitions, we do only one round here
+    n_generators=1,  # number of generators, ie number of reducing factors
 )
 strategy = strategies.map(strategy_data)
 design = strategy.ask()
@@ -1549,7 +1549,7 @@ display(design)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [7]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-6">
@@ -1574,7 +1574,7 @@ display(design)</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[7]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>'a b ab'</pre>
 </div>
@@ -1599,7 +1599,7 @@ display(design)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [8]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-7">
@@ -1614,12 +1614,12 @@ display(design)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
-<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span><span class="mi">7</span><span class="p">},</span><span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span> <span class="mi">7</span><span class="p">},</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-7">m = get_confounding_matrix(domain.inputs, design=design, interactions=[2])
 
-sns.heatmap(m, annot=True, annot_kws={"fontsize":7},fmt="2.1f")
+sns.heatmap(m, annot=True, annot_kws={"fontsize": 7}, fmt="2.1f")
 plt.show()</div>
 </div>
 </div>
@@ -1655,7 +1655,7 @@ plt.show()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [12]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-8">
@@ -1680,7 +1680,7 @@ plt.show()</div>
 </div>
 <div class="jp-OutputArea jp-Cell-outputArea">
 <div class="jp-OutputArea-child jp-OutputArea-executeResult">
-<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[12]:</div>
+<div class="jp-OutputPrompt jp-OutputArea-prompt">Out[ ]:</div>
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain" tabindex="0">
 <pre>['a = bc', 'b = ac', 'c = ab', 'I = abc']</pre>
 </div>
@@ -1705,7 +1705,7 @@ plt.show()</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [9]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-9">
@@ -1720,9 +1720,9 @@ plt.show()</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">strategy_data</span> <span class="o">=</span> <span class="n">FractionalFactorialStrategy</span><span class="p">(</span>
     <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
-    <span class="n">n_center</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of center points</span>
-    <span class="n">n_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="c1"># number of repetitions, we do only one round here</span>
-    <span class="n">generator</span> <span class="o">=</span> <span class="s2">"a b -ab"</span> <span class="c1"># the exact generator</span>
+    <span class="n">n_center</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of center points</span>
+    <span class="n">n_repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># number of repetitions, we do only one round here</span>
+    <span class="n">generator</span><span class="o">=</span><span class="s2">"a b -ab"</span><span class="p">,</span>  <span class="c1"># the exact generator</span>
 <span class="p">)</span>
 <span class="n">strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">strategy_data</span><span class="p">)</span>
 <span class="n">design</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">()</span>
@@ -1730,9 +1730,9 @@ plt.show()</div>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-9">strategy_data = FractionalFactorialStrategy(
     domain=domain,
-    n_center=1, # number of center points
-    n_repetitions=1, # number of repetitions, we do only one round here
-    generator = "a b -ab" # the exact generator
+    n_center=1,  # number of center points
+    n_repetitions=1,  # number of repetitions, we do only one round here
+    generator="a b -ab",  # the exact generator
 )
 strategy = strategies.map(strategy_data)
 design = strategy.ask()
@@ -1827,7 +1827,7 @@ display(design)</div>
 <div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
 </div>
 <div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In [10]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
+<div class="jp-InputPrompt jp-InputArea-prompt">In [ ]:</div><div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
 <div class="CodeMirror cm-s-jupyter">
 <div class="zeroclipboard-container">
 <clipboard-copy ,="" aria-label="Copy to Clipboard" for="cell-10">
@@ -1842,12 +1842,12 @@ display(design)</div>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">m</span> <span class="o">=</span> <span class="n">get_confounding_matrix</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
-<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span><span class="mi">7</span><span class="p">},</span><span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
+<span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span> <span class="mi">7</span><span class="p">},</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-10">m = get_confounding_matrix(domain.inputs, design=design, interactions=[2])
 
-sns.heatmap(m, annot=True, annot_kws={"fontsize":7},fmt="2.1f")
+sns.heatmap(m, annot=True, annot_kws={"fontsize": 7}, fmt="2.1f")
 plt.show()</div>
 </div>
 </div>

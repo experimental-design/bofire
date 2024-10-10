@@ -1216,9 +1216,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rdkit_mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">smiles2mol</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
     <span class="n">fps</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">AllChem</span><span class="o">.</span><span class="n">GetMorganFingerprintAsBitVect</span><span class="p">(</span>  <span class="c1"># type: ignore</span>
-            <span class="n">mol</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">bond_radius</span><span class="p">,</span> <span class="n">nBits</span><span class="o">=</span><span class="n">n_bits</span>
-        <span class="p">)</span>
+        <span class="n">AllChem</span><span class="o">.</span><span class="n">GetMorganFingerprintAsBitVect</span><span class="p">(</span><span class="n">mol</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="n">bond_radius</span><span class="p">,</span> <span class="n">nBits</span><span class="o">=</span><span class="n">n_bits</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
         <span class="k">for</span> <span class="n">mol</span> <span class="ow">in</span> <span class="n">rdkit_mols</span>
     <span class="p">]</span>
 
@@ -1293,7 +1291,9 @@
 <span class="sd">        np.ndarray: Array holding the fragment information.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rdkit_fragment_list</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span> <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;fr_&quot;</span><span class="p">)</span>
+        <span class="n">item</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">Descriptors</span><span class="o">.</span><span class="n">descList</span>
+        <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;fr_&quot;</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     <span class="p">]</span>
     <span class="k">if</span> <span class="n">fragments_list</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">fragments</span> <span class="o">=</span> <span class="p">{</span><span class="n">d</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span> <span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">rdkit_fragment_list</span><span class="p">}</span>
@@ -1393,7 +1393,7 @@
 <span class="sd">    Returns:</span>
 <span class="sd">        rdkit.Mol: rdkit.mol object</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mol</span> <span class="o">=</span> <span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>
+    <span class="n">mol</span> <span class="o">=</span> <span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">smiles</span><span class="si">}</span><span class="s2"> is not a valid smiles string.&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">mol</span>
@@ -1473,17 +1473,17 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span> <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
 
-    <span class="n">calc</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">ignore_3D</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">calc</span> <span class="o">=</span> <span class="n">Calculator</span><span class="p">(</span><span class="n">descriptors</span><span class="p">,</span> <span class="n">ignore_3D</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     <span class="n">calc</span><span class="o">.</span><span class="n">descriptors</span> <span class="o">=</span> <span class="p">[</span><span class="n">d</span> <span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="n">calc</span><span class="o">.</span><span class="n">descriptors</span> <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">d</span><span class="p">)</span> <span class="ow">in</span> <span class="n">descriptors_list</span><span class="p">]</span>
 
     <span class="n">descriptors_df</span> <span class="o">=</span> <span class="n">calc</span><span class="o">.</span><span class="n">pandas</span><span class="p">(</span><span class="n">mols</span><span class="p">)</span>
     <span class="n">nan_list</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">descriptors_df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>
+        <span class="n">pd</span><span class="o">.</span><span class="n">to_numeric</span><span class="p">(</span><span class="n">descriptors_df</span><span class="p">[</span><span class="n">col</span><span class="p">],</span> <span class="n">errors</span><span class="o">=</span><span class="s2">&quot;coerce&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">isnull</span><span class="p">()</span><span class="o">.</span><span class="n">values</span><span class="o">.</span><span class="n">any</span><span class="p">()</span>  <span class="c1"># type: ignore</span>
         <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span>
     <span class="p">]</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">nan_list</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Found NaN values in descriptors </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">nan_list</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Found NaN values in descriptors </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">nan_list</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># type: ignore</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">descriptors_df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -2429,11 +2429,11 @@ that should be considered in the mask. Defaults to None.</p></td>
     <span class="n">mask</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">output_feature_keys</span><span class="p">:</span>
         <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeObjective</span><span class="p">):</span>
             <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">):</span>
             <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">):</span>
             <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -2546,7 +2546,7 @@ that should be considered in the mask. Defaults to None.</p></td>
 <span class="sd">        Tuple[List[str], List[str]]: A tuple containing the prediction column names and the standard deviation column names</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pred_cols</span><span class="p">,</span> <span class="n">sd_cols</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">CategoricalOutput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+    <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">CategoricalOutput</span><span class="p">):</span>
         <span class="n">pred_cols</span> <span class="o">=</span> <span class="n">pred_cols</span> <span class="o">+</span> <span class="p">[</span>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2">_prob&quot;</span>
             <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span><span class="o">.</span><span class="n">categories</span>  <span class="c1"># type: ignore</span>
@@ -2555,7 +2555,7 @@ that should be considered in the mask. Defaults to None.</p></td>
             <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">cat</span><span class="si">}</span><span class="s2">_sd&quot;</span>
             <span class="k">for</span> <span class="n">cat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span><span class="o">.</span><span class="n">categories</span>  <span class="c1"># type: ignore</span>
         <span class="p">]</span>
-    <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+    <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousOutput</span><span class="p">):</span>
         <span class="n">pred_cols</span> <span class="o">=</span> <span class="n">pred_cols</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">]</span>
         <span class="n">sd_cols</span> <span class="o">=</span> <span class="n">sd_cols</span> <span class="o">+</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">featkey</span><span class="si">}</span><span class="s2">_sd&quot;</span><span class="p">]</span>
 
@@ -2624,7 +2624,9 @@ that should be considered in the mask. Defaults to None.</p></td>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">postprocess_categorical_predictions</span><span class="p">(</span><span class="n">predictions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">postprocess_categorical_predictions</span><span class="p">(</span>
+    <span class="n">predictions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Postprocess categorical predictions by finding the maximum probability location</span>
 
@@ -2636,7 +2638,7 @@ that should be considered in the mask. Defaults to None.</p></td>
 <span class="sd">        predictions (pd.DataFrame): The (potentially modified) original dataframe with categorical predictions added</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">CategoricalOutput</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">CategoricalOutput</span><span class="p">):</span>
             <span class="n">predictions</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
                 <span class="n">loc</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                 <span class="n">column</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_pred&quot;</span><span class="p">,</span>
@@ -2644,7 +2646,7 @@ that should be considered in the mask. Defaults to None.</p></td>
                 <span class="o">.</span><span class="n">idxmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="si">}</span><span class="s2">_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
                 <span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_prob&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">values</span><span class="p">,</span>
+                <span class="o">.</span><span class="n">values</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
             <span class="p">)</span>
             <span class="n">predictions</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span>
                 <span class="n">loc</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
@@ -3289,7 +3291,7 @@ are the corresponding coefficients.</p></td>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">linear_equalities</span><span class="p">)):</span>
         <span class="n">c</span> <span class="o">=</span> <span class="n">linear_equalities</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearEqualityConstraint</span><span class="p">)</span>
-        <span class="n">A_aug</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span>  <span class="c1"># type: ignore</span>
+        <span class="n">A_aug</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span>
         <span class="n">A_aug</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;rhs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span>
     <span class="n">A_aug</span> <span class="o">=</span> <span class="n">A_aug</span><span class="o">.</span><span class="n">values</span>
 
@@ -3665,7 +3667,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
             <span class="n">pivots</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">col</span><span class="p">)</span>
             <span class="n">max_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="p">:,</span> <span class="n">col</span><span class="p">]))</span> <span class="o">+</span> <span class="n">row</span>
             <span class="c1"># switch to most stable row</span>
-            <span class="n">A</span><span class="p">[[</span><span class="n">row</span><span class="p">,</span> <span class="n">max_row</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[[</span><span class="n">max_row</span><span class="p">,</span> <span class="n">row</span><span class="p">],</span> <span class="p">:]</span>  <span class="c1"># type: ignore</span>
+            <span class="n">A</span><span class="p">[[</span><span class="n">row</span><span class="p">,</span> <span class="n">max_row</span><span class="p">],</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">A</span><span class="p">[[</span><span class="n">max_row</span><span class="p">,</span> <span class="n">row</span><span class="p">],</span> <span class="p">:]</span>
             <span class="c1"># normalize row</span>
             <span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/=</span> <span class="n">A</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span>
             <span class="c1"># eliminate other elements from column</span>
@@ -3845,7 +3847,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
     <span class="n">outputs</span> <span class="o">=</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">outputs</span><span class="p">)</span>
     <span class="c1"># loop over constraints and make sure that all features used in constraints are in the input_feature_keys</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>  <span class="c1"># type: ignore</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Removed input feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is used in a constraint.&quot;</span>
@@ -4388,17 +4390,17 @@ are generated at once.</p></td>
         <span class="n">lower</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">upper</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">rhs</span> <span class="o">=</span> <span class="mf">0.0</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>
             <span class="n">idx</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">Input</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span>
             <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">featkey</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>  <span class="c1"># type: ignore</span>
+            <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">is_fixed</span><span class="p">():</span>
                 <span class="n">rhs</span> <span class="o">-=</span> <span class="n">feat</span><span class="o">.</span><span class="n">fixed_value</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">lower</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="n">upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
                 <span class="n">coefficients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="c1"># type: ignore</span>
+                    <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
                 <span class="p">)</span>  <span class="c1"># if unit_scaled == False else c_scaled.coefficients[i])</span>
         <span class="k">if</span> <span class="n">unit_scaled</span><span class="p">:</span>
             <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span>
@@ -4409,7 +4411,7 @@ are generated at once.</p></td>
                 <span class="p">(</span>
                     <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
                     <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">scaled_coefficients</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-                    <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span> <span class="o">*</span> <span class="n">lower</span><span class="p">)),</span>  <span class="c1"># type: ignore</span>
+                    <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span> <span class="o">*</span> <span class="n">lower</span><span class="p">)),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
@@ -4417,7 +4419,7 @@ are generated at once.</p></td>
                 <span class="p">(</span>
                     <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
                     <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-                    <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">),</span>  <span class="c1"># type: ignore</span>
+                    <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
@@ -4510,11 +4512,11 @@ adapting the objectives on the fly, for example in the case of the
                     <span class="n">feat</span><span class="o">.</span><span class="n">key</span>
                 <span class="p">]</span><span class="o">.</span><span class="n">values</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
-        <span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="n">feat</span><span class="o">.</span><span class="n">objective</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+            <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
             <span class="p">(</span><span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="p">]</span>
@@ -4798,13 +4800,13 @@ adapting the objectives on the fly, for example in the case of the
     <span class="n">etas</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">idx</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>  <span class="c1"># type: ignore</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>
             <span class="n">cleaned_experiments</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_one_valid_output</span><span class="p">(</span>
                 <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">experiments</span>
             <span class="p">)</span>
             <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
                 <span class="n">idx</span><span class="p">,</span>
-                <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
+                <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
                 <span class="n">x_adapt</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">cleaned_experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
                     <span class="o">**</span><span class="n">tkwargs</span>
                 <span class="p">)</span>
