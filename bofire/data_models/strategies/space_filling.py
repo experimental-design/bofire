@@ -30,7 +30,7 @@ class SpaceFillingStrategy(Strategy):
         ipopt_options (dict, optional): Dictionary containing options for the IPOPT solver. Defaults to {"maxiter":200, "disp"=0}.
     """
 
-    type: Literal["SpaceFillingStrategy"] = "SpaceFillingStrategy"
+    type: Literal["SpaceFillingStrategy"] = "SpaceFillingStrategy"  # type: ignore
     sampling_fraction: Annotated[float, Field(gt=0, lt=1)] = 0.3
     ipopt_options: dict = {"maxiter": 200, "disp": 0}
 
