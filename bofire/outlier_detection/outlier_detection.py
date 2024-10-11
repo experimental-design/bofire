@@ -112,8 +112,11 @@ class IterativeTrimming(OutlierDetection):
 
         filtered_experiments = experiments.copy()
         output_name = self.base_gp.outputs.get_keys()[0]
+        filtered_experiments[f"valid_{output_name}"] = filtered_experiments[
+            f"valid_{output_name}"
+        ].astype(int)
         filtered_experiments.loc[
             ~ix_sub,  # type: ignore
             f"valid_{output_name}",
-        ] = False
+        ] = 0
         return filtered_experiments
