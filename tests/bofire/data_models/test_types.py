@@ -5,7 +5,7 @@ from bofire.data_models.types import (
     CategoryVals,
     FeatureKeys,
     make_unique_validator,
-    validate_bounds,
+    validate_monotonically_increasing,
 )
 
 
@@ -31,8 +31,8 @@ def test_FeatureKeys():
 
 
 def test_validate_bounds():
-    with pytest.raises(
-        ValueError, match="lower bound must be <= upper bound, got 2.0 > 1.0"
-    ):
-        validate_bounds((2.0, 1.0))
-    assert validate_bounds((1.0, 2.0)) == (1.0, 2.0)
+    with pytest.raises(ValueError, match="Sequence is not monotonically increasing."):
+        validate_monotonically_increasing((2.0, 1.0, 3.0))
+    assert validate_monotonically_increasing((1.0, 2.0)) == (1.0, 2.0)
+    assert validate_monotonically_increasing((1.0, 1.0)) == (1.0, 1.0)
+    assert validate_monotonically_increasing((1.0, 2.0, 3.0)) == (1.0, 2.0, 3.0)
