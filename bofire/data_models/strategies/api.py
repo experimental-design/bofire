@@ -1,7 +1,17 @@
 from typing import Union
 
 from bofire.data_models.strategies.actual_strategy_type import ActualStrategy
-from bofire.data_models.strategies.doe import DoEStrategy
+from bofire.data_models.strategies.doe import (
+    AnyDoEOptimalityCriterion,
+    AnyOptimalityCriterion,
+    AOptimalityCriterion,
+    DoEStrategy,
+    DOptimalityCriterion,
+    EOptimalityCriterion,
+    GOptimalityCriterion,
+    KOptimalityCriterion,
+    SpaceFillingCriterion,
+)
 from bofire.data_models.strategies.factorial import FactorialStrategy
 from bofire.data_models.strategies.fractional_factorial import (
     FractionalFactorialStrategy,
