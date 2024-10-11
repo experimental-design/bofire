@@ -43,4 +43,8 @@ If you wish to update all the outputs in a systematic manner please run the foll
 python scripts/run_tutorials.py --long --in-place
 ```
 
-This will run all the notebooks in the `tutorials` folder and save the outputs in the same folder. The `--long` flag is used to run the notebooks without the `SMOKE_TEST` flag. This is useful to generate the full outputs for the tutorials. The `--in-place` flag runs the notebooks in place such that the outputs are saved to the actuual notebook file rather than a copy in a temporary directory.
+This will run all the notebooks in the `tutorials` folder and save the outputs in the same folder. The `--long` flag is used to run the notebooks without the `SMOKE_TEST` flag. This is useful to generate the full outputs for the tutorials. The `--in-place` flag runs the notebooks in place such that the outputs are saved to the actuual notebook file rather than a copy in a temporary directory. Please clean up the outputs after running the notebooks by running the following command:
+
+```bash
+find . -name '*.ipynb' -exec nbstripout --keep-output --extra-keys "metadata.papermill.input_path metadata.papermill.output_path" {} \;
+```
