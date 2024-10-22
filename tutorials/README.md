@@ -11,7 +11,7 @@ The notebooks in this folder demonstrate the usage of bofire. The are organized 
 Additionally, the basic functionality such as setting up the reaction domain, defining objectives and running a bayesian optimization loop is shown in a variety of noteboooks by example.
 
 ### Advanced Examples
-The following notebooks show more advanced use cases such as the use of a Random Forest surrogate model.
+The following notebooks show more niche use cases such as the use of a Random Forest surrogate model. Advanced examples are not necessarily better strategies, they represent more complex uses of components within the library.
 
 ### Benchmarks
 The benchmark tutorials exist to easily recreate results from various papers or common studies in `bofire`.
