@@ -24,7 +24,7 @@ Value = Union[str, float]
 
 
 class OutputValue(BaseModel):
-    value: Union[str, float, None]
+    value: Optional[Value]
 
 
 TOutputValue = TypeVar("TOutputValue", bound=OutputValue)

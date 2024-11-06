@@ -54,7 +54,3 @@ def test_candidates_to_pandas():
     )
     candidates2 = Candidates.from_pandas(df_candidates, domain)
     assert candidates == candidates2
-
-
-if __name__ == "__main__":
-    test_experiments_to_pandas()
