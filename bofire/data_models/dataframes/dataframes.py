@@ -31,7 +31,7 @@ TOutputValue = TypeVar("TOutputValue", bound=OutputValue)
 
 
 class ExperimentOutputValue(OutputValue):
-    value: Optional[Value] = Field(description="The oberved value.")
+    value: Optional[Value] = Field(description="The observed value.")
     valid: bool = True
 
 
