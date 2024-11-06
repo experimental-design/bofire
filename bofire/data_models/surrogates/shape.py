@@ -31,9 +31,9 @@ from bofire.data_models.types import Bounds, validate_monotonically_increasing
 
 
 class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
-    type: Literal[
+    type: Literal["PiecewiseLinearGPSurrogateHyperconfig"] = (
         "PiecewiseLinearGPSurrogateHyperconfig"
-    ] = "PiecewiseLinearGPSurrogateHyperconfig"
+    )
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
@@ -44,9 +44,9 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
         ]
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal[
-        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FactorialStrategy"
+    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
+        "FactorialStrategy"
+    )
 
     @staticmethod
     def _update_hyperparameters(
