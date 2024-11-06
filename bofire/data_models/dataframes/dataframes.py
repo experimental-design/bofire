@@ -36,7 +36,7 @@ class ExperimentOutputValue(OutputValue):
 
 
 class CandidateOutputValue(OutputValue):
-    value: Optional[Value] = Field(description="The predicted value.")
+    value: Value = Field(description="The predicted value.")
     standard_deviation: float
     objective_value: float
 
