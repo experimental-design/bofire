@@ -4,6 +4,7 @@ from bofire.data_models.api import (
     AnyAcquisitionFunction,
     AnyCondition,
     AnyConstraint,
+    AnyDataFrame,
     AnyFeature,
     AnyKernel,
     AnyLocalSearchConfig,
@@ -19,6 +20,12 @@ from bofire.data_models.api import (
     Outputs,
 )
 from tests.bofire.data_models.specs.api import Spec
+
+
+def test_dataframe_should_be_deserializable(dataframe_spec: Spec):
+    obj = dataframe_spec.obj()
+    deserialized = TypeAdapter(AnyDataFrame).validate_python(obj.model_dump())
+    assert obj == deserialized
 
 
 def test_prior_should_be_deserializable(prior_spec: Spec):
