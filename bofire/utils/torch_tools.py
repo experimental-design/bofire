@@ -4,6 +4,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 import numpy as np
 import pandas as pd
 import torch
+import torch.jit
 from botorch.models.transforms.input import InputTransform
 from torch import Tensor
 from torch.nn import Module
