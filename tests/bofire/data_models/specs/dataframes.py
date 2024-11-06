@@ -12,8 +12,8 @@ specs.add_valid(
         "rows": [
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -31,8 +31,8 @@ specs.add_invalid(
         "rows": [
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -41,8 +41,8 @@ specs.add_invalid(
             ).model_dump(),
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "c": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "c": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -61,8 +61,8 @@ specs.add_invalid(
         "rows": [
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -71,8 +71,8 @@ specs.add_invalid(
             ).model_dump(),
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "gamma": dataframes.ExperimentOutputValue(value=2),
@@ -91,8 +91,8 @@ specs.add_invalid(
         "rows": [
             dataframes.ExperimentRow(
                 inputs={
-                    "b": dataframes.Value(value=1),
-                    "a": dataframes.Value(value="cat"),
+                    "b": 1,
+                    "a": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -101,8 +101,8 @@ specs.add_invalid(
             ).model_dump(),
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -121,8 +121,8 @@ specs.add_invalid(
         "rows": [
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "beta": dataframes.ExperimentOutputValue(value=2),
@@ -131,8 +131,8 @@ specs.add_invalid(
             ).model_dump(),
             dataframes.ExperimentRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.ExperimentOutputValue(value=2),
@@ -152,8 +152,8 @@ specs.add_valid(
         "rows": [
             dataframes.CandidateRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.CandidateOutputValue(
@@ -174,8 +174,8 @@ specs.add_invalid(
         "rows": [
             dataframes.CandidateRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={
                     "alpha": dataframes.CandidateOutputValue(
@@ -195,8 +195,8 @@ specs.add_valid(
         "rows": [
             dataframes.CandidateRow(
                 inputs={
-                    "a": dataframes.Value(value=1),
-                    "b": dataframes.Value(value="cat"),
+                    "a": 1,
+                    "b": "cat",
                 },
                 outputs={},
             ).model_dump()

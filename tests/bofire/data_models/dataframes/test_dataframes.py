@@ -11,9 +11,9 @@ from tests.bofire.data_models.specs.dataframes import specs as dataframe_spec
 
 
 def test_experiments_to_pandas():
-    experiments = dataframe_spec.valid(Experiments).obj()
+    experiments: Experiments = dataframe_spec.valid(Experiments).obj()
     df_experiments = experiments.to_pandas()
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="a", bounds=(0, 2)),
             CategoricalInput(key="b", categories=["cat", "cat2"]),
@@ -34,9 +34,9 @@ def test_experiments_to_pandas():
 
 
 def test_candidates_to_pandas():
-    candidates = dataframe_spec.valid(Candidates).obj()
+    candidates: Candidates = dataframe_spec.valid(Candidates).obj()
     df_candidates = candidates.to_pandas()
-    domain = Domain(
+    domain = Domain.from_lists(
         inputs=[
             ContinuousInput(key="a", bounds=(0, 2)),
             CategoricalInput(key="b", categories=["cat", "cat2"]),
@@ -54,3 +54,7 @@ def test_candidates_to_pandas():
     )
     candidates2 = Candidates.from_pandas(df_candidates, domain)
     assert candidates == candidates2
+
+
+if __name__ == "__main__":
+    test_experiments_to_pandas()

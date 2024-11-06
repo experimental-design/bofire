@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, Generic, Literal, Optional, Sequence, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field, field_validator
@@ -8,25 +8,42 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.domain import Domain
 
 
-class Value(BaseModel):
-    value: Union[float, str]
+def _append_std(s: str):
+    return f"{s}_sd"
 
 
-class ExperimentOutputValue(Value):
-    value: Optional[Union[float, str]] = Field(description="The oberved value.")  # type: ignore
+def _append_pred(s: str):
+    return f"{s}_pred"
+
+
+def _append_des(s: str):
+    return f"{s}_des"
+
+
+Value = Union[str, float]
+
+
+class OutputValue(BaseModel):
+    value: Union[str, float, None]
+
+
+TOutputValue = TypeVar("TOutputValue", bound=OutputValue)
+
+
+class ExperimentOutputValue(OutputValue):
+    value: Optional[Value] = Field(description="The oberved value.")
     valid: bool = True
 
 
-class CandidateOutputValue(Value):
-    value: Optional[Union[float, str]] = Field(description="The predicted value.")  # type: ignore
+class CandidateOutputValue(OutputValue):
+    value: Optional[Value] = Field(description="The predicted value.")
     standard_deviation: float
     objective_value: float
 
 
-class Row(BaseModel):
-    type: str
+class Row(BaseModel, Generic[TOutputValue]):
     inputs: Dict[str, Value]
-    outputs: Dict[str, Union[ExperimentOutputValue, CandidateOutputValue]]
+    outputs: Dict[str, TOutputValue]
 
     @abstractmethod
     def to_pandas(self) -> pd.Series:
@@ -36,9 +53,6 @@ class Row(BaseModel):
     @abstractmethod
     def from_pandas(row: pd.Series, domain: Domain) -> "Row":
         pass
-
-    def _inputs_to_dict(self) -> Dict[str, Union[float, str]]:
-        return {k: v.value for k, v in self.inputs.items()}
 
     @property
     def input_keys(self):
@@ -50,13 +64,11 @@ class Row(BaseModel):
 
     @property
     def categorical_input_keys(self):
-        return sorted([k for k, v in self.inputs.items() if isinstance(v.value, str)])
+        return sorted([k for k, v in self.inputs.items() if isinstance(v, str)])
 
     @property
     def continuous_input_keys(self):
-        return sorted(
-            [k for k, v in self.inputs.items() if not isinstance(v.value, str)]
-        )
+        return sorted([k for k, v in self.inputs.items() if not isinstance(v, str)])
 
     @property
     def categorical_output_keys(self):
@@ -69,14 +81,13 @@ class Row(BaseModel):
         )
 
 
-class ExperimentRow(Row):
-    type: Literal["ExperimentRow"] = "ExperimentRow"  # type: ignore
-    outputs: Dict[str, ExperimentOutputValue]  # type: ignore
+class ExperimentRow(Row[ExperimentOutputValue]):
+    type: Literal["ExperimentRow"] = "ExperimentRow"
 
     def to_pandas(self) -> pd.Series:
         return pd.Series(
             {
-                **self._inputs_to_dict(),
+                **self.inputs,
                 **{k: v.value for k, v in self.outputs.items()},
                 **{f"valid_{k}": v.valid for k, v in self.outputs.items()},
             }
@@ -84,7 +95,7 @@ class ExperimentRow(Row):
 
     @staticmethod
     def from_pandas(row: pd.Series, domain: Domain) -> "ExperimentRow":
-        inputs = {k: Value(value=row[k]) for k in domain.inputs.get_keys()}
+        inputs = {k: row[k] for k in domain.inputs.get_keys()}
         outputs = {
             k: ExperimentOutputValue(
                 value=row[k], valid=row[f"valid_{k}"] if f"valid_{k}" in row else True
@@ -94,29 +105,31 @@ class ExperimentRow(Row):
         return ExperimentRow(inputs=inputs, outputs=outputs)
 
 
-class CandidateRow(Row):
-    type: Literal["CandidateRow"] = "CandidateRow"  # type: ignore
-    outputs: Dict[str, CandidateOutputValue]  # type: ignore
+class CandidateRow(Row[CandidateOutputValue]):
+    type: Literal["CandidateRow"] = "CandidateRow"
 
     def to_pandas(self) -> pd.Series:
         return pd.Series(
             {
-                **self._inputs_to_dict(),
-                **{f"{k}_pred": v.value for k, v in self.outputs.items()},
-                **{f"{k}_std": v.standard_deviation for k, v in self.outputs.items()},
-                **{f"{k}_des": v.objective_value for k, v in self.outputs.items()},
+                **self.inputs,
+                **{_append_pred(k): v.value for k, v in self.outputs.items()},
+                **{
+                    _append_std(k): v.standard_deviation
+                    for k, v in self.outputs.items()
+                },
+                **{_append_des(k): v.objective_value for k, v in self.outputs.items()},
             }
         )
 
     @staticmethod
     def from_pandas(row: pd.Series, domain: Domain) -> "CandidateRow":
-        inputs = {k: Value(value=row[k]) for k in domain.inputs.get_keys()}
+        inputs = {k: row[k] for k in domain.inputs.get_keys()}
         if f"{domain.outputs.get_keys()[0]}_pred" in row.index:
             outputs = {
                 k: CandidateOutputValue(
-                    value=row[f"{k}_pred"],
-                    objective_value=row[f"{k}_des"],
-                    standard_deviation=row[f"{k}_std"],
+                    value=row[_append_pred(k)],
+                    objective_value=row[_append_des(k)],
+                    standard_deviation=row[_append_std(k)],
                 )
                 for k in domain.outputs.get_keys()
             }
@@ -126,9 +139,11 @@ class CandidateRow(Row):
         return CandidateRow(inputs=inputs, outputs=outputs)
 
 
-class DataFrame(BaseModel):
-    type: str
-    rows: List[Row]
+TRow = TypeVar("TRow", bound=Row)
+
+
+class DataFrame(BaseModel, Generic[TRow]):
+    rows: Sequence[TRow]
 
     @field_validator("rows")
     def validate_rows(cls, rows):
@@ -155,9 +170,8 @@ class DataFrame(BaseModel):
         pass
 
 
-class Experiments(DataFrame):
-    type: Literal["Experiments"] = "Experiments"  # type: ignore
-    rows: List[ExperimentRow]  # type: ignore
+class Experiments(DataFrame[ExperimentRow]):
+    type: Literal["Experiments"] = "Experiments"
 
     @staticmethod
     def from_pandas(df: pd.DataFrame, domain: Domain) -> "Experiments":
@@ -166,9 +180,8 @@ class Experiments(DataFrame):
         )
 
 
-class Candidates(DataFrame):
-    type: Literal["Candidates"] = "Candidates"  # type: ignore
-    rows: List[CandidateRow]  # type: ignore
+class Candidates(DataFrame[CandidateRow]):
+    type: Literal["Candidates"] = "Candidates"
 
     @staticmethod
     def from_pandas(df: pd.DataFrame, domain: Domain) -> "Candidates":
