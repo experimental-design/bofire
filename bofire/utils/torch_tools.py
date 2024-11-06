@@ -638,7 +638,7 @@ def get_initial_conditions_generator(
     return generator
 
 
-@torch.jit.script
+@torch.jit.script  # type: ignore
 def interp1d(
     x: torch.Tensor,
     y: torch.Tensor,

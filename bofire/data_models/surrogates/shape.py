@@ -31,9 +31,9 @@ from bofire.data_models.types import Bounds, validate_monotonically_increasing
 
 
 class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
-    type: Literal[
+    type: Literal["PiecewiseLinearGPSurrogateHyperconfig"] = (  # type: ignore
         "PiecewiseLinearGPSurrogateHyperconfig"
-    ] = "PiecewiseLinearGPSurrogateHyperconfig"
+    )
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
@@ -44,9 +44,9 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
         ]
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal[
-        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FactorialStrategy"
+    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
+        "FactorialStrategy"
+    )
 
     @staticmethod
     def _update_hyperparameters(
@@ -112,7 +112,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
         hyperconfig: The hyperconfig that is used for training the GP.
     """
 
-    type: Literal["PiecewiseLinearGPSurrogate"] = "PiecewiseLinearGPSurrogate"
+    type: Literal["PiecewiseLinearGPSurrogate"] = "PiecewiseLinearGPSurrogate"  # type: ignore
     interpolation_range: Bounds
     n_interpolation_points: PositiveInt = 1000
     x_keys: list[str]
@@ -122,7 +122,7 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
     append_x: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     prepend_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
     append_y: Annotated[List[float], AfterValidator(validate_monotonically_increasing)]
-    hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(
+    hyperconfig: Optional[PiecewiseLinearGPSurrogateHyperconfig] = Field(  # type: ignore
         default_factory=lambda: PiecewiseLinearGPSurrogateHyperconfig()
     )
 
