@@ -134,7 +134,6 @@ class CandidateRow(Row[CandidateOutputValue]):
                 for k in domain.outputs.get_keys()
             }
         else:
-            print(row)
             outputs = {}
         return CandidateRow(inputs=inputs, outputs=outputs)
 
