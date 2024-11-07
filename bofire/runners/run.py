@@ -35,7 +35,7 @@ def _single_run(
         iterations.
 
         Args:
-            benchmark: Benchmark function that is suposed be evaluated.
+            benchmark: Benchmark function that is supposed be evaluated.
 
         """
         benchmark_name = benchmark.__class__.__name__
@@ -68,7 +68,7 @@ def _single_run(
         Y = benchmark.f(X)
         XY = pd.concat([X, Y], axis=1)
         # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
-        # colum needs to be converted back to str to be added to the benchmark domain.
+        # column needs to be converted back to str to be added to the benchmark domain.
         strategy.tell(XY)
         metric_values[i] = metric(strategy.domain, strategy.experiments)
         pbar.set_description(f"Run {run_idx}")

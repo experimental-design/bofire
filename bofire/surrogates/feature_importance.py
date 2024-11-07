@@ -17,13 +17,13 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
         surrogate (SingleTaskGPSurrogate): Surrogate to extract the importances.
 
     Returns:
-        pd.Series: The importance values (inverse of the individual lenght scales).
+        pd.Series: The importance values (inverse of the individual length scales).
 
     """
     try:
         scales = surrogate.model.covar_module.base_kernel.lengthscale  # type: ignore
     except AttributeError:
-        raise ValueError("No lenghtscale based kernel found.")
+        raise ValueError("No lengthscale based kernel found.")
     scales = 1.0 / scales.squeeze().detach().numpy()
     if isinstance(scales, float):
         raise ValueError("Only one lengthscale found, use `ard=True`.")
@@ -75,7 +75,7 @@ def permutation_importance(
         seed (int, optional): Seed for the random sampler. Defaults to 42.
 
     Returns:
-        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
+        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evaluated and value is a dataframe
             with the feature keys as columns and the mean and std of the respective permutation importances as rows.
 
     """
@@ -168,7 +168,7 @@ def permutation_importance_hook(
         seed (int, optional): Seed for the random number generator. Defaults to 42.
 
     Returns:
-        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
+        Dict[str, pd.DataFrame]: keys are the metrices for which the model is evaluated and value is a dataframe
             with the feature keys as columns and the mean and std of the respective permutation importances as rows.
 
     """

@@ -8,7 +8,7 @@ from bofire.benchmarks.benchmark import Benchmark
 from bofire.data_models.domain.api import Domain
 
 
-# Create a folder for the log file, if not alredy exists.
+# Create a folder for the log file, if not already exists.
 if not os.path.exists("bofire_logs"):
     os.makedirs("bofire_logs")
 
@@ -133,7 +133,7 @@ class Aspen_benchmark(Benchmark):
         }
         add_outputs = {key: [] for key in self.additional_output_keys}
 
-        # Iterate through dataframe rows to retrieve multiple input vectors. Running seperate simulations for each.
+        # Iterate through dataframe rows to retrieve multiple input vectors. Running separate simulations for each.
         for index, row in X.iterrows():
             logger.info("Writing inputs into Aspen")
             # Write input variables corresping to columns into aspen according to predefined paths.

@@ -162,7 +162,7 @@ class Ackley(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1, x_2, y and valid_y
+            pd.DataFrame: x values of optima. Columns are x_1, x_2, y and valid_y
 
         """
         x = np.zeros((1, self.dim))
@@ -337,7 +337,7 @@ class Himmelblau(Benchmark):
             **kwargs: Additional arguments for the Benchmark class.
 
         Raises:
-            ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
+            ValueError: As constraints are not implemented yet, a True value for use_constraints yields a ValueError.
 
         """
         super().__init__(**kwargs)
@@ -378,7 +378,7 @@ class Himmelblau(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1 and x_2
+            pd.DataFrame: x values of optima. Columns are x_1 and x_2
 
         """
         x = np.array(
@@ -410,7 +410,7 @@ class MultiTaskHimmelblau(Benchmark):
             **kwargs: Additional arguments for the Benchmark class.
 
         Raises:
-            ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
+            ValueError: As constraints are not implemented yet, a True value for use_constraints yields a ValueError.
 
         """
         super().__init__(**kwargs)
@@ -463,7 +463,7 @@ class MultiTaskHimmelblau(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1, x_2, task_id
+            pd.DataFrame: x values of optima. Columns are x_1, x_2, task_id
 
         """
         out = [
@@ -573,7 +573,7 @@ class Multinormalpdfs(Benchmark):
             **kwargs: Additional arguments for the Benchmark class.
 
         Details:
-            The way the covariance matrix is generated is pehaps nontrivial:
+            The way the covariance matrix is generated is perhaps nontrivial:
             1) sample n_dims values from a dirichlet distribution, and call this sample eigs. sum(eigs)=1
             2) scale eigs so that the sum equals n_dims
             3) generate a random correlation matrix with the eigenvalues eigs

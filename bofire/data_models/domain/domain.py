@@ -340,7 +340,7 @@ class Domain(BaseModel):
 
         Args:
             experiments (pd.DataFrame): Dataframe with experimental data
-            strict (bool, optional): Boolean to distinguish if the occurence of
+            strict (bool, optional): Boolean to distinguish if the occurrence of
                 fixed features in the dataset should be considered or not.
                 Defaults to False.
 
@@ -421,7 +421,7 @@ class Domain(BaseModel):
         tol: float = 1e-5,
         raise_validation_error: bool = True,
     ) -> pd.DataFrame:
-        """Method to check the validty of porposed candidates
+        """Method to check the validty of proposed candidates
 
         Args:
             candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)

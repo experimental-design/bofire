@@ -103,7 +103,7 @@ class TrainableSurrogate(BaseModel):
             for key in agg.features:
                 if key not in self.inputs.get_keys():  # type: ignore
                     raise ValueError(
-                        f"Unkown feature key {key} provided in aggregations.",
+                        f"Unknown feature key {key} provided in aggregations.",
                     )
                 feat = self.inputs.get_by_key(key)  # type: ignore
                 if not isinstance(feat, ContinuousInput):

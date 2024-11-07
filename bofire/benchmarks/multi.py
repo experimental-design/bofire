@@ -35,12 +35,12 @@ from bofire.utils.torch_tools import tkwargs
 
 
 class DTLZ2(Benchmark):
-    """Multiobjective bechmark function for testing optimization algorithms.
+    """Multiobjective benchmark function for testing optimization algorithms.
     Info about the function: https://pymoo.org/problems/many/dtlz.html
     """
 
     def __init__(self, dim: PositiveInt, num_objectives: PositiveInt = 2, **kwargs):
-        """Initiallizes object of Type DTLZ2 which is a benchmark function.
+        """Initializes object of Type DTLZ2 which is a benchmark function.
 
         Args:
             dim (PositiveInt): Dimension of input vector
@@ -274,7 +274,7 @@ class C2DTLZ2(DTLZ2):
 
 class SnarBenchmark(Benchmark):
     """Nucleophilic aromatic substitution problem as a multiobjective test function for optimization algorithms.
-    Solving of a differential equation system with varying intitial values.
+    Solving of a differential equation system with varying initial values.
     """
 
     def __init__(self, C_i: Optional[np.ndarray] = None, **kwargs):
@@ -298,7 +298,7 @@ class SnarBenchmark(Benchmark):
             ContinuousInput(key="equiv_pldn", bounds=(1, 5)),
             # "concentration of 2,4 dinitrofluorobenenze at reactor inlet (after mixing) in M"
             ContinuousInput(key="conc_dfnb", bounds=(0.1, 0.5)),
-            # "Reactor temperature in degress celsius"
+            # "Reactor temperature in degrees celsius"
             ContinuousInput(key="temperature", bounds=(30, 120)),
         ]
         # Objectives

@@ -196,7 +196,7 @@ class BotorchStrategy(PredictiveStrategy):
         candidates: pd.DataFrame,
         combined: bool = False,
     ) -> np.ndarray:
-        """Calculate the acqusition value for a set of experiments.
+        """Calculate the acquisition value for a set of experiments.
 
         Args:
             candidates (pd.DataFrame): Dataframe with experimentes for which the acqf value should be calculated.
@@ -419,13 +419,13 @@ class BotorchStrategy(PredictiveStrategy):
 
         acqfs = self._get_acqfs(candidate_count)
 
-        # we check here if we have a fully combinatorical search space
+        # we check here if we have a fully combinatorial search space
         if len(
             self.domain.inputs.get(includes=[DiscreteInput, CategoricalInput]),
         ) == len(self.domain.inputs):
             if len(acqfs) > 1:
                 raise NotImplementedError(
-                    "Multiple Acqfs are currently not supported for purely combinatorical search spaces.",
+                    "Multiple Acqfs are currently not supported for purely combinatorial search spaces.",
                 )
             # generate the choices as pandas dataframe
             choices = pd.DataFrame.from_dict(

@@ -194,11 +194,13 @@ def _fisher_exact_test_p(
     predicted: np.ndarray,
     standard_deviation: Optional[np.ndarray] = None,
 ) -> float:
-    """Test if the model is able to distuinguish the bottom half of the observations from the top half.
+    """Test if the model is able to distuinguish the bottom half of the
+    observations from the top half.
 
-    For this purpose Fisher's excat test is used together with the observations and predictions. The
-    p value is returned. A low p value indicates that the model has some ability to distuiguish high from
-    low values. A high p value indcates that the model cannot identify the difference or that the
+    For this purpose Fisher's exact test is used together with the observations
+    and predictions. The p value is returned. A low p value indicates that
+    the model has some ability to distuiguish high from low values. A high p
+    value indicates that the model cannot identify the difference or that the
     observations are too noisy to be able to tell.
 
     This implementation is taken from Ax: https://github.com/facebook/Ax/blob/main/ax/modelbridge/cross_validation.py
@@ -206,8 +208,8 @@ def _fisher_exact_test_p(
     Args:
         observed (np.ndarray): Observed data.
         predicted (np.ndarray): Predicted data.
-        standard_deviation (Optional[np.ndarray], optional): Predicted standard deviation.
-            Ignored in the calculation. Defaults to None.
+        standard_deviation (Optional[np.ndarray], optional): Predicted standard
+            deviation. Ignored in the calculation. Defaults to None.
 
     Returns:
         float: p value of the test.
@@ -342,7 +344,7 @@ def _CVPPDiagram(
 
     Returns:
         np.ndarray: quantiles.
-        np.ndarray: callibration score for each quantile.
+        np.ndarray: calibration score for each quantile.
 
     """
     if standard_deviation is None:
@@ -772,7 +774,7 @@ class CvResults(BaseModel):
         return pd.concat([self.get_metric(m, combine_folds) for m in metrics], axis=1)
 
 
-# the following methods tranform a CvResults object to a CrossValidationValues object
+# the following methods transform a CvResults object to a CrossValidationValues object
 # in which the metrics are stored and not computed on the fly, moreover the field types
 # are more backend friendly. It should be used to store CvResults in a backend system
 class CrossValidationValues(BaseModel):

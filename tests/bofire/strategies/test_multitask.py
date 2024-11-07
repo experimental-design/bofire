@@ -101,9 +101,9 @@ def test_nosurrogate_multitask():
         domain = _domain(task_input)
         dm = strat_data_model(domain=domain, **kwargs)
 
-        strat = strategies.map(dm)
-        strat.tell(experiments)
-        candidate = strat.ask(1)
+        strategy = strategies.map(dm)
+        strategy.tell(experiments)
+        candidate = strategy.ask(1)
         assert len(candidate) == 1
 
         task_2_x = np.linspace(0, 1, 15)
@@ -115,8 +115,8 @@ def test_nosurrogate_multitask():
                 "task": ["task_1"] * len(task_1_x) + ["task_2"] * len(task_2_x),
             },
         )
-        strat.tell(experiments)
-        candidate = strat.ask(1)
+        strategy.tell(experiments)
+        candidate = strategy.ask(1)
         assert len(candidate) == 1
 
     test(RandomStrategy)

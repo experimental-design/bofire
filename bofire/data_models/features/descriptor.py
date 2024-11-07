@@ -34,7 +34,7 @@ class ContinuousDescriptorInput(ContinuousInput):
         """Compares the length of the defined descriptors list with the provided values
 
         Args:
-            values (Dict): Dictionary with all attribues
+            values (Dict): Dictionary with all attributes
 
         Raises:
             ValueError: when the number of descriptors does not math the number of provided values
@@ -86,7 +86,7 @@ class CategoricalDescriptorInput(CategoricalInput):
     @field_validator("values")
     @classmethod
     def validate_values(cls, v, info):
-        """Validates the compatability of passed values for the descriptors and the defined categories
+        """Validates the compatibility of passed values for the descriptors and the defined categories
 
         Args:
             v (List[List[float]]): Nested list with descriptor values
@@ -173,12 +173,12 @@ class CategoricalDescriptorInput(CategoricalInput):
 
         Args:
             values (pd.Series): A dataFrame with experiments
-            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.
+            strict (bool, optional): Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False.
 
         Raises:
             ValueError: when an entry is not in the list of allowed categories
             ValueError: when there is no variation in a feature provided by the experimental data
-            ValueError: when no variation is present or planed for a given descriptor
+            ValueError: when no variation is present or planned for a given descriptor
 
         Returns:
             pd.Series: A dataFrame with experiments

@@ -64,7 +64,7 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         categorical_feature_keys = get_categorical_feature_keys(
             self.input_preprocessing_specs,
         )
-        # these are the categorical dimesions after applying the OneHotToNumeric transform
+        # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys)),
         )

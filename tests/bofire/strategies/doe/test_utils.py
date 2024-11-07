@@ -138,7 +138,7 @@ def test_get_formula_from_string():
 
 
 def test_n_zero_eigvals_unconstrained():
-    # 5 continous
+    # 5 continuous
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
@@ -183,7 +183,7 @@ def test_n_zero_eigvals_constrained():
 
 
 def test_number_of_model_terms():
-    # 5 continous inputs
+    # 5 continuous inputs
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
@@ -309,7 +309,7 @@ def test_constraints_as_scipy_constraints():
         assert np.allclose(c.fun(np.array([1, 1, 1, 1, 1, 1])), [1, 1])
 
     # TODO NChooseKConstraint requires input lower_bounds to be 0.
-    # can we lift this requirment?
+    # can we lift this requirement?
 
     inputs = [ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(4)]
 

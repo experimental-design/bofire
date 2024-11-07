@@ -489,7 +489,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         experiments: pd.DataFrame,
         specs: InputTransformSpecs,
     ) -> pd.DataFrame:
-        """Transform a dataframe to the represenation specified in `specs`.
+        """Transform a dataframe to the representation specified in `specs`.
 
         Currently only input categoricals are supported.
 

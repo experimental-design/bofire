@@ -49,7 +49,7 @@ def test_lengthscale_importance_invalid():
     )
     surrogate = surrogates.map(surrogate_data)
     surrogate.fit(experiments)
-    with pytest.raises(ValueError, match="No lenghtscale based kernel found."):
+    with pytest.raises(ValueError, match="No lengthscale based kernel found."):
         lengthscale_importance(surrogate=surrogate)
     surrogate_data = SingleTaskGPSurrogate(
         inputs=model.inputs,

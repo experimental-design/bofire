@@ -8,7 +8,7 @@ from bofire.data_models.base import BaseModel
 class PredictedValue(BaseModel):
     """Container holding information regarding individual predictions.
 
-    Used to comunicate with backend services.
+    Used to communicate with backend services.
 
     Attributes:
         predictedValue (float): The predicted value.

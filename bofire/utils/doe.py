@@ -85,10 +85,10 @@ def validate_generator(n_factors: int, generator: str) -> str:
         raise ValueError("Generator does not match the number of factors.")
     # clean it and transform it into a list
     generators = [item for item in re.split(r"\-|\s|\+", generator) if item]
-    lengthes = [len(i) for i in generators]
+    lengths = [len(i) for i in generators]
 
     # Indices of single letters (main factors)
-    idx_main = [i for i, item in enumerate(lengthes) if item == 1]
+    idx_main = [i for i, item in enumerate(lengths) if item == 1]
 
     if len(idx_main) == 0:
         raise ValueError("At least one unconfounded main factor is needed.")
@@ -140,10 +140,10 @@ def fracfact(gen) -> np.ndarray:
     gen = validate_generator(n_factors=gen.count(" ") + 1, generator=gen)
 
     generators = [item for item in re.split(r"\-|\s|\+", gen) if item]
-    lengthes = [len(i) for i in generators]
+    lengths = [len(i) for i in generators]
 
     # Indices of single letters (main factors)
-    idx_main = [i for i, item in enumerate(lengthes) if item == 1]
+    idx_main = [i for i, item in enumerate(lengths) if item == 1]
 
     # Indices of letter combinations.
     idx_combi = [i for i, item in enumerate(generators) if item != 1]
@@ -155,7 +155,7 @@ def fracfact(gen) -> np.ndarray:
 
     # Fill in design with two level factorial design
     H1 = ff2n(len(idx_main))
-    H = np.zeros((H1.shape[0], len(lengthes)))
+    H = np.zeros((H1.shape[0], len(lengths)))
     H[:, idx_main] = H1
 
     # Recognize combinations and fill in the rest of matrix H2 with the proper
@@ -180,7 +180,7 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
 
     Args:
         gen: The generator.
-        order: The order up to wich the alias structure should be calculated. Defaults to 4.
+        order: The order up to which the alias structure should be calculated. Defaults to 4.
 
     Returns:
         The alias structure of the design matrix.

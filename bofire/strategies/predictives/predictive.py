@@ -115,7 +115,7 @@ class PredictiveStrategy(Strategy):
                 )
         if retrain and self.has_sufficient_experiments():
             self.fit()
-            # we have a seperate _tell here for things that are relevant when
+            # we have a separate _tell here for things that are relevant when
             # setting up the strategy but unrelated to fitting the models like
             # initializing the ACQF.
             self._tell()
@@ -179,7 +179,7 @@ class PredictiveStrategy(Strategy):
 
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):
-        """Abstract method where the acutal prediction are occuring."""
+        """Abstract method where the actual prediction are occurring."""
 
     def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
         """Transform candiadtes dataframe to a list of `Candidate` objects.

@@ -244,7 +244,7 @@ def constrained_objective2botorch(
     eps: float = 1e-8,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
-    to setup ouput constrained optimizations.
+    to setup output constrained optimizations.
 
     Args:
         idx (int): Index of the constraint objective in the list of outputs.
@@ -297,7 +297,7 @@ def constrained_objective2botorch(
         )
     if isinstance(objective, ConstrainedCategoricalObjective):
         # The output of a categorical objective has final dim `c` where `c` is number of classes
-        # Pass in the expected acceptance probability and perform an inverse sigmoid to atain the original probabilities
+        # Pass in the expected acceptance probability and perform an inverse sigmoid to attain the original probabilities
         return (
             [
                 lambda Z: torch.log(
@@ -616,7 +616,7 @@ def get_initial_conditions_generator(
         ask_options (Dict, optional): Dictionary of keyword arguments that are
             passed to the `ask` method of the strategy. Defaults to {}.
         sequential (bool, optional): If True, samples for every q-batch are
-            generate indepenent from each other. If False, the `n x q` samples
+            generate independent from each other. If False, the `n x q` samples
             are generated at once.
 
     Returns:

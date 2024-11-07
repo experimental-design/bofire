@@ -352,7 +352,7 @@ def test_custom_dumps_invalid():
 
 
 @pytest.mark.parametrize("candidate_count", [1, 2])
-def test_sobo_fully_combinatorical(candidate_count):
+def test_sobo_fully_combinatorial(candidate_count):
     benchmark = _CategoricalDiscreteHimmelblau()
 
     strategy_data = data_models.SoboStrategy(domain=benchmark.domain)

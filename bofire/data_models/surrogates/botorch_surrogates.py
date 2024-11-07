@@ -117,7 +117,7 @@ class BotorchSurrogates(BaseModel):
             for key in model.inputs.get_keys():
                 if key not in used_feature_keys:
                     used_feature_keys.append(key)
-        # check that the features and preprocessing steps are equal trough the surrogates
+        # check that the features and preprocessing steps are equal through the surrogates
         for key in used_feature_keys:
             features = [
                 model.inputs.get_by_key(key)

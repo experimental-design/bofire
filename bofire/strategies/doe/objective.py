@@ -119,7 +119,7 @@ class DOptimality(Objective):
     closed expression for this one) and one model dependent part for the jacobian of X.T@X
     w.r.t. the inputs. Because each row of X only depends on the inputs of one experiment
     the second part can be formulated in a simplified way. It is built up with n_experiment
-    blocks of the same structure which is represended by the attribute jacobian_building_block.
+    blocks of the same structure which is represented by the attribute jacobian_building_block.
 
     A nice derivation for the "first part" of the jacobian can be found [here](https://angms.science/doc/LA/logdet.pdf).
     The second part consists of the partial derivatives of the model terms with
@@ -144,7 +144,7 @@ class DOptimality(Objective):
     default_jacobian_building_block implements the computation of these matrices/"building blocks".
 
     Then, we notice that the model term values of the j-th experiment only depend on the input values of
-    the j-th experiment. Thus, to compute the partial derivative df/dx_ik we only have to compute the euclidian
+    the j-th experiment. Thus, to compute the partial derivative df/dx_ik we only have to compute the euclidean
     scalar product of (K_kij)_j and (df/dy_jk)_j. The way how we built the two parts of the jacobian allows us
     to compute this scalar product in a vectorized way for all x_ik at once, see also JacobianForLogDet.jacobian.
     """

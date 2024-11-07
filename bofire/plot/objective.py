@@ -30,7 +30,7 @@ def plot_objective_plotly(
     """
     if feature.objective is None:
         raise ValueError(
-            f"No objective assigned for ContinuousOutputFeauture with key {feature.key}.",
+            f"No objective assigned for ContinuousOutputFeature with key {feature.key}.",
         )
 
     x = pd.Series(np.linspace(lower, upper, 5000))

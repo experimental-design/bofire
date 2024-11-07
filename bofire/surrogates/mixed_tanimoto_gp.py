@@ -261,7 +261,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             self.input_preprocessing_specs,
             continuous_feature_keys,
         )
-        # these are the categorical dimesions after applying the OneHotToNumeric transform
+        # these are the categorical dimensions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(
                 len(ord_dims) + len(mol_dims),

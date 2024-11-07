@@ -496,7 +496,7 @@ specs.add_invalid(
         "dump": None,
     },
     error=ValueError,
-    message="Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
+    message="Only numerical inputs are supported for the `LinearDeterministicSurrogate`",
 )
 
 specs.add_valid(

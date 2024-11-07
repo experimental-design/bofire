@@ -111,7 +111,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     @field_validator("input_preprocessing_specs")
     @classmethod
     def validate_categoricals(cls, v, values):
-        """Checks that at least one one-hot encoded categorical feauture is present."""
+        """Checks that at least one one-hot encoded categorical feature is present."""
         if CategoricalEncodingEnum.ONE_HOT not in v.values():
             raise ValueError(
                 "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present.",

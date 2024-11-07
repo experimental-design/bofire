@@ -50,7 +50,7 @@ def test_mlp_input_size(output_size):
 
 def test_mlp_hidden_layer_sizes():
     mlp = MLP(input_size=2, output_size=1, hidden_layer_sizes=(8, 4, 2))
-    assert len(mlp.layers) == 8  # added final acitvation function as a layer
+    assert len(mlp.layers) == 8  # added final activation function as a layer
     assert mlp.layers[0].in_features == 2
     assert mlp.layers[0].out_features == 8
     assert mlp.layers[2].in_features == 8

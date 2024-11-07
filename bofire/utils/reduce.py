@@ -80,7 +80,7 @@ def reduce_domain(domain: Domain) -> Tuple[Domain, AffineTransform]:
 
     Returns:
         Tuple[Domain, AffineTransform]: reduced domain and the according transformation to switch between the
-            reduced and orginal domain.
+            reduced and original domain.
 
     """
     # check if the domain can be reduced
@@ -276,7 +276,7 @@ def check_existence_of_solution(A_aug):
 
 
 def remove_eliminated_inputs(domain: Domain, transform: AffineTransform) -> Domain:
-    """Eliminates remaining occurences of eliminated inputs in linear constraints.
+    """Eliminates remaining occurrences of eliminated inputs in linear constraints.
 
     Args:
         domain (Domain): Domain in which the linear constraints should be purged.

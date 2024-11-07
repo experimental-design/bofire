@@ -10,7 +10,7 @@ from bofire.data_models.surrogates.api import BotorchSurrogates, SingleTaskGPSur
 
 def test_active_learning():
     """Tests the initialization of the ActiveLearningStrategy.
-    This is done for the most complicated case meaning a multi-objective szenario with
+    This is done for the most complicated case meaning a multi-objective scenario with
     a unique weight for each output feature.
     """
     benchmark = DTLZ2(dim=3)

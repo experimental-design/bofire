@@ -180,7 +180,7 @@ class ContinuousOutput(Output):
     """The base class for a continuous output feature
 
     Attributes:
-        objective (objective, optional): objective of the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.
+        objective (objective, optional): objective of the feature indicating in which direction it should be optimized. Defaults to `MaximizeObjective`.
 
     """
 

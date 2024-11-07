@@ -91,7 +91,7 @@ class TrainableSurrogate(ABC):
             hooks (Dict[str, Callable[[Model, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame], Any]], optional):
                 Dictionary of callable hooks that are called within the CV loop. The callable retrieves the current trained
                 modeld and the current CV folds in the following order: X_train, y_train, X_test, y_test. Defaults to {}.
-            hook_kwargs (Dict[str, Dict[str, Any]], optional): Dictionary holding hook specefic keyword arguments.
+            hook_kwargs (Dict[str, Dict[str, Any]], optional): Dictionary holding hook specific keyword arguments.
                 Defaults to {}.
 
         Returns:

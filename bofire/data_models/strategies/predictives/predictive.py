@@ -56,7 +56,7 @@ class PredictiveStrategy(Strategy):
 
         Raises:
             ValueError: if no output feature is specified
-            ValueError: if not output feauture with an attached objective is specified
+            ValueError: if not output feature with an attached objective is specified
 
         Returns:
             Domain: the domain

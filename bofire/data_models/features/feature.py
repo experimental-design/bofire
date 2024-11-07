@@ -76,7 +76,7 @@ class Input(Feature):
 
         Args:
             values (pd.Series): A dataFrame with experiments
-            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.
+            strict (bool, optional): Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False.
 
         Returns:
             pd.Series: The passed dataFrame with experiments

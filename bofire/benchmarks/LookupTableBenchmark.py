@@ -41,7 +41,7 @@ class LookupTableBenchmark(Benchmark):
             **kwargs: Allow additional unused arguments to prevent errors.
 
         Returns:
-            pd.DataFrame: output values from the LookUpTable. Columns are ouput keys and valid_output keys.
+            pd.DataFrame: output values from the LookUpTable. Columns are output keys and valid_output keys.
 
         """
         X = sampled.copy()

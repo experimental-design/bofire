@@ -54,7 +54,7 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
         return dict(zip(self.categories, self.desirability))
 
     def to_dict_label(self) -> Dict:
-        """Returns the catergories and label location of categories"""
+        """Returns the categories and label location of categories"""
         return {c: i for i, c in enumerate(self.categories)}
 
     def from_dict_label(self) -> Dict:

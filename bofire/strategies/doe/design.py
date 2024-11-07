@@ -481,7 +481,7 @@ def find_local_max_ipopt(
     ), "NChooseKConstraint with min_count !=0 is not supported!"
 
     #
-    # Sampling initital values
+    # Sampling initial values
     #
 
     if sampling is not None:

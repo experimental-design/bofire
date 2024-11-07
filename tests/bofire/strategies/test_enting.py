@@ -35,7 +35,7 @@ from tests.bofire.strategies.test_base import domains
 ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
 if ENTMOOT_AVAILABLE:
     try:
-        # this is the recommended way to check precense of gurobi license file
+        # this is the recommended way to check presence  of gurobi license file
         gurobipy.Model()
         GUROBI_AVAILABLE = True
     except gurobipy.GurobiError:

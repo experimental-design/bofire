@@ -154,7 +154,7 @@ class BotorchStrategy(PredictiveStrategy):
             self.domain,
             self.surrogate_specs,
         )
-        # we also have to checke here that the categorical method is compatible with the chosen models
+        # we also have to check here that the categorical method is compatible with the chosen models
         # categorical_method = (
         #   values["categorical_method"] if "categorical_method" in values else None
         # )
