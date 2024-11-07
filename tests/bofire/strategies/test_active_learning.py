@@ -32,13 +32,14 @@ def test_active_learning():
                     inputs=benchmark.domain.inputs,
                     outputs=Outputs(features=[benchmark.domain.outputs[1]]),
                 ),
-            ]
+            ],
         ),
         acquisition_function=aqcf_data_model,
     )
     initial_points = benchmark.domain.inputs.sample(10)
     initial_experiments = pd.concat(
-        [initial_points, benchmark.f(initial_points)], axis=1
+        [initial_points, benchmark.f(initial_points)],
+        axis=1,
     )
     recommender = strategies.map(data_model=data_model)
     recommender.tell(initial_experiments)  # Check whether the model can be trained.

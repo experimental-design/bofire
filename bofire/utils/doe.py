@@ -32,6 +32,7 @@ def get_confounding_matrix(
 
     Returns:
         _type_: _description_
+
     """
     from sklearn.preprocessing import MinMaxScaler
 
@@ -73,13 +74,13 @@ def ff2n(n_factors: int) -> np.ndarray:
 
     Returns:
         The full factorial design.
+
     """
     return np.array(list(itertools.product([-1, 1], repeat=n_factors)))
 
 
 def validate_generator(n_factors: int, generator: str) -> str:
     """Validates the generator and thows an error if it is not valid."""
-
     if len(generator.split(" ")) != n_factors:
         raise ValueError("Generator does not match the number of factors.")
     # clean it and transform it into a list
@@ -102,7 +103,7 @@ def validate_generator(n_factors: int, generator: str) -> str:
         != string.ascii_lowercase[: len(idx_main)]
     ):
         raise ValueError(
-            f'Use the letters `{" ".join(string.ascii_lowercase[: len(idx_main)])}` for the main factors.'
+            f'Use the letters `{" ".join(string.ascii_lowercase[: len(idx_main)])}` for the main factors.',
         )
 
     # Indices of letter combinations.
@@ -134,6 +135,7 @@ def fracfact(gen) -> np.ndarray:
 
     Returns:
         The fractional factorial design.
+
     """
     gen = validate_generator(n_factors=gen.count(" ") + 1, generator=gen)
 
@@ -182,6 +184,7 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
 
     Returns:
         The alias structure of the design matrix.
+
     """
     design = fracfact(gen)
 
@@ -190,17 +193,15 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
     all_names = string.ascii_lowercase + "I"
     factors = range(n_factors)
     all_combinations = itertools.chain.from_iterable(
-        (
-            itertools.combinations(factors, n)
-            for n in range(1, min(n_factors, order) + 1)
-        )
+        itertools.combinations(factors, n) for n in range(1, min(n_factors, order) + 1)
     )
     aliases = {n_experiments * "+": [(26,)]}  # 26 is mapped to I
 
     for combination in all_combinations:
         # positive sign
         contrast = np.prod(
-            design[:, combination], axis=1
+            design[:, combination],
+            axis=1,
         )  # this is the product of the combination
         scontrast = "".join(np.where(contrast == 1, "+", "-").tolist())
         aliases[scontrast] = aliases.get(scontrast, [])
@@ -209,17 +210,18 @@ def get_alias_structure(gen: str, order: int = 4) -> List[str]:
     aliases_list = []
     for alias in aliases.values():
         aliases_list.append(
-            sorted(alias, key=lambda a: (len(a), a))
+            sorted(alias, key=lambda a: (len(a), a)),
         )  # sort by length and then by the combination
     aliases_list = sorted(
-        aliases_list, key=lambda list: ([len(a) for a in list], list)
+        aliases_list,
+        key=lambda list: ([len(a) for a in list], list),
     )  # sort by the length of the alias
 
     aliases_readable = []
 
     for alias in aliases_list:
         aliases_readable.append(
-            " = ".join(["".join([all_names[f] for f in a]) for a in alias])
+            " = ".join(["".join([all_names[f] for f in a]) for a in alias]),
         )
 
     return aliases_readable
@@ -236,6 +238,7 @@ def get_default_generator(n_factors: int, n_generators: int) -> str:
 
     Returns:
         The generator.
+
     """
     if n_generators == 0:
         return " ".join(list(string.ascii_lowercase[:n_factors]))
@@ -269,6 +272,7 @@ def compute_generator(n_factors: int, n_generators: int) -> str:
 
     Returns:
         The generator.
+
     """
     if n_generators == 0:
         return " ".join(list(string.ascii_lowercase[:n_factors]))
@@ -276,22 +280,23 @@ def compute_generator(n_factors: int, n_generators: int) -> str:
     if n_generators == 1:
         if n_base_factors == 1:
             raise ValueError(
-                "Design not possible, as main factors are confounded with each other."
+                "Design not possible, as main factors are confounded with each other.",
             )
         return " ".join(
             list(string.ascii_lowercase[:n_base_factors])
-            + [string.ascii_lowercase[:n_base_factors]]
+            + [string.ascii_lowercase[:n_base_factors]],
         )
     n_base_factors = n_factors - n_generators
     if n_base_factors - 1 < 2:
         raise ValueError(
-            "Design not possible, as main factors are confounded with each other."
+            "Design not possible, as main factors are confounded with each other.",
         )
     generators = [
         "".join(i)
         for i in (
             itertools.combinations(
-                string.ascii_lowercase[:n_base_factors], n_base_factors - 1
+                string.ascii_lowercase[:n_base_factors],
+                n_base_factors - 1,
             )
         )
     ]
@@ -301,7 +306,7 @@ def compute_generator(n_factors: int, n_generators: int) -> str:
         generators += [string.ascii_lowercase[:n_base_factors]]
     elif n_generators - len(generators) >= 1:
         raise ValueError(
-            "Design not possible, as main factors are confounded with each other."
+            "Design not possible, as main factors are confounded with each other.",
         )
     return " ".join(list(string.ascii_lowercase[:n_base_factors]) + generators)
 
@@ -318,6 +323,7 @@ def get_generator(n_factors: int, n_generators: int) -> str:
 
     Returns:
         The generator.
+
     """
     try:
         return get_default_generator(n_factors, n_generators)

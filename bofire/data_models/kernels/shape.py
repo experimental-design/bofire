@@ -21,6 +21,7 @@ class WassersteinKernel(Kernel):
             definite for all lenghtscales. For this reason, as default the absolute
             exponential Wasserstein distance is used.
         lengthscale_prior: Prior for the lengthscale of the kernel.
+
     """
 
     type: Literal["WassersteinKernel"] = "WassersteinKernel"

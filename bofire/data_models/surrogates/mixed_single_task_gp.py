@@ -37,11 +37,12 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
-                key="continuous_kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+                key="continuous_kernel",
+                categories=["rbf", "matern_1.5", "matern_2.5"],
             ),
             CategoricalInput(key="prior", categories=["mbo", "botorch"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
-        ]
+        ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
@@ -50,7 +51,8 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
 
     @staticmethod
     def _update_hyperparameters(
-        surrogate_data: "MixedSingleTaskGPSurrogate", hyperparameters: pd.Series
+        surrogate_data: "MixedSingleTaskGPSurrogate",
+        hyperparameters: pd.Series,
     ):
         if hyperparameters.prior == "mbo":
             noise_prior, lengthscale_prior, _ = (
@@ -67,17 +69,22 @@ class MixedSingleTaskGPHyperconfig(Hyperconfig):
         surrogate_data.noise_prior = noise_prior
         if hyperparameters.continuous_kernel == "rbf":
             surrogate_data.continuous_kernel = RBFKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
 
         elif hyperparameters.continuous_kernel == "matern_2.5":
             surrogate_data.continuous_kernel = MaternKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=2.5
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                nu=2.5,
             )
 
         elif hyperparameters.continuous_kernel == "matern_1.5":
             surrogate_data.continuous_kernel = MaternKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior, nu=1.5
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
+                nu=1.5,
             )
 
         else:
@@ -88,15 +95,17 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["MixedSingleTaskGPSurrogate"] = "MixedSingleTaskGPSurrogate"
     continuous_kernel: AnyContinuousKernel = Field(
         default_factory=lambda: MaternKernel(
-            ard=True, nu=2.5, lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR()
-        )
+            ard=True,
+            nu=2.5,
+            lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
+        ),
     )
     categorical_kernel: AnyCategoricalKernel = Field(
-        default_factory=lambda: HammingDistanceKernel(ard=True)
+        default_factory=lambda: HammingDistanceKernel(ard=True),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     hyperconfig: Optional[MixedSingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: MixedSingleTaskGPHyperconfig()
+        default_factory=lambda: MixedSingleTaskGPHyperconfig(),
     )
 
     @field_validator("input_preprocessing_specs")
@@ -105,7 +114,7 @@ class MixedSingleTaskGPSurrogate(TrainableBotorchSurrogate):
         """Checks that at least one one-hot encoded categorical feauture is present."""
         if CategoricalEncodingEnum.ONE_HOT not in v.values():
             raise ValueError(
-                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present."
+                "MixedSingleTaskGPSurrogate can only be used if at least one one-hot encoded categorical feature is present.",
             )
         return v
 

@@ -25,7 +25,11 @@ from bofire.data_models.kernels.shape import WassersteinKernel
 AbstractKernel = Union[Kernel, CategoricalKernel, ContinuousKernel, MolecularKernel]
 
 AnyContinuousKernel = Union[
-    MaternKernel, LinearKernel, PolynomialKernel, RBFKernel, InfiniteWidthBNNKernel
+    MaternKernel,
+    LinearKernel,
+    PolynomialKernel,
+    RBFKernel,
+    InfiniteWidthBNNKernel,
 ]
 
 AnyCategoricalKernel = HammingDistanceKernel

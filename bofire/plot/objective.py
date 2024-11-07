@@ -26,10 +26,11 @@ def plot_objective_plotly(
         adapt_values (Optional[pd.Series], optional): If provided, adapt the objective function to the passed values.
             Defaults to None.
         layout_options: (Dict, optional): Options that are passed to plotlys `update_layout`.
+
     """
     if feature.objective is None:
         raise ValueError(
-            f"No objective assigned for ContinuousOutputFeauture with key {feature.key}."
+            f"No objective assigned for ContinuousOutputFeauture with key {feature.key}.",
         )
 
     x = pd.Series(np.linspace(lower, upper, 5000))

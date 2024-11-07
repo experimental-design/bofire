@@ -1,5 +1,6 @@
 import warnings
-from typing import Dict, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -39,6 +40,7 @@ def _accuracy_score(
 
     Returns:
         float: Accuracy score.
+
     """
     return float(accuracy_score(observed, predicted))
 
@@ -58,6 +60,7 @@ def _f1_score(
 
     Returns:
         float: Accuracy score.
+
     """
     return float(f1_score(observed, predicted, average="micro"))
 
@@ -77,6 +80,7 @@ def _mean_absolute_error(
 
     Returns:
         float: mean absolute error
+
     """
     return mean_absolute_error(observed, predicted)
 
@@ -96,6 +100,7 @@ def _mean_squared_error(
 
     Returns:
         float: mean squared error
+
     """
     return mean_squared_error(observed, predicted)
 
@@ -115,6 +120,7 @@ def _mean_absolute_percentage_error(
 
     Returns:
         float: mean percentage error
+
     """
     return mean_absolute_percentage_error(observed, predicted)
 
@@ -134,6 +140,7 @@ def _r2_score(
 
     Returns:
         float: R2 score.
+
     """
     return float(r2_score(observed, predicted))
 
@@ -153,6 +160,7 @@ def _pearson(
 
     Returns:
         float: Pearson correlation coefficient.
+
     """
     with np.errstate(invalid="ignore"):
         rho, _ = pearsonr(predicted, observed)
@@ -174,6 +182,7 @@ def _spearman(
 
     Returns:
         float: Spearman correlation coefficient.
+
     """
     with np.errstate(invalid="ignore"):
         rho, _ = spearmanr(predicted, observed)
@@ -202,6 +211,7 @@ def _fisher_exact_test_p(
 
     Returns:
         float: p value of the test.
+
     """
     n_half = len(observed) // 2
     top_obs = observed.argsort(axis=0)[-n_half:]
@@ -235,6 +245,7 @@ def _spearman_UQ(
 
     Returns:
         float: Spearman correlation coefficient.
+
     """
     if standard_deviation is None:
         warnings.warn(
@@ -242,11 +253,10 @@ def _spearman_UQ(
             UserWarning,
         )
         return np.nan
-    else:
-        ae = np.abs(observed - predicted)
-        with np.errstate(invalid="ignore"):
-            rho, _ = spearmanr(ae, standard_deviation)
-        return float(rho)
+    ae = np.abs(observed - predicted)
+    with np.errstate(invalid="ignore"):
+        rho, _ = spearmanr(ae, standard_deviation)
+    return float(rho)
 
 
 def _pearson_UQ(
@@ -267,6 +277,7 @@ def _pearson_UQ(
 
     Returns:
         float: Pearson correlation coefficient.
+
     """
     if standard_deviation is None:
         warnings.warn(
@@ -274,11 +285,10 @@ def _pearson_UQ(
             UserWarning,
         )
         return np.nan
-    else:
-        ae = np.abs(observed - predicted)
-        with np.errstate(invalid="ignore"):
-            rho, _ = pearsonr(ae, standard_deviation)
-        return float(rho)
+    ae = np.abs(observed - predicted)
+    with np.errstate(invalid="ignore"):
+        rho, _ = pearsonr(ae, standard_deviation)
+    return float(rho)
 
 
 def _kendall_UQ(
@@ -299,6 +309,7 @@ def _kendall_UQ(
 
     Returns:
         float: Kendall correlation coefficient.
+
     """
     if standard_deviation is None:
         warnings.warn(
@@ -306,11 +317,10 @@ def _kendall_UQ(
             UserWarning,
         )
         return np.nan
-    else:
-        ae = np.abs(observed - predicted)
-        with np.errstate(invalid="ignore"):
-            rho, _ = kendalltau(ae, standard_deviation)
-        return float(rho)
+    ae = np.abs(observed - predicted)
+    with np.errstate(invalid="ignore"):
+        rho, _ = kendalltau(ae, standard_deviation)
+    return float(rho)
 
 
 def _CVPPDiagram(
@@ -333,20 +343,20 @@ def _CVPPDiagram(
     Returns:
         np.ndarray: quantiles.
         np.ndarray: callibration score for each quantile.
+
     """
     if standard_deviation is None:
         raise ValueError(
-            "Calibration metric without standard deviation is not possible"
+            "Calibration metric without standard deviation is not possible",
         )
-    else:
-        lhs = np.abs((predicted - observed) / standard_deviation)
-        qs = np.linspace(0, 1, num_bins)
-        Cqs = np.empty(qs.shape)
-        for ix, q in enumerate(qs):
-            rhs = norm.ppf(((1.0 + q) / 2.0), loc=0.0, scale=1.0)
-            Cqs[ix] = np.sum((lhs < rhs).astype(int)) / observed.shape[0]
+    lhs = np.abs((predicted - observed) / standard_deviation)
+    qs = np.linspace(0, 1, num_bins)
+    Cqs = np.empty(qs.shape)
+    for ix, q in enumerate(qs):
+        rhs = norm.ppf(((1.0 + q) / 2.0), loc=0.0, scale=1.0)
+        Cqs[ix] = np.sum((lhs < rhs).astype(int)) / observed.shape[0]
 
-        return qs, Cqs
+    return qs, Cqs
 
 
 def _MaximumMiscalibration(
@@ -371,6 +381,7 @@ def _MaximumMiscalibration(
 
     Returns:
         float: maximum miscalibration
+
     """
     try:
         qs, Cqs = _CVPPDiagram(
@@ -384,7 +395,8 @@ def _MaximumMiscalibration(
         return float(res)
     except ValueError:
         warnings.warn(
-            "Calibration metric without standard deviation is not possible", UserWarning
+            "Calibration metric without standard deviation is not possible",
+            UserWarning,
         )
         return np.nan
 
@@ -411,6 +423,7 @@ def _MiscalibrationArea(
 
     Returns:
         float: total miscalibration area
+
     """
     try:
         qs, Cqs = _CVPPDiagram(
@@ -424,7 +437,8 @@ def _MiscalibrationArea(
         return float(res)
     except ValueError:
         warnings.warn(
-            "Calibration metric without standard deviation is not possible", UserWarning
+            "Calibration metric without standard deviation is not possible",
+            UserWarning,
         )
         return np.nan
 
@@ -435,7 +449,7 @@ def _AbsoluteMiscalibrationArea(
     standard_deviation: Optional[np.ndarray] = None,
     num_bins: int = 10,
 ) -> float:
-    """absolute miscalibration area metric with CVPP
+    """Absolute miscalibration area metric with CVPP
     This implementation is taken from : https://github.com/aspuru-guzik-group/dionysus/blob/main/dionysus/uncertainty_metrics.py
 
 
@@ -447,6 +461,7 @@ def _AbsoluteMiscalibrationArea(
 
     Returns:
         float: absolute miscalibration area
+
     """
     try:
         qs, Cqs = _CVPPDiagram(
@@ -460,7 +475,8 @@ def _AbsoluteMiscalibrationArea(
         return float(res)
     except ValueError:
         warnings.warn(
-            "Calibration metric without standard deviation is not possible", UserWarning
+            "Calibration metric without standard deviation is not possible",
+            UserWarning,
         )
         return np.nan
 
@@ -501,6 +517,7 @@ class CvResult(BaseModel):
         predicted (pd.Series): Series holding the predicted values
         standard_deviation (pd.Series, optional): Series holding the standard deviation associated with
             the prediction. Defaults to None.
+
     """
 
     key: str
@@ -515,22 +532,22 @@ class CvResult(BaseModel):
     def validate_shapes(self):
         if not len(self.predicted) == len(self.observed):
             raise ValueError(
-                f"Predicted values has length {len(self.predicted)} whereas observed has length {len(self.observed)}"
+                f"Predicted values has length {len(self.predicted)} whereas observed has length {len(self.observed)}",
             )
         if self.standard_deviation is not None:
             if not len(self.predicted) == len(self.standard_deviation):
                 raise ValueError(
-                    f"Predicted values has length {len(self.predicted)} whereas standard_deviation has length {len(self.standard_deviation)}"
+                    f"Predicted values has length {len(self.predicted)} whereas standard_deviation has length {len(self.standard_deviation)}",
                 )
         if self.labcodes is not None:
             if not len(self.predicted) == len(self.labcodes):
                 raise ValueError(
-                    f"Predicted values has length {len(self.predicted)} whereas labcodes has length {len(self.labcodes)}"
+                    f"Predicted values has length {len(self.predicted)} whereas labcodes has length {len(self.labcodes)}",
                 )
         if self.X is not None:
             if not len(self.predicted) == len(self.X):
                 raise ValueError(
-                    f"Predicted values has length {len(self.predicted)} whereas X has length {len(self.X)}"
+                    f"Predicted values has length {len(self.predicted)} whereas X has length {len(self.X)}",
                 )
         return self
 
@@ -556,13 +573,16 @@ class CvResult(BaseModel):
 
         Returns:
             int: Number of samples in the split.
+
         """
         return len(self.observed)
 
     def get_metric(
         self,
         metric: Union[
-            ClassificationMetricsEnum, RegressionMetricsEnum, UQRegressionMetricsEnum
+            ClassificationMetricsEnum,
+            RegressionMetricsEnum,
+            UQRegressionMetricsEnum,
         ],
     ) -> float:
         """Calculates a metric for the fold.
@@ -572,14 +592,17 @@ class CvResult(BaseModel):
 
         Returns:
             float: Metric value.
+
         """
         if self.n_samples == 1:
             warnings.warn(
-                "Metric cannot be calculated for only one sample. Null value will be returned"
+                "Metric cannot be calculated for only one sample. Null value will be returned",
             )
             return np.nan
         return all_metrics[metric](
-            self.observed.values, self.predicted.values, self.standard_deviation
+            self.observed.values,
+            self.predicted.values,
+            self.standard_deviation,
         )
 
 
@@ -588,6 +611,7 @@ class CvResults(BaseModel):
 
     Attributes:
         results (Sequence[CvResult]: Sequence of `CvResult` objects.
+
     """
 
     results: Sequence[CvResult]
@@ -608,7 +632,7 @@ class CvResults(BaseModel):
                 has_i = getattr(i, field) is not None
                 if has_field != has_i:
                     raise ValueError(
-                        f"Either all or none `CvResult` objects contain {field}."
+                        f"Either all or none `CvResult` objects contain {field}.",
                     )
         # check columns of X
         if v[0].X is not None:
@@ -633,6 +657,7 @@ class CvResults(BaseModel):
 
         Returns:
             str: feature name.
+
         """
         return self.results[0].key
 
@@ -642,6 +667,7 @@ class CvResults(BaseModel):
 
         Returns:
             bool: True if LOO-CV else False.
+
         """
         return (np.array([r.n_samples for r in self.results]) == 1).all()
 
@@ -650,6 +676,7 @@ class CvResults(BaseModel):
 
         Returns:
             Tuple[np.ndarray, np.ndarray, Union[np.ndarray, None]]: One pd.Series for CvResult property.
+
         """
         observed = pd.concat([cv.observed for cv in self.results], ignore_index=True)
         predicted = pd.concat([cv.predicted for cv in self.results], ignore_index=True)
@@ -683,7 +710,9 @@ class CvResults(BaseModel):
     def get_metric(
         self,
         metric: Union[
-            ClassificationMetricsEnum, RegressionMetricsEnum, UQRegressionMetricsEnum
+            ClassificationMetricsEnum,
+            RegressionMetricsEnum,
+            UQRegressionMetricsEnum,
         ],
         combine_folds: bool = True,
     ) -> pd.Series:
@@ -697,13 +726,16 @@ class CvResults(BaseModel):
 
         Returns:
             pd.Series: Object containing the metric value for every fold.
+
         """
         if self.is_loo or combine_folds:
             return pd.Series(
-                self._combine_folds().get_metric(metric=metric), name=metric.name
+                self._combine_folds().get_metric(metric=metric),
+                name=metric.name,
             )
         return pd.Series(
-            [cv.get_metric(metric) for cv in self.results], name=metric.name
+            [cv.get_metric(metric) for cv in self.results],
+            name=metric.name,
         )
 
     def get_metrics(
@@ -735,6 +767,7 @@ class CvResults(BaseModel):
 
         Returns:
             pd.DataFrame: Dataframe containing the metric values for all folds.
+
         """
         return pd.concat([self.get_metric(m, combine_folds) for m in metrics], axis=1)
 
@@ -746,10 +779,12 @@ class CrossValidationValues(BaseModel):
     observed: List[float] = Field(description="actual output values")
     predicted: List[float] = Field(description="predicted output values")
     standardDeviation: Optional[List[float]] = Field(
-        description="standard deviation of predicted values", default=None
+        description="standard deviation of predicted values",
+        default=None,
     )
     metrics: Optional[Dict[str, float]] = Field(
-        description="metrics per cv fold. Key is the metric type", default=None
+        description="metrics per cv fold. Key is the metric type",
+        default=None,
     )
 
 
@@ -769,6 +804,6 @@ def CvResults2CrossValidationValues(
                     else None
                 ),
                 metrics=metrics.loc[i].to_dict() if fold.n_samples > 1 else None,
-            )
+            ),
         )
     return cvResults

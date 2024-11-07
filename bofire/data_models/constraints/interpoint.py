@@ -26,6 +26,7 @@ class InterpointEqualityConstraint(InterpointConstraint):
         feature(str): The constrained feature.
         multiplicity(int): The multiplicity of the constraint, stating how many
             values of the feature in the batch should have always the same value.
+
     """
 
     type: Literal["InterpointEqualityConstraint"] = "InterpointEqualityConstraint"
@@ -35,11 +36,13 @@ class InterpointEqualityConstraint(InterpointConstraint):
     def validate_inputs(self, inputs: Inputs):
         if self.feature not in inputs.get_keys(ContinuousInput):
             raise ValueError(
-                f"Feature {self.feature} is not a continuous input feature in the provided Inputs object."
+                f"Feature {self.feature} is not a continuous input feature in the provided Inputs object.",
             )
 
     def is_fulfilled(
-        self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
+        self,
+        experiments: pd.DataFrame,
+        tol: Optional[float] = 1e-6,
     ) -> pd.Series:
         multiplicity = self.multiplicity or len(experiments)
         for i in range(math.ceil(len(experiments) / multiplicity)):
@@ -59,9 +62,10 @@ class InterpointEqualityConstraint(InterpointConstraint):
 
         Returns:
             pd.Series: Distance to reach constraint fulfillment.
+
         """
         multiplicity = self.multiplicity or len(experiments)
-        n_batches = int(np.ceil((experiments.shape[0] / multiplicity)))
+        n_batches = int(np.ceil(experiments.shape[0] / multiplicity))
         feature_values = np.zeros(n_batches * multiplicity)
         feature_values[: experiments.shape[0]] = experiments[self.feature].values
         feature_values[experiments.shape[0] :] = feature_values[-multiplicity]

@@ -7,7 +7,7 @@ from setuptools import find_packages, setup
 sklearn_dependency = "scikit-learn>=1.0.0"
 
 root_dir = os.path.dirname(__file__)
-with open(os.path.join(root_dir, "README.md"), "r") as f:
+with open(os.path.join(root_dir, "README.md")) as f:
     long_description = f.read()
 
 

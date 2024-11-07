@@ -16,7 +16,7 @@ specs.add_valid(
 
 specs.add_valid(
     DropDataTransform,
-    lambda: {},
+    dict,
 )
 specs.add_valid(
     DropDataTransform,

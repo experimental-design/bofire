@@ -1,4 +1,5 @@
-from typing import Dict, Optional, Sequence
+from collections.abc import Sequence
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -17,6 +18,7 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
 
     Returns:
         pd.Series: The importance values (inverse of the individual lenght scales).
+
     """
     try:
         scales = surrogate.model.covar_module.base_kernel.lengthscale  # type: ignore
@@ -27,7 +29,7 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
         raise ValueError("Only one lengthscale found, use `ard=True`.")
     if len(scales) != len(surrogate.inputs):
         raise ValueError(
-            "Number of lengthscale parameters to not matches the number of inputs."
+            "Number of lengthscale parameters to not matches the number of inputs.",
         )
     return pd.Series(data=scales, index=surrogate.inputs.get_keys())
 
@@ -51,6 +53,7 @@ def combine_lengthscale_importances(importances: Sequence[pd.Series]) -> pd.Data
 
     Returns:
         pd.DataFrame: Dataframe with feature keys as columns, and one row per fold.
+
     """
     return pd.concat(importances, axis=1).T
 
@@ -74,6 +77,7 @@ def permutation_importance(
     Returns:
         Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
             with the feature keys as columns and the mean and std of the respective permutation importances as rows.
+
     """
     assert len(surrogate.outputs) == 1, "Only single output model supported so far."
     assert n_repeats > 1, "Number of repeats has to be larger than 1."
@@ -115,7 +119,7 @@ def permutation_importance(
             for metricenum, metric in metrics.items():
                 if len(pred) >= 2:
                     prelim_results[metricenum.name][feature.key].append(
-                        metric(y[output_key].values, pred[output_key + "_pred"].values)
+                        metric(y[output_key].values, pred[output_key + "_pred"].values),
                     )
                 else:
                     prelim_results[metricenum.name][feature.key].append(np.nan)
@@ -166,6 +170,7 @@ def permutation_importance_hook(
     Returns:
         Dict[str, pd.DataFrame]: keys are the metrices for which the model is evluated and value is a dataframe
             with the feature keys as columns and the mean and std of the respective permutation importances as rows.
+
     """
     if use_test:
         X = X_test
@@ -174,7 +179,11 @@ def permutation_importance_hook(
         X = X_train
         y = y_train
     return permutation_importance(
-        surrogate=surrogate, X=X, y=y, n_repeats=n_repeats, seed=seed
+        surrogate=surrogate,
+        X=X,
+        y=y,
+        n_repeats=n_repeats,
+        seed=seed,
     )
 
 
@@ -192,11 +201,12 @@ def combine_permutation_importances(
     Returns:
         pd.DataFrame: Dataframe holding the mean permutation importance per fold and feature. Can be further processed by
             `describe`.
+
     """
     feature_keys = importances[0]["MAE"].columns
     return pd.DataFrame(
         data={
             key: [fold[metric.name].loc["mean", key] for fold in importances]
             for key in feature_keys
-        }
+        },
     )

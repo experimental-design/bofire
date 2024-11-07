@@ -33,7 +33,7 @@ def test_benchmark():
     results = run(
         zdt1,
         strategy_factory=lambda domain: strategy_mapper.map(
-            qparego_factory(domain=domain)
+            qparego_factory(domain=domain),
         ),
         n_iterations=n_iterations,
         metric=hypervolume,

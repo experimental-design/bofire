@@ -30,7 +30,7 @@ class LinearDeterministicSurrogate(BotorchSurrogate):
     def validate_input_types(self):
         if len(self.inputs.get([ContinuousInput, DiscreteInput])) != len(self.inputs):
             raise ValueError(
-                "Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`"
+                "Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
             )
         return self
 

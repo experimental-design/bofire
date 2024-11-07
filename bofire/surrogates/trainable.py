@@ -36,18 +36,17 @@ class TrainableSurrogate(ABC):
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self._output_filtering is None:
             return experiments
-        elif self._output_filtering == OutputFilteringEnum.ALL:
+        if self._output_filtering == OutputFilteringEnum.ALL:
             return self.outputs.preprocess_experiments_all_valid_outputs(  # type: ignore
                 experiments=experiments,
                 output_feature_keys=self.outputs.get_keys(),  # type: ignore
             )
-        elif self._output_filtering == OutputFilteringEnum.ANY:
+        if self._output_filtering == OutputFilteringEnum.ANY:
             return self.outputs.preprocess_experiments_any_valid_outputs(  # type: ignore
                 experiments=experiments,
                 output_feature_keys=self.outputs.get_keys(),  # type: ignore
             )
-        else:
-            raise ValueError("Unknown output filtering option requested.")
+        raise ValueError("Unknown output filtering option requested.")
 
     @abstractmethod
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame, **kwargs):
@@ -98,13 +97,14 @@ class TrainableSurrogate(ABC):
         Returns:
             Tuple[CvResults, CvResults, Dict[str, List[Any]]]: First CvResults object reflects the training data,
                 second CvResults object the test data, dictionary object holds the return values of the applied hooks.
+
         """
         if include_labcodes and "labcode" not in experiments.columns:
             raise ValueError("No labcodes available for the provided experiments.")
 
         if len(self.outputs) > 1:  # type: ignore
             raise NotImplementedError(
-                "Cross validation not implemented for multi-output models"
+                "Cross validation not implemented for multi-output models",
             )
 
         if stratified_feature is not None:
@@ -112,7 +112,7 @@ class TrainableSurrogate(ABC):
                 self.inputs.get_keys() + self.outputs.get_keys()  # type: ignore
             ):
                 raise ValueError(
-                    "The feature to be stratified is not in the model inputs or outputs"
+                    "The feature to be stratified is not in the model inputs or outputs",
                 )
             try:
                 feat = self.inputs.get_by_key(stratified_feature)  # type: ignore
@@ -123,7 +123,7 @@ class TrainableSurrogate(ABC):
                 (DiscreteInput, CategoricalInput, CategoricalOutput, ContinuousOutput),
             ):
                 raise ValueError(
-                    "The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput"
+                    "The feature to be stratified needs to be a DiscreteInput, CategoricalInput, CategoricalOutput, or ContinuousOutput",
                 )
 
         # first filter the experiments based on the model setting
@@ -131,7 +131,7 @@ class TrainableSurrogate(ABC):
         n = len(experiments)
         if folds > n:
             warnings.warn(
-                f"Training data only has {n} experiments, which is less than folds, fallback to LOOCV."
+                f"Training data only has {n} experiments, which is less than folds, fallback to LOOCV.",
             )
             folds = n
         elif n == 0:
@@ -153,7 +153,9 @@ class TrainableSurrogate(ABC):
             cv_func = cv.split(experiments)
         else:
             cv = StratifiedKFold(
-                n_splits=folds, shuffle=True, random_state=random_state
+                n_splits=folds,
+                shuffle=True,
+                random_state=random_state,
             )
             cv_func = cv.split(
                 experiments.drop([stratified_feature], axis=1),
@@ -187,16 +189,16 @@ class TrainableSurrogate(ABC):
                 ConstrainedCategoricalObjective,
             ):
                 y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
                 )
                 y_train_pred[f"{key}_pred"] = y_train_pred[f"{key}_pred"].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
                 )
                 y_test[key] = y_test[key].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
                 )
                 y_train[key] = y_train[key].map(
-                    self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
+                    self.outputs.get_by_key(key).objective.to_dict_label(),  # type: ignore
                 )
 
             # now store the results
@@ -208,7 +210,7 @@ class TrainableSurrogate(ABC):
                     standard_deviation=y_train_pred[key + "_sd"],
                     X=X_train if include_X else None,
                     labcodes=train_labcodes,
-                )
+                ),
             )
             test_results.append(
                 CvResult(
@@ -218,7 +220,7 @@ class TrainableSurrogate(ABC):
                     standard_deviation=y_test_pred[key + "_sd"],
                     X=X_test if include_X else None,
                     labcodes=test_labcodes,
-                )
+                ),
             )
             # now call the hooks if available
             for hookname, hook in hooks.items():
@@ -230,7 +232,7 @@ class TrainableSurrogate(ABC):
                         X_test=X_test,
                         y_test=y_test,
                         **hook_kwargs.get(hookname, {}),
-                    )
+                    ),
                 )
         return (
             CvResults(results=train_results),

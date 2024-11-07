@@ -24,19 +24,20 @@ def _single_run(
     n_iterations: int,
     metric: Callable[[Domain, pd.DataFrame], float],
     n_candidates_per_proposals: int,
-    safe_intervall: int,
+    safe_interval: int,
     initial_sampler: Optional[
         Union[Callable[[Domain], pd.DataFrame], pd.DataFrame]
     ] = None,
 ) -> Tuple[pd.DataFrame, pd.Series]:
     def autosafe_results(benchmark):
-        """Safes results into a .json file to prevent data loss during time-expensive optimization runs.
-        Autosave should operate every 10 iterations.
+        """Safes results into a .json file to prevent data loss during
+        time-expensive optimization runs. Autosave should operate every 10
+        iterations.
 
         Args:
             benchmark: Benchmark function that is suposed be evaluated.
-        """
 
+        """
         benchmark_name = benchmark.__class__.__name__
         # Create a folder for autosaves, if not already exists.
         if not os.path.exists("bofire_autosaves/" + benchmark_name):
@@ -72,7 +73,7 @@ def _single_run(
         metric_values[i] = metric(strategy.domain, strategy.experiments)
         pbar.set_description(f"Run {run_idx}")
         pbar.set_postfix({"Current Best:": f"{metric_values[i]:0.3f}"})
-        if (i + 1) % safe_intervall == 0:
+        if (i + 1) % safe_interval == 0:
             autosafe_results(benchmark=benchmark)
     return strategy.experiments, pd.Series(metric_values)
 
@@ -86,23 +87,26 @@ def run(
     n_candidates_per_proposal: int = 1,
     n_runs: int = 5,
     n_procs: int = 5,
-    safe_intervall: int = 1000,
+    safe_interval: int = 1000,
 ) -> List[Tuple[pd.DataFrame, pd.Series]]:
     """Run a benchmark problem several times in parallel
 
     Args:
         benchmark: problem to be benchmarked
-        strategy_factory: creates the strategy to be benchmarked on the benchmark problem
+        strategy_factory: creates the strategy to be benchmarked on the benchmark
+            problem
         n_iterations: number of times the strategy is asked
-        metric: measure of success, e.g, best value found so far for single objective or
-                hypervolume for multi-objective
+        metric: measure of success, e.g, best value found so far for single
+            objective or hypervolume for multi-objective
         initial_sampler: Creates initial data
-        n_candidates: also known as batch size, number of proposals made at once by the strategy
+        n_candidates: also known as batch size, number of proposals made at once
+            by the strategy
         n_runs: number of runs
         n_procs: number of parallel processes to execute the runs
 
     Returns:
         per run, a tuple with the benchmark object containing the proposed data and metric values
+
     """
 
     def make_args(run_idx: int):
@@ -113,7 +117,7 @@ def run(
             n_iterations,
             metric,
             n_candidates_per_proposal,
-            safe_intervall,
+            safe_interval,
             initial_sampler,
         )
 

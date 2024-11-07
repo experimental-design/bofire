@@ -1,4 +1,4 @@
-from typing import List, Literal, Optional, Tuple, TypeVar, Union
+from typing import List, Literal, Optional, Tuple, TypeVar
 
 import pandas as pd
 from pydantic import PositiveInt
@@ -17,7 +17,7 @@ from bofire.transforms.transform import Transform
 T = TypeVar("T", pd.DataFrame, Domain)
 
 
-TfData = Union[Literal["experiments"], Literal["candidates"], Literal["domain"]]
+TfData = Literal["experiments", "candidates", "domain"]
 
 
 def _apply_tf(
@@ -71,8 +71,7 @@ class StepwiseStrategy(Strategy):
         candidates = strategy.ask(candidate_count=candidate_count)
         if transform is not None:
             return transform.untransform_candidates(candidates)
-        else:
-            return candidates
+        return candidates
 
     def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
         strategy, _ = self.get_step()

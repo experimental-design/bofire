@@ -26,7 +26,8 @@ class QnehviStrategy(QehviStrategy):
 
         # get etas and constraints
         constraints, etas = get_output_constraints(
-            self.domain.outputs, experiments=self.experiments
+            self.domain.outputs,
+            experiments=self.experiments,
         )
         if len(constraints) == 0:
             constraints, etas = None, 1e-3

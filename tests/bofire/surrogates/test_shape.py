@@ -26,28 +26,36 @@ def test_PiecewiseLinearGPSurrogate():
     surrogate = surrogates.map(surrogate_data)
     assert isinstance(surrogate, surrogates.PiecewiseLinearGPSurrogate)
     assert_allclose(
-        surrogate.transform.tf1.idx_x, torch.tensor([4, 5], dtype=torch.int64)
+        surrogate.transform.tf1.idx_x,
+        torch.tensor([4, 5], dtype=torch.int64),
     )
     assert_allclose(
-        surrogate.transform.tf1.idx_y, torch.tensor([0, 1, 2, 3], dtype=torch.int64)
+        surrogate.transform.tf1.idx_y,
+        torch.tensor([0, 1, 2, 3], dtype=torch.int64),
     )
     assert torch.allclose(
-        surrogate.transform.tf1.prepend_x, torch.tensor([0], dtype=torch.float64)
+        surrogate.transform.tf1.prepend_x,
+        torch.tensor([0], dtype=torch.float64),
     )
     assert torch.allclose(
-        surrogate.transform.tf1.prepend_y, torch.tensor([], dtype=torch.float64)
+        surrogate.transform.tf1.prepend_y,
+        torch.tensor([], dtype=torch.float64),
     )
     assert torch.allclose(
-        surrogate.transform.tf1.append_x, torch.tensor([1], dtype=torch.float64)
+        surrogate.transform.tf1.append_x,
+        torch.tensor([1], dtype=torch.float64),
     )
     assert torch.allclose(
-        surrogate.transform.tf1.append_y, torch.tensor([], dtype=torch.float64)
+        surrogate.transform.tf1.append_y,
+        torch.tensor([], dtype=torch.float64),
     )
     assert torch.allclose(
-        surrogate.transform.tf2.bounds, torch.tensor([[2], [60]], dtype=torch.float64)
+        surrogate.transform.tf2.bounds,
+        torch.tensor([[2], [60]], dtype=torch.float64),
     )
     assert torch.allclose(
-        surrogate.transform.tf2.indices, torch.tensor([1006], dtype=torch.int64)
+        surrogate.transform.tf2.indices,
+        torch.tensor([1006], dtype=torch.int64),
     )
     experiments = pd.DataFrame.from_dict(
         {
@@ -59,7 +67,7 @@ def test_PiecewiseLinearGPSurrogate():
             "t_2": {0: 0.8253013968891976, 1: 0.7838135122442911},
             "t_3": {0: 20.589423292016406, 1: 6.836910327501014},
             "alpha": {0: 7, 1: 3},
-        }
+        },
     )
     surrogate.fit(experiments)
     assert isinstance(surrogate.model.covar_module, ScaleKernel)
@@ -74,7 +82,8 @@ def test_PiecewiseLinearGPSurrogate():
         0
     ].active_dims == torch.tensor([1006], dtype=torch.int64)
     assert isinstance(
-        surrogate.model.covar_module.base_kernel.kernels[1], WassersteinKernel
+        surrogate.model.covar_module.base_kernel.kernels[1],
+        WassersteinKernel,
     )
     assert torch.allclose(
         surrogate.model.covar_module.base_kernel.kernels[1].active_dims,

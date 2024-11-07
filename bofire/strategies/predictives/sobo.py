@@ -7,7 +7,7 @@ try:
     import cloudpickle
 except ModuleNotFoundError:
     warnings.warn(
-        "Cloudpickle is not available. CustomSoboStrategy's `f` cannot be dumped or loaded."
+        "Cloudpickle is not available. CustomSoboStrategy's `f` cannot be dumped or loaded.",
     )
 
 import torch
@@ -95,18 +95,21 @@ class SoboStrategy(BotorchStrategy):
         assert self.experiments is not None, "No experiments available."
         try:
             target_feature = self.domain.outputs.get_by_objective(
-                excludes=ConstrainedObjective
+                excludes=ConstrainedObjective,
             )[0]
         except IndexError:
             target_feature = self.domain.outputs.get_by_objective(includes=Objective)[0]
         target_index = self.domain.outputs.get_keys().index(target_feature.key)
         x_adapt = torch.from_numpy(
             self.domain.outputs.preprocess_experiments_one_valid_output(
-                target_feature.key, self.experiments
-            )[target_feature.key].values
+                target_feature.key,
+                self.experiments,
+            )[target_feature.key].values,
         ).to(**tkwargs)
         objective_callable = get_objective_callable(
-            idx=target_index, objective=target_feature.objective, x_adapt=x_adapt
+            idx=target_index,
+            objective=target_feature.objective,
+            x_adapt=x_adapt,
         )
 
         # get the constraints
@@ -114,7 +117,8 @@ class SoboStrategy(BotorchStrategy):
             len(self.domain.outputs.get_by_objective(Objective)) > 1
         ):
             constraint_callables, etas = get_output_constraints(
-                outputs=self.domain.outputs, experiments=self.experiments
+                outputs=self.domain.outputs,
+                experiments=self.experiments,
             )
         else:
             constraint_callables, etas = None, 1e-3
@@ -129,7 +133,7 @@ class SoboStrategy(BotorchStrategy):
                     constraints=constraint_callables,
                     eta=torch.tensor(etas).to(**tkwargs),
                     infeasible_cost=self.get_infeasible_cost(
-                        objective=objective_callable
+                        objective=objective_callable,
                     ),
                 ),
                 None,
@@ -168,7 +172,8 @@ class AdditiveSoboStrategy(SoboStrategy):
             and self.use_output_constraints
         ):
             constraint_callables, etas = get_output_constraints(
-                outputs=self.domain.outputs, experiments=self.experiments
+                outputs=self.domain.outputs,
+                experiments=self.experiments,
             )
         else:
             constraint_callables, etas = None, 1e-3
@@ -188,18 +193,17 @@ class AdditiveSoboStrategy(SoboStrategy):
                         constraints=constraint_callables,  # type: ignore
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
-                            objective=objective_callable
+                            objective=objective_callable,
                         ),
                     ),
                     None,
                     1e-3,
                 )
-            else:
-                return (
-                    GenericMCObjective(objective=objective_callable),  # type: ignore
-                    constraint_callables,
-                    etas,
-                )
+            return (
+                GenericMCObjective(objective=objective_callable),  # type: ignore
+                constraint_callables,
+                etas,
+            )
 
         # we absorb all constraints into the objective
         return (
@@ -207,7 +211,7 @@ class AdditiveSoboStrategy(SoboStrategy):
                 objective=get_additive_botorch_objective(
                     outputs=self.domain.outputs,
                     exclude_constraints=False,  # type: ignore
-                )
+                ),
             ),
             constraint_callables,
             etas,
@@ -236,7 +240,7 @@ class MultiplicativeSoboStrategy(SoboStrategy):
                 objective=get_multiplicative_botorch_objective(  # type: ignore
                     outputs=self.domain.outputs,
                     experiments=self.experiments,
-                )
+                ),
             ),
             None,
             1e-3,
@@ -273,7 +277,8 @@ class CustomSoboStrategy(SoboStrategy):
             and self.use_output_constraints
         ):
             constraint_callables, etas = get_output_constraints(
-                outputs=self.domain.outputs, experiments=self.experiments
+                outputs=self.domain.outputs,
+                experiments=self.experiments,
             )
         else:
             constraint_callables, etas = None, 1e-3
@@ -293,18 +298,17 @@ class CustomSoboStrategy(SoboStrategy):
                         constraints=constraint_callables,  # type: ignore
                         eta=torch.tensor(etas).to(**tkwargs),
                         infeasible_cost=self.get_infeasible_cost(
-                            objective=objective_callable
+                            objective=objective_callable,
                         ),
                     ),
                     None,
                     1e-3,
                 )
-            else:
-                return (
-                    GenericMCObjective(objective=objective_callable),  # type: ignore
-                    constraint_callables,
-                    etas,
-                )
+            return (
+                GenericMCObjective(objective=objective_callable),  # type: ignore
+                constraint_callables,
+                etas,
+            )
 
         # we absorb all constraints into the objective
         return (
@@ -314,7 +318,7 @@ class CustomSoboStrategy(SoboStrategy):
                     f=self.f,
                     exclude_constraints=False,
                     experiments=self.experiments,
-                )
+                ),
             ),
             constraint_callables,
             etas,

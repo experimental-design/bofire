@@ -9,7 +9,7 @@ def test_plot_duplicates_plotly():
         {
             "labcode": ["a", "b", "c", "d", "e", "f", "g", "h"],
             "output": [1, 2, 3, 4, 5, 6, 7, 8],
-        }
+        },
     )
     plot = plot_duplicates_plotly(
         experiments=experiments,

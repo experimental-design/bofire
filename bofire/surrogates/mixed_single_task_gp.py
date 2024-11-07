@@ -53,22 +53,24 @@ class MixedSingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
         )
 
         continuous_feature_keys = get_continuous_feature_keys(
-            self.inputs, self.input_preprocessing_specs
+            self.inputs,
+            self.input_preprocessing_specs,
         )
         ord_dims = self.inputs.get_feature_indices(
-            self.input_preprocessing_specs, continuous_feature_keys
+            self.input_preprocessing_specs,
+            continuous_feature_keys,
         )
 
         categorical_feature_keys = get_categorical_feature_keys(
-            self.input_preprocessing_specs
+            self.input_preprocessing_specs,
         )
         # these are the categorical dimesions after applying the OneHotToNumeric transform
         cat_dims = list(
-            range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys))
+            range(len(ord_dims), len(ord_dims) + len(categorical_feature_keys)),
         )
 
         features2idx, _ = self.inputs._get_transform_info(
-            self.input_preprocessing_specs
+            self.input_preprocessing_specs,
         )
 
         # these are the categorical features within the the OneHotToNumeric transform

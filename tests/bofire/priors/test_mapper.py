@@ -33,7 +33,9 @@ def test_map(prior, expected_prior):
 
 def test_lkj_map():
     prior = LKJPrior(
-        n_tasks=3, shape=0.4, sd_prior=GammaPrior(concentration=2.0, rate=0.2)
+        n_tasks=3,
+        shape=0.4,
+        sd_prior=GammaPrior(concentration=2.0, rate=0.2),
     )
     expected_prior = gpytorch.priors.LKJPrior
 
@@ -53,10 +55,17 @@ def test_lkj_map():
     ],
 )
 def test_DimensionalityScaledLogNormalPrior_map(
-    loc, loc_scaling, scale, scale_scaling, d
+    loc,
+    loc_scaling,
+    scale,
+    scale_scaling,
+    d,
 ):
     prior_data_model = DimensionalityScaledLogNormalPrior(
-        loc=loc, loc_scaling=loc_scaling, scale=scale, scale_scaling=scale_scaling
+        loc=loc,
+        loc_scaling=loc_scaling,
+        scale=scale,
+        scale_scaling=scale_scaling,
     )
     prior = priors.map(prior_data_model, d=d)
     assert isinstance(prior, gpytorch.priors.LogNormalPrior)

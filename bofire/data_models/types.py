@@ -1,4 +1,5 @@
-from typing import Annotated, Dict, List, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Annotated, Dict, List, Tuple, Union
 
 from pydantic import AfterValidator, Field, PositiveInt
 
@@ -7,8 +8,7 @@ from bofire.data_models.molfeatures.api import AnyMolFeatures
 
 
 def make_unique_validator(name: str):
-    """
-    Creates a unique validator function for a given name.
+    """Creates a unique validator function for a given name.
 
     Args:
         name (str): The name of the validator.
@@ -22,11 +22,11 @@ def make_unique_validator(name: str):
         ['john@example.com', 'jane@example.com']
         >>> validator(["john@example.com", "john@example.com"])
         ValueError: email must be unique
+
     """
 
     def validate_unique(uniques: List[str]) -> List[str]:
-        """
-        Validates that the given list of strings is unique.
+        """Validates that the given list of strings is unique.
 
         Args:
             uniques (List[str]): The list of strings to validate.
@@ -36,6 +36,7 @@ def make_unique_validator(name: str):
 
         Raises:
             ValueError: If the strings are not unique.
+
         """
         if len(uniques) != len(set(uniques)):
             raise ValueError(f"{name} must be unique")
@@ -64,6 +65,7 @@ def validate_monotonically_increasing(sequence: Sequence[float]) -> Sequence[flo
 
     Returns:
         Validated sequence
+
     """
     if len(sequence) > 1:
         if not all(x <= y for x, y in zip(sequence, sequence[1:])):
@@ -72,19 +74,26 @@ def validate_monotonically_increasing(sequence: Sequence[float]) -> Sequence[flo
 
 
 FeatureKeys = Annotated[
-    List[str], Field(min_length=2), AfterValidator(make_unique_validator("Features"))
+    List[str],
+    Field(min_length=2),
+    AfterValidator(make_unique_validator("Features")),
 ]
 
 CategoryVals = Annotated[
-    List[str], Field(min_length=2), AfterValidator(make_unique_validator("Categories"))
+    List[str],
+    Field(min_length=2),
+    AfterValidator(make_unique_validator("Categories")),
 ]
 
 Descriptors = Annotated[
-    List[str], Field(min_length=1), AfterValidator(make_unique_validator("Descriptors"))
+    List[str],
+    Field(min_length=1),
+    AfterValidator(make_unique_validator("Descriptors")),
 ]
 
 Bounds = Annotated[
-    Tuple[float, float], AfterValidator(validate_monotonically_increasing)
+    Tuple[float, float],
+    AfterValidator(validate_monotonically_increasing),
 ]
 
 DiscreteVals = Annotated[List[float], Field(min_length=1)]

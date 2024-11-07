@@ -1,17 +1,8 @@
 import collections.abc
 import itertools
 import warnings
-from typing import (
-    Any,
-    Dict,
-    Literal,
-    Optional,
-    Sequence,
-    Tuple,
-    Union,
-    get_args,
-    get_origin,
-)
+from collections.abc import Sequence
+from typing import Any, Dict, Literal, Optional, Tuple, Union, get_args, get_origin
 
 import numpy as np
 import pandas as pd
@@ -87,8 +78,7 @@ class Domain(BaseModel):
             return v
         if isinstance_or_union(v, AnyInput):
             return Inputs(features=[v])
-        else:
-            return v
+        return v
 
     @field_validator("outputs", mode="before")
     @classmethod
@@ -97,8 +87,7 @@ class Domain(BaseModel):
             return Outputs(features=v)
         if isinstance_or_union(v, AnyOutput):
             return Outputs(features=[v])
-        else:
-            return v
+        return v
 
     @field_validator("constraints", mode="before")
     @classmethod
@@ -107,8 +96,7 @@ class Domain(BaseModel):
             return Constraints(constraints=v)
         if isinstance_or_union(v, AnyConstraint):
             return Constraints(constraints=[v])
-        else:
-            return v
+        return v
 
     @model_validator(mode="after")
     def validate_unique_feature_keys(self):
@@ -123,8 +111,8 @@ class Domain(BaseModel):
 
         Returns:
             Outputs: Keeps output features as given.
-        """
 
+        """
         keys = self.outputs.get_keys() + self.inputs.get_keys()
         if len(set(keys)) != len(keys):
             raise ValueError("Feature keys are not unique")
@@ -143,14 +131,15 @@ class Domain(BaseModel):
 
         Returns:
             List[Constraint]: List of constraints defined for the domain
+
         """
         for c in self.constraints.get():
             c.validate_inputs(self.inputs)
         return self
 
     # TODO: tidy this up
-    def get_nchoosek_combinations(self, exhaustive: bool = False):  # noqa: C901
-        """get all possible NChooseK combinations
+    def get_nchoosek_combinations(self, exhaustive: bool = False):
+        """Get all possible NChooseK combinations
 
         Args:
             exhaustive (bool, optional): if True all combinations are returned. Defaults to False.
@@ -158,8 +147,8 @@ class Domain(BaseModel):
         Returns:
             Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.
                 unused_features_list is a list of lists containing features unused in each NChooseK combination.
-        """
 
+        """
         if len(self.constraints.get(NChooseKConstraint)) == 0:
             used_continuous_features = self.inputs.get_keys(ContinuousInput)
             return used_continuous_features, []
@@ -179,13 +168,13 @@ class Domain(BaseModel):
                     used_features_list.append(())
             else:
                 used_features_list.extend(
-                    itertools.combinations(con.features, con.max_count)
+                    itertools.combinations(con.features, con.max_count),
                 )
 
             used_features_list_all.append(used_features_list)
 
         used_features_list_all = list(
-            itertools.product(*used_features_list_all)
+            itertools.product(*used_features_list_all),
         )  # product between NChooseK constraints
 
         # format into a list of used features
@@ -219,9 +208,12 @@ class Domain(BaseModel):
                 for f in combo:
                     if f in con.features:
                         count += 1
-                if count >= con.min_count and count <= con.max_count:
-                    fulfil_constraints.append(True)
-                elif count == 0 and con.none_also_valid:
+                if (
+                    count >= con.min_count
+                    and count <= con.max_count
+                    or count == 0
+                    and con.none_also_valid
+                ):
                     fulfil_constraints.append(True)
                 else:
                     fulfil_constraints.append(False)
@@ -240,7 +232,7 @@ class Domain(BaseModel):
         unused_features_list = []
         for used_features in used_features_list_final:
             unused_features_list.append(
-                [f_key for f_key in features_in_cc if f_key not in used_features]
+                [f_key for f_key in features_in_cc if f_key not in used_features],
             )
 
         # postprocess
@@ -260,6 +252,7 @@ class Domain(BaseModel):
 
         Returns:
             pd.DataFrame: coerced dataframe
+
         """
         # coerce invalid to nan
         for feat in self.outputs.get_keys(Output):
@@ -275,17 +268,23 @@ class Domain(BaseModel):
     ) -> Tuple[pd.DataFrame, list]:
         """Aggregate the dataframe by duplicate experiments
 
-        Duplicates are identified based on the experiments with the same input features. Continuous input features
-        are rounded before identifying the duplicates. Aggregation is performed by taking the average of the
+        Duplicates are identified based on the experiments with the same input
+        features. Continuous input features are rounded before identifying the
+        duplicates. Aggregation is performed by taking the average of the
         involved output features.
 
         Args:
             experiments (pd.DataFrame): Dataframe containing experimental data
             prec (int): Precision of the rounding of the continuous input features
-            delimiter (str, optional): Delimiter used when combining the orig. labcodes to a new one. Defaults to "-".
+            delimiter (str, optional): Delimiter used when combining the orig.
+                labcodes to a new one. Defaults to "-".
+            method (Literal["mean", "median"], optional): Which aggregation
+                method to use. Defaults to "mean".
 
         Returns:
-            Tuple[pd.DataFrame, list]: Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates
+            Tuple[pd.DataFrame, list]: Dataframe holding the aggregated
+                experiments, list of lists holding the labcodes of the duplicates
+
         """
         # prepare the parent frame
         if method not in ["mean", "median"]:
@@ -337,10 +336,13 @@ class Domain(BaseModel):
         experiments: pd.DataFrame,
         strict: bool = False,
     ) -> pd.DataFrame:
-        """checks the experimental data on validity
+        """Checks the experimental data on validity
 
         Args:
             experiments (pd.DataFrame): Dataframe with experimental data
+            strict (bool, optional): Boolean to distinguish if the occurence of
+                fixed features in the dataset should be considered or not.
+                Defaults to False.
 
         Raises:
             ValueError: empty dataframe
@@ -355,10 +357,11 @@ class Domain(BaseModel):
 
         Returns:
             pd.DataFrame: The provided dataframe with experimental data
-        """
 
+        """
         if len(experiments) == 0:
             raise ValueError("no experiments provided (empty dataframe)")
+
         # we allow here for a column named labcode used to identify experiments
         if "labcode" in experiments.columns:
             # test that labcodes are not na
@@ -372,9 +375,11 @@ class Domain(BaseModel):
                 != experiments.shape[0]
             ):
                 raise ValueError("labcodes are not unique")
+
         # run the individual validators
         experiments = self.inputs.validate_experiments(
-            experiments=experiments, strict=strict
+            experiments=experiments,
+            strict=strict,
         )
         experiments = self.outputs.validate_experiments(experiments=experiments)
         return experiments
@@ -387,6 +392,7 @@ class Domain(BaseModel):
 
         Returns:
             pd.DataFrame: Dataframe with counts how many measurements and how many valid entries are included in the input data for each output feature
+
         """
         data = {}
         for feat in self.outputs.get_keys(Output):
@@ -395,7 +401,7 @@ class Domain(BaseModel):
                 experiments.loc[experiments[feat].notna(), "valid_%s" % feat].sum(),
             ]
         preprocessed = self.outputs.preprocess_experiments_all_valid_outputs(
-            experiments
+            experiments,
         )
         assert preprocessed is not None
         data["all"] = [
@@ -403,7 +409,9 @@ class Domain(BaseModel):
             preprocessed.shape[0],
         ]
         return pd.DataFrame.from_dict(
-            data, orient="index", columns=["measured", "valid"]
+            data,
+            orient="index",
+            columns=["measured", "valid"],
         )
 
     def validate_candidates(
@@ -432,6 +440,7 @@ class Domain(BaseModel):
 
         Returns:
             pd.DataFrame: dataframe with suggested experiments (candidates)
+
         """
         # check that each input feature has a col and is valid in itself
         assert isinstance(self.inputs, Inputs)
@@ -440,7 +449,7 @@ class Domain(BaseModel):
         if not self.constraints.is_fulfilled(candidates, tol=tol).all():
             if raise_validation_error:
                 raise ConstraintNotFulfilledError(
-                    f"Constraints not fulfilled: {candidates}"
+                    f"Constraints not fulfilled: {candidates}",
                 )
             warnings.warn("Not all constraints are fulfilled.")
         # for each continuous output feature with an attached objective object
@@ -451,10 +460,11 @@ class Domain(BaseModel):
 
     @property
     def experiment_column_names(self):
-        """the columns in the experimental dataframe
+        """The columns in the experimental dataframe
 
         Returns:
             List[str]: List of columns in the experiment dataframe (output feature keys + valid_output feature keys)
+
         """
         return (self.inputs + self.outputs).get_keys() + [
             f"valid_{output_feature_key}"
@@ -463,10 +473,11 @@ class Domain(BaseModel):
 
     @property
     def candidate_column_names(self):
-        """the columns in the candidate dataframe
+        """The columns in the candidate dataframe
 
         Returns:
             List[str]: List of columns in the candidate dataframe (input feature keys + input feature keys_pred, input feature keys_sd, input feature keys_des)
+
         """
         assert isinstance(self.outputs, Outputs)
         return (

@@ -35,7 +35,8 @@ def test_random_forest_forward():
     samples = bench.domain.inputs.sample(10)
     experiments = bench.f(samples, return_complete=True)
     rfr = RandomForestRegressor().fit(
-        experiments[["x_1", "x_2"]].values, experiments.y.values.ravel()
+        experiments[["x_1", "x_2"]].values,
+        experiments.y.values.ravel(),
     )
     rf = _RandomForest(rf=rfr)
     pred = rf.forward(torch.from_numpy(experiments[["x_1", "x_2"]].values))
@@ -102,7 +103,7 @@ def test_random_forest(scaler, output_scaler):
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -111,7 +112,10 @@ def test_random_forest(scaler, output_scaler):
     experiments.loc[experiments.x_cat == "papa", "y"] /= 2.0
     experiments["valid_y"] = 1
     rf = RandomForestSurrogate(
-        inputs=inputs, outputs=outputs, scaler=scaler, output_scaler=output_scaler
+        inputs=inputs,
+        outputs=outputs,
+        scaler=scaler,
+        output_scaler=output_scaler,
     )
     rf = surrogates.map(rf)
     assert rf.input_preprocessing_specs["x_cat"] == CategoricalEncodingEnum.ONE_HOT
@@ -135,7 +139,10 @@ def test_random_forest(scaler, output_scaler):
     preds = rf.predict(experiments)
     dump = rf.dumps()
     rf2 = RandomForestSurrogate(
-        inputs=inputs, outputs=outputs, scaler=scaler, output_scaler=output_scaler
+        inputs=inputs,
+        outputs=outputs,
+        scaler=scaler,
+        output_scaler=output_scaler,
     )
     rf2 = surrogates.map(rf2)
     rf2.loads(dump)

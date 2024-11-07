@@ -36,11 +36,12 @@ class SingleTaskGPHyperconfig(Hyperconfig):
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
-                key="kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+                key="kernel",
+                categories=["rbf", "matern_1.5", "matern_2.5"],
             ),
             CategoricalInput(key="prior", categories=["mbo", "botorch"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
-        ]
+        ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
@@ -49,7 +50,8 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 
     @staticmethod
     def _update_hyperparameters(
-        surrogate_data: "SingleTaskGPSurrogate", hyperparameters: pd.Series
+        surrogate_data: "SingleTaskGPSurrogate",
+        hyperparameters: pd.Series,
     ):
         def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
             return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
@@ -73,21 +75,24 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         if hyperparameters.kernel == "rbf":
             surrogate_data.kernel = ScaleKernel(
                 base_kernel=RBFKernel(
-                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                    ard=hyperparameters.ard,
+                    lengthscale_prior=lengthscale_prior,
                 ),
                 outputscale_prior=outputscale_prior,
             )
         elif hyperparameters.kernel == "matern_2.5":
             surrogate_data.kernel = ScaleKernel(
                 base_kernel=matern_25(
-                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                    ard=hyperparameters.ard,
+                    lengthscale_prior=lengthscale_prior,
                 ),
                 outputscale_prior=outputscale_prior,
             )
         elif hyperparameters.kernel == "matern_1.5":
             surrogate_data.kernel = ScaleKernel(
                 base_kernel=matern_15(
-                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                    ard=hyperparameters.ard,
+                    lengthscale_prior=lengthscale_prior,
                 ),
                 outputscale_prior=outputscale_prior,
             )
@@ -106,11 +111,11 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
                 lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        )
+        ),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: SingleTaskGPHyperconfig()
+        default_factory=lambda: SingleTaskGPHyperconfig(),
     )
 
     @classmethod

@@ -19,6 +19,7 @@ class ContinuousInput(NumericalInput):
         stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
             Defaults to None.
+
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"  # type: ignore
@@ -45,12 +46,12 @@ class ContinuousInput(NumericalInput):
         lower, upper = self.bounds
         if lower == upper and self.stepsize is not None:
             raise ValueError(
-                "Stepsize cannot be provided for a fixed continuous input."
+                "Stepsize cannot be provided for a fixed continuous input.",
             )
         range = upper - lower
         if np.arange(lower, upper + self.stepsize, self.stepsize)[-1] != upper:
             raise ValueError(
-                f"Stepsize of {self.stepsize} does not match the provided interval [{lower},{upper}]."
+                f"Stepsize of {self.stepsize} does not match the provided interval [{lower},{upper}].",
             )
         if range // self.stepsize == 1:
             raise ValueError("Stepsize is too big, only one value allowed.")
@@ -65,18 +66,22 @@ class ContinuousInput(NumericalInput):
 
         Returns:
             pd.Series: The rounded values
+
         """
         if self.stepsize is None:
             return values
         self.validate_candidental(values=values)
         allowed_values = np.arange(
-            self.lower_bound, self.upper_bound + self.stepsize, self.stepsize
+            self.lower_bound,
+            self.upper_bound + self.stepsize,
+            self.stepsize,
         )
         idx = abs(values.values.reshape([len(values), 1]) - allowed_values).argmin(  # type: ignore
-            axis=1
+            axis=1,
         )
         return pd.Series(
-            data=self.lower_bound + idx * self.stepsize, index=values.index
+            data=self.lower_bound + idx * self.stepsize,
+            index=values.index,
         )
 
     def validate_candidental(self, values: pd.Series) -> pd.Series:
@@ -92,17 +97,17 @@ class ContinuousInput(NumericalInput):
 
         Returns:
             pd.Series: The passed dataFrame with candidates
-        """
 
+        """
         noise = 10e-6
         values = super().validate_candidental(values)
         if (values < self.lower_bound - noise).any():
             raise ValueError(
-                f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` "
+                f"not all values of input feature `{self.key}`are larger than lower bound `{self.lower_bound}` ",
             )
         if (values > self.upper_bound + noise).any():
             raise ValueError(
-                f"not all values of input feature `{self.key}`are smaller than upper bound `{self.upper_bound}` "
+                f"not all values of input feature `{self.key}`are smaller than upper bound `{self.upper_bound}` ",
             )
         return values
 
@@ -111,14 +116,18 @@ class ContinuousInput(NumericalInput):
 
         Args:
             n (int): number of samples.
+            seed (int, optional): random seed. Defaults to None.
 
         Returns:
             pd.Series: drawn samples.
+
         """
         return pd.Series(
             name=self.key,
             data=np.random.default_rng(seed=seed).uniform(
-                self.lower_bound, self.upper_bound, n
+                self.lower_bound,
+                self.upper_bound,
+                n,
             ),
         )
 
@@ -131,25 +140,28 @@ class ContinuousInput(NumericalInput):
         assert transform_type is None
         if reference_value is not None and values is not None:
             raise ValueError("Only one can be used, `local_value` or `values`.")
+
         if values is None:
             if reference_value is None or self.is_fixed():
                 return [self.lower_bound], [self.upper_bound]
-            else:
-                local_relative_bounds = self.local_relative_bounds or (
-                    math.inf,
-                    math.inf,
-                )
-                return [
-                    max(
-                        reference_value - local_relative_bounds[0],
-                        self.lower_bound,
-                    )
-                ], [
-                    min(
-                        reference_value + local_relative_bounds[1],
-                        self.upper_bound,
-                    )
-                ]
+
+            local_relative_bounds = self.local_relative_bounds or (
+                math.inf,
+                math.inf,
+            )
+
+            return [
+                max(
+                    reference_value - local_relative_bounds[0],
+                    self.lower_bound,
+                ),
+            ], [
+                min(
+                    reference_value + local_relative_bounds[1],
+                    self.upper_bound,
+                ),
+            ]
+
         lower = min(self.lower_bound, values.min())
         upper = max(self.upper_bound, values.max())
         return [lower], [upper]
@@ -159,6 +171,7 @@ class ContinuousInput(NumericalInput):
 
         Returns:
             str: String of a list with lower and upper bound
+
         """
         return f"[{self.lower_bound},{self.upper_bound}]"
 
@@ -168,6 +181,7 @@ class ContinuousOutput(Output):
 
     Attributes:
         objective (objective, optional): objective of the feature indicating in which direction it should be optimzed. Defaults to `MaximizeObjective`.
+
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"  # type: ignore
@@ -175,7 +189,7 @@ class ContinuousOutput(Output):
     unit: Optional[str] = None
 
     objective: Optional[AnyObjective] = Field(
-        default_factory=lambda: MaximizeObjective(w=1.0)
+        default_factory=lambda: MaximizeObjective(w=1.0),
     )
 
     def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
@@ -192,7 +206,7 @@ class ContinuousOutput(Output):
             values = pd.to_numeric(values, errors="raise").astype("float64")
         except ValueError:
             raise ValueError(
-                f"not all values of input feature `{self.key}` are numerical"
+                f"not all values of input feature `{self.key}` are numerical",
             )
         return values
 

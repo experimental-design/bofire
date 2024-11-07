@@ -14,6 +14,7 @@ class Candidate(BaseModel):
             corresponding input feature key.
         outputValues (Dict[str, OutputValue], optional): Dictionary of output values where
             the key is the corresponding output feature key.
+
     """
 
     inputValues: Dict[str, InputValue]
@@ -24,6 +25,7 @@ class Candidate(BaseModel):
 
         Returns:
             pd.Series: pandas series which corresponds to one row in the original candidates dataframe
+
         """
         data = []
         index = []

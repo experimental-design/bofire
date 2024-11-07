@@ -28,7 +28,7 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
                 ard=True,
             ),
             outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        )
+        ),
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
@@ -54,6 +54,6 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             for value in v.values()
         ):
             raise ValueError(
-                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
+                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
             )
         return v

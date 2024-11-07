@@ -47,7 +47,8 @@ AnyBotorchSurrogate = Union[
 class BotorchSurrogates(BaseModel):
     """ "List of botorch surrogates.
 
-    Behaves similar to a Surrogate."""
+    Behaves similar to a Surrogate.
+    """
 
     surrogates: List[AnyBotorchSurrogate]
 
@@ -64,9 +65,9 @@ class BotorchSurrogates(BaseModel):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]
-                )
-            )
+                    [model.outputs.get() for model in self.surrogates],
+                ),
+            ),
         )
 
     def _check_compability(self, inputs: Inputs, outputs: Outputs):
@@ -78,7 +79,7 @@ class BotorchSurrogates(BaseModel):
         for i, model in enumerate(self.surrogates):
             if len(model.inputs) > len(inputs):
                 raise ValueError(
-                    f"Model with index {i} has more features than acceptable."
+                    f"Model with index {i} has more features than acceptable.",
                 )
             for feat in model.inputs:
                 try:
@@ -106,7 +107,7 @@ class BotorchSurrogates(BaseModel):
                 raise ValueError("Only single output surrogates allowed.")
         # check that the output feature keys are distinctw
         used_output_feature_keys = list(
-            itertools.chain.from_iterable([model.outputs.get_keys() for model in v])
+            itertools.chain.from_iterable([model.outputs.get_keys() for model in v]),
         )
         if len(set(used_output_feature_keys)) != len(used_output_feature_keys):
             raise ValueError("Output feature keys are not unique across surrogates.")
@@ -132,12 +133,12 @@ class BotorchSurrogates(BaseModel):
                 raise ValueError(f"Features with key {key} are incompatible.")
             if all(i == preprocessing[0] for i in preprocessing) is False:
                 raise ValueError(
-                    f"Preprocessing steps for features with {key} are incompatible."
+                    f"Preprocessing steps for features with {key} are incompatible.",
                 )
         # check that if any surrogate is a MultiTaskGPSurrogate, all have to be
         if any(isinstance(model, MultiTaskGPSurrogate) for model in v):
             if not all(isinstance(model, MultiTaskGPSurrogate) for model in v):
                 raise ValueError(
-                    "If a MultiTaskGPSurrogate is used, all surrogates need to be MultiTask."
+                    "If a MultiTaskGPSurrogate is used, all surrogates need to be MultiTask.",
                 )
         return v

@@ -167,5 +167,5 @@ default_fracfac_generators = pd.DataFrame.from_dict(
             "n_generators": 11,
             "generator": "E = ABC ; F = ABD ; G = ACD ; H = BCD ; J = ABCD ; K = AB ; L = AC ; M = AD ; N = BC ; O = BD ; P = CD ",
         },
-    ]
+    ],
 )

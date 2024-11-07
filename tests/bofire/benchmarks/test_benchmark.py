@@ -1,8 +1,8 @@
 import numpy as np
 from pandas.testing import assert_frame_equal
 
-import bofire.benchmarks.benchmark as benchmark
 import bofire.strategies.api as strategies
+from bofire.benchmarks import benchmark
 from bofire.benchmarks.api import GenericBenchmark
 from bofire.benchmarks.multi import ZDT1
 from bofire.benchmarks.single import Himmelblau

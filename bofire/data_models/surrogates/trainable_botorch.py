@@ -12,7 +12,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
     @field_validator("output_scaler")
     @classmethod
     def validate_output_scaler(cls, output_scaler):
-        """validates that output_scaler is a valid type
+        """Validates that output_scaler is a valid type
 
         Args:
             output_scaler (ScalerEnum): Scaler used to transform the output
@@ -22,6 +22,7 @@ class TrainableBotorchSurrogate(BotorchSurrogate, TrainableSurrogate):
 
         Returns:
             ScalerEnum: Scaler used to transform the output
+
         """
         if output_scaler == ScalerEnum.NORMALIZE:
             raise ValueError("Normalize is not supported as an output transform.")

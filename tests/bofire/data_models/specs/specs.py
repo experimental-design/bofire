@@ -12,7 +12,6 @@ class Spec:
 
     def obj(self, **kwargs) -> Any:
         """Create and return an instance of <cls>."""
-
         return self.cls(**{**self.spec(), **kwargs})
 
     def typed_spec(self) -> dict:
@@ -51,9 +50,8 @@ class Invalidator(ABC):
         """Return a list of invalidated specs.
 
         If this invalidator is not applicable to the specified
-        spec, an empty list is returned."""
-
-        pass
+        spec, an empty list is returned.
+        """
 
 
 class Overwrite(Invalidator):
@@ -69,7 +67,8 @@ class Overwrite(Invalidator):
             return []
         return [
             InvalidSpec(
-                spec.cls, lambda data=data, overwrite=overwrite: {**data, **overwrite}
+                spec.cls,
+                lambda data=data, overwrite=overwrite: {**data, **overwrite},
             )
             for overwrite in self.overwrites
         ]
@@ -80,7 +79,8 @@ class Specs:
 
     In the init, only <invalidators> must be provided.
     Valid specs are added via the <add_valid> method.
-    Invalid specs can auomatically be added as part of this method."""
+    Invalid specs can auomatically be added as part of this method.
+    """
 
     def __init__(self, invalidators: List[Invalidator]):
         self.invalidators = invalidators
@@ -95,7 +95,7 @@ class Specs:
                 specs = [s for s in specs if issubclass(s.cls, cls)]
         if len(specs) == 0 and cls is None:
             raise TypeError("no spec found")
-        elif len(specs) == 0:
+        if len(specs) == 0:
             raise TypeError(f"no spec of type {cls.__name__} found")
         return random.choice(specs)
 
@@ -104,8 +104,8 @@ class Specs:
 
         If <cls> is provided, the list of all valid specs is filtered by it.
         If no spec (with the specified class) exists, a TypeError is raised.
-        If more than one spec exist, a random one is returned."""
-
+        If more than one spec exist, a random one is returned.
+        """
         return self._get_spec(self.valids, cls, exact)
 
     def invalid(self, cls: Type = None, exact: bool = True) -> Spec:
@@ -113,18 +113,21 @@ class Specs:
 
         If <cls> is provided, the list of all invalid specs is filtered by it.
         If no spec (with the specified class) exists, a TypeError is raised.
-        If more than one spec exist, a random one is returned."""
-
+        If more than one spec exist, a random one is returned.
+        """
         return self._get_spec(self.invalids, cls, exact)
 
     def add_valid(
-        self, cls: Type, spec: Callable[[], dict], add_invalids: bool = False
+        self,
+        cls: Type,
+        spec: Callable[[], dict],
+        add_invalids: bool = False,
     ) -> Spec:
         """Add a new valid spec to the list.
 
         If <add_invalids> is True (default), invalid specs are generated using the
-        rules provided in <invalidators>."""
-
+        rules provided in <invalidators>.
+        """
         spec_ = Spec(cls, spec)
         self.valids.append(spec_)
         if add_invalids:
@@ -140,7 +143,6 @@ class Specs:
         message: Optional[str] = None,
     ) -> Spec:
         """Add a new invalid spec to the list."""
-
         spec_ = InvalidSpec(cls, spec, error, message)
         self.invalids.append(spec_)
         return spec_

@@ -1,7 +1,6 @@
-from typing import Literal, Type
+from typing import Annotated, Literal, Type
 
 from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.objectives.api import (
     CloseToTargetObjective,
@@ -28,6 +27,7 @@ class QnehviStrategy(QehviStrategy):
 
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
+
         """
         return my_type in [
             MaximizeObjective,

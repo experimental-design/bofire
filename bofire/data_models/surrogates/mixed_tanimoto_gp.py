@@ -34,14 +34,14 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
             ard=True,
             nu=2.5,
             lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
-        )
+        ),
     )
     categorical_kernel: AnyCategoricalKernel = Field(
-        default_factory=lambda: HammingDistanceKernel(ard=True)
+        default_factory=lambda: HammingDistanceKernel(ard=True),
     )
     # Molecular kernel will only be imposed on fingerprints, fragments, or fingerprintsfragments
     molecular_kernel: AnyMolecularKernel = Field(
-        default_factory=lambda: TanimotoKernel(ard=True)
+        default_factory=lambda: TanimotoKernel(ard=True),
     )
     scaler: ScalerEnum = ScalerEnum.NORMALIZE
     noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
@@ -66,6 +66,6 @@ class MixedTanimotoGPSurrogate(TrainableBotorchSurrogate):
             for value in v.values()
         ):
             raise ValueError(
-                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
+                "MixedTanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
             )
         return v

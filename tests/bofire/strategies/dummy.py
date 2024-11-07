@@ -66,7 +66,7 @@ class DummyStrategy(Strategy):
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
         )
 
     def _choose_from_pool(
@@ -143,7 +143,7 @@ class DummyPredictiveStrategy(PredictiveStrategy):
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
         )
 
     def _choose_from_pool(
@@ -192,7 +192,7 @@ class DummyBotorchPredictiveStrategy(BotorchStrategy):
         candidate_count: int,
     ) -> Tuple[pd.DataFrame, List[dict]]:
         raise NotImplementedError(
-            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}"
+            f"{inspect.stack()[0][3]} not implemented for {self.__class__.__name__}",
         )
 
     def _get_acqfs(self, n: int) -> List[AcquisitionFunction]:

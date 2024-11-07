@@ -14,6 +14,7 @@ class IdentityObjective(Objective):
     Attributes:
         w (float): float between zero and one for weighting the objective
         bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
+
     """
 
     type: Literal["IdentityObjective"] = "IdentityObjective"
@@ -41,10 +42,11 @@ class IdentityObjective(Objective):
 
         Returns:
             Dict: The attributes of the class
+
         """
         if bounds[0] > bounds[1]:
             raise ValueError(
-                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}"
+                f"lower bound must be <= upper bound, got {bounds[0]} > {bounds[1]}",
             )
         return bounds
 
@@ -62,6 +64,7 @@ class IdentityObjective(Objective):
 
         Returns:
             np.ndarray: The identity as reward, might be normalized to the passed lower and upper bounds
+
         """
         return (x - self.lower_bound) / (self.upper_bound - self.lower_bound)
 
@@ -72,6 +75,7 @@ class MaximizeObjective(IdentityObjective):
     Attributes:
         w (float): float between zero and one for weighting the objective
         bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
+
     """
 
     type: Literal["MaximizeObjective"] = "MaximizeObjective"
@@ -83,6 +87,7 @@ class MinimizeObjective(IdentityObjective):
     Attributes:
         w (float): float between zero and one for weighting the objective
         bounds (Tuple[float], optional): Bound for normalizing the objective between zero and one. Defaults to (0,1).
+
     """
 
     type: Literal["MinimizeObjective"] = "MinimizeObjective"
@@ -101,5 +106,6 @@ class MinimizeObjective(IdentityObjective):
 
         Returns:
             np.ndarray: The negative identity as reward, might be normalized to the passed lower and upper bounds
+
         """
         return -1.0 * (x - self.lower_bound) / (self.upper_bound - self.lower_bound)

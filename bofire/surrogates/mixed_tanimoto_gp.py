@@ -105,13 +105,13 @@ class MixedTanimotoGP(SingleTaskGP):
                     ard_num_dims=len(cat_dims),  # type: ignore
                     active_dims=cat_dims,  # type: ignore
                     lengthscale_constraint=GreaterThan(1e-06),
-                )
+                ),
             ) + ScaleKernel(
                 mol_kernel_factory(
                     batch_shape=aug_batch_shape,  # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
-                )
+                ),
             )
 
             prod_kernel = ScaleKernel(
@@ -120,13 +120,13 @@ class MixedTanimotoGP(SingleTaskGP):
                     ard_num_dims=len(cat_dims),  # type: ignore
                     active_dims=cat_dims,  # type: ignore
                     lengthscale_constraint=GreaterThan(1e-06),
-                )
+                ),
             ) * ScaleKernel(
                 mol_kernel_factory(
                     batch_shape=aug_batch_shape,  # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
-                )
+                ),
             )
 
             covar_module = sum_kernel + prod_kernel
@@ -137,13 +137,13 @@ class MixedTanimotoGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,  # type: ignore
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
-                )
+                ),
             ) + ScaleKernel(
                 mol_kernel_factory(
                     batch_shape=aug_batch_shape,  # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
-                )
+                ),
             )
 
             prod_kernel = ScaleKernel(
@@ -151,13 +151,13 @@ class MixedTanimotoGP(SingleTaskGP):
                     batch_shape=aug_batch_shape,  # type: ignore
                     ard_num_dims=len(ord_dims),
                     active_dims=ord_dims,
-                )
+                ),
             ) * ScaleKernel(
                 mol_kernel_factory(
                     batch_shape=aug_batch_shape,  # type: ignore
                     ard_num_dims=len(mol_dims),
                     active_dims=mol_dims,
-                )
+                ),
             )
 
             covar_module = sum_kernel + prod_kernel
@@ -169,14 +169,14 @@ class MixedTanimotoGP(SingleTaskGP):
                         batch_shape=aug_batch_shape,  # type: ignore
                         ard_num_dims=len(ord_dims),
                         active_dims=ord_dims,
-                    )
+                    ),
                 )
                 + ScaleKernel(
                     mol_kernel_factory(
                         batch_shape=aug_batch_shape,  # type: ignore
                         ard_num_dims=len(mol_dims),
                         active_dims=mol_dims,
-                    )
+                    ),
                 )
                 + ScaleKernel(
                     CategoricalKernel(
@@ -184,7 +184,7 @@ class MixedTanimotoGP(SingleTaskGP):
                         ard_num_dims=len(cat_dims),  # type: ignore
                         active_dims=cat_dims,  # type: ignore
                         lengthscale_constraint=GreaterThan(1e-06),
-                    )
+                    ),
                 )
             )
 
@@ -194,14 +194,14 @@ class MixedTanimotoGP(SingleTaskGP):
                         batch_shape=aug_batch_shape,  # type: ignore
                         ard_num_dims=len(ord_dims),
                         active_dims=ord_dims,
-                    )
+                    ),
                 )
                 * ScaleKernel(
                     mol_kernel_factory(
                         batch_shape=aug_batch_shape,  # type: ignore
                         ard_num_dims=len(mol_dims),
                         active_dims=mol_dims,
-                    )
+                    ),
                 )
                 * ScaleKernel(
                     CategoricalKernel(
@@ -209,7 +209,7 @@ class MixedTanimotoGP(SingleTaskGP):
                         ard_num_dims=len(cat_dims),  # type: ignore
                         active_dims=cat_dims,  # type: ignore
                         lengthscale_constraint=GreaterThan(1e-06),
-                    )
+                    ),
                 )
             )
             covar_module = sum_kernel + prod_kernel
@@ -243,34 +243,40 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
     def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
         molecular_feature_keys = get_molecular_feature_keys(
-            self.input_preprocessing_specs
+            self.input_preprocessing_specs,
         )
         continuous_feature_keys = get_continuous_feature_keys(
-            self.inputs, self.input_preprocessing_specs
+            self.inputs,
+            self.input_preprocessing_specs,
         )
         categorical_feature_keys = get_categorical_feature_keys(
-            self.input_preprocessing_specs
+            self.input_preprocessing_specs,
         )
 
         mol_dims = self.inputs.get_feature_indices(
-            self.input_preprocessing_specs, molecular_feature_keys
+            self.input_preprocessing_specs,
+            molecular_feature_keys,
         )
         ord_dims = self.inputs.get_feature_indices(
-            self.input_preprocessing_specs, continuous_feature_keys
+            self.input_preprocessing_specs,
+            continuous_feature_keys,
         )
         # these are the categorical dimesions after applying the OneHotToNumeric transform
         cat_dims = list(
             range(
                 len(ord_dims) + len(mol_dims),
                 len(ord_dims) + len(mol_dims) + len(categorical_feature_keys),
-            )
+            ),
         )
 
         if len(continuous_feature_keys) == 0:
             scaler = None  # skip the scaler
         else:
             scaler = get_scaler(
-                self.inputs, self.input_preprocessing_specs, self.scaler, X
+                self.inputs,
+                self.input_preprocessing_specs,
+                self.scaler,
+                X,
             )
 
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
@@ -285,7 +291,7 @@ class MixedTanimotoGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             tXX = tX
         else:
             features2idx, _ = self.inputs._get_transform_info(
-                self.input_preprocessing_specs
+                self.input_preprocessing_specs,
             )
             # these are the categorical features within the OneHotToNumeric transform
             categorical_features = {

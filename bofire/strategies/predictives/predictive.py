@@ -45,13 +45,18 @@ class PredictiveStrategy(Strategy):
         """Function to generate new candidates.
 
         Args:
-            candidate_count (PositiveInt, optional): Number of candidates to be generated. If not provided, the number of candidates is determined automatically. Defaults to None.
-            add_pending (bool, optional): If true the proposed candidates are added to the set of pending experiments. Defaults to False.
-            raise_validation_error (bool, optional): If true an error will be raised if candidates violate constraints,
-                otherwise only a warning will be displayed. Defaults to True.
+            candidate_count (PositiveInt, optional): Number of candidates to
+                be generated. If not provided, the number of candidates is
+                determined automatically. Defaults to None.
+            add_pending (bool, optional): If true the proposed candidates are
+                added to the set of pending experiments. Defaults to False.
+            raise_validation_error (bool, optional): If true an error will be
+                raised if candidates violate constraints, otherwise only a
+                warning will be displayed. Defaults to True.
 
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
+
         """
         candidates = super().ask(
             candidate_count=candidate_count,
@@ -59,7 +64,8 @@ class PredictiveStrategy(Strategy):
             raise_validation_error=raise_validation_error,
         )
         self.domain.validate_candidates(
-            candidates=candidates, raise_validation_error=raise_validation_error
+            candidates=candidates,
+            raise_validation_error=raise_validation_error,
         )
         return candidates
 
@@ -73,8 +79,12 @@ class PredictiveStrategy(Strategy):
 
         Args:
             experiments (pd.DataFrame): DataFrame with experimental data
-            replace (bool, optional): Boolean to decide if the experimental data should replace the former dataFrame or if the new experiments should be attached. Defaults to False.
-            retrain (bool, optional): If True, model(s) are retrained when new experimental data is passed to the optimizer. Defaults to True.
+            replace (bool, optional): Boolean to decide if the experimental data
+                should replace the former dataFrame or if the new experiments
+                should be attached. Defaults to False.
+            retrain (bool, optional): If True, model(s) are retrained when new
+                experimental data is passed to the optimizer. Defaults to True.
+
         """
         # maybe unite the preprocessor here with the one of the parent tell
         # TODO: add self.domain.validate_experiments(self.experiments, strict=True) here to ensure variance in each feature?
@@ -87,7 +97,7 @@ class PredictiveStrategy(Strategy):
         # we check here that the experiments do not have completely fixed columns
         cleaned_experiments = (
             self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                experiments=experiments
+                experiments=experiments,
             )
         )
 
@@ -101,35 +111,41 @@ class PredictiveStrategy(Strategy):
             assert fixed_value is not None
             if (cleaned_experiments[feature.key] == fixed_value[0]).all():
                 raise ValueError(
-                    f"No variance in experiments for fixed feature {feature.key}"
+                    f"No variance in experiments for fixed feature {feature.key}",
                 )
         if retrain and self.has_sufficient_experiments():
             self.fit()
-            # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
-            # to fitting the models like initializing the ACQF.
+            # we have a seperate _tell here for things that are relevant when
+            # setting up the strategy but unrelated to fitting the models like
+            # initializing the ACQF.
             self._tell()
 
     def predict(self, experiments: pd.DataFrame) -> pd.DataFrame:
-        """Run predictions for the provided experiments. Only input features have to be provided.
+        """Run predictions for the provided experiments. Only input features
+        have to be provided.
 
         Args:
-            experiments (pd.DataFrame): Experimental data for which predictions should be performed.
+            experiments (pd.DataFrame): Experimental data for which predictions
+                should be performed.
 
         Returns:
             pd.DataFrame: Dataframe with the predicted values.
+
         """
         if self.is_fitted is not True:
             raise ValueError("Model not yet fitted.")
         # TODO: validate also here the experiments but only for the input_columns
         # transformed = self.transformer.transform(experiments)
         transformed = self.domain.inputs.transform(
-            experiments=experiments, specs=self.input_preprocessing_specs
+            experiments=experiments,
+            specs=self.input_preprocessing_specs,
         )
         preds, stds = self._predict(transformed)
         pred_cols, sd_cols = get_column_names(self.domain.outputs)
         if stds is not None:
             predictions = pd.DataFrame(
-                data=np.hstack((preds, stds)), columns=pred_cols + sd_cols
+                data=np.hstack((preds, stds)),
+                columns=pred_cols + sd_cols,
             )
         else:
             predictions = pd.DataFrame(
@@ -137,7 +153,8 @@ class PredictiveStrategy(Strategy):
                 columns=pred_cols,
             )
         predictions = postprocess_categorical_predictions(
-            predictions=predictions, outputs=self.domain.outputs
+            predictions=predictions,
+            outputs=self.domain.outputs,
         )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
@@ -146,8 +163,9 @@ class PredictiveStrategy(Strategy):
 
     @abstractmethod
     def _predict(self, experiments: pd.DataFrame) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """Abstract method in which the actual prediction is happening. Has to be overwritten."""
-        pass
+        """Abstract method in which the actual prediction is happening. Has to
+        be overwritten.
+        """
 
     def fit(self):
         """Fit the model(s) to the experimental data."""
@@ -162,7 +180,6 @@ class PredictiveStrategy(Strategy):
     @abstractmethod
     def _fit(self, experiments: pd.DataFrame):
         """Abstract method where the acutal prediction are occuring."""
-        pass
 
     def to_candidates(self, candidates: pd.DataFrame) -> List[Candidate]:
         """Transform candiadtes dataframe to a list of `Candidate` objects.
@@ -172,6 +189,7 @@ class PredictiveStrategy(Strategy):
 
         Returns:
             List[Candidate]: candidates formatted as list of `Candidate` objects.
+
         """
         return [
             Candidate(

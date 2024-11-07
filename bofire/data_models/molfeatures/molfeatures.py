@@ -1,12 +1,11 @@
 from abc import abstractmethod
-from typing import List, Literal, Optional
+from typing import Annotated, List, Literal, Optional
 
 import pandas as pd
 from pydantic import Field, field_validator
-from typing_extensions import Annotated
 
-import bofire.data_models.molfeatures.names as names
 from bofire.data_models.base import BaseModel
+from bofire.data_models.molfeatures import names
 from bofire.utils.cheminformatics import (  # smiles2bag_of_characters,
     smiles2fingerprints,
     smiles2fragments,
@@ -40,7 +39,9 @@ class Fingerprints(MolFeatures):
     def get_descriptor_values(self, values: pd.Series) -> pd.DataFrame:
         return pd.DataFrame(
             data=smiles2fingerprints(
-                values.to_list(), bond_radius=self.bond_radius, n_bits=self.n_bits
+                values.to_list(),
+                bond_radius=self.bond_radius,
+                n_bits=self.n_bits,
             ).astype(float),
             columns=self.get_descriptor_names(),
             index=values.index,
@@ -54,7 +55,7 @@ class Fragments(MolFeatures):
     @field_validator("fragments")
     @classmethod
     def validate_fragments(cls, fragments):
-        """validates that fragments have unique names
+        """Validates that fragments have unique names
 
         Args:
             categories (List[str]): List of fragment names
@@ -64,6 +65,7 @@ class Fragments(MolFeatures):
 
         Returns:
             List[str]: List of the fragments
+
         """
         if fragments is not None:
             if len(fragments) != len(set(fragments)):
@@ -71,7 +73,7 @@ class Fragments(MolFeatures):
 
             if not all(user_fragment in names.fragments for user_fragment in fragments):
                 raise ValueError(
-                    "Not all provided fragments were not found in the RDKit list"
+                    "Not all provided fragments were not found in the RDKit list",
                 )
 
         return fragments
@@ -124,7 +126,7 @@ class MordredDescriptors(MolFeatures):
     @field_validator("descriptors")
     @classmethod
     def validate_descriptors(cls, descriptors):
-        """validates that descriptors have unique names
+        """Validates that descriptors have unique names
 
         Args:
             descriptors (List[str]): List of descriptor names
@@ -134,13 +136,14 @@ class MordredDescriptors(MolFeatures):
 
         Returns:
             List[str]: List of the descriptors
+
         """
         if len(descriptors) != len(set(descriptors)):
             raise ValueError("descriptors must be unique")
 
         if not all(desc in names.mordred for desc in descriptors):
             raise ValueError(
-                "Not all provided descriptors were not found in the Mordred list"
+                "Not all provided descriptors were not found in the Mordred list",
             )
 
         return descriptors

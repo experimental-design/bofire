@@ -44,9 +44,9 @@ class BotorchSurrogates(ABC):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]
-                )
-            )
+                    [model.outputs.get() for model in self.surrogates],
+                ),
+            ),
         )
 
     # TODO: is this really neede here, code duplication with functional model
@@ -58,7 +58,7 @@ class BotorchSurrogates(ABC):
         for i, model in enumerate(self.surrogates):
             if len(model.inputs) > len(inputs):
                 raise ValueError(
-                    f"Model with index {i} has more features than acceptable."
+                    f"Model with index {i} has more features than acceptable.",
                 )
             for feat in model.inputs:
                 try:
@@ -82,7 +82,6 @@ class BotorchSurrogates(ABC):
         # of the optimization domain
         self._check_compability(inputs=inputs, outputs=outputs)
         features2idx, _ = inputs._get_transform_info(self.input_preprocessing_specs)
-        #
         all_gp = True
         botorch_models = []
         # we sort the models by sorting them with their occurence in outputs
@@ -93,7 +92,7 @@ class BotorchSurrogates(ABC):
             ]
             if model.model is None:
                 raise ValueError(
-                    f"Surrogate for output feature {output_feature_key} not fitted."
+                    f"Surrogate for output feature {output_feature_key} not fitted.",
                 )
             # in case that inputs are complete we do not need to adjust anything
             if len(model.inputs) == len(inputs):

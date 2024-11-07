@@ -19,7 +19,7 @@ specs.add_valid(
                     "alpha": dataframes.ExperimentOutputValue(value=2),
                     "beta": dataframes.ExperimentOutputValue(value="cat", valid=False),
                 },
-            ).model_dump()
+            ).model_dump(),
         ],
     },
 )
@@ -157,13 +157,17 @@ specs.add_valid(
                 },
                 outputs={
                     "alpha": dataframes.CandidateOutputValue(
-                        value=2, standard_deviation=0, objective_value=1
+                        value=2,
+                        standard_deviation=0,
+                        objective_value=1,
                     ),
                     "beta": dataframes.CandidateOutputValue(
-                        value="cat", standard_deviation=0, objective_value=1
+                        value="cat",
+                        standard_deviation=0,
+                        objective_value=1,
                     ),
                 },
-            ).model_dump()
+            ).model_dump(),
         ],
     },
 )
@@ -179,11 +183,13 @@ specs.add_invalid(
                 },
                 outputs={
                     "alpha": dataframes.CandidateOutputValue(
-                        value=2, standard_deviation=0, objective_value=1
+                        value=2,
+                        standard_deviation=0,
+                        objective_value=1,
                     ),
                     "beta": dataframes.ExperimentOutputValue(value="cat"),
                 },
-            ).model_dump()
+            ).model_dump(),
         ],
     },
     error=ValidationError,
@@ -199,7 +205,7 @@ specs.add_valid(
                     "b": "cat",
                 },
                 outputs={},
-            ).model_dump()
+            ).model_dump(),
         ],
     },
 )

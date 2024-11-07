@@ -6,7 +6,7 @@ from bofire.transforms.transform import Transform
 
 
 TRANSFORM_MAP: Dict[Type[data_models.AnyTransform], Type[Transform]] = {
-    data_models.DropDataTransform: DropDataTransform
+    data_models.DropDataTransform: DropDataTransform,
 }
 
 

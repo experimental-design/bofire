@@ -25,8 +25,21 @@ from bofire.benchmarks.single import (
 
 
 AnyMultiBenchmark = Union[
-    C2DTLZ2, Detergent, DTLZ2, ZDT1, CrossCoupling, SnarBenchmark, BNH, TNK
+    C2DTLZ2,
+    Detergent,
+    DTLZ2,
+    ZDT1,
+    CrossCoupling,
+    SnarBenchmark,
+    BNH,
+    TNK,
 ]
 AnySingleBenchmark = Union[
-    Ackley, Branin, Branin30, Hartmann, Himmelblau, MultiTaskHimmelblau, Multinormalpdfs
+    Ackley,
+    Branin,
+    Branin30,
+    Hartmann,
+    Himmelblau,
+    MultiTaskHimmelblau,
+    Multinormalpdfs,
 ]

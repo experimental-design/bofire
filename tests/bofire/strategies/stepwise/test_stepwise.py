@@ -34,7 +34,8 @@ def test_StepwiseStrategy_invalid_domains():
                 ),
                 Step(
                     strategy_data=SoboStrategy(
-                        domain=benchmark.domain, acquisition_function=qNEI()
+                        domain=benchmark.domain,
+                        acquisition_function=qNEI(),
                     ),
                     condition=NumberOfExperimentsCondition(n_experiments=15),
                 ),
@@ -45,7 +46,8 @@ def test_StepwiseStrategy_invalid_domains():
 def test_StepwiseStrategy_invalid_AlwaysTrue():
     benchmark = Himmelblau()
     with pytest.raises(
-        ValueError, match="`AlwaysTrueCondition` is only allowed for the last step."
+        ValueError,
+        match="`AlwaysTrueCondition` is only allowed for the last step.",
     ):
         StepwiseStrategy(
             domain=benchmark.domain,
@@ -56,7 +58,8 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
                 ),
                 Step(
                     strategy_data=SoboStrategy(
-                        domain=benchmark.domain, acquisition_function=qNEI()
+                        domain=benchmark.domain,
+                        acquisition_function=qNEI(),
                     ),
                     condition=NumberOfExperimentsCondition(n_experiments=10),
                 ),
@@ -71,7 +74,8 @@ def test_StepwiseStrategy_invalid_AlwaysTrue():
 def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     benchmark = Himmelblau()
     experiments = benchmark.f(
-        benchmark.domain.inputs.sample(n_experiments), return_complete=True
+        benchmark.domain.inputs.sample(n_experiments),
+        return_complete=True,
     )
     data_model = StepwiseStrategy(
         domain=benchmark.domain,
@@ -82,7 +86,8 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
             ),
             Step(
                 strategy_data=SoboStrategy(
-                    domain=benchmark.domain, acquisition_function=qNEI()
+                    domain=benchmark.domain,
+                    acquisition_function=qNEI(),
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
             ),
@@ -115,7 +120,8 @@ def test_StepWiseStrategy_get_step_invalid():
             ),
             Step(
                 strategy_data=SoboStrategy(
-                    domain=benchmark.domain, acquisition_function=qNEI()
+                    domain=benchmark.domain,
+                    acquisition_function=qNEI(),
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
             ),
@@ -139,7 +145,8 @@ def test_StepWiseStrategy_ask():
             ),
             Step(
                 strategy_data=SoboStrategy(
-                    domain=benchmark.domain, acquisition_function=qNEI()
+                    domain=benchmark.domain,
+                    acquisition_function=qNEI(),
                 ),
                 condition=NumberOfExperimentsCondition(n_experiments=10),
             ),

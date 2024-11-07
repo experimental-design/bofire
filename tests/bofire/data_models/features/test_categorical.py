@@ -38,7 +38,7 @@ from bofire.data_models.objectives.api import ConstrainedCategoricalObjective
 )
 def test_categorical_input_feature_get_possible_categories(input_feature, expected):
     experiments = pd.DataFrame(
-        {"if1": ["a", "b"], "if2": ["a", "a"], "if3": ["a", "a"], "if4": ["b", "b"]}
+        {"if1": ["a", "b"], "if2": ["a", "a"], "if3": ["a", "a"], "if4": ["b", "b"]},
     )
     categories = input_feature.get_possible_categories(experiments[input_feature.key])
     assert categories == expected
@@ -151,7 +151,8 @@ def test_categorical_input_feature_validate_invalid(input_feature, values, stric
         ),
         (
             specs.features.valid(CategoricalInput).obj(
-                categories=["a", "b"], allowed=[True, False]
+                categories=["a", "b"],
+                allowed=[True, False],
             ),
             pd.Series(["a", "a"]),
         ),
@@ -170,7 +171,8 @@ def test_categorical_input_feature_validate_candidental_valid(input_feature, val
         ),
         (
             specs.features.valid(CategoricalInput).obj(
-                categories=["a", "b"], allowed=[True, False]
+                categories=["a", "b"],
+                allowed=[True, False],
             ),
             pd.Series(["a", "b"]),
         ),
@@ -330,7 +332,9 @@ def test_categorical_to_label_encoding():
         ),
         (
             CategoricalInput(
-                key="c", categories=["B", "A", "C"], allowed=[True, False, True]
+                key="c",
+                categories=["B", "A", "C"],
+                allowed=[True, False, True],
             ),
             CategoricalEncodingEnum.ONE_HOT,
             pd.Series(["A", "B", "C"]),
@@ -338,7 +342,9 @@ def test_categorical_to_label_encoding():
         ),
         (
             CategoricalInput(
-                key="c", categories=["B", "A", "C"], allowed=[True, False, True]
+                key="c",
+                categories=["B", "A", "C"],
+                allowed=[True, False, True],
             ),
             CategoricalEncodingEnum.ONE_HOT,
             None,
@@ -419,12 +425,15 @@ def test_categorical_get_bounds(feature, transform_type, values, expected):
             transform_type,
         )
         for expected, expected_value, transform_type in [
-            (True, [1, 2], CategoricalEncodingEnum.DESCRIPTOR)
+            (True, [1, 2], CategoricalEncodingEnum.DESCRIPTOR),
         ]
     ],
 )
 def test_categorical_input_feature_is_fixed(
-    input_feature, expected, expected_value, transform_type
+    input_feature,
+    expected,
+    expected_value,
+    transform_type,
 ):
     assert input_feature.is_fixed() == expected
     assert input_feature.fixed_value(transform_type) == expected_value
@@ -470,7 +479,8 @@ def test_categorical_output_call():
         key="a",
         categories=["c1", "c2"],
         objective=ConstrainedCategoricalObjective(
-            categories=["c1", "c2"], desirability=[True, False]
+            categories=["c1", "c2"],
+            desirability=[True, False],
         ),
     )
     output = categorical_output(test_df, test_df)

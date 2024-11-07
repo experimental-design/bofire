@@ -58,7 +58,8 @@ class Surrogate(ABC):
         )
         # append predictions for categorical cases
         predictions = postprocess_categorical_predictions(
-            predictions=predictions, outputs=self.outputs
+            predictions=predictions,
+            outputs=self.outputs,
         )
         # validate
         self.validate_predictions(predictions=predictions)
@@ -74,7 +75,7 @@ class Surrogate(ABC):
             expected_cols = expected_cols + [f"{featkey}_{t}" for t in ["pred", "sd"]]
         if sorted(predictions.columns) != sorted(expected_cols):
             raise ValueError(
-                f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}."
+                f"Predictions are ill-formatted. Expected: {expected_cols}, got: {list(predictions.columns)}.",
             )
         # check that values are numeric
         if not is_numeric(predictions[check_columns]):
@@ -82,7 +83,8 @@ class Surrogate(ABC):
         return predictions
 
     def to_predictions(
-        self, predictions: pd.DataFrame
+        self,
+        predictions: pd.DataFrame,
     ) -> Dict[str, List[PredictedValue]]:
         outputs = {key: [] for key in self.outputs.get_keys()}
         for _, row in predictions.iterrows():
@@ -91,7 +93,7 @@ class Surrogate(ABC):
                     PredictedValue(
                         predictedValue=row[f"{key}_pred"],
                         standardDeviation=row[f"{key}_sd"],
-                    )
+                    ),
                 )
         return outputs
 
@@ -112,9 +114,7 @@ class Surrogate(ABC):
 
     def _prepare_for_dump(self):
         """Prepares the model before the dump."""
-        pass
 
     @abstractmethod
     def loads(self, data: str):
         """Loads the actual model from a string and writes it to the `model` attribute."""
-        pass
