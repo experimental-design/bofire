@@ -35,7 +35,9 @@ class MultiFidelityStrategy(SoboStrategy):
         if candidate_count > 1:
             raise NotImplementedError("Batch optimization is not yet implemented")
         task_feature: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
-        task_feature.allowed = [True] + [False] * (len(task_feature.categories) - 1)
+        # only optimize the input x on the target fidelity
+        # we fix the fidelity by setting all other fidelities to 'not allowed'
+        task_feature.allowed = [fidelity == 0 for fidelity in task_feature.fidelities]
         x = super()._ask(candidate_count)
         task_feature.allowed = [True] * len(task_feature.categories)
         fidelity_pred = self._select_fidelity_and_get_predict(x)
