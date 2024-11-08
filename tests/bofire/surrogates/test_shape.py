@@ -12,10 +12,10 @@ from bofire.data_models.kernels.api import RBFKernel as RBFKernelDataModel
 
 # , RBFKernel, ScaleKernel
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
 )
 from bofire.data_models.surrogates.api import PiecewiseLinearGPSurrogate
 from bofire.kernels.shape import WassersteinKernel
@@ -113,8 +113,8 @@ def test_PiecewiseLinearGPHyperconfig():
             surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
         )
     else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         assert (
             surrogate_data.continuous_kernel.lengthscale_prior
-            == BOTORCH_LENGTHCALE_PRIOR()
+            == THREESIX_LENGTHSCALE_PRIOR()
         )
