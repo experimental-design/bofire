@@ -120,21 +120,6 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     type: Literal["SingleTaskGPSurrogate"] = "SingleTaskGPSurrogate"
 
-    # kernel: AnyKernel = Field(
-    #     default_factory=lambda: ScaleKernel(
-    #         base_kernel=MaternKernel(
-    #             ard=True,
-    #             nu=2.5,
-    #             lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
-    #         ),
-    #         outputscale_prior=THREESIX_SCALE_PRIOR(),
-    #     )
-    # )
-    # noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
-    # hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-    #     default_factory=lambda: SingleTaskGPHyperconfig()
-    # )
-
     kernel: AnyKernel = Field(
         default_factory=lambda: RBFKernel(
             ard=True,
