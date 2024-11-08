@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from bofire.data_models.features.api import TaskInput
@@ -5,6 +6,7 @@ from bofire.data_models.strategies.predictives.multi_fidelity import (
     MultiFidelityStrategy as DataModel,
 )
 from bofire.strategies.predictives.sobo import SoboStrategy
+from bofire.utils.naming_conventions import get_column_names
 
 
 class MultiFidelityStrategy(SoboStrategy):
@@ -30,41 +32,45 @@ class MultiFidelityStrategy(SoboStrategy):
         Returns:
             pd.DataFrame: DataFrame with candidates (proposed experiments)
         """
+        if candidate_count > 1:
+            raise NotImplementedError("Batch optimization is not yet implemented")
         task_feature: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
         task_feature.allowed = [True] + [False] * (len(task_feature.categories) - 1)
         x = super()._ask(candidate_count)
         task_feature.allowed = [True] * len(task_feature.categories)
-        m = self._select_fidelity(x)
-        candidates = x.assign(**{self.task_feature_key: m})
-        # TODO: assign the true pred and sd (not the one from the target fn)
-        return candidates
+        fidelity_pred = self._select_fidelity_and_get_predict(x)
+        x.update(fidelity_pred)
+        return x
 
-    def _select_fidelity(self, X: pd.DataFrame) -> int:
+    def _select_fidelity_and_get_predict(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         """Select the fidelity for a given input.
 
         Uses the variance based approach (see [Kandasamy et al. 2016,
         Folch et al. 2023]) to select the lowest fidelity that has a variance
-        exceeding a threshold.
+        exceeding a threshold. If no such fidelity exists, pick the target fidelity
 
         Args:
             X (pd.DataFrame): optimum input of target fidelity
 
         Returns:
-            int: selected fidelity
+            pd.DataFrame: selected fidelity and prediction
         """
         fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
         assert self.model is not None
 
-        fidelities = list(zip(fidelity_input.fidelities, fidelity_input.categories))
-        for m, fidelity in reversed(fidelities[1:]):
-            X_fid = X.assign(**{self.task_feature_key: fidelity})
+        sorted_fidelities = np.argsort(fidelity_input.fidelities)[::-1]
+        _, sd_cols = get_column_names(self.domain.outputs)
+
+        for fidelity_idx in sorted_fidelities:
+            m = fidelity_input.fidelities[fidelity_idx]
+            fidelity_name = fidelity_input.categories[fidelity_idx]
+
+            X_fid = X.assign(**{self.task_feature_key: fidelity_name})
             transformed = self.domain.inputs.transform(
                 experiments=X_fid, specs=self.input_preprocessing_specs
             )
-            _, std = self._predict(transformed)
+            pred = self.predict(transformed)
 
-            if std > self.fidelity_thresholds[m]:
-                return fidelity
-
-        # if no low fidelity is selected, return the target fidelity
-        return fidelity_input.categories[0]
+            if (pred[sd_cols] > self.fidelity_thresholds[m]).all().all() or m == 0:
+                pred[self.task_feature_key] = fidelity_name
+                return pred
