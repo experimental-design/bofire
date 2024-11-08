@@ -2,8 +2,11 @@ import math
 from typing import Callable, Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
+import pandas as pd
 import torch
+from botorch.models.transforms.input import InputTransform
 from torch import Tensor
+from torch.nn import Module
 
 from bofire.data_models.api import AnyObjective, Domain, Outputs
 from bofire.data_models.constraints.api import (
@@ -22,9 +25,11 @@ from bofire.data_models.objectives.api import (
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     TargetObjective,
 )
 from bofire.strategies.strategy import Strategy
+
 
 tkwargs = {
     "dtype": torch.double,
@@ -54,17 +59,17 @@ def get_linear_constraints(
         lower = []
         upper = []
         rhs = 0.0
-        for i, featkey in enumerate(c.features):  # type: ignore
+        for i, featkey in enumerate(c.features):
             idx = domain.inputs.get_keys(Input).index(featkey)
             feat = domain.inputs.get_by_key(featkey)
-            if feat.is_fixed():  # type: ignore
+            if feat.is_fixed():
                 rhs -= feat.fixed_value()[0] * c.coefficients[i]  # type: ignore
             else:
                 lower.append(feat.lower_bound)  # type: ignore
                 upper.append(feat.upper_bound)  # type: ignore
                 indices.append(idx)
                 coefficients.append(
-                    c.coefficients[i]  # type: ignore
+                    c.coefficients[i]
                 )  # if unit_scaled == False else c_scaled.coefficients[i])
         if unit_scaled:
             lower = np.array(lower)
@@ -75,7 +80,7 @@ def get_linear_constraints(
                 (
                     torch.tensor(indices),
                     -torch.tensor(scaled_coefficients).to(**tkwargs),
-                    -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),  # type: ignore
+                    -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),
                 )
             )
         else:
@@ -83,7 +88,7 @@ def get_linear_constraints(
                 (
                     torch.tensor(indices),
                     -torch.tensor(coefficients).to(**tkwargs),
-                    -(rhs + c.rhs),  # type: ignore
+                    -(rhs + c.rhs),
                 )
             )
     return constraints
@@ -225,7 +230,10 @@ def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]
 
 
 def constrained_objective2botorch(
-    idx: int, objective: ConstrainedObjective, eps: float = 1e-8
+    idx: int,
+    objective: ConstrainedObjective,
+    x_adapt: Optional[Tensor],
+    eps: float = 1e-8,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
     to setup ouput constrained optimizations.
@@ -233,6 +241,10 @@ def constrained_objective2botorch(
     Args:
         idx (int): Index of the constraint objective in the list of outputs.
         objective (BotorchConstrainedObjective): The objective that should be transformed.
+        x_adapt (Optional[Tensor]): The tensor that should be used to adapt the objective,
+            for example in case of a moving turning point in the `MovingMaximizeSigmoidObjective`.
+        eps (float, optional): Small value to avoid numerical instabilities in case of the `ConstrainedCategoricalObjective`.
+            Defaults to 1e-8.
 
     Returns:
         Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,
@@ -244,6 +256,14 @@ def constrained_objective2botorch(
     if isinstance(objective, MaximizeSigmoidObjective):
         return (
             [lambda Z: (Z[..., idx] - objective.tp) * -1.0],
+            [1.0 / objective.steepness],
+            idx + 1,
+        )
+    elif isinstance(objective, MovingMaximizeSigmoidObjective):
+        assert x_adapt is not None
+        tp = x_adapt.max().item() + objective.tp
+        return (
+            [lambda Z: (Z[..., idx] - tp) * -1.0],
             [1.0 / objective.steepness],
             idx + 1,
         )
@@ -291,7 +311,7 @@ def constrained_objective2botorch(
 
 
 def get_output_constraints(
-    outputs: Outputs,
+    outputs: Outputs, experiments: pd.DataFrame
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
@@ -299,6 +319,9 @@ def get_output_constraints(
     Args:
         outputs (Outputs): Output feature object that should
             be processed.
+        experiments (pd.DataFrame): DataFrame containing the experiments that are used for
+            adapting the objectives on the fly, for example in the case of the
+            `MovingMaximizeSigmoidObjective`.
 
     Returns:
         Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,
@@ -308,10 +331,18 @@ def get_output_constraints(
     etas = []
     idx = 0
     for feat in outputs.get():
-        if isinstance(feat.objective, ConstrainedObjective):  # type: ignore
+        if isinstance(feat.objective, ConstrainedObjective):
+            cleaned_experiments = outputs.preprocess_experiments_one_valid_output(
+                feat.key, experiments
+            )
             iconstraints, ietas, idx = constrained_objective2botorch(
                 idx,
-                objective=feat.objective,  # type: ignore
+                objective=feat.objective,
+                x_adapt=torch.from_numpy(cleaned_experiments[feat.key].values).to(
+                    **tkwargs
+                )
+                if not isinstance(feat.objective, ConstrainedCategoricalObjective)
+                else None,
             )
             constraints += iconstraints
             etas += ietas
@@ -321,8 +352,8 @@ def get_output_constraints(
 
 
 def get_objective_callable(
-    idx: int, objective: AnyObjective
-) -> Callable[[Tensor, Optional[Tensor]], Tensor]:  # type: ignore
+    idx: int, objective: AnyObjective, x_adapt: Tensor
+) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     if isinstance(objective, MaximizeObjective):
         return lambda y, X=None: (
             (y[..., idx] - objective.lower_bound)
@@ -353,6 +384,11 @@ def get_objective_callable(
                 1.0
                 + torch.exp(-1.0 * objective.steepness * (y[..., idx] - objective.tp))
             )
+        )
+    if isinstance(objective, MovingMaximizeSigmoidObjective):
+        tp = x_adapt.max().item() + objective.tp
+        return lambda y, X=None: (
+            1.0 / (1.0 + torch.exp(-1.0 * objective.steepness * (y[..., idx] - tp)))
         )
     if isinstance(objective, TargetObjective):
         return lambda y, X=None: (
@@ -395,24 +431,33 @@ def get_custom_botorch_objective(
         ],
         Tensor,
     ],
+    experiments: pd.DataFrame,
     exclude_constraints: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
-        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        get_objective_callable(
+            idx=i,
+            objective=feat.objective,
+            x_adapt=torch.from_numpy(
+                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+                    feat.key
+                ].values
+            ).to(**tkwargs),
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
     ]
     weights = [
-        feat.objective.w  # type: ignore
+        feat.objective.w
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
@@ -426,16 +471,25 @@ def get_custom_botorch_objective(
 
 def get_multiplicative_botorch_objective(
     outputs: Outputs,
+    experiments: pd.DataFrame,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
-        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        get_objective_callable(
+            idx=i,
+            objective=feat.objective,
+            x_adapt=torch.from_numpy(
+                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+                    feat.key
+                ].values
+            ).to(**tkwargs),
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
     ]
     weights = [
-        feat.objective.w  # type: ignore
+        feat.objective.w
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
     ]
 
     def objective(samples: torch.Tensor, X: torch.Tensor) -> torch.Tensor:
@@ -448,24 +502,34 @@ def get_multiplicative_botorch_objective(
 
 
 def get_additive_botorch_objective(
-    outputs: Outputs, exclude_constraints: bool = True
+    outputs: Outputs,
+    experiments: pd.DataFrame,
+    exclude_constraints: bool = True,
 ) -> Callable[[Tensor, Tensor], Tensor]:
     callables = [
-        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        get_objective_callable(
+            idx=i,
+            objective=feat.objective,
+            x_adapt=torch.from_numpy(
+                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+                    feat.key
+                ].values
+            ).to(**tkwargs),
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
     ]
     weights = [
-        feat.objective.w  # type: ignore
+        feat.objective.w
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and (
-            not isinstance(feat.objective, ConstrainedObjective)  # type: ignore
+            not isinstance(feat.objective, ConstrainedObjective)
             if exclude_constraints
             else True
         )
@@ -481,22 +545,33 @@ def get_additive_botorch_objective(
 
 
 def get_multiobjective_objective(
-    outputs: Outputs,
+    outputs: Outputs, experiments: pd.DataFrame
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
-    """Returns
+    """Returns a callable that can be used by botorch for multiobjective optimization.
 
     Args:
-        outputs (Outputs): _description_
+        outputs (Outputs): Outputs object for which the callable should be generated.
+        experiments (pd.DataFrame): DataFrame containing the experiments that are used for
+            adapting the objectives on the fly, for example in the case of the
+            `MovingMaximizeSigmoidObjective`.
 
     Returns:
         Callable[[Tensor], Tensor]: _description_
     """
     callables = [
-        get_objective_callable(idx=i, objective=feat.objective)  # type: ignore
+        get_objective_callable(
+            idx=i,
+            objective=feat.objective,
+            x_adapt=torch.from_numpy(
+                outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
+                    feat.key
+                ].values
+            ).to(**tkwargs),
+        )
         for i, feat in enumerate(outputs.get())
-        if feat.objective is not None  # type: ignore
+        if feat.objective is not None
         and isinstance(
-            feat.objective,  # type: ignore
+            feat.objective,
             (MaximizeObjective, MinimizeObjective, CloseToTargetObjective),
         )
     ]
@@ -561,3 +636,114 @@ def get_initial_conditions_generator(
             )
 
     return generator
+
+
+@torch.jit.script  # type: ignore
+def interp1d(
+    x: torch.Tensor,
+    y: torch.Tensor,
+    x_new: torch.Tensor,
+) -> torch.Tensor:
+    """
+    Interpolates values in the y tensor based on the x tensor using linear interpolation.
+
+    Args:
+        x (torch.Tensor): The x-coordinates of the data points.
+        y (torch.Tensor): The y-coordinates of the data points.
+        x_new (torch.Tensor): The x-coordinates at which to interpolate the values.
+
+    Returns:
+        torch.Tensor: The interpolated values at the x_new x-coordinates.
+    """
+    m = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
+    b = y[:-1] - (m * x[:-1])
+
+    idx = torch.sum(torch.ge(x_new[:, None], x[None, :]), 1) - 1
+    idx = torch.clamp(idx, 0, len(m) - 1)
+
+    itp = m[idx] * x_new + b[idx]
+
+    return itp
+
+
+class InterpolateTransform(InputTransform, Module):
+    """Botorch input transform that interpolates values between given x and y values."""
+
+    def __init__(
+        self,
+        new_x: Tensor,
+        idx_x: List[int],
+        idx_y: List[int],
+        prepend_x: Tensor,
+        prepend_y: Tensor,
+        append_x: Tensor,
+        append_y: Tensor,
+        keep_original: bool = False,
+        transform_on_train: bool = True,
+        transform_on_eval: bool = True,
+        transform_on_fantasize: bool = True,
+    ):
+        super().__init__()
+        if len(set(idx_x + idx_y)) != len(idx_x) + len(idx_y):
+            raise ValueError("Indices are not unique.")
+
+        self.idx_x = torch.as_tensor(idx_x, dtype=torch.long)
+        self.idx_y = torch.as_tensor(idx_y, dtype=torch.long)
+
+        self.transform_on_train = transform_on_train
+        self.transform_on_eval = transform_on_eval
+        self.transform_on_fantasize = transform_on_fantasize
+        self.new_x = new_x
+
+        self.prepend_x = prepend_x
+        self.prepend_y = prepend_y
+        self.append_x = append_x
+        self.append_y = append_y
+
+        self.keep_original = keep_original
+
+        if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
+            self.idx_y
+        ) + len(self.prepend_y) + len(self.append_y):
+            raise ValueError("The number of x and y indices must be equal.")
+
+    def _to(self, X: Tensor) -> None:
+        self.new_x = self.coefficient.to(X)
+
+    def append(self, X: Tensor, values: Tensor) -> Tensor:
+        shape = X.shape
+        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
+        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
+        return torch.cat([X, values_expanded], dim=-1)
+
+    def prepend(self, X: Tensor, values: Tensor) -> Tensor:
+        shape = X.shape
+        values_reshaped = values.view(*([1] * (len(shape) - 1)), -1)
+        values_expanded = values_reshaped.expand(*shape[:-1], -1).to(X)
+        return torch.cat([values_expanded, X], dim=-1)
+
+    def transform(self, X: Tensor):
+        shapeX = X.shape
+
+        x = X[..., self.idx_x]
+        x = self.prepend(x, self.prepend_x)
+        x = self.append(x, self.append_x)
+
+        y = X[..., self.idx_y]
+        y = self.prepend(y, self.prepend_y)
+        y = self.append(y, self.append_y)
+
+        if X.dim() == 3:
+            x = x.reshape((shapeX[0] * shapeX[1], x.shape[-1]))
+            y = y.reshape((shapeX[0] * shapeX[1], y.shape[-1]))
+
+        new_x = self.new_x.expand(x.shape[0], -1)
+        new_y = torch.vmap(interp1d)(x, y, new_x)
+
+        if X.dim() == 3:
+            new_y = new_y.reshape((shapeX[0], shapeX[1], new_y.shape[-1]))
+
+        if self.keep_original:
+            return torch.cat([new_y, X], dim=-1)
+
+        return new_y

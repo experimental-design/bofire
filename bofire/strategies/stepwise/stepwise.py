@@ -13,6 +13,7 @@ from bofire.strategies.strategy import Strategy
 from bofire.surrogates.botorch_surrogates import BotorchSurrogates
 from bofire.transforms.transform import Transform
 
+
 T = TypeVar("T", pd.DataFrame, Domain)
 
 
@@ -47,7 +48,7 @@ class StepwiseStrategy(Strategy):
                 return self.strategies[i], self.transforms[i]
         raise ValueError("No condition could be satisfied.")
 
-    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:
+    def _ask(self, candidate_count: Optional[PositiveInt]) -> pd.DataFrame:  # type: ignore
         strategy, transform = self.get_step()
 
         candidate_count = candidate_count or 1

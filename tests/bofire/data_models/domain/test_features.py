@@ -16,6 +16,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.features.descriptor import CategoricalDescriptorInput
 
+
 # test features container
 if1 = specs.features.valid(ContinuousInput).obj(key="if1")
 if2 = specs.features.valid(ContinuousInput).obj(key="if2")
@@ -93,7 +94,7 @@ def test_features_invalid_feature(FeatureContainer, features):
 )
 def test_features_plus(features1, features2, expected_type):
     returned = features1 + features2
-    assert type(returned) == expected_type
+    assert type(returned) is expected_type
     assert len(returned) == (len(features1) + len(features2))
 
 
@@ -111,7 +112,7 @@ def test_features_get(features, FeatureType, exact, expected):
     assert returned.features == expected
     for i in range(len(expected)):
         assert id(expected[i]) == id(returned[i])
-    assert type(returned) == type(features)
+    assert type(returned) is type(features)
 
 
 @pytest.mark.parametrize(
@@ -185,7 +186,3 @@ def test_exclude_include():
 
     with pytest.raises(ValueError, match="no filter provided"):
         test(includes=None, excludes=None, expected=[if1, if2, if3, if4, if5, if7])
-
-
-if __name__ == "__main__":
-    test_exclude_include()

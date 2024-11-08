@@ -95,12 +95,12 @@ def test_StepWiseStrategy_get_step(n_experiments, expected_strategy):
     assert isinstance(_strategy, expected_strategy)
     if isinstance(_strategy, strategies.RandomStrategy):
         with pytest.raises(ValueError):
-            surrogates = strategy.surrogates  # noqa: F841
+            _ = strategy.surrogates
         with pytest.raises(ValueError):
-            surrogate_specs = strategy.surrogates_specs  # noqa: F841
+            _ = strategy.surrogates_specs
     else:
-        assert strategy.surrogates == _strategy.surrogates
-        assert strategy.surrogates_specs == _strategy.surrogate_specs
+        assert strategy.surrogates == _strategy.surrogates  # type: ignore
+        assert strategy.surrogates_specs == _strategy.surrogate_specs  # type: ignore
 
 
 def test_StepWiseStrategy_get_step_invalid():

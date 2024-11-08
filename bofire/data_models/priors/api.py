@@ -10,6 +10,7 @@ from bofire.data_models.priors.normal import (
 )
 from bofire.data_models.priors.prior import Prior
 
+
 AbstractPrior = Prior
 
 AnyPrior = Union[

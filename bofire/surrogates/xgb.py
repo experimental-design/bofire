@@ -6,8 +6,9 @@ import pandas as pd
 
 from bofire.utils.tmpfile import make_tmpfile
 
+
 try:
-    from xgboost import XGBRegressor  # type: ignore
+    from xgboost import XGBRegressor
 except ImportError:
     warnings.warn("xgboost not installed, BoFire's `XGBoostSurrogate` cannot be used.")
 

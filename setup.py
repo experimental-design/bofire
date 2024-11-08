@@ -1,6 +1,8 @@
+import itertools
 import os.path
 
 from setuptools import find_packages, setup
+
 
 sklearn_dependency = "scikit-learn>=1.0.0"
 
@@ -8,6 +10,39 @@ root_dir = os.path.dirname(__file__)
 with open(os.path.join(root_dir, "README.md"), "r") as f:
     long_description = f.read()
 
+
+extras_require = {
+    "optimization": [
+        "botorch>=0.10.0",
+        "numpy",
+        "multiprocess",
+        "plotly",
+        "formulaic>=1.0.1",
+        "cloudpickle>=2.0.0",
+        "sympy>=1.12",
+        "cvxpy[CLARABEL]",
+        sklearn_dependency,
+    ],
+    "entmoot": ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"],
+    "xgb": ["xgboost>=1.7.5"],
+    "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
+    "tests": [
+        "mopti",
+        "pytest",
+        "pytest-cov",
+        "papermill",
+    ],
+    "docs": [
+        "mkdocs",
+        "mkdocs-material",
+        "mkdocs-jupyter",
+        "mkdocstrings>=0.18",
+        "mkdocstrings-python-legacy",
+        "mike",
+    ],
+    "tutorials": ["jupyter", "matplotlib", "seaborn"],
+}
+extras_require["all"] = list(itertools.chain.from_iterable(extras_require.values()))
 
 setup(
     name="bofire",
@@ -40,36 +75,5 @@ setup(
         "scipy>=1.7",
         "typing-extensions",
     ],
-    extras_require={
-        "optimization": [
-            "botorch>=0.10.0",
-            "multiprocess",
-            "plotly",
-            "formulaic>=1.0.1",
-            "cloudpickle>=2.0.0",
-            "sympy>=1.12",
-            "cvxpy[CLARABEL]",
-            sklearn_dependency,
-        ],
-        "entmoot": ["entmoot>=2.0", "lightgbm==4.0.0", "pyomo==6.7.1", "gurobipy"],
-        "xgb": ["xgboost>=1.7.5"],
-        "cheminfo": ["rdkit>=2023.3.2", sklearn_dependency, "mordred"],
-        "tests": [
-            "mock",
-            "mopti",
-            "pyright==1.1.305",
-            "pytest",
-            "pytest-cov",
-            "papermill",
-        ],
-        "docs": [
-            "mkdocs",
-            "mkdocs-material",
-            "mkdocs-jupyter",
-            "mkdocstrings>=0.18",
-            "mkdocstrings-python-legacy",
-            "mike",
-        ],
-        "tutorials": ["jupyter", "matplotlib", "seaborn"],
-    },
+    extras_require=extras_require,
 )

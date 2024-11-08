@@ -118,7 +118,7 @@ class DiscreteInput(NumericalInput):
     ) -> Tuple[List[float], List[float]]:
         assert transform_type is None
         if values is None:
-            return [self.lower_bound], [self.upper_bound]  # type: ignore
-        lower = min(self.lower_bound, values.min())  # type: ignore
-        upper = max(self.upper_bound, values.max())  # type: ignore
-        return [lower], [upper]  # type: ignore
+            return [self.lower_bound], [self.upper_bound]
+        lower = min(self.lower_bound, values.min())
+        upper = max(self.upper_bound, values.max())
+        return [lower], [upper]

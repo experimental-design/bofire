@@ -1,6 +1,7 @@
 from itertools import chain
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.multi_objective import (  # qLogExpectedHypervolumeImprovement,; qLogNoisyExpectedHypervolumeImprovement,
@@ -19,8 +20,11 @@ import bofire.data_models.acquisition_functions.api as acquisitions
 import bofire.data_models.strategies.api as data_models
 import bofire.strategies.api as strategies
 from bofire.benchmarks.multi import C2DTLZ2, DTLZ2
-from bofire.data_models.features.api import ContinuousOutput
+from bofire.data_models.domain.api import Domain, Inputs, Outputs
+from bofire.data_models.features.api import ContinuousInput, ContinuousOutput, TaskInput
+from bofire.data_models.objectives.api import MaximizeObjective
 from bofire.data_models.strategies.api import RandomStrategy as RandomStrategyDataModel
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.api import RandomStrategy
 from tests.bofire.utils.test_multiobjective import (
     dfs,
@@ -211,3 +215,75 @@ def test_no_objective():
     recommender.tell(experiments=experiments)
     candidates = recommender.ask(candidate_count=1)
     recommender.to_candidates(candidates)
+
+
+@pytest.mark.parametrize(
+    "acqf, target_task",
+    [
+        (acquisitions.qEHVI, "task_1"),
+        (acquisitions.qLogEHVI, "task_2"),
+        (acquisitions.qNEHVI, "task_1"),
+        (acquisitions.qLogNEHVI, "task_2"),
+    ],
+)
+def test_mobo_with_multitask(acqf, target_task):
+    # set the data
+    def task_1_f(x):
+        return np.sin(x * 2 * np.pi)
+
+    def task_2_f(x):
+        return 0.9 * np.sin(x * 2 * np.pi) - 0.2 + 0.2 * np.cos(x * 3 * np.pi)
+
+    task_1_x = np.linspace(0.6, 1, 4)
+    task_1_y = task_1_f(task_1_x)
+
+    task_2_x = np.linspace(0, 1, 15)
+    task_2_y = task_2_f(task_2_x)
+
+    experiments = pd.DataFrame(
+        {
+            "x": np.concatenate([task_1_x, task_2_x]),
+            "y1": np.concatenate([task_1_y, task_2_y]),
+            "y2": np.concatenate([task_1_y, task_2_y]),
+            "task": ["task_1"] * len(task_1_x) + ["task_2"] * len(task_2_x),
+        }
+    )
+
+    if target_task == "task_1":
+        allowed = [True, False]
+    else:
+        allowed = [False, True]
+
+    input_features = [
+        ContinuousInput(key="x", bounds=(0, 1)),
+        TaskInput(key="task", categories=["task_1", "task_2"], allowed=allowed),
+    ]
+
+    objective = MaximizeObjective(w=1)
+
+    inputs = Inputs(features=input_features)
+
+    output_features_1 = [ContinuousOutput(key="y1", objective=objective)]
+    output_features_2 = [ContinuousOutput(key="y2", objective=objective)]
+    outputs_1 = Outputs(features=output_features_1)
+    outputs_2 = Outputs(features=output_features_2)
+    outputs = Outputs(features=output_features_1 + output_features_2)
+
+    surrogate_data_1 = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_1)
+    surrogate_data_2 = MultiTaskGPSurrogate(inputs=inputs, outputs=outputs_2)
+    surrogate_data = [surrogate_data_1, surrogate_data_2]
+
+    surrogate_specs = BotorchSurrogates(surrogates=surrogate_data)
+
+    strategy_data_model = data_models.MoboStrategy(
+        domain=Domain(inputs=inputs, outputs=outputs),
+        surrogate_specs=surrogate_specs,
+        acquisition_function=acqf(),
+    )
+
+    strategy = strategies.map(strategy_data_model)
+    strategy.tell(experiments)
+    candidate = strategy.ask(1)
+
+    # test that the candidate is in the target task
+    assert candidate["task"].item() == target_task

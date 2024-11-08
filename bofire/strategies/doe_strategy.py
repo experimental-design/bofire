@@ -56,7 +56,7 @@ class DoEStrategy(Strategy):
 
         self._candidates = candidates
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         all_new_categories = []
 
         # map categorical/ discrete Domain to a relaxable Domain
@@ -181,11 +181,11 @@ class DoEStrategy(Strategy):
             raise RuntimeError("Could not find suitable optimization strategy")
 
         # mapping the solution to the variables from the original domain
-        transformed_design = design_from_new_to_original_domain(self.domain, design)
+        transformed_design = design_from_new_to_original_domain(self.domain, design)  # type: ignore
 
         return transformed_design.iloc[fixed_experiments_count:, :].reset_index(
             drop=True
-        )  # type: ignore
+        )
 
     def has_sufficient_experiments(
         self,
@@ -216,7 +216,8 @@ class DoEStrategy(Strategy):
                         continue
                     if c not in cat.categories:  # type: ignore
                         raise AttributeError(
-                            f"provided value {c} for categorical variable {cat.key} does not exist in the corresponding categories {cat.categories}"  # type: ignore
+                            f"provided value {c} for categorical variable {cat.key} "
+                            f"does not exist in the corresponding categories {cat.categories}"  # type: ignore
                         )
                     intermediate_candidates.loc[row_index, cat.categories] = 0  # type: ignore
                     intermediate_candidates.loc[row_index, c] = 1

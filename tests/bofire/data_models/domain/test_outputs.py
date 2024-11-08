@@ -16,6 +16,7 @@ from bofire.data_models.objectives.api import (
     TargetObjective,
 )
 
+
 data = pd.DataFrame.from_dict(
     {
         "x1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0],

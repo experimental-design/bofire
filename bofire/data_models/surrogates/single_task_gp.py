@@ -46,9 +46,9 @@ class SingleTaskGPHyperconfig(Hyperconfig):
         ]
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
-    hyperstrategy: Literal[
-        "FactorialStrategy", "SoboStrategy", "RandomStrategy"
-    ] = "FactorialStrategy"
+    hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
+        "FactorialStrategy"
+    )
 
     @staticmethod
     def _update_hyperparameters(

@@ -9,20 +9,28 @@ from typing import Dict, Optional
 
 import pandas as pd
 
+
 # This script is based on the corresponding one from botorch: https://github.com/pytorch/botorch/blob/main/scripts/run_tutorials.py
 
 
 def run_script(
-    tutorial: Path, timeout_minutes: int = 20, env: Optional[Dict[str, str]] = None
+    tutorial: Path,
+    timeout_minutes: int = 20,
+    env: Optional[Dict[str, str]] = None,
+    inplace: bool = False,
 ):
+    tutorial_path = str(tutorial.absolute())
+    output_path = tutorial_path if inplace else "temp.ipynb"
+
     utils_path = {"PYTHONPATH": str(tutorial.parent)}
     if env is not None:
         env = {**os.environ, **env, **utils_path}
     else:
         env = {**os.environ, **utils_path}
+
     try:
         run_out = subprocess.run(
-            ["papermill", str(tutorial.absolute()), "temp.ipynb"],  # , "|"
+            ["papermill", tutorial_path, output_path],
             capture_output=True,
             text=True,
             env=env,
@@ -31,17 +39,23 @@ def run_script(
         )
     except subprocess.TimeoutExpired:
         print(f"{tutorial} exceeded max. runtime ({timeout_minutes*60} s)... ")
+        if not inplace:
+            os.remove(output_path)
         return None
+
+    if not inplace:
+        os.remove(output_path)
+
     return run_out
 
 
 def run_tutorials(
     name: Optional[str] = None,
-    smoke_test=False,
+    smoke_test: bool = False,
+    inplace: bool = False,
 ) -> None:
-    """
-    Run each tutorial, print statements on how it ran, and write a data set as a csv
-    to a directory.
+    """Run each tutorial, print statements on how it ran, and write a data set
+    as a csv to a directory.
     """
 
     timeout_minutes = 30 if smoke_test is False else 2
@@ -80,7 +94,9 @@ def run_tutorials(
             continue
         num_runs += 1
         t1 = time.time()
-        run_out = run_script(tutorial, env=env, timeout_minutes=timeout_minutes)
+        run_out = run_script(
+            tutorial, env=env, timeout_minutes=timeout_minutes, inplace=inplace
+        )
         elapsed_time = time.time() - t1
         print(f"time elapsed:{elapsed_time:.2f}")
         if run_out is None:  # in this case it bumped against max wall time
@@ -125,15 +141,13 @@ if __name__ == "__main__":
         "-l",
         "--long",
         action="store_true",
-        help="Run the full version of the notebook. Will take a long time",
+        help="Run the full version of the notebook. Will take a long time.",
     )
 
-    # parser.add_argument(
-    #     "-s", "--smoke", action="store_true", help="Run in smoke test (quick) mode."
-    # )
-
     parser.add_argument(
-        "-p", "--path", metavar="path", required=False, help="bofire repo directory."
+        "--in-place",
+        action="store_true",
+        help="Run the tests in place, without creating a temporary notebook. Used to update all outputs.",
     )
 
     args = parser.parse_args()
@@ -141,4 +155,5 @@ if __name__ == "__main__":
     run_tutorials(
         name=args.name,
         smoke_test=not args.long,
+        inplace=args.in_place,
     )

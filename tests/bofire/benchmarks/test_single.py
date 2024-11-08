@@ -140,9 +140,3 @@ def test_single_obj_benchmark_reproducibility(
     assert np.allclose(Y, Yrep, atol=1e-04), (
         "Attempt to reproduce results of " + benchmark_function_name + " failed."
     )
-
-
-if __name__ == "__main__":
-    test_single_obj_benchmark_reproducibility(
-        Multinormalpdfs, False, {"seed": 42}, {"seed": 42}
-    )

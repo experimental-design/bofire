@@ -23,7 +23,7 @@ class CategoricalInput(Input):
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
     """
 
-    type: Literal["CategoricalInput"] = "CategoricalInput"
+    type: Literal["CategoricalInput"] = "CategoricalInput"  # type: ignore
     # order_id: ClassVar[int] = 5
     order_id: ClassVar[int] = 7
 
@@ -49,7 +49,7 @@ class CategoricalInput(Input):
         return self
 
     @staticmethod
-    def valid_transform_types() -> List[CategoricalEncodingEnum]:
+    def valid_transform_types() -> List[CategoricalEncodingEnum]:  # type: ignore
         return [
             CategoricalEncodingEnum.ONE_HOT,
             CategoricalEncodingEnum.DUMMY,
@@ -290,7 +290,7 @@ class CategoricalInput(Input):
             ),
         )
 
-    def get_bounds(
+    def get_bounds(  # type: ignore
         self,
         transform_type: TTransform,
         values: Optional[pd.Series] = None,
@@ -336,7 +336,7 @@ class CategoricalInput(Input):
 
 
 class CategoricalOutput(Output):
-    type: Literal["CategoricalOutput"] = "CategoricalOutput"
+    type: Literal["CategoricalOutput"] = "CategoricalOutput"  # type: ignore
     order_id: ClassVar[int] = 10
 
     categories: CategoryVals
@@ -352,18 +352,18 @@ class CategoricalOutput(Output):
         Returns:
             self
         """
-        if self.objective.categories != self.categories:  # type: ignore
+        if self.objective.categories != self.categories:
             raise ValueError("categories must match to objective categories")
         return self
 
-    def __call__(self, values: pd.Series) -> pd.Series:
+    def __call__(self, values: pd.Series, values_adapt: pd.Series) -> pd.Series:  # type: ignore
         if self.objective is None:
             return pd.Series(
                 data=[np.nan for _ in range(len(values))],
                 index=values.index,
                 name=values.name,
             )
-        return self.objective(values)  # type: ignore
+        return self.objective(values, values_adapt)  # type: ignore
 
     def validate_experimental(self, values: pd.Series) -> pd.Series:
         values = values.map(str)

@@ -3,12 +3,20 @@ from bofire.data_models.priors.api import GammaPrior, LogNormalPrior
 from tests.bofire.data_models.specs.priors import specs as priors
 from tests.bofire.data_models.specs.specs import Specs
 
+
 specs = Specs([])
 
 specs.add_valid(
     kernels.HammingDistanceKernel,
     lambda: {
         "ard": True,
+    },
+)
+specs.add_valid(
+    kernels.WassersteinKernel,
+    lambda: {
+        "squared": False,
+        "lengthscale_prior": priors.valid(GammaPrior).obj().model_dump(),
     },
 )
 specs.add_valid(

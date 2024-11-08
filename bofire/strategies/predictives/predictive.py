@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from pydantic import PositiveInt
 
+from bofire.data_models.features.task import TaskInput
 from bofire.data_models.strategies.api import Strategy as DataModel
 from bofire.data_models.types import InputTransformSpecs
 from bofire.strategies.data_models.candidate import Candidate
@@ -83,6 +84,25 @@ class PredictiveStrategy(Strategy):
             self.set_experiments(experiments)
         else:
             self.add_experiments(experiments)
+        # we check here that the experiments do not have completely fixed columns
+        cleaned_experiments = (
+            self.domain.outputs.preprocess_experiments_all_valid_outputs(
+                experiments=experiments
+            )
+        )
+
+        fixed_nontasks = (
+            feat
+            for feat in self.domain.inputs.get_fixed()
+            if not isinstance(feat, TaskInput)
+        )
+        for feature in fixed_nontasks:
+            fixed_value = feature.fixed_value()
+            assert fixed_value is not None
+            if (cleaned_experiments[feature.key] == fixed_value[0]).all():
+                raise ValueError(
+                    f"No variance in experiments for fixed feature {feature.key}"
+                )
         if retrain and self.has_sufficient_experiments():
             self.fit()
             # we have a seperate _tell here for things that are relevant when setting up the strategy but unrelated
@@ -106,7 +126,7 @@ class PredictiveStrategy(Strategy):
             experiments=experiments, specs=self.input_preprocessing_specs
         )
         preds, stds = self._predict(transformed)
-        pred_cols, sd_cols = get_column_names(self.domain.outputs)  # type: ignore
+        pred_cols, sd_cols = get_column_names(self.domain.outputs)
         if stds is not None:
             predictions = pd.DataFrame(
                 data=np.hstack((preds, stds)), columns=pred_cols + sd_cols
@@ -118,7 +138,7 @@ class PredictiveStrategy(Strategy):
             )
         predictions = postprocess_categorical_predictions(
             predictions=predictions, outputs=self.domain.outputs
-        )  # type: ignore
+        )
         desis = self.domain.outputs(predictions, predictions=True)
         predictions = pd.concat((predictions, desis), axis=1)
         predictions.index = experiments.index
@@ -165,7 +185,7 @@ class PredictiveStrategy(Strategy):
                         standardDeviation=row[f"{feat.key}_sd"],
                         objective=(
                             row[f"{feat.key}_des"]
-                            if feat.objective is not None  # type: ignore
+                            if feat.objective is not None
                             else 1.0
                         ),
                     )

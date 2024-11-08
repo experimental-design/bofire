@@ -1,4 +1,4 @@
-from typing import Dict, List, Literal, Union
+from typing import Dict, List, Literal, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -61,12 +61,16 @@ class ConstrainedCategoricalObjective(ConstrainedObjective, Objective):
         return dict(zip(d.values(), d.keys()))
 
     def __call__(
-        self, x: Union[pd.Series, np.ndarray]
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Optional[Union[pd.Series, np.ndarray]] = None,
     ) -> Union[pd.Series, np.ndarray, float]:
         """The call function returning a probabilistic reward for x.
 
         Args:
             x (np.ndarray): A matrix of x values
+            x_adapt (Optional[np.ndarray], optional): An array of x values which are used to
+                update the objective parameters on the fly. Defaults to None.
 
         Returns:
             np.ndarray: A reward calculated as inner product of probabilities and feasible objectives.

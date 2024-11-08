@@ -20,9 +20,11 @@ from bofire.data_models.surrogates.mlp import (
 from bofire.data_models.surrogates.multi_task_gp import MultiTaskGPSurrogate
 from bofire.data_models.surrogates.polynomial import PolynomialSurrogate
 from bofire.data_models.surrogates.random_forest import RandomForestSurrogate
+from bofire.data_models.surrogates.shape import PiecewiseLinearGPSurrogate
 from bofire.data_models.surrogates.single_task_gp import SingleTaskGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.data_models.types import InputTransformSpecs
+
 
 AnyBotorchSurrogate = Union[
     EmpiricalSurrogate,
@@ -38,6 +40,7 @@ AnyBotorchSurrogate = Union[
     PolynomialSurrogate,
     LinearDeterministicSurrogate,
     MultiTaskGPSurrogate,
+    PiecewiseLinearGPSurrogate,
 ]
 
 
@@ -61,7 +64,7 @@ class BotorchSurrogates(BaseModel):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]  # type: ignore
+                    [model.outputs.get() for model in self.surrogates]
                 )
             )
         )
@@ -130,5 +133,11 @@ class BotorchSurrogates(BaseModel):
             if all(i == preprocessing[0] for i in preprocessing) is False:
                 raise ValueError(
                     f"Preprocessing steps for features with {key} are incompatible."
+                )
+        # check that if any surrogate is a MultiTaskGPSurrogate, all have to be
+        if any(isinstance(model, MultiTaskGPSurrogate) for model in v):
+            if not all(isinstance(model, MultiTaskGPSurrogate) for model in v):
+                raise ValueError(
+                    "If a MultiTaskGPSurrogate is used, all surrogates need to be MultiTask."
                 )
         return v

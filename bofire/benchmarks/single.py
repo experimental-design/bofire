@@ -116,7 +116,7 @@ class Ackley(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
         """Evaluates benchmark function.
 
         Args:
@@ -358,7 +358,7 @@ class Branin30(Benchmark):
         self.branin = torchBranin().to(**tkwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
-        lb, ub = self.branin.bounds  # type: ignore
+        lb, ub = self.branin.bounds
         c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
             **tkwargs
         )
@@ -401,7 +401,7 @@ class Himmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
         """Evaluates benchmark function.
 
         Args:
@@ -469,7 +469,7 @@ class MultiTaskHimmelblau(Benchmark):
             outputs=Outputs(features=[output_feature]),
         )
 
-    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame, **kwargs) -> pd.DataFrame:  # type: ignore
         """Evaluates benchmark function.
 
         Args:
@@ -671,7 +671,7 @@ class Multinormalpdfs(Benchmark):
         self.gaussians = gaussians
         self.prefactors = prefactors
 
-    def _f(self, X: pd.DataFrame) -> pd.DataFrame:
+    def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         return pd.DataFrame(
             {
                 "y": X.apply(
@@ -698,7 +698,3 @@ class Multinormalpdfs(Benchmark):
                 index=[0],
             )
             return pd.concat([x_opt, self._f(x_opt)], axis=1)
-
-
-if __name__ == "__main__":
-    mv = Multinormalpdfs()

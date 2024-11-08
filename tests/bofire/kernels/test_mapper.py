@@ -6,6 +6,7 @@ from botorch.models.kernels.categorical import CategoricalKernel
 
 import bofire
 import bofire.kernels.api as kernels
+import bofire.kernels.shape as shapeKernels
 from bofire.data_models.kernels.api import (
     AdditiveKernel,
     HammingDistanceKernel,
@@ -17,9 +18,11 @@ from bofire.data_models.kernels.api import (
     RBFKernel,
     ScaleKernel,
     TanimotoKernel,
+    WassersteinKernel,
 )
 from bofire.data_models.priors.api import THREESIX_SCALE_PRIOR, GammaPrior
 from tests.bofire.data_models.specs.api import Spec
+
 
 try:
     from botorch.models.kernels import InfiniteWidthBNNKernel as BNNKernel
@@ -38,6 +41,7 @@ EQUIVALENTS = {
     MultiplicativeKernel: gpytorch.kernels.ProductKernel,
     TanimotoKernel: bofire.kernels.fingerprint_kernels.tanimoto_kernel.TanimotoKernel,
     HammingDistanceKernel: CategoricalKernel,
+    WassersteinKernel: shapeKernels.WassersteinKernel,
 }
 
 
@@ -202,3 +206,28 @@ def test_map_molecular_kernel(kernel, ard_num_dims, active_dims, expected_kernel
     else:
         assert k.ard_num_dims == len(active_dims)
     assert torch.eq(k.active_dims, torch.tensor(active_dims, dtype=torch.int64)).all()
+
+
+def test_map_wasserstein_kernel():
+    kernel = WassersteinKernel(
+        squared=False, lengthscale_prior=GammaPrior(concentration=2.0, rate=0.15)
+    )
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        ard_num_dims=10,
+        active_dims=list(range(5)),
+    )
+    assert isinstance(k, shapeKernels.WassersteinKernel)
+    assert hasattr(k, "lengthscale_prior")
+    assert isinstance(k.lengthscale_prior, gpytorch.priors.GammaPrior)
+    assert k.squared is False
+    kernel = WassersteinKernel(squared=True)
+    k = kernels.map(
+        kernel,
+        batch_shape=torch.Size(),
+        ard_num_dims=10,
+        active_dims=list(range(5)),
+    )
+    assert k.squared is True
+    assert hasattr(k, "lengthscale_prior") is False

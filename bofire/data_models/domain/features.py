@@ -53,6 +53,7 @@ from bofire.data_models.objectives.api import (
 )
 from bofire.data_models.types import InputTransformSpecs
 
+
 F = TypeVar("F", bound=AnyFeature)
 FeatureSequence = Sequence[F]
 
@@ -77,7 +78,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
             raise ValueError("Feature keys are not unique.")
         return features
 
-    def __iter__(self) -> Iterator[F]:
+    def __iter__(self) -> Iterator[F]:  # type: ignore
         return iter(self.features)
 
     def __len__(self):
@@ -135,7 +136,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,
+        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> Self:
@@ -163,7 +164,7 @@ class _BaseFeatures(BaseModel, Generic[F]):
 
     def get_keys(
         self,
-        includes: Union[Type, List[Type], None] = AnyFeature,
+        includes: Union[Type, List[Type], None] = AnyFeature,  # type: ignore
         excludes: Union[Type, List[Type], None] = None,
         exact: bool = False,
     ) -> List[str]:
@@ -209,7 +210,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         features (List(Inputs)): list of the features.
     """
 
-    type: Literal["Inputs"] = "Inputs"
+    type: Literal["Inputs"] = "Inputs"  # type: ignore
 
     @field_validator("features")
     @classmethod
@@ -230,7 +231,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         Returns:
             Inputs: Input features object containing only fixed features.
         """
-        return Inputs(features=[feat for feat in self if feat.is_fixed()])  # type: ignore
+        return Inputs(features=[feat for feat in self if feat.is_fixed()])
 
     def get_free(self) -> "Inputs":
         """Gets all features in `self` that are not fixed and returns them as new `Inputs` object.
@@ -238,7 +239,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         Returns:
             Inputs: Input features object containing only non-fixed features.
         """
-        return Inputs(features=[feat for feat in self if not feat.is_fixed()])  # type: ignore
+        return Inputs(features=[feat for feat in self if not feat.is_fixed()])
 
     @validate_call
     def sample(
@@ -268,7 +269,7 @@ class Inputs(_BaseFeatures[AnyInput]):
             return self.validate_candidates(
                 pd.concat(
                     [
-                        feat.sample(n, seed=int(rng.integers(1, 1000000)))  # type: ignore
+                        feat.sample(n, seed=int(rng.integers(1, 1000000)))
                         for feat in self.get(Input)
                     ],
                     axis=1,
@@ -320,7 +321,7 @@ class Inputs(_BaseFeatures[AnyInput]):
         for feature in self:
             if feature.key not in candidates:
                 raise ValueError(f"no col for input feature `{feature.key}`")
-            candidates[feature.key] = feature.validate_candidental(  # type: ignore
+            candidates[feature.key] = feature.validate_candidental(
                 candidates[feature.key]
             )
         if candidates[self.get_keys()].isnull().to_numpy().any():
@@ -337,7 +338,7 @@ class Inputs(_BaseFeatures[AnyInput]):
                 raise ValueError(f"no col for input feature `{feature.key}`")
             experiments[feature.key] = feature.validate_experimental(
                 experiments[feature.key],
-                strict=strict,  # type: ignore
+                strict=strict,
             )
         if experiments[self.get_keys()].isnull().to_numpy().any():
             raise ValueError("there are null values")
@@ -517,7 +518,9 @@ class Inputs(_BaseFeatures[AnyInput]):
                 transformed.append(feat.from_onehot_encoding(experiments))
             elif specs[feat.key] == CategoricalEncodingEnum.ORDINAL:
                 assert isinstance(feat, CategoricalInput)
-                transformed.append(feat.from_ordinal_encoding(experiments[feat.key]))
+                transformed.append(
+                    feat.from_ordinal_encoding(experiments[feat.key].astype(int))
+                )
             elif specs[feat.key] == CategoricalEncodingEnum.DUMMY:
                 assert isinstance(feat, CategoricalInput)
                 transformed.append(feat.from_dummy_encoding(experiments))
@@ -614,9 +617,9 @@ class Inputs(_BaseFeatures[AnyInput]):
             assert isinstance(feat, Input)
             lo, up = feat.get_bounds(
                 transform_type=specs.get(feat.key),  # type: ignore
-                values=experiments[feat.key] if experiments is not None else None,
+                values=experiments[feat.key] if experiments is not None else None,  # type: ignore
                 reference_value=(
-                    reference_experiment[feat.key]  # type: ignore
+                    reference_experiment[feat.key]
                     if reference_experiment is not None
                     else None
                 ),
@@ -653,7 +656,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
         features (List(Outputs)): list of the features.
     """
 
-    type: Literal["Outputs"] = "Outputs"
+    type: Literal["Outputs"] = "Outputs"  # type: ignore
 
     def get_by_objective(
         self,
@@ -689,7 +692,7 @@ class Outputs(_BaseFeatures[AnyOutput]):
                         self.get([ContinuousOutput, CategoricalOutput]).features,
                         lambda of: of.objective,
                         includes,
-                        excludes,  # type: ignore
+                        excludes,
                         exact,
                     )
                 )
@@ -737,17 +740,23 @@ class Outputs(_BaseFeatures[AnyOutput]):
         """
         desis = pd.concat(
             [
-                feat(experiments[f"{feat.key}_pred" if predictions else feat.key])  # type: ignore
+                feat(
+                    experiments[f"{feat.key}_pred" if predictions else feat.key],
+                    experiments[f"{feat.key}_pred" if predictions else feat.key],
+                )
                 for feat in self.features
                 if feat.objective is not None
                 and not isinstance(feat, CategoricalOutput)
             ]
             + [
                 (
-                    pd.Series(
-                        data=feat(experiments.filter(regex=f"{feat.key}(.*)_prob")),
+                    pd.Series(  # type: ignore
+                        data=feat(
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                            experiments.filter(regex=f"{feat.key}(.*)_prob"),  # type: ignore
+                        ),
                         name=f"{feat.key}_pred",
-                    )  # type: ignore
+                    )
                     if predictions
                     else experiments[feat.key]
                 )

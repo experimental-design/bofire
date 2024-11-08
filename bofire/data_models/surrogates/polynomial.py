@@ -4,9 +4,7 @@ from pydantic import Field
 
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
-from bofire.data_models.kernels.api import (
-    PolynomialKernel,
-)
+from bofire.data_models.kernels.api import PolynomialKernel
 from bofire.data_models.priors.api import THREESIX_NOISE_PRIOR, AnyPrior
 
 # from bofire.data_models.strategies.api import FactorialStrategy

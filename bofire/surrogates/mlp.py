@@ -136,7 +136,7 @@ def fit_mlp(
     lr: float = 1e-4,
     shuffle: bool = True,
     weight_decay: float = 0.0,
-    loss_function=nn.L1Loss,  # type: ignore
+    loss_function=nn.L1Loss,
 ):
     """Fit a MLP to a dataset.
 
@@ -205,7 +205,7 @@ class MLPEnsemble(BotorchSurrogate, TrainableSurrogate):
     model: Optional[_MLPEnsemble] = None
 
     @abstractmethod
-    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):
+    def _fit(self, X: pd.DataFrame, Y: pd.DataFrame):  # type: ignore
         pass
 
 

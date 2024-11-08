@@ -1,10 +1,7 @@
 from typing import Literal, Optional, Type, Union
 
 from bofire.data_models.constraints.api import Constraint
-from bofire.data_models.features.api import (
-    Feature,
-    MolecularInput,
-)
+from bofire.data_models.features.api import Feature, MolecularInput
 from bofire.data_models.objectives.api import Objective
 from bofire.data_models.strategies.strategy import Strategy
 from bofire.data_models.types import Bounds

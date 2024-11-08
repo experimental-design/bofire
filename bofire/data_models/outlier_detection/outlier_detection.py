@@ -17,12 +17,12 @@ class OutlierDetection(BaseModel):
 
     @property
     @abstractmethod
-    def inputs(self) -> Inputs:  # type: ignore
+    def inputs(self) -> Inputs:
         pass
 
     @property
     @abstractmethod
-    def outputs(self) -> Outputs:  # type: ignore
+    def outputs(self) -> Outputs:
         pass
 
 

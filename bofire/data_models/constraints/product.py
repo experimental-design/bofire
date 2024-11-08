@@ -5,7 +5,7 @@ import pandas as pd
 from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.constraint import (
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
@@ -52,7 +52,7 @@ class ProductConstraint(IntrapointConstraint):
 
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys(ContinuousInput)
-        for f in self.features:  # type: ignore
+        for f in self.features:
             if f not in keys:
                 raise ValueError(
                     f"Feature {f} is not a continuous input feature in the provided Inputs object."
@@ -84,7 +84,7 @@ class ProductConstraint(IntrapointConstraint):
         )
 
 
-class ProductEqualityConstraint(ProductConstraint, EqalityConstraint):
+class ProductEqualityConstraint(ProductConstraint, EqualityConstraint):
     """
     Represents a product constraint of the form `sign * x1**e1 * x2**e2 * ... * xn**en == rhs`.
 

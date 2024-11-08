@@ -27,6 +27,7 @@ from tests.bofire.utils.test_multiobjective import (
     valid_domains,
 )
 
+
 if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,

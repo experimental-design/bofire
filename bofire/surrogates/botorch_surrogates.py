@@ -44,7 +44,7 @@ class BotorchSurrogates(ABC):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]  # type: ignore
+                    [model.outputs.get() for model in self.surrogates]
                 )
             )
         )
@@ -109,14 +109,14 @@ class BotorchSurrogates(ABC):
                 )
                 if (
                     hasattr(model.model, "input_transform")
-                    and model.model.input_transform is not None  # type: ignore
+                    and model.model.input_transform is not None
                 ):
-                    model.model.input_transform = ChainedInputTransform(  # type: ignore
+                    model.model.input_transform = ChainedInputTransform(
                         tcompatibilize=features_filter,
-                        tf2=model.model.input_transform,  # type: ignore
+                        tf2=model.model.input_transform,
                     )
                 else:
-                    model.model.input_transform = features_filter  # type: ignore
+                    model.model.input_transform = features_filter
 
                 botorch_models.append(model.model)
             if isinstance(model.model, botorch.models.SingleTaskGP) is False:

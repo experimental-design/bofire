@@ -66,7 +66,7 @@ class RandomStrategy(Strategy):
         """
         return True
 
-    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:
+    def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
         """
         Generate candidate samples using the random strategy.
 
@@ -208,23 +208,23 @@ class RandomStrategy(Strategy):
         # this can happen when fixing features when sampling with NChooseK constraints
         eqs = get_linear_constraints(
             domain=domain,
-            constraint=LinearEqualityConstraint,  # type: ignore
+            constraint=LinearEqualityConstraint,
             unit_scaled=False,
         )
         cleaned_eqs = []
-        fixed_features: Dict[str, float] = {
+        fixed_features: Dict[str, float] = {  # type: ignore
             feat.key: feat.fixed_value()[0]  # type: ignore
             for feat in domain.inputs.get(ContinuousInput)
-            if feat.is_fixed()  # type: ignore
+            if feat.is_fixed()
         }
 
         for eq in eqs:
             if (
                 len(eq[0]) == 1
             ):  # only one coefficient, so this is a pseudo fixed feature
-                fixed_features[
-                    domain.inputs.get_keys(ContinuousInput)[eq[0][0]]
-                ] = float(eq[2] / eq[1][0])
+                fixed_features[domain.inputs.get_keys(ContinuousInput)[eq[0][0]]] = (
+                    float(eq[2] / eq[1][0])
+                )
             else:
                 cleaned_eqs.append(eq)
 
@@ -235,7 +235,7 @@ class RandomStrategy(Strategy):
 
         ineqs = get_linear_constraints(
             domain=domain,
-            constraint=LinearInequalityConstraint,  # type: ignore
+            constraint=LinearInequalityConstraint,
             unit_scaled=False,
         )
 
@@ -244,13 +244,13 @@ class RandomStrategy(Strategy):
         lower = [
             feat.lower_bound  # type: ignore
             for feat in domain.inputs.get(ContinuousInput)
-            if feat.key not in fixed_features.keys()  # type: ignore
+            if feat.key not in fixed_features.keys()
         ]
 
         upper = [
             feat.upper_bound  # type: ignore
             for feat in domain.inputs.get(ContinuousInput)
-            if feat.key not in fixed_features.keys()  # type: ignore
+            if feat.key not in fixed_features.keys()
         ]
 
         if len(lower) == 0:
@@ -292,7 +292,7 @@ class RandomStrategy(Strategy):
             # new release is out, we can remove this try except block.
             # TODO: remove this try except block when the new release of botorch is out
             try:
-                candidates = sample_q_batches_from_polytope(
+                candidates = sample_q_batches_from_polytope(  # type: ignore
                     n=1,
                     q=n,
                     bounds=bounds.to(**tkwargs),
@@ -303,7 +303,7 @@ class RandomStrategy(Strategy):
                     if len(combined_eqs) > 0
                     else None,
                     n_burnin=n_burnin,
-                    thinning=n_thinning,
+                    thinning=n_thinning,  # type: ignore
                     seed=seed,
                 ).squeeze(dim=0)
             except TypeError:
@@ -318,7 +318,7 @@ class RandomStrategy(Strategy):
                     if len(combined_eqs) > 0
                     else None,
                     n_burnin=n_burnin,
-                    n_thinning=n_thinning,  # type: ignore
+                    n_thinning=n_thinning,
                     seed=seed,
                 ).squeeze(dim=0)
 
@@ -329,7 +329,7 @@ class RandomStrategy(Strategy):
             free_continuals = [
                 feat.key
                 for feat in domain.inputs.get(ContinuousInput)
-                if feat.key not in fixed_features.keys()  # type: ignore
+                if feat.key not in fixed_features.keys()
             ]
             # setup the output
             samples = pd.DataFrame(
@@ -342,7 +342,7 @@ class RandomStrategy(Strategy):
         samples = pd.concat(
             [
                 samples,
-                domain.inputs.get([CategoricalInput, DiscreteInput]).sample(  # type: ignore
+                domain.inputs.get([CategoricalInput, DiscreteInput]).sample(
                     n, method=SamplingMethodEnum.UNIFORM, seed=seed
                 ),
             ],

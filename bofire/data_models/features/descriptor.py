@@ -152,8 +152,8 @@ class CategoricalDescriptorInput(CategoricalInput):
                 df = self.to_df().loc[self.get_allowed_categories()]
             else:
                 df = self.to_df()
-            lower = df.min().values.tolist()  # type: ignore
-            upper = df.max().values.tolist()  # type: ignore
+            lower = df.min().values.tolist()
+            upper = df.max().values.tolist()
             return lower, upper
 
     def validate_experimental(
@@ -214,7 +214,7 @@ class CategoricalDescriptorInput(CategoricalInput):
             pd.DataFrame: Descriptor encoded dataframe.
         """
         return pd.DataFrame(
-            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),  # type: ignore
+            data=values.map(dict(zip(self.categories, self.values))).values.tolist(),
             columns=[get_encoded_name(self.key, d) for d in self.descriptors],
             index=values.index,
         )

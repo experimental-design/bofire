@@ -18,6 +18,7 @@ from bofire.data_models.features.api import (
 )
 from bofire.strategies.api import DoEStrategy
 
+
 # from tests.bofire.strategies.botorch.test_model_spec import VALID_MODEL_SPEC_LIST
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -302,7 +303,7 @@ def test_scaled_doe():
         domain=domain, formula="linear", transform_range=(-1, 1)
     )
     strategy = DoEStrategy(data_model=data_model)
-    candidates = strategy.ask(candidate_count=4).to_numpy()
+    candidates = strategy.ask(candidate_count=6).to_numpy()
     expected_candidates = np.array([[0.0, 0.0], [0.0, 1.0], [1.0, 0.0], [1.0, 1.0]])
     for c in candidates:
         assert np.any([np.allclose(c, e) for e in expected_candidates])
@@ -344,7 +345,3 @@ def test_categorical_doe_iterative():
     )
 
     assert candidates.shape == (5, 3)
-
-
-if __name__ == "__main__":
-    test_categorical_doe_iterative()

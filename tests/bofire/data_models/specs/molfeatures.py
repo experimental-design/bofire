@@ -5,6 +5,7 @@ import bofire.data_models.molfeatures.api as molfeatures
 import bofire.data_models.molfeatures.names as names
 from tests.bofire.data_models.specs.specs import Specs
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 MORDRED_AVAILABLE = importlib.util.find_spec("mordred") is not None
 

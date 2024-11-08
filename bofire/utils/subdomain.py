@@ -44,7 +44,7 @@ def get_subdomain(
     outputs = Outputs(features=outputs)
     # loop over constraints and make sure that all features used in constraints are in the input_feature_keys
     for c in domain.constraints:
-        for key in c.features:  # type: ignore
+        for key in c.features:
             if key not in inputs.get_keys():
                 raise ValueError(
                     f"Removed input feature {key} is used in a constraint."

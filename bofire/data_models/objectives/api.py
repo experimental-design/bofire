@@ -1,8 +1,6 @@
 from typing import Union
 
-from bofire.data_models.objectives.categorical import (
-    ConstrainedCategoricalObjective,
-)
+from bofire.data_models.objectives.categorical import ConstrainedCategoricalObjective
 from bofire.data_models.objectives.identity import (
     IdentityObjective,
     MaximizeObjective,
@@ -12,6 +10,7 @@ from bofire.data_models.objectives.objective import Objective
 from bofire.data_models.objectives.sigmoid import (
     MaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     SigmoidObjective,
 )
 from bofire.data_models.objectives.target import (
@@ -19,6 +18,7 @@ from bofire.data_models.objectives.target import (
     ConstrainedObjective,
     TargetObjective,
 )
+
 
 AbstractObjective = Union[
     Objective,
@@ -31,6 +31,7 @@ AnyCategoricalObjective = ConstrainedCategoricalObjective
 
 AnyConstraintObjective = Union[
     MaximizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     MinimizeSigmoidObjective,
     TargetObjective,
 ]
@@ -45,4 +46,5 @@ AnyObjective = Union[
     TargetObjective,
     CloseToTargetObjective,
     ConstrainedCategoricalObjective,
+    MovingMaximizeSigmoidObjective,
 ]

@@ -138,3 +138,6 @@ bofire/version.py
 # OS generated files
 .DS_Store
 .DS_Store?
+
+# output files
+notebook_test_stats.csv

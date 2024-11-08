@@ -34,7 +34,8 @@ class QehviStrategy(BotorchStrategy):
     ref_point: Optional[dict] = None
     objective: Optional[MCMultiOutputObjective] = None
 
-    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:
+    def _get_acqfs(self, n) -> List[qExpectedHypervolumeImprovement]:  # type: ignore
+        assert self.experiments is not None, "No experiments available."
         df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
             self.experiments
         )
@@ -76,10 +77,14 @@ class QehviStrategy(BotorchStrategy):
         return [acqf]
 
     def _get_objective(self) -> GenericMCMultiOutputObjective:
-        objective = get_multiobjective_objective(outputs=self.domain.outputs)
+        assert self.experiments is not None, "No experiments available."
+        objective = get_multiobjective_objective(
+            outputs=self.domain.outputs, experiments=self.experiments
+        )
         return GenericMCMultiOutputObjective(objective=objective)
 
     def get_adjusted_refpoint(self) -> List[float]:
+        assert self.experiments is not None, "No experiments available."
         if self.ref_point is None:
             df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
                 self.experiments

@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import pandas as pd
-from scipy.stats import chi2  # type: ignore
+from scipy.stats import chi2
 
 import bofire.surrogates.api as surrogates
 from bofire.data_models.domain.api import Inputs, Outputs
@@ -68,7 +68,9 @@ class IterativeTrimming(OutlierDetection):
 
                 # XXX: might be buggy when there are identical data points
                 # better to use argpartition! but may break ix_sub == ix_old.
-                ix_sub = d_sq <= np.partition(d_sq, h)[h]  # alpha-quantile
+                ix_sub = (
+                    d_sq <= np.partition(d_sq, h)[h]  # type: ignore
+                )  # alpha-quantile
                 consistency = alpha / chi2(p + 2).cdf(chi_sq)
 
             # check convergence
@@ -83,12 +85,16 @@ class IterativeTrimming(OutlierDetection):
             pred = self.surrogate.predict(experiments)
             d_sq = (
                 (
-                    experiments[self.base_gp.outputs.get_keys()[0]]
-                    - pred[self.base_gp.outputs.get_keys()[0] + "_pred"]
+                    (
+                        experiments[self.base_gp.outputs.get_keys()[0]]
+                        - pred[self.base_gp.outputs.get_keys()[0] + "_pred"]
+                    )
+                    ** 2
+                    / pred[self.base_gp.outputs.get_keys()[0] + "_sd"] ** 2
                 )
-                ** 2
-                / pred[self.base_gp.outputs.get_keys()[0] + "_sd"] ** 2
-            ).ravel()
+                .to_numpy()
+                .ravel()
+            )
 
             niter += 1
         for _ in range(self.nrw):
@@ -105,8 +111,12 @@ class IterativeTrimming(OutlierDetection):
             ix_old = ix_sub
 
         filtered_experiments = experiments.copy()
+        output_name = self.base_gp.outputs.get_keys()[0]
+        filtered_experiments[f"valid_{output_name}"] = filtered_experiments[
+            f"valid_{output_name}"
+        ].astype(int)
         filtered_experiments.loc[
             ~ix_sub,  # type: ignore
-            f"valid_{self.base_gp.outputs.get_keys()[0]}",  # type: ignore
+            f"valid_{output_name}",
         ] = 0
-        return filtered_experiments  # type: ignore
+        return filtered_experiments

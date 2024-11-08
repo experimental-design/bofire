@@ -35,12 +35,11 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
     MordredDescriptors,
 )
-from bofire.data_models.surrogates.api import (
-    ScalerEnum,
-)
+from bofire.data_models.surrogates.api import ScalerEnum
 from bofire.data_models.surrogates.mixed_tanimoto_gp import MixedTanimotoGPSurrogate
 from bofire.data_models.surrogates.tanimoto_gp import TanimotoGPSurrogate
 from bofire.surrogates.mixed_tanimoto_gp import MixedTanimotoGP
+
 
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 

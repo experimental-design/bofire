@@ -5,7 +5,7 @@ import pandas as pd
 from pydantic import Field, model_validator
 
 from bofire.data_models.constraints.constraint import (
-    EqalityConstraint,
+    EqualityConstraint,
     InequalityConstraint,
     IntrapointConstraint,
 )
@@ -40,7 +40,7 @@ class LinearConstraint(IntrapointConstraint):
 
     def validate_inputs(self, inputs: Inputs):
         keys = inputs.get_keys(ContinuousInput)
-        for f in self.features:  # type: ignore
+        for f in self.features:
             if f not in keys:
                 raise ValueError(
                     f"Feature {f} is not a continuous input feature in the provided Inputs object."
@@ -64,7 +64,7 @@ class LinearConstraint(IntrapointConstraint):
         )
 
 
-class LinearEqualityConstraint(LinearConstraint, EqalityConstraint):
+class LinearEqualityConstraint(LinearConstraint, EqualityConstraint):
     """Linear equality constraint of the form `coefficients * x = rhs`.
 
     Attributes:

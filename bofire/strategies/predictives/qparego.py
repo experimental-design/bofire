@@ -51,6 +51,7 @@ class QparegoStrategy(BotorchStrategy):
             Union[ConstrainedObjective, None]: the botorch constraints.
             Union[List, float]: etas used in the botorch constraints.
         """
+        assert self.experiments is not None, "No experiments available."
         ref_point_mask = torch.from_numpy(get_ref_point_mask(domain=self.domain)).to(
             **tkwargs
         )
@@ -70,7 +71,9 @@ class QparegoStrategy(BotorchStrategy):
             * ref_point_mask
         )
 
-        obj_callable = get_multiobjective_objective(outputs=self.domain.outputs)
+        obj_callable = get_multiobjective_objective(
+            outputs=self.domain.outputs, experiments=self.experiments
+        )
 
         df_preds = self.predict(
             self.domain.outputs.preprocess_experiments_any_valid_output(
@@ -90,7 +93,9 @@ class QparegoStrategy(BotorchStrategy):
             return scalarization(obj_callable(Z, None) * ref_point_mask, X)
 
         if len(weights) != len(self.domain.outputs.get_by_objective(Objective)):
-            constraint_callables, etas = get_output_constraints(self.domain.outputs)
+            constraint_callables, etas = get_output_constraints(
+                self.domain.outputs, experiments=self.experiments
+            )
         else:
             constraint_callables, etas = None, 1e-3
 

@@ -1,5 +1,10 @@
 import bofire.data_models.strategies.api as strategies
-from bofire.data_models.acquisition_functions.api import qEI, qLogNEHVI, qPI
+from bofire.data_models.acquisition_functions.api import (
+    qEI,
+    qLogNEHVI,
+    qNegIntPosVar,
+    qPI,
+)
 from bofire.data_models.constraints.api import (
     InterpointEqualityConstraint,
     LinearEqualityConstraint,
@@ -13,11 +18,13 @@ from bofire.data_models.features.api import (
     ContinuousInput,
     ContinuousOutput,
     DiscreteInput,
+    TaskInput,
 )
-from bofire.data_models.surrogates.api import BotorchSurrogates
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
+
 
 specs = Specs([])
 
@@ -111,6 +118,62 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.ActiveLearningStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "acquisition_function": qNegIntPosVar(n_mc_samples=2048).model_dump(),
+        **strategy_commons,
+    },
+)
+
+specs.add_invalid(
+    strategies.ActiveLearningStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key="a",
+                        bounds=(0, 1),
+                    ),
+                    ContinuousInput(
+                        key="b",
+                        bounds=(0, 1),
+                    ),
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="alpha"), ContinuousOutput(key="beta")]
+            ),
+        ).model_dump(),
+        "acquisition_function": qNegIntPosVar(
+            n_mc_samples=2048,
+            weights={
+                "alph_invalid": 0.1,
+                "beta_invalid": 0.9,
+            },
+        ).model_dump(),
+        **strategy_commons,
+    },
+    error=ValueError,
+    message="The keys provided for the weights do not match the required keys of the output features.",
+)
+
+specs.add_valid(
     strategies.EntingStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -167,6 +230,7 @@ specs.add_valid(
         "transform_range": (-1, 1),
     },
 )
+
 
 tempdomain = domain.valid().obj()
 
@@ -503,4 +567,42 @@ specs.add_invalid(
     },
     error=ValueError,
     message="Generator does not match the number of factors.",
+)
+
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    TaskInput(
+                        key="task",
+                        categories=["task_1", "task_2"],
+                        allowed=[True, True],
+                    ),
+                    ContinuousInput(key="x", bounds=(0, 1)),
+                ]
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="y")]),
+        ).model_dump(),
+        "surrogate_specs": BotorchSurrogates(
+            surrogates=[
+                MultiTaskGPSurrogate(
+                    inputs=Inputs(
+                        features=[
+                            TaskInput(
+                                key="task",
+                                categories=["task_1", "task_2"],
+                                allowed=[True, True],
+                            ),
+                            ContinuousInput(key="x", bounds=(0, 1)),
+                        ]
+                    ),
+                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                )
+            ]
+        ).model_dump(),
+    },
+    error=ValueError,
+    message="Exactly one allowed task category must be specified for strategies with MultiTask models.",
 )

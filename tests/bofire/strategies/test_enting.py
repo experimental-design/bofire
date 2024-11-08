@@ -4,6 +4,7 @@ import warnings
 import numpy as np
 import pytest
 
+
 try:
     import gurobipy
     from entmoot.problem_config import FeatureType, ProblemConfig
@@ -29,6 +30,7 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.strategies.api import EntingStrategy
 from bofire.strategies.predictives.enting import domain_to_problem_config
 from tests.bofire.strategies.test_base import domains
+
 
 ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
 if ENTMOOT_AVAILABLE:

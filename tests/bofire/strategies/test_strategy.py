@@ -1,6 +1,6 @@
 from typing import List
+from unittest import mock
 
-import mock
 import numpy as np
 import pandas as pd
 import pytest
@@ -38,6 +38,7 @@ from tests.bofire.strategies.specs import (
     VALID_NCHOOSEKE_CONSTRAINT_SPEC,
 )
 
+
 if1 = ContinuousInput(
     **{**VALID_CONTINUOUS_INPUT_FEATURE_SPEC, "key": "if1", "bounds": (0, 5.3)}
 )
@@ -55,13 +56,13 @@ of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }  # type: ignore
+    }
 )
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }  # type: ignore
+    }
 )
 of3 = ContinuousOutput(key="of3", objective=None)
 
@@ -92,7 +93,7 @@ c3 = NChooseKConstraint(
 )
 
 
-@fixture  # type: ignore
+@fixture
 def strategy():
     data_model = dummy.DummyStrategyDataModel(
         domain=Domain.from_lists(
@@ -246,6 +247,10 @@ def test_strategy_no_variance():
     strategy = dummy.DummyStrategy(
         data_model=dummy.DummyStrategyDataModel(domain=domain)
     )
+    strategy.tell(experiments)
+    strategy = dummy.DummyPredictiveStrategy(
+        data_model=dummy.DummyPredictiveStrategyDataModel(domain=domain)
+    )
     with pytest.raises(ValueError):
         strategy.tell(experiments)
     # introduce variance but in an invalid experiment
@@ -266,7 +271,7 @@ def test_strategy_set_experiments():
     experiments = generate_experiments(domain, 2)
     strategy.set_experiments(experiments=experiments)
     assert_frame_equal(strategy.experiments, experiments)
-    assert_frame_equal(strategy._experiments, experiments)  # type: ignore
+    assert_frame_equal(strategy._experiments, experiments)
     assert strategy.num_experiments == 2
 
 
@@ -295,7 +300,7 @@ def test_strategy_set_candidates():
     candidates = generate_candidates(domain, 2)
     strategy.set_candidates(candidates=candidates)
     assert_frame_equal(strategy.candidates, candidates[domain.inputs.get_keys()])
-    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])  # type: ignore
+    assert_frame_equal(strategy._candidates, candidates[domain.inputs.get_keys()])
     assert strategy.num_candidates == 2
     strategy.reset_candidates()
     assert strategy.num_candidates == 0
@@ -401,7 +406,9 @@ def test_strategy_tell_outliers(
         experiments1, experiments
     )  # test that experiments don't get changed outside detect_outliers
     strategy1.tell(experiments=experiments)
-    assert str(strategy.model.state_dict()) != str(strategy1.model.state_dict())  # type: ignore # test if two fitted surrogates are different
+    assert str(strategy.model.state_dict()) != str(
+        strategy1.model.state_dict()
+    )  # test if two fitted surrogates are different
 
 
 @pytest.mark.parametrize("domain, experiments", [(domain, e) for e in [e3, e4]])

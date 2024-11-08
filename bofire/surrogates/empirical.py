@@ -37,7 +37,7 @@ class EmpiricalSurrogate(BotorchSurrogate):
                 raise ModuleNotFoundError("Cloudpickle is not available.")
 
         buffer = io.BytesIO()
-        torch.save(self.model, buffer, pickle_module=cloudpickle_module)  # type: ignore
+        torch.save(self.model, buffer, pickle_module=cloudpickle_module)
         return base64.b64encode(buffer.getvalue()).decode()
         # return codecs.encode(pickle.dumps(self.model), "base64").decode()
 
@@ -51,4 +51,4 @@ class EmpiricalSurrogate(BotorchSurrogate):
                 raise ModuleNotFoundError("Cloudpickle is not available.")
 
         buffer = io.BytesIO(base64.b64decode(data.encode()))
-        self.model = torch.load(buffer, pickle_module=cloudpickle_module)  # type: ignore
+        self.model = torch.load(buffer, pickle_module=cloudpickle_module)

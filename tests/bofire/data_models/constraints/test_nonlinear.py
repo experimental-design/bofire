@@ -6,6 +6,7 @@ import pytest
 
 from bofire.data_models.constraints.api import NonlinearInequalityConstraint
 
+
 SYMPY_AVAILABLE = importlib.util.find_spec("sympy") is not None
 
 

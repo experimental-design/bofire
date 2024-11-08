@@ -23,29 +23,39 @@ class BotorchSurrogate(Surrogate):
         # transform to tensor
         X = torch.from_numpy(transformed_X.values).to(**tkwargs)
         with torch.no_grad():
-            preds = self.model.posterior(X=X, observation_noise=True).mean.cpu().detach().numpy()  # type: ignore
-            stds = np.sqrt(self.model.posterior(X=X, observation_noise=True).variance.cpu().detach().numpy())  # type: ignore
+            preds = (
+                self.model.posterior(X=X, observation_noise=True)
+                .mean.cpu()
+                .detach()
+                .numpy()
+            )
+            stds = np.sqrt(
+                self.model.posterior(X=X, observation_noise=True)
+                .variance.cpu()
+                .detach()
+                .numpy()
+            )
         return preds, stds
 
     @property
     def is_compatibilized(self) -> bool:
         if self.is_fitted:
             if hasattr(self.model, "input_transform"):
-                if self.model.input_transform is not None:  # type: ignore
-                    if isinstance(self.model.input_transform, FilterFeatures):  # type: ignore
+                if self.model.input_transform is not None:
+                    if isinstance(self.model.input_transform, FilterFeatures):
                         return True
-                    if isinstance(self.model.input_transform, ChainedInputTransform):  # type: ignore
-                        if "tcompatibilize" in self.model.input_transform.keys():  # type: ignore
+                    if isinstance(self.model.input_transform, ChainedInputTransform):
+                        if "tcompatibilize" in self.model.input_transform.keys():
                             return True
         return False
 
     def decompatibilize(self):
         if self.is_fitted:
             if self.is_compatibilized:
-                if isinstance(self.model.input_transform, FilterFeatures):  # type: ignore
-                    self.model.input_transform = None  # type: ignore
-                elif isinstance(self.model.input_transform, ChainedInputTransform):  # type: ignore
-                    self.model.input_transform = self.model.input_transform.tf2  # type: ignore
+                if isinstance(self.model.input_transform, FilterFeatures):
+                    self.model.input_transform = None
+                elif isinstance(self.model.input_transform, ChainedInputTransform):
+                    self.model.input_transform = self.model.input_transform.tf2
                 else:
                     raise ValueError("Undefined input transform structure detected.")
 
@@ -64,4 +74,4 @@ class BotorchSurrogate(Surrogate):
     def loads(self, data: str):
         """Loads the actual model from a base64 encoded pickle bytes object and writes it to the `model` attribute."""
         buffer = io.BytesIO(base64.b64decode(data.encode()))
-        self.model = torch.load(buffer)
+        self.model = torch.load(buffer, weights_only=False)

@@ -1,6 +1,7 @@
 import random
 
 import numpy as np
+import pandas as pd
 import pytest
 import torch
 from botorch.acquisition.objective import ConstrainedMCObjective, GenericMCObjective
@@ -29,10 +30,12 @@ from bofire.data_models.objectives.api import (
     MaximizeSigmoidObjective,
     MinimizeObjective,
     MinimizeSigmoidObjective,
+    MovingMaximizeSigmoidObjective,
     TargetObjective,
 )
 from bofire.data_models.strategies.api import RandomStrategy
 from bofire.utils.torch_tools import (
+    InterpolateTransform,
     constrained_objective2botorch,
     get_additive_botorch_objective,
     get_custom_botorch_objective,
@@ -46,8 +49,10 @@ from bofire.utils.torch_tools import (
     get_objective_callable,
     get_output_constraints,
     get_product_constraints,
+    interp1d,
     tkwargs,
 )
+
 
 if1 = ContinuousInput(
     bounds=(0, 1),
@@ -94,18 +99,32 @@ c3 = LinearInequalityConstraint(
         MinimizeSigmoidObjective(steepness=1.0, tp=1.0, w=0.5),
         TargetObjective(target_value=2.0, steepness=1.0, tolerance=1e-3, w=0.5),
         CloseToTargetObjective(target_value=2.0, exponent=1.0, w=0.5),
+        MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1),
         # ConstantObjective(w=0.5, value=1.0),
     ],
 )
 def test_get_objective_callable(objective):
     samples = (torch.rand(50, 3, requires_grad=True) * 5.0).to(**tkwargs)
     a_samples = samples.detach().numpy()
-    callable = get_objective_callable(idx=1, objective=objective)
+    x_adapt = (torch.rand(10) * 3).to(**tkwargs)
+    callable = get_objective_callable(idx=1, objective=objective, x_adapt=x_adapt)
     assert np.allclose(
         # objective.reward(samples, desFunc)[0].detach().numpy(),
         callable(samples).detach().numpy(),
-        objective(a_samples[:, 1]),
+        objective.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
         rtol=1e-06,
+    )
+
+
+def test_moving_maximize_sigmoid_objective():
+    samples = (torch.rand(50, 3, requires_grad=True) * 5.0).to(**tkwargs)
+    a_samples = samples.detach().numpy()
+    x_adapt = torch.tensor([1.0, 2.0, 3.0]).to(**tkwargs)
+    o1 = MovingMaximizeSigmoidObjective(steepness=1, tp=-1, w=1)
+    o2 = MaximizeSigmoidObjective(steepness=1.0, tp=2, w=1)
+    assert np.allclose(
+        o1.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
+        o2.__call__(a_samples[:, 1], x_adapt=x_adapt.numpy()),
     )
 
 
@@ -133,6 +152,16 @@ def f2(samples, callables, weights, X):
 
 @pytest.mark.parametrize("f, exclude_constraints", [(f1, True), (f2, False)])
 def test_get_custom_botorch_objective(f, exclude_constraints):
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "gamma": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+            "valid_gamma": [1] * 10,
+        }
+    )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective(w=1.0)
@@ -155,7 +184,7 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
         ]
     )
     objective = get_custom_botorch_objective(
-        outputs, f=f, exclude_constraints=exclude_constraints
+        outputs, f=f, exclude_constraints=exclude_constraints, experiments=experiments
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -167,8 +196,7 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
     # do the comparison
     assert np.allclose(
         (
-            (reward1**obj1.w + reward3**obj3.w)
-            * (reward1**obj1.w * reward3**obj3.w)
+            (reward1**obj1.w + reward3**obj3.w) * (reward1**obj1.w * reward3**obj3.w)
             if exclude_constraints
             else (reward1**obj1.w + reward2**obj2.w)
             * (reward1**obj1.w * reward2**obj2.w)
@@ -178,7 +206,9 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
         rtol=1e-06,
     )
     if exclude_constraints:
-        constraints, etas = get_output_constraints(outputs=outputs)
+        constraints, etas = get_output_constraints(
+            outputs=outputs, experiments=experiments
+        )
         generic_objective = ConstrainedMCObjective(
             objective=objective,
             constraints=constraints,
@@ -201,6 +231,14 @@ def test_get_custom_botorch_objective(f, exclude_constraints):
 
 
 def test_get_multiplicative_botorch_objective():
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+        }
+    )
     (obj1, obj2) = random.choices(
         [
             MaximizeObjective(w=0.5),
@@ -218,7 +256,7 @@ def test_get_multiplicative_botorch_objective():
             ContinuousOutput(key="beta", objective=obj2),
         ]
     )
-    objective = get_multiplicative_botorch_objective(outputs)
+    objective = get_multiplicative_botorch_objective(outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
     samples = (torch.rand(30, 2, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
@@ -237,6 +275,16 @@ def test_get_multiplicative_botorch_objective():
 
 @pytest.mark.parametrize("exclude_constraints", [True, False])
 def test_get_additive_botorch_objective(exclude_constraints):
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "gamma": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+            "valid_gamma": [1] * 10,
+        }
+    )
     samples = (torch.rand(30, 3, requires_grad=True) * 5).to(**tkwargs)
     a_samples = samples.detach().numpy()
     obj1 = MaximizeObjective(w=0.5)
@@ -260,7 +308,7 @@ def test_get_additive_botorch_objective(exclude_constraints):
         ]
     )
     objective = get_additive_botorch_objective(
-        outputs, exclude_constraints=exclude_constraints
+        outputs, exclude_constraints=exclude_constraints, experiments=experiments
     )
     generic_objective = GenericMCObjective(objective=objective)
     objective_forward = generic_objective.forward(samples)
@@ -281,7 +329,9 @@ def test_get_additive_botorch_objective(exclude_constraints):
         rtol=1e-06,
     )
     if exclude_constraints:
-        constraints, etas = get_output_constraints(outputs=outputs)
+        constraints, etas = get_output_constraints(
+            outputs=outputs, experiments=experiments
+        )
         generic_objective = ConstrainedMCObjective(
             objective=objective,
             constraints=constraints,
@@ -480,7 +530,17 @@ of3 = ContinuousOutput(
     ],
 )
 def test_get_output_constraints(outputs):
-    constraints, etas = get_output_constraints(outputs=outputs)
+    experiments = pd.DataFrame(
+        {
+            "of1": np.random.rand(10),
+            "of2": np.random.rand(10),
+            "of3": np.random.rand(10),
+            "valid_of1": [1] * 10,
+            "valid_of2": [1] * 10,
+            "valid_of3": [1] * 10,
+        }
+    )
+    constraints, etas = get_output_constraints(outputs=outputs, experiments=experiments)
     assert len(constraints) == len(etas)
     assert np.allclose(etas, [0.5, 0.25, 0.25])
 
@@ -763,7 +823,19 @@ def test_get_multiobjective_objective():
             ),
         ]
     )
-    objective = get_multiobjective_objective(outputs=outputs)
+    experiments = pd.DataFrame(
+        {
+            "alpha": np.random.rand(10),
+            "beta": np.random.rand(10),
+            "gamma": np.random.rand(10),
+            "omega": np.random.rand(10),
+            "valid_alpha": [1] * 10,
+            "valid_beta": [1] * 10,
+            "valid_gamma": [1] * 10,
+            "valid_omega": [1] * 10,
+        }
+    )
+    objective = get_multiobjective_objective(outputs=outputs, experiments=experiments)
     generic_objective = GenericMCObjective(objective=objective)
     # check the shape
     objective_forward = generic_objective.forward(samples2)
@@ -821,10 +893,14 @@ def test_get_initial_conditions_generator(sequential: bool):
         (MaximizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
         (MinimizeSigmoidObjective(w=1, tp=15, steepness=0.5)),
         (TargetObjective(w=1, target_value=15, steepness=2, tolerance=5)),
+        (MovingMaximizeSigmoidObjective(w=1, tp=-1, steepness=0.5)),
     ],
 )
 def test_constrained_objective2botorch(objective):
-    cs, etas, _ = constrained_objective2botorch(idx=0, objective=objective)
+    x_adapt = torch.tensor([1.0, 2.0, 3.0]).to(**tkwargs)
+    cs, etas, _ = constrained_objective2botorch(
+        idx=0, objective=objective, x_adapt=x_adapt
+    )
 
     x = torch.from_numpy(np.linspace(0, 30, 500)).unsqueeze(-1).to(**tkwargs)
 
@@ -840,7 +916,17 @@ def test_constrained_objective2botorch(objective):
         .ravel()
     )
 
-    assert np.allclose(objective.__call__(np.linspace(0, 30, 500)), result)
+    assert np.allclose(
+        objective.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()), result
+    )
+    if isinstance(objective, MovingMaximizeSigmoidObjective):
+        objective2 = MaximizeSigmoidObjective(
+            w=1, tp=x_adapt.max().item() + objective.tp, steepness=objective.steepness
+        )
+        assert np.allclose(
+            objective2.__call__(np.linspace(0, 30, 500), x_adapt=x_adapt.numpy()),
+            result,
+        )
 
 
 def test_constrained_objective():
@@ -848,7 +934,7 @@ def test_constrained_objective():
     obj1 = ConstrainedCategoricalObjective(
         categories=["c1", "c2", "c3"], desirability=desirability
     )
-    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1)
+    cs, etas, _ = constrained_objective2botorch(idx=0, objective=obj1, x_adapt=None)
 
     x = torch.zeros((50, 3))
     x[:, 0] = torch.arange(50) / 50
@@ -878,3 +964,242 @@ def test_constrained_objective():
         .ravel()
     )
     assert np.allclose(true_y.numpy(), result)
+
+
+def test_interp1d():
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([0.0, 10, 40, 60])
+    y = np.array([0.0, 0.2, 0.5, 0.9])
+    y_new = np.interp(x_new, x, y)
+    tx_new = torch.from_numpy(x_new).to(**tkwargs)
+    tx = torch.from_numpy(np.array([0.0, 10, 40, 60])).to(**tkwargs)
+    ty = torch.from_numpy(np.array([0.0, 0.2, 0.5, 0.9])).to(**tkwargs)
+    ty_new = interp1d(tx, ty, tx_new).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+
+def test_InterpolateTransform():
+    new_x = torch.from_numpy(np.linspace(0, 60, 200)).to(**tkwargs)
+    with pytest.raises(ValueError, match="Indices are not unique."):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[2, 3, 4],
+            prepend_x=torch.tensor([0]),
+            append_x=torch.tensor([60]),
+            prepend_y=torch.tensor([0]),
+            append_y=torch.tensor([1]),
+            new_x=new_x,
+        )
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2],
+        idx_y=[3, 4, 5],
+        prepend_x=torch.tensor([0]),
+        append_x=torch.tensor([60]),
+        prepend_y=torch.tensor([0]),
+        append_y=torch.tensor([1]),
+        new_x=new_x,
+    )
+
+    # test the append and prepend functionality for 2 dim data
+    X = torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs)
+    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor(
+            [
+                [
+                    1,
+                    2,
+                    10,
+                    40,
+                    55,
+                ],
+                [1, 2, 10, 20, 55],
+            ]
+        ).to(**tkwargs),
+    )
+
+    values = torch.tensor([1.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[10, 40, 55, 1], [10, 20, 55, 1]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[1, 10, 40, 55], [1, 10, 20, 55]]).to(**tkwargs),
+    )
+
+    values = torch.tensor([]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[10, 40, 55], [10, 20, 55]]).to(**tkwargs),
+    )
+
+    # test the append and prepend functionality for 3 dim data
+    X = torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs)
+    values = torch.tensor([1.0, 2.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[[10, 40, 55, 1, 2], [10, 20, 55, 1, 2]]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor(
+            [
+                [
+                    1,
+                    2,
+                    10,
+                    40,
+                    55,
+                ],
+                [1, 2, 10, 20, 55],
+            ]
+        ).to(**tkwargs),
+    )
+
+    values = torch.tensor([1.0]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[[10, 40, 55, 1], [10, 20, 55, 1]]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[1, 10, 40, 55], [1, 10, 20, 55]]]).to(**tkwargs),
+    )
+
+    values = torch.tensor([]).to(**tkwargs)
+    X_new = t.append(X, values)
+    assert torch.allclose(
+        X_new, torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs)
+    )
+
+    X_new = t.prepend(X, values)
+    assert torch.allclose(
+        X_new,
+        torch.tensor([[[10, 40, 55], [10, 20, 55]]]).to(**tkwargs),
+    )
+
+    x_new = np.linspace(0, 60, 200)
+    x = np.array([[0.0, 10, 40, 55, 60], [0.0, 10, 20, 55, 60]])
+    y = np.array([[0.0, 0.2, 0.5, 0.75, 1.0], [0.0, 0.2, 0.5, 0.7, 1.0]])
+    y_new = np.array([np.interp(x_new, x[i], y[i]) for i in range(2)])
+
+    tX = torch.tensor([[10, 40, 55, 0.2, 0.5, 0.75], [10, 20, 55, 0.2, 0.5, 0.7]]).to(
+        **tkwargs
+    )
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test error handling
+    with pytest.raises(
+        ValueError, match="The number of x and y indices must be equal."
+    ):
+        InterpolateTransform(
+            idx_x=[0, 1, 2],
+            idx_y=[3, 4, 5],
+            prepend_x=torch.tensor([0, 0.1]),
+            append_x=torch.tensor([60]),
+            prepend_y=torch.tensor([0]),
+            append_y=torch.tensor([1]),
+            new_x=new_x,
+        )
+
+    # test without prepend and append
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3, 4],
+        idx_y=[5, 6, 7, 8, 9],
+        prepend_x=torch.tensor([]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([]),
+        new_x=new_x,
+    )
+
+    tX = torch.tensor(
+        [
+            [0, 10, 40, 55, 60, 0, 0.2, 0.5, 0.75, 1],
+            [0, 10, 20, 55, 60, 0, 0.2, 0.5, 0.7, 1],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test different prepend and append
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(y_new, ty_new, rtol=1e-6)
+
+    # test keep original
+    t = InterpolateTransform(
+        idx_x=[0, 1, 2, 3],
+        idx_y=[4, 5, 6, 7],
+        prepend_x=torch.tensor([0.0]),
+        append_x=torch.tensor([]),
+        prepend_y=torch.tensor([]),
+        append_y=torch.tensor([1.0]),
+        new_x=new_x,
+        keep_original=True,
+    )
+
+    tX = torch.tensor(
+        [
+            [10, 40, 55, 60, 0, 0.2, 0.5, 0.75],
+            [
+                10,
+                20,
+                55,
+                60,
+                0,
+                0.2,
+                0.5,
+                0.7,
+            ],
+        ]
+    ).to(**tkwargs)
+    ty_new = t(tX).numpy()
+    np.testing.assert_allclose(
+        np.concatenate([y_new, tX.numpy()], axis=-1), ty_new, rtol=1e-6
+    )

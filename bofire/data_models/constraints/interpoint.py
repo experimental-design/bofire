@@ -32,7 +32,7 @@ class InterpointEqualityConstraint(InterpointConstraint):
     feature: str
     multiplicity: Optional[Annotated[int, Field(ge=2)]] = None
 
-    def validate_inputs(self, inputs: Inputs):  # type: ignore
+    def validate_inputs(self, inputs: Inputs):
         if self.feature not in inputs.get_keys(ContinuousInput):
             raise ValueError(
                 f"Feature {self.feature} is not a continuous input feature in the provided Inputs object."

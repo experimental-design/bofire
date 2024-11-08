@@ -14,8 +14,7 @@ from bofire.strategies.api import Strategy
 
 
 class StrategyFactory(Protocol):
-    def __call__(self, domain: Domain) -> Strategy:
-        ...
+    def __call__(self, domain: Domain) -> Strategy: ...
 
 
 def _single_run(
@@ -70,10 +69,9 @@ def _single_run(
         # pd.concat() changes datatype of str to np.int32 if column contains whole numbers.
         # colum needs to be converted back to str to be added to the benchmark domain.
         strategy.tell(XY)
-        metric_values[i] = metric(strategy.domain, strategy.experiments)  # type: ignore
-        pbar.set_description(
-            f"run {run_idx:02d} with current best {metric_values[i]:0.3f}"
-        )
+        metric_values[i] = metric(strategy.domain, strategy.experiments)
+        pbar.set_description(f"Run {run_idx}")
+        pbar.set_postfix({"Current Best:": f"{metric_values[i]:0.3f}"})
         if (i + 1) % safe_intervall == 0:
             autosafe_results(benchmark=benchmark)
     return strategy.experiments, pd.Series(metric_values)

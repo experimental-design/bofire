@@ -4,9 +4,10 @@ from typing import List, Optional
 import numpy as np
 import pandas as pd
 
+
 try:
     from rdkit import RDLogger
-    from rdkit.Chem import AllChem, Descriptors, MolFromSmiles  # type: ignore
+    from rdkit.Chem import AllChem, Descriptors, MolFromSmiles
 
     lg = RDLogger.logger()
     lg.setLevel(RDLogger.CRITICAL)
@@ -39,7 +40,7 @@ def smiles2mol(smiles: str):
     Returns:
         rdkit.Mol: rdkit.mol object
     """
-    mol = MolFromSmiles(smiles)
+    mol = MolFromSmiles(smiles)  # type: ignore
     if mol is None:
         raise ValueError(f"{smiles} is not a valid smiles string.")
     return mol
@@ -60,9 +61,7 @@ def smiles2fingerprints(
     """
     rdkit_mols = [smiles2mol(m) for m in smiles]
     fps = [
-        AllChem.GetMorganFingerprintAsBitVect(  # type: ignore
-            mol, radius=bond_radius, nBits=n_bits
-        )
+        AllChem.GetMorganFingerprintAsBitVect(mol, radius=bond_radius, nBits=n_bits)  # type: ignore
         for mol in rdkit_mols
     ]
 
@@ -81,7 +80,9 @@ def smiles2fragments(
         np.ndarray: Array holding the fragment information.
     """
     rdkit_fragment_list = [
-        item for item in Descriptors.descList if item[0].startswith("fr_")
+        item
+        for item in Descriptors.descList
+        if item[0].startswith("fr_")  # type: ignore
     ]
     if fragments_list is None:
         fragments = {d[0]: d[1] for d in rdkit_fragment_list}
@@ -125,17 +126,17 @@ def smiles2mordred(smiles: List[str], descriptors_list: List[str]) -> np.ndarray
     """
     mols = [smiles2mol(smi) for smi in smiles]
 
-    calc = Calculator(descriptors, ignore_3D=True)
+    calc = Calculator(descriptors, ignore_3D=True)  # type: ignore
     calc.descriptors = [d for d in calc.descriptors if str(d) in descriptors_list]
 
     descriptors_df = calc.pandas(mols)
     nan_list = [
-        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()
+        pd.to_numeric(descriptors_df[col], errors="coerce").isnull().values.any()  # type: ignore
         for col in descriptors_df.columns
     ]
     if any(nan_list):
         raise ValueError(
-            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"
+            f"Found NaN values in descriptors {list(descriptors_df.columns[nan_list])}"  # type: ignore
         )
 
     return descriptors_df.astype(float).values

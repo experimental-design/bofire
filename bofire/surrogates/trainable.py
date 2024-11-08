@@ -22,9 +22,7 @@ class TrainableSurrogate(ABC):
 
     def fit(self, experiments: pd.DataFrame, options: Optional[Dict] = None):
         # validate
-        experiments = self.inputs.validate_experiments(  # type: ignore
-            experiments, strict=False
-        )
+        experiments = self.inputs.validate_experiments(experiments, strict=False)  # type: ignore
         experiments = self.outputs.validate_experiments(experiments)  # type: ignore
         # preprocess
         experiments = self._preprocess_experiments(experiments)
@@ -33,7 +31,7 @@ class TrainableSurrogate(ABC):
         Y = experiments[self.outputs.get_keys()]  # type: ignore
         # fit
         options = options or {}
-        self._fit(X=X, Y=Y, **options)  # type: ignore
+        self._fit(X=X, Y=Y, **options)
 
     def _preprocess_experiments(self, experiments: pd.DataFrame) -> pd.DataFrame:
         if self._output_filtering is None:
@@ -184,7 +182,10 @@ class TrainableSurrogate(ABC):
             y_train_pred = self.predict(X_train)  # type: ignore
 
             # Convert to categorical if applicable
-            if isinstance(self.outputs.get_by_key(key).objective, ConstrainedCategoricalObjective):  # type: ignore
+            if isinstance(
+                self.outputs.get_by_key(key).objective,  # type: ignore
+                ConstrainedCategoricalObjective,
+            ):
                 y_test_pred[f"{key}_pred"] = y_test_pred[f"{key}_pred"].map(
                     self.outputs.get_by_key(key).objective.to_dict_label()  # type: ignore
                 )
@@ -200,7 +201,7 @@ class TrainableSurrogate(ABC):
 
             # now store the results
             train_results.append(
-                CvResult(  # type: ignore
+                CvResult(
                     key=key,
                     observed=y_train[key],
                     predicted=y_train_pred[key + "_pred"],
@@ -210,7 +211,7 @@ class TrainableSurrogate(ABC):
                 )
             )
             test_results.append(
-                CvResult(  # type: ignore
+                CvResult(
                     key=key,
                     observed=y_test[key],
                     predicted=y_test_pred[key + "_pred"],

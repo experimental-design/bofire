@@ -23,7 +23,7 @@ class FactorialStrategy(Strategy):
             )
         return pd.DataFrame.from_dict(
             [
-                {e[0]: e[1] for e in combi}  # type: ignore
+                {e[0]: e[1] for e in combi}
                 for combi in self.domain.inputs.get_categorical_combinations()
             ]
         )

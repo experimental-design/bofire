@@ -27,6 +27,7 @@ from bofire.data_models.molfeatures.api import (
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
 
+
 RDKIT_AVAILABLE = importlib.util.find_spec("rdkit") is not None
 
 

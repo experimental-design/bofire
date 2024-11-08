@@ -13,6 +13,7 @@ from bofire.data_models.constraints.api import (
 from bofire.data_models.domain.api import Domain
 from bofire.data_models.features.api import ContinuousInput
 
+
 inputs = [ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)]
 c1 = LinearInequalityConstraint(
     features=["if1", "if2", "if3"], coefficients=[1, 1, 1], rhs=1

@@ -31,7 +31,7 @@ class Strategy(BaseModel):
         for constraint in domain.constraints:
             if not cls.is_constraint_implemented(type(constraint)):
                 raise ValueError(
-                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"
                 )
         return domain
 
@@ -52,7 +52,7 @@ class Strategy(BaseModel):
         for feature in domain.inputs + domain.outputs:
             if not cls.is_feature_implemented(type(feature)):
                 raise ValueError(
-                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"  # type: ignore
+                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
                 )
         return domain
 

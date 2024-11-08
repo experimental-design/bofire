@@ -4,6 +4,7 @@ import bofire.data_models.strategies.api as data_models
 from bofire.strategies.stepwise.stepwise import StepwiseStrategy
 from bofire.strategies.strategy import Strategy
 
+
 # Meta strategies compositions of other strategies.
 STRATEGY_MAP: Dict[Type[data_models.Strategy], Type[Strategy]] = {
     data_models.StepwiseStrategy: StepwiseStrategy,

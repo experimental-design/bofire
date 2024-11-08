@@ -27,7 +27,7 @@ def lengthscale_importance(surrogate: SingleTaskGPSurrogate) -> pd.Series:
             scales = surrogate.model.covar_module.lengthscale  # type: ignore
         except AttributeError:
             raise ValueError("No lenghtscale based kernel found.")
-    scales = 1.0 / scales.squeeze().detach().numpy()  # type: ignore
+    scales = 1.0 / scales.squeeze().detach().numpy()
     if isinstance(scales, float):
         raise ValueError("Only one lengthscale found, use `ard=True`.")
     if len(scales) != len(surrogate.inputs):
@@ -103,7 +103,7 @@ def permutation_importance(
     pred = surrogate.predict(X)
     if len(pred) >= 2:
         original_metrics = {
-            k.name: metrics[k](y[output_key].values, pred[output_key + "_pred"].values)  # type: ignore
+            k.name: metrics[k](y[output_key].values, pred[output_key + "_pred"].values)
             for k in metrics.keys()
         }
     else:
@@ -120,10 +120,10 @@ def permutation_importance(
             for metricenum, metric in metrics.items():
                 if len(pred) >= 2:
                     prelim_results[metricenum.name][feature.key].append(
-                        metric(y[output_key].values, pred[output_key + "_pred"].values)  # type: ignore
+                        metric(y[output_key].values, pred[output_key + "_pred"].values)
                     )
                 else:
-                    prelim_results[metricenum.name][feature.key].append(np.nan)  # type: ignore
+                    prelim_results[metricenum.name][feature.key].append(np.nan)
 
     # convert dictionaries to dataframe for easier postprocessing and statistics
     # and return
@@ -195,8 +195,8 @@ def combine_permutation_importances(
             Defaults to RegressionMetricsEnum.R2
 
     Returns:
-        pd.DataFrame: Dataframe holding the mean permutation importance per fold and feature. Can be further processed by
-            `describe`.
+        pd.DataFrame: Dataframe holding the mean permutation importance per fold and feature. Can be further processed
+            by `describe`.
     """
     feature_keys = importances[0]["MAE"].columns
     return pd.DataFrame(

@@ -177,7 +177,7 @@ def n_zero_eigvals(
     X = sampler.ask(N)
     # compute eigenvalues of information matrix
     A = model_formula.get_model_matrix(X)
-    eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))  # type: ignore
+    eigvals = np.abs(np.linalg.eigvalsh(A.T @ A))
 
     return len(eigvals) - len(eigvals[eigvals > epsilon])
 
@@ -207,7 +207,7 @@ def constraints_as_scipy_constraints(
             c, LinearInequalityConstraint
         ):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
+            constraints.append(LinearConstraint(A, lb, ub))
 
         elif isinstance(c, NonlinearEqualityConstraint) or isinstance(
             c, NonlinearInequalityConstraint
@@ -229,7 +229,7 @@ def constraints_as_scipy_constraints(
 
         elif isinstance(c, InterpointEqualityConstraint):
             A, lb, ub = get_constraint_function_and_bounds(c, domain, n_experiments)
-            constraints.append(LinearConstraint(A, lb, ub))  # type: ignore
+            constraints.append(LinearConstraint(A, lb, ub))
 
         else:
             raise NotImplementedError(f"No implementation for this constraint: {c}")
@@ -282,7 +282,9 @@ def get_constraint_function_and_bounds(
     ):
         # define constraint evaluation (and gradient if provided)
         fun = ConstraintWrapper(
-            constraint=c, domain=domain, n_experiments=n_experiments
+            constraint=c,
+            domain=domain,
+            n_experiments=n_experiments,  # type: ignore
         )
 
         # write upper/lower bound as vector
@@ -296,7 +298,9 @@ def get_constraint_function_and_bounds(
     elif isinstance(c, NChooseKConstraint):
         # define constraint evaluation (and gradient if provided)
         fun = ConstraintWrapper(
-            constraint=c, domain=domain, n_experiments=n_experiments
+            constraint=c,
+            domain=domain,
+            n_experiments=n_experiments,  # type: ignore
         )
 
         # write upper/lower bound as vector
@@ -361,25 +365,26 @@ class ConstraintWrapper:
         self.names = domain.inputs.get_keys()
         self.D = len(domain.inputs)
         self.n_experiments = n_experiments
-        if constraint.features is None:
+        if constraint.features is None:  # type: ignore
             raise ValueError(
                 f"The features attribute of constraint {constraint} is not set, but has to be set."
             )
         self.constraint_feature_indices = np.searchsorted(
-            self.names, self.constraint.features
+            self.names,
+            self.constraint.features,  # type: ignore
         )
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
         """call constraint with flattened numpy array."""
         x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
-        violation = self.constraint(x).to_numpy()
+        violation = self.constraint(x).to_numpy()  # type: ignore
         violation[np.abs(violation) < 0] = 0
-        return violation  # type: ignore
+        return violation
 
     def jacobian(self, x: np.ndarray) -> np.ndarray:
         """call constraint gradient with flattened numpy array."""
-        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)
-        gradient_compressed = self.constraint.jacobian(x).to_numpy()
+        x = pd.DataFrame(x.reshape(len(x) // self.D, self.D), columns=self.names)  # type: ignore
+        gradient_compressed = self.constraint.jacobian(x).to_numpy()  # type: ignore
 
         jacobian = np.zeros(shape=(self.n_experiments, self.D * self.n_experiments))
         rows = np.repeat(

@@ -41,7 +41,7 @@ class ShortestPathStrategy(Strategy):
         Returns:
             Inputs: The continuous inputs from the domain.
         """
-        return self.domain.inputs.get(ContinuousInput)  # type: ignore
+        return self.domain.inputs.get(ContinuousInput)
 
     def get_linear_constraints(
         self, constraints: Constraints
@@ -58,7 +58,7 @@ class ShortestPathStrategy(Strategy):
         """
         inputs = self.continuous_inputs
         keys = inputs.get_keys()
-        b = np.array([c.rhs for c in constraints])  # type: ignore
+        b = np.array([c.rhs for c in constraints])
         A = np.zeros([len(constraints), len(inputs)])
         for i, c in enumerate(constraints):
             assert isinstance(c, LinearConstraint)

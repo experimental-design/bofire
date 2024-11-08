@@ -7,6 +7,7 @@ from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Inputs, Outputs
 from bofire.data_models.outlier_detection.outlier_detection import IterativeTrimming
 
+
 AnyOutlierDetector = IterativeTrimming
 
 
@@ -22,7 +23,7 @@ class OutlierDetections(BaseModel):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.detectors]  # type: ignore
+                    [model.outputs.get() for model in self.detectors]
                 )
             )
         )
@@ -42,15 +43,15 @@ class OutlierDetections(BaseModel):
     def _check_compability(self, inputs: Inputs, outputs: Outputs):
         # TODO: add sync option
         used_output_feature_keys = self.outputs.get_keys()
-        if sorted(used_output_feature_keys) != sorted(outputs.get_keys()):  # type: ignore
+        if sorted(used_output_feature_keys) != sorted(outputs.get_keys()):
             raise ValueError("Output features do not match.")
         used_feature_keys = []
         for i, model in enumerate(self.detectors):
-            if len(model.inputs) > len(inputs):  # type: ignore
+            if len(model.inputs) > len(inputs):
                 raise ValueError(
                     f"Model with index {i} has more features than acceptable."
                 )
-            for feat in model.inputs:  # type: ignore
+            for feat in model.inputs:
                 try:
                     other_feat = inputs.get_by_key(feat.key)
                 except KeyError:
