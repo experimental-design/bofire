@@ -16,21 +16,13 @@ from bofire.benchmarks.multi import (
     "cls_benchmark, return_complete, kwargs",
     [
         (DTLZ2, True, {"dim": 5}),
-        (SnarBenchmark, True, {}),
-        (ZDT1, True, {}),
-        (
-            CrossCoupling,
-            True,
-            {},
-        ),
         (DTLZ2, False, {"dim": 5}),
+        (SnarBenchmark, True, {}),
         (SnarBenchmark, False, {}),
+        (ZDT1, True, {}),
         (ZDT1, False, {}),
-        (
-            CrossCoupling,
-            False,
-            {},
-        ),
+        (CrossCoupling, True, {}),
+        (CrossCoupling, False, {}),
         (C2DTLZ2, True, {"dim": 4}),
         (C2DTLZ2, False, {"dim": 4}),
         (BNH, False, {"constraints": True}),
@@ -42,7 +34,7 @@ from bofire.benchmarks.multi import (
 def test_multi_objective_benchmarks(
     cls_benchmark: type[Benchmark],
     return_complete: bool,
-    **kwargs,
+    kwargs,
 ):
     """Test function for multi objective benchmark functions."""
     benchmark_function = cls_benchmark(**kwargs)

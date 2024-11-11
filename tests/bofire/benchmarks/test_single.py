@@ -65,7 +65,7 @@ def test_hartmann():
 def test_single_objective_benchmarks(
     cls_benchmark: type[Benchmark],
     return_complete: bool,
-    **kwargs,
+    kwargs,
 ):
     """Test function for single objective benchmark functions."""
     benchmark_function = cls_benchmark(**kwargs)
