@@ -80,41 +80,27 @@ class SingleTaskGPHyperconfig(Hyperconfig):
             )
         surrogate_data.noise_prior = noise_prior
 
-        # Define a kernel that wraps the base kernel in a scale kernel if necessary
-        def outer_kernel(base_kernel, outputscale_prior, use_scale) -> AnyKernel:
-            if use_scale:
-                return ScaleKernel(
-                    base_kernel=base_kernel, outputscale_prior=outputscale_prior
-                )
-            else:
-                return base_kernel
-
         if hyperparameters.kernel == "rbf":
-            surrogate_data.kernel = outer_kernel(
-                base_kernel=RBFKernel(
-                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
-                ),
-                outputscale_prior=outputscale_prior,
-                use_scale=hyperparameters.scalekernel,
+            base_kernel = RBFKernel(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
             )
         elif hyperparameters.kernel == "matern_2.5":
-            surrogate_data.kernel = outer_kernel(
-                base_kernel=matern_25(
-                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
-                ),
-                outputscale_prior=outputscale_prior,
-                use_scale=hyperparameters.scalekernel,
+            base_kernel = matern_25(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
             )
         elif hyperparameters.kernel == "matern_1.5":
-            surrogate_data.kernel = outer_kernel(
-                base_kernel=matern_15(
-                    ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
-                ),
-                outputscale_prior=outputscale_prior,
-                use_scale=hyperparameters.scalekernel,
+            base_kernel = matern_15(
+                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
+
+        if hyperparameters.scalekernel:
+            surrogate_data.kernel = ScaleKernel(
+                base_kernel=base_kernel, outputscale_prior=outputscale_prior
+            )
+        else:
+            surrogate_data.kernel = base_kernel
 
 
 class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
