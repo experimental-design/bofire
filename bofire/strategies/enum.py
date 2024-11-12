@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class OptimalityCriterionEnum(Enum):
+class OptimalityCriterionEnum(str, Enum):
     D_OPTIMALITY = "D_OPTIMALITY"
     E_OPTIMALITY = "E_OPTIMALITY"
     A_OPTIMALITY = "A_OPTIMALITY"
