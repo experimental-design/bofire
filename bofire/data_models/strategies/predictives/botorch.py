@@ -83,7 +83,6 @@ class TrustRegionConfig(BaseModel):
 
     length: float = Field(default=length_init, alias="length_")
     X_center_idx: int = -1
-    n_tr_experiments: PositiveInt = 0
 
     @model_validator(mode="after")
     def validate_fit_region_multiplier(self):
@@ -101,11 +100,30 @@ class TrustRegionConfig(BaseModel):
             domain (Domain): domain containing the inputs and constraints.
         """
 
+    def has_sufficient_experiments(
+        self, experiments: pd.DataFrame, domain: Domain
+    ) -> bool:
+        """Do we have enough samples in the trust region to fit a model?
+
+        Args:
+            experiments (pd.DataFrame): DataFrame containing experiments that
+                were performed and their results.
+            domain (Domain): The domain defining the problem to be optimized
+                with the strategy.
+        """
+        return (
+            self.min_tr_size
+            < self.get_trust_region_experiments(experiments, domain).shape[0]
+        )
+
     def init_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
         """Method to initialize the trust region.
 
         Args:
-            domain (Domain): The domain defining the problem to be optimized with the strategy.
+            experiments (pd.DataFrame): DataFrame containing experiments that
+                were performed and their results.
+            domain (Domain): The domain defining the problem to be optimized
+                with the strategy.
         """
 
         self.length = self.length_init
@@ -115,7 +133,6 @@ class TrustRegionConfig(BaseModel):
             raise ValueError("TuRBO only supports single output optimization.")
 
         self.X_center_idx = experiments[Y_cols].idxmax().iloc[0]
-        self.n_tr_experiments = len(experiments)
 
     def get_trust_region_experiments(
         self, experiments: pd.DataFrame, domain: Domain, eps: float = 1e-8
@@ -123,12 +140,14 @@ class TrustRegionConfig(BaseModel):
         """Method to get the experiments that are within the trust region.
 
         Args:
-            experiments (pd.DataFrame): DataFrame containing experiments that were
-                performed and their results.
-            domain (Domain): domain containing the inputs and constraints.
+            experiments (pd.DataFrame): DataFrame containing experiments that
+                were performed and their results.
+            domain (Domain): The domain defining the problem to be optimized
+                with the strategy.
 
         Returns:
-            pd.DataFrame: DataFrame containing experiments that are within the trust region.
+            pd.DataFrame: DataFrame containing experiments that are within the
+                trust region.
         """
         if self.use_independent_tr:
             tr_size = sum(self.experiment_batch_sizes[-1])
@@ -148,7 +167,6 @@ class TrustRegionConfig(BaseModel):
         ].index
 
         experiments = experiments.loc[tr_indicies]
-        self.n_tr_experiments = len(experiments)
         return experiments
 
 
@@ -161,8 +179,8 @@ class TuRBOConfig(TrustRegionConfig):
         """Method to update the trust region based on the success of the optimization step.
 
         Args:
-            experiments (pd.DataFrame): DataFrame containing experiments that were
-                performed and their results.
+            experiments (pd.DataFrame): DataFrame containing experiments that
+                were performed and their results.
             domain (Domain): domain containing the inputs and constraints.
         """
         Y_cols = domain.outputs.get_keys()
@@ -211,7 +229,6 @@ class LocalSearchConfig(BaseModel):
 
         Returns:
             bool: If true, do local step, else a step towards the global acqf maximum.
-
         """
 
 
@@ -222,7 +239,6 @@ class LSRBOConfig(LocalSearchConfig):
     Attributes:
         gamma (float): The switching parameter between local and global optimization.
             Defaults to 0.1.
-
     """
 
     type: Literal["LSRBOConfig"] = "LSRBOConfig"

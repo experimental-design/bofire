@@ -22,7 +22,6 @@ class ContinuousInput(NumericalInput):
         local_relative_bounds (Tuple[float, float], optional): A tuple that stores
             the lower and upper bounds relative to a reference value.
             Defaults to None.
-
     """
 
     type: Literal["ContinuousInput"] = "ContinuousInput"  # type: ignore
@@ -36,9 +35,11 @@ class ContinuousInput(NumericalInput):
 
     @property
     def lower_bound(self) -> float:
+        """Returns the lower bound of the feature."""
         return self.bounds[0]
 
     def local_lower_bound(self, reference_value) -> float:
+        """Returns the lower bound of the feature relative to a reference value."""
         local_relative_bounds = self.local_relative_bounds or (math.inf, math.inf)
         return max(
             reference_value - local_relative_bounds[0],
@@ -47,9 +48,11 @@ class ContinuousInput(NumericalInput):
 
     @property
     def upper_bound(self) -> float:
+        """Returns the upper bound of the feature."""
         return self.bounds[1]
 
     def local_upper_bound(self, reference_value) -> float:
+        """Returns the upper bound of the feature relative to a reference value."""
         local_relative_bounds = self.local_relative_bounds or (math.inf, math.inf)
         return min(
             reference_value + local_relative_bounds[1],
@@ -83,7 +86,6 @@ class ContinuousInput(NumericalInput):
 
         Returns:
             pd.Series: The rounded values
-
         """
         if self.stepsize is None:
             return values
@@ -186,7 +188,6 @@ class ContinuousOutput(Output):
     Attributes:
         objective (objective, optional): objective of the feature indicating in
         which direction it should be optimized. Defaults to `MaximizeObjective`.
-
     """
 
     type: Literal["ContinuousOutput"] = "ContinuousOutput"  # type: ignore

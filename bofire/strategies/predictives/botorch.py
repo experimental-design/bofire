@@ -141,15 +141,19 @@ class BotorchStrategy(PredictiveStrategy):
             else:
                 self.trust_region_config.update_trust_region(experiments, self.domain)
 
+            if not self.trust_region_config.has_sufficient_experiments(
+                experiments, self.domain
+            ):
+                # we want to take samples up to the minimum trust region size
+                # and so we don't bother to fit the model.
+                return
+
+            # get only the experiments that we want for the trust region.
+            # NOTE this is a bit redundant as we call this method inside
+            # the has_sufficient_experiments method but cleaner this way.
             experiments = self.trust_region_config.get_trust_region_experiments(
                 experiments, self.domain
             )
-
-            if (
-                self.trust_region_config.n_tr_experiments
-                < self.trust_region_config.min_tr_size
-            ):
-                return  # we want to take samples up to the minimum trust region size
 
         # perform outlier detection
         if self.outlier_detection_specs is not None:
@@ -483,8 +487,9 @@ class BotorchStrategy(PredictiveStrategy):
 
         if (
             self.trust_region_config is not None
-            and self.trust_region_config.n_tr_experiments
-            < self.trust_region_config.min_tr_size
+            and not self.trust_region_config.has_sufficient_experiments(
+                self.experiments, self.domain
+            )
         ):
             reference_experiment = self.experiments.loc[
                 self.trust_region_config.X_center_idx
@@ -522,8 +527,13 @@ class BotorchStrategy(PredictiveStrategy):
             # we have to ask for candidate_count to not break the validation elsewhere
             # in bofire. This is inefficient and breaks the low discrepancy sampling
             # benefits of using a single sobol sequence.
-            return sampler.ask(candidate_count)
-            # return sampler.ask(self.trust_region_config.min_tr_size)
+            candidates = sampler.ask(candidate_count)
+            for key in self.domain.outputs.get_keys():
+                candidates[f"{key}_pred"] = 0
+                candidates[f"{key}_sd"] = 0
+                candidates[f"{key}_des"] = 1
+                candidates[f"valid_{key}"] = 1
+            return candidates
 
         acqfs = self._get_acqfs(candidate_count)
 
