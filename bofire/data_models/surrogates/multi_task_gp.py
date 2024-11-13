@@ -13,10 +13,10 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import AnyKernel, MaternKernel, RBFKernel
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
     AnyPrior,
 )
 from bofire.data_models.priors.lkj import LKJPrior
@@ -58,8 +58,8 @@ class MultiTaskGPHyperconfig(Hyperconfig):
             noise_prior, lengthscale_prior = (MBO_NOISE_PRIOR(), MBO_LENGTHCALE_PRIOR())
         else:
             noise_prior, lengthscale_prior = (
-                BOTORCH_NOISE_PRIOR(),
-                BOTORCH_LENGTHCALE_PRIOR(),
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
             )
 
         surrogate_data.noise_prior = noise_prior
@@ -88,10 +88,10 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
         default_factory=lambda: MaternKernel(
             ard=True,
             nu=2.5,
-            lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
-        ),
+            lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+        )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
         default_factory=lambda: MultiTaskGPHyperconfig(),

@@ -11,8 +11,8 @@ from bofire.data_models.molfeatures.api import (
     Fragments,
 )
 from bofire.data_models.priors.api import (
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
     AnyPrior,
 )
 from bofire.data_models.surrogates.scaler import ScalerEnum
@@ -27,10 +27,10 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             base_kernel=TanimotoKernel(
                 ard=True,
             ),
-            outputscale_prior=BOTORCH_SCALE_PRIOR(),
-        ),
+            outputscale_prior=THREESIX_SCALE_PRIOR(),
+        )
     )
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     scaler: ScalerEnum = ScalerEnum.IDENTITY
 
     @classmethod

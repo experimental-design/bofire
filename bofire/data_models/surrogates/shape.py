@@ -14,12 +14,12 @@ from bofire.data_models.features.api import (
 )
 from bofire.data_models.kernels.api import MaternKernel, RBFKernel, WassersteinKernel
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
     AnyPrior,
     LogNormalPrior,
 )
@@ -62,9 +62,9 @@ class PiecewiseLinearGPSurrogateHyperconfig(Hyperconfig):
             )
         else:
             noise_prior, lengthscale_prior, outputscale_prior = (
-                BOTORCH_NOISE_PRIOR(),
-                BOTORCH_LENGTHCALE_PRIOR(),
-                BOTORCH_SCALE_PRIOR(),
+                THREESIX_NOISE_PRIOR(),
+                THREESIX_LENGTHSCALE_PRIOR(),
+                THREESIX_SCALE_PRIOR(),
             )
         surrogate_data.noise_prior = noise_prior
         surrogate_data.outputscale_prior = outputscale_prior
@@ -143,12 +143,12 @@ class PiecewiseLinearGPSurrogate(TrainableBotorchSurrogate):
 
     continuous_kernel: Optional[Union[RBFKernel, MaternKernel]] = Field(
         default_factory=lambda: RBFKernel(
-            lengthscale_prior=BOTORCH_LENGTHCALE_PRIOR(),
-        ),
+            lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR(),
+        )
     )
 
-    outputscale_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_SCALE_PRIOR())
-    noise_prior: AnyPrior = Field(default_factory=lambda: BOTORCH_NOISE_PRIOR())
+    outputscale_prior: AnyPrior = Field(default_factory=lambda: THREESIX_SCALE_PRIOR())
+    noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
 
     @model_validator(mode="after")
     def validate_keys(self):

@@ -229,6 +229,60 @@ class Hartmann(Benchmark):
         )
 
 
+class Hartmann6plus(Benchmark):
+    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+            constraints=(
+                Constraints(
+                    constraints=[
+                        NChooseKConstraint(
+                            features=[f"x_{i}" for i in range(dim)],
+                            min_count=0,
+                            max_count=allowed_k,
+                            none_also_valid=True,
+                        )
+                    ]
+                )
+                if allowed_k
+                else Constraints()
+            ),
+        )
+        if dim < 6:
+            raise ValueError("Hartmann6plus available for dim>=6.")
+        self._hartmann = botorch_hartmann(dim=6)
+
+    def get_optima(self) -> pd.DataFrame:
+        if len(self.domain.constraints) > 0:
+            raise ValueError("Not defined for NChooseK use case.")
+        return pd.DataFrame(
+            columns=[f"x_{i}" for i in range(6)] + ["y"],
+            data=[[0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, -3.32237]],
+        )
+
+    @property
+    def dim(self) -> int:
+        return len(self.domain.inputs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "y": self._hartmann(
+                    torch.from_numpy(candidates[[f"x_{i}" for i in range(6)]].values)
+                ),
+                "valid_y": [1 for _ in range(len(candidates))],
+            }
+        )
+
+
 class Branin(Benchmark):
     def __init__(self, locality_factor: Optional[float] = None, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -544,7 +598,7 @@ class Multinormalpdfs(Benchmark):
         N_unimportant_inputs: int = 2,
         seed: Optional[int] = None,
         means: Optional[list] = None,
-        covmats: Optional[np.ndarray] = None,
+        covmats: Optional[list] = None,
         **kwargs,
     ) -> None:
         """Initializes the class of type Multinormalpdfs
@@ -602,6 +656,7 @@ class Multinormalpdfs(Benchmark):
         np.random.seed(seed)
 
         gaussians = []
+        prefactors = []
         if means is not None and covmats is not None:
             # user has define the parameters of the distributions
             for mean, cov_mat in zip(means, covmats):
@@ -610,6 +665,7 @@ class Multinormalpdfs(Benchmark):
                         "Length of mean should equal dimensionality in Multinormalpdfs",
                     )
                 gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
+            n_gaussians = len(gaussians)
         else:
             # Generate the multivariate normal distributions
             unimportant_dims = np.random.choice(
@@ -631,14 +687,23 @@ class Multinormalpdfs(Benchmark):
                     cov_mat[:, i] = 0.0
                     cov_mat[i, i] = 10.0
                 gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
-
+        for i in range(n_gaussians):
+            prefactors.append(
+                (2 * np.pi) ** (-dim / 2) / np.sqrt(np.linalg.det(gaussians[i].cov))
+            )
         self.gaussians = gaussians
+        self.prefactors = prefactors
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         return pd.DataFrame(
             {
                 "y": X.apply(
-                    lambda x: sum([g.pdf(x.to_numpy()) for g in self.gaussians]),
+                    lambda x: sum(
+                        [
+                            g.pdf(x.to_numpy()) / prefac
+                            for prefac, g in zip(self.prefactors, self.gaussians)
+                        ]
+                    ),
                     axis=1,
                 ),
                 "valid_y": np.ones(len(X)),

@@ -38,7 +38,7 @@ def test_hyperoptimize(strategy: str):
     )
     if strategy == "RandomStrategy":
         surrogate_data.hyperconfig.hyperstrategy = strategy
-        surrogate_data.hyperconfig.n_iterations = 5
+        surrogate_data.hyperconfig.n_iterations = 6
 
     opt_data, metrics = hyperoptimize(
         surrogate_data=surrogate_data,
@@ -46,14 +46,15 @@ def test_hyperoptimize(strategy: str):
         folds=3,
     )
     if strategy == "RandomStrategy":
-        assert len(metrics) == 5
+        assert len(metrics) == 6
     else:
-        assert len(metrics) == 12
+        assert len(metrics) == 36
 
     assert set(metrics.columns) == set(
         [e.name for e in RegressionMetricsEnum]
         + surrogate_data.hyperconfig.domain.inputs.get_keys(),
     )
+    assert hasattr(opt_data.kernel, "base_kernel")
     assert opt_data.kernel.base_kernel.ard == (metrics.iloc[0]["ard"] == "True")
     if metrics.iloc[0].kernel == "matern_1.5":
         assert isinstance(opt_data.kernel.base_kernel, MaternKernel)
