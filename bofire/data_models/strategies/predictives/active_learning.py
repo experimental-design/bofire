@@ -18,7 +18,7 @@ class ActiveLearningStrategy(BotorchStrategy):
 
     type: Literal["ActiveLearningStrategy"] = "ActiveLearningStrategy"
     acquisition_function: AnyActiveLearningAcquisitionFunction = Field(
-        default_factory=lambda: qNegIntPosVar()
+        default_factory=lambda: qNegIntPosVar(),
     )
 
     @model_validator(mode="after")
@@ -26,10 +26,10 @@ class ActiveLearningStrategy(BotorchStrategy):
         if isinstance(self.acquisition_function, qNegIntPosVar):
             if self.acquisition_function.weights is not None:
                 if sorted(self.acquisition_function.weights.keys()) != sorted(
-                    self.domain.outputs.get_keys()
+                    self.domain.outputs.get_keys(),
                 ):
                     raise ValueError(
-                        "The keys provided for the weights do not match the required keys of the output features."
+                        "The keys provided for the weights do not match the required keys of the output features.",
                     )
         return self
 
@@ -42,6 +42,7 @@ class ActiveLearningStrategy(BotorchStrategy):
 
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
+
         """
         if my_type not in [CategoricalOutput]:
             return True
@@ -56,5 +57,6 @@ class ActiveLearningStrategy(BotorchStrategy):
 
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
+
         """
         return True

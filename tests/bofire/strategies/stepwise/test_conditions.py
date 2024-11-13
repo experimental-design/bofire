@@ -40,12 +40,14 @@ def test_CombiCondition_invalid():
 
 
 @pytest.mark.parametrize(
-    "n_required, n_experiments, expected", [(1, 10, True), (2, 1, True)]
+    "n_required, n_experiments, expected",
+    [(1, 10, True), (2, 1, True)],
 )
 def test_CombiCondition(n_required, n_experiments, expected):
     benchmark = Himmelblau()
     experiments = benchmark.f(
-        benchmark.domain.inputs.sample(n_experiments), return_complete=True
+        benchmark.domain.inputs.sample(n_experiments),
+        return_complete=True,
     )
     condition = data_models.CombiCondition(
         conditions=[

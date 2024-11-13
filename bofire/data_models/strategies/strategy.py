@@ -27,11 +27,12 @@ class Strategy(BaseModel):
 
         Returns:
             Domain: the domain
+
         """
         for constraint in domain.constraints:
             if not cls.is_constraint_implemented(type(constraint)):
                 raise ValueError(
-                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`"
+                    f"constraint `{type(constraint)}` is not implemented for strategy `{cls.__name__}`",
                 )
         return domain
 
@@ -48,11 +49,12 @@ class Strategy(BaseModel):
 
         Returns:
             Domain: the domain
+
         """
         for feature in domain.inputs + domain.outputs:
             if not cls.is_feature_implemented(type(feature)):
                 raise ValueError(
-                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`"
+                    f"feature `{type(feature)}` is not implemented for strategy `{cls.__name__}`",
                 )
         return domain
 
@@ -69,6 +71,7 @@ class Strategy(BaseModel):
 
         Returns:
             Domain: the domain
+
         """
         if len(domain.inputs) == 0:
             raise ValueError("no input feature specified")
@@ -84,8 +87,8 @@ class Strategy(BaseModel):
 
         Returns:
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
+
         """
-        pass
 
     @classmethod
     @abstractmethod
@@ -97,5 +100,5 @@ class Strategy(BaseModel):
 
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
+
         """
-        pass

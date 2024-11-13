@@ -31,11 +31,12 @@ class MultiTaskGPHyperconfig(Hyperconfig):
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
-                key="kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+                key="kernel",
+                categories=["rbf", "matern_1.5", "matern_2.5"],
             ),
             CategoricalInput(key="prior", categories=["mbo", "botorch"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
-        ]
+        ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
@@ -44,7 +45,8 @@ class MultiTaskGPHyperconfig(Hyperconfig):
 
     @staticmethod
     def _update_hyperparameters(
-        surrogate_data: "MultiTaskGPSurrogate", hyperparameters: pd.Series
+        surrogate_data: "MultiTaskGPSurrogate",
+        hyperparameters: pd.Series,
     ):
         def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
             return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
@@ -63,15 +65,18 @@ class MultiTaskGPHyperconfig(Hyperconfig):
         surrogate_data.noise_prior = noise_prior
         if hyperparameters.kernel == "rbf":
             surrogate_data.kernel = RBFKernel(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
         elif hyperparameters.kernel == "matern_2.5":
             surrogate_data.kernel = matern_25(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
         elif hyperparameters.kernel == "matern_1.5":
             surrogate_data.kernel = matern_15(
-                ard=hyperparameters.ard, lengthscale_prior=lengthscale_prior
+                ard=hyperparameters.ard,
+                lengthscale_prior=lengthscale_prior,
             )
         else:
             raise ValueError(f"Kernel {hyperparameters.kernel} not known.")
@@ -89,7 +94,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
     noise_prior: AnyPrior = Field(default_factory=lambda: THREESIX_NOISE_PRIOR())
     task_prior: Optional[LKJPrior] = Field(default_factory=lambda: None)
     hyperconfig: Optional[MultiTaskGPHyperconfig] = Field(
-        default_factory=lambda: MultiTaskGPHyperconfig()
+        default_factory=lambda: MultiTaskGPHyperconfig(),
     )
 
     @classmethod
@@ -124,7 +129,7 @@ class MultiTaskGPSurrogate(TrainableBotorchSurrogate):
             v[task_feature_id] = CategoricalEncodingEnum.ORDINAL
         elif v[task_feature_id] != CategoricalEncodingEnum.ORDINAL:
             raise ValueError(
-                f"The task feature {task_feature_id} has to be encoded as ordinal."
+                f"The task feature {task_feature_id} has to be encoded as ordinal.",
             )
 
         return v

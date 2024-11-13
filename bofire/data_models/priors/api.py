@@ -41,7 +41,9 @@ MBO_OUTPUTSCALE_PRIOR = partial(GammaPrior, concentration=2.0, rate=4.0)
 
 # prior for multitask kernel
 LKJ_PRIOR = partial(
-    LKJPrior, shape=2.0, sd_prior=GammaPrior(concentration=2.0, rate=0.15)
+    LKJPrior,
+    shape=2.0,
+    sd_prior=GammaPrior(concentration=2.0, rate=0.15),
 )
 
 # Hvarfner priors

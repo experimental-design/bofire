@@ -34,6 +34,7 @@ class _RandomForest(EnsembleModel):
 
         Args:
             rf (RandomForestRegressor): Fitted sklearn random forest regressor.
+
         """
         super().__init__()
         if not isinstance(rf, RandomForestRegressor):
@@ -52,6 +53,7 @@ class _RandomForest(EnsembleModel):
         Returns:
             A `batch_shape x s x n x m`-dimensional output tensor where
             `s` is the size of the ensemble.
+
         """
         # we transform to numpy
         nX = X.detach().numpy()
@@ -66,14 +68,14 @@ class _RandomForest(EnsembleModel):
             # loop over estimators
             for estimator in self._rf.estimators_:
                 batch_preds.append(
-                    estimator.predict(nX[i]).reshape((nX[i].shape[0], 1))
+                    estimator.predict(nX[i]).reshape((nX[i].shape[0], 1)),
                 )
             preds.append(np.stack(batch_preds, axis=0))
         preds = np.stack(preds, axis=0)
         if X.ndim == 3:  # we have a batch dim
             return torch.from_numpy(preds).to(**tkwargs)
-        else:  # we have no batch dim
-            return torch.from_numpy(preds).to(**tkwargs).squeeze(dim=0)
+        # we have no batch dim
+        return torch.from_numpy(preds).to(**tkwargs).squeeze(dim=0)
 
     @property
     def num_outputs(self) -> int:
@@ -119,6 +121,7 @@ class RandomForestSurrogate(BotorchSurrogate, TrainableSurrogate):
         Args:
             X (pd.DataFrame): Dataframe with X values.
             Y (pd.DataFrame): Dataframe with Y values.
+
         """
         transformed_X = self.inputs.transform(X, self.input_preprocessing_specs)
 

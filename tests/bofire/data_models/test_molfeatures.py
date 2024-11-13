@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-import bofire.data_models.molfeatures.names as names
+from bofire.data_models.molfeatures import names
 from bofire.data_models.molfeatures.api import (
     Fingerprints,
     FingerprintsFragments,
@@ -64,7 +64,8 @@ def test_mordred():
         ),
         (
             FingerprintsFragments(
-                n_bits=32, fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+                n_bits=32,
+                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
             ),
             [f"fingerprint_{i}" for i in range(32)]
             + ["fr_unbrch_alkane", "fr_thiocyan"],
@@ -183,7 +184,8 @@ def test_molfeatures_type_get_descriptor_values_fingerprintsfragments():
     }
 
     molfeature = FingerprintsFragments(
-        n_bits=32, fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+        n_bits=32,
+        fragments=["fr_unbrch_alkane", "fr_thiocyan"],
     )
     generated = molfeature.get_descriptor_values(VALID_SMILES)
     assert_frame_equal(generated, pd.DataFrame.from_dict(values))

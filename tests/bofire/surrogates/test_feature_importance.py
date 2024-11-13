@@ -26,7 +26,7 @@ def get_model_and_data():
                 bounds=(-4, 4),
             )
             for i in range(3)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=20)
@@ -132,7 +132,12 @@ def test_permutation_importance_hook(use_test):
     y = experiments[["y"]]
     model.fit(experiments=experiments)
     results = permutation_importance_hook(
-        surrogate=model, X_train=X, y_train=y, X_test=X, y_test=y, use_test=use_test
+        surrogate=model,
+        X_train=X,
+        y_train=y,
+        X_test=X,
+        y_test=y,
+        use_test=use_test,
     )
     assert isinstance(results, dict)
     assert len(results) == len(metrics)
@@ -153,7 +158,8 @@ def test_combine_permutation_importances(n_folds):
     )
     for m in metrics.keys():
         importance = combine_permutation_importances(
-            importances=pi["pemutation_importance"], metric=m
+            importances=pi["pemutation_importance"],
+            metric=m,
         )
         assert list(importance.columns) == model.inputs.get_keys()
         assert len(importance) == n_folds

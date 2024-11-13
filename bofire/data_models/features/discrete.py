@@ -15,6 +15,7 @@ class DiscreteInput(NumericalInput):
     Attributes:
         key(str): key of the feature.
         values(List[float]): the discretized allowed values during the optimization.
+
     """
 
     type: Literal["DiscreteInput"] = "DiscreteInput"
@@ -37,12 +38,13 @@ class DiscreteInput(NumericalInput):
 
         Returns:
             List[values]: Sorted list of values
+
         """
         if len(values) != len(set(values)):
             raise ValueError("Discrete values must be unique")
         if len(values) == 1:
             raise ValueError(
-                "Fixed discrete inputs are not supported. Please use a fixed continuous input."
+                "Fixed discrete inputs are not supported. Please use a fixed continuous input.",
             )
         if len(values) == 0:
             raise ValueError("No values defined.")
@@ -69,11 +71,12 @@ class DiscreteInput(NumericalInput):
 
         Returns:
             pd.Series: _uggested candidates for the feature
+
         """
         values = super().validate_candidental(values)
         if not np.isin(values.to_numpy(), np.array(self.values)).all():
             raise ValueError(
-                f"Not allowed values in candidates for feature {self.key}."
+                f"Not allowed values in candidates for feature {self.key}.",
             )
         return values
 
@@ -82,12 +85,15 @@ class DiscreteInput(NumericalInput):
 
         Args:
             n (int): number of samples.
+            seed (int, optional): random seed. Defaults to None.
 
         Returns:
             pd.Series: drawn samples.
+
         """
         return pd.Series(
-            name=self.key, data=np.random.default_rng(seed=seed).choice(self.values, n)
+            name=self.key,
+            data=np.random.default_rng(seed=seed).choice(self.values, n),
         )
 
     def from_continuous(self, values: pd.DataFrame) -> pd.Series:
@@ -98,11 +104,11 @@ class DiscreteInput(NumericalInput):
 
         Returns:
             pd.Series: Series with discrete values.
-        """
 
+        """
         s = pd.DataFrame(
             data=np.abs(
-                (values[self.key].to_numpy()[:, np.newaxis] - np.array(self.values))
+                values[self.key].to_numpy()[:, np.newaxis] - np.array(self.values),
             ),
             columns=self.values,
             index=values.index,

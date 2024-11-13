@@ -1,6 +1,6 @@
 # Installation
 
-In BoFire we have several optional depencies.
+In BoFire we have several optional dependencies.
 
 ### Domain and Optimization Algorithms
 

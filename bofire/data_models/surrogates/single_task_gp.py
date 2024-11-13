@@ -38,12 +38,13 @@ class SingleTaskGPHyperconfig(Hyperconfig):
     inputs: Inputs = Inputs(
         features=[
             CategoricalInput(
-                key="kernel", categories=["rbf", "matern_1.5", "matern_2.5"]
+                key="kernel",
+                categories=["rbf", "matern_1.5", "matern_2.5"],
             ),
             CategoricalInput(key="prior", categories=["mbo", "threesix", "hvarfner"]),
             CategoricalInput(key="scalekernel", categories=["True", "False"]),
             CategoricalInput(key="ard", categories=["True", "False"]),
-        ]
+        ],
     )
     target_metric: RegressionMetricsEnum = RegressionMetricsEnum.MAE
     hyperstrategy: Literal["FactorialStrategy", "SoboStrategy", "RandomStrategy"] = (
@@ -52,7 +53,8 @@ class SingleTaskGPHyperconfig(Hyperconfig):
 
     @staticmethod
     def _update_hyperparameters(
-        surrogate_data: "SingleTaskGPSurrogate", hyperparameters: pd.Series
+        surrogate_data: "SingleTaskGPSurrogate",
+        hyperparameters: pd.Series,
     ):
         def matern_25(ard: bool, lengthscale_prior: AnyPrior) -> MaternKernel:
             return MaternKernel(nu=2.5, lengthscale_prior=lengthscale_prior, ard=ard)
@@ -114,7 +116,7 @@ class SingleTaskGPSurrogate(TrainableBotorchSurrogate):
     )
     noise_prior: AnyPrior = Field(default_factory=lambda: HVARFNER_NOISE_PRIOR())
     hyperconfig: Optional[SingleTaskGPHyperconfig] = Field(
-        default_factory=lambda: SingleTaskGPHyperconfig()
+        default_factory=lambda: SingleTaskGPHyperconfig(),
     )
 
     @classmethod

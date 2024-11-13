@@ -52,7 +52,7 @@ class Detergent(Benchmark):
                 [0.8737, 8.7178, 0.0, 0.0, 0.0],
                 [0.0, 2.6651, 2.3495, 0.046, 0.0],
                 [0.0, 0.0, 0.0, 0.0, 0.0],
-            ]
+            ],
         )
 
         self._domain = Domain.from_lists(
@@ -82,5 +82,7 @@ class Detergent(Benchmark):
         x = np.atleast_2d(X[self.domain.inputs.get_keys()])
         xp = np.stack([_poly2(xi) for xi in x], axis=0)
         return pd.DataFrame(
-            xp @ self.coef, columns=self.domain.outputs.get_keys(), index=X.index
+            xp @ self.coef,
+            columns=self.domain.outputs.get_keys(),
+            index=X.index,
         )

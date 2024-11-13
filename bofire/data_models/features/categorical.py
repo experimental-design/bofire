@@ -21,6 +21,7 @@ class CategoricalInput(Input):
     Attributes:
         categories (List[str]): Names of the categories.
         allowed (List[bool]): List of bools indicating if a category is allowed within the optimization.
+
     """
 
     type: Literal["CategoricalInput"] = "CategoricalInput"  # type: ignore
@@ -29,7 +30,8 @@ class CategoricalInput(Input):
 
     categories: CategoryVals
     allowed: Optional[Annotated[List[bool], Field(min_length=2)]] = Field(
-        default=None, validate_default=True
+        default=None,
+        validate_default=True,
     )
 
     @field_validator("allowed")
@@ -61,54 +63,58 @@ class CategoricalInput(Input):
 
         Returns:
             [bool]: True if there is only one allowed category
+
         """
         if self.allowed is None:
             return False
         return sum(self.allowed) == 1
 
     def fixed_value(
-        self, transform_type: Optional[TTransform] = None
+        self,
+        transform_type: Optional[TTransform] = None,
     ) -> Union[List[str], List[float], None]:
         """Returns the categories to which the feature is fixed, None if the feature is not fixed
 
         Returns:
             List[str]: List of categories or None
+
         """
         if self.is_fixed():
             val = self.get_allowed_categories()[0]
             if transform_type is None:
                 return [val]
-            elif transform_type == CategoricalEncodingEnum.ONE_HOT:
+            if transform_type == CategoricalEncodingEnum.ONE_HOT:
                 return self.to_onehot_encoding(pd.Series([val])).values[0].tolist()
-            elif transform_type == CategoricalEncodingEnum.DUMMY:
+            if transform_type == CategoricalEncodingEnum.DUMMY:
                 return self.to_dummy_encoding(pd.Series([val])).values[0].tolist()
-            elif transform_type == CategoricalEncodingEnum.ORDINAL:
+            if transform_type == CategoricalEncodingEnum.ORDINAL:
                 return self.to_ordinal_encoding(pd.Series([val])).tolist()
-            else:
-                raise ValueError(
-                    f"Unkwon transform type {transform_type} for categorical input {self.key}"
-                )
-        else:
-            return None
+            raise ValueError(
+                f"Unkwon transform type {transform_type} for categorical input {self.key}",
+            )
+        return None
 
     def get_allowed_categories(self):
         """Returns the allowed categories.
 
         Returns:
             list of str: The allowed categories
+
         """
         if self.allowed is None:
             return []
         return [c for c, a in zip(self.categories, self.allowed) if a]
 
     def validate_experimental(
-        self, values: pd.Series, strict: bool = False
+        self,
+        values: pd.Series,
+        strict: bool = False,
     ) -> pd.Series:
         """Method to validate the experimental dataFrame
 
         Args:
             values (pd.Series): A dataFrame with experiments
-            strict (bool, optional): Boolean to distinguish if the occurence of fixed features in the dataset should be considered or not. Defaults to False.
+            strict (bool, optional): Boolean to distinguish if the occurrence of fixed features in the dataset should be considered or not. Defaults to False.
 
         Raises:
             ValueError: when an entry is not in the list of allowed categories
@@ -116,17 +122,18 @@ class CategoricalInput(Input):
 
         Returns:
             pd.Series: A dataFrame with experiments
+
         """
         values = values.map(str)
         if sum(values.isin(self.categories)) != len(values):
             raise ValueError(
-                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
+                f"invalid values for `{self.key}`, allowed are: `{self.categories}`",
             )
         if strict:
             possible_categories = self.get_possible_categories(values)
             if len(possible_categories) != len(self.categories):
                 raise ValueError(
-                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them."
+                    f"Categories {list(set(self.categories)-set(possible_categories))} of feature {self.key} not used. Remove them.",
                 )
         return values
 
@@ -141,11 +148,12 @@ class CategoricalInput(Input):
 
         Returns:
             pd.Series: The passed dataFrame with candidates
+
         """
         values = values.map(str)
         if sum(values.isin(self.get_allowed_categories())) != len(values):
             raise ValueError(
-                f"not all values of input feature `{self.key}` are a valid allowed category from {self.get_allowed_categories()}"
+                f"not all values of input feature `{self.key}` are a valid allowed category from {self.get_allowed_categories()}",
             )
         return values
 
@@ -154,6 +162,7 @@ class CategoricalInput(Input):
 
         Returns:
             List[str]: List of the non-allowed categories
+
         """
         return list(set(self.categories) - set(self.get_allowed_categories()))
 
@@ -166,6 +175,7 @@ class CategoricalInput(Input):
 
         Returns:
             list: list of possible categories
+
         """
         return sorted(set(list(set(values.tolist())) + self.get_allowed_categories()))
 
@@ -177,6 +187,7 @@ class CategoricalInput(Input):
 
         Returns:
             pd.DataFrame: One-hot transformed data frame.
+
         """
         return pd.DataFrame(
             {get_encoded_name(self.key, c): values == c for c in self.categories},
@@ -195,13 +206,14 @@ class CategoricalInput(Input):
 
         Returns:
             pd.Series: Series with categorical values.
+
         """
         cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):
             raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}.",
             )
         s = values[cat_cols].idxmax(1).str[(len(self.key) + 1) :]
         s.name = self.key
@@ -215,6 +227,7 @@ class CategoricalInput(Input):
 
         Returns:
             pd.DataFrame: Dummy-hot transformed data frame.
+
         """
         return pd.DataFrame(
             {get_encoded_name(self.key, c): values == c for c in self.categories[1:]},
@@ -233,13 +246,14 @@ class CategoricalInput(Input):
 
         Returns:
             pd.Series: Series with categorical values.
+
         """
         cat_cols = [get_encoded_name(self.key, c) for c in self.categories]
         # we allow here explicitly that the dataframe can have more columns than needed to have it
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols[1:]]):
             raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols[1:]}."
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols[1:]}.",
             )
         values = values.copy()
         values[cat_cols[0]] = 1 - values[cat_cols[1:]].sum(axis=1)
@@ -255,6 +269,7 @@ class CategoricalInput(Input):
 
         Returns:
             pd.Series: Ordinal encoded values.
+
         """
         enc = pd.Series(range(len(self.categories)), index=list(self.categories))
         s = enc[values]
@@ -270,6 +285,7 @@ class CategoricalInput(Input):
 
         Returns:
             pd.Series: Series with categorical values.
+
         """
         enc = np.array(self.categories)
         return pd.Series(enc[values], index=values.index, name=self.key)
@@ -279,14 +295,17 @@ class CategoricalInput(Input):
 
         Args:
             n (int): number of samples.
+            seed (int, optional): random seed. Defaults to None.
 
         Returns:
             pd.Series: drawn samples.
+
         """
         return pd.Series(
             name=self.key,
             data=np.random.default_rng(seed=seed).choice(
-                self.get_allowed_categories(), n
+                self.get_allowed_categories(),
+                n,
             ),
         )
 
@@ -319,18 +338,18 @@ class CategoricalInput(Input):
             return lower, upper
         if transform_type == CategoricalEncodingEnum.DESCRIPTOR:
             raise ValueError(
-                f"Invalid descriptor transform for categorical {self.key}."
+                f"Invalid descriptor transform for categorical {self.key}.",
             )
-        else:
-            raise ValueError(
-                f"Invalid transform_type {transform_type} provided for categorical {self.key}."
-            )
+        raise ValueError(
+            f"Invalid transform_type {transform_type} provided for categorical {self.key}.",
+        )
 
     def __str__(self) -> str:
         """Returns the number of categories as str
 
         Returns:
             str: Number of categories
+
         """
         return f"{len(self.categories)} categories"
 
@@ -344,13 +363,14 @@ class CategoricalOutput(Output):
 
     @model_validator(mode="after")
     def validate_objective_categories(self):
-        """validates that objective categories match the output categories
+        """Validates that objective categories match the output categories
 
         Raises:
             ValueError: when categories do not match objective categories
 
         Returns:
             self
+
         """
         if self.objective.categories != self.categories:
             raise ValueError("categories must match to objective categories")
@@ -369,7 +389,7 @@ class CategoricalOutput(Output):
         values = values.map(str)
         if sum(values.isin(self.categories)) != len(values):
             raise ValueError(
-                f"invalid values for `{self.key}`, allowed are: `{self.categories}`"
+                f"invalid values for `{self.key}`, allowed are: `{self.categories}`",
             )
         return values
 

@@ -14,7 +14,8 @@ AnyOutlierDetector = IterativeTrimming
 class OutlierDetections(BaseModel):
     """ "List of Outlier detectors.
 
-    Behaves similar to a outlier_detector."""
+    Behaves similar to a outlier_detector.
+    """
 
     detectors: Annotated[List[AnyOutlierDetector], Field(min_length=1)]
 
@@ -23,9 +24,9 @@ class OutlierDetections(BaseModel):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.detectors]
-                )
-            )
+                    [model.outputs.get() for model in self.detectors],
+                ),
+            ),
         )
 
     @field_validator("detectors")
@@ -33,8 +34,8 @@ class OutlierDetections(BaseModel):
     def validate_detectors(cls, v):
         used_output_feature_keys = list(
             itertools.chain.from_iterable(
-                [detector.outputs.get_keys() for detector in v]
-            )
+                [detector.outputs.get_keys() for detector in v],
+            ),
         )
         if len(set(used_output_feature_keys)) != len(used_output_feature_keys):
             raise ValueError("Output feature keys are not unique across detectors.")
@@ -49,7 +50,7 @@ class OutlierDetections(BaseModel):
         for i, model in enumerate(self.detectors):
             if len(model.inputs) > len(inputs):
                 raise ValueError(
-                    f"Model with index {i} has more features than acceptable."
+                    f"Model with index {i} has more features than acceptable.",
                 )
             for feat in model.inputs:
                 try:

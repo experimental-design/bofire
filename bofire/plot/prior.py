@@ -24,6 +24,7 @@ def plot_prior_pdf_plotly(
 
     Returns:
         fig, ax objects of the plot.
+
     """
     use_labels = labels is not None and len(labels) == len(priors)
     x = np.linspace(lower, upper, 1000)

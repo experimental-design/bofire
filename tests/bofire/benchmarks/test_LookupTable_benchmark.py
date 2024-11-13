@@ -21,8 +21,8 @@ def test_LookupTable_benchmark(cls_benchmark: LookupTableBenchmark):
         cls_benchmark (Aspen_benchmark): Aspen_benchmark class
         return_complete (bool): _description_
         kwargs (dict): Arguments to the initializer of Aspen_benchmark. {"filename": , "domain": , "paths": }
-    """
 
+    """
     look_up = pd.DataFrame(columns=["x1", "x2", "y"])
     look_up["x1"] = np.random.choice(["a", "b", "c", "d"], 10)
     look_up["x2"] = np.random.choice(["e", "b", "f", "d"], 10)

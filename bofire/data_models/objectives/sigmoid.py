@@ -18,6 +18,7 @@ class SigmoidObjective(Objective, ConstrainedObjective):
         w (float): float between zero and one for weighting the objective.
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
         tp (float): Turning point of the sigmoid function.
+
     """
 
     steepness: TGt0
@@ -50,6 +51,7 @@ class MaximizeSigmoidObjective(SigmoidObjective):
 
         Returns:
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+
         """
         return 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))
 
@@ -62,6 +64,7 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
         tp (float): Relative turning point of the sigmoid function. The actual turning point is calculated by adding
             the maximum of the observed x values to the relative turning point.
+
     """
 
     type: Literal["MovingMaximizeSigmoidObjective"] = "MovingMaximizeSigmoidObjective"
@@ -74,11 +77,14 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
 
         Returns:
             float: The adjusted turning point for the sigmoid function.
+
         """
         return x.max() + self.tp
 
     def __call__(
-        self, x: Union[pd.Series, np.ndarray], x_adapt: Union[pd.Series, np.ndarray]
+        self,
+        x: Union[pd.Series, np.ndarray],
+        x_adapt: Union[pd.Series, np.ndarray],
     ) -> Union[pd.Series, np.ndarray]:
         """The call function returning a sigmoid shaped reward for passed x values.
 
@@ -88,6 +94,7 @@ class MovingMaximizeSigmoidObjective(SigmoidObjective):
 
         Returns:
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+
         """
         return 1 / (
             1 + np.exp(-1 * self.steepness * (x - self.get_adjusted_tp(x_adapt)))
@@ -101,6 +108,7 @@ class MinimizeSigmoidObjective(SigmoidObjective):
         w (float): float between zero and one for weighting the objective.
         steepness (float): Steepness of the sigmoid function. Has to be greater than zero.
         tp (float): Turning point of the sigmoid function.
+
     """
 
     type: Literal["MinimizeSigmoidObjective"] = "MinimizeSigmoidObjective"
@@ -118,5 +126,6 @@ class MinimizeSigmoidObjective(SigmoidObjective):
 
         Returns:
             np.ndarray: A reward calculated with a sigmoid function. The stepness and the tipping point can be modified via passed arguments.
+
         """
         return 1 - 1 / (1 + np.exp(-1 * self.steepness * (x - self.tp)))

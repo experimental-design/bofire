@@ -106,41 +106,41 @@ if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if1",
-    }
+    },
 )
 if2 = ContinuousInput(
     **{
         **VALID_FIXED_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if2",
-    }
+    },
 )
 
 if3 = CategoricalInput(
     **{
         **VALID_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "if3",
-    }
+    },
 )
 
 if4 = CategoricalInput(
     **{
         **VALID_FIXED_CATEGORICAL_INPUT_FEATURE_SPEC,
         "key": "if4",
-    }
+    },
 )
 
 if5 = CategoricalDescriptorInput(
     **{
         **VALID_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         "key": "if5",
-    }
+    },
 )
 
 if6 = CategoricalDescriptorInput(
     **{
         **VALID_FIXED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         "key": "if6",
-    }
+    },
 )
 
 if7 = DummyFeature(key="if7")
@@ -149,28 +149,28 @@ if8 = CategoricalDescriptorInput(
     **{
         **VALID_ALLOWED_CATEGORICAL_DESCRIPTOR_INPUT_FEATURE_SPEC,
         "key": "if8",
-    }
+    },
 )
 
 if9 = DiscreteInput(
     **{
         **VALID_DISCRETE_INPUT_FEATURE_SPEC,
         "key": "if9",
-    }
+    },
 )
 
 of1 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of1",
-    }
+    },
 )
 
 of2 = ContinuousOutput(
     **{
         **VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC,
         "key": "of2",
-    }
+    },
 )
 
 domains = [
@@ -241,7 +241,7 @@ data = [
             "if9": [1.0, 2.0, 1.0, 2.0],
             "of1": [10, 11, 12, 13],
             "valid_of1": [1, 0, 1, 0],
-        }
+        },
     ),
     pd.DataFrame.from_dict(
         {
@@ -254,7 +254,7 @@ data = [
             "if9": [1.0, 2.0, 1.0, 2.0],
             "of1": [10, 11, 12, 13],
             "valid_of1": [1, 0, 1, 0],
-        }
+        },
     ),
     pd.DataFrame.from_dict(
         {
@@ -269,7 +269,7 @@ data = [
             "of2": [100, 103, 105, 110],
             "valid_of1": [1, 0, 1, 0],
             "valid_of2": [0, 1, 1, 0],
-        }
+        },
     ),
     pd.DataFrame.from_dict(
         {
@@ -277,7 +277,7 @@ data = [
             "if2": [3, 3, 3, 3],
             "of1": [10, 11, 12, 13],
             "valid_of1": [1, 0, 1, 0],
-        }
+        },
     ),
     pd.DataFrame.from_dict(
         {
@@ -289,7 +289,7 @@ data = [
             "of2": [100, 103, 105, 110],
             "valid_of1": [1, 0, 1, 0],
             "valid_of2": [0, 1, 1, 0],
-        }
+        },
     ),
 ]
 
@@ -312,7 +312,7 @@ def test_base_invalid_descriptor_method():
                     inputs=domains[0].inputs,
                     outputs=domains[0].outputs,
                     input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
-                )
+                ),
             ],
             descriptor_method="FREE",
             categorical_method="EXHAUSTIVE",
@@ -348,8 +348,8 @@ def test_base_invalid_descriptor_method():
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                             "if6": CategoricalEncodingEnum.ONE_HOT,
                         },
-                    )
-                ]
+                    ),
+                ],
             ),
             "EXHAUSTIVE",
             "EXHAUSTIVE",
@@ -362,14 +362,14 @@ def test_base_invalid_descriptor_method():
                     surrogate_data_models.SingleTaskGPSurrogate(
                         inputs=domains[1].inputs,
                         outputs=domains[1].outputs,
-                    )
-                ]
+                    ),
+                ],
             ),
             "FREE",
             "EXHAUSTIVE",
             {1: 3, 5: 1, 6: 2, 10: 1, 11: 0, 12: 0},
         ),
-        (  #
+        (
             domains[1],
             surrogate_data_models.BotorchSurrogates(
                 surrogates=[
@@ -380,8 +380,8 @@ def test_base_invalid_descriptor_method():
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                             "if6": CategoricalEncodingEnum.ONE_HOT,
                         },
-                    )
-                ]
+                    ),
+                ],
             ),
             "FREE",
             "FREE",
@@ -404,8 +404,8 @@ def test_base_invalid_descriptor_method():
                         input_preprocessing_specs={
                             "if8": CategoricalEncodingEnum.ONE_HOT,
                         },
-                    )
-                ]
+                    ),
+                ],
             ),
             "FREE",
             "FREE",
@@ -428,7 +428,11 @@ def test_base_invalid_descriptor_method():
     ],
 )
 def test_base_get_fixed_features(
-    domain, surrogate_specs, categorical_method, descriptor_method, expected
+    domain,
+    surrogate_specs,
+    categorical_method,
+    descriptor_method,
+    expected,
 ):
     data_model = DummyStrategyDataModel(
         domain=domain,
@@ -507,8 +511,8 @@ def test_base_get_fixed_features(
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
-                    )
-                ]
+                    ),
+                ],
             ),
             [
                 {2: 1.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0, 1: 1},
@@ -544,8 +548,8 @@ def test_base_get_fixed_features(
                         input_preprocessing_specs={
                             "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
-                    )
-                ]
+                    ),
+                ],
             ),
             [
                 {2: 1.0, 3: 0.0, 4: 0.0, 5: 1.0, 6: 0.0, 7: 0.0},
@@ -569,8 +573,8 @@ def test_base_get_fixed_features(
                     surrogate_data_models.SingleTaskGPSurrogate(
                         inputs=domains[0].inputs,
                         outputs=domains[0].outputs,
-                    )
-                ]
+                    ),
+                ],
             ),
             [{2: 1.0, 3: 2.0}, {2: 3.0, 3: 7.0}, {2: 5.0, 3: 1.0}],
         ),
@@ -584,8 +588,8 @@ def test_base_get_fixed_features(
                     surrogate_data_models.SingleTaskGPSurrogate(
                         inputs=domains[0].inputs,
                         outputs=domains[0].outputs,
-                    )
-                ]
+                    ),
+                ],
             ),
             [{1: 1.0}, {1: 2.0}],
         ),
@@ -599,8 +603,8 @@ def test_base_get_fixed_features(
                     surrogate_data_models.SingleTaskGPSurrogate(
                         inputs=domains[0].inputs,
                         outputs=domains[0].outputs,
-                    )
-                ]
+                    ),
+                ],
             ),
             [
                 {2: 1.0, 3: 2.0, 1: 1.0},
@@ -622,10 +626,10 @@ def test_base_get_fixed_features(
                         inputs=domains[0].inputs,
                         outputs=domains[0].outputs,
                         input_preprocessing_specs={
-                            "if5": CategoricalEncodingEnum.ONE_HOT
+                            "if5": CategoricalEncodingEnum.ONE_HOT,
                         },
-                    )
-                ]
+                    ),
+                ],
             ),
             [{}],
         ),
@@ -690,25 +694,37 @@ def test_base_invalid_pair_encoding_method(domain):
         (
             domains[0],
             generate_experiments(
-                domains[0], row_count=5, tol=1.0, force_all_categories=True
+                domains[0],
+                row_count=5,
+                tol=1.0,
+                force_all_categories=True,
             ),
         ),
         (
             domains[1],
             generate_experiments(
-                domains[1], row_count=5, tol=1.0, force_all_categories=True
+                domains[1],
+                row_count=5,
+                tol=1.0,
+                force_all_categories=True,
             ),
         ),
         (
             domains[2],
             generate_experiments(
-                domains[2], row_count=5, tol=1.0, force_all_categories=True
+                domains[2],
+                row_count=5,
+                tol=1.0,
+                force_all_categories=True,
             ),
         ),
         (
             domains[4],
             generate_experiments(
-                domains[4], row_count=5, tol=1.0, force_all_categories=True
+                domains[4],
+                row_count=5,
+                tol=1.0,
+                force_all_categories=True,
             ),
         ),
     ],
@@ -727,14 +743,20 @@ def test_base_fit(domain, data):
         (
             domains[0],
             generate_experiments(
-                domains[0], row_count=10, tol=1.0, force_all_categories=True
+                domains[0],
+                row_count=10,
+                tol=1.0,
+                force_all_categories=True,
             ),
             specs.acquisition_functions.valid().obj(),
         ),
         (
             domains[1],
             generate_experiments(
-                domains[1], row_count=10, tol=1.0, force_all_categories=True
+                domains[1],
+                row_count=10,
+                tol=1.0,
+                force_all_categories=True,
             ),
             specs.acquisition_functions.valid().obj(),
         ),
@@ -758,7 +780,7 @@ def test_base_fit(domain, data):
 )
 def test_base_predict(domain, data, acquisition_function):
     data_model = DummyStrategyDataModel(
-        domain=domain
+        domain=domain,
     )  # , acquisition_function=acquisition_function
     # )
     myStrategy = DummyStrategy(data_model=data_model)
@@ -775,11 +797,13 @@ def test_base_predict(domain, data, acquisition_function):
             [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
             [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
             [CategoricalMethodEnum.FREE, CategoricalMethodEnum.EXHAUSTIVE],
-        )
+        ),
     ),
 )
 def test_base_setup_ask_fixed_features(
-    categorical_method, descriptor_method, discrete_method
+    categorical_method,
+    descriptor_method,
+    discrete_method,
 ):
     # test for fixed features list
     data_model = DummyStrategyDataModel(
@@ -794,8 +818,8 @@ def test_base_setup_ask_fixed_features(
                     inputs=domains[0].inputs,
                     outputs=domains[0].outputs,
                     # input_preprocessing_specs={"if5": CategoricalEncodingEnum.ONE_HOT},
-                )
-            ]
+                ),
+            ],
         ),
     )
     myStrategy = DummyStrategy(data_model=data_model)
@@ -854,7 +878,8 @@ def test_base_setup_ask():
     )
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy._experiments = benchmark.f(
-        benchmark.domain.inputs.sample(3), return_complete=True
+        benchmark.domain.inputs.sample(3),
+        return_complete=True,
     )
     (
         bounds,
@@ -886,7 +911,8 @@ def test_base_setup_ask():
     )
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy._experiments = benchmark.f(
-        benchmark.domain.inputs.sample(3), return_complete=True
+        benchmark.domain.inputs.sample(3),
+        return_complete=True,
     )
     (
         bounds,
@@ -910,8 +936,10 @@ def test_base_setup_ask():
     benchmark = Hartmann(dim=6, allowed_k=3)
     benchmark.domain.constraints.constraints.append(
         ProductInequalityConstraint(
-            features=["x_1", "x_2", "x_3"], exponents=[1, 1, 1], rhs=50
-        )
+            features=["x_1", "x_2", "x_3"],
+            exponents=[1, 1, 1],
+            rhs=50,
+        ),
     )
     data_model = DummyStrategyDataModel(
         domain=benchmark.domain,
@@ -919,7 +947,8 @@ def test_base_setup_ask():
     )
     myStrategy = DummyStrategy(data_model=data_model)
     myStrategy._experiments = benchmark.f(
-        benchmark.domain.inputs.sample(3), return_complete=True
+        benchmark.domain.inputs.sample(3),
+        return_complete=True,
     )
     (
         bounds,

@@ -54,6 +54,6 @@ class TanimotoGPSurrogate(TrainableBotorchSurrogate):
             for value in v.values()
         ):
             raise ValueError(
-                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present."
+                "TanimotoGPSurrogate can only be used if at least one of fingerprints, fragments, or fingerprintsfragments features are present.",
             )
         return v

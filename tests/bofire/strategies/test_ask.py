@@ -38,7 +38,7 @@ def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_coun
     # generate data
     benchmark = Ackley(categorical=categorical, descriptor=descriptor)
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
 
@@ -71,10 +71,10 @@ def test_ask_single_objective(cls, spec, categorical, descriptor, candidate_coun
 def test_ask_multi_objective(cls, spec, use_ref_point, candidate_count):
     # generate data
     benchmark = DTLZ2(
-        dim=6
+        dim=6,
     )  # TODO: expand benchmark also towards categorical features?
     random_strategy = RandomStrategy(
-        data_model=RandomStrategyDataModel(domain=benchmark.domain)
+        data_model=RandomStrategyDataModel(domain=benchmark.domain),
     )
     experiments = benchmark.f(random_strategy.ask(10), return_complete=True)
 

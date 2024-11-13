@@ -55,12 +55,12 @@ def test_sobo_with_multitask(task_input):
             "x": np.concatenate([task_1_x, task_2_x]),
             "y": np.concatenate([task_1_y, task_2_y]),
             "task": ["task_1"] * len(task_1_x) + ["task_2"] * len(task_2_x),
-        }
+        },
     )
 
     domain = _domain(task_input)
     surrogate_data = [
-        MultiTaskGPSurrogate(inputs=domain.inputs, outputs=domain.outputs)
+        MultiTaskGPSurrogate(inputs=domain.inputs, outputs=domain.outputs),
     ]
 
     surrogate_specs = BotorchSurrogates(surrogates=surrogate_data)  # type: ignore
@@ -85,7 +85,9 @@ def test_sobo_with_multitask(task_input):
 def test_nosurrogate_multitask():
     def test(strat_data_model, **kwargs):
         task_input = TaskInput(
-            key="task", categories=["task_1", "task_2"], allowed=[False, True]
+            key="task",
+            categories=["task_1", "task_2"],
+            allowed=[False, True],
         )
         task_1_x = np.linspace(0.6, 1, 4)
         task_1_y = _task_1_f(task_1_x)
@@ -94,14 +96,14 @@ def test_nosurrogate_multitask():
                 "x": task_1_x,
                 "y": task_1_y,
                 "task": ["task_1"] * len(task_1_x),
-            }
+            },
         )
         domain = _domain(task_input)
         dm = strat_data_model(domain=domain, **kwargs)
 
-        strat = strategies.map(dm)
-        strat.tell(experiments)
-        candidate = strat.ask(1)
+        strategy = strategies.map(dm)
+        strategy.tell(experiments)
+        candidate = strategy.ask(1)
         assert len(candidate) == 1
 
         task_2_x = np.linspace(0, 1, 15)
@@ -111,10 +113,10 @@ def test_nosurrogate_multitask():
                 "x": np.concatenate([task_1_x, task_2_x]),
                 "y": np.concatenate([task_1_y, task_2_y]),
                 "task": ["task_1"] * len(task_1_x) + ["task_2"] * len(task_2_x),
-            }
+            },
         )
-        strat.tell(experiments)
-        candidate = strat.ask(1)
+        strategy.tell(experiments)
+        candidate = strategy.ask(1)
         assert len(candidate) == 1
 
     test(RandomStrategy)

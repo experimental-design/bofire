@@ -35,7 +35,7 @@ from tests.bofire.strategies.test_base import domains
 ENTMOOT_AVAILABLE = importlib.util.find_spec("entmoot") is not None
 if ENTMOOT_AVAILABLE:
     try:
-        # this is the recommended way to check precense of gurobi license file
+        # this is the recommended way to check presence  of gurobi license file
         gurobipy.Model()
         GUROBI_AVAILABLE = True
     except gurobipy.GurobiError:
@@ -76,7 +76,8 @@ def test_enting_not_fitted(common_args):
 def test_enting_param_consistency(common_args, params):
     # compare EntingParams objects between entmoot and bofire
     data_model = data_models.EntingStrategy(
-        domain=domains[0], **{**common_args, **params}
+        domain=domains[0],
+        **{**common_args, **params},
     )
     strategy = EntingStrategy(data_model=data_model)
 
@@ -164,6 +165,7 @@ def feat_equal(a: "FeatureType", b: "FeatureType") -> bool:
     Args:
         a: First feature.
         b: Second feature.
+
     """
     # no __eq__ method is implemented for FeatureType, hence the need for this function
     assert a is not None and b is not None
@@ -175,7 +177,7 @@ def feat_equal(a: "FeatureType", b: "FeatureType") -> bool:
             a.is_cat() == b.is_cat(),
             a.is_int() == b.is_int(),
             a.is_bin() == b.is_bin(),
-        )
+        ),
     )
 
 
@@ -204,7 +206,9 @@ of2 = ContinuousOutput(key="of2", objective=MaximizeObjective(w=1.0))
 of2_ent = {"name": "of2"}
 
 constr1 = LinearInequalityConstraint(
-    features=["if4", "if5"], coefficients=[1, 1], rhs=12
+    features=["if4", "if5"],
+    coefficients=[1, 1],
+    rhs=12,
 )
 constr2 = LinearEqualityConstraint(features=["if4", "if5"], coefficients=[1, 5], rhs=38)
 
@@ -224,13 +228,15 @@ def build_problem_config(inputs, outputs) -> "ProblemConfig":
 def test_domain_to_problem_config():
     domain = Domain.from_lists(inputs=[if1, if2, if3, if4], outputs=[of1, of2])
     ent_problem_config = build_problem_config(
-        inputs=[if1_ent, if2_ent, if3_ent, if4_ent], outputs=[of1_ent, of2_ent]
+        inputs=[if1_ent, if2_ent, if3_ent, if4_ent],
+        outputs=[of1_ent, of2_ent],
     )
     bof_problem_config, _ = domain_to_problem_config(domain)
     for feat_ent in ent_problem_config.feat_list:
         # get bofire feature with same name
         feat_bof = next(
-            (f for f in bof_problem_config.feat_list if f.name == feat_ent.name), None
+            (f for f in bof_problem_config.feat_list if f.name == feat_ent.name),
+            None,
         )
         assert feat_equal(feat_ent, feat_bof)
 
@@ -241,7 +247,9 @@ def test_domain_to_problem_config():
 def test_convert_constraint_to_entmoot():
     constraints = [constr1, constr2]
     domain = Domain.from_lists(
-        inputs=[if1, if2, if3, if4, if5], outputs=[of1, of2], constraints=constraints
+        inputs=[if1, if2, if3, if4, if5],
+        outputs=[of1, of2],
+        constraints=constraints,
     )
     _, model = domain_to_problem_config(domain)
 

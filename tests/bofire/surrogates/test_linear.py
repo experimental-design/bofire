@@ -15,7 +15,7 @@ def test_LinearSurrogate():
         features=[
             ContinuousInput(key="a", bounds=(0, 40)),
             ContinuousInput(key="b", bounds=(20, 60)),
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="c")])
 
@@ -48,7 +48,7 @@ def test_can_define_botorch_surrogate():
         features=[
             ContinuousInput(key="a", bounds=(0, 40)),
             ContinuousInput(key="b", bounds=(20, 80)),
-        ]
+        ],
     )
     outputs = [ContinuousOutput(key="c"), ContinuousOutput(key="d")]
     (
@@ -56,6 +56,6 @@ def test_can_define_botorch_surrogate():
             surrogates=[
                 LinearSurrogate(inputs=inputs, outputs=Outputs(features=[outputs[0]])),
                 LinearSurrogate(inputs=inputs, outputs=Outputs(features=[outputs[1]])),
-            ]
+            ],
         ),
     )

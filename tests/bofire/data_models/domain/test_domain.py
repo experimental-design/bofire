@@ -29,7 +29,9 @@ from bofire.utils.subdomain import get_subdomain
 
 def test_empty_domain():
     assert Domain() == Domain(
-        inputs=Inputs(), outputs=Outputs(), constraints=Constraints()
+        inputs=Inputs(),
+        outputs=Outputs(),
+        constraints=Constraints(),
     )
 
 
@@ -70,13 +72,15 @@ def constraint_list(input_list):
             features=[inp.key for inp in input_list],
             coefficients=[1.0] * len(input_list),
             rhs=11,
-        )
+        ),
     ]
 
 
 def test_from_lists(input_list, output_list, constraint_list):
     assert Domain.from_lists(
-        inputs=input_list, outputs=output_list, constraints=constraint_list
+        inputs=input_list,
+        outputs=output_list,
+        constraints=constraint_list,
     ) == Domain(
         inputs=Inputs(features=input_list),
         outputs=Outputs(features=output_list),
@@ -95,10 +99,12 @@ def test_from_lists(input_list, output_list, constraint_list):
             ],
             [
                 LinearEqualityConstraint(
-                    features=["if1", "if2"], coefficients=[1.0, 1.0], rhs=11
-                )
+                    features=["if1", "if2"],
+                    coefficients=[1.0, 1.0],
+                    rhs=11,
+                ),
             ],
-        )
+        ),
     ],
 )
 def test_invalid_type_in_linear_constraints(inputs, constraints):
@@ -121,7 +127,7 @@ def test_invalid_type_in_linear_constraints(inputs, constraints):
                     min_count=0,
                     max_count=1,
                     none_also_valid=True,
-                )
+                ),
             ],
         ),
         (
@@ -133,7 +139,7 @@ def test_invalid_type_in_linear_constraints(inputs, constraints):
                     min_count=0,
                     max_count=2,
                     none_also_valid=True,
-                )
+                ),
             ],
         ),
     ],
@@ -158,7 +164,7 @@ def test_valid_constraints_in_domain(outputs, inputs, constraints):
                     min_count=0,
                     max_count=1,
                     none_also_valid=True,
-                )
+                ),
             ],
         ),
         (
@@ -170,7 +176,7 @@ def test_valid_constraints_in_domain(outputs, inputs, constraints):
                     min_count=0,
                     max_count=2,
                     none_also_valid=True,
-                )
+                ),
             ],
         ),
         (
@@ -182,7 +188,7 @@ def test_valid_constraints_in_domain(outputs, inputs, constraints):
                     min_count=0,
                     max_count=1,
                     none_also_valid=True,
-                )
+                ),
             ],
         ),
         (
@@ -194,7 +200,7 @@ def test_valid_constraints_in_domain(outputs, inputs, constraints):
                     min_count=0,
                     max_count=1,
                     none_also_valid=True,
-                )
+                ),
             ],
         ),
     ],
@@ -216,7 +222,7 @@ data = pd.DataFrame.from_dict(
         "out2": [nan, 1.0, 2.0, 3.0, 4.0, 5.0],
         "valid_out1": [1, 0, 1, 1, 1, 1],
         "valid_out2": [1, 1, 0, 1, 1, 0],
-    }
+    },
 )
 
 if1 = ContinuousInput(key="x1", bounds=(1, 10))
@@ -231,7 +237,8 @@ of1_ = ContinuousOutput(key="out3", objective=None)
 of2_ = ContinuousOutput(key="out4", objective=None)
 
 domain = Domain(
-    inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+    inputs=Inputs(features=[if1, if2]),
+    outputs=Outputs(features=[of1, of2]),
 )
 domain2 = Domain(
     inputs=Inputs(features=[if1, if2]),
@@ -242,7 +249,8 @@ domain2 = Domain(
 
 def test_coerce_invalids():
     domain = Domain(
-        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, of2]),
     )
     experiments = domain.coerce_invalids(data)
     expected = pd.DataFrame.from_dict(
@@ -253,7 +261,7 @@ def test_coerce_invalids():
             "out2": [nan, 1.0, nan, 3.0, 4.0, nan],
             "valid_out1": [1, 0, 1, 1, 1, 1],
             "valid_out2": [1, 1, 0, 1, 1, 0],
-        }
+        },
     )
     assert_frame_equal(experiments, expected, check_dtype=False)
 
@@ -268,7 +276,7 @@ def test_aggregate_by_duplicates_no_continuous(method):
             "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
-        }
+        },
     )
     expected_aggregated = pd.DataFrame.from_dict(
         {
@@ -279,23 +287,28 @@ def test_aggregate_by_duplicates_no_continuous(method):
             "out2": [-3.5, -5.0, -6.0],
             "valid_out1": [1, 1, 1],
             "valid_out2": [1, 1, 1],
-        }
+        },
     )
     domain = Domain(
         inputs=Inputs(
             features=[
                 CategoricalInput(key="x1", categories=["a", "b", "c"]),
                 CategoricalInput(key="x2", categories=["a", "b", "c"]),
-            ]
+            ],
         ),
         outputs=Outputs(features=[of1, of2]),
     )
     aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
-        full, prec=2, method=method
+        full,
+        prec=2,
+        method=method,
     )
     assert duplicated_labcodes == [["1", "4"]]
     assert_frame_equal(
-        aggregated, expected_aggregated, check_dtype=False, check_like=True
+        aggregated,
+        expected_aggregated,
+        check_dtype=False,
+        check_like=True,
     )
 
 
@@ -310,7 +323,7 @@ def test_aggregate_by_duplicates(method):
             "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
-        }
+        },
     )
     expected_aggregated = pd.DataFrame.from_dict(
         {
@@ -321,17 +334,23 @@ def test_aggregate_by_duplicates(method):
             "out2": [-3.5, -5.0, -6.0],
             "valid_out1": [1, 1, 1],
             "valid_out2": [1, 1, 1],
-        }
+        },
     )
     domain = Domain(
-        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, of2]),
     )
     aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
-        full, prec=2, method=method
+        full,
+        prec=2,
+        method=method,
     )
     assert duplicated_labcodes == [["1", "4"]]
     assert_frame_equal(
-        aggregated, expected_aggregated, check_dtype=False, check_like=True
+        aggregated,
+        expected_aggregated,
+        check_dtype=False,
+        check_like=True,
     )
     # dataset without duplicates
     full = pd.DataFrame.from_dict(
@@ -342,7 +361,7 @@ def test_aggregate_by_duplicates(method):
             "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
-        }
+        },
     )
     expected_aggregated = pd.DataFrame.from_dict(
         {
@@ -353,13 +372,16 @@ def test_aggregate_by_duplicates(method):
             "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
-        }
+        },
     )
     domain = Domain(
-        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, of2]),
     )
     aggregated, duplicated_labcodes = domain.aggregate_by_duplicates(
-        full, prec=2, method=method
+        full,
+        prec=2,
+        method=method,
     )
     assert duplicated_labcodes == []
 
@@ -373,17 +395,19 @@ def test_aggregate_by_duplicates_error():
             "out2": [-4.0, -5.0, -6.0, -3.0],
             "valid_out1": [1, 1, 1, 1],
             "valid_out2": [1, 1, 1, 1],
-        }
+        },
     )
     domain = Domain(
-        inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2])
+        inputs=Inputs(features=[if1, if2]),
+        outputs=Outputs(features=[of1, of2]),
     )
     with pytest.raises(ValueError, match="Unknown aggregation type provided: 25"):
         domain.aggregate_by_duplicates(full, prec=2, method="25")
 
 
 domain = Domain(
-    inputs=Inputs(features=[if1, if2]), outputs=Outputs(features=[of1, of2, of1_, of2_])
+    inputs=Inputs(features=[if1, if2]),
+    outputs=Outputs(features=[of1, of2, of1_, of2_]),
 )
 
 
@@ -426,7 +450,7 @@ def test_get_subdomain_invalid(domain, output_feature_keys):
                     "col": [1, 2, 10, np.nan, "a"],
                     "col2": ["a", 10, 30, 40, 50],
                     "col3": [1, 2, 3, 4, 5.0],
-                }
+                },
             ),
             False,
         ),
@@ -436,7 +460,7 @@ def test_get_subdomain_invalid(domain, output_feature_keys):
                     "col": [1, 2, 10, np.nan, 6],
                     "col2": [5, 10, 30, 40, 50],
                     "col3": [1, 2, 3, 4, 5.0],
-                }
+                },
             ),
             False,
         ),
@@ -446,7 +470,7 @@ def test_get_subdomain_invalid(domain, output_feature_keys):
                     "col": [1, 2, 10, 7.0, 6],
                     "col2": [5, 10, 30, 40, 50],
                     "col3": [1, 2, 3, 4, 5.0],
-                }
+                },
             ),
             True,
         ),

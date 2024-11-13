@@ -12,6 +12,7 @@ class NormalPrior(Prior):
     Attributes:
         loc(float): mean/center of the normal distribution
         scale(PositiveFloat): width of the normal distribution
+
     """
 
     type: Literal["NormalPrior"] = "NormalPrior"
@@ -25,6 +26,7 @@ class LogNormalPrior(Prior):
     Attributes:
         loc(float): mean/center of the log-normal distribution
         scale(PositiveFloat): width of the log-normal distribution
+
     """
 
     type: Literal["LogNormalPrior"] = "LogNormalPrior"

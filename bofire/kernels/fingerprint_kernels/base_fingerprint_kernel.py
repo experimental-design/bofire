@@ -1,5 +1,4 @@
-"""
-This module was copied from the GAUCHE library(https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/base_fingerprint_kernel.py).
+"""This module was copied from the GAUCHE library(https://github.com/leojklarner/gauche/blob/main/gauche/kernels/fingerprint_kernels/base_fingerprint_kernel.py).
 
 GAUCHE was published under the following license (https://github.com/leojklarner/gauche/blob/main/LICENSE):
 
@@ -35,10 +34,11 @@ def default_postprocess_script(x):
 
 
 def batch_tanimoto_sim(
-    x1: torch.Tensor, x2: torch.Tensor, eps: float = 1e-6
+    x1: torch.Tensor,
+    x2: torch.Tensor,
+    eps: float = 1e-6,
 ) -> torch.Tensor:
-    """
-    Tanimoto between two batched tensors, across last 2 dimensions.
+    """Tanimoto between two batched tensors, across last 2 dimensions.
     eps argument ensures numerical stability if all zero tensors are added.
     """
     # Tanimoto distance is proportional to (<x, y>) / (||x||^2 + ||y||^2 - <x, y>) where x and y are bit vectors
@@ -54,17 +54,14 @@ def batch_tanimoto_sim(
 
 
 class BitDistance(torch.nn.Module):
-    """
-    Distance module for bit vector test_kernels.
-    """
+    """Distance module for bit vector test_kernels."""
 
     def __init__(self, postprocess_script=default_postprocess_script):
         super().__init__()
         self._postprocess = postprocess_script
 
     def _sim(self, x1, x2, postprocess, x1_eq_x2=False, metric="tanimoto"):
-        """
-        Computes the similarity between x1 and x2
+        """Computes the similarity between x1 and x2
 
         Args:
             x1 (Tensor): First set of data where b is a batch dimension. Has shape `n x d` or `b x n x d`
@@ -78,21 +75,20 @@ class BitDistance(torch.nn.Module):
 
         Returns:
             Tensor: corresponding to the similarity matrix between `x1` and `x2`
+
         """
         # Branch for Tanimoto metric
         if metric == "tanimoto":
             res = batch_tanimoto_sim(x1, x2)
             res.clamp_min_(0)  # zero out negative values
             return self._postprocess(res) if postprocess else res
-        else:
-            raise RuntimeError(
-                "Similarity metric not supported. Available options are 'tanimoto'"
-            )
+        raise RuntimeError(
+            "Similarity metric not supported. Available options are 'tanimoto'",
+        )
 
 
 class BitKernel(Kernel):
-    """
-     Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
+    """Base class for test_kernels that operate on bit or count vectors such as ECFP fingerprints or RDKit fragments.
      In the typical use case, test_kernels inheriting from this class will specify a similarity metric such as Tanimoto,
      MinMax etc. This kernel does not have an `outputscale` parameter. To add a scaling parameter, decorate this kernel
      with a `gpytorch.test_kernels.ScaleKernel`. This base :class:`BitKernel` class does not include a lengthscale
@@ -100,6 +96,7 @@ class BitKernel(Kernel):
 
     Args:
         metric (str): The similarity metric to use. One of ['tanimoto']. Defaults to ''
+
     """
 
     def __init__(self, metric="", **kwargs):
@@ -118,8 +115,7 @@ class BitKernel(Kernel):
         postprocess=True,
         **params,
     ):
-        """
-        This is a helper method for computing the bit vector similarity between
+        """This is a helper method for computing the bit vector similarity between
         all pairs of points in x1 and x2.
 
         Args:
@@ -136,6 +132,7 @@ class BitKernel(Kernel):
             * `diag=False` and `last_dim_is_batch=True`: (`b x d x n x n`)
             * `diag=True`
             * `diag=True` and `last_dim_is_batch=True`: (`b x d x n`)
+
         """
         if last_dim_is_batch:
             x1 = x1.transpose(-1, -2).unsqueeze(-1)

@@ -38,7 +38,10 @@ from bofire.data_models.features.api import (
     ],
 )
 def test_categorical_descriptor_to_descriptor_encoding(
-    key, categories, samples_in, descriptors
+    key,
+    categories,
+    samples_in,
+    descriptors,
 ):
     c = CategoricalDescriptorInput(
         key=key,
@@ -153,10 +156,12 @@ def test_categorical_descriptor_to_descriptor_encoding_1d():
     ],
 )
 def test_categorical_descriptor_feature_get_bounds(
-    input_feature, expected_with_values, expected
+    input_feature,
+    expected_with_values,
+    expected,
 ):
     experiments = pd.DataFrame(
-        {"if1": ["a", "b"], "if2": ["a", "c"], "if3": ["a", "a"], "if4": ["b", "b"]}
+        {"if1": ["a", "b"], "if2": ["a", "c"], "if3": ["a", "a"], "if4": ["b", "b"]},
     )
     lower, upper = input_feature.get_bounds(
         transform_type=CategoricalEncodingEnum.DESCRIPTOR,
@@ -177,14 +182,14 @@ def test_categorical_descriptor_feature_get_bounds(
     [
         (
             specs.features.valid(CategoricalDescriptorInput).obj(
-                categories=["c1", "c2", "c3"]
+                categories=["c1", "c2", "c3"],
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             True,
         ),
         (
             specs.features.valid(CategoricalDescriptorInput).obj(
-                categories=["c1", "c2", "c3"]
+                categories=["c1", "c2", "c3"],
             ),
             pd.Series([random.choice(["c1", "c2", "c3"]) for _ in range(20)]),
             False,
@@ -240,7 +245,9 @@ def test_categorical_descriptor_feature_get_bounds(
     ],
 )
 def test_categorical_descriptor_input_feature_validate_valid(
-    input_feature, values, strict
+    input_feature,
+    values,
+    strict,
 ):
     input_feature.validate_experimental(values, strict)
 
@@ -299,7 +306,9 @@ def test_categorical_descriptor_input_feature_validate_valid(
     ],
 )
 def test_categorical_descriptor_input_feature_validate_invalid(
-    input_feature, values, strict
+    input_feature,
+    values,
+    strict,
 ):
     with pytest.raises(ValueError):
         input_feature.validate_experimental(values, strict)
@@ -322,10 +331,15 @@ def test_categorical_descriptor_input_feature_validate_invalid(
     ],
 )
 def test_categorical_descriptor_input_feature_as_dataframe(
-    categories, descriptors, values
+    categories,
+    descriptors,
+    values,
 ):
     f = CategoricalDescriptorInput(
-        key="k", categories=categories, descriptors=descriptors, values=values
+        key="k",
+        categories=categories,
+        descriptors=descriptors,
+        values=values,
     )
     df = f.to_df()
     assert len(df.columns) == len(descriptors)
@@ -370,7 +384,9 @@ def test_continuous_descriptor_input_feature_as_dataframe(descriptors, values):
     ],
 )
 def test_categorical_descriptor_input_feature_from_dataframe(
-    categories, descriptors, values
+    categories,
+    descriptors,
+    values,
 ):
     df = pd.DataFrame.from_dict(
         dict(zip(categories, values)),

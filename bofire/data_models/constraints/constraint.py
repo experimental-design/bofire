@@ -15,7 +15,9 @@ class Constraint(BaseModel):
 
     @abstractmethod
     def is_fulfilled(
-        self, experiments: pd.DataFrame, tol: Optional[float] = 1e-6
+        self,
+        experiments: pd.DataFrame,
+        tol: Optional[float] = 1e-6,
     ) -> pd.Series:
         """Abstract method to check if a constraint is fulfilled for all the rows of the provided dataframe.
 
@@ -26,8 +28,8 @@ class Constraint(BaseModel):
 
         Returns:
             bool: True if fulfilled else False
+
         """
-        pass
 
     @abstractmethod
     def __call__(self, experiments: pd.DataFrame) -> pd.Series:
@@ -38,18 +40,19 @@ class Constraint(BaseModel):
 
         Returns:
             pd.Series: Distance to reach constraint fulfillment.
+
         """
-        pass
 
     @abstractmethod
     def jacobian(self, experiments: pd.DataFrame) -> pd.DataFrame:
         """Numerically evaluates the jacobian of the constraint
         Args:
             experiments (pd.DataFrame): Dataframe to evaluate the constraint on.
+
         Returns:
             pd.DataFrame: the i-th row contains the jacobian evaluated at the i-th experiment
+
         """
-        pass
 
     @abstractmethod
     def validate_inputs(self, inputs: Inputs):
@@ -57,8 +60,8 @@ class Constraint(BaseModel):
 
         Args:
             inputs (Inputs): Inputs to validate.
+
         """
-        pass
 
 
 class IntrapointConstraint(Constraint):
@@ -74,7 +77,8 @@ class EqualityConstraint(IntrapointConstraint):
 
     def is_fulfilled(self, experiments: pd.DataFrame, tol: float = 1e-6) -> pd.Series:
         return pd.Series(
-            np.isclose(self(experiments), 0, atol=tol), index=experiments.index
+            np.isclose(self(experiments), 0, atol=tol),
+            index=experiments.index,
         )
 
 
@@ -88,10 +92,6 @@ class InequalityConstraint(IntrapointConstraint):
 class ConstraintError(Exception):
     """Base Error for Constraints"""
 
-    pass
-
 
 class ConstraintNotFulfilledError(ConstraintError):
     """Raised when an constraint is not fulfilled."""
-
-    pass

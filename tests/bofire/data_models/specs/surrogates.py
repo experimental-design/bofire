@@ -47,12 +47,12 @@ specs.add_valid(
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(0, 1)),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
@@ -65,8 +65,8 @@ specs.add_valid(
                 [
                     SumAggregation(features=["a", "b"]).model_dump(),
                     MeanAggregation(features=["a", "b"]).model_dump(),
-                ]
-            )
+                ],
+            ),
         ],
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
@@ -84,12 +84,12 @@ specs.add_valid(
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(0, 1)),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
         "output_scaler": ScalerEnum.STANDARDIZE,
@@ -109,12 +109,12 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
+            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "continuous_kernel": MaternKernel(ard=True, nu=2.5).model_dump(),
@@ -133,12 +133,12 @@ specs.add_valid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
@@ -161,12 +161,12 @@ specs.add_valid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "input_preprocessing_specs": {},
@@ -196,12 +196,12 @@ specs.add_valid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "n_estimators": 2,
@@ -228,12 +228,12 @@ specs.add_invalid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(CategoricalOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "n_estimators": 2,
@@ -262,12 +262,12 @@ specs.add_valid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(CategoricalOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "n_estimators": 2,
@@ -294,12 +294,12 @@ specs.add_invalid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "n_estimators": 2,
@@ -328,12 +328,12 @@ specs.add_valid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "n_estimators": 10,
@@ -369,12 +369,12 @@ specs.add_valid(
         "inputs": Inputs(
             features=[
                 MolecularInput(key="mol1"),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=TanimotoKernel(
@@ -387,7 +387,7 @@ specs.add_valid(
         "output_scaler": ScalerEnum.IDENTITY,
         "noise_prior": THREESIX_NOISE_PRIOR().model_dump(),
         "input_preprocessing_specs": {
-            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump()
+            "mol1": Fingerprints(n_bits=32, bond_radius=3).model_dump(),
         },
         "dump": None,
         "hyperconfig": None,
@@ -402,17 +402,18 @@ specs.add_valid(
                 features.valid(ContinuousInput).obj(),
             ]
             + [MolecularInput(key="mol1")]
-            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])]
+            + [CategoricalInput(key="cat1", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "aggregations": None,
         "molecular_kernel": TanimotoKernel(ard=True).model_dump(),
         "continuous_kernel": MaternKernel(
-            ard=True, nu=random.choice([0.5, 1.5, 2.5])
+            ard=True,
+            nu=random.choice([0.5, 1.5, 2.5]),
         ).model_dump(),
         "categorical_kernel": HammingDistanceKernel(ard=True).model_dump(),
         "scaler": ScalerEnum.NORMALIZE,
@@ -434,12 +435,12 @@ specs.add_valid(
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(0, 1)),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0},
@@ -455,12 +456,12 @@ specs.add_invalid(
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(0, 1)),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0, "c": 5.0},
@@ -478,12 +479,12 @@ specs.add_invalid(
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 CategoricalInput(key="b", categories=["a", "b"]),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "intercept": 5.0,
         "coefficients": {"a": 2.0, "b": -3.0},
@@ -491,7 +492,7 @@ specs.add_invalid(
         "dump": None,
     },
     error=ValueError,
-    message="Only numerical inputs are suppoerted for the `LinearDeterministicSurrogate`",
+    message="Only numerical inputs are supported for the `LinearDeterministicSurrogate`",
 )
 
 specs.add_valid(
@@ -501,12 +502,12 @@ specs.add_valid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])]
+            + [TaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
@@ -535,12 +536,12 @@ specs.add_invalid(
             features=[
                 features.valid(ContinuousInput).obj(),
             ]
-            + [TaskInput(key="task", categories=["a", "b", "c"])]
+            + [TaskInput(key="task", categories=["a", "b", "c"])],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
@@ -569,12 +570,12 @@ specs.add_invalid(
         "inputs": Inputs(
             features=[
                 features.valid(ContinuousInput).obj(),
-            ]
+            ],
         ).model_dump(),
         "outputs": Outputs(
             features=[
                 features.valid(ContinuousOutput).obj(),
-            ]
+            ],
         ).model_dump(),
         "kernel": ScaleKernel(
             base_kernel=MaternKernel(
@@ -603,7 +604,7 @@ specs.add_valid(
         "inputs": Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
             + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
-            + [ContinuousInput(key=f"t_{3}", bounds=(2, 60))]
+            + [ContinuousInput(key=f"t_{3}", bounds=(2, 60))],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
@@ -616,7 +617,8 @@ specs.add_valid(
         "prepend_y": [],
         "append_y": [],
         "shape_kernel": WassersteinKernel(
-            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            squared=False,
+            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
         ).model_dump(),
         "continuous_kernel": MaternKernel(
             ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
@@ -637,7 +639,7 @@ specs.add_invalid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)]
+            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(2)],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
@@ -650,7 +652,8 @@ specs.add_invalid(
         "prepend_y": [],
         "append_y": [],
         "shape_kernel": WassersteinKernel(
-            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            squared=False,
+            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
         ).model_dump(),
         "continuous_kernel": MaternKernel(
             ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
@@ -673,7 +676,7 @@ specs.add_invalid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"phi_{i}", bounds=(0, 1)) for i in range(4)]
-            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(3)]
+            + [ContinuousInput(key=f"t_{i+1}", bounds=(0, 1)) for i in range(3)],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
@@ -686,7 +689,8 @@ specs.add_invalid(
         "prepend_y": [],
         "append_y": [],
         "shape_kernel": WassersteinKernel(
-            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            squared=False,
+            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
         ).model_dump(),
         "continuous_kernel": MaternKernel(
             ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
@@ -710,7 +714,7 @@ specs.add_invalid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
@@ -723,7 +727,8 @@ specs.add_invalid(
         "prepend_y": [],
         "append_y": [],
         "shape_kernel": WassersteinKernel(
-            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            squared=False,
+            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
         ).model_dump(),
         "continuous_kernel": MaternKernel(
             ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()
@@ -746,7 +751,7 @@ specs.add_invalid(
     lambda: {
         "inputs": Inputs(
             features=[ContinuousInput(key=f"x_{i}", bounds=(0, 60)) for i in range(4)]
-            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)]
+            + [ContinuousInput(key=f"y_{i}", bounds=(0, 1)) for i in range(4)],
         ).model_dump(),
         "outputs": Outputs(features=[ContinuousOutput(key="alpha")]).model_dump(),
         "interpolation_range": (0, 1),
@@ -759,7 +764,8 @@ specs.add_invalid(
         "prepend_y": [],
         "append_y": [],
         "shape_kernel": WassersteinKernel(
-            squared=False, lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0)
+            squared=False,
+            lengthscale_prior=LogNormalPrior(loc=1.0, scale=2.0),
         ).model_dump(),
         "continuous_kernel": MaternKernel(
             ard=True, lengthscale_prior=THREESIX_LENGTHSCALE_PRIOR()

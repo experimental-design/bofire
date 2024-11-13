@@ -28,7 +28,9 @@ c3 = specs.constraints.valid(NChooseKConstraint).obj()
 c4 = specs.constraints.valid(NonlinearEqualityConstraint).obj()
 c5 = specs.constraints.valid(NonlinearInequalityConstraint).obj()
 c6 = LinearInequalityConstraint.from_smaller_equal(
-    features=["f1", "f2", "f3"], coefficients=[1, 1, 1], rhs=100.0
+    features=["f1", "f2", "f3"],
+    coefficients=[1, 1, 1],
+    rhs=100.0,
 )
 c7 = InterpointEqualityConstraint(feature="f2", multiplicity=2)
 
@@ -88,7 +90,8 @@ def test_constraints_call(constraints, num_candidates):
     for c in constraints:
         if isinstance(c, InterpointConstraint):
             max_num_batches = max(
-                max_num_batches, int(np.ceil(num_candidates / c.multiplicity))
+                max_num_batches,
+                int(np.ceil(num_candidates / c.multiplicity)),
             )
     num_rows += max_num_batches
 
@@ -124,20 +127,21 @@ def test_constraints_jacobian(constraints, num_candidates):
         [
             list(returned[i].columns) == ["dg/df1", "dg/df2", "dg/df3"]
             for i, c in enumerate(constraints)
-        ]
+        ],
     )
     assert np.all(
         [
             returned[i].shape == (num_candidates, len(inputs))
             for i, c in enumerate(constraints)
-        ]
+        ],
     )
     for i, c in enumerate(constraints):
         if isinstance(c, LinearConstraint):
             assert np.allclose(
                 returned[i],
                 np.tile(
-                    c.coefficients / np.linalg.norm(c.coefficients), (num_candidates, 1)
+                    c.coefficients / np.linalg.norm(c.coefficients),
+                    (num_candidates, 1),
                 ),
             )
         if isinstance(c, NonlinearConstraint):

@@ -3,7 +3,7 @@ from typing import Union
 import pytest
 from pydantic import BaseModel
 
-import bofire.data_models.unions as unions
+from bofire.data_models import unions
 
 
 class A(BaseModel):

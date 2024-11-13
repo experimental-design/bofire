@@ -10,7 +10,7 @@ specs = Specs([])
 
 specs.add_valid(
     AlwaysTrueCondition,
-    lambda: {},
+    dict,
 )
 
 specs.add_valid(

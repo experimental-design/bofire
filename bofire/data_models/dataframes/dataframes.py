@@ -1,5 +1,6 @@
 from abc import abstractmethod
-from typing import Dict, Generic, Literal, Optional, Sequence, TypeVar, Union
+from collections.abc import Sequence
+from typing import Dict, Generic, Literal, Optional, TypeVar, Union
 
 import pandas as pd
 from pydantic import Field, field_validator
@@ -77,7 +78,7 @@ class Row(BaseModel, Generic[TOutputValue]):
     @property
     def continuous_output_keys(self):
         return sorted(
-            [k for k, v in self.outputs.items() if not isinstance(v.value, str)]
+            [k for k, v in self.outputs.items() if not isinstance(v.value, str)],
         )
 
 
@@ -90,7 +91,7 @@ class ExperimentRow(Row[ExperimentOutputValue]):
                 **self.inputs,
                 **{k: v.value for k, v in self.outputs.items()},
                 **{f"valid_{k}": v.valid for k, v in self.outputs.items()},
-            }
+            },
         )
 
     @staticmethod
@@ -98,7 +99,8 @@ class ExperimentRow(Row[ExperimentOutputValue]):
         inputs = {k: row[k] for k in domain.inputs.get_keys()}
         outputs = {
             k: ExperimentOutputValue(
-                value=row[k], valid=row[f"valid_{k}"] if f"valid_{k}" in row else True
+                value=row[k],
+                valid=row[f"valid_{k}"] if f"valid_{k}" in row else True,
             )
             for k in domain.outputs.get_keys()
         }
@@ -118,7 +120,7 @@ class CandidateRow(Row[CandidateOutputValue]):
                     for k, v in self.outputs.items()
                 },
                 **{_append_des(k): v.objective_value for k, v in self.outputs.items()},
-            }
+            },
         )
 
     @staticmethod
@@ -175,7 +177,7 @@ class Experiments(DataFrame[ExperimentRow]):
     @staticmethod
     def from_pandas(df: pd.DataFrame, domain: Domain) -> "Experiments":
         return Experiments(
-            rows=[ExperimentRow.from_pandas(row, domain) for _, row in df.iterrows()]
+            rows=[ExperimentRow.from_pandas(row, domain) for _, row in df.iterrows()],
         )
 
 
@@ -185,5 +187,5 @@ class Candidates(DataFrame[CandidateRow]):
     @staticmethod
     def from_pandas(df: pd.DataFrame, domain: Domain) -> "Candidates":
         return Candidates(
-            rows=[CandidateRow.from_pandas(row, domain) for _, row in df.iterrows()]
+            rows=[CandidateRow.from_pandas(row, domain) for _, row in df.iterrows()],
         )

@@ -24,7 +24,8 @@ def test_experiments_to_pandas():
                 key="beta",
                 categories=["cat", "cat2"],
                 objective=ConstrainedCategoricalObjective(
-                    categories=["cat", "cat2"], desirability=[True, False]
+                    categories=["cat", "cat2"],
+                    desirability=[True, False],
                 ),
             ),
         ],
@@ -47,7 +48,8 @@ def test_candidates_to_pandas():
                 key="beta",
                 categories=["cat", "cat2"],
                 objective=ConstrainedCategoricalObjective(
-                    categories=["cat", "cat2"], desirability=[True, False]
+                    categories=["cat", "cat2"],
+                    desirability=[True, False],
                 ),
             ),
         ],

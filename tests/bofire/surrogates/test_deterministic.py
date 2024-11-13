@@ -13,7 +13,7 @@ def test_linear_deterministic_surrogate():
             features=[
                 ContinuousInput(key="a", bounds=(0, 1)),
                 ContinuousInput(key="b", bounds=(0, 1)),
-            ]
+            ],
         ),
         outputs=Outputs(features=[ContinuousOutput(key="y")]),
         intercept=2.0,

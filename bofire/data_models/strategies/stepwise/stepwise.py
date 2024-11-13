@@ -1,7 +1,6 @@
-from typing import List, Literal, Optional, Type
+from typing import Annotated, List, Literal, Optional, Type
 
 from pydantic import Field, field_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import Constraint
@@ -32,11 +31,11 @@ class StepwiseStrategy(Strategy):
         for i, step in enumerate(v):
             if step.strategy_data.domain != info.data["domain"]:
                 raise ValueError(
-                    f"Domain of step {i} is incompatible to domain of StepwiseStrategy."
+                    f"Domain of step {i} is incompatible to domain of StepwiseStrategy.",
                 )
             if i < len(v) - 1 and isinstance(step.condition, AlwaysTrueCondition):
                 raise ValueError(
-                    "`AlwaysTrueCondition` is only allowed for the last step."
+                    "`AlwaysTrueCondition` is only allowed for the last step.",
                 )
         return v
 

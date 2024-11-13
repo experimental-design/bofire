@@ -68,7 +68,8 @@ def test_get_formula_from_string():
     # linear and interaction
     terms = ["1", "x0", "x1", "x2", "x0:x1", "x0:x2", "x1:x2"]
     model_formula = get_formula_from_string(
-        domain=domain, model_type="linear-and-interactions"
+        domain=domain,
+        model_type="linear-and-interactions",
     )
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
@@ -76,7 +77,8 @@ def test_get_formula_from_string():
     # linear and quadratic
     terms = ["1", "x0", "x1", "x2", "x0 ** 2", "x1 ** 2", "x2 ** 2"]
     model_formula = get_formula_from_string(
-        domain=domain, model_type="linear-and-quadratic"
+        domain=domain,
+        model_type="linear-and-quadratic",
     )
     assert all(term in terms for term in model_formula)
     assert all(term in np.array(model_formula, dtype=str) for term in terms)
@@ -136,7 +138,7 @@ def test_get_formula_from_string():
 
 
 def test_n_zero_eigvals_unconstrained():
-    # 5 continous
+    # 5 continuous
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i+1}", bounds=(0, 100)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
@@ -161,8 +163,10 @@ def test_n_zero_eigvals_constrained():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
-            )
+                features=["x1", "x2", "x3"],
+                coefficients=[1, 1, 1],
+                rhs=1,
+            ),
         ],
     )
 
@@ -179,7 +183,7 @@ def test_n_zero_eigvals_constrained():
 
 
 def test_number_of_model_terms():
-    # 5 continous inputs
+    # 5 continuous inputs
     domain = Domain.from_lists(
         inputs=[ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(5)],
         outputs=[ContinuousOutput(key="y")],
@@ -192,7 +196,8 @@ def test_number_of_model_terms():
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain, model_type="linear-and-interactions"
+        domain=domain,
+        model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
@@ -218,7 +223,8 @@ def test_number_of_model_terms():
     assert len(formula) == 11
 
     formula = get_formula_from_string(
-        domain=domain, model_type="linear-and-interactions"
+        domain=domain,
+        model_type="linear-and-interactions",
     )
     assert len(formula) == 16
 
@@ -239,13 +245,19 @@ def test_constraints_as_scipy_constraints():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
+                features=["x1", "x2", "x3"],
+                coefficients=[1, 1, 1],
+                rhs=1,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[5, 4], rhs=3.9
+                features=["x1", "x2"],
+                coefficients=[5, 4],
+                rhs=3.9,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+                features=["x1", "x2"],
+                coefficients=[-20, 5],
+                rhs=-3,
             ),
         ],
     )
@@ -278,10 +290,12 @@ def test_constraints_as_scipy_constraints():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             NonlinearEqualityConstraint(
-                expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
+                expression="x1**2 + x2**2 - 1",
+                features=["x1", "x2", "x3"],
             ),
             NonlinearInequalityConstraint(
-                expression="x1**2 + x2**2 - 1", features=["x1", "x2", "x3"]
+                expression="x1**2 + x2**2 - 1",
+                features=["x1", "x2", "x3"],
             ),
         ],
     )
@@ -295,7 +309,7 @@ def test_constraints_as_scipy_constraints():
         assert np.allclose(c.fun(np.array([1, 1, 1, 1, 1, 1])), [1, 1])
 
     # TODO NChooseKConstraint requires input lower_bounds to be 0.
-    # can we lift this requirment?
+    # can we lift this requirement?
 
     inputs = [ContinuousInput(key=f"x{i}", bounds=(0, 1)) for i in range(4)]
 
@@ -308,23 +322,28 @@ def test_constraints_as_scipy_constraints():
                 max_count=2,
                 min_count=0,
                 none_also_valid=True,
-            )
+            ),
         ],
     )
     n_experiments = 1
 
     constraints = constraints_as_scipy_constraints(
-        domain, n_experiments, ignore_nchoosek=True
+        domain,
+        n_experiments,
+        ignore_nchoosek=True,
     )
     assert len(constraints) == 0
 
     constraints = constraints_as_scipy_constraints(
-        domain, n_experiments, ignore_nchoosek=False
+        domain,
+        n_experiments,
+        ignore_nchoosek=False,
     )
     assert len(constraints) == 1
     assert isinstance(constraints[0], NonlinearConstraint)
     assert np.allclose(
-        constraints[0].fun(np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])), [2, 0, 0]
+        constraints[0].fun(np.array([1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0])),
+        [2, 0, 0],
     )
 
     # domain with batch constraint
@@ -360,10 +379,14 @@ def test_ConstraintWrapper():
         outputs=[ContinuousOutput(key="y")],
         constraints=[
             LinearEqualityConstraint(
-                features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
+                features=["x1", "x2", "x3", "x4"],
+                coefficients=[1, 1, 1, 1],
+                rhs=1,
             ),
             LinearInequalityConstraint(
-                features=["x1", "x2", "x3", "x4"], coefficients=[1, 1, 1, 1], rhs=1
+                features=["x1", "x2", "x3", "x4"],
+                coefficients=[1, 1, 1, 1],
+                rhs=1,
             ),
             NonlinearEqualityConstraint(
                 expression="x1**2 + x2**2 + x3**2 + x4**2 - 1",
@@ -396,7 +419,7 @@ def test_ConstraintWrapper():
                 [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-            ]
+            ],
         ),
     )
 
@@ -411,7 +434,7 @@ def test_ConstraintWrapper():
                 [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
-            ]
+            ],
         ),
     )
 
@@ -425,7 +448,7 @@ def test_ConstraintWrapper():
                 [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 6, 4, 2, 0],
-            ]
+            ],
         ),
     )
 
@@ -439,7 +462,7 @@ def test_ConstraintWrapper():
                 [2, 2, 2, 2, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 6, 4, 2, 0],
-            ]
+            ],
         ),
     )
 
@@ -453,7 +476,7 @@ def test_ConstraintWrapper():
                 [2, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
                 [0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0],
                 [0, 0, 0, 0, 0, 0, 0, 0, 6, 0, 0, 0],
-            ]
+            ],
         ),
     )
 
@@ -466,7 +489,7 @@ def test_d_optimality():
             [1, 0, 1, 0],
             [1, 0, 0, 1],
             [1, 0, 0, 0],
-        ]
+        ],
     )
     assert np.allclose(d_optimality(X), np.linalg.slogdet(X.T @ X)[1])
 
@@ -477,7 +500,7 @@ def test_d_optimality():
             [1, 0, 1, 0],
             [1, 0, 0, 1],
             [1, 1 / 3, 1 / 3, 1 / 3],
-        ]
+        ],
     )
     assert np.allclose(d_optimality(X), np.sum(np.log(np.linalg.eigvalsh(X.T @ X)[1:])))
 
@@ -490,7 +513,7 @@ def test_a_optimality():
             [1, 0, 1, 0],
             [1, 0, 0, 1],
             [1, 0, 0, 0],
-        ]
+        ],
     )
     assert np.allclose(a_optimality(X), np.sum(1 / (np.linalg.eigvalsh(X.T @ X))))
 
@@ -501,7 +524,7 @@ def test_a_optimality():
             [1, 0, 1, 0],
             [1, 0, 0, 1],
             [1, 1 / 3, 1 / 3, 1 / 3],
-        ]
+        ],
     )
     assert np.allclose(a_optimality(X), np.sum(1 / (np.linalg.eigvalsh(X.T @ X)[1:])))
 
@@ -514,7 +537,7 @@ def test_g_optimality():
             [0, 0.1, 0, 0],
             [0, 0, 0.1, 0],
             [0, 0, 0, 0.1],
-        ]
+        ],
     )
     assert np.allclose(g_optimality(X), 1)
 
@@ -527,7 +550,7 @@ def test_metrics():
             [1, 0, 1, 0],
             [1, 0, 0, 1],
             [1, 0, 0, 0],
-        ]
+        ],
     )
 
     m = metrics(X)
@@ -555,7 +578,7 @@ def test_check_nchoosek_constraints_as_bounds():
         inputs=[ContinuousInput(key=f"x{i+1}", bounds=(-np.inf, 1)) for i in range(4)],
         outputs=[ContinuousOutput(key="y")],
         constraints=[
-            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0)
+            LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
         ],
     )
     check_nchoosek_constraints_as_bounds(domain)
@@ -572,13 +595,21 @@ def test_check_nchoosek_constraints_as_bounds():
         constraints=[
             LinearEqualityConstraint(features=["x1", "x2"], coefficients=[1, 1], rhs=0),
             LinearInequalityConstraint(
-                features=["x3", "x4"], coefficients=[1, 1], rhs=0
+                features=["x3", "x4"],
+                coefficients=[1, 1],
+                rhs=0,
             ),
             NChooseKConstraint(
-                features=["x1", "x2"], max_count=1, min_count=0, none_also_valid=True
+                features=["x1", "x2"],
+                max_count=1,
+                min_count=0,
+                none_also_valid=True,
             ),
             NChooseKConstraint(
-                features=["x3", "x4"], max_count=1, min_count=0, none_also_valid=True
+                features=["x3", "x4"],
+                max_count=1,
+                min_count=0,
+                none_also_valid=True,
             ),
         ],
     )

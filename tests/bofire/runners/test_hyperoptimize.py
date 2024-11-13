@@ -18,10 +18,12 @@ def test_hyperoptimize_warning():
         hyperconfig=None,
     )
     with pytest.warns(
-        match="No hyperopt is possible as no hyperopt config is available. Returning initial config."
+        match="No hyperopt is possible as no hyperopt config is available. Returning initial config.",
     ):
         opt_data, metrics = hyperoptimize(
-            surrogate_data=surrogate_data, training_data=experiments, folds=3
+            surrogate_data=surrogate_data,
+            training_data=experiments,
+            folds=3,
         )
     assert opt_data == surrogate_data
     assert len(metrics) == 0
@@ -39,7 +41,9 @@ def test_hyperoptimize(strategy: str):
         surrogate_data.hyperconfig.n_iterations = 6
 
     opt_data, metrics = hyperoptimize(
-        surrogate_data=surrogate_data, training_data=experiments, folds=3
+        surrogate_data=surrogate_data,
+        training_data=experiments,
+        folds=3,
     )
     if strategy == "RandomStrategy":
         assert len(metrics) == 6
@@ -48,7 +52,7 @@ def test_hyperoptimize(strategy: str):
 
     assert set(metrics.columns) == set(
         [e.name for e in RegressionMetricsEnum]
-        + surrogate_data.hyperconfig.domain.inputs.get_keys()
+        + surrogate_data.hyperconfig.domain.inputs.get_keys(),
     )
     assert hasattr(opt_data.kernel, "base_kernel")
     assert opt_data.kernel.base_kernel.ard == (metrics.iloc[0]["ard"] == "True")

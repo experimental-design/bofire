@@ -20,7 +20,9 @@ class PolynomialSurrogate(TrainableBotorchSurrogate):
     @staticmethod
     def from_power(power: int, inputs: Inputs, outputs: Outputs):
         return PolynomialSurrogate(
-            kernel=PolynomialKernel(power=power), inputs=inputs, outputs=outputs
+            kernel=PolynomialKernel(power=power),
+            inputs=inputs,
+            outputs=outputs,
         )
 
     @classmethod

@@ -16,19 +16,28 @@ from bofire.data_models.features.api import ContinuousInput
 
 inputs = [ContinuousInput(key=f"if{i}", bounds=(0, 1)) for i in range(1, 4)]
 c1 = LinearInequalityConstraint(
-    features=["if1", "if2", "if3"], coefficients=[1, 1, 1], rhs=1
+    features=["if1", "if2", "if3"],
+    coefficients=[1, 1, 1],
+    rhs=1,
 )
 c2 = LinearEqualityConstraint(
-    features=["if1", "if2", "if3"], coefficients=[1, 1, 1], rhs=1
+    features=["if1", "if2", "if3"],
+    coefficients=[1, 1, 1],
+    rhs=1,
 )
 c3 = NonlinearEqualityConstraint(
-    expression="if1**2 + if2**2 - if3", features=["if1", "if2", "if3"]
+    expression="if1**2 + if2**2 - if3",
+    features=["if1", "if2", "if3"],
 )
 c4 = NonlinearInequalityConstraint(
-    expression="if1**2 + if2**2 - if3", features=["if1", "if2", "if3"]
+    expression="if1**2 + if2**2 - if3",
+    features=["if1", "if2", "if3"],
 )
 c5 = NChooseKConstraint(
-    features=["if1", "if2", "if3"], min_count=0, max_count=1, none_also_valid=True
+    features=["if1", "if2", "if3"],
+    min_count=0,
+    max_count=1,
+    none_also_valid=True,
 )
 
 
@@ -59,6 +68,8 @@ def test_ask_pending_candidates():
     samples = sampler.ask(1)
     assert len(samples) == 1
     all_samples = concat(
-        [samples, pending_candidates], axis=0, ignore_index=True
+        [samples, pending_candidates],
+        axis=0,
+        ignore_index=True,
     ).drop_duplicates()
     assert len(all_samples) == 3

@@ -81,7 +81,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -172,7 +172,7 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
         },
     )
     model = surrogates.map(model)
@@ -207,7 +207,7 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
         },
     )
     model2 = surrogates.map(model2)
@@ -251,11 +251,12 @@ def test_SingleTaskGPHyperconfig():
     )
     with pytest.raises(ValueError, match="No hyperconfig available."):
         surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0]
+            benchmark.domain.inputs.sample(1).loc[0],
         )
     # test that correct stuff is written
     surrogate_data = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs, outputs=benchmark.domain.outputs
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
     )
     candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
     surrogate_data.update_hyperparameters(candidate)
@@ -301,7 +302,7 @@ def test_MixedSingleTaskGPHyperconfig():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     surrogate_data = MixedSingleTaskGPSurrogate(
@@ -340,7 +341,7 @@ def test_MixedSingleTaskGPModel_invalid_preprocessing():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -370,7 +371,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -448,7 +449,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[MolecularInput(key="x_mol")]
-        + [CategoricalInput(key="x_cat", categories=["a", "b"])]
+        + [CategoricalInput(key="x_cat", categories=["a", "b"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [
