@@ -509,7 +509,7 @@ specs.add_invalid(
                 ],
             ),
         ).model_dump(),
-        "local_search_config": strategies.LSRBO(),
+        "local_search_config": strategies.LSRBOConfig(),
     },
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",

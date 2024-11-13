@@ -15,9 +15,12 @@ class ContinuousInput(NumericalInput):
     """Base class for all continuous input features.
 
     Attributes:
-        bounds (Tuple[float, float]): A tuple that stores the lower and upper bound of the feature.
-        stepsize (float, optional): Float indicating the allowed stepsize between lower and upper. Defaults to None.
-        local_relative_bounds (Tuple[float, float], optional): A tuple that stores the lower and upper bounds relative to a reference value.
+        bounds (Tuple[float, float]): A tuple that stores the lower and upper
+            bound of the feature.
+        stepsize (float, optional): Float indicating the allowed stepsize between
+            lower and upper. Defaults to None.
+        local_relative_bounds (Tuple[float, float], optional): A tuple that stores
+            the lower and upper bounds relative to a reference value.
             Defaults to None.
 
     """
@@ -35,9 +38,23 @@ class ContinuousInput(NumericalInput):
     def lower_bound(self) -> float:
         return self.bounds[0]
 
+    def local_lower_bound(self, reference_value) -> float:
+        local_relative_bounds = self.local_relative_bounds or (math.inf, math.inf)
+        return max(
+            reference_value - local_relative_bounds[0],
+            self.lower_bound,
+        )
+
     @property
     def upper_bound(self) -> float:
         return self.bounds[1]
+
+    def local_upper_bound(self, reference_value) -> float:
+        local_relative_bounds = self.local_relative_bounds or (math.inf, math.inf)
+        return min(
+            reference_value + local_relative_bounds[1],
+            self.upper_bound,
+        )
 
     @model_validator(mode="after")
     def validate_step_size(self):
@@ -144,24 +161,11 @@ class ContinuousInput(NumericalInput):
         if values is None:
             if reference_value is None or self.is_fixed():
                 return [self.lower_bound], [self.upper_bound]
-
-            local_relative_bounds = self.local_relative_bounds or (
-                math.inf,
-                math.inf,
-            )
-
-            return [
-                max(
-                    reference_value - local_relative_bounds[0],
-                    self.lower_bound,
-                ),
-            ], [
-                min(
-                    reference_value + local_relative_bounds[1],
-                    self.upper_bound,
-                ),
-            ]
-
+            else:
+                return (
+                    [self.local_lower_bound(reference_value)],
+                    [self.local_upper_bound(reference_value)],
+                )
         lower = min(self.lower_bound, values.min())
         upper = max(self.upper_bound, values.max())
         return [lower], [upper]
@@ -180,7 +184,8 @@ class ContinuousOutput(Output):
     """The base class for a continuous output feature
 
     Attributes:
-        objective (objective, optional): objective of the feature indicating in which direction it should be optimized. Defaults to `MaximizeObjective`.
+        objective (objective, optional): objective of the feature indicating in
+        which direction it should be optimized. Defaults to `MaximizeObjective`.
 
     """
 

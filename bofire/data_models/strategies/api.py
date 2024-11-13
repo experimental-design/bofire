@@ -10,7 +10,13 @@ from bofire.data_models.strategies.meta_strategy_type import MetaStrategy
 from bofire.data_models.strategies.predictives.active_learning import (
     ActiveLearningStrategy,
 )
-from bofire.data_models.strategies.predictives.botorch import LSRBO, BotorchStrategy
+from bofire.data_models.strategies.predictives.botorch import (
+    AnyLocalSearchConfig,
+    AnyTrustRegionConfig,
+    BotorchStrategy,
+    LSRBOConfig,
+    TuRBOConfig,
+)
 from bofire.data_models.strategies.predictives.enting import EntingStrategy
 from bofire.data_models.strategies.predictives.mobo import MoboStrategy
 from bofire.data_models.strategies.predictives.multiobjective import (
@@ -61,6 +67,3 @@ AnyPredictive = Union[
     EntingStrategy,
     MoboStrategy,
 ]
-
-
-AnyLocalSearchConfig = LSRBO

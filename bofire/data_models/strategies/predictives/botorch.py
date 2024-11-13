@@ -1,7 +1,9 @@
+import math
 import warnings
 from abc import abstractmethod
-from typing import Annotated, Literal, Optional, Type
+from typing import Annotated, Literal, Optional, Type, Union
 
+import pandas as pd
 from pydantic import Field, PositiveInt, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
@@ -32,6 +34,165 @@ from bofire.data_models.surrogates.api import (
 from bofire.data_models.types import IntPowerOfTwo
 
 
+class TrustRegionConfig(BaseModel):
+    """TrustRegionConfigs provide a way to define how to adapt local trust region
+    constraints based on sucess.
+
+    Args:
+        length_init: Initial edge length
+        length_min: Minimum edge length
+        length_max: Maximum edge length
+        lengthscale_adjustment_factor: Factor to adjust the lengthscale by when
+            increasing or decreasing the dimensions of the trust region.
+        fit_region_multiplier: Multiplier for the trust region dimensions to
+            use when determining which points to fit the GP to.
+        success_streak: Number of consecutive successes necessary to increase length
+        failure_streak: Number of consecutive failures necessary to decrease length
+        min_tr_size: The minimum number of points allowed in the trust region.
+            If there are too few points in the TR, random samples will be used
+            to refill the TR. NOTE this should be set to a low value. If using
+            running experiments in parallel consider setting this to the
+            candidate_count (batch_size).
+        max_tr_size: The maximum number of points in a trust region. This can be
+            used to avoid memory issues.
+        experiment_batch_sizes: List of sizes of the experiment batches for
+            each trust region. Used to determine whether or not a batch led to
+            a success or failure and to prevent data sharing between trust regions.
+        use_independent_tr: If true, each trust region will only fit to data
+            from its own history. If false (default), all trust regions will
+            fit to available data that overlaps the trust region.
+    """
+
+    type: str
+    length_init: float = 0.8
+    length_min: float = 0.01
+    length_max: float = 1.6
+    lengthscale_adjustment_factor: float = 2.0
+    fit_region_multiplier: float = 2.0
+    min_tr_size: PositiveInt = 10
+    max_tr_size: PositiveInt = 2048
+    success_epsilon: float = 1e-3
+    success_streak: PositiveInt = 3
+    failure_streak: PositiveInt = 3
+    success_counter: PositiveInt = 0
+    failure_counter: PositiveInt = 0
+    experiment_batch_sizes: list[list[PositiveInt]] = Field(
+        default_factory=lambda: [[]]
+    )
+    use_independent_tr: bool = False
+
+    length: float = Field(default=length_init, alias="length_")
+    X_center_idx: int = -1
+    n_tr_experiments: PositiveInt = 0
+
+    @model_validator(mode="after")
+    def validate_fit_region_multiplier(self):
+        if self.fit_region_multiplier < 1:
+            raise ValueError("fit_region_multiplier must be >= 1.")
+        return self
+
+    @abstractmethod
+    def update_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
+        """Method to update the trust region based on the success of the optimization step.
+
+        Args:
+            experiments (pd.DataFrame): DataFrame containing experiments that were
+                performed and their results.
+            domain (Domain): domain containing the inputs and constraints.
+        """
+
+    def init_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
+        """Method to initialize the trust region.
+
+        Args:
+            domain (Domain): The domain defining the problem to be optimized with the strategy.
+        """
+
+        self.length = self.length_init
+
+        Y_cols = domain.outputs.get_keys()
+        if len(Y_cols) != 1:
+            raise ValueError("TuRBO only supports single output optimization.")
+
+        self.X_center_idx = experiments[Y_cols].idxmax().iloc[0]
+        self.n_tr_experiments = len(experiments)
+
+    def get_trust_region_experiments(
+        self, experiments: pd.DataFrame, domain: Domain, eps: float = 1e-8
+    ) -> pd.DataFrame:
+        """Method to get the experiments that are within the trust region.
+
+        Args:
+            experiments (pd.DataFrame): DataFrame containing experiments that were
+                performed and their results.
+            domain (Domain): domain containing the inputs and constraints.
+
+        Returns:
+            pd.DataFrame: DataFrame containing experiments that are within the trust region.
+        """
+        if self.use_independent_tr:
+            tr_size = sum(self.experiment_batch_sizes[-1])
+            experiments = experiments.iloc[-tr_size : len(experiments)]
+
+        # TODO does X need to be normalized?
+        X_cols = domain.inputs.get_keys()
+        X = experiments[X_cols]
+
+        X_center = X.loc[self.X_center_idx]
+
+        # TODO scale box according to the kernel lengthscales if using ARD.
+        # we seem to be limited by the abstraction here.
+
+        tr_indicies = X[
+            ((X - X_center).abs() - self.length / 2 <= eps).all(axis=1)
+        ].index
+
+        experiments = experiments.loc[tr_indicies]
+        self.n_tr_experiments = len(experiments)
+        return experiments
+
+
+class TuRBOConfig(TrustRegionConfig):
+    """A trust region strategy for single objective bayesian optimization."""
+
+    type: Literal["TuRBO"] = "TuRBO"
+
+    def update_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
+        """Method to update the trust region based on the success of the optimization step.
+
+        Args:
+            experiments (pd.DataFrame): DataFrame containing experiments that were
+                performed and their results.
+            domain (Domain): domain containing the inputs and constraints.
+        """
+        Y_cols = domain.outputs.get_keys()
+        if len(Y_cols) != 1:
+            raise ValueError("TuRBO only supports single output optimization.")
+
+        Y_best = experiments.loc[self.X_center_idx][Y_cols].iloc[0]
+        # Check that the experiments are success_epsilons better than the best
+        # value, NOTE that the best value may be negative.
+        if Y_best > self.best_value + self.success_epsilon * math.fabs(self.best_value):
+            self.success_counter += 1
+            self.failure_counter = 0
+        else:
+            self.success_counter = 0
+            self.failure_counter += 1
+
+        if self.success_counter == self.success_streak:  # Expand trust region
+            self.length = min(
+                self.lengthscale_adjustment_factor * self.length, self.length_max
+            )
+            self.success_counter = 0
+        elif self.failure_counter == self.failure_streak:  # Shrink trust region
+            self.length /= self.lengthscale_adjustment_factor
+            self.failure_counter = 0
+
+        self.best_value = max(self.best_value, Y_best)  # type: ignore
+        if self.length < self.length_min:
+            self.experiment_batch_sizes.append([])
+
+
 class LocalSearchConfig(BaseModel):
     """LocalSearchConfigs provide a way to define how to switch between global
     acqf optimization in the global bounds and local acqf optimization in the local
@@ -54,24 +215,25 @@ class LocalSearchConfig(BaseModel):
         """
 
 
-class LSRBO(LocalSearchConfig):
+class LSRBOConfig(LocalSearchConfig):
     """LSRBO implements the local search region method published in.
     https://www.merl.com/publications/docs/TR2023-057.pdf
 
     Attributes:
-        gamma (float): The switsching parameter between local and global optimization.
+        gamma (float): The switching parameter between local and global optimization.
             Defaults to 0.1.
 
     """
 
-    type: Literal["LSRBO"] = "LSRBO"
+    type: Literal["LSRBOConfig"] = "LSRBOConfig"
     gamma: Annotated[float, Field(ge=0)] = 0.1
 
     def is_local_step(self, acqf_local: float, acqf_global: float) -> bool:
         return acqf_local >= self.gamma
 
 
-AnyLocalSearchConfig = LSRBO
+AnyLocalSearchConfig = Union[LSRBOConfig, LocalSearchConfig]
+AnyTrustRegionConfig = Union[TuRBOConfig, TrustRegionConfig]
 
 
 class BotorchStrategy(PredictiveStrategy):
@@ -96,6 +258,7 @@ class BotorchStrategy(PredictiveStrategy):
     frequency_hyperopt: Annotated[int, Field(ge=0)] = 0  # 0 indicates no hyperopt
     folds: int = 5
     # local search region params
+    trust_region_config: Optional[AnyTrustRegionConfig] = None
     local_search_config: Optional[AnyLocalSearchConfig] = None
 
     @field_validator("batch_limit")
@@ -136,6 +299,18 @@ class BotorchStrategy(PredictiveStrategy):
         if my_type in [NonlinearInequalityConstraint, NonlinearEqualityConstraint]:
             return False
         return True
+
+    @model_validator(mode="after")
+    def validate_exclusive_local_search_trust_region(self):
+        # dont allow both local search and trust region to be used at the same time
+        if (
+            self.local_search_config is not None
+            and self.trust_region_config is not None
+        ):
+            raise ValueError(
+                "Local search and trust region optimization cannot be used at the same time."
+            )
+        return self
 
     @model_validator(mode="after")
     def validate_interpoint_constraints(self):
