@@ -505,12 +505,18 @@ class BotorchStrategy(PredictiveStrategy):
                 features=[
                     ContinuousInput(
                         key=inp.key,
-                        bounds=[
-                            x[0]
-                            for x in inp.get_bounds(
-                                reference_value=reference_experiment[inp.key]  # type: ignore
-                            )
-                        ],
+                        bounds=(
+                            max(
+                                reference_experiment[inp.key]
+                                - self.trust_region_config.length / 2,  # type: ignore
+                                inp.lower_bound,  # type: ignore
+                            ),
+                            min(
+                                reference_experiment[inp.key]
+                                + self.trust_region_config.length / 2,  # type: ignore
+                                inp.upper_bound,  # type: ignore
+                            ),
+                        ),
                     )
                     for inp in inputs.get(ContinuousInput)
                 ]

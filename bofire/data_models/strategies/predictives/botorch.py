@@ -132,7 +132,7 @@ class TrustRegionConfig(BaseModel):
         if len(Y_cols) != 1:
             raise ValueError("TuRBO only supports single output optimization.")
 
-        self.X_center_idx = experiments[Y_cols].idxmax().iloc[0]
+        self.X_center_idx = experiments[Y_cols].idxmin().iloc[0]
 
     def get_trust_region_experiments(
         self, experiments: pd.DataFrame, domain: Domain, eps: float = 1e-8
@@ -187,6 +187,7 @@ class TuRBOConfig(TrustRegionConfig):
         if len(Y_cols) != 1:
             raise ValueError("TuRBO only supports single output optimization.")
 
+        self.X_center_idx = experiments[Y_cols].idxmin().iloc[0]
         Y_best = experiments.loc[self.X_center_idx][Y_cols].iloc[0]
         # Check that the experiments are success_epsilons better than the best
         # value, NOTE that the best value may be negative.
@@ -206,7 +207,7 @@ class TuRBOConfig(TrustRegionConfig):
             self.length /= self.lengthscale_adjustment_factor
             self.failure_counter = 0
 
-        self.best_value = max(self.best_value, Y_best)  # type: ignore
+        self.best_value = min(self.best_value, Y_best)  # type: ignore
         if self.length < self.length_min:
             self.experiment_batch_sizes.append([])
 
