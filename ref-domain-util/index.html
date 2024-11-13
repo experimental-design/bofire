@@ -1226,7 +1226,9 @@
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fingerprints</span><span class="p">(</span>
-    <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">bond_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">bond_radius</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">n_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2048</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms a list of smiles to an array of morgan fingerprints.</span>
 
@@ -1237,6 +1239,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: Numpy array holding the fingerprints</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rdkit_mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">smiles2mol</span><span class="p">(</span><span class="n">m</span><span class="p">)</span> <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
     <span class="n">fps</span> <span class="o">=</span> <span class="p">[</span>
@@ -1280,9 +1283,15 @@
   <tbody>
       <tr>
         <td><code>smiles</code></td>
-        <td><code>List[str]</code></td>
+        <td><code>list[str]</code></td>
         <td><p>List of smiles</p></td>
         <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>fragments_list</code></td>
+        <td><code>list[str]</code></td>
+        <td><p>List of desired fragments. Defaults to None.</p></td>
+        <td><code>None</code></td>
       </tr>
   </tbody>
 </table>
@@ -1304,15 +1313,18 @@
         <details class="quote">
           <summary>Source code in <code>bofire/utils/cheminformatics.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">smiles2fragments</span><span class="p">(</span>
-    <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">fragments_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">smiles</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="n">fragments_list</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Transforms smiles to an array of fragments.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        smiles (List[str]): List of smiles</span>
+<span class="sd">        smiles (list[str]): List of smiles</span>
+<span class="sd">        fragments_list (list[str], optional): List of desired fragments. Defaults to None.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: Array holding the fragment information.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">rdkit_fragment_list</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">item</span>
@@ -1416,6 +1428,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        rdkit.Mol: rdkit.mol object</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mol</span> <span class="o">=</span> <span class="n">MolFromSmiles</span><span class="p">(</span><span class="n">smiles</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
     <span class="k">if</span> <span class="n">mol</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -1494,6 +1507,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: Array holding the mordred moelcular descriptors.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mols</span> <span class="o">=</span> <span class="p">[</span><span class="n">smiles2mol</span><span class="p">(</span><span class="n">smi</span><span class="p">)</span> <span class="k">for</span> <span class="n">smi</span> <span class="ow">in</span> <span class="n">smiles</span><span class="p">]</span>
 
@@ -1507,7 +1521,7 @@
     <span class="p">]</span>
     <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">nan_list</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;Found NaN values in descriptors </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">nan_list</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># type: ignore</span>
+            <span class="sa">f</span><span class="s2">&quot;Found NaN values in descriptors </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">descriptors_df</span><span class="o">.</span><span class="n">columns</span><span class="p">[</span><span class="n">nan_list</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>  <span class="c1"># type: ignore</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">descriptors_df</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
@@ -1621,6 +1635,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The generator.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">n_generators</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_factors</span><span class="p">]))</span>
@@ -1628,22 +1643,23 @@
     <span class="k">if</span> <span class="n">n_generators</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">n_base_factors</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span>
+                <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
             <span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">])</span>
-            <span class="o">+</span> <span class="p">[</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">]]</span>
+            <span class="o">+</span> <span class="p">[</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">]],</span>
         <span class="p">)</span>
     <span class="n">n_base_factors</span> <span class="o">=</span> <span class="n">n_factors</span> <span class="o">-</span> <span class="n">n_generators</span>
     <span class="k">if</span> <span class="n">n_base_factors</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span>
+            <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span>
         <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span>
             <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span>
-                <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">],</span> <span class="n">n_base_factors</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">],</span>
+                <span class="n">n_base_factors</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="p">)</span>
     <span class="p">]</span>
@@ -1653,7 +1669,7 @@
         <span class="n">generators</span> <span class="o">+=</span> <span class="p">[</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">]]</span>
     <span class="k">elif</span> <span class="n">n_generators</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span>
+            <span class="s2">&quot;Design not possible, as main factors are confounded with each other.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_base_factors</span><span class="p">])</span> <span class="o">+</span> <span class="n">generators</span><span class="p">)</span>
 </code></pre></div>
@@ -1722,6 +1738,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The full factorial design.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">([</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">repeat</span><span class="o">=</span><span class="n">n_factors</span><span class="p">)))</span>
 </code></pre></div>
@@ -1790,14 +1807,15 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The fractional factorial design.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">gen</span> <span class="o">=</span> <span class="n">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="o">=</span><span class="n">gen</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">gen</span><span class="p">)</span>
 
     <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\-|\s|\+&quot;</span><span class="p">,</span> <span class="n">gen</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="p">]</span>
-    <span class="n">lengthes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">]</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">]</span>
 
     <span class="c1"># Indices of single letters (main factors)</span>
-    <span class="n">idx_main</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengthes</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">idx_main</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
 
     <span class="c1"># Indices of letter combinations.</span>
     <span class="n">idx_combi</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">generators</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
@@ -1809,7 +1827,7 @@
 
     <span class="c1"># Fill in design with two level factorial design</span>
     <span class="n">H1</span> <span class="o">=</span> <span class="n">ff2n</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">))</span>
-    <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">H1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengthes</span><span class="p">)))</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">H1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">lengths</span><span class="p">)))</span>
     <span class="n">H</span><span class="p">[:,</span> <span class="n">idx_main</span><span class="p">]</span> <span class="o">=</span> <span class="n">H1</span>
 
     <span class="c1"># Recognize combinations and fill in the rest of matrix H2 with the proper</span>
@@ -1869,7 +1887,7 @@ with positive signs.</p>
       <tr>
         <td><code>order</code></td>
         <td><code>int</code></td>
-        <td><p>The order up to wich the alias structure should be calculated. Defaults to 4.</p></td>
+        <td><p>The order up to which the alias structure should be calculated. Defaults to 4.</p></td>
         <td><code>4</code></td>
       </tr>
   </tbody>
@@ -1897,10 +1915,11 @@ with positive signs.</p>
 
 <span class="sd">    Args:</span>
 <span class="sd">        gen: The generator.</span>
-<span class="sd">        order: The order up to wich the alias structure should be calculated. Defaults to 4.</span>
+<span class="sd">        order: The order up to which the alias structure should be calculated. Defaults to 4.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The alias structure of the design matrix.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">design</span> <span class="o">=</span> <span class="n">fracfact</span><span class="p">(</span><span class="n">gen</span><span class="p">)</span>
 
@@ -1909,17 +1928,15 @@ with positive signs.</p>
     <span class="n">all_names</span> <span class="o">=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span> <span class="o">+</span> <span class="s2">&quot;I&quot;</span>
     <span class="n">factors</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_factors</span><span class="p">)</span>
     <span class="n">all_combinations</span> <span class="o">=</span> <span class="n">itertools</span><span class="o">.</span><span class="n">chain</span><span class="o">.</span><span class="n">from_iterable</span><span class="p">(</span>
-        <span class="p">(</span>
-            <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">factors</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">factors</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">aliases</span> <span class="o">=</span> <span class="p">{</span><span class="n">n_experiments</span> <span class="o">*</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span> <span class="p">[(</span><span class="mi">26</span><span class="p">,)]}</span>  <span class="c1"># 26 is mapped to I</span>
 
     <span class="k">for</span> <span class="n">combination</span> <span class="ow">in</span> <span class="n">all_combinations</span><span class="p">:</span>
         <span class="c1"># positive sign</span>
         <span class="n">contrast</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span>
-            <span class="n">design</span><span class="p">[:,</span> <span class="n">combination</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+            <span class="n">design</span><span class="p">[:,</span> <span class="n">combination</span><span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>  <span class="c1"># this is the product of the combination</span>
         <span class="n">scontrast</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">contrast</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
         <span class="n">aliases</span><span class="p">[</span><span class="n">scontrast</span><span class="p">]</span> <span class="o">=</span> <span class="n">aliases</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">scontrast</span><span class="p">,</span> <span class="p">[])</span>
@@ -1928,17 +1945,18 @@ with positive signs.</p>
     <span class="n">aliases_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">aliases</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
         <span class="n">aliases_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="nb">sorted</span><span class="p">(</span><span class="n">alias</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">a</span><span class="p">))</span>
+            <span class="nb">sorted</span><span class="p">(</span><span class="n">alias</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">),</span> <span class="n">a</span><span class="p">)),</span>
         <span class="p">)</span>  <span class="c1"># sort by length and then by the combination</span>
     <span class="n">aliases_list</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
-        <span class="n">aliases_list</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="nb">list</span><span class="p">:</span> <span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="n">aliases_list</span><span class="p">,</span>
+        <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="nb">list</span><span class="p">:</span> <span class="p">([</span><span class="nb">len</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">],</span> <span class="nb">list</span><span class="p">),</span>
     <span class="p">)</span>  <span class="c1"># sort by the length of the alias</span>
 
     <span class="n">aliases_readable</span> <span class="o">=</span> <span class="p">[]</span>
 
     <span class="k">for</span> <span class="n">alias</span> <span class="ow">in</span> <span class="n">aliases_list</span><span class="p">:</span>
         <span class="n">aliases_readable</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="s2">&quot; = &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">all_names</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">a</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alias</span><span class="p">])</span>
+            <span class="s2">&quot; = &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="n">all_names</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">a</span><span class="p">])</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">alias</span><span class="p">]),</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">aliases_readable</span>
@@ -2041,6 +2059,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        _type_: _description_</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">MinMaxScaler</span>
 
@@ -2148,6 +2167,7 @@ Integers has to be larger than 1. Defaults to [2].</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The generator.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">n_generators</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="n">n_factors</span><span class="p">]))</span>
@@ -2248,6 +2268,7 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The generator.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">get_default_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">,</span> <span class="n">n_generators</span><span class="p">)</span>
@@ -2279,15 +2300,14 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
           <summary>Source code in <code>bofire/utils/doe.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">validate_generator</span><span class="p">(</span><span class="n">n_factors</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">generator</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Validates the generator and thows an error if it is not valid.&quot;&quot;&quot;</span>
-
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">generator</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">))</span> <span class="o">!=</span> <span class="n">n_factors</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Generator does not match the number of factors.&quot;</span><span class="p">)</span>
     <span class="c1"># clean it and transform it into a list</span>
     <span class="n">generators</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\-|\s|\+&quot;</span><span class="p">,</span> <span class="n">generator</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span><span class="p">]</span>
-    <span class="n">lengthes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">]</span>
+    <span class="n">lengths</span> <span class="o">=</span> <span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">generators</span><span class="p">]</span>
 
     <span class="c1"># Indices of single letters (main factors)</span>
-    <span class="n">idx_main</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengthes</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">idx_main</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">lengths</span><span class="p">)</span> <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="mi">1</span><span class="p">]</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one unconfounded main factor is needed.&quot;</span><span class="p">)</span>
@@ -2302,7 +2322,7 @@ this one. Otherwise, it will compute a new one using <code>get_bofire_generator<
         <span class="o">!=</span> <span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)]</span>
     <span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s1">&#39;Use the letters `</span><span class="si">{</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)])</span><span class="si">}</span><span class="s1">` for the main factors.&#39;</span>
+            <span class="sa">f</span><span class="s1">&#39;Use the letters `</span><span class="si">{</span><span class="s2">&quot; &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span><span class="p">[:</span><span class="w"> </span><span class="nb">len</span><span class="p">(</span><span class="n">idx_main</span><span class="p">)])</span><span class="si">}</span><span class="s1">` for the main factors.&#39;</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="c1"># Indices of letter combinations.</span>
@@ -2430,7 +2450,8 @@ that should be considered in the mask. Defaults to None.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/multiobjective.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_ref_point_mask</span><span class="p">(</span>
-    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">output_feature_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
+    <span class="n">output_feature_keys</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">list</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to get a mask for the reference points taking into account if we</span>
 <span class="sd">    want to maximize or minimize an objective. In case it is maximize the value</span>
@@ -2443,10 +2464,11 @@ that should be considered in the mask. Defaults to None.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        np.ndarray: _description_</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">output_feature_keys</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">output_feature_keys</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys_by_objective</span><span class="p">(</span>
-            <span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">]</span>
+            <span class="n">includes</span><span class="o">=</span><span class="p">[</span><span class="n">MaximizeObjective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">],</span>
         <span class="p">)</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">output_feature_keys</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least two output features have to be provided.&quot;</span><span class="p">)</span>
@@ -2455,13 +2477,14 @@ that should be considered in the mask. Defaults to None.</p></td>
         <span class="n">feat</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeObjective</span><span class="p">):</span>
             <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">):</span>
-            <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">CloseToTargetObjective</span><span class="p">):</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeObjective</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">CloseToTargetObjective</span><span class="p">,</span>
+        <span class="p">):</span>
             <span class="n">mask</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Only `MaximizeObjective` and `MinimizeObjective` supported&quot;</span>
+                <span class="s2">&quot;Only `MaximizeObjective` and `MinimizeObjective` supported&quot;</span><span class="p">,</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
 </code></pre></div>
@@ -2560,14 +2583,14 @@ that should be considered in the mask. Defaults to None.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_column_names</span><span class="p">(</span><span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Specifies column names for given Outputs type.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Specifies column names for given Outputs type.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        outputs (Outputs): The Outputs object containing the individual outputs.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[List[str], List[str]]: A tuple containing the prediction column names and the standard deviation column names</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">pred_cols</span><span class="p">,</span> <span class="n">sd_cols</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">featkey</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">CategoricalOutput</span><span class="p">):</span>
@@ -2649,10 +2672,10 @@ that should be considered in the mask. Defaults to None.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/naming_conventions.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">postprocess_categorical_predictions</span><span class="p">(</span>
-    <span class="n">predictions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span>
+    <span class="n">predictions</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Postprocess categorical predictions by finding the maximum probability location</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Postprocess categorical predictions by finding the maximum probability location</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        predictions (pd.DataFrame): The dataframe containing the predictions.</span>
@@ -2660,6 +2683,7 @@ that should be considered in the mask. Defaults to None.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        predictions (pd.DataFrame): The (potentially modified) original dataframe with categorical predictions added</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">CategoricalOutput</span><span class="p">):</span>
@@ -2750,6 +2774,7 @@ AffineTransform        </code>
 <span class="sd">                is defined as a tuple, in which the first entry is the key of the reduced feature, the second</span>
 <span class="sd">                one is a list of feature keys that can be used to compute the feature and the third list of floats</span>
 <span class="sd">                are the corresponding coefficients.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">equalities</span> <span class="o">=</span> <span class="n">equalities</span>
 
@@ -2761,6 +2786,7 @@ AffineTransform        </code>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Restored dataframe</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equalities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span>
@@ -2779,6 +2805,7 @@ AffineTransform        </code>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Reduced dataframe.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equalities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">data</span>
@@ -2851,6 +2878,7 @@ are the corresponding coefficients.</p></td>
 <span class="sd">            is defined as a tuple, in which the first entry is the key of the reduced feature, the second</span>
 <span class="sd">            one is a list of feature keys that can be used to compute the feature and the third list of floats</span>
 <span class="sd">            are the corresponding coefficients.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="bp">self</span><span class="o">.</span><span class="n">equalities</span> <span class="o">=</span> <span class="n">equalities</span>
 </code></pre></div>
@@ -2919,6 +2947,7 @@ are the corresponding coefficients.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Restored dataframe</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equalities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data</span>
@@ -2994,6 +3023,7 @@ are the corresponding coefficients.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Reduced dataframe.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">equalities</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">data</span>
@@ -3075,14 +3105,14 @@ are the corresponding coefficients.</p></td>
 <span class="sd">        feature (ContinuousInput): Feature to be adjusted.</span>
 <span class="sd">        coef (float): Coefficient.</span>
 <span class="sd">        rhs (float): Right-hand-side of the constraint.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">boundary</span> <span class="o">=</span> <span class="n">rhs</span> <span class="o">/</span> <span class="n">coef</span>
     <span class="k">if</span> <span class="n">coef</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">boundary</span> <span class="o">&gt;</span> <span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">:</span>
             <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">boundary</span><span class="p">,</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">boundary</span> <span class="o">&lt;</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
-            <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">boundary</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">boundary</span> <span class="o">&lt;</span> <span class="n">feature</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
+        <span class="n">feature</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">feature</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">,</span> <span class="n">boundary</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -3146,8 +3176,10 @@ are the corresponding coefficients.</p></td>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): Domain to be checked.</span>
+
 <span class="sd">    Returns:</span>
 <span class="sd">        bool: True if reducable, else False.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># are there any constraints?</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
@@ -3211,14 +3243,13 @@ are the corresponding coefficients.</p></td>
     <span class="k">if</span> <span class="n">rk_A</span> <span class="o">==</span> <span class="n">rk_A_aug</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">rk_A</span> <span class="o">&lt;</span> <span class="n">len_inputs</span><span class="p">:</span>
             <span class="k">return</span>  <span class="c1"># all good</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
-            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;There is a unique solution x for the linear equality constraints: x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="p">)</span>
-    <span class="k">elif</span> <span class="n">rk_A</span> <span class="o">&lt;</span> <span class="n">rk_A_aug</span><span class="p">:</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
-            <span class="s2">&quot;There is no solution fulfilling the linear equality constraints.&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;There is a unique solution x for the linear equality constraints: x=</span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">rk_A</span> <span class="o">&lt;</span> <span class="n">rk_A_aug</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span>
+            <span class="s2">&quot;There is no solution fulfilling the linear equality constraints.&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 </code></pre></div>
         </details>
@@ -3273,7 +3304,7 @@ are the corresponding coefficients.</p></td>
     <tr>
       <td><code>Tuple[Domain, AffineTransform]</code></td>
       <td><p>reduced domain and the according transformation to switch between the
-    reduced and orginal domain.</p></td>
+    reduced and original domain.</p></td>
     </tr>
   </tbody>
 </table>
@@ -3287,7 +3318,8 @@ are the corresponding coefficients.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[Domain, AffineTransform]: reduced domain and the according transformation to switch between the</span>
-<span class="sd">            reduced and orginal domain.</span>
+<span class="sd">            reduced and original domain.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># check if the domain can be reduced</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">check_domain_for_reduction</span><span class="p">(</span><span class="n">domain</span><span class="p">):</span>
@@ -3296,7 +3328,8 @@ are the corresponding coefficients.</p></td>
     <span class="c1"># find linear equality constraints</span>
     <span class="n">linear_equalities</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">LinearEqualityConstraint</span><span class="p">)</span>
     <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span>
-        <span class="n">Constraint</span><span class="p">,</span> <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">]</span>
+        <span class="n">Constraint</span><span class="p">,</span>
+        <span class="n">excludes</span><span class="o">=</span><span class="p">[</span><span class="n">LinearEqualityConstraint</span><span class="p">],</span>
     <span class="p">)</span>
 
     <span class="c1"># only consider continuous inputs</span>
@@ -3371,9 +3404,8 @@ are the corresponding coefficients.</p></td>
                 <span class="n">key</span> <span class="o">=</span> <span class="n">names</span><span class="p">[</span><span class="n">ind</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
                 <span class="n">feat</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">_domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
                 <span class="n">adjust_boundary</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">ind</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1e-16</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1e-16</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
 
         <span class="c1"># reduce equation system of lower bounds</span>
         <span class="n">ind</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
@@ -3393,9 +3425,8 @@ are the corresponding coefficients.</p></td>
                     <span class="p">(</span><span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">ind</span><span class="p">])[</span><span class="mi">0</span><span class="p">],</span>
                     <span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
                 <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1e-16</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">B</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">1e-16</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;There is no solution that fulfills the constraints.&quot;</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">constraints</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">_domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span> <span class="o">=</span> <span class="n">_domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">constraints</span> <span class="o">+</span> <span class="n">constraints</span>  <span class="c1"># type: ignore</span>
@@ -3440,7 +3471,7 @@ are the corresponding coefficients.</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>Eliminates remaining occurences of eliminated inputs in linear constraints.</p>
+      <p>Eliminates remaining occurrences of eliminated inputs in linear constraints.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -3500,7 +3531,7 @@ are the corresponding coefficients.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/reduce.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">remove_eliminated_inputs</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">transform</span><span class="p">:</span> <span class="n">AffineTransform</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eliminates remaining occurences of eliminated inputs in linear constraints.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eliminates remaining occurrences of eliminated inputs in linear constraints.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): Domain in which the linear constraints should be purged.</span>
@@ -3511,6 +3542,7 @@ are the corresponding coefficients.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Domain: Purged domain.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">inputs_names</span> <span class="o">=</span> <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
     <span class="n">M</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs_names</span><span class="p">)</span>
@@ -3532,11 +3564,11 @@ are the corresponding coefficients.</p></td>
         <span class="c1"># Nonlinear constraints not supported</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">LinearConstraint</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Elimination of variables is only supported for LinearEquality and LinearInequality constraints.&quot;</span>
+                <span class="s2">&quot;Elimination of variables is only supported for LinearEquality and LinearInequality constraints.&quot;</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="c1"># no changes, if the constraint does not contain eliminated inputs</span>
-        <span class="k">elif</span> <span class="nb">all</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">inputs_names</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">inputs_names</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
 
         <span class="c1"># remove inputs from the constraint that were eliminated from the inputs before</span>
@@ -3568,23 +3600,22 @@ are the corresponding coefficients.</p></td>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">feat</span><span class="p">:</span> <span class="n">ContinuousInput</span> <span class="o">=</span> <span class="n">ContinuousInput</span><span class="p">(</span>
-                        <span class="o">**</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">model_dump</span><span class="p">()</span>
+                        <span class="o">**</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">model_dump</span><span class="p">(),</span>
                     <span class="p">)</span>
                     <span class="n">feat</span><span class="o">.</span><span class="n">bounds</span> <span class="o">=</span> <span class="p">(</span><span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
                     <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">_c</span> <span class="o">=</span> <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
+                    <span class="n">features</span><span class="o">=</span><span class="n">_features</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="n">coefficients</span><span class="o">=</span><span class="n">_coefficients</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="n">rhs</span><span class="o">=</span><span class="n">_rhs</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-                    <span class="n">_c</span> <span class="o">=</span> <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
-                        <span class="n">features</span><span class="o">=</span><span class="n">_features</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-                        <span class="n">coefficients</span><span class="o">=</span><span class="n">_coefficients</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
-                        <span class="n">rhs</span><span class="o">=</span><span class="n">_rhs</span><span class="p">,</span>
-                    <span class="p">)</span>
-                <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">_features</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="n">feat</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-                    <span class="n">adjust_boundary</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_rhs</span><span class="p">)</span>
-                    <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">feat</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">,</span> <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_by_key</span><span class="p">(</span><span class="n">_features</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="n">adjust_boundary</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="n">_coefficients</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_rhs</span><span class="p">)</span>
+                <span class="n">totally_removed</span> <span class="o">=</span> <span class="kc">True</span>
 
             <span class="c1"># check if constraint is always fulfilled/not fulfilled</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">totally_removed</span><span class="p">:</span>
@@ -3674,6 +3705,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        (A_rref, pivots), where A_rref is the reduced row echelon form of A and pivots</span>
 <span class="sd">        is a numpy array containing the pivot columns of A_rref</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
     <span class="n">n</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>
@@ -3758,7 +3790,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>removes all features not defined as argument creating a subdomain of the provided domain</p>
+      <p>Removes all features not defined as argument creating a subdomain of the provided domain</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -3837,7 +3869,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
     <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
     <span class="n">feature_keys</span><span class="p">:</span> <span class="n">List</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Domain</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;removes all features not defined as argument creating a subdomain of the provided domain</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Removes all features not defined as argument creating a subdomain of the provided domain</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): the original domain wherefrom a subdomain should be created</span>
@@ -3852,6 +3884,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Domain: A new domain containing only parts of the original domain</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_keys</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">,</span> <span class="s2">&quot;At least two features have to be provided.&quot;</span>
     <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -3874,7 +3907,7 @@ is a numpy array containing the pivot columns of A_rref</p></td>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">():</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Removed input feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is used in a constraint.&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Removed input feature </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is used in a constraint.&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
     <span class="n">subdomain</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
     <span class="n">subdomain</span><span class="o">.</span><span class="n">inputs</span> <span class="o">=</span> <span class="n">inputs</span>
@@ -3981,7 +4014,7 @@ InterpolateTransform            (<span title="botorch.models.transforms.input.In
         <span class="bp">self</span><span class="o">.</span><span class="n">keep_original</span> <span class="o">=</span> <span class="n">keep_original</span>
 
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">idx_x</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prepend_x</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">append_x</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">idx_y</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">idx_y</span><span class="p">,</span>
         <span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prepend_y</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">append_y</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The number of x and y indices must be equal.&quot;</span><span class="p">)</span>
 
@@ -4150,7 +4183,7 @@ InterpolateTransform            (<span title="botorch.models.transforms.input.In
     <div class="doc doc-contents ">
 
       <p>Create a callable that can be used by <code>botorch.utils.objective.apply_constraints</code>
-to setup ouput constrained optimizations.</p>
+to setup output constrained optimizations.</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -4216,7 +4249,7 @@ Defaults to 1e-8.</p></td>
     <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-8</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Create a callable that can be used by `botorch.utils.objective.apply_constraints`</span>
-<span class="sd">    to setup ouput constrained optimizations.</span>
+<span class="sd">    to setup output constrained optimizations.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        idx (int): Index of the constraint objective in the list of outputs.</span>
@@ -4229,9 +4262,11 @@ Defaults to 1e-8.</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,</span>
 <span class="sd">            list of the corresponding botorch eta values, final index used by the method (to track for categorical variables)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
-        <span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span>
+        <span class="n">objective</span><span class="p">,</span>
+        <span class="n">ConstrainedObjective</span><span class="p">,</span>
     <span class="p">),</span> <span class="s2">&quot;Objective is not a `ConstrainedObjective`.&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MaximizeSigmoidObjective</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -4239,7 +4274,7 @@ Defaults to 1e-8.</p></td>
             <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
             <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MovingMaximizeSigmoidObjective</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MovingMaximizeSigmoidObjective</span><span class="p">):</span>
         <span class="k">assert</span> <span class="n">x_adapt</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">tp</span> <span class="o">=</span> <span class="n">x_adapt</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">+</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -4247,13 +4282,13 @@ Defaults to 1e-8.</p></td>
             <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
             <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeSigmoidObjective</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">MinimizeSigmoidObjective</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">[</span><span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tp</span><span class="p">)],</span>
             <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
             <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">TargetObjective</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">TargetObjective</span><span class="p">):</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">[</span>
                 <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="p">(</span><span class="n">Z</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">target_value</span> <span class="o">-</span> <span class="n">objective</span><span class="o">.</span><span class="n">tolerance</span><span class="p">))</span>
@@ -4265,9 +4300,9 @@ Defaults to 1e-8.</p></td>
             <span class="p">[</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">objective</span><span class="o">.</span><span class="n">steepness</span><span class="p">],</span>
             <span class="n">idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedCategoricalObjective</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedCategoricalObjective</span><span class="p">):</span>
         <span class="c1"># The output of a categorical objective has final dim `c` where `c` is number of classes</span>
-        <span class="c1"># Pass in the expected acceptance probability and perform an inverse sigmoid to atain the original probabilities</span>
+        <span class="c1"># Pass in the expected acceptance probability and perform an inverse sigmoid to attain the original probabilities</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="p">[</span>
                 <span class="k">lambda</span> <span class="n">Z</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
@@ -4281,13 +4316,12 @@ Defaults to 1e-8.</p></td>
                         <span class="nb">max</span><span class="o">=</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eps</span><span class="p">,</span>
                     <span class="p">)</span>
                     <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">],</span>
             <span class="p">[</span><span class="mf">1.0</span><span class="p">],</span>
             <span class="n">idx</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">objective</span><span class="o">.</span><span class="n">desirability</span><span class="p">),</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective </span><span class="si">{</span><span class="n">objective</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not known.&quot;</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Objective </span><span class="si">{</span><span class="n">objective</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> not known.&quot;</span><span class="p">)</span>
 </code></pre></div>
         </details>
     </div>
@@ -4348,7 +4382,7 @@ passed to the <code>ask</code> method of the strategy. Defaults to {}.</p></td>
         <td><code>sequential</code></td>
         <td><code>bool</code></td>
         <td><p>If True, samples for every q-batch are
-generate indepenent from each other. If False, the <code>n x q</code> samples
+generate independent from each other. If False, the <code>n x q</code> samples
 are generated at once.</p></td>
         <td><code>True</code></td>
       </tr>
@@ -4389,12 +4423,13 @@ are generated at once.</p></td>
 <span class="sd">        ask_options (Dict, optional): Dictionary of keyword arguments that are</span>
 <span class="sd">            passed to the `ask` method of the strategy. Defaults to {}.</span>
 <span class="sd">        sequential (bool, optional): If True, samples for every q-batch are</span>
-<span class="sd">            generate indepenent from each other. If False, the `n x q` samples</span>
+<span class="sd">            generate independent from each other. If False, the `n x q` samples</span>
 <span class="sd">            are generated at once.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Callable[[int, int, int], Tensor]: Callable that can be passed to</span>
 <span class="sd">            `batch_initial_conditions`.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">ask_options</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">ask_options</span> <span class="o">=</span> <span class="p">{}</span>
@@ -4406,24 +4441,25 @@ are generated at once.</p></td>
                 <span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">ask_options</span><span class="p">)</span>
                 <span class="c1"># transform it</span>
                 <span class="n">transformed_candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
-                    <span class="n">candidates</span><span class="p">,</span> <span class="n">transform_specs</span>
+                    <span class="n">candidates</span><span class="p">,</span>
+                    <span class="n">transform_specs</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="c1"># transform to tensor</span>
                 <span class="n">initial_conditions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transformed_candidates</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transformed_candidates</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
                 <span class="p">)</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">initial_conditions</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">ask_options</span><span class="p">)</span>
-            <span class="c1"># transform it</span>
-            <span class="n">transformed_candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
-                <span class="n">candidates</span><span class="p">,</span> <span class="n">transform_specs</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transformed_candidates</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
-                <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">transformed_candidates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-            <span class="p">)</span>
+        <span class="n">candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">ask</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">q</span><span class="p">,</span> <span class="o">**</span><span class="n">ask_options</span><span class="p">)</span>
+        <span class="c1"># transform it</span>
+        <span class="n">transformed_candidates</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span>
+            <span class="n">candidates</span><span class="p">,</span>
+            <span class="n">transform_specs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">transformed_candidates</span><span class="o">.</span><span class="n">values</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">)</span>
+            <span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">q</span><span class="p">,</span> <span class="n">transformed_candidates</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">generator</span>
 </code></pre></div>
@@ -4495,7 +4531,8 @@ are generated at once.</p></td>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_interpoint_constraints</span><span class="p">(</span>
-    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span> <span class="n">n_candidates</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">,</span>
+    <span class="n">n_candidates</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Converts interpoint equality constraints to linear equality constraints,</span>
 <span class="sd">        that can be processed by botorch. For more information, see the docstring</span>
@@ -4509,6 +4546,7 @@ are generated at once.</p></td>
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists</span>
 <span class="sd">            of a tensor with the feature indices, coefficients and a float for the rhs.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">if</span> <span class="n">n_candidates</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -4524,7 +4562,8 @@ are generated at once.</p></td>
         <span class="n">multiplicity</span> <span class="o">=</span> <span class="n">constraint</span><span class="o">.</span><span class="n">multiplicity</span> <span class="ow">or</span> <span class="n">n_candidates</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">n_candidates</span> <span class="o">/</span> <span class="n">multiplicity</span><span class="p">)):</span>
             <span class="n">all_indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span>
-                <span class="n">i</span> <span class="o">*</span> <span class="n">multiplicity</span><span class="p">,</span> <span class="nb">min</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">multiplicity</span><span class="p">,</span> <span class="n">n_candidates</span><span class="p">)</span>
+                <span class="n">i</span> <span class="o">*</span> <span class="n">multiplicity</span><span class="p">,</span>
+                <span class="nb">min</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">multiplicity</span><span class="p">,</span> <span class="n">n_candidates</span><span class="p">),</span>
             <span class="p">)</span>
             <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">all_indices</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
                 <span class="n">indices</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
@@ -4617,6 +4656,7 @@ are generated at once.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">domain</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">constraint</span><span class="p">):</span>
@@ -4635,7 +4675,7 @@ are generated at once.</p></td>
                 <span class="n">upper</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
                 <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
                 <span class="n">coefficients</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                    <span class="n">c</span><span class="o">.</span><span class="n">coefficients</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
                 <span class="p">)</span>  <span class="c1"># if unit_scaled == False else c_scaled.coefficients[i])</span>
         <span class="k">if</span> <span class="n">unit_scaled</span><span class="p">:</span>
             <span class="n">lower</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lower</span><span class="p">)</span>
@@ -4647,7 +4687,7 @@ are generated at once.</p></td>
                     <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
                     <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">scaled_coefficients</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
                     <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span> <span class="o">*</span> <span class="n">lower</span><span class="p">)),</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
@@ -4655,7 +4695,7 @@ are generated at once.</p></td>
                     <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">indices</span><span class="p">),</span>
                     <span class="o">-</span><span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">coefficients</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
                     <span class="o">-</span><span class="p">(</span><span class="n">rhs</span> <span class="o">+</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">),</span>
-                <span class="p">)</span>
+                <span class="p">),</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>
@@ -4725,7 +4765,8 @@ adapting the objectives on the fly, for example in the case of the
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_multiobjective_objective</span><span class="p">(</span>
-    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a callable that can be used by botorch for multiobjective optimization.</span>
 
@@ -4737,6 +4778,7 @@ adapting the objectives on the fly, for example in the case of the
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Callable[[Tensor], Tensor]: _description_</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">callables</span> <span class="o">=</span> <span class="p">[</span>
         <span class="n">get_objective_callable</span><span class="p">(</span>
@@ -4745,7 +4787,7 @@ adapting the objectives on the fly, for example in the case of the
             <span class="n">x_adapt</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span>
                 <span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_one_valid_output</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">experiments</span><span class="p">)[</span>
                     <span class="n">feat</span><span class="o">.</span><span class="n">key</span>
-                <span class="p">]</span><span class="o">.</span><span class="n">values</span>
+                <span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
             <span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="o">**</span><span class="n">tkwargs</span><span class="p">),</span>
         <span class="p">)</span>
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">feat</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">())</span>
@@ -4835,6 +4877,7 @@ at zero.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Callable[[Tensor], float]]: List of callables that can be used</span>
 <span class="sd">            as nonlinear equality constraints in botorch.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">narrow_gaussian</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ell</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">):</span>
@@ -4861,14 +4904,18 @@ at zero.</p>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">max_count</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">):</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">max_constraint</span><span class="p">(</span>
-                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span> <span class="n">max_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_count</span>
-                <span class="p">)</span>
+                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+                    <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span>
+                    <span class="n">max_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">max_count</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">min_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                 <span class="n">min_constraint</span><span class="p">(</span>
-                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span> <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span> <span class="n">min_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">min_count</span>
-                <span class="p">)</span>
+                    <span class="n">indices</span><span class="o">=</span><span class="n">indices</span><span class="p">,</span>
+                    <span class="n">num_features</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">features</span><span class="p">),</span>
+                    <span class="n">min_count</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">min_count</span><span class="p">,</span>
+                <span class="p">),</span>
             <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>
@@ -4932,16 +4979,16 @@ as input and return a float value representing the constraint evaluation.</p></t
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nonlinear_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns a list of callable functions that represent the nonlinear constraints</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a list of callable functions that represent the nonlinear constraints</span>
 <span class="sd">    for the given domain that can be processed by botorch.</span>
 
-<span class="sd">    Parameters:</span>
+<span class="sd">    Args:</span>
 <span class="sd">        domain (Domain): The domain for which to generate the nonlinear constraints.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Callable[[Tensor], float]]: A list of callable functions that take a tensor</span>
 <span class="sd">        as input and return a float value representing the constraint evaluation.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">get_nchoosek_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span> <span class="o">+</span> <span class="n">get_product_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">)</span>
 </code></pre></div>
@@ -5015,7 +5062,8 @@ adapting the objectives on the fly, for example in the case of the
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_output_constraints</span><span class="p">(</span>
-    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span> <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span>
+    <span class="n">outputs</span><span class="p">:</span> <span class="n">Outputs</span><span class="p">,</span>
+    <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Tensor</span><span class="p">]],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to translate output constraint objectives into a list of</span>
 <span class="sd">    callables and list of etas for use in botorch.</span>
@@ -5030,6 +5078,7 @@ adapting the objectives on the fly, for example in the case of the
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,</span>
 <span class="sd">            list of associated etas.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">constraints</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">etas</span> <span class="o">=</span> <span class="p">[]</span>
@@ -5037,13 +5086,14 @@ adapting the objectives on the fly, for example in the case of the
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">outputs</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedObjective</span><span class="p">):</span>
             <span class="n">cleaned_experiments</span> <span class="o">=</span> <span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_one_valid_output</span><span class="p">(</span>
-                <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span> <span class="n">experiments</span>
+                <span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">,</span>
+                <span class="n">experiments</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="n">iconstraints</span><span class="p">,</span> <span class="n">ietas</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">constrained_objective2botorch</span><span class="p">(</span>
                 <span class="n">idx</span><span class="p">,</span>
                 <span class="n">objective</span><span class="o">=</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span>
                 <span class="n">x_adapt</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">from_numpy</span><span class="p">(</span><span class="n">cleaned_experiments</span><span class="p">[</span><span class="n">feat</span><span class="o">.</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">values</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span>
-                    <span class="o">**</span><span class="n">tkwargs</span>
+                    <span class="o">**</span><span class="n">tkwargs</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">ConstrainedCategoricalObjective</span><span class="p">)</span>
                 <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
@@ -5113,8 +5163,7 @@ based on the given domain.</p>
         <details class="quote">
           <summary>Source code in <code>bofire/utils/torch_tools.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_product_constraints</span><span class="p">(</span><span class="n">domain</span><span class="p">:</span> <span class="n">Domain</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">],</span> <span class="nb">float</span><span class="p">]]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Returns a list of nonlinear constraint functions that can be processed by botorch</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Returns a list of nonlinear constraint functions that can be processed by botorch</span>
 <span class="sd">    based on the given domain.</span>
 
 <span class="sd">    Args:</span>
@@ -5136,7 +5185,7 @@ based on the given domain.</p>
             <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="n">product_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">exponents</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sign</span><span class="p">)</span>
+            <span class="n">product_constraint</span><span class="p">(</span><span class="n">indices</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">exponents</span><span class="p">),</span> <span class="n">c</span><span class="o">.</span><span class="n">rhs</span><span class="p">,</span> <span class="n">c</span><span class="o">.</span><span class="n">sign</span><span class="p">),</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">constraints</span>
 </code></pre></div>

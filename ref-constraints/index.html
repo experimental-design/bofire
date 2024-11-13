@@ -875,7 +875,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
           <summary>Source code in <code>bofire/data_models/domain/constraints.py</code></summary>
           <div class="highlight"><pre><span></span><code><span class="k">class</span> <span class="nc">Constraints</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">C</span><span class="p">]):</span>
     <span class="nb">type</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;Constraints&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;Constraints&quot;</span>
-    <span class="n">constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">C</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="p">[])</span>
+    <span class="n">constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">C</span><span class="p">]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">C</span><span class="p">]:</span>
         <span class="k">return</span> <span class="nb">iter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span>
@@ -887,7 +887,8 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">],</span> <span class="s2">&quot;Constraints[CIncludes]&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">other</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="n">CIncludes</span><span class="p">],</span> <span class="s2">&quot;Constraints[CIncludes]&quot;</span><span class="p">],</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Constraints[Union[C, CIncludes]]&quot;</span><span class="p">:</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">abc</span><span class="o">.</span><span class="n">Sequence</span><span class="p">):</span>
             <span class="n">other_constraints</span> <span class="o">=</span> <span class="n">other</span>
@@ -904,6 +905,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Constraint evaluation for each of the constraints</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
@@ -915,6 +917,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
 <span class="sd">        Returns:</span>
 <span class="sd">            list: A list containing the jacobians as pd.DataFrames</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">]</span>
 
@@ -928,12 +931,14 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Boolean: True if all constraints are fulfilled for all rows, false if not</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
             <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+                <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -954,6 +959,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Constraints: constraints in the domain fitting to the passed requirements.</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span>
             <span class="n">constraints</span><span class="o">=</span><span class="n">filter_by_class</span><span class="p">(</span>
@@ -961,7 +967,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
                 <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
                 <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
                 <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
-            <span class="p">)</span>
+            <span class="p">),</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">get_reps_df</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -969,6 +975,7 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: DataFrame listing all constraints of the domain with a description</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
             <span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)),</span>
@@ -1320,6 +1327,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Constraint evaluation for each of the constraints</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">c</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </code></pre></div>
@@ -1360,7 +1368,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
   <tbody>
       <tr>
         <td><code>includes</code></td>
-        <td><code>Union[Type[~CIncludes], Sequence[Type[~CIncludes]]]</code></td>
+        <td><code>Union[Type[~CIncludes], collections.abc.Sequence[Type[~CIncludes]]]</code></td>
         <td><p>Constraint class or list of specific constraint classes to be returned. Defaults to Constraint.</p></td>
         <td><code>&lt;class &#39;bofire.data_models.constraints.constraint.Constraint&#39;&gt;</code></td>
       </tr>
@@ -1410,6 +1418,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Constraints: constraints in the domain fitting to the passed requirements.</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span>
         <span class="n">constraints</span><span class="o">=</span><span class="n">filter_by_class</span><span class="p">(</span>
@@ -1417,7 +1426,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
             <span class="n">includes</span><span class="o">=</span><span class="n">includes</span><span class="p">,</span>
             <span class="n">excludes</span><span class="o">=</span><span class="n">excludes</span><span class="p">,</span>
             <span class="n">exact</span><span class="o">=</span><span class="n">exact</span><span class="p">,</span>
-        <span class="p">)</span>
+        <span class="p">),</span>
     <span class="p">)</span>
 </code></pre></div>
         </details>
@@ -1463,6 +1472,7 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: DataFrame listing all constraints of the domain with a description</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span>
         <span class="n">index</span><span class="o">=</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)),</span>
@@ -1550,12 +1560,14 @@ the violation is larger than tol. Defaults to 0.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Boolean: True if all constraints are fulfilled for all rows, false if not</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">Series</span><span class="p">([</span><span class="kc">True</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">),</span> <span class="n">index</span><span class="o">=</span><span class="n">experiments</span><span class="o">.</span><span class="n">index</span><span class="p">)</span>
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+            <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">experiments</span><span class="p">,</span> <span class="n">tol</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">],</span>
+            <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="o">.</span><span class="n">fillna</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
         <span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1626,6 +1638,7 @@ the violation is larger than tol. Defaults to 0.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        list: A list containing the jacobians as pd.DataFrames</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">jacobian</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="p">]</span>
 </code></pre></div>

@@ -1147,11 +1147,15 @@ from bofire.strategies.doe.design import find_local_max_ipopt</div>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
     <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
         <span class="n">LinearEqualityConstraint</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+            <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">3.9</span><span class="p">),</span>
         <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=-</span><span class="mi">3</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">],</span>
+            <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">20</span><span class="p">,</span> <span class="mi">5</span><span class="p">],</span>
+            <span class="n">rhs</span><span class="o">=-</span><span class="mi">3</span><span class="p">,</span>
         <span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span>
@@ -1171,11 +1175,15 @@ from bofire.strategies.doe.design import find_local_max_ipopt</div>
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         LinearEqualityConstraint(
-            features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
+            features=["x1", "x2", "x3"],
+            coefficients=[1, 1, 1],
+            rhs=1,
         ),
         LinearInequalityConstraint(features=["x1", "x2"], coefficients=[5, 4], rhs=3.9),
         LinearInequalityConstraint(
-            features=["x1", "x2"], coefficients=[-20, 5], rhs=-3
+            features=["x1", "x2"],
+            coefficients=[-20, 5],
+            rhs=-3,
         ),
     ],
 )
@@ -1344,7 +1352,7 @@ plt.legend()</div>
             <span class="mf">0.2878</span><span class="p">,</span>
             <span class="mf">0.4376</span><span class="p">,</span>
         <span class="p">],</span>
-    <span class="p">]</span>
+    <span class="p">],</span>
 <span class="p">)</span>  <span class="c1"># values taken from paper</span>
 
 
@@ -1429,7 +1437,7 @@ d_opt = np.array(
             0.2878,
             0.4376,
         ],
-    ]
+    ],
 )  # values taken from paper
 
 
@@ -1595,13 +1603,16 @@ The optimization is done for a linear model and places the points on the surface
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
     <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
         <span class="n">NonlinearInequalityConstraint</span><span class="p">(</span>
-            <span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">]</span>
-        <span class="p">)</span>
+            <span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+        <span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span>
-    <span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+    <span class="n">domain</span><span class="p">,</span>
+    <span class="s2">"linear"</span><span class="p">,</span>
+    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">,</span> <span class="s2">"disp"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
 <span class="p">)</span>
 <span class="n">result</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">plot_results_3d</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">surface_func</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x2</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
@@ -1615,13 +1626,16 @@ The optimization is done for a linear model and places the points on the surface
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         NonlinearInequalityConstraint(
-            expression="(x1**2 + x2**2)**0.5 - x3", features=["x1", "x2", "x3"]
-        )
+            expression="(x1**2 + x2**2)**0.5 - x3",
+            features=["x1", "x2", "x3"],
+        ),
     ],
 )
 
 result = find_local_max_ipopt(
-    domain, "linear", ipopt_options={"maxiter": 100, "disp": 0}
+    domain,
+    "linear",
+    ipopt_options={"maxiter": 100, "disp": 0},
 )
 result.round(3)
 plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div>
@@ -1669,8 +1683,9 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
     <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
         <span class="n">NonlinearInequalityConstraint</span><span class="p">(</span>
-            <span class="n">expression</span><span class="o">=</span><span class="s2">"x1**2 + x2**2 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">]</span>
-        <span class="p">)</span>
+            <span class="n">expression</span><span class="o">=</span><span class="s2">"x1**2 + x2**2 - x3"</span><span class="p">,</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+        <span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span>
 
@@ -1687,8 +1702,9 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         NonlinearInequalityConstraint(
-            expression="x1**2 + x2**2 - x3", features=["x1", "x2", "x3"]
-        )
+            expression="x1**2 + x2**2 - x3",
+            features=["x1", "x2", "x3"],
+        ),
     ],
 )
 
@@ -1740,8 +1756,9 @@ plot_results_3d(result, surface_func=lambda x1, x2: x1**2 + x2**2)</div>
     <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">ContinuousOutput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"y"</span><span class="p">)],</span>
     <span class="n">constraints</span><span class="o">=</span><span class="p">[</span>
         <span class="n">NonlinearEqualityConstraint</span><span class="p">(</span>
-            <span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">]</span>
-        <span class="p">)</span>
+            <span class="n">expression</span><span class="o">=</span><span class="s2">"(x1**2 + x2**2)**0.5 - x3"</span><span class="p">,</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+        <span class="p">),</span>
     <span class="p">],</span>
 <span class="p">)</span>
 
@@ -1758,8 +1775,9 @@ plot_results_3d(result, surface_func=lambda x1, x2: x1**2 + x2**2)</div>
     outputs=[ContinuousOutput(key="y")],
     constraints=[
         NonlinearEqualityConstraint(
-            expression="(x1**2 + x2**2)**0.5 - x3", features=["x1", "x2", "x3"]
-        )
+            expression="(x1**2 + x2**2)**0.5 - x3",
+            features=["x1", "x2", "x3"],
+        ),
     ],
 )
 
@@ -1812,7 +1830,10 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 <span class="p">)</span>
 
 <span class="n">result</span> <span class="o">=</span> <span class="n">find_local_max_ipopt</span><span class="p">(</span>
-    <span class="n">domain</span><span class="p">,</span> <span class="s2">"linear"</span><span class="p">,</span> <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span> <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span>
+    <span class="n">domain</span><span class="p">,</span>
+    <span class="s2">"linear"</span><span class="p">,</span>
+    <span class="n">ipopt_options</span><span class="o">=</span><span class="p">{</span><span class="s2">"maxiter"</span><span class="p">:</span> <span class="mi">100</span><span class="p">},</span>
+    <span class="n">n_experiments</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">result</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
 </pre></div>
@@ -1827,7 +1848,10 @@ plot_results_3d(result, surface_func=lambda x1, x2: np.sqrt(x1**2 + x2**2))</div
 )
 
 result = find_local_max_ipopt(
-    domain, "linear", ipopt_options={"maxiter": 100}, n_experiments=12
+    domain,
+    "linear",
+    ipopt_options={"maxiter": 100},
+    n_experiments=12,
 )
 result.round(3)</div>
 </div>

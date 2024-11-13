@@ -1840,12 +1840,16 @@ They take a list of names of the input features they are operating on, a list of
 
 <span class="c1"># A mixture: x1 + x2 + x3 = 1</span>
 <span class="n">constr1</span> <span class="o">=</span> <span class="n">LinearEqualityConstraint</span><span class="p">(</span>
-    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+    <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+    <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># x1 + 2 * x3 &lt; 0.8</span>
 <span class="n">constr2</span> <span class="o">=</span> <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
-    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.8</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+    <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+    <span class="n">rhs</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-14">from bofire.data_models.constraints.api import (
@@ -1856,12 +1860,16 @@ They take a list of names of the input features they are operating on, a list of
 
 # A mixture: x1 + x2 + x3 = 1
 constr1 = LinearEqualityConstraint(
-    features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=1
+    features=["x1", "x2", "x3"],
+    coefficients=[1, 1, 1],
+    rhs=1,
 )
 
 # x1 + 2 * x3 &lt; 0.8
 constr2 = LinearInequalityConstraint(
-    features=["x1", "x3"], coefficients=[1, 2], rhs=0.8
+    features=["x1", "x3"],
+    coefficients=[1, 2],
+    rhs=0.8,
 )</div>
 </div>
 </div>
@@ -1974,7 +1982,10 @@ Think of a mixture, where we have long list of possible ingredients, but want to
 
 <span class="c1"># Only 2 or 3 out of 3 parameters can be greater than zero</span>
 <span class="n">constr5</span> <span class="o">=</span> <span class="n">NChooseKConstraint</span><span class="p">(</span>
-    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">none_also_valid</span><span class="o">=</span><span class="kc">True</span>
+    <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+    <span class="n">min_count</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">max_count</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">none_also_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="n">constr5</span>
 </pre></div>
@@ -1983,7 +1994,10 @@ Think of a mixture, where we have long list of possible ingredients, but want to
 
 # Only 2 or 3 out of 3 parameters can be greater than zero
 constr5 = NChooseKConstraint(
-    features=["x1", "x2", "x3"], min_count=2, max_count=3, none_also_valid=True
+    features=["x1", "x2", "x3"],
+    min_count=2,
+    max_count=3,
+    none_also_valid=True,
 )
 constr5</div>
 </div>
@@ -2179,7 +2193,7 @@ fig.show()</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h3 id="the-domain">The domain<a class="anchor-link" href="#the-domain">¶</a></h3><p>The domain holds then all information about an optimization problem and can be understood as a search space defintion.</p>
+<h3 id="the-domain">The domain<a class="anchor-link" href="#the-domain">¶</a></h3><p>The domain holds then all information about an optimization problem and can be understood as a search space definition.</p>
 </div>
 </div>
 </div>
@@ -2247,11 +2261,15 @@ domain = Domain(inputs=input_features, outputs=output_features, constraints=cons
 </clipboard-copy>
 </div>
 <div class="highlight-ipynb hl-python"><pre><span></span><span class="n">domain_single_objective</span> <span class="o">=</span> <span class="n">Domain</span><span class="o">.</span><span class="n">from_lists</span><span class="p">(</span>
-    <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span><span class="p">,</span> <span class="n">x5</span><span class="p">,</span> <span class="n">x6</span><span class="p">],</span> <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">y1</span><span class="p">],</span> <span class="n">constraints</span><span class="o">=</span><span class="p">[]</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">x3</span><span class="p">,</span> <span class="n">x4</span><span class="p">,</span> <span class="n">x5</span><span class="p">,</span> <span class="n">x6</span><span class="p">],</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">y1</span><span class="p">],</span>
+    <span class="n">constraints</span><span class="o">=</span><span class="p">[],</span>
 <span class="p">)</span>
 </pre></div>
 <div class="clipboard-copy-txt" id="cell-22">domain_single_objective = Domain.from_lists(
-    inputs=[x1, x2, x3, x4, x5, x6], outputs=[y1], constraints=[]
+    inputs=[x1, x2, x3, x4, x5, x6],
+    outputs=[y1],
+    constraints=[],
 )</div>
 </div>
 </div>
@@ -2456,7 +2474,8 @@ experiments</div>
 
 
 <span class="n">sobo_strategy_data_model</span> <span class="o">=</span> <span class="n">SoboStrategy</span><span class="p">(</span>
-    <span class="n">domain</span><span class="o">=</span><span class="n">benchmark</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span> <span class="n">acquisition_function</span><span class="o">=</span><span class="n">qLogNEI</span><span class="p">()</span>
+    <span class="n">domain</span><span class="o">=</span><span class="n">benchmark</span><span class="o">.</span><span class="n">domain</span><span class="p">,</span>
+    <span class="n">acquisition_function</span><span class="o">=</span><span class="n">qLogNEI</span><span class="p">(),</span>
 <span class="p">)</span>
 
 <span class="n">sobo_strategy</span> <span class="o">=</span> <span class="n">strategies</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">sobo_strategy_data_model</span><span class="p">)</span>
@@ -2470,7 +2489,8 @@ from bofire.data_models.strategies.api import SoboStrategy
 
 
 sobo_strategy_data_model = SoboStrategy(
-    domain=benchmark.domain, acquisition_function=qLogNEI()
+    domain=benchmark.domain,
+    acquisition_function=qLogNEI(),
 )
 
 sobo_strategy = strategies.map(sobo_strategy_data_model)

@@ -1118,13 +1118,20 @@ it is impossible to fulfill the linear constraint $x_3 + x_4 \geq 0.1$ since $x_
             <span class="n">rhs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">NChooseKConstraint</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">min_count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">none_also_valid</span><span class="o">=</span><span class="kc">True</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+            <span class="n">min_count</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">max_count</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">none_also_valid</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.7</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x1"</span><span class="p">,</span> <span class="s2">"x2"</span><span class="p">,</span> <span class="s2">"x3"</span><span class="p">],</span>
+            <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+            <span class="n">rhs</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">LinearInequalityConstraint</span><span class="p">(</span>
-            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span> <span class="s2">"x8"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=-</span><span class="mf">0.1</span>
+            <span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span> <span class="s2">"x8"</span><span class="p">],</span>
+            <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">rhs</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">LinearInequalityConstraint</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="s2">"x7"</span><span class="p">,</span> <span class="s2">"x8"</span><span class="p">],</span> <span class="n">coefficients</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">rhs</span><span class="o">=</span><span class="mf">0.9</span><span class="p">),</span>
     <span class="p">],</span>
@@ -1159,13 +1166,20 @@ domain = Domain(
             rhs=1,
         ),
         NChooseKConstraint(
-            features=["x1", "x2", "x3"], min_count=0, max_count=1, none_also_valid=True
+            features=["x1", "x2", "x3"],
+            min_count=0,
+            max_count=1,
+            none_also_valid=True,
         ),
         LinearInequalityConstraint(
-            features=["x1", "x2", "x3"], coefficients=[1, 1, 1], rhs=0.7
+            features=["x1", "x2", "x3"],
+            coefficients=[1, 1, 1],
+            rhs=0.7,
         ),
         LinearInequalityConstraint(
-            features=["x7", "x8"], coefficients=[-1, -1], rhs=-0.1
+            features=["x7", "x8"],
+            coefficients=[-1, -1],
+            rhs=-0.1,
         ),
         LinearInequalityConstraint(features=["x7", "x8"], coefficients=[1, 1], rhs=0.9),
     ],

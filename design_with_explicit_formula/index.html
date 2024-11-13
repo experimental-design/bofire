@@ -1140,7 +1140,7 @@ from bofire.utils.doe import get_confounding_matrix</div>
         <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"b"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">40</span><span class="p">,</span> <span class="mi">800</span><span class="p">)),</span>
         <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"c"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">80</span><span class="p">,</span> <span class="mi">180</span><span class="p">)),</span>
         <span class="n">ContinuousInput</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="s2">"d"</span><span class="p">,</span> <span class="n">bounds</span><span class="o">=</span><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">800</span><span class="p">)),</span>
-    <span class="p">]</span>
+    <span class="p">],</span>
 <span class="p">)</span>
 <span class="n">domain</span> <span class="o">=</span> <span class="n">Domain</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="n">input_features</span><span class="p">)</span>
 </pre></div>
@@ -1150,7 +1150,7 @@ from bofire.utils.doe import get_confounding_matrix</div>
         ContinuousInput(key="b", bounds=(40, 800)),
         ContinuousInput(key="c", bounds=(80, 180)),
         ContinuousInput(key="d", bounds=(200, 800)),
-    ]
+    ],
 )
 domain = Domain(inputs=input_features)</div>
 </div>
@@ -1165,7 +1165,7 @@ domain = Domain(inputs=input_features)</div>
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput" data-mime-type="text/markdown">
-<h2 id="defintion-of-the-formula-for-which-the-optimal-points-should-be-found">Defintion of the formula for which the optimal points should be found<a class="anchor-link" href="#defintion-of-the-formula-for-which-the-optimal-points-should-be-found">¶</a></h2>
+<h2 id="definitionn-of-the-formula-for-which-the-optimal-points-should-be-found">Definitionn of the formula for which the optimal points should be found<a class="anchor-link" href="#definitionn-of-the-formula-for-which-the-optimal-points-should-be-found">¶</a></h2>
 </div>
 </div>
 </div>
@@ -1276,7 +1276,10 @@ design</div>
 <span class="n">matplotlib</span><span class="o">.</span><span class="n">rcParams</span><span class="p">[</span><span class="s2">"figure.dpi"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">120</span>
 
 <span class="n">m</span> <span class="o">=</span> <span class="n">get_confounding_matrix</span><span class="p">(</span>
-    <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">,</span> <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="n">powers</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">domain</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span>
+    <span class="n">design</span><span class="o">=</span><span class="n">design</span><span class="p">,</span>
+    <span class="n">interactions</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+    <span class="n">powers</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
 <span class="p">)</span>
 
 <span class="n">sns</span><span class="o">.</span><span class="n">heatmap</span><span class="p">(</span><span class="n">m</span><span class="p">,</span> <span class="n">annot</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">annot_kws</span><span class="o">=</span><span class="p">{</span><span class="s2">"fontsize"</span><span class="p">:</span> <span class="mi">7</span><span class="p">},</span> <span class="n">fmt</span><span class="o">=</span><span class="s2">"2.1f"</span><span class="p">)</span>
@@ -1290,7 +1293,10 @@ import seaborn as sns
 matplotlib.rcParams["figure.dpi"] = 120
 
 m = get_confounding_matrix(
-    domain.inputs, design=design, interactions=[2, 3], powers=[2]
+    domain.inputs,
+    design=design,
+    interactions=[2, 3],
+    powers=[2],
 )
 
 sns.heatmap(m, annot=True, annot_kws={"fontsize": 7}, fmt="2.1f")

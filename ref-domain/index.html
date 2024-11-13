@@ -954,8 +954,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="k">return</span> <span class="n">v</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyInput</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Inputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -964,8 +963,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="k">return</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyOutput</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Outputs</span><span class="p">(</span><span class="n">features</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@field_validator</span><span class="p">(</span><span class="s2">&quot;constraints&quot;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
     <span class="nd">@classmethod</span>
@@ -974,8 +972,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="n">v</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">isinstance_or_union</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">AnyConstraint</span><span class="p">):</span>
             <span class="k">return</span> <span class="n">Constraints</span><span class="p">(</span><span class="n">constraints</span><span class="o">=</span><span class="p">[</span><span class="n">v</span><span class="p">])</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">v</span>
+        <span class="k">return</span> <span class="n">v</span>
 
     <span class="nd">@model_validator</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">validate_unique_feature_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -990,8 +987,8 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 <span class="sd">        Returns:</span>
 <span class="sd">            Outputs: Keeps output features as given.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
 
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Feature keys are not unique&quot;</span><span class="p">)</span>
@@ -1010,14 +1007,15 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[Constraint]: List of constraints defined for the domain</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
             <span class="n">c</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="c1"># TODO: tidy this up</span>
-    <span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>  <span class="c1"># noqa: C901</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
+    <span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get all possible NChooseK combinations</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            exhaustive (bool, optional): if True all combinations are returned. Defaults to False.</span>
@@ -1025,8 +1023,8 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 <span class="sd">        Returns:</span>
 <span class="sd">            Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.</span>
 <span class="sd">                unused_features_list is a list of lists containing features unused in each NChooseK combination.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
 
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
@@ -1046,13 +1044,13 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                     <span class="n">used_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(())</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">used_features_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                    <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">)</span>
+                    <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">),</span>
                 <span class="p">)</span>
 
             <span class="n">used_features_list_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">used_features_list</span><span class="p">)</span>
 
         <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-            <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">used_features_list_all</span><span class="p">)</span>
+            <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">used_features_list_all</span><span class="p">),</span>
         <span class="p">)</span>  <span class="c1"># product between NChooseK constraints</span>
 
         <span class="c1"># format into a list of used features</span>
@@ -1086,9 +1084,12 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                 <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">:</span>
                     <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
                         <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-                <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">min_count</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">:</span>
-                    <span class="n">fulfil_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-                <span class="k">elif</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">con</span><span class="o">.</span><span class="n">none_also_valid</span><span class="p">:</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">min_count</span>
+                    <span class="ow">and</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span>
+                    <span class="ow">or</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span>
+                    <span class="ow">and</span> <span class="n">con</span><span class="o">.</span><span class="n">none_also_valid</span>
+                <span class="p">):</span>
                     <span class="n">fulfil_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
                 <span class="k">else</span><span class="p">:</span>
                     <span class="n">fulfil_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
@@ -1107,7 +1108,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="n">unused_features_list</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">used_features</span> <span class="ow">in</span> <span class="n">used_features_list_final</span><span class="p">:</span>
             <span class="n">unused_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                <span class="p">[</span><span class="n">f_key</span> <span class="k">for</span> <span class="n">f_key</span> <span class="ow">in</span> <span class="n">features_in_cc</span> <span class="k">if</span> <span class="n">f_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_features</span><span class="p">]</span>
+                <span class="p">[</span><span class="n">f_key</span> <span class="k">for</span> <span class="n">f_key</span> <span class="ow">in</span> <span class="n">features_in_cc</span> <span class="k">if</span> <span class="n">f_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_features</span><span class="p">],</span>
             <span class="p">)</span>
 
         <span class="c1"># postprocess</span>
@@ -1127,6 +1128,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: coerced dataframe</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># coerce invalid to nan</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
@@ -1142,17 +1144,23 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Aggregate the dataframe by duplicate experiments</span>
 
-<span class="sd">        Duplicates are identified based on the experiments with the same input features. Continuous input features</span>
-<span class="sd">        are rounded before identifying the duplicates. Aggregation is performed by taking the average of the</span>
+<span class="sd">        Duplicates are identified based on the experiments with the same input</span>
+<span class="sd">        features. Continuous input features are rounded before identifying the</span>
+<span class="sd">        duplicates. Aggregation is performed by taking the average of the</span>
 <span class="sd">        involved output features.</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe containing experimental data</span>
 <span class="sd">            prec (int): Precision of the rounding of the continuous input features</span>
-<span class="sd">            delimiter (str, optional): Delimiter used when combining the orig. labcodes to a new one. Defaults to &quot;-&quot;.</span>
+<span class="sd">            delimiter (str, optional): Delimiter used when combining the orig.</span>
+<span class="sd">                labcodes to a new one. Defaults to &quot;-&quot;.</span>
+<span class="sd">            method (Literal[&quot;mean&quot;, &quot;median&quot;], optional): Which aggregation</span>
+<span class="sd">                method to use. Defaults to &quot;mean&quot;.</span>
 
 <span class="sd">        Returns:</span>
-<span class="sd">            Tuple[pd.DataFrame, list]: Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates</span>
+<span class="sd">            Tuple[pd.DataFrame, list]: Dataframe holding the aggregated</span>
+<span class="sd">                experiments, list of lists holding the labcodes of the duplicates</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># prepare the parent frame</span>
         <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;median&quot;</span><span class="p">]:</span>
@@ -1204,10 +1212,13 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
         <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;checks the experimental data on validity</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Checks the experimental data on validity</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            experiments (pd.DataFrame): Dataframe with experimental data</span>
+<span class="sd">            strict (bool, optional): Boolean to distinguish if the occurrence of</span>
+<span class="sd">                fixed features in the dataset should be considered or not.</span>
+<span class="sd">                Defaults to False.</span>
 
 <span class="sd">        Raises:</span>
 <span class="sd">            ValueError: empty dataframe</span>
@@ -1222,10 +1233,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: The provided dataframe with experimental data</span>
-<span class="sd">        &quot;&quot;&quot;</span>
 
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no experiments provided (empty dataframe)&quot;</span><span class="p">)</span>
+
         <span class="c1"># we allow here for a column named labcode used to identify experiments</span>
         <span class="k">if</span> <span class="s2">&quot;labcode&quot;</span> <span class="ow">in</span> <span class="n">experiments</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
             <span class="c1"># test that labcodes are not na</span>
@@ -1239,9 +1251,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                 <span class="o">!=</span> <span class="n">experiments</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;labcodes are not unique&quot;</span><span class="p">)</span>
+
         <span class="c1"># run the individual validators</span>
         <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span>
-            <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
+            <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span>
+            <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">experiments</span>
@@ -1254,6 +1268,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: Dataframe with counts how many measurements and how many valid entries are included in the input data for each output feature</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
@@ -1262,7 +1277,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
                 <span class="n">experiments</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">(),</span> <span class="s2">&quot;valid_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">feat</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
             <span class="p">]</span>
         <span class="n">preprocessed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_all_valid_outputs</span><span class="p">(</span>
-            <span class="n">experiments</span>
+            <span class="n">experiments</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="k">assert</span> <span class="n">preprocessed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
         <span class="n">data</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
@@ -1270,7 +1285,9 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
             <span class="n">preprocessed</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
         <span class="p">]</span>
         <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;measured&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">]</span>
+            <span class="n">data</span><span class="p">,</span>
+            <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
+            <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;measured&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">validate_candidates</span><span class="p">(</span>
@@ -1280,7 +1297,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
         <span class="n">raise_validation_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to check the validty of proposed candidates</span>
 
 <span class="sd">        Args:</span>
 <span class="sd">            candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)</span>
@@ -1299,6 +1316,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
 <span class="sd">        Returns:</span>
 <span class="sd">            pd.DataFrame: dataframe with suggested experiments (candidates)</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c1"># check that each input feature has a col and is valid in itself</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
@@ -1307,7 +1325,7 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">raise_validation_error</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">ConstraintNotFulfilledError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Not all constraints are fulfilled.&quot;</span><span class="p">)</span>
         <span class="c1"># for each continuous output feature with an attached objective object</span>
@@ -1318,10 +1336,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">experiment_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;the columns in the experimental dataframe</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The columns in the experimental dataframe</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: List of columns in the experiment dataframe (output feature keys + valid_output feature keys)</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">)</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span> <span class="o">+</span> <span class="p">[</span>
             <span class="sa">f</span><span class="s2">&quot;valid_</span><span class="si">{</span><span class="n">output_feature_key</span><span class="si">}</span><span class="s2">&quot;</span>
@@ -1330,10 +1349,11 @@ Domain            (<span title="bofire.data_models.base.BaseModel">BaseModel</sp
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">candidate_column_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;the columns in the candidate dataframe</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The columns in the candidate dataframe</span>
 
 <span class="sd">        Returns:</span>
 <span class="sd">            List[str]: List of columns in the candidate dataframe (input feature keys + input feature keys_pred, input feature keys_sd, input feature keys_des)</span>
+
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="p">,</span> <span class="n">Outputs</span><span class="p">)</span>
         <span class="k">return</span> <span class="p">(</span>
@@ -1582,7 +1602,7 @@ This replaces <code>Model.__validators__</code> and <code>Model.__root_validator
 
     <div class="doc doc-contents ">
 
-      <p>the columns in the candidate dataframe</p>
+      <p>The columns in the candidate dataframe</p>
 
 <p><strong>Returns:</strong></p>
 <table>
@@ -1620,7 +1640,7 @@ This replaces <code>Model.__validators__</code> and <code>Model.__root_validator
 
     <div class="doc doc-contents ">
 
-      <p>the columns in the experimental dataframe</p>
+      <p>The columns in the experimental dataframe</p>
 
 <p><strong>Returns:</strong></p>
 <table>
@@ -1717,8 +1737,9 @@ mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] ob
     <div class="doc doc-contents ">
 
       <p>Aggregate the dataframe by duplicate experiments</p>
-<p>Duplicates are identified based on the experiments with the same input features. Continuous input features
-are rounded before identifying the duplicates. Aggregation is performed by taking the average of the
+<p>Duplicates are identified based on the experiments with the same input
+features. Continuous input features are rounded before identifying the
+duplicates. Aggregation is performed by taking the average of the
 involved output features.</p>
 
 <p><strong>Parameters:</strong></p>
@@ -1747,8 +1768,16 @@ involved output features.</p>
       <tr>
         <td><code>delimiter</code></td>
         <td><code>str</code></td>
-        <td><p>Delimiter used when combining the orig. labcodes to a new one. Defaults to "-".</p></td>
+        <td><p>Delimiter used when combining the orig.
+labcodes to a new one. Defaults to "-".</p></td>
         <td><code>&#39;-&#39;</code></td>
+      </tr>
+      <tr>
+        <td><code>method</code></td>
+        <td><code>Literal[&#34;mean&#34;, &#34;median&#34;]</code></td>
+        <td><p>Which aggregation
+method to use. Defaults to "mean".</p></td>
+        <td><code>&#39;mean&#39;</code></td>
       </tr>
   </tbody>
 </table>
@@ -1763,7 +1792,8 @@ involved output features.</p>
   <tbody>
     <tr>
       <td><code>Tuple[pd.DataFrame, list]</code></td>
-      <td><p>Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates</p></td>
+      <td><p>Dataframe holding the aggregated
+    experiments, list of lists holding the labcodes of the duplicates</p></td>
     </tr>
   </tbody>
 </table>
@@ -1778,17 +1808,23 @@ involved output features.</p>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span> <span class="nb">list</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Aggregate the dataframe by duplicate experiments</span>
 
-<span class="sd">    Duplicates are identified based on the experiments with the same input features. Continuous input features</span>
-<span class="sd">    are rounded before identifying the duplicates. Aggregation is performed by taking the average of the</span>
+<span class="sd">    Duplicates are identified based on the experiments with the same input</span>
+<span class="sd">    features. Continuous input features are rounded before identifying the</span>
+<span class="sd">    duplicates. Aggregation is performed by taking the average of the</span>
 <span class="sd">    involved output features.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe containing experimental data</span>
 <span class="sd">        prec (int): Precision of the rounding of the continuous input features</span>
-<span class="sd">        delimiter (str, optional): Delimiter used when combining the orig. labcodes to a new one. Defaults to &quot;-&quot;.</span>
+<span class="sd">        delimiter (str, optional): Delimiter used when combining the orig.</span>
+<span class="sd">            labcodes to a new one. Defaults to &quot;-&quot;.</span>
+<span class="sd">        method (Literal[&quot;mean&quot;, &quot;median&quot;], optional): Which aggregation</span>
+<span class="sd">            method to use. Defaults to &quot;mean&quot;.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        Tuple[pd.DataFrame, list]: Dataframe holding the aggregated experiments, list of lists holding the labcodes of the duplicates</span>
+<span class="sd">        Tuple[pd.DataFrame, list]: Dataframe holding the aggregated</span>
+<span class="sd">            experiments, list of lists holding the labcodes of the duplicates</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># prepare the parent frame</span>
     <span class="k">if</span> <span class="n">method</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;median&quot;</span><span class="p">]:</span>
@@ -1900,6 +1936,7 @@ involved output features.</p>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: coerced dataframe</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># coerce invalid to nan</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
@@ -1971,6 +2008,7 @@ involved output features.</p>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: Dataframe with counts how many measurements and how many valid entries are included in the input data for each output feature</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">Output</span><span class="p">):</span>
@@ -1979,7 +2017,7 @@ involved output features.</p>
             <span class="n">experiments</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">experiments</span><span class="p">[</span><span class="n">feat</span><span class="p">]</span><span class="o">.</span><span class="n">notna</span><span class="p">(),</span> <span class="s2">&quot;valid_</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">feat</span><span class="p">]</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
         <span class="p">]</span>
     <span class="n">preprocessed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">preprocess_experiments_all_valid_outputs</span><span class="p">(</span>
-        <span class="n">experiments</span>
+        <span class="n">experiments</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="k">assert</span> <span class="n">preprocessed</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
     <span class="n">data</span><span class="p">[</span><span class="s2">&quot;all&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
@@ -1987,7 +2025,9 @@ involved output features.</p>
         <span class="n">preprocessed</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="p">]</span>
     <span class="k">return</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span>
-        <span class="n">data</span><span class="p">,</span> <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;measured&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">]</span>
+        <span class="n">data</span><span class="p">,</span>
+        <span class="n">orient</span><span class="o">=</span><span class="s2">&quot;index&quot;</span><span class="p">,</span>
+        <span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;measured&quot;</span><span class="p">,</span> <span class="s2">&quot;valid&quot;</span><span class="p">],</span>
     <span class="p">)</span>
 </code></pre></div>
         </details>
@@ -2010,7 +2050,7 @@ involved output features.</p>
 
     <div class="doc doc-contents ">
 
-      <p>get all possible NChooseK combinations</p>
+      <p>Get all possible NChooseK combinations</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2049,8 +2089,8 @@ involved output features.</p>
 </table>
         <details class="quote">
           <summary>Source code in <code>bofire/data_models/domain/domain.py</code></summary>
-          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>  <span class="c1"># noqa: C901</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;get all possible NChooseK combinations</span>
+          <div class="highlight"><pre><span></span><code><span class="k">def</span> <span class="nf">get_nchoosek_combinations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exhaustive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get all possible NChooseK combinations</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        exhaustive (bool, optional): if True all combinations are returned. Defaults to False.</span>
@@ -2058,8 +2098,8 @@ involved output features.</p>
 <span class="sd">    Returns:</span>
 <span class="sd">        Tuple(used_features_list, unused_features_list): used_features_list is a list of lists containing features used in each NChooseK combination.</span>
 <span class="sd">            unused_features_list is a list of lists containing features unused in each NChooseK combination.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
 
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">NChooseKConstraint</span><span class="p">))</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">used_continuous_features</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">(</span><span class="n">ContinuousInput</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">used_continuous_features</span><span class="p">,</span> <span class="p">[]</span>
@@ -2079,13 +2119,13 @@ involved output features.</p>
                 <span class="n">used_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(())</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">used_features_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
-                <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">)</span>
+                <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">,</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">),</span>
             <span class="p">)</span>
 
         <span class="n">used_features_list_all</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">used_features_list</span><span class="p">)</span>
 
     <span class="n">used_features_list_all</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
-        <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">used_features_list_all</span><span class="p">)</span>
+        <span class="n">itertools</span><span class="o">.</span><span class="n">product</span><span class="p">(</span><span class="o">*</span><span class="n">used_features_list_all</span><span class="p">),</span>
     <span class="p">)</span>  <span class="c1"># product between NChooseK constraints</span>
 
     <span class="c1"># format into a list of used features</span>
@@ -2119,9 +2159,12 @@ involved output features.</p>
             <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">combo</span><span class="p">:</span>
                 <span class="k">if</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">con</span><span class="o">.</span><span class="n">features</span><span class="p">:</span>
                     <span class="n">count</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">min_count</span> <span class="ow">and</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span><span class="p">:</span>
-                <span class="n">fulfil_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">con</span><span class="o">.</span><span class="n">none_also_valid</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">count</span> <span class="o">&gt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">min_count</span>
+                <span class="ow">and</span> <span class="n">count</span> <span class="o">&lt;=</span> <span class="n">con</span><span class="o">.</span><span class="n">max_count</span>
+                <span class="ow">or</span> <span class="n">count</span> <span class="o">==</span> <span class="mi">0</span>
+                <span class="ow">and</span> <span class="n">con</span><span class="o">.</span><span class="n">none_also_valid</span>
+            <span class="p">):</span>
                 <span class="n">fulfil_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">fulfil_constraints</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
@@ -2140,7 +2183,7 @@ involved output features.</p>
     <span class="n">unused_features_list</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">used_features</span> <span class="ow">in</span> <span class="n">used_features_list_final</span><span class="p">:</span>
         <span class="n">unused_features_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-            <span class="p">[</span><span class="n">f_key</span> <span class="k">for</span> <span class="n">f_key</span> <span class="ow">in</span> <span class="n">features_in_cc</span> <span class="k">if</span> <span class="n">f_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_features</span><span class="p">]</span>
+            <span class="p">[</span><span class="n">f_key</span> <span class="k">for</span> <span class="n">f_key</span> <span class="ow">in</span> <span class="n">features_in_cc</span> <span class="k">if</span> <span class="n">f_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">used_features</span><span class="p">],</span>
         <span class="p">)</span>
 
     <span class="c1"># postprocess</span>
@@ -2171,7 +2214,7 @@ involved output features.</p>
 
     <div class="doc doc-contents ">
 
-      <p>Method to check the validty of porposed candidates</p>
+      <p>Method to check the validty of proposed candidates</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2267,7 +2310,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
     <span class="n">tol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
     <span class="n">raise_validation_error</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to check the validty of porposed candidates</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Method to check the validty of proposed candidates</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        candidates (pd.DataFrame): Dataframe with suggested new experiments (candidates)</span>
@@ -2286,6 +2329,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: dataframe with suggested experiments (candidates)</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># check that each input feature has a col and is valid in itself</span>
     <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">,</span> <span class="n">Inputs</span><span class="p">)</span>
@@ -2294,7 +2338,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
     <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">is_fulfilled</span><span class="p">(</span><span class="n">candidates</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="n">tol</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
         <span class="k">if</span> <span class="n">raise_validation_error</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">ConstraintNotFulfilledError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Constraints not fulfilled: </span><span class="si">{</span><span class="n">candidates</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
             <span class="p">)</span>
         <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Not all constraints are fulfilled.&quot;</span><span class="p">)</span>
     <span class="c1"># for each continuous output feature with an attached objective object</span>
@@ -2394,6 +2438,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        List[Constraint]: List of constraints defined for the domain</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">constraints</span><span class="o">.</span><span class="n">get</span><span class="p">():</span>
         <span class="n">c</span><span class="o">.</span><span class="n">validate_inputs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="p">)</span>
@@ -2419,7 +2464,7 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
     <div class="doc doc-contents ">
 
-      <p>checks the experimental data on validity</p>
+      <p>Checks the experimental data on validity</p>
 
 <p><strong>Parameters:</strong></p>
 <table>
@@ -2437,6 +2482,14 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
         <td><code>pd.DataFrame</code></td>
         <td><p>Dataframe with experimental data</p></td>
         <td><em>required</em></td>
+      </tr>
+      <tr>
+        <td><code>strict</code></td>
+        <td><code>bool</code></td>
+        <td><p>Boolean to distinguish if the occurrence of
+fixed features in the dataset should be considered or not.
+Defaults to False.</p></td>
+        <td><code>False</code></td>
       </tr>
   </tbody>
 </table>
@@ -2509,10 +2562,13 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
     <span class="n">experiments</span><span class="p">:</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
     <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;checks the experimental data on validity</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks the experimental data on validity</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        experiments (pd.DataFrame): Dataframe with experimental data</span>
+<span class="sd">        strict (bool, optional): Boolean to distinguish if the occurrence of</span>
+<span class="sd">            fixed features in the dataset should be considered or not.</span>
+<span class="sd">            Defaults to False.</span>
 
 <span class="sd">    Raises:</span>
 <span class="sd">        ValueError: empty dataframe</span>
@@ -2527,10 +2583,11 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        pd.DataFrame: The provided dataframe with experimental data</span>
-<span class="sd">    &quot;&quot;&quot;</span>
 
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">experiments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no experiments provided (empty dataframe)&quot;</span><span class="p">)</span>
+
     <span class="c1"># we allow here for a column named labcode used to identify experiments</span>
     <span class="k">if</span> <span class="s2">&quot;labcode&quot;</span> <span class="ow">in</span> <span class="n">experiments</span><span class="o">.</span><span class="n">columns</span><span class="p">:</span>
         <span class="c1"># test that labcodes are not na</span>
@@ -2544,9 +2601,11 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
             <span class="o">!=</span> <span class="n">experiments</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="p">):</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;labcodes are not unique&quot;</span><span class="p">)</span>
+
     <span class="c1"># run the individual validators</span>
     <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span>
-        <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="n">strict</span>
+        <span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">,</span>
+        <span class="n">strict</span><span class="o">=</span><span class="n">strict</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">experiments</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">validate_experiments</span><span class="p">(</span><span class="n">experiments</span><span class="o">=</span><span class="n">experiments</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">experiments</span>
@@ -2644,8 +2703,8 @@ otherwise only a warning will be displayed. Defaults to True.</p></td>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        Outputs: Keeps output features as given.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
 
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">keys</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">outputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">inputs</span><span class="o">.</span><span class="n">get_keys</span><span class="p">()</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">keys</span><span class="p">))</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Feature keys are not unique&quot;</span><span class="p">)</span>
