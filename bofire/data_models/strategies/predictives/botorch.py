@@ -65,13 +65,13 @@ class TrustRegionConfig(BaseModel):
 
     type: str
     length_init: float = 0.8
-    length_min: float = 0.01
+    length_min: float = Field(default=1e-2, gt=0)
     length_max: float = 1.6
-    lengthscale_adjustment_factor: float = 2.0
-    fit_region_multiplier: float = 2.0
+    lengthscale_adjustment_factor: float = Field(default=2.0, ge=1)
+    fit_region_multiplier: float = Field(default=2.0, ge=1)
     min_tr_size: PositiveInt = 10
     max_tr_size: PositiveInt = 2048
-    success_epsilon: float = 1e-3
+    success_epsilon: float = Field(default=1e-3, gt=0)
     success_streak: PositiveInt = 3
     failure_streak: PositiveInt = 3
     success_counter: PositiveInt = 0
@@ -81,14 +81,8 @@ class TrustRegionConfig(BaseModel):
     )
     use_independent_tr: bool = False
 
-    length: float = Field(default=length_init, alias="length_")
+    length: float = Field(default=length_init)
     X_center_idx: int = -1
-
-    @model_validator(mode="after")
-    def validate_fit_region_multiplier(self):
-        if self.fit_region_multiplier < 1:
-            raise ValueError("fit_region_multiplier must be >= 1.")
-        return self
 
     @abstractmethod
     def update_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:

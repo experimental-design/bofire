@@ -427,7 +427,7 @@ class BotorchStrategy(PredictiveStrategy):
 
     def _ask_local_search(
         self,
-        candidates: Tensor,
+        global_candidates: Tensor,
         global_acqf_val: Tensor,
         candidate_count: int,
         acqfs: List[AcquisitionFunction],
@@ -468,11 +468,71 @@ class BotorchStrategy(PredictiveStrategy):
             data_model=ShortestPathStrategyDataModel(
                 domain=self.domain,
                 start=self.experiments.iloc[-1].to_dict(),
-                end=self._postprocess_candidates(candidates).iloc[-1].to_dict(),
+                end=self._postprocess_candidates(global_candidates).iloc[-1].to_dict(),
             )
         )
         step = pd.DataFrame(sp.step(sp.start)).T
         return pd.concat((step, self.predict(step)), axis=1)
+
+    def _ask_refill_trust_region(self, candidate_count: int) -> pd.DataFrame:
+        """If a trust region doesn't have enough experiments to reliably fit a
+        surrogate GP then we will just randomly sample from the trust region.
+
+        Args:
+            candidate_count (int): The number of candidates to sample.
+
+        Returns:
+            pd.DataFrame: The candidates sampled from the trust region with
+                assigned dummy values for the predictions, standard deviations.
+        """
+        reference_experiment = self.experiments.loc[
+            self.trust_region_config.X_center_idx
+        ]
+        # instantiate a random strategy and ask it for the new experiments.
+        inputs = self.domain.inputs
+        outputs = self.domain.outputs
+        constraints = self.domain.constraints
+
+        # This is a bit of a hack to get the local sampler to work, ideally
+        # there would be a more elegant solution.
+        local_inputs = Inputs(
+            features=[
+                ContinuousInput(
+                    key=inp.key,
+                    bounds=(
+                        max(
+                            reference_experiment[inp.key]
+                            - self.trust_region_config.length / 2,  # type: ignore
+                            inp.lower_bound,  # type: ignore
+                        ),
+                        min(
+                            reference_experiment[inp.key]
+                            + self.trust_region_config.length / 2,  # type: ignore
+                            inp.upper_bound,  # type: ignore
+                        ),
+                    ),
+                )
+                for inp in inputs.get(ContinuousInput)
+            ]
+            + list(inputs.get(excludes=ContinuousInput))  # type: ignore
+        )
+        local_domain = Domain(
+            inputs=local_inputs,
+            outputs=outputs,
+            constraints=constraints,
+        )
+        sampler = strategies.map(
+            data_model=RandomStrategyDataModel(domain=local_domain)
+        )
+        # we have to ask for candidate_count to not break the validation elsewhere
+        # in bofire. This is inefficient and breaks the low discrepancy sampling
+        # benefits of using a single sobol sequence.
+        candidates = sampler.ask(candidate_count)
+        for key in self.domain.outputs.get_keys():
+            candidates[f"{key}_pred"] = 0
+            candidates[f"{key}_sd"] = 0
+            candidates[f"{key}_des"] = 1
+        return candidates
 
     def _ask(self, candidate_count: int) -> pd.DataFrame:  # type: ignore
         """Ask the strategy for new experiments.
@@ -491,55 +551,7 @@ class BotorchStrategy(PredictiveStrategy):
                 self.experiments, self.domain
             )
         ):
-            reference_experiment = self.experiments.loc[
-                self.trust_region_config.X_center_idx
-            ]
-            # instantiate a random strategy and ask it for the new experiments.
-            inputs = self.domain.inputs
-            outputs = self.domain.outputs
-            constraints = self.domain.constraints
-
-            # This is a bit of a hack to get the local sampler to work, ideally
-            # there would be a more elegant solution.
-            local_inputs = Inputs(
-                features=[
-                    ContinuousInput(
-                        key=inp.key,
-                        bounds=(
-                            max(
-                                reference_experiment[inp.key]
-                                - self.trust_region_config.length / 2,  # type: ignore
-                                inp.lower_bound,  # type: ignore
-                            ),
-                            min(
-                                reference_experiment[inp.key]
-                                + self.trust_region_config.length / 2,  # type: ignore
-                                inp.upper_bound,  # type: ignore
-                            ),
-                        ),
-                    )
-                    for inp in inputs.get(ContinuousInput)
-                ]
-                + list(inputs.get(excludes=ContinuousInput))  # type: ignore
-            )
-            local_domain = Domain(
-                inputs=local_inputs,
-                outputs=outputs,
-                constraints=constraints,
-            )
-            sampler = strategies.map(
-                data_model=RandomStrategyDataModel(domain=local_domain)
-            )
-            # we have to ask for candidate_count to not break the validation elsewhere
-            # in bofire. This is inefficient and breaks the low discrepancy sampling
-            # benefits of using a single sobol sequence.
-            candidates = sampler.ask(candidate_count)
-            for key in self.domain.outputs.get_keys():
-                candidates[f"{key}_pred"] = 0
-                candidates[f"{key}_sd"] = 0
-                candidates[f"{key}_des"] = 1
-                candidates[f"valid_{key}"] = 1
-            return candidates
+            return self._ask_refill_trust_region(candidate_count)
 
         acqfs = self._get_acqfs(candidate_count)
 
@@ -615,7 +627,7 @@ class BotorchStrategy(PredictiveStrategy):
             and candidate_count == 1
         ):
             return self._ask_local_search(
-                candidates=candidates,
+                global_candidates=candidates,
                 global_acqf_val=global_acqf_val,
                 candidate_count=candidate_count,
                 acqfs=acqfs,
