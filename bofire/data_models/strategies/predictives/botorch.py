@@ -68,7 +68,7 @@ class TrustRegionConfig(BaseModel):
     length_min: float = Field(default=1e-2, gt=0)
     length_max: float = 1.6
     lengthscale_adjustment_factor: float = Field(default=2.0, ge=1)
-    fit_region_multiplier: float = Field(default=2.0, ge=1)
+    fit_region_multiplier: float | None = Field(default=2.0, ge=1)
     min_tr_size: PositiveInt = 10
     max_tr_size: PositiveInt = 2048
     success_epsilon: float = Field(default=1e-3, gt=0)
@@ -83,6 +83,15 @@ class TrustRegionConfig(BaseModel):
 
     length: float = Field(default=length_init)
     X_center_idx: int = -1
+
+    @model_validator(mode="after")
+    def validate_independent_trust_regions(self):
+        if (not self.use_independent_tr) and self.fit_region_multiplier is None:
+            raise ValueError(
+                "If use_independent_tr is False, fit_region_multiplier must be "
+                "set as otherwise we will fit a global model to all the data."
+            )
+        return self
 
     @abstractmethod
     def update_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
@@ -110,6 +119,7 @@ class TrustRegionConfig(BaseModel):
             < self.get_trust_region_experiments(experiments, domain).shape[0]
         )
 
+    @abstractmethod
     def init_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
         """Method to initialize the trust region.
 
@@ -119,14 +129,6 @@ class TrustRegionConfig(BaseModel):
             domain (Domain): The domain defining the problem to be optimized
                 with the strategy.
         """
-
-        self.length = self.length_init
-
-        Y_cols = domain.outputs.get_keys()
-        if len(Y_cols) != 1:
-            raise ValueError("TuRBO only supports single output optimization.")
-
-        self.X_center_idx = experiments[Y_cols].idxmin().iloc[0]
 
     def get_trust_region_experiments(
         self, experiments: pd.DataFrame, domain: Domain, eps: float = 1e-8
@@ -156,18 +158,36 @@ class TrustRegionConfig(BaseModel):
         # TODO scale box according to the kernel lengthscales if using ARD.
         # we seem to be limited by the abstraction here.
 
-        tr_indicies = X[
-            ((X - X_center).abs() - self.length / 2 <= eps).all(axis=1)
-        ].index
+        if self.fit_region_multiplier is not None:
+            half_edge = self.fit_region_multiplier * self.length / 2
+            tr_indicies = X[((X - X_center).abs() - half_edge <= eps).all(axis=1)].index
+            experiments = experiments.loc[tr_indicies]
 
-        experiments = experiments.loc[tr_indicies]
         return experiments
 
 
 class TuRBOConfig(TrustRegionConfig):
     """A trust region strategy for single objective bayesian optimization."""
 
-    type: Literal["TuRBO"] = "TuRBO"
+    type: Literal["TuRBOConfig"] = "TuRBOConfig"
+
+    def init_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
+        """Method to initialize the trust region.
+
+        Args:
+            experiments (pd.DataFrame): DataFrame containing experiments that
+                were performed and their results.
+            domain (Domain): The domain defining the problem to be optimized
+                with the strategy.
+        """
+
+        self.length = self.length_init
+
+        Y_cols = domain.outputs.get_keys()
+        if len(Y_cols) != 1:
+            raise ValueError("TuRBO only supports single output optimization.")
+
+        self.X_center_idx = experiments[Y_cols].idxmin().iloc[0]
 
     def update_trust_region(self, experiments: pd.DataFrame, domain: Domain) -> None:
         """Method to update the trust region based on the success of the optimization step.
