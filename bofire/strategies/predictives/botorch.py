@@ -485,8 +485,8 @@ class BotorchStrategy(PredictiveStrategy):
             pd.DataFrame: The candidates sampled from the trust region with
                 assigned dummy values for the predictions, standard deviations.
         """
-        reference_experiment = self.experiments.loc[
-            self.trust_region_config.X_center_idx
+        reference_experiment = self.experiments.loc[  # type: ignore
+            self.trust_region_config.X_center_idx  # type: ignore
         ]
         # instantiate a random strategy and ask it for the new experiments.
         inputs = self.domain.inputs
@@ -551,6 +551,9 @@ class BotorchStrategy(PredictiveStrategy):
                 self.experiments, self.domain
             )
         ):
+            # fill the trust region with random samples if we're using a trust
+            # region approach and don't have enough experiments to fit a
+            # reasonable GP surrogate
             return self._ask_refill_trust_region(candidate_count)
 
         acqfs = self._get_acqfs(candidate_count)

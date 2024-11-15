@@ -68,7 +68,7 @@ class TrustRegionConfig(BaseModel):
     length_min: float = Field(default=1e-2, gt=0)
     length_max: float = 1.6
     lengthscale_adjustment_factor: float = Field(default=2.0, ge=1)
-    fit_region_multiplier: float | None = Field(default=2.0, ge=1)
+    fit_region_multiplier: Union[float, None] = Field(default=2.0, ge=1)
     min_tr_size: PositiveInt = 10
     max_tr_size: PositiveInt = 2048
     success_epsilon: float = Field(default=1e-3, gt=0)
