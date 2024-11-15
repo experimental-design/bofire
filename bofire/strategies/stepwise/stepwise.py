@@ -53,10 +53,9 @@ class StepwiseStrategy(Strategy):
 
         candidate_count = candidate_count or 1
 
-        # handle a possible transform
-        tf_domain = _apply_tf(self.domain, transform, "domain")
-        transformed_domain = tf_domain or self.domain
-        strategy.domain = transformed_domain
+        # handle a possible transform, no need to apply transforms to domains, as domains
+        # do not have to be exactly the same for each step, they only have to be compatible
+        # to the master domain of the stepwise strategy
         tf_exp = _apply_tf(self.experiments, transform, "experiments")
         transformed_experiments = self.experiments if tf_exp is None else tf_exp
         tf_cand = _apply_tf(self.candidates, transform, "candidates")
