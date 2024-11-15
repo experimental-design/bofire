@@ -1,4 +1,4 @@
-from typing import Annotated, List, Literal, Optional, Type, Union
+from typing import Annotated, List, Literal, Optional, Type
 
 from pydantic import Field, model_validator
 
@@ -46,9 +46,9 @@ def validate_domain_compatibility(domain1: Domain, domain2: Domain):
     for feature1, feature2 in zip(features1.get(), features2.get()):
         if feature1.__class__ != feature2.__class__:
             raise ValueError(f"Features with key {feature1.key} have different types.")
-        if isinstance(
-            feature1, Union[CategoricalInput, CategoricalOutput]
-        ) and isinstance(feature2, Union[CategoricalInput, CategoricalOutput]):
+        if isinstance(feature1, (CategoricalInput, CategoricalOutput)) and isinstance(
+            feature2, (CategoricalInput, CategoricalOutput)
+        ):
             if feature1.categories != feature2.categories:
                 raise ValueError(
                     f"Features with key {feature1.key} have different categories."
