@@ -2,11 +2,13 @@ from typing import Dict, Type
 
 import bofire.data_models.transforms.api as data_models
 from bofire.transforms.drop_data import DropDataTransform
+from bofire.transforms.manipulate_data import ManipulateDataTransform
 from bofire.transforms.transform import Transform
 
 
 TRANSFORM_MAP: Dict[Type[data_models.AnyTransform], Type[Transform]] = {
     data_models.DropDataTransform: DropDataTransform,
+    data_models.ManipulateDataTransform: ManipulateDataTransform,
 }
 
 

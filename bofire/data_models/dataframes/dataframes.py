@@ -146,6 +146,9 @@ TRow = TypeVar("TRow", bound=Row)
 class DataFrame(BaseModel, Generic[TRow]):
     rows: Sequence[TRow]
 
+    def __len__(self):
+        return len(self.rows)
+
     @field_validator("rows")
     def validate_rows(cls, rows):
         if len({tuple(sorted(row.input_keys)) for row in rows}) > 1:

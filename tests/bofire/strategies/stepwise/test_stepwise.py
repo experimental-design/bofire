@@ -6,6 +6,7 @@ import pytest
 import bofire.strategies.api as strategies
 from bofire.benchmarks.single import Himmelblau
 from bofire.data_models.acquisition_functions.api import qNEI
+from bofire.data_models.features.api import CategoricalInput, ContinuousInput
 from bofire.data_models.strategies.api import (
     AlwaysTrueCondition,
     NumberOfExperimentsCondition,
@@ -14,6 +15,37 @@ from bofire.data_models.strategies.api import (
     Step,
     StepwiseStrategy,
 )
+from bofire.data_models.strategies.stepwise.stepwise import (
+    validate_domain_compatibility,
+)
+
+
+def test_validate_domain_compatibility():
+    bench = Himmelblau()
+    domain2 = deepcopy(bench.domain)
+    domain2.inputs.features.append(ContinuousInput(key="a", bounds=(0, 1)))
+    with pytest.raises(ValueError, match="Domains have different number of features."):
+        validate_domain_compatibility(bench.domain, domain2)
+
+    domain2 = deepcopy(bench.domain)
+    domain2.inputs.features[0].key = "mama"
+    with pytest.raises(ValueError, match="Domains have different feature keys."):
+        validate_domain_compatibility(bench.domain, domain2)
+
+    domain2 = deepcopy(bench.domain)
+    domain2.inputs = bench.domain.inputs.get_by_keys(["x_1"])
+    domain2.inputs.features.append(CategoricalInput(key="x_2", categories=["a", "b"]))
+    with pytest.raises(ValueError, match="Features with key x_2 have different types."):
+        validate_domain_compatibility(bench.domain, domain2)
+
+    domain2 = deepcopy(bench.domain)
+    domain2.inputs.features.append(CategoricalInput(key="x_3", categories=["a", "b"]))
+    domain3 = deepcopy(bench.domain)
+    domain3.inputs.features.append(CategoricalInput(key="x_3", categories=["a", "c"]))
+    with pytest.raises(
+        ValueError, match="Features with key x_3 have different categories"
+    ):
+        validate_domain_compatibility(domain2, domain3)
 
 
 def test_StepwiseStrategy_invalid_domains():
@@ -22,8 +54,7 @@ def test_StepwiseStrategy_invalid_domains():
     domain2.inputs[0].key = "mama"
     with pytest.raises(
         ValueError,
-        match="Domain of step 0 is incompatible to domain of StepwiseStrategy.",
-        # match=f"Domain of step {0} is incompatible to domain of StepwiseStrategy.",
+        match="Domains have different feature keys.",
     ):
         StepwiseStrategy(
             domain=benchmark.domain,
