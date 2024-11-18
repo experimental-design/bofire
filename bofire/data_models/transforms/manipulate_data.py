@@ -17,7 +17,7 @@ class ManipulateDataTransform(Transform):
 
     """
 
-    type: Literal["ManipulateDataTransform"] = "ManipulateDataTransform"  # type: ignore
+    type: Literal["ManipulateDataTransform"] = "ManipulateDataTransform"
     experiment_transforms: Optional[List[str]] = Field(None, min_length=1)
     candidate_transforms: Optional[List[str]] = Field(None, min_length=1)
     candidate_untransforms: Optional[List[str]] = Field(None, min_length=1)
