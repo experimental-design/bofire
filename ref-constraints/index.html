@@ -18,7 +18,7 @@
       
       
       <link rel="icon" href="../assets/images/favicon.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.44">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.45">
     
     
       
@@ -585,6 +585,15 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#bofire.data_models.domain.constraints.Constraints.__pydantic_computed_fields__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_computed_fields__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.__pydantic_custom_init__" class="md-nav__link">
     <span class="md-ellipsis">
       __pydantic_custom_init__
@@ -597,6 +606,15 @@
   <a href="#bofire.data_models.domain.constraints.Constraints.__pydantic_decorators__" class="md-nav__link">
     <span class="md-ellipsis">
       __pydantic_decorators__
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#bofire.data_models.domain.constraints.Constraints.__pydantic_fields__" class="md-nav__link">
+    <span class="md-ellipsis">
+      __pydantic_fields__
     </span>
   </a>
   
@@ -639,27 +657,9 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#bofire.data_models.domain.constraints.Constraints.model_computed_fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      model_computed_fields
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#bofire.data_models.domain.constraints.Constraints.model_config" class="md-nav__link">
     <span class="md-ellipsis">
       model_config
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#bofire.data_models.domain.constraints.Constraints.model_fields" class="md-nav__link">
-    <span class="md-ellipsis">
-      model_fields
     </span>
   </a>
   
@@ -1066,6 +1066,28 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
 
 
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="bofire.data_models.domain.constraints.Constraints.__pydantic_computed_fields__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_computed_fields__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>A dictionary of computed field names and their corresponding [<code>ComputedFieldInfo</code>][pydantic.fields.ComputedFieldInfo] objects.</p>
+    </div>
+
+  </div>
+
+
+
 
   <div class="doc doc-object doc-attribute">
 
@@ -1106,6 +1128,29 @@ Constraints            (<span title="bofire.data_models.base.BaseModel">BaseMode
 
       <p>Metadata containing the decorators defined on the model.
 This replaces <code>Model.__validators__</code> and <code>Model.__root_validators__</code> from Pydantic V1.</p>
+    </div>
+
+  </div>
+
+
+
+  <div class="doc doc-object doc-attribute">
+
+
+
+<h3 id="bofire.data_models.domain.constraints.Constraints.__pydantic_fields__" class="doc doc-heading">
+<code class="highlight language-python"><span class="n">__pydantic_fields__</span></code>
+
+  <span class="doc doc-properties">
+      <small class="doc doc-property doc-property-special"><code>special</code></small>
+  </span>
+
+</h3>
+
+    <div class="doc doc-contents ">
+
+      <p>A dictionary of field names and their corresponding [<code>FieldInfo</code>][pydantic.fields.FieldInfo] objects.
+This replaces <code>Model.__fields__</code> from Pydantic V1.</p>
     </div>
 
   </div>
@@ -1207,25 +1252,6 @@ This replaces <code>Model.__validators__</code> and <code>Model.__root_validator
 
 
 
-<h3 id="bofire.data_models.domain.constraints.Constraints.model_computed_fields" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">model_computed_fields</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>A dictionary of computed field names and their corresponding <code>ComputedFieldInfo</code> objects.</p>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-attribute">
-
-
-
 <h3 id="bofire.data_models.domain.constraints.Constraints.model_config" class="doc doc-heading">
 <code class="highlight language-python"><span class="n">model_config</span></code>
 
@@ -1235,27 +1261,6 @@ This replaces <code>Model.__validators__</code> and <code>Model.__root_validator
     <div class="doc doc-contents ">
 
       <p>Configuration for the model, should be a dictionary conforming to [<code>ConfigDict</code>][pydantic.config.ConfigDict].</p>
-    </div>
-
-  </div>
-
-
-
-  <div class="doc doc-object doc-attribute">
-
-
-
-<h3 id="bofire.data_models.domain.constraints.Constraints.model_fields" class="doc doc-heading">
-<code class="highlight language-python"><span class="n">model_fields</span></code>
-
-
-</h3>
-
-    <div class="doc doc-contents ">
-
-      <p>Metadata about the fields defined on the model,
-mapping of field names to [<code>FieldInfo</code>][pydantic.fields.FieldInfo] objects.</p>
-<p>This replaces <code>Model.__fields__</code> from Pydantic V1.</p>
     </div>
 
   </div>
