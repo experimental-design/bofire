@@ -92,6 +92,30 @@ specs.add_valid(
     },
 )
 specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "local_search_config": strategies.LSRBOConfig().model_dump(),
+    },
+)
+specs.add_valid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(features=[ContinuousInput(key="a", bounds=(0, 1))]),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        **strategy_commons,
+        "acquisition_function": qPI(tau=0.1).model_dump(),
+        "trust_region_config": strategies.TuRBOConfig().model_dump(),
+    },
+)
+specs.add_valid(
     strategies.AdditiveSoboStrategy,
     lambda: {
         "domain": domain.valid().obj().model_dump(),
@@ -514,7 +538,53 @@ specs.add_invalid(
     error=ValueError,
     message="LSR-BO only supported for linear constraints.",
 )
-
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=k,
+                        bounds=(0, 1),
+                        local_relative_bounds=(0.1, 0.1),
+                    )
+                    for k in ["a", "b", "c"]
+                ],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "trust_region_config": strategies.TuRBOConfig(length=-0.1),
+    },
+    error=ValueError,
+    message=(
+        "Local search and trust region optimization cannot be used at the same time."
+    ),
+)
+specs.add_invalid(
+    strategies.SoboStrategy,
+    lambda: {
+        "domain": Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(
+                        key=k,
+                        bounds=(0, 1),
+                        local_relative_bounds=(0.1, 0.1),
+                    )
+                    for k in ["a", "b", "c"]
+                ],
+            ),
+            outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
+        ).model_dump(),
+        "local_search_config": strategies.LSRBOConfig(),
+        "trust_region_config": strategies.TuRBOConfig(),
+    },
+    error=ValueError,
+    message=(
+        "Local search and trust region optimization cannot be used at the same time."
+    ),
+)
 specs.add_invalid(
     strategies.SoboStrategy,
     lambda: {

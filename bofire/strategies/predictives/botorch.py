@@ -524,9 +524,9 @@ class BotorchStrategy(PredictiveStrategy):
         sampler = strategies.map(
             data_model=RandomStrategyDataModel(domain=local_domain)
         )
-        # we have to ask for candidate_count to not break the validation elsewhere
-        # in bofire. This is inefficient and breaks the low discrepancy sampling
-        # benefits of using a single sobol sequence.
+        # TODO (jduerholt): allow for method to return the required number of
+        # candidates in a single call rather than having to iterate over this
+        # via an external loop.
         candidates = sampler.ask(candidate_count)
         for key in self.domain.outputs.get_keys():
             candidates[f"{key}_pred"] = 0
@@ -551,9 +551,8 @@ class BotorchStrategy(PredictiveStrategy):
                 self.experiments, self.domain
             )
         ):
-            # fill the trust region with random samples if we're using a trust
-            # region approach and don't have enough experiments to fit a
-            # reasonable GP surrogate
+            # fill the trust region with random samples if we're using a TR
+            # approach and don't have enough experiments to fit a reasonable GP
             return self._ask_refill_trust_region(candidate_count)
 
         acqfs = self._get_acqfs(candidate_count)
