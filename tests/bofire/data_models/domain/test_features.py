@@ -144,11 +144,18 @@ def test_features_get_by_key(features, key, expected):
     assert id(returned) == id(expected)
 
 
-def test_features_get_by_keys():
+def test_features_get_by_keys_include():
     keys = ["of2", "if1"]
     feats = features.get_by_keys(keys)
     assert feats[0].key == "if1"
     assert feats[1].key == "of2"
+
+
+def test_features_get_by_keys_exclude():
+    keys = ["of2", "if1"]
+    feats = features.get_by_keys(keys, include=False)
+    assert feats[0].key == "if2"
+    assert feats[1].key == "of1"
 
 
 @pytest.mark.parametrize(

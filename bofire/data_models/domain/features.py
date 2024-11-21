@@ -125,17 +125,23 @@ class _BaseFeatures(BaseModel, Generic[F]):
         """
         return {f.key: f for f in self.features}[key]
 
-    def get_by_keys(self, keys: Sequence[str]) -> Self:
+    def get_by_keys(self, keys: Sequence[str], include: bool = True) -> Self:
         """Get features of the domain specified by its keys.
 
         Args:
             keys: List of the keys of the features that should be returned.
+            include: Boolean to distinguish if the features with the keys in the
+                list should be included or excluded.
 
         Returns:
             Features: Features object with the requested features.
 
         """
-        return self.__class__(features=sorted([self.get_by_key(key) for key in keys]))
+        if include:
+            features = [self.get_by_key(key) for key in keys]
+        else:
+            features = [f for f in self.features if f.key not in keys]
+        return self.__class__(features=sorted(features))
 
     def get(
         self,
