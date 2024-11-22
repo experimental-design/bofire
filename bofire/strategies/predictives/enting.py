@@ -12,7 +12,8 @@ try:
     from entmoot.optimizers.pyomo_opt import PyomoOptimizer
     from entmoot.problem_config import ProblemConfig
 except ImportError:
-    warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
+    warnings.warn("entmoot not installed. Please install it to use "
+                  "BoFire's `EntingStrategy`.", ImportWarning)
 
 from typing import Union
 
@@ -36,7 +37,7 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
-def domain_to_problem_config(
+def _domain_to_problem_config(
     domain: Domain,
     seed: Optional[int] = None,
 ) -> Tuple["ProblemConfig", "pyo.ConcreteModel"]:
@@ -243,7 +244,7 @@ class EntingStrategy(PredictiveStrategy):
         self._kappa_fantasy = data_model.kappa_fantasy
 
     def _init_problem_config(self) -> None:
-        cfg = domain_to_problem_config(self.domain, self.seed)
+        cfg = _domain_to_problem_config(self.domain, self.seed)
         self._problem_config: ProblemConfig = cfg[0]  # type: ignore
         self._model_pyo: pyo.ConcreteModel = cfg[1]  # type: ignore
 
