@@ -7,6 +7,11 @@ on:
     branches:
       - main
 
+concurrency:
+  # Cancel only on same PR number
+  group: ${{ github.workflow }}-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   testing_data_models:
     runs-on: ubuntu-latest
