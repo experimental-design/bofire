@@ -37,7 +37,7 @@ from bofire.data_models.objectives.api import MaximizeObjective, MinimizeObjecti
 from bofire.strategies.predictives.predictive import PredictiveStrategy
 
 
-def _domain_to_problem_config(
+def domain_to_problem_config(
     domain: Domain,
     seed: Optional[int] = None,
 ) -> Tuple["ProblemConfig", "pyo.ConcreteModel"]:
@@ -244,7 +244,7 @@ class EntingStrategy(PredictiveStrategy):
         self._kappa_fantasy = data_model.kappa_fantasy
 
     def _init_problem_config(self) -> None:
-        cfg = _domain_to_problem_config(self.domain, self.seed)
+        cfg = domain_to_problem_config(self.domain, self.seed)
         self._problem_config: ProblemConfig = cfg[0]  # type: ignore
         self._model_pyo: pyo.ConcreteModel = cfg[1]  # type: ignore
 
