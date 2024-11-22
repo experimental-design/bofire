@@ -260,7 +260,7 @@ class TuRBOConfig(TrustRegionConfig):
             self.experiment_batch_sizes.append([])
 
         for inp in domain.inputs.get(ContinuousInput):
-            inp.local_relative_bounds = (self.length / 2, self.length / 2)
+            inp.local_relative_bounds = (self.length / 2, self.length / 2)  # type: ignore
 
         return domain
 
@@ -302,8 +302,8 @@ class LSRBOConfig(LocalSearchConfig):
         return acqf_local >= self.gamma
 
 
-AnyLocalSearchConfig = Union[LSRBOConfig]
-AnyTrustRegionConfig = Union[TuRBOConfig]
+AnyLocalSearchConfig = LSRBOConfig
+AnyTrustRegionConfig = TuRBOConfig
 
 
 class BotorchStrategy(PredictiveStrategy):
