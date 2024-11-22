@@ -663,6 +663,7 @@ def test_fixed_experiments_checker():
         )
 
 
+@pytest.mark.skipif(not CYIPOPT_AVAILABLE, reason="requires cyipopt")
 def test_partially_fixed_experiments():
     domain = Domain(
         inputs=[

@@ -1,3 +1,5 @@
+from pydantic_core import ValidationError
+
 import bofire.data_models.strategies.api as strategies
 from bofire.data_models.acquisition_functions.api import (
     qEI,
@@ -554,12 +556,9 @@ specs.add_invalid(
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
-        "trust_region_config": strategies.TuRBOConfig(length=-0.1),
+        "trust_region_config": strategies.TuRBOConfig(length_min=-0.1),
     },
-    error=ValueError,
-    message=(
-        "Local search and trust region optimization cannot be used at the same time."
-    ),
+    error=ValidationError,
 )
 specs.add_invalid(
     strategies.SoboStrategy,

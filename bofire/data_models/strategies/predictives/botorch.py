@@ -4,7 +4,7 @@ from abc import abstractmethod
 from typing import Annotated, Literal, Optional, Type, Union
 
 import pandas as pd
-from pydantic import Field, PositiveInt, field_validator, model_validator
+from pydantic import Field, PositiveFloat, PositiveInt, field_validator, model_validator
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.constraints.api import (
@@ -64,14 +64,14 @@ class TrustRegionConfig(BaseModel):
     """
 
     type: str
-    length_init: float = 0.8
-    length_min: float = Field(default=1e-2, gt=0)
-    length_max: float = 1.6
+    length_init: PositiveFloat = 0.8
+    length_min: PositiveFloat = 1e-2
+    length_max: PositiveFloat = 1.6
     lengthscale_adjustment_factor: float = Field(default=2.0, ge=1)
     fit_region_multiplier: Union[float, None] = Field(default=2.0, ge=1)
     min_tr_size: PositiveInt = 10
     max_tr_size: PositiveInt = 2048
-    success_epsilon: float = Field(default=1e-3, gt=0)
+    success_epsilon: PositiveFloat = 1e-3
     success_streak: PositiveInt = 3
     failure_streak: PositiveInt = 3
     success_counter: int = Field(default=0, ge=0)
@@ -218,7 +218,7 @@ class TuRBOConfig(TrustRegionConfig):
         self.X_center_idx = experiments[Y_cols].idxmin().iloc[0]
 
         for inp in domain.inputs.get(ContinuousInput):
-            inp.local_relative_bounds = (self.length / 2, self.length / 2)
+            inp.local_relative_bounds = (self.length / 2, self.length / 2)  # type: ignore
 
         return domain
 
@@ -302,8 +302,8 @@ class LSRBOConfig(LocalSearchConfig):
         return acqf_local >= self.gamma
 
 
-AnyLocalSearchConfig = Union[LSRBOConfig, LocalSearchConfig]
-AnyTrustRegionConfig = Union[TuRBOConfig, TrustRegionConfig]
+AnyLocalSearchConfig = Union[LSRBOConfig]
+AnyTrustRegionConfig = Union[TuRBOConfig]
 
 
 class BotorchStrategy(PredictiveStrategy):

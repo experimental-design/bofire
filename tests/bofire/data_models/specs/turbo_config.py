@@ -1,3 +1,5 @@
+from pydantic_core import ValidationError
+
 from bofire.data_models.strategies.api import TuRBOConfig
 from tests.bofire.data_models.specs.specs import Specs
 
@@ -25,8 +27,10 @@ specs.add_valid(
     },
 )
 
-specs.add_invalid(TuRBOConfig, lambda: {"length_min": -0.1}, error=ValueError)
+specs.add_invalid(TuRBOConfig, lambda: {"length_min": -0.1}, error=ValidationError)
 specs.add_invalid(
-    TuRBOConfig, lambda: {"lengthscale_adjustment_factor": 0.9}, error=ValueError
+    TuRBOConfig, lambda: {"lengthscale_adjustment_factor": 0.9}, error=ValidationError
 )
-specs.add_invalid(TuRBOConfig, lambda: {"fit_region_multiplier": 0.9}, error=ValueError)
+specs.add_invalid(
+    TuRBOConfig, lambda: {"fit_region_multiplier": 0.9}, error=ValidationError
+)
