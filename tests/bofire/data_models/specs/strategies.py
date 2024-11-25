@@ -661,10 +661,10 @@ specs.add_invalid(
                 SingleTaskGPSurrogate(
                     inputs=Inputs(
                         features=[
-                            ContinuousInput(key="x", bounds=(0, 1)),
+                            ContinuousInput(key="a", bounds=(0, 1)),
                         ]
                     ),
-                    outputs=Outputs(features=[ContinuousOutput(key="y")]),
+                    outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
                 )
             ]
         ),
