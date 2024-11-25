@@ -58,7 +58,7 @@ class MultiFidelityStrategy(SoboStrategy):
             pd.DataFrame: selected fidelity and prediction
         """
         fidelity_input: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
-        assert self.model is not None
+        assert self.model is not None and self.experiments is not None
 
         sorted_fidelities = np.argsort(fidelity_input.fidelities)[::-1]
         _, sd_cols = get_column_names(self.domain.outputs)
@@ -67,12 +67,15 @@ class MultiFidelityStrategy(SoboStrategy):
             m = fidelity_input.fidelities[fidelity_idx]
             fidelity_name = fidelity_input.categories[fidelity_idx]
 
+            fidelity_threshold_scale = self.model.outcome_transform.stdvs.item()
+            fidelity_threshold = self.fidelity_thresholds[m] * fidelity_threshold_scale
+
             X_fid = X.assign(**{self.task_feature_key: fidelity_name})
             transformed = self.domain.inputs.transform(
                 experiments=X_fid, specs=self.input_preprocessing_specs
             )
             pred = self.predict(transformed)
 
-            if (pred[sd_cols] > self.fidelity_thresholds[m]).all().all() or m == 0:
+            if (pred[sd_cols] > fidelity_threshold).all().all() or m == 0:
                 pred[self.task_feature_key] = fidelity_name
                 return pred
