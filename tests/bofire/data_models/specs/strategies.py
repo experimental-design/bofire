@@ -20,11 +20,7 @@ from bofire.data_models.features.api import (
     DiscreteInput,
     TaskInput,
 )
-from bofire.data_models.surrogates.api import (
-    BotorchSurrogates,
-    MultiTaskGPSurrogate,
-    SingleTaskGPSurrogate,
-)
+from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 from bofire.strategies.enum import OptimalityCriterionEnum
 from tests.bofire.data_models.specs.api import domain
 from tests.bofire.data_models.specs.specs import Specs
@@ -686,28 +682,16 @@ specs.add_invalid(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
                     TaskInput(
-                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 0]
                     ),
                 ]
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
         ).model_dump(),
-        "surrogate_specs": BotorchSurrogates(
-            surrogates=[
-                SingleTaskGPSurrogate(
-                    inputs=Inputs(
-                        features=[
-                            ContinuousInput(key="a", bounds=(0, 1)),
-                        ]
-                    ),
-                    outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
-                )
-            ]
-        ),
         **strategy_commons,
         "acquisition_function": qEI().model_dump(),
         "fidelity_thresholds": 0.1,
     },
     error=ValueError,
-    message="Must use a MultiTaskGPSurrogate with MultiFidelityStrategy.",
+    message="Only one task can be the target fidelity",
 )
