@@ -9,7 +9,10 @@ try:
     import gurobipy
     from entmoot.problem_config import FeatureType, ProblemConfig
 except ImportError:
-    warnings.warn("entmoot not installed, BoFire's `EntingStrategy` cannot be used.")
+    warnings.warn(
+        "entmoot not installed, BoFire's `EntingStrategy` cannot be used.",
+        ImportWarning,
+    )
 
 
 import bofire.data_models.strategies.api as data_models
