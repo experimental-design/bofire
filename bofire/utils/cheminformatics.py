@@ -16,7 +16,7 @@ try:
 except ImportError:
     warnings.warn(
         "rdkit not installed, BoFire's cheminformatics utilities cannot be used.",
-        ImportWarning
+        ImportWarning,
     )
 
 try:
@@ -24,7 +24,7 @@ try:
 except ImportError:
     warnings.warn(
         "mordred not installed. Mordred molecular descriptors cannot be used.",
-        ImportWarning
+        ImportWarning,
     )
 
 # This code is based on GAUCHE: https://github.com/leojklarner/gauche/blob/main/gauche/data_featuriser/featurisation.py

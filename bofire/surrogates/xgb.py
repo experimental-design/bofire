@@ -10,8 +10,11 @@ from bofire.utils.tmpfile import make_tmpfile
 try:
     from xgboost import XGBRegressor
 except ImportError:
-    warnings.warn("xgboost not installed. Please install it to use "
-                  "BoFire's `XGBoostSurrogate`.", ImportWarning)
+    warnings.warn(
+        "xgboost not installed. Please install it to use "
+        "BoFire's `XGBoostSurrogate`.",
+        ImportWarning,
+    )
 
 import uuid
 
