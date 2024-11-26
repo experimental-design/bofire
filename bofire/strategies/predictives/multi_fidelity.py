@@ -37,9 +37,10 @@ class MultiFidelityStrategy(SoboStrategy):
         task_feature: TaskInput = self.domain.inputs.get_by_key(self.task_feature_key)  # type: ignore
         # only optimize the input x on the target fidelity
         # we fix the fidelity by setting all other fidelities to 'not allowed'
+        prev_allowed = task_feature.allowed
         task_feature.allowed = [fidelity == 0 for fidelity in task_feature.fidelities]
         x = super()._ask(candidate_count)
-        task_feature.allowed = [True] * len(task_feature.categories)
+        task_feature.allowed = prev_allowed
         fidelity_pred = self._select_fidelity_and_get_predict(x)
         x.update(fidelity_pred)
         return x

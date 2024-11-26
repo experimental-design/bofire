@@ -3,6 +3,7 @@ from typing import List, Literal, Union
 from pydantic import model_validator
 
 from bofire.data_models.domain.api import Domain, Outputs
+from bofire.data_models.features.api import TaskInput
 from bofire.data_models.strategies.predictives.sobo import SoboStrategy
 from bofire.data_models.surrogates.api import BotorchSurrogates, MultiTaskGPSurrogate
 
@@ -11,6 +12,34 @@ class MultiFidelityStrategy(SoboStrategy):
     type: Literal["MultiFidelityStrategy"] = "MultiFidelityStrategy"
 
     fidelity_thresholds: Union[List[float], float] = 0.1
+
+    @model_validator(mode="after")
+    def validate_tasks_and_fidelity_thresholds(self):
+        """Ensures that there is one threshold per fidelity"""
+        task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
+        num_tasks = len(task_input.categories)  # type: ignore
+
+        if (
+            isinstance(self.fidelity_thresholds, list)
+            and len(self.fidelity_thresholds) != num_tasks
+        ):
+            raise ValueError(
+                f"The number of tasks should be equal to the number of fidelity thresholds (got {num_tasks} tasks, {len(self.fidelity_thresholds)} thresholds)."
+            )  # type: ignore
+
+        return self
+
+    @model_validator(mode="after")
+    def validate_only_one_target_fidelity(self):
+        """Ensures that there is only one target fidelity (task where fidelity==0)."""
+        task_input, *_ = self.domain.inputs.get(includes=TaskInput, exact=True)
+        num_target = sum(t == 0 for t in task_input.fidelities)  # type: ignore
+        if num_target != 1:
+            raise ValueError(
+                f"Only one task can be the target fidelity (got {num_target})."
+            )
+
+        return self
 
     @model_validator(mode="after")
     def validate_multitask_allowed(self):

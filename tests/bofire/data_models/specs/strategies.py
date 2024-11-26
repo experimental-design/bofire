@@ -618,7 +618,9 @@ specs.add_valid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(key="task", categories=["task_hf", "task_lf"]),
+                    TaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
                 ]
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
@@ -651,7 +653,9 @@ specs.add_invalid(
             inputs=Inputs(
                 features=[
                     ContinuousInput(key="a", bounds=(0, 1)),
-                    TaskInput(key="task", categories=["task_hf", "task_lf"]),
+                    TaskInput(
+                        key="task", categories=["task_hf", "task_lf"], fidelities=[0, 1]
+                    ),
                 ]
             ),
             outputs=Outputs(features=[ContinuousOutput(key="alpha")]),
