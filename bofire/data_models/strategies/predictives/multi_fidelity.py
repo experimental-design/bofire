@@ -25,7 +25,7 @@ class MultiFidelityStrategy(SoboStrategy):
         ):
             raise ValueError(
                 f"The number of tasks should be equal to the number of fidelity thresholds (got {num_tasks} tasks, {len(self.fidelity_thresholds)} thresholds)."
-            )  # type: ignore
+            )
 
         return self
 
