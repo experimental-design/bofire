@@ -26,7 +26,7 @@ def hyperoptimize(
 ) -> Tuple[AnyTrainableSurrogate, pd.DataFrame]:
     if surrogate_data.hyperconfig is None:
         warnings.warn(
-            "No hyperopt is possible as no hyperopt config is available. Returning initial config."
+            "No hyperopt is possible as no hyperopt config is available. Returning initial config.",
         )
         return surrogate_data, pd.DataFrame({e.name: [] for e in RegressionMetricsEnum})
 
@@ -53,7 +53,8 @@ def hyperoptimize(
     if surrogate_data.hyperconfig.hyperstrategy == "FactorialStrategy":
         strategy = strategies.map(FactorialStrategy(domain=benchmark.domain))
         experiments = benchmark.f(
-            strategy.ask(candidate_count=None), return_complete=True
+            strategy.ask(candidate_count=None),
+            return_complete=True,
         )
     else:
         strategy_data = (
@@ -64,7 +65,7 @@ def hyperoptimize(
         experiments = run(
             benchmark=benchmark,
             strategy_factory=lambda domain: strategy_mapper.map(
-                data_model=strategy_data(domain=domain)
+                data_model=strategy_data(domain=domain),
             ),
             metric=best,
             n_runs=1,

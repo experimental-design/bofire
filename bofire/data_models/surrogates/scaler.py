@@ -1,7 +1,7 @@
 from enum import Enum
 
 
-class ScalerEnum(Enum):
+class ScalerEnum(str, Enum):
     """Enumeration class of supported scalers
     Currently, normalization and standardization are implemented.
     """

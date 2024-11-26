@@ -16,13 +16,13 @@ if1 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if11",
-    }
+    },
 )
 if2 = ContinuousInput(
     **{
         **VALID_CONTINUOUS_INPUT_FEATURE_SPEC,
         "key": "if22",
-    }
+    },
 )
 of1 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of11"})
 of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"})
@@ -51,11 +51,11 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"}
                                     features=[
                                         VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                             "domain"
-                                        ].outputs.get_by_key("of1")
-                                    ]
+                                        ].outputs.get_by_key("of1"),
+                                    ],
                                 ),
                             ),
-                        ]
+                        ],
                     ),
                 },
             ),
@@ -65,7 +65,8 @@ of2 = ContinuousOutput(**{**VALID_CONTINUOUS_OUTPUT_FEATURE_SPEC, "key": "of22"}
 )
 def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
     surrogate_specs = data_models.BotorchStrategy._generate_surrogate_specs(
-        domain=strategy.domain, surrogate_specs=strategy.surrogate_specs
+        domain=strategy.domain,
+        surrogate_specs=strategy.surrogate_specs,
     )
     assert len(surrogate_specs.surrogates) == expected_count
 
@@ -85,11 +86,11 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
                             features=[
                                 VALID_BOTORCH_QEHVI_STRATEGY_SPEC[
                                     "domain"
-                                ].outputs.get_by_key("of1")
-                            ]
+                                ].outputs.get_by_key("of1"),
+                            ],
                         ),
                     ),
-                ]
+                ],
             ),
         ),
         (
@@ -102,13 +103,14 @@ def test_generate_surrogate_specs(strategy: Strategy, expected_count: int):
                         inputs=VALID_BOTORCH_QEHVI_STRATEGY_SPEC["domain"].inputs,
                         outputs=Outputs(features=[of1]),
                     ),
-                ]
+                ],
             ),
         ),
     ],
 )
 def test_generate_surrogate_specs_invalid(
-    strategy: data_models.Strategy, specs: surrogate_data_models.BotorchSurrogates
+    strategy: data_models.Strategy,
+    specs: surrogate_data_models.BotorchSurrogates,
 ):
     with pytest.raises(ValueError):
         data_models.BotorchStrategy._generate_surrogate_specs(strategy.domain, specs)

@@ -138,7 +138,8 @@ specs.add_valid(
         "key": str(uuid.uuid4()),
         "categories": ["a", "b", "c"],
         "objective": ConstrainedCategoricalObjective(
-            categories=["a", "b", "c"], desirability=[True, True, False]
+            categories=["a", "b", "c"],
+            desirability=[True, True, False],
         ).model_dump(),
     },
 )

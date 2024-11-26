@@ -23,12 +23,13 @@ class PredictiveStrategy(Strategy):
 
         Returns:
             Domain: the domain
+
         """
         for feature in domain.outputs.get_by_objective(Objective):
             assert isinstance(feature, Output)
             if not cls.is_objective_implemented(type(feature.objective)):  # type: ignore
                 raise ValueError(
-                    f"Objective `{type(feature.objective)}` is not implemented for strategy `{cls.__name__}`"
+                    f"Objective `{type(feature.objective)}` is not implemented for strategy `{cls.__name__}`",
                 )
         return domain
 
@@ -42,8 +43,8 @@ class PredictiveStrategy(Strategy):
 
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
+
         """
-        pass
 
     @field_validator("domain")
     @classmethod
@@ -55,10 +56,11 @@ class PredictiveStrategy(Strategy):
 
         Raises:
             ValueError: if no output feature is specified
-            ValueError: if not output feauture with an attached objective is specified
+            ValueError: if not output feature with an attached objective is specified
 
         Returns:
             Domain: the domain
+
         """
         if len(domain.outputs) == 0:
             raise ValueError("no output feature specified")

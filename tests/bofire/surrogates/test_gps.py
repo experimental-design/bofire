@@ -32,12 +32,14 @@ from bofire.data_models.kernels.api import (
 )
 from bofire.data_models.molfeatures.api import MordredDescriptors
 from bofire.data_models.priors.api import (
-    BOTORCH_LENGTHCALE_PRIOR,
-    BOTORCH_NOISE_PRIOR,
-    BOTORCH_SCALE_PRIOR,
+    HVARFNER_LENGTHSCALE_PRIOR,
+    HVARFNER_NOISE_PRIOR,
     MBO_LENGTHCALE_PRIOR,
     MBO_NOISE_PRIOR,
     MBO_OUTPUTSCALE_PRIOR,
+    THREESIX_LENGTHSCALE_PRIOR,
+    THREESIX_NOISE_PRIOR,
+    THREESIX_SCALE_PRIOR,
 )
 from bofire.data_models.surrogates.api import (
     MixedSingleTaskGPSurrogate,
@@ -79,7 +81,7 @@ def test_SingleTaskGPModel(kernel, scaler, output_scaler):
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -170,7 +172,7 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
         },
     )
     model = surrogates.map(model)
@@ -205,7 +207,7 @@ def test_SingleTaskGPModel_mordred(kernel, scaler, output_scaler):
         scaler=scaler,
         output_scaler=output_scaler,
         input_preprocessing_specs={
-            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"])
+            "x_mol": MordredDescriptors(descriptors=["NssCH2", "ATSC2d"]),
         },
     )
     model2 = surrogates.map(model2)
@@ -236,7 +238,7 @@ def test_hyperconfig_invalid():
     ):
         SingleTaskGPHyperconfig(n_iterations=3, hyperstrategy="RandomStrategy")
     hy = SingleTaskGPHyperconfig(n_iterations=None, hyperstrategy="RandomStrategy")
-    assert hy.n_iterations == 13
+    assert hy.n_iterations == 14
 
 
 def test_SingleTaskGPHyperconfig():
@@ -249,37 +251,46 @@ def test_SingleTaskGPHyperconfig():
     )
     with pytest.raises(ValueError, match="No hyperconfig available."):
         surrogate_data_no_hy.update_hyperparameters(
-            benchmark.domain.inputs.sample(1).loc[0]
+            benchmark.domain.inputs.sample(1).loc[0],
         )
     # test that correct stuff is written
     surrogate_data = SingleTaskGPSurrogate(
-        inputs=benchmark.domain.inputs, outputs=benchmark.domain.outputs
+        inputs=benchmark.domain.inputs,
+        outputs=benchmark.domain.outputs,
     )
     candidate = surrogate_data.hyperconfig.inputs.sample(1).loc[0]
     surrogate_data.update_hyperparameters(candidate)
-    assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
-    if candidate.kernel == "matern_1.5":
-        assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-        assert surrogate_data.kernel.base_kernel.nu == 1.5
-    elif candidate.kernel == "matern_2.5":
-        assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
-        assert surrogate_data.kernel.base_kernel.nu == 2.5
-    else:
-        assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
-    if candidate.prior == "mbo":
-        assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
-        assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
-        assert (
-            surrogate_data.kernel.base_kernel.lengthscale_prior
-            == MBO_LENGTHCALE_PRIOR()
-        )
-    else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
-        assert surrogate_data.kernel.outputscale_prior == BOTORCH_SCALE_PRIOR()
-        assert (
-            surrogate_data.kernel.base_kernel.lengthscale_prior
-            == BOTORCH_LENGTHCALE_PRIOR()
-        )
+    if hasattr(surrogate_data.kernel, "base_kernel"):
+        assert surrogate_data.kernel.base_kernel.ard == (candidate["ard"] == "True")
+        if candidate.kernel == "matern_1.5":
+            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+            assert surrogate_data.kernel.base_kernel.nu == 1.5
+        elif candidate.kernel == "matern_2.5":
+            assert isinstance(surrogate_data.kernel.base_kernel, MaternKernel)
+            assert surrogate_data.kernel.base_kernel.nu == 2.5
+        else:
+            assert isinstance(surrogate_data.kernel.base_kernel, RBFKernel)
+        if candidate.prior == "mbo":
+            assert surrogate_data.noise_prior == MBO_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == MBO_OUTPUTSCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == MBO_LENGTHCALE_PRIOR()
+            )
+        elif candidate.prior == "threesix":
+            assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == THREESIX_LENGTHSCALE_PRIOR()
+            )
+        else:
+            assert surrogate_data.noise_prior == HVARFNER_NOISE_PRIOR()
+            assert surrogate_data.kernel.outputscale_prior == THREESIX_SCALE_PRIOR()
+            assert (
+                surrogate_data.kernel.base_kernel.lengthscale_prior
+                == HVARFNER_LENGTHSCALE_PRIOR()
+            )
 
 
 def test_MixedSingleTaskGPHyperconfig():
@@ -291,7 +302,7 @@ def test_MixedSingleTaskGPHyperconfig():
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     surrogate_data = MixedSingleTaskGPSurrogate(
@@ -315,10 +326,10 @@ def test_MixedSingleTaskGPHyperconfig():
             surrogate_data.continuous_kernel.lengthscale_prior == MBO_LENGTHCALE_PRIOR()
         )
     else:
-        assert surrogate_data.noise_prior == BOTORCH_NOISE_PRIOR()
+        assert surrogate_data.noise_prior == THREESIX_NOISE_PRIOR()
         assert (
             surrogate_data.continuous_kernel.lengthscale_prior
-            == BOTORCH_LENGTHCALE_PRIOR()
+            == THREESIX_LENGTHSCALE_PRIOR()
         )
 
 
@@ -330,7 +341,7 @@ def test_MixedSingleTaskGPModel_invalid_preprocessing():
                 bounds=(-4, 4),
             )
             for i in range(2)
-        ]
+        ],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -360,7 +371,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
             )
             for i in range(2)
         ]
-        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])]
+        + [CategoricalInput(key="x_cat", categories=["mama", "papa"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = inputs.sample(n=10)
@@ -438,7 +449,7 @@ def test_MixedSingleTaskGPModel(kernel, scaler, output_scaler):
 def test_MixedSingleTaskGPModel_mordred(kernel, scaler, output_scaler):
     inputs = Inputs(
         features=[MolecularInput(key="x_mol")]
-        + [CategoricalInput(key="x_cat", categories=["a", "b"])]
+        + [CategoricalInput(key="x_cat", categories=["a", "b"])],
     )
     outputs = Outputs(features=[ContinuousOutput(key="y")])
     experiments = [

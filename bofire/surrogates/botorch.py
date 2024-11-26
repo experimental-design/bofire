@@ -33,7 +33,7 @@ class BotorchSurrogate(Surrogate):
                 self.model.posterior(X=X, observation_noise=True)
                 .variance.cpu()
                 .detach()
-                .numpy()
+                .numpy(),
             )
         return preds, stds
 

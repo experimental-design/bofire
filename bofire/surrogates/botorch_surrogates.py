@@ -44,12 +44,12 @@ class BotorchSurrogates(ABC):
         return Outputs(
             features=list(
                 itertools.chain.from_iterable(
-                    [model.outputs.get() for model in self.surrogates]
-                )
-            )
+                    [model.outputs.get() for model in self.surrogates],
+                ),
+            ),
         )
 
-    # TODO: is this really neede here, code duplication with functional model
+    # TODO: is this really needed here, code duplication with functional model
     def _check_compability(self, inputs: Inputs, outputs: Outputs):
         used_output_feature_keys = self.outputs.get_keys()
         if sorted(used_output_feature_keys) != sorted(outputs.get_keys()):
@@ -58,7 +58,7 @@ class BotorchSurrogates(ABC):
         for i, model in enumerate(self.surrogates):
             if len(model.inputs) > len(inputs):
                 raise ValueError(
-                    f"Model with index {i} has more features than acceptable."
+                    f"Model with index {i} has more features than acceptable.",
                 )
             for feat in model.inputs:
                 try:
@@ -82,10 +82,9 @@ class BotorchSurrogates(ABC):
         # of the optimization domain
         self._check_compability(inputs=inputs, outputs=outputs)
         features2idx, _ = inputs._get_transform_info(self.input_preprocessing_specs)
-        #
         all_gp = True
         botorch_models = []
-        # we sort the models by sorting them with their occurence in outputs
+        # we sort the models by sorting them with their occurrence in outputs
         for output_feature_key in outputs.get_keys():
             # get the corresponding model
             model = {model.outputs[0].key: model for model in self.surrogates}[
@@ -93,7 +92,7 @@ class BotorchSurrogates(ABC):
             ]
             if model.model is None:
                 raise ValueError(
-                    f"Surrogate for output feature {output_feature_key} not fitted."
+                    f"Surrogate for output feature {output_feature_key} not fitted.",
                 )
             # in case that inputs are complete we do not need to adjust anything
             if len(model.inputs) == len(inputs):

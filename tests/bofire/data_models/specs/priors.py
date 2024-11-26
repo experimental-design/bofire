@@ -91,7 +91,8 @@ for concentration in [-1, 0]:
 
 
 specs.add_valid(
-    priors.LogNormalPrior, lambda: {"loc": random.random(), "scale": random.random()}
+    priors.LogNormalPrior,
+    lambda: {"loc": random.random(), "scale": random.random()},
 )
 
 

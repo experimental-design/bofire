@@ -48,7 +48,8 @@ class MoboStrategy(BotorchStrategy):
 
         # get etas and constraints
         constraints, etas = get_output_constraints(
-            self.domain.outputs, experiments=self.experiments
+            self.domain.outputs,
+            experiments=self.experiments,
         )
         if len(constraints) == 0:
             constraints, etas = None, 1e-3
@@ -60,8 +61,8 @@ class MoboStrategy(BotorchStrategy):
         if isinstance(self.acquisition_function, (qLogEHVI, qEHVI)):
             Y = torch.from_numpy(
                 self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                    self.experiments
-                )[self.domain.outputs.get_keys()].values
+                    self.experiments,
+                )[self.domain.outputs.get_keys()].values,
             ).to(**tkwargs)
         else:
             Y = None
@@ -92,7 +93,8 @@ class MoboStrategy(BotorchStrategy):
     def _get_objective(self) -> GenericMCMultiOutputObjective:
         assert self.experiments is not None
         objective = get_multiobjective_objective(
-            outputs=self.domain.outputs, experiments=self.experiments
+            outputs=self.domain.outputs,
+            experiments=self.experiments,
         )
         return GenericMCMultiOutputObjective(objective=objective)
 
@@ -100,10 +102,12 @@ class MoboStrategy(BotorchStrategy):
         assert self.experiments is not None, "No experiments available."
         if self.ref_point is None:
             df = self.domain.outputs.preprocess_experiments_all_valid_outputs(
-                self.experiments
+                self.experiments,
             )
             ref_point = infer_ref_point(
-                self.domain, experiments=df, return_masked=False
+                self.domain,
+                experiments=df,
+                return_masked=False,
             )
         else:
             ref_point = self.ref_point
@@ -113,8 +117,8 @@ class MoboStrategy(BotorchStrategy):
                 [
                     ref_point[feat]
                     for feat in self.domain.outputs.get_keys_by_objective(
-                        excludes=ConstrainedObjective
+                        excludes=ConstrainedObjective,
                     )
-                ]
+                ],
             )
         ).tolist()

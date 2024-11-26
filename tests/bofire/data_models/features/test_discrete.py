@@ -54,7 +54,7 @@ def test_discrete_input_feature_bounds(input_feature, expected_lower, expected_u
 )
 def test_discrete_input_feature_get_bounds(input_feature, expected):
     experiments = pd.DataFrame(
-        {"if1": [1.0, 2.0, 3.0, 4.0], "if2": [1.0, 1.0, 1.0, 1.0]}
+        {"if1": [1.0, 2.0, 3.0, 4.0], "if2": [1.0, 1.0, 1.0, 1.0]},
     )
     lower, upper = input_feature.get_bounds(values=experiments[input_feature.key])
     assert (lower[0], upper[0]) == expected

@@ -7,14 +7,14 @@ from bofire.data_models.features.api import CategoricalOutput, ContinuousOutput
 
 
 def get_column_names(outputs: Outputs) -> Tuple[List[str], List[str]]:
-    """
-    Specifies column names for given Outputs type.
+    """Specifies column names for given Outputs type.
 
     Args:
         outputs (Outputs): The Outputs object containing the individual outputs.
 
     Returns:
         Tuple[List[str], List[str]]: A tuple containing the prediction column names and the standard deviation column names
+
     """
     pred_cols, sd_cols = [], []
     for featkey in outputs.get_keys(CategoricalOutput):
@@ -34,10 +34,10 @@ def get_column_names(outputs: Outputs) -> Tuple[List[str], List[str]]:
 
 
 def postprocess_categorical_predictions(
-    predictions: pd.DataFrame, outputs: Outputs
+    predictions: pd.DataFrame,
+    outputs: Outputs,
 ) -> pd.DataFrame:
-    """
-    Postprocess categorical predictions by finding the maximum probability location
+    """Postprocess categorical predictions by finding the maximum probability location
 
     Args:
         predictions (pd.DataFrame): The dataframe containing the predictions.
@@ -45,6 +45,7 @@ def postprocess_categorical_predictions(
 
     Returns:
         predictions (pd.DataFrame): The (potentially modified) original dataframe with categorical predictions added
+
     """
     for feat in outputs.get():
         if isinstance(feat, CategoricalOutput):

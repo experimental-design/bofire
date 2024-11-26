@@ -25,14 +25,12 @@ class NodeExperiment:
         categorical_groups: Optional[List[List[ContinuousInput]]] = None,
         discrete_vars: Optional[Dict[str, Tuple[ContinuousInput, List[float]]]] = None,
     ):
-        """
-
-        Args:
-            partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
-            design_matrix: optimal design for given the fixed and partially fixed experiments
-            value: value of the objective function evaluated with the design_matrix
-            categorical_groups: Represents the different groups of the categorical variables
-            discrete_vars: Dict of discrete variables and the corresponding valid values in the optimization problem
+        """Args:
+        partially_fixed_experiments: dataframe containing (some) fixed variables for experiments.
+        design_matrix: optimal design for given the fixed and partially fixed experiments
+        value: value of the objective function evaluated with the design_matrix
+        categorical_groups: Represents the different groups of the categorical variables
+        discrete_vars: Dict of discrete variables and the corresponding valid values in the optimization problem
         """
         self.partially_fixed_experiments = partially_fixed_experiments
         self.design_matrix = design_matrix
@@ -47,8 +45,7 @@ class NodeExperiment:
             self.discrete_vars = {}
 
     def get_next_fixed_experiments(self) -> List[pd.DataFrame]:
-        """
-        Based on the current partially_fixed_experiment DataFrame the next branches are determined. One variable will
+        """Based on the current partially_fixed_experiment DataFrame the next branches are determined. One variable will
         be fixed more than before.
         Returns: List of the next possible branches where only one variable more is fixed
 
@@ -77,14 +74,18 @@ class NodeExperiment:
                 first_fixation, second_fixation = None, None
                 if current_fixation is None:
                     lower_split, upper_split = equal_count_split(
-                        values, var.lower_bound, var.upper_bound
+                        values,
+                        var.lower_bound,
+                        var.upper_bound,
                     )
                     first_fixation = (var.lower_bound, lower_split)
                     second_fixation = (upper_split, var.upper_bound)
 
                 elif current_fixation[0] != current_fixation[1]:
                     lower_split, upper_split = equal_count_split(
-                        values, current_fixation[0], current_fixation[1]
+                        values,
+                        current_fixation[0],
+                        current_fixation[1],
                     )
                     first_fixation = (current_fixation[0], lower_split)
                     second_fixation = (upper_split, current_fixation[1])
@@ -119,8 +120,7 @@ class NodeExperiment:
 
 
 def is_valid(node: NodeExperiment, tolerance: float = 1e-2) -> bool:
-    """
-    test if a design is a valid solution. i.e. binary and discrete variables are valid
+    """Test if a design is a valid solution. i.e. binary and discrete variables are valid
     Args:
         node: the current node of the branch to be tested
         tolerance: absolute tolerance between valid values and values in the design
@@ -154,8 +154,7 @@ def bnb(
     num_explored: int = 0,
     **kwargs,
 ) -> NodeExperiment:
-    """
-    branch-and-bound algorithm for solving optimization problems containing binary and discrete variables
+    """branch-and-bound algorithm for solving optimization problems containing binary and discrete variables
     Args:
         num_explored: keeping track of how many branches have been explored
         priority_queue (PriorityQueue): initial nodes of the branching tree
@@ -173,11 +172,15 @@ def bnb(
 
     # get objective function
     model_formula = get_formula_from_string(
-        model_type=kwargs["model_type"], rhs_only=True, domain=domain
+        model_type=kwargs["model_type"],
+        rhs_only=True,
+        domain=domain,
     )
     objective_class = get_objective_class(kwargs["objective"])
     objective_class = objective_class(
-        domain=domain, model=model_formula, n_experiments=n_experiments
+        domain=domain,
+        model=model_formula,
+        n_experiments=n_experiments,
     )
 
     pre_size = priority_queue.qsize()
@@ -192,7 +195,7 @@ def bnb(
     if verbose:
         print(
             f"current length of branching queue (+ new branches): {pre_size} + {len(next_branches)} currently "
-            f"explored branches: {num_explored}, current best value: {current_branch.value}"
+            f"explored branches: {num_explored}, current best value: {current_branch.value}",
         )
     # solve branched problems
     for _i, branch in enumerate(next_branches):

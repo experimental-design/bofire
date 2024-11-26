@@ -18,7 +18,7 @@ class BotorchSurrogate(Surrogate):
         # when validator for inputs fails, this validator is still checked and causes an Exception error instead of a ValueError
         # fix this by checking if inputs is in info.data
         if "inputs" not in info.data:
-            return
+            return None
 
         inputs = info.data["inputs"]
         categorical_keys = inputs.get_keys(CategoricalInput, exact=True)
@@ -30,10 +30,9 @@ class BotorchSurrogate(Surrogate):
                 != CategoricalEncodingEnum.ONE_HOT
             ):
                 raise ValueError(
-                    "Botorch based models have to use one hot encodings for categoricals"
+                    "Botorch based models have to use one hot encodings for categoricals",
                 )
-            else:
-                v[key] = CategoricalEncodingEnum.ONE_HOT
+            v[key] = CategoricalEncodingEnum.ONE_HOT
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in descriptor_keys:
             if v.get(key, CategoricalEncodingEnum.DESCRIPTOR) not in [
@@ -41,21 +40,21 @@ class BotorchSurrogate(Surrogate):
                 CategoricalEncodingEnum.ONE_HOT,
             ]:
                 raise ValueError(
-                    "Botorch based models have to use one hot encodings or descriptor encodings for categoricals."
+                    "Botorch based models have to use one hot encodings or descriptor encodings for categoricals.",
                 )
-            elif v.get(key) is None:
+            if v.get(key) is None:
                 v[key] = CategoricalEncodingEnum.DESCRIPTOR
         for key in inputs.get_keys(NumericalInput):
             if v.get(key) is not None:
                 raise ValueError(
-                    "Botorch based models have to use internal transforms to preprocess numerical features."
+                    "Botorch based models have to use internal transforms to preprocess numerical features.",
                 )
         # TODO: include descriptors into probabilistic reparam via OneHotToDescriptor input transform
         for key in molecular_keys:
             mol_encoding = v.get(key, Fingerprints())
             if not isinstance(mol_encoding, MolFeatures):
                 raise ValueError(
-                    "Botorch based models have to use fingerprints, fragments, fingerprints_fragments, or molecular descriptors for molecular inputs"
+                    "Botorch based models have to use fingerprints, fragments, fingerprints_fragments, or molecular descriptors for molecular inputs",
                 )
             v[key] = mol_encoding
         return v

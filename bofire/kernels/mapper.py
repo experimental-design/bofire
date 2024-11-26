@@ -63,7 +63,7 @@ def map_InfiniteWidthBNNKernel(
         raise ImportError(
             "InfiniteWidthBNNKernel requires botorch>=0.11.3 to be installed. "
             "This can be installed by running `pip install 'botorch>=0.11.3'`, "
-            "requires python 3.10+."
+            "requires python 3.10+.",
         )
 
     return InfiniteWidthBNNKernel(
@@ -123,7 +123,7 @@ def map_AdditiveKernel(
                 active_dims=active_dims,
             )
             for k in data_model.kernels
-        ]
+        ],
     )
 
 
@@ -142,7 +142,7 @@ def map_MultiplicativeKernel(
                 active_dims=active_dims,
             )
             for k in data_model.kernels
-        ]
+        ],
     )
 
 
@@ -232,5 +232,8 @@ def map(
     active_dims: List[int],
 ) -> GpytorchKernel:
     return KERNEL_MAP[data_model.__class__](
-        data_model, batch_shape, ard_num_dims, active_dims
+        data_model,
+        batch_shape,
+        ard_num_dims,
+        active_dims,
     )

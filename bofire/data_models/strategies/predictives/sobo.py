@@ -13,7 +13,7 @@ from bofire.data_models.strategies.predictives.botorch import BotorchStrategy
 
 class SoboBaseStrategy(BotorchStrategy):
     acquisition_function: AnySingleObjectiveAcquisitionFunction = Field(
-        default_factory=lambda: qLogNEI()
+        default_factory=lambda: qLogNEI(),
     )
 
     @classmethod
@@ -25,6 +25,7 @@ class SoboBaseStrategy(BotorchStrategy):
 
         Returns:
             bool: True if the feature type is valid for the strategy chosen, False otherwise
+
         """
         return True
 
@@ -37,6 +38,7 @@ class SoboBaseStrategy(BotorchStrategy):
 
         Returns:
             bool: True if the objective type is valid for the strategy chosen, False otherwise
+
         """
         return True
 
@@ -54,7 +56,7 @@ class SoboStrategy(SoboBaseStrategy):
             - len(v.outputs.get_by_objective(includes=None, excludes=Objective))
         ) > 1:
             raise ValueError(
-                "SOBO strategy can only deal with one no-constraint objective."
+                "SOBO strategy can only deal with one no-constraint objective.",
             )
         return v
 
@@ -67,7 +69,7 @@ class AdditiveSoboStrategy(SoboBaseStrategy):
     def validate_is_multiobjective(cls, v, info):
         if (len(v.outputs.get_by_objective(Objective))) < 2:
             raise ValueError(
-                "Additive SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead."
+                "Additive SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead.",
             )
         return v
 
@@ -79,7 +81,7 @@ class MultiplicativeSoboStrategy(SoboBaseStrategy):
     def validate_is_multiobjective(cls, v, info):
         if (len(v.outputs.get_by_objective(Objective))) < 2:
             raise ValueError(
-                "Multiplicative SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead."
+                "Multiplicative SOBO strategy requires at least 2 outputs with objectives. Consider SOBO strategy instead.",
             )
         return v
 

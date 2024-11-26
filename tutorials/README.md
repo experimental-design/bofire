@@ -8,7 +8,7 @@ The notebooks in this folder demonstrate the usage of bofire. The are organized 
 
 ### Basic Examples
 
-Additionally, the basic functionality such as setting up the reaction domain, defining objectives and running a bayesian optimization loop is shown in a variety of noteboooks by example.
+Additionally, the basic functionality such as setting up the reaction domain, defining objectives and running a bayesian optimization loop is shown in a variety of notebooks by example.
 
 ### Advanced Examples
 The following notebooks show more niche use cases such as the use of a Random Forest surrogate model. Advanced examples are not necessarily better strategies, they represent more complex uses of components within the library.
@@ -24,7 +24,7 @@ All the classes in `bofire` are serializable and can be saved to json formats. T
 
 ## Notebook testing
 
-Notebooks should execute fast, once the `SMOKE_TEST` environment variable is present. It'll be set to true during testing a PR. Use this to check wheter it is present:
+Notebooks should execute fast, once the `SMOKE_TEST` environment variable is present. It'll be set to true during testing a PR. Use this to check whether it is present:
 
 ```python
 SMOKE_TEST = os.environ.get("SMOKE_TEST")

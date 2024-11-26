@@ -17,11 +17,12 @@ def test_docs():
     code_block_start = "```python"
     code_block_end = "```"
     code_block_regex = re.compile(
-        f"{code_block_start}(.*?){code_block_end}", flags=re.DOTALL
+        f"{code_block_start}(.*?){code_block_end}",
+        flags=re.DOTALL,
     )
     for filename in files_under_test:
         print(f"### Processing doc file {filename} ###")
-        with open(filename, "r") as f:
+        with open(filename) as f:
             content = f.read()
         codeblocks = code_block_regex.findall(content)
         codeblocks = "\n".join(codeblocks)

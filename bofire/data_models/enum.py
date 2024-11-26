@@ -1,13 +1,13 @@
 from enum import Enum
 
 
-class SamplingMethodEnum(Enum):
+class SamplingMethodEnum(str, Enum):
     UNIFORM = "UNIFORM"
     SOBOL = "SOBOL"
     LHS = "LHS"
 
 
-class CategoricalMethodEnum(Enum):
+class CategoricalMethodEnum(str, Enum):
     """Enumeration class of supported methods how to handle categorical features
     Currently, exhaustive search and free relaxation are implemented.
     """
@@ -17,7 +17,7 @@ class CategoricalMethodEnum(Enum):
     # PR = "PR" available soon
 
 
-class CategoricalEncodingEnum(Enum):
+class CategoricalEncodingEnum(str, Enum):
     """Enumeration class of implemented categorical encodings
     Currently, one-hot and ordinal encoding are implemented.
     """
@@ -28,19 +28,19 @@ class CategoricalEncodingEnum(Enum):
     DESCRIPTOR = "DESCRIPTOR"  # only possible for categorical with descriptors
 
 
-class ClassificationMetricsEnum(Enum):
+class ClassificationMetricsEnum(str, Enum):
     """Enumeration class for classification metrics."""
 
     ACCURACY = "ACCURACY"
     F1 = "F1"
 
 
-class OutputFilteringEnum(Enum):
+class OutputFilteringEnum(str, Enum):
     ALL = "ALL"
     ANY = "ANY"
 
 
-class RegressionMetricsEnum(Enum):
+class RegressionMetricsEnum(str, Enum):
     """Enumeration class for regression metrics."""
 
     R2 = "R2"
@@ -52,7 +52,7 @@ class RegressionMetricsEnum(Enum):
     FISHER = "FISHER"
 
 
-class UQRegressionMetricsEnum(Enum):
+class UQRegressionMetricsEnum(str, Enum):
     """Enumeration class for ucertainty regression metrics."""
 
     PEARSON_UQ = "PEARSON_UQ"

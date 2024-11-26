@@ -51,6 +51,7 @@ def get_linear_constraints(
 
     Returns:
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists of a tensor with the feature indices, coefficients and a float for the rhs.
+
     """
     constraints = []
     for c in domain.constraints.get(constraint):
@@ -69,7 +70,7 @@ def get_linear_constraints(
                 upper.append(feat.upper_bound)  # type: ignore
                 indices.append(idx)
                 coefficients.append(
-                    c.coefficients[i]
+                    c.coefficients[i],
                 )  # if unit_scaled == False else c_scaled.coefficients[i])
         if unit_scaled:
             lower = np.array(lower)
@@ -81,7 +82,7 @@ def get_linear_constraints(
                     torch.tensor(indices),
                     -torch.tensor(scaled_coefficients).to(**tkwargs),
                     -(rhs + c.rhs - np.sum(np.array(coefficients) * lower)),
-                )
+                ),
             )
         else:
             constraints.append(
@@ -89,13 +90,14 @@ def get_linear_constraints(
                     torch.tensor(indices),
                     -torch.tensor(coefficients).to(**tkwargs),
                     -(rhs + c.rhs),
-                )
+                ),
             )
     return constraints
 
 
 def get_interpoint_constraints(
-    domain: Domain, n_candidates: int
+    domain: Domain,
+    n_candidates: int,
 ) -> List[Tuple[Tensor, Tensor, float]]:
     """Converts interpoint equality constraints to linear equality constraints,
         that can be processed by botorch. For more information, see the docstring
@@ -109,6 +111,7 @@ def get_interpoint_constraints(
     Returns:
         List[Tuple[Tensor, Tensor, float]]: List of tuples, each tuple consists
             of a tensor with the feature indices, coefficients and a float for the rhs.
+
     """
     constraints = []
     if n_candidates == 1:
@@ -124,7 +127,8 @@ def get_interpoint_constraints(
         multiplicity = constraint.multiplicity or n_candidates
         for i in range(math.ceil(n_candidates / multiplicity)):
             all_indices = torch.arange(
-                i * multiplicity, min((i + 1) * multiplicity, n_candidates)
+                i * multiplicity,
+                min((i + 1) * multiplicity, n_candidates),
             )
             for k in range(len(all_indices) - 1):
                 indices = torch.tensor(
@@ -147,6 +151,7 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
     Returns:
         List[Callable[[Tensor], float]]: List of callables that can be used
             as nonlinear equality constraints in botorch.
+
     """
 
     def narrow_gaussian(x, ell=1e-3):
@@ -173,21 +178,24 @@ def get_nchoosek_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
         if c.max_count != len(c.features):
             constraints.append(
                 max_constraint(
-                    indices=indices, num_features=len(c.features), max_count=c.max_count
-                )
+                    indices=indices,
+                    num_features=len(c.features),
+                    max_count=c.max_count,
+                ),
             )
         if c.min_count > 0:
             constraints.append(
                 min_constraint(
-                    indices=indices, num_features=len(c.features), min_count=c.min_count
-                )
+                    indices=indices,
+                    num_features=len(c.features),
+                    min_count=c.min_count,
+                ),
             )
     return constraints
 
 
 def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
-    """
-    Returns a list of nonlinear constraint functions that can be processed by botorch
+    """Returns a list of nonlinear constraint functions that can be processed by botorch
     based on the given domain.
 
     Args:
@@ -209,22 +217,22 @@ def get_product_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
             dtype=torch.int64,
         )
         constraints.append(
-            product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign)
+            product_constraint(indices, torch.tensor(c.exponents), c.rhs, c.sign),
         )
     return constraints
 
 
 def get_nonlinear_constraints(domain: Domain) -> List[Callable[[Tensor], float]]:
-    """
-    Returns a list of callable functions that represent the nonlinear constraints
+    """Returns a list of callable functions that represent the nonlinear constraints
     for the given domain that can be processed by botorch.
 
-    Parameters:
+    Args:
         domain (Domain): The domain for which to generate the nonlinear constraints.
 
     Returns:
         List[Callable[[Tensor], float]]: A list of callable functions that take a tensor
         as input and return a float value representing the constraint evaluation.
+
     """
     return get_nchoosek_constraints(domain) + get_product_constraints(domain)
 
@@ -236,7 +244,7 @@ def constrained_objective2botorch(
     eps: float = 1e-8,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float], int]:
     """Create a callable that can be used by `botorch.utils.objective.apply_constraints`
-    to setup ouput constrained optimizations.
+    to setup output constrained optimizations.
 
     Args:
         idx (int): Index of the constraint objective in the list of outputs.
@@ -249,9 +257,11 @@ def constrained_objective2botorch(
     Returns:
         Tuple[List[Callable[[Tensor], Tensor]], List[float], int]: List of callables that can be used by botorch for setting up the constrained objective,
             list of the corresponding botorch eta values, final index used by the method (to track for categorical variables)
+
     """
     assert isinstance(
-        objective, ConstrainedObjective
+        objective,
+        ConstrainedObjective,
     ), "Objective is not a `ConstrainedObjective`."
     if isinstance(objective, MaximizeSigmoidObjective):
         return (
@@ -259,7 +269,7 @@ def constrained_objective2botorch(
             [1.0 / objective.steepness],
             idx + 1,
         )
-    elif isinstance(objective, MovingMaximizeSigmoidObjective):
+    if isinstance(objective, MovingMaximizeSigmoidObjective):
         assert x_adapt is not None
         tp = x_adapt.max().item() + objective.tp
         return (
@@ -267,13 +277,13 @@ def constrained_objective2botorch(
             [1.0 / objective.steepness],
             idx + 1,
         )
-    elif isinstance(objective, MinimizeSigmoidObjective):
+    if isinstance(objective, MinimizeSigmoidObjective):
         return (
             [lambda Z: (Z[..., idx] - objective.tp)],
             [1.0 / objective.steepness],
             idx + 1,
         )
-    elif isinstance(objective, TargetObjective):
+    if isinstance(objective, TargetObjective):
         return (
             [
                 lambda Z: (Z[..., idx] - (objective.target_value - objective.tolerance))
@@ -285,9 +295,9 @@ def constrained_objective2botorch(
             [1.0 / objective.steepness, 1.0 / objective.steepness],
             idx + 1,
         )
-    elif isinstance(objective, ConstrainedCategoricalObjective):
+    if isinstance(objective, ConstrainedCategoricalObjective):
         # The output of a categorical objective has final dim `c` where `c` is number of classes
-        # Pass in the expected acceptance probability and perform an inverse sigmoid to atain the original probabilities
+        # Pass in the expected acceptance probability and perform an inverse sigmoid to attain the original probabilities
         return (
             [
                 lambda Z: torch.log(
@@ -301,17 +311,17 @@ def constrained_objective2botorch(
                         max=1 - eps,
                     )
                     - 1,
-                )
+                ),
             ],
             [1.0],
             idx + len(objective.desirability),
         )
-    else:
-        raise ValueError(f"Objective {objective.__class__.__name__} not known.")
+    raise ValueError(f"Objective {objective.__class__.__name__} not known.")
 
 
 def get_output_constraints(
-    outputs: Outputs, experiments: pd.DataFrame
+    outputs: Outputs,
+    experiments: pd.DataFrame,
 ) -> Tuple[List[Callable[[Tensor], Tensor]], List[float]]:
     """Method to translate output constraint objectives into a list of
     callables and list of etas for use in botorch.
@@ -326,6 +336,7 @@ def get_output_constraints(
     Returns:
         Tuple[List[Callable[[Tensor], Tensor]], List[float]]: List of constraint callables,
             list of associated etas.
+
     """
     constraints = []
     etas = []
@@ -333,13 +344,14 @@ def get_output_constraints(
     for feat in outputs.get():
         if isinstance(feat.objective, ConstrainedObjective):
             cleaned_experiments = outputs.preprocess_experiments_one_valid_output(
-                feat.key, experiments
+                feat.key,
+                experiments,
             )
             iconstraints, ietas, idx = constrained_objective2botorch(
                 idx,
                 objective=feat.objective,
                 x_adapt=torch.from_numpy(cleaned_experiments[feat.key].values).to(
-                    **tkwargs
+                    **tkwargs,
                 )
                 if not isinstance(feat.objective, ConstrainedCategoricalObjective)
                 else None,
@@ -352,7 +364,9 @@ def get_output_constraints(
 
 
 def get_objective_callable(
-    idx: int, objective: AnyObjective, x_adapt: Tensor
+    idx: int,
+    objective: AnyObjective,
+    x_adapt: Tensor,
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     if isinstance(objective, MaximizeObjective):
         return lambda y, X=None: (
@@ -398,7 +412,7 @@ def get_objective_callable(
                 + torch.exp(
                     -1
                     * objective.steepness
-                    * (y[..., idx] - (objective.target_value - objective.tolerance))
+                    * (y[..., idx] - (objective.target_value - objective.tolerance)),
                 )
             )
             * (
@@ -409,15 +423,16 @@ def get_objective_callable(
                     + torch.exp(
                         -1.0
                         * objective.steepness
-                        * (y[..., idx] - (objective.target_value + objective.tolerance))
+                        * (
+                            y[..., idx] - (objective.target_value + objective.tolerance)
+                        ),
                     )
                 )
             )
         )
-    else:
-        raise NotImplementedError(
-            f"Objective {objective.__class__.__name__} not implemented."
-        )
+    raise NotImplementedError(
+        f"Objective {objective.__class__.__name__} not implemented.",
+    )
 
 
 def get_custom_botorch_objective(
@@ -441,7 +456,7 @@ def get_custom_botorch_objective(
             x_adapt=torch.from_numpy(
                 outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
                     feat.key
-                ].values
+                ].values,
             ).to(**tkwargs),
         )
         for i, feat in enumerate(outputs.get())
@@ -480,7 +495,7 @@ def get_multiplicative_botorch_objective(
             x_adapt=torch.from_numpy(
                 outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
                     feat.key
-                ].values
+                ].values,
             ).to(**tkwargs),
         )
         for i, feat in enumerate(outputs.get())
@@ -513,7 +528,7 @@ def get_additive_botorch_objective(
             x_adapt=torch.from_numpy(
                 outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
                     feat.key
-                ].values
+                ].values,
             ).to(**tkwargs),
         )
         for i, feat in enumerate(outputs.get())
@@ -545,7 +560,8 @@ def get_additive_botorch_objective(
 
 
 def get_multiobjective_objective(
-    outputs: Outputs, experiments: pd.DataFrame
+    outputs: Outputs,
+    experiments: pd.DataFrame,
 ) -> Callable[[Tensor, Optional[Tensor]], Tensor]:
     """Returns a callable that can be used by botorch for multiobjective optimization.
 
@@ -557,6 +573,7 @@ def get_multiobjective_objective(
 
     Returns:
         Callable[[Tensor], Tensor]: _description_
+
     """
     callables = [
         get_objective_callable(
@@ -565,7 +582,7 @@ def get_multiobjective_objective(
             x_adapt=torch.from_numpy(
                 outputs.preprocess_experiments_one_valid_output(feat.key, experiments)[
                     feat.key
-                ].values
+                ].values,
             ).to(**tkwargs),
         )
         for i, feat in enumerate(outputs.get())
@@ -599,12 +616,13 @@ def get_initial_conditions_generator(
         ask_options (Dict, optional): Dictionary of keyword arguments that are
             passed to the `ask` method of the strategy. Defaults to {}.
         sequential (bool, optional): If True, samples for every q-batch are
-            generate indepenent from each other. If False, the `n x q` samples
+            generate independent from each other. If False, the `n x q` samples
             are generated at once.
 
     Returns:
         Callable[[int, int, int], Tensor]: Callable that can be passed to
             `batch_initial_conditions`.
+
     """
     if ask_options is None:
         ask_options = {}
@@ -616,36 +634,36 @@ def get_initial_conditions_generator(
                 candidates = strategy.ask(q, **ask_options)
                 # transform it
                 transformed_candidates = strategy.domain.inputs.transform(
-                    candidates, transform_specs
+                    candidates,
+                    transform_specs,
                 )
                 # transform to tensor
                 initial_conditions.append(
-                    torch.from_numpy(transformed_candidates.values).to(**tkwargs)
+                    torch.from_numpy(transformed_candidates.values).to(**tkwargs),
                 )
             return torch.stack(initial_conditions, dim=0)
-        else:
-            candidates = strategy.ask(n * q, **ask_options)
-            # transform it
-            transformed_candidates = strategy.domain.inputs.transform(
-                candidates, transform_specs
-            )
-            return (
-                torch.from_numpy(transformed_candidates.values)
-                .to(**tkwargs)
-                .reshape(n, q, transformed_candidates.shape[1])
-            )
+        candidates = strategy.ask(n * q, **ask_options)
+        # transform it
+        transformed_candidates = strategy.domain.inputs.transform(
+            candidates,
+            transform_specs,
+        )
+        return (
+            torch.from_numpy(transformed_candidates.values)
+            .to(**tkwargs)
+            .reshape(n, q, transformed_candidates.shape[1])
+        )
 
     return generator
 
 
-@torch.jit.script
+@torch.jit.script  # type: ignore
 def interp1d(
     x: torch.Tensor,
     y: torch.Tensor,
     x_new: torch.Tensor,
 ) -> torch.Tensor:
-    """
-    Interpolates values in the y tensor based on the x tensor using linear interpolation.
+    """Interpolates values in the y tensor based on the x tensor using linear interpolation.
 
     Args:
         x (torch.Tensor): The x-coordinates of the data points.
@@ -654,6 +672,7 @@ def interp1d(
 
     Returns:
         torch.Tensor: The interpolated values at the x_new x-coordinates.
+
     """
     m = (y[1:] - y[:-1]) / (x[1:] - x[:-1])
     b = y[:-1] - (m * x[:-1])
@@ -703,7 +722,7 @@ class InterpolateTransform(InputTransform, Module):
         self.keep_original = keep_original
 
         if len(self.idx_x) + len(self.prepend_x) + len(self.append_x) != len(
-            self.idx_y
+            self.idx_y,
         ) + len(self.prepend_y) + len(self.append_y):
             raise ValueError("The number of x and y indices must be equal.")
 

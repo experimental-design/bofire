@@ -1,4 +1,5 @@
-from typing import Literal, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Literal, Optional, Union
 
 from bofire.data_models.kernels.categorical import HammingDistanceKernel
 from bofire.data_models.kernels.continuous import LinearKernel, MaternKernel, RBFKernel

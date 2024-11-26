@@ -1,9 +1,8 @@
 from abc import abstractmethod
-from typing import List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional, Union
 
 import pandas as pd
 from pydantic import Field, field_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain
@@ -32,7 +31,7 @@ class NumberOfExperimentsCondition(SingleCondition, EvaluateableCondition):
             n_experiments = 0
         else:
             n_experiments = len(
-                domain.outputs.preprocess_experiments_all_valid_outputs(experiments)
+                domain.outputs.preprocess_experiments_all_valid_outputs(experiments),
             )
         return n_experiments <= self.n_experiments
 
@@ -59,7 +58,7 @@ class CombiCondition(Condition, EvaluateableCondition):
     def validate_n_required_conditions(cls, v, info):
         if v > len(info.data["conditions"]):
             raise ValueError(
-                "Number of required conditions larger than number of conditions."
+                "Number of required conditions larger than number of conditions.",
             )
         return v
 

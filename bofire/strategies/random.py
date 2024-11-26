@@ -43,6 +43,7 @@ class RandomStrategy(Strategy):
     Args:
         data_model (data_models.RandomStrategy): The data model for the random strategy.
         **kwargs: Additional keyword arguments.
+
     """
 
     def __init__(
@@ -58,17 +59,16 @@ class RandomStrategy(Strategy):
         self.n_thinning = data_model.n_thinning
 
     def has_sufficient_experiments(self) -> bool:
-        """
-        Check if there are sufficient experiments for the strategy.
+        """Check if there are sufficient experiments for the strategy.
 
         Returns:
             bool: True if there are sufficient experiments, False otherwise.
+
         """
         return True
 
     def _ask(self, candidate_count: PositiveInt) -> pd.DataFrame:  # type: ignore
-        """
-        Generate candidate samples using the random strategy.
+        """Generate candidate samples using the random strategy.
 
         If the domain is compatible with polytope sampling, it uses the polytope sampling to generate
         candidate samples. Otherwise, it performs rejection sampling by repeatedly generating candidate
@@ -79,6 +79,7 @@ class RandomStrategy(Strategy):
 
         Returns:
             pd.DataFrame: A DataFrame containing the generated candidate samples.
+
         """
         # no nonlinear constraints present --> no rejection sampling needed
         if len(self.domain.constraints) == len(
@@ -88,8 +89,8 @@ class RandomStrategy(Strategy):
                     LinearEqualityConstraint,
                     NChooseKConstraint,
                     InterpointEqualityConstraint,
-                ]
-            )
+                ],
+            ),
         ):
             return self._sample_with_nchooseks(candidate_count)
         # perform the rejection sampling
@@ -111,14 +112,14 @@ class RandomStrategy(Strategy):
         self,
         candidate_count: int,
     ) -> pd.DataFrame:
-        """
-        Sample from the domain with NChooseK constraints.
+        """Sample from the domain with NChooseK constraints.
 
         Args:
             candidate_count (int): The number of samples to generate.
 
         Returns:
             pd.DataFrame: A DataFrame containing the sampled data.
+
         """
         if len(self.domain.constraints.get(NChooseKConstraint)) > 0:
             _, unused = self.domain.get_nchoosek_combinations()
@@ -127,7 +128,9 @@ class RandomStrategy(Strategy):
                 sampled_combinations = [
                     unused[i]
                     for i in self.rng.choice(
-                        len(unused), size=candidate_count, replace=False
+                        len(unused),
+                        size=candidate_count,
+                        replace=False,
                     )
                 ]
                 num_samples_per_it = 1
@@ -154,7 +157,7 @@ class RandomStrategy(Strategy):
                         n_thinning=self.n_thinning,
                         seed=self._get_seed(),
                         n=num_samples_per_it,
-                    )
+                    ),
                 )
             samples = pd.concat(samples, axis=0, ignore_index=True)
             return samples.sample(
@@ -182,8 +185,7 @@ class RandomStrategy(Strategy):
         n_thinning: int = 32,
         seed: Optional[int] = None,
     ) -> pd.DataFrame:
-        """
-        Sample points from a polytope defined by the given domain.
+        """Sample points from a polytope defined by the given domain.
 
         Args:
             n (int): The number of points to sample.
@@ -196,6 +198,7 @@ class RandomStrategy(Strategy):
 
         Returns:
             pd.DataFrame: A DataFrame containing the sampled points.
+
         """
         if seed is None:
             seed = np.random.default_rng().integers(1, 1000000)
@@ -244,13 +247,13 @@ class RandomStrategy(Strategy):
         lower = [
             feat.lower_bound  # type: ignore
             for feat in domain.inputs.get(ContinuousInput)
-            if feat.key not in fixed_features.keys()
+            if feat.key not in fixed_features
         ]
 
         upper = [
             feat.upper_bound  # type: ignore
             for feat in domain.inputs.get(ContinuousInput)
-            if feat.key not in fixed_features.keys()
+            if feat.key not in fixed_features
         ]
 
         if len(lower) == 0:
@@ -259,7 +262,9 @@ class RandomStrategy(Strategy):
                 UserWarning,
             )
             samples = pd.DataFrame(
-                data=np.nan, index=range(n), columns=domain.inputs.get_keys()
+                data=np.nan,
+                index=range(n),
+                columns=domain.inputs.get_keys(),
             )
         else:
             bounds = torch.tensor([lower, upper]).to(**tkwargs)
@@ -329,7 +334,7 @@ class RandomStrategy(Strategy):
             free_continuals = [
                 feat.key
                 for feat in domain.inputs.get(ContinuousInput)
-                if feat.key not in fixed_features.keys()
+                if feat.key not in fixed_features
             ]
             # setup the output
             samples = pd.DataFrame(
@@ -343,7 +348,9 @@ class RandomStrategy(Strategy):
             [
                 samples,
                 domain.inputs.get([CategoricalInput, DiscreteInput]).sample(
-                    n, method=SamplingMethodEnum.UNIFORM, seed=seed
+                    n,
+                    method=SamplingMethodEnum.UNIFORM,
+                    seed=seed,
                 ),
             ],
             axis=1,

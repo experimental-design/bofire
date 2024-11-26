@@ -1,5 +1,6 @@
 import pytest
 
+from bofire.benchmarks.benchmark import Benchmark
 from bofire.benchmarks.multi import (
     BNH,
     C2DTLZ2,
@@ -15,21 +16,13 @@ from bofire.benchmarks.multi import (
     "cls_benchmark, return_complete, kwargs",
     [
         (DTLZ2, True, {"dim": 5}),
-        (SnarBenchmark, True, {}),
-        (ZDT1, True, {}),
-        (
-            CrossCoupling,
-            True,
-            {},
-        ),
         (DTLZ2, False, {"dim": 5}),
+        (SnarBenchmark, True, {}),
         (SnarBenchmark, False, {}),
+        (ZDT1, True, {}),
         (ZDT1, False, {}),
-        (
-            CrossCoupling,
-            False,
-            {},
-        ),
+        (CrossCoupling, True, {}),
+        (CrossCoupling, False, {}),
         (C2DTLZ2, True, {"dim": 4}),
         (C2DTLZ2, False, {"dim": 4}),
         (BNH, False, {"constraints": True}),
@@ -38,13 +31,12 @@ from bofire.benchmarks.multi import (
         (TNK, True, {}),
     ],
 )
-def test_multi_objective_benchmarks(cls_benchmark, return_complete, kwargs):
-    """Test function for multi objective benchmark functions.
-
-    Args:
-        cls_benchmark (Benchmark function class): Benchmark function that is supposed to be tested.
-        kwargs ({"dim": , "k":}): Optinal arguments for benchmark functions that require additional arguments. DTLZ2 requires "dim" and "k".
-    """
+def test_multi_objective_benchmarks(
+    cls_benchmark: type[Benchmark],
+    return_complete: bool,
+    kwargs,
+):
+    """Test function for multi objective benchmark functions."""
     benchmark_function = cls_benchmark(**kwargs)
     benchmark_function_name = benchmark_function.__class__.__name__
 

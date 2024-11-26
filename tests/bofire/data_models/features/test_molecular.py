@@ -220,7 +220,8 @@ def test_molecular_input_fixed():
                 ],
             ),
             FingerprintsFragments(
-                n_bits=32, fragments=["fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO"]
+                n_bits=32,
+                fragments=["fr_COO", "fr_COO2", "fr_C_O", "fr_C_O_noCOO"],
             ),
         ),
         (
@@ -293,7 +294,8 @@ def test_molecular_feature_get_bounds(expected, transform_type):
         (
             "molecule",
             FingerprintsFragments(
-                n_bits=32, fragments=["fr_unbrch_alkane", "fr_thiocyan"]
+                n_bits=32,
+                fragments=["fr_unbrch_alkane", "fr_thiocyan"],
             ),
             {
                 "molecule_fingerprint_0": {0: 1.0, 1: 1.0, 2: 0.0, 3: 0.0},
@@ -361,7 +363,8 @@ def test_molecular_input_to_descriptor_encoding(key, transform_type, values):
 def test_categorical_molecular_input_invalid_smiles():
     with pytest.raises(ValueError, match="abcd is not a valid smiles string."):
         CategoricalMolecularInput(
-            key="a", categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"]
+            key="a",
+            categories=["CC(=O)Oc1ccccc1C(=O)O", "c1ccccc1", "abcd"],
         )
 
 
@@ -398,23 +401,28 @@ def test_categorical_molecular_input_from_descriptor_encoding(key):
 def test_categorical_molecular_input_get_bounds():
     # first test with onehot
     feat = CategoricalMolecularInput(
-        key="a", categories=VALID_SMILES.to_list(), allowed=[True, True, True, True]
+        key="a",
+        categories=VALID_SMILES.to_list(),
+        allowed=[True, True, True, True],
     )
     lower, upper = feat.get_bounds(
-        transform_type=CategoricalEncodingEnum.ONE_HOT, reference_value=None
+        transform_type=CategoricalEncodingEnum.ONE_HOT,
+        reference_value=None,
     )
     assert lower == [0 for _ in range(len(feat.categories))]
     assert upper == [1 for _ in range(len(feat.categories))]
     # now test it with descriptors,
     feat = CategoricalMolecularInput(
-        key="a", categories=VALID_SMILES.to_list(), allowed=[True, True, False, False]
+        key="a",
+        categories=VALID_SMILES.to_list(),
+        allowed=[True, True, False, False],
     )
     lower, upper = feat.get_bounds(
         transform_type=MordredDescriptors(
             descriptors=[
                 "nAromAtom",
                 "nAromBond",
-            ]
+            ],
         ),
         reference_value=None,
     )
@@ -426,7 +434,7 @@ def test_categorical_molecular_input_get_bounds():
             descriptors=[
                 "nAromAtom",
                 "nAromBond",
-            ]
+            ],
         ),
         values=VALID_SMILES,
         reference_value=None,

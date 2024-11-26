@@ -1,7 +1,6 @@
-from typing import Literal, Optional, Type, Union
+from typing import Annotated, Literal, Optional, Type, Union
 
 from pydantic import Field
-from typing_extensions import Annotated
 
 from bofire.data_models.features.api import AnyOutput, ContinuousOutput
 from bofire.data_models.surrogates.trainable_botorch import TrainableBotorchSurrogate

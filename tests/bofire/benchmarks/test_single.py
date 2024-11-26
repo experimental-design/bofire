@@ -1,6 +1,7 @@
 import numpy as np
 import pytest
 
+from bofire.benchmarks.benchmark import Benchmark
 from bofire.benchmarks.single import (
     Ackley,
     Branin,
@@ -61,13 +62,12 @@ def test_hartmann():
         # (Ackley, {"descriptor": True}),
     ],
 )
-def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
-    """Test function for single objective benchmark functions.
-
-    Args:
-        cls_benchmark (Benchmark function class): Benchmark function that is supposed to be tested.
-        kwargs ({"dim": , "k":}): Optinal arguments for benchmark functions that require additional arguments. Ackley can handle categerical and descriptive inputs.
-    """
+def test_single_objective_benchmarks(
+    cls_benchmark: type[Benchmark],
+    return_complete: bool,
+    kwargs,
+):
+    """Test function for single objective benchmark functions."""
     benchmark_function = cls_benchmark(**kwargs)
     benchmark_function_name = benchmark_function.__class__.__name__
 
@@ -124,7 +124,10 @@ def test_single_objective_benchmarks(cls_benchmark, return_complete, kwargs):
     ],
 )
 def test_single_obj_benchmark_reproducibility(
-    cls_benchmark, return_complete, kwargs1, kwargs2
+    cls_benchmark,
+    return_complete,
+    kwargs1,
+    kwargs2,
 ):
     benchmark_function = cls_benchmark(**kwargs1)
     benchmark_function_rep = cls_benchmark(**kwargs2)

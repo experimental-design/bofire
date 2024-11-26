@@ -18,9 +18,10 @@ class WassersteinKernel(Kernel):
     Attributes:
         squared: If True, the squared exponential Wasserstein distance is used. Note
             that the squared exponential Wasserstein distance kernel is not positive
-            definite for all lenghtscales. For this reason, as default the absolute
+            definite for all lengthscales. For this reason, as default the absolute
             exponential Wasserstein distance is used.
         lengthscale_prior: Prior for the lengthscale of the kernel.
+
     """
 
     type: Literal["WassersteinKernel"] = "WassersteinKernel"

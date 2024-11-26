@@ -79,7 +79,7 @@ class IterativeTrimming(OutlierDetection):
             ix_old = ix_sub
 
             self.surrogate.fit(  # type: ignore
-                experiments[experiments.index.isin(indices[ix_sub])].copy()
+                experiments[experiments.index.isin(indices[ix_sub])].copy(),
             )
             # make prediction
             pred = self.surrogate.predict(experiments)

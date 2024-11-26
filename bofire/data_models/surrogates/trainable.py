@@ -1,9 +1,8 @@
 import warnings
-from typing import List, Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional, Union
 
 import pandas as pd
 from pydantic import Field, field_validator, model_validator
-from typing_extensions import Annotated
 
 from bofire.data_models.base import BaseModel
 from bofire.data_models.domain.api import Domain, Inputs, Outputs
@@ -60,15 +59,14 @@ class Hyperconfig(BaseModel):
             if values.data["hyperstrategy"] == "FactorialStrategy":
                 return v
             return len(values.data["inputs"]) + 10
-        else:
-            if values.data["hyperstrategy"] == "FactorialStrategy":
-                raise ValueError(
-                    "It is not allowed to scpecify the number of its for FactorialStrategy"
-                )
-            if v < len(values.data["inputs"]) + 2:
-                raise ValueError(
-                    "At least number of hyperparams plus 2 iterations has to be specified"
-                )
+        if values.data["hyperstrategy"] == "FactorialStrategy":
+            raise ValueError(
+                "It is not allowed to scpecify the number of its for FactorialStrategy",
+            )
+        if v < len(values.data["inputs"]) + 2:
+            raise ValueError(
+                "At least number of hyperparams plus 2 iterations has to be specified",
+            )
         return v
 
     @property
@@ -80,15 +78,15 @@ class Hyperconfig(BaseModel):
                     ContinuousOutput(
                         key=self.target_metric.name,
                         objective=metrics2objectives[self.target_metric](),
-                    )
-                ]
+                    ),
+                ],
             ),
         )
 
     @staticmethod
     def _update_hyperparameters(surrogate_data, hyperparameters: pd.Series):
         raise NotImplementedError(
-            "Ideally this would be an abstract method, but this causes problems in pydantic."
+            "Ideally this would be an abstract method, but this causes problems in pydantic.",
         )
 
 
@@ -105,12 +103,12 @@ class TrainableSurrogate(BaseModel):
             for key in agg.features:
                 if key not in self.inputs.get_keys():  # type: ignore
                     raise ValueError(
-                        f"Unkown feature key {key} provided in aggregations."
+                        f"Unknown feature key {key} provided in aggregations.",
                     )
                 feat = self.inputs.get_by_key(key)  # type: ignore
                 if not isinstance(feat, ContinuousInput):
                     raise ValueError(
-                        f"Feature with key {key} is not of type ContinuousInput"
+                        f"Feature with key {key} is not of type ContinuousInput",
                     )
         warnings.warn("Aggregations currently only implemented in the data models.")
         return self
@@ -123,7 +121,8 @@ class TrainableSurrogate(BaseModel):
                 raise_validation_error=True,
             )
             self.hyperconfig._update_hyperparameters(
-                self, hyperparameters=hyperparameters
+                self,
+                hyperparameters=hyperparameters,
             )
         else:
             raise ValueError("No hyperconfig available.")

@@ -27,7 +27,7 @@ from bofire.data_models.strategies.predictives.multiobjective import (
 class QparegoStrategy(MultiobjectiveStrategy):
     type: Literal["QparegoStrategy"] = "QparegoStrategy"
     acquisition_function: Union[qEI, qLogEI, qLogNEI, qNEI] = Field(
-        default_factory=lambda: qNEI()
+        default_factory=lambda: qNEI(),
     )
 
     @classmethod
@@ -56,6 +56,7 @@ class QparegoStrategy(MultiobjectiveStrategy):
 
         Returns:
             bool: True if the constraint type is valid for the strategy chosen, False otherwise
+
         """
         if my_type in [
             NonlinearInequalityConstraint,

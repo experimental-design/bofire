@@ -35,7 +35,7 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
 
         lower, upper = data_model.interpolation_range
         new_ts = torch.from_numpy(
-            np.linspace(lower, upper, data_model.n_interpolation_points)
+            np.linspace(lower, upper, data_model.n_interpolation_points),
         ).to(dtype=torch.float64)
         idx_x = [data_model.inputs.get_keys().index(k) for k in data_model.x_keys]
         idx_y = [data_model.inputs.get_keys().index(k) for k in data_model.y_keys]
@@ -55,13 +55,13 @@ class PiecewiseLinearGPSurrogate(BotorchSurrogate, TrainableSurrogate):
             [
                 data_model.inputs.get_keys().index(k) + new_ts.shape[0]
                 for k in data_model.continuous_keys
-            ]
+            ],
         )
         self.idx_shape = list(range(new_ts.shape[0]))
         bounds = torch.tensor(
             data_model.inputs.get_by_keys(data_model.continuous_keys).get_bounds(
-                specs={}
-            )
+                specs={},
+            ),
         ).to(**tkwargs)
         norm = Normalize(
             indices=self.idx_continuous,

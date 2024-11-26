@@ -27,6 +27,7 @@ from bofire.utils.torch_tools import tkwargs
 class Ackley(Benchmark):
     """Ackley function for testing optimization algorithms
     Virtual experiment corresponds to a function evaluation.
+
     Examples
     --------
     >>> b = Ackley()
@@ -35,9 +36,11 @@ class Ackley(Benchmark):
     >>> values = np.array(values)
     >>> conditions = DataSet(values, columns=columns)
     >>> results = b.run_experiments(conditions)
+
     Notes
     -----
     This function is the negated version of https://en.wikipedia.org/wiki/Ackley_function.
+
     """
 
     # @validator("validate_categoricals")
@@ -69,6 +72,8 @@ class Ackley(Benchmark):
             upper (float, optional): Lower boundary. Defaults to 32.768.
             best_possible_f (float, optional): Best possible function value. Defaults to 0.0.
             evaluated_points (list, optional): Evaluated points. Defaults to [].
+            **kwargs: Additional arguments for the Benchmark class.
+
         """
         super().__init__(**kwargs)
         self.num_categories = num_categories
@@ -89,7 +94,7 @@ class Ackley(Benchmark):
                 CategoricalInput(
                     key="category",
                     categories=[str(x) for x in range(self.num_categories)],
-                )
+                ),
             )
 
         if self.descriptor:
@@ -99,13 +104,13 @@ class Ackley(Benchmark):
                     categories=[str(x) for x in range(self.num_categories)],
                     descriptors=["d1"],
                     values=[[x * 2] for x in range(self.num_categories)],
-                )
+                ),
             )
 
         # continuous input features
         for d in range(self.dim):
             input_feature_list.append(
-                ContinuousInput(key=f"x_{d+1}", bounds=(self.lower, self.upper))
+                ContinuousInput(key=f"x_{d+1}", bounds=(self.lower, self.upper)),
             )
 
         # Objective
@@ -121,9 +126,11 @@ class Ackley(Benchmark):
 
         Args:
             X (pd.DataFrame): Input values. Columns are x_1 and x_2
+            **kwargs: Allow additional unused arguments to prevent errors.
 
         Returns:
             pd.DataFrame: y values of the function. Columns are y and valid_y.
+
         """
         a = 20
         b = 0.2
@@ -155,7 +162,8 @@ class Ackley(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1, x_2, y and valid_y
+            pd.DataFrame: x values of optima. Columns are x_1, x_2, y and valid_y
+
         """
         x = np.zeros((1, self.dim))
         y = 0
@@ -172,10 +180,10 @@ class Hartmann(Benchmark):
             inputs=Inputs(
                 features=[
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
-                ]
+                ],
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())],
             ),
             constraints=(
                 Constraints(
@@ -185,8 +193,8 @@ class Hartmann(Benchmark):
                             min_count=0,
                             max_count=allowed_k,
                             none_also_valid=True,
-                        )
-                    ]
+                        ),
+                    ],
                 )
                 if allowed_k
                 else Constraints()
@@ -213,8 +221,62 @@ class Hartmann(Benchmark):
             {
                 "y": self._hartmann(
                     torch.from_numpy(
-                        candidates[[f"x_{i}" for i in range(self.dim)]].values
-                    )
+                        candidates[[f"x_{i}" for i in range(self.dim)]].values,
+                    ),
+                ),
+                "valid_y": [1 for _ in range(len(candidates))],
+            },
+        )
+
+
+class Hartmann6plus(Benchmark):
+    def __init__(self, dim: int = 6, allowed_k: Optional[int] = None, **kwargs) -> None:
+        super().__init__(**kwargs)
+        self._domain = Domain(
+            inputs=Inputs(
+                features=[
+                    ContinuousInput(key=f"x_{i}", bounds=(0, 1)) for i in range(dim)
+                ]
+            ),
+            outputs=Outputs(
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+            ),
+            constraints=(
+                Constraints(
+                    constraints=[
+                        NChooseKConstraint(
+                            features=[f"x_{i}" for i in range(dim)],
+                            min_count=0,
+                            max_count=allowed_k,
+                            none_also_valid=True,
+                        )
+                    ]
+                )
+                if allowed_k
+                else Constraints()
+            ),
+        )
+        if dim < 6:
+            raise ValueError("Hartmann6plus available for dim>=6.")
+        self._hartmann = botorch_hartmann(dim=6)
+
+    def get_optima(self) -> pd.DataFrame:
+        if len(self.domain.constraints) > 0:
+            raise ValueError("Not defined for NChooseK use case.")
+        return pd.DataFrame(
+            columns=[f"x_{i}" for i in range(6)] + ["y"],
+            data=[[0.20169, 0.150011, 0.476874, 0.275332, 0.311652, 0.6573, -3.32237]],
+        )
+
+    @property
+    def dim(self) -> int:
+        return len(self.domain.inputs)
+
+    def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "y": self._hartmann(
+                    torch.from_numpy(candidates[[f"x_{i}" for i in range(6)]].values)
                 ),
                 "valid_y": [1 for _ in range(len(candidates))],
             }
@@ -251,23 +313,23 @@ class Branin(Benchmark):
                             else None
                         ),
                     ),
-                ]
+                ],
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())],
             ),
         )
         self.branin = torchBranin().to(**tkwargs)
 
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
-            **tkwargs
+            **tkwargs,
         )
         return pd.DataFrame(
             {
                 "y": self.branin(c).detach().numpy(),
                 "valid_y": np.ones(len(candidates)),
-            }
+            },
         )
 
     def get_optima(self) -> pd.DataFrame:
@@ -277,7 +339,7 @@ class Branin(Benchmark):
                     [-math.pi, 12.275, 0.397887],
                     [math.pi, 2.275, 0.397887],
                     [9.42478, 2.475, 0.397887],
-                ]
+                ],
             ),
             columns=self.domain.inputs.get_keys() + self.domain.outputs.get_keys(),
         )
@@ -295,10 +357,10 @@ class Branin30(Benchmark):
                 features=[
                     ContinuousInput(key=f"x_{i+1:02d}", bounds=(0, 1))
                     for i in range(30)
-                ]
+                ],
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MinimizeObjective())]
+                features=[ContinuousOutput(key="y", objective=MinimizeObjective())],
             ),
         )
         self.branin = torchBranin().to(**tkwargs)
@@ -306,13 +368,13 @@ class Branin30(Benchmark):
     def _f(self, candidates: pd.DataFrame) -> pd.DataFrame:
         lb, ub = self.branin.bounds
         c = torch.from_numpy(candidates[self.domain.inputs.get_keys()].values).to(
-            **tkwargs
+            **tkwargs,
         )
         return pd.DataFrame(
             {
                 "y": self.branin(lb + (ub - lb) * c[..., :2]).detach().numpy(),
                 "valid_y": np.ones(len(candidates)),
-            }
+            },
         )
 
 
@@ -325,11 +387,12 @@ class Himmelblau(Benchmark):
         """Initialiszes class of type Himmelblau.
 
         Args:
-            best_possible_f (float, optional): Not implemented yet. Defaults to 0.0.
             use_constraints (bool, optional): Whether constraints should be used or not (Not implemented yet.). Defaults to False.
+            **kwargs: Additional arguments for the Benchmark class.
 
         Raises:
-            ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
+            ValueError: As constraints are not implemented yet, a True value for use_constraints yields a ValueError.
+
         """
         super().__init__(**kwargs)
         self.use_constraints = use_constraints
@@ -352,12 +415,15 @@ class Himmelblau(Benchmark):
 
         Args:
             X (pd.DataFrame): Input values. Columns are x_1 and x_2
+            **kwargs: Allow additional unused arguments to prevent errors.
 
         Returns:
             pd.DataFrame: y values of the function. Columns are y and valid_y.
+
         """
         X_temp = X.eval(
-            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=False
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+            inplace=False,
         )
         Y = pd.DataFrame({"y": X_temp["y"], "valid_y": 1})
         return Y
@@ -366,7 +432,8 @@ class Himmelblau(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1 and x_2
+            pd.DataFrame: x values of optima. Columns are x_1 and x_2
+
         """
         x = np.array(
             [
@@ -374,7 +441,7 @@ class Himmelblau(Benchmark):
                 [-2.805118, 3.131312],
                 [-3.779310, -3.283186],
                 [3.584428, -1.848126],
-            ]
+            ],
         )
         y = np.zeros(4)
         return pd.DataFrame(
@@ -394,9 +461,11 @@ class MultiTaskHimmelblau(Benchmark):
         Args:
             best_possible_f (float, optional): Not implemented yet. Defaults to 0.0.
             use_constraints (bool, optional): Whether constraints should be used or not (Not implemented yet.). Defaults to False.
+            **kwargs: Additional arguments for the Benchmark class.
 
         Raises:
-            ValueError: As constraints are not implemeted yet, a True value for use_constraints yields a ValueError.
+            ValueError: As constraints are not implemented yet, a True value for use_constraints yields a ValueError.
+
         """
         super().__init__(**kwargs)
         self.use_constraints = use_constraints
@@ -420,21 +489,25 @@ class MultiTaskHimmelblau(Benchmark):
 
         Args:
             X (pd.DataFrame): Input values. Columns are x_1 and x_2
+            **kwargs: Allow additional unused arguments to prevent errors.
 
         Returns:
             pd.DataFrame: y values of the function. Columns are y and valid_y.
+
         """
         # initialize y outputs
         Y = pd.DataFrame({"y": np.zeros(len(X)), "valid_y": 0})
         # evaluate task 1
         X_temp = X.query("task_id == 'task_1'").eval(
-            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)", inplace=False
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2)",
+            inplace=False,
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1
         # evaluate task 2
         X_temp = X.query("task_id == 'task_2'").eval(
-            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2", inplace=False
+            "y=((x_1**2 + x_2 - 11)**2+(x_1 + x_2**2 -7)**2) + x_1 * x_2",
+            inplace=False,
         )
         Y.loc[X_temp.index, "y"] = X_temp["y"]
         Y.loc[X_temp.index, "valid_y"] = 1
@@ -444,7 +517,8 @@ class MultiTaskHimmelblau(Benchmark):
         """Returns positions of optima of the benchmark function.
 
         Returns:
-            pd.DataFrame: x values of optima. Colums are x_1, x_2, task_id
+            pd.DataFrame: x values of optima. Columns are x_1, x_2, task_id
+
         """
         out = [
             [3.0, 2.0, "task_1", 0],
@@ -494,7 +568,7 @@ class _CategoricalDiscreteHimmelblau(Himmelblau):  # only used for testing
         )
 
     def get_optima(self):
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class Multinormalpdfs(Benchmark):
@@ -524,34 +598,36 @@ class Multinormalpdfs(Benchmark):
         N_unimportant_inputs: int = 2,
         seed: Optional[int] = None,
         means: Optional[list] = None,
-        covmats: Optional[np.ndarray] = None,
+        covmats: Optional[list] = None,
         **kwargs,
     ) -> None:
         """Initializes the class of type Multinormalpdfs
 
         Args:
-        dim : number of input dimensions
-        n_gaussians : number of gaussian pdfs in the sum
-        stdev : standard deviation used to generate the covariance matrices
-        eigscale : the concentration parameter (this value repeated dim times)
-            of a Dirichlet distribution used to sample scaled eigenvalues of the
-            correlation matrix, which is used to create the covariance matrix. Larger values
-            will make the covariance matrix more dominated by the diagonal and thus the shape
-            of the objective landscape nice and axis-parallel. Smaller values will
-            emphasize the off-diagonal elements of the covariance matrix. See details.
-        opt_on_boundary : if True, the first element of the mean vector(s) is set to
-            zero to put the optimum on the boundary of the space
-        N_unimportant_inputs : this many inputs receive zeroed rows and columns in the
-            covariance matrix and a large number on the diagonal. This essentially
-            makes them noise variables that don't do anything (or only have a very
-            weak effect)
-        means : a list of mean vectors in case the user wants to specify them and
-            bypass generation. Setting this causes above args except dim to be ignored
-        covmats : a list of covariance matrices in case the user wants to specify them
-            and bypass generation. As with means
+            dim : number of input dimensions
+            n_gaussians : number of gaussian pdfs in the sum
+            stdev : standard deviation used to generate the covariance matrices
+            eigscale : the concentration parameter (this value repeated dim times)
+                of a Dirichlet distribution used to sample scaled eigenvalues of the
+                correlation matrix, which is used to create the covariance matrix. Larger values
+                will make the covariance matrix more dominated by the diagonal and thus the shape
+                of the objective landscape nice and axis-parallel. Smaller values will
+                emphasize the off-diagonal elements of the covariance matrix. See details.
+            opt_on_boundary : if True, the first element of the mean vector(s) is set to
+                zero to put the optimum on the boundary of the space
+            N_unimportant_inputs : this many inputs receive zeroed rows and columns in the
+                covariance matrix and a large number on the diagonal. This essentially
+                makes them noise variables that don't do anything (or only have a very
+                weak effect)
+            seed (int, optional): random seed. Defaults to None.
+            means : a list of mean vectors in case the user wants to specify them and
+                bypass generation. Setting this causes above args except dim to be ignored
+            covmats : a list of covariance matrices in case the user wants to specify them
+                and bypass generation. As with means
+            **kwargs: Additional arguments for the Benchmark class.
 
         Details:
-            The way the covariance matrix is generated is pehaps nontrivial:
+            The way the covariance matrix is generated is perhaps nontrivial:
             1) sample n_dims values from a dirichlet distribution, and call this sample eigs. sum(eigs)=1
             2) scale eigs so that the sum equals n_dims
             3) generate a random correlation matrix with the eigenvalues eigs
@@ -559,7 +635,6 @@ class Multinormalpdfs(Benchmark):
             5) make any required additional changes to make the PDF almost flat in some directions
 
         """
-
         super().__init__(**kwargs)
         self.dim = dim
         self.n_gaussians = n_gaussians
@@ -572,27 +647,31 @@ class Multinormalpdfs(Benchmark):
                 features=[
                     ContinuousInput(key=f"x_{i}", bounds=(0, 1))
                     for i in range(self.dim)
-                ]
+                ],
             ),
             outputs=Outputs(
-                features=[ContinuousOutput(key="y", objective=MaximizeObjective())]
+                features=[ContinuousOutput(key="y", objective=MaximizeObjective())],
             ),
         )
         np.random.seed(seed)
 
         gaussians = []
+        prefactors = []
         if means is not None and covmats is not None:
             # user has define the parameters of the distributions
             for mean, cov_mat in zip(means, covmats):
                 if len(mean) != dim:
                     raise ValueError(
-                        "Length of mean should equal dimensionality in Multinormalpdfs"
+                        "Length of mean should equal dimensionality in Multinormalpdfs",
                     )
                 gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
+            n_gaussians = len(gaussians)
         else:
             # Generate the multivariate normal distributions
             unimportant_dims = np.random.choice(
-                list(range(self.dim)), self.N_unimportant_inputs, replace=False
+                list(range(self.dim)),
+                self.N_unimportant_inputs,
+                replace=False,
             )
             for _ in range(n_gaussians):
                 mean = np.random.random(size=dim)
@@ -608,14 +687,24 @@ class Multinormalpdfs(Benchmark):
                     cov_mat[:, i] = 0.0
                     cov_mat[i, i] = 10.0
                 gaussians.append(multivariate_normal(mean=mean, cov=cov_mat))
-
+        for i in range(n_gaussians):
+            prefactors.append(
+                (2 * np.pi) ** (-dim / 2) / np.sqrt(np.linalg.det(gaussians[i].cov))
+            )
         self.gaussians = gaussians
+        self.prefactors = prefactors
 
     def _f(self, X: pd.DataFrame) -> pd.DataFrame:  # type: ignore
         return pd.DataFrame(
             {
                 "y": X.apply(
-                    lambda x: sum([g.pdf(x.to_numpy()) for g in self.gaussians]), axis=1
+                    lambda x: sum(
+                        [
+                            g.pdf(x.to_numpy()) / prefac
+                            for prefac, g in zip(self.prefactors, self.gaussians)
+                        ]
+                    ),
+                    axis=1,
                 ),
                 "valid_y": np.ones(len(X)),
             },
@@ -624,11 +713,10 @@ class Multinormalpdfs(Benchmark):
     def get_optima(self) -> pd.DataFrame:
         if self.n_gaussians != 1:
             raise NotImplementedError(
-                "Position of optima only implemented for benchmark with n_gaussians = 1"
+                "Position of optima only implemented for benchmark with n_gaussians = 1",
             )
-        else:
-            x_opt = pd.DataFrame(
-                {f"x_{i}": self.gaussians[0].mean[i] for i in range(self.dim)},
-                index=[0],
-            )
-            return pd.concat([x_opt, self._f(x_opt)], axis=1)
+        x_opt = pd.DataFrame(
+            {f"x_{i}": self.gaussians[0].mean[i] for i in range(self.dim)},
+            index=[0],
+        )
+        return pd.concat([x_opt, self._f(x_opt)], axis=1)

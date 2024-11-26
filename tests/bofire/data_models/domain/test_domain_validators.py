@@ -30,14 +30,17 @@ if1 = specs.features.valid(ContinuousInput).obj(key="cont")
 if2 = specs.features.valid(CategoricalInput).obj(key="cat")
 if3 = specs.features.valid(CategoricalDescriptorInput).obj(key="cat_")
 if4 = specs.features.valid(CategoricalInput).obj(
-    key="cat2", allowed=[True, True, False]
+    key="cat2",
+    allowed=[True, True, False],
 )
 if5 = specs.features.valid(ContinuousInput).obj(
     key="if5",
     bounds=(3, 3),
 )
 if6 = specs.features.valid(CategoricalInput).obj(
-    key="if6", categories=["c1", "c2", "c3"], allowed=[True, False, False]
+    key="if6",
+    categories=["c1", "c2", "c3"],
+    allowed=[True, False, False],
 )
 of1 = specs.features.valid(ContinuousOutput).obj(key="out1")
 of2 = specs.features.valid(ContinuousOutput).obj(key="out2")
@@ -82,7 +85,7 @@ def generate_experiments(
                 },
             }
             for _ in range(row_count)
-        ]
+        ],
     )
     if include_labcode:
         experiments["labcode"] = [str(i) for i in range(row_count)]
@@ -124,7 +127,7 @@ def generate_candidates(domain: Domain, row_count: int = 5):
                 },
             }
             for _ in range(row_count)
-        ]
+        ],
     )
 
 
@@ -183,7 +186,9 @@ domain7 = Domain.from_lists(
     [if1, if5],
     [of1, of2],
     constraints=[
-        LinearEqualityConstraint(features=["cont", "if5"], coefficients=[1, 1], rhs=500)
+        LinearEqualityConstraint(
+            features=["cont", "if5"], coefficients=[1, 1], rhs=500
+        ),
     ],
 )
 
@@ -222,7 +227,9 @@ def test_domain_validate_experiments_valid(
     ],
 )
 def test_domain_validate_experiments_invalid(
-    domain: Domain, experiments: pd.DataFrame, strict: bool
+    domain: Domain,
+    experiments: pd.DataFrame,
+    strict: bool,
 ):
     with pytest.raises(ValueError):
         domain.validate_experiments(experiments, strict=strict)
@@ -258,7 +265,8 @@ def test_domain_validate_experiments_invalid_labcode():
 
 
 @pytest.mark.parametrize(
-    "domain, candidates", [(d, generate_candidates(d)) for d in domains]
+    "domain, candidates",
+    [(d, generate_candidates(d)) for d in domains],
 )
 def test_domain_validate_candidates_valid(
     domain: Domain,
@@ -304,7 +312,8 @@ def test_domain_validate_candidates_missing_cols(
     ],
 )
 def test_domain_validate_candidates_invalid_bounds(
-    domain: Domain, candidates: pd.DataFrame
+    domain: Domain,
+    candidates: pd.DataFrame,
 ):
     with pytest.raises(ValueError):
         domain.validate_candidates(candidates)
@@ -350,17 +359,21 @@ def test_domain_validate_candidates_not_numerical(
     ],
 )
 def test_domain_validate_candidates_constraint_not_fulfilled(
-    domain, candidates, raise_validation_error
+    domain,
+    candidates,
+    raise_validation_error,
 ):
     if raise_validation_error:
         with pytest.raises(ConstraintNotFulfilledError):
             domain.validate_candidates(
-                candidates, raise_validation_error=raise_validation_error
+                candidates,
+                raise_validation_error=raise_validation_error,
             )
     else:
         assert isinstance(
             domain.validate_candidates(
-                candidates, raise_validation_error=raise_validation_error
+                candidates,
+                raise_validation_error=raise_validation_error,
             ),
             pd.DataFrame,
         )
@@ -373,7 +386,6 @@ def test_outputs_add_valid_columns():
     experiments = domain0.outputs.add_valid_columns(experiments)
     assert "valid_out1" in experiments.columns
     assert "valid_out2" in experiments.columns
-    #
     experiments["valid_out1"] = "1"
     experiments["valid_out2"] = "0"
     experiments = domain0.outputs.add_valid_columns(experiments)

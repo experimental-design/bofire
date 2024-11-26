@@ -25,10 +25,11 @@ class FractionalFactorialStrategy(Strategy):
             raise ValueError(
                 "FractionalFactorialStrategy will ignore the specified value of candidate_count. "
                 "The strategy automatically determines how many candidates to "
-                "propose."
+                "propose.",
             )
         gen = self.generator or get_generator(
-            n_factors=len(self.domain.inputs), n_generators=self.n_generators
+            n_factors=len(self.domain.inputs),
+            n_generators=self.n_generators,
         )
         design = pd.DataFrame(fracfact(gen=gen), columns=self.domain.inputs.get_keys())
         # setup the repetitions
@@ -36,7 +37,7 @@ class FractionalFactorialStrategy(Strategy):
             design = pd.concat([design] * (self.n_repetitions), ignore_index=True)
         # setup the center points
         centers = pd.DataFrame(
-            {key: [0] * self.n_center for key in self.domain.inputs.get_keys()}
+            {key: [0] * self.n_center for key in self.domain.inputs.get_keys()},
         )
         design = pd.concat([design, centers], ignore_index=True)
         # scale the design to 0 and 1

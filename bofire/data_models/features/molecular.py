@@ -1,5 +1,6 @@
 import warnings
-from typing import ClassVar, List, Literal, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import ClassVar, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -28,7 +29,9 @@ class MolecularInput(Input):
         return [Fingerprints, FingerprintsFragments, Fragments, MordredDescriptors]  # type: ignore
 
     def validate_experimental(
-        self, values: pd.Series, strict: bool = False
+        self,
+        values: pd.Series,
+        strict: bool = False,
     ) -> pd.Series:
         values = values.map(str)
         for smi in values:
@@ -57,8 +60,7 @@ class MolecularInput(Input):
         values: pd.Series,
         reference_value: Optional[str] = None,
     ) -> Tuple[List[float], List[float]]:
-        """
-        Calculates the lower and upper bounds for the feature based on the given transform type and values.
+        """Calculates the lower and upper bounds for the feature based on the given transform type and values.
 
         Args:
             transform_type (AnyMolFeatures): The type of transformation to apply to the data.
@@ -71,13 +73,13 @@ class MolecularInput(Input):
 
         Raises:
             NotImplementedError: Raised when `values` is None, as it is currently required for `MolecularInput`.
+
         """
         if values is None:
             raise NotImplementedError(
-                "`values` is currently required for `MolecularInput`"
+                "`values` is currently required for `MolecularInput`",
             )
-        else:
-            data = self.to_descriptor_encoding(transform_type, values)
+        data = self.to_descriptor_encoding(transform_type, values)
 
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
@@ -85,7 +87,9 @@ class MolecularInput(Input):
         return lower, upper
 
     def to_descriptor_encoding(
-        self, transform_type: AnyMolFeatures, values: pd.Series
+        self,
+        transform_type: AnyMolFeatures,
+        values: pd.Series,
     ) -> pd.DataFrame:
         """Converts values to descriptor encoding.
 
@@ -94,6 +98,7 @@ class MolecularInput(Input):
 
         Returns:
             pd.DataFrame: Descriptor encoded dataframe.
+
         """
         descriptor_values = transform_type.get_descriptor_values(values)
 
@@ -113,7 +118,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
     @field_validator("categories")
     @classmethod
     def validate_smiles(cls, categories: Sequence[str]):
-        """validates that categories are valid smiles. Note that this check can only
+        """Validates that categories are valid smiles. Note that this check can only
         be executed when rdkit is available.
 
         Args:
@@ -124,6 +129,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
 
         Returns:
             List[str]: List of the smiles
+
         """
         # check on rdkit availability:
         try:
@@ -158,23 +164,24 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
                 values=values,
                 reference_value=reference_value,
             )
-        else:
-            # in case that values is None, we return the optimization bounds
-            # else we return the complete bounds
-            data = self.to_descriptor_encoding(
-                transform_type=transform_type,
-                values=(
-                    pd.Series(self.get_allowed_categories())
-                    if values is None
-                    else pd.Series(self.categories)
-                ),
-            )
+        # in case that values is None, we return the optimization bounds
+        # else we return the complete bounds
+        data = self.to_descriptor_encoding(
+            transform_type=transform_type,
+            values=(
+                pd.Series(self.get_allowed_categories())
+                if values is None
+                else pd.Series(self.categories)
+            ),
+        )
         lower = data.min(axis=0).values.tolist()
         upper = data.max(axis=0).values.tolist()
         return lower, upper
 
     def from_descriptor_encoding(
-        self, transform_type: AnyMolFeatures, values: pd.DataFrame
+        self,
+        transform_type: AnyMolFeatures,
+        values: pd.DataFrame,
     ) -> pd.Series:
         """Converts values back from descriptor encoding.
 
@@ -186,8 +193,8 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
 
         Returns:
             pd.Series: Series with categorical values.
-        """
 
+        """
         # This method is modified based on the categorical descriptor feature
         # TODO: move it to more central place
         cat_cols = [
@@ -197,7 +204,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
         # easier in the backtransform.
         if np.any([c not in values.columns for c in cat_cols]):
             raise ValueError(
-                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}."
+                f"{self.key}: Column names don't match categorical levels: {values.columns}, {cat_cols}.",
             )
         s = pd.DataFrame(
             data=np.sqrt(
@@ -211,7 +218,7 @@ class CategoricalMolecularInput(CategoricalInput, MolecularInput):  # type: igno
                     )
                     ** 2,
                     axis=2,
-                )
+                ),
             ),
             columns=self.get_allowed_categories(),
             index=values.index,

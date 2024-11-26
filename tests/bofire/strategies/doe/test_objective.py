@@ -315,7 +315,7 @@ def test_Objective_model_jacobian_t():
                 8.0,
                 12.0,
             ],
-        ]
+        ],
     )
 
     B = pd.DataFrame(
@@ -408,7 +408,7 @@ def test_DOptimality_instantiation():
 
     assert isinstance(d_optimality.domain, Domain)
     assert all(
-        np.array(d_optimality.domain.inputs.get_keys()) == np.array(["x1", "x2", "x3"])
+        np.array(d_optimality.domain.inputs.get_keys()) == np.array(["x1", "x2", "x3"]),
     )
     for i in d_optimality.domain.inputs.get():
         assert isinstance(i, ContinuousInput)
@@ -419,7 +419,7 @@ def test_DOptimality_instantiation():
     assert isinstance(d_optimality.model, Formula)
     assert all(
         np.array(d_optimality.model, dtype=str)
-        == np.array(["1", "x1", "x2", "x3", "x3 ** 2", "x1:x2"])
+        == np.array(["1", "x1", "x2", "x3", "x3 ** 2", "x1:x2"]),
     )
 
     x = np.array([[1, 2, 3], [1, 2, 3]])
@@ -430,7 +430,7 @@ def test_DOptimality_instantiation():
 
     assert np.allclose(B, d_optimality._model_jacobian_t(x))
     assert np.shape(
-        d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2]]).flatten())
+        d_optimality.evaluate_jacobian(np.array([[1, 1, 1], [2, 2, 2]]).flatten()),
     ) == (6,)
 
     # 5th order model
@@ -460,8 +460,8 @@ def test_DOptimality_instantiation():
     assert np.allclose(B, d_optimality._model_jacobian_t(x))
     assert np.shape(
         d_optimality.evaluate_jacobian(
-            np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]).flatten()
-        )
+            np.array([[1, 1, 1], [2, 2, 2], [3, 3, 3]]).flatten(),
+        ),
     ) == (9,)
 
 
@@ -484,7 +484,10 @@ def test_DOptimality_evaluate_jacobian():
     model = Formula("x1 + x2 - 1")
     n_experiments = 1
     d_optimality = DOptimality(
-        domain=domain, model=model, n_experiments=n_experiments, delta=1e-3
+        domain=domain,
+        model=model,
+        n_experiments=n_experiments,
+        delta=1e-3,
     )
 
     np.random.seed(1)
@@ -498,7 +501,10 @@ def test_DOptimality_evaluate_jacobian():
 
     model = Formula("{x1**2} + {x2**2} - 1")
     d_optimality = DOptimality(
-        domain=domain, model=model, n_experiments=n_experiments, delta=1e-3
+        domain=domain,
+        model=model,
+        n_experiments=n_experiments,
+        delta=1e-3,
     )
     np.random.seed(1)
     for _ in range(10):
@@ -548,7 +554,10 @@ def test_DOptimality_evaluate_jacobian():
     model = Formula("x1 + x2 - 1")
     n_experiments = 2
     d_optimality = DOptimality(
-        domain=domain, model=model, n_experiments=n_experiments, delta=1e-3
+        domain=domain,
+        model=model,
+        n_experiments=n_experiments,
+        delta=1e-3,
     )
     np.random.seed(1)
     for _ in range(10):
@@ -597,7 +606,10 @@ def test_DOptimality_evaluate_jacobian():
 
     model = Formula("{x1**2} + {x2**2} - 1")
     d_optimality = DOptimality(
-        domain=domain, model=model, n_experiments=n_experiments, delta=1e-3
+        domain=domain,
+        model=model,
+        n_experiments=n_experiments,
+        delta=1e-3,
     )
 
     np.random.seed(1)
@@ -678,7 +690,7 @@ def test_EOptimality_evaluate():
     min_eigval = 0.5 * (
         x[0] ** 2
         - np.sqrt(
-            x[0] ** 4 + 2 * x[0] ** 2 * x[1] ** 2 + 8 * x[0] * x[1] + x[1] ** 4 + 4
+            x[0] ** 4 + 2 * x[0] ** 2 * x[1] ** 2 + 8 * x[0] * x[1] + x[1] ** 4 + 4,
         )
         + x[1] ** 2
         + 2
@@ -700,13 +712,13 @@ def test_EOptimality_evaluate_jacobian():
 
     def grad(x):
         temp = np.sqrt(
-            x[0] ** 4 + 2 * x[0] ** 2 * x[1] ** 2 + 8 * x[0] * x[1] + x[1] ** 4 + 4
+            x[0] ** 4 + 2 * x[0] ** 2 * x[1] ** 2 + 8 * x[0] * x[1] + x[1] ** 4 + 4,
         )
         return np.array(
             [
                 (x[0] ** 3 + x[0] * x[1] ** 2 + 2 * x[1]) / temp - x[0],
                 (x[1] ** 3 + x[1] * x[0] ** 2 + 2 * x[0]) / temp - x[1],
-            ]
+            ],
         )
 
     assert np.allclose(e_optimality.evaluate_jacobian(x), grad(x))
@@ -799,7 +811,8 @@ def test_MinMaxTransform():
             transform_range=(-1.0, 1.0),
         )
         assert np.allclose(
-            objective_unscaled.evaluate(x_scaled), objective_scaled.evaluate(x)
+            objective_unscaled.evaluate(x_scaled),
+            objective_scaled.evaluate(x),
         )
         assert np.allclose(
             2 * objective_unscaled.evaluate_jacobian(x_scaled),

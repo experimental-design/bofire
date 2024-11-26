@@ -52,7 +52,7 @@ class SingleTaskGPSurrogate(BotorchSurrogate, TrainableSurrogate):
                 self.kernel,
                 batch_shape=torch.Size(),
                 active_dims=list(range(tX.shape[1])),
-                ard_num_dims=1,  # this keyword is ingored
+                ard_num_dims=1,  # this keyword is ignored
             ),
             outcome_transform=(
                 Standardize(m=tY.shape[-1])
