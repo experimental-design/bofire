@@ -37,22 +37,37 @@ def validate_domain_compatibility(domain1: Domain, domain2: Domain):
     Raises:
         ValueError: If one of the the conditions mentioned above is not met.
     """
-    features1 = domain1.inputs + domain1.outputs
-    features2 = domain2.inputs + domain2.outputs
-    if len(features1) != len(features2):
-        raise ValueError("Domains have different number of features.")
-    if features1.get_keys() != features2.get_keys():
-        raise ValueError("Domains have different feature keys.")
-    for feature1, feature2 in zip(features1.get(), features2.get()):
-        if feature1.__class__ != feature2.__class__:
-            raise ValueError(f"Features with key {feature1.key} have different types.")
-        if isinstance(feature1, (CategoricalInput, CategoricalOutput)) and isinstance(
-            feature2, (CategoricalInput, CategoricalOutput)
-        ):
-            if feature1.categories != feature2.categories:
+
+    def validate(equals: List[str], features1, features2):
+        for key in equals:
+            feature1 = features1.get_by_key(key)
+            feature2 = features2.get_by_key(key)
+            if feature1.__class__ != feature2.__class__:
                 raise ValueError(
-                    f"Features with key {feature1.key} have different categories."
+                    f"Features with key {feature1.key} have different types."
                 )
+            if isinstance(
+                feature1, (CategoricalInput, CategoricalOutput)
+            ) and isinstance(feature2, (CategoricalInput, CategoricalOutput)):
+                if feature1.categories != feature2.categories:
+                    raise ValueError(
+                        f"Features with key {feature1.key} have different categories."
+                    )
+
+    validate(
+        [key for key in domain1.inputs.get_keys() if key in domain2.inputs.get_keys()],
+        domain1.inputs,
+        domain2.inputs,
+    )
+    validate(
+        [
+            key
+            for key in domain1.outputs.get_keys()
+            if key in domain2.outputs.get_keys()
+        ],
+        domain1.outputs,
+        domain2.outputs,
+    )
 
 
 class StepwiseStrategy(Strategy):

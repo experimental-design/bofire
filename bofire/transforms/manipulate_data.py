@@ -14,10 +14,8 @@ class ManipulateDataTransform(Transform):
         if len(transforms) == 0:
             return df
         transformed_df = df.copy()
-        print(transformed_df)
         for tr in transforms:
             transformed_df.eval(tr, inplace=True)
-            print(transformed_df)
 
         return transformed_df
 
